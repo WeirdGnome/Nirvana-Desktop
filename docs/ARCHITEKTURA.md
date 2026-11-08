@@ -25,7 +25,15 @@ wymieniamy tylko `insight` (kompozytor na wlroots), a resztę zostawiamy.
 - Okna o klasie `LisaOS-*` same animują otwieranie i zamykanie (z ikony do okna),
   więc Insight pomija dla nich własną animację. `LisaOS-Dialog` dostaje ramkę
   dialogu: bez przycisków i zmiany rozmiaru.
-- Działa też pod innym menedżerem okien zgodnym z EWMH, np. pod GNOME.
+- **Pod innym menedżerem okien** (GNOME, KDE, Openbox) albo bez menedżera Rambler
+  rysuje ramki Platinum sam (CSD, jak aplikacje GTK): okna są bez obcych dekoracji,
+  przesuwanie za pasek tytułu i zmianę rozmiaru zleca menedżerowi przez
+  `_NET_WM_MOVERESIZE` (dopiero po ruchu myszy, żeby podwójne kliknięcie zwijało okno),
+  a zwijanie i zoom robi sam. Wykrycie: `_NET_SUPPORTING_WM_CHECK` → nazwa „insight”.
+  Wymuszenie do testów: `LISAOS_CSD=1` lub `0`.
+- Okno biurka FLTK mapuje od razu w `show()`, zanim da się nadać mu typ DESKTOP.
+  Rambler wycofuje je więc zgodnie z ICCCM, czeka na potwierdzenie menedżera okien
+  i pokazuje ponownie już jako biurko, żeby leżało pod oknami folderów.
 
 ## Globalny pasek menu (`gary`)
 

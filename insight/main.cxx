@@ -430,7 +430,11 @@ static int x_handler(void *event, void *) {
   XEvent *e = (XEvent *)event;
   switch (e->type) {
   case MapRequest:
-    if (Client *c = client_of(e->xmaprequest.window)) XMapWindow(dpy, c->win);
+    if (e->xmaprequest.window == desktop_win) {
+      // biurko pokazane ponownie (np. Rambler przestawił mu typ na DESKTOP)
+      XMapWindow(dpy, desktop_win);
+      XLowerWindow(dpy, desktop_win);
+    } else if (Client *c = client_of(e->xmaprequest.window)) XMapWindow(dpy, c->win);
     else manage(e->xmaprequest.window, false);
     return 1;
 

@@ -8,10 +8,12 @@
 #include <FL/Fl.H>
 #include <FL/platform.H>
 #include <X11/Xatom.h>
+#include <X11/Xutil.h>
 #include <csignal>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <unistd.h>
 #include <string>
 
 #include <filesystem>
@@ -55,8 +57,40 @@ int main(int argc, char **argv) {
   {
     Atom type = XInternAtom(fl_display, "_NET_WM_WINDOW_TYPE", False);
     Atom desk_t = XInternAtom(fl_display, "_NET_WM_WINDOW_TYPE_DESKTOP", False);
-    XChangeProperty(fl_display, fl_xid(&desk), type, XA_ATOM, 32, PropModeReplace,
+    Window xid = fl_xid(&desk);
+    // FLTK mapuje okno już w show(), więc menedżer okien widział je jako zwykłe.
+    // Zdejmujemy je, oznaczamy jako biurko i pokazujemy ponownie - wtedy WM
+    // (Openbox, GNOME, KDE...) położy je na samym dole i nie da mu ramki.
+    // Wycofanie zgodne z ICCCM: unmap + syntetyczne UnmapNotify do korzenia,
+    // potem czekamy, aż menedżer okien potwierdzi (zniknie WM_STATE=Normal).
+    Atom wm_state = XInternAtom(fl_display, "WM_STATE", False);
+    auto normal_state = [&]() {
+      Atom t; int f; unsigned long n, after; unsigned char *d = nullptr;
+      bool normal = false;
+      if (XGetWindowProperty(fl_display, xid, wm_state, 0, 2, False, wm_state, &t, &f, &n, &after,
+                             &d) == Success && d) {
+        normal = n && ((long *)d)[0] == NormalState;
+        XFree(d);
+      }
+      return normal;
+    };
+    XSync(fl_display, False);
+    bool managed = normal_state();   // bez menedżera okien nie ma na co czekać
+    XUnmapWindow(fl_display, xid);
+    XEvent ev{};
+    ev.xunmap.type = UnmapNotify;
+    ev.xunmap.event = DefaultRootWindow(fl_display);
+    ev.xunmap.window = xid;
+    ev.xunmap.from_configure = False;
+    XSendEvent(fl_display, DefaultRootWindow(fl_display), False,
+               SubstructureRedirectMask | SubstructureNotifyMask, &ev);
+    XSync(fl_display, False);
+    for (int i = 0; managed && i < 100 && normal_state(); i++) usleep(10000);
+    XChangeProperty(fl_display, xid, type, XA_ATOM, 32, PropModeReplace,
                     (unsigned char *)&desk_t, 1);
+    XMapWindow(fl_display, xid);
+    XLowerWindow(fl_display, xid);
+    XSync(fl_display, False);
   }
   desk.restore();
   return Fl::run();

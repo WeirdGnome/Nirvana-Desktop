@@ -31,6 +31,14 @@ public:
   std::string path;
   std::vector<std::function<void()>> actions;  // akcje przycisków dialogu
   bool dialog;
+  // Własna ramka Platinum (CSD), gdy menedżerem okien nie jest Insight -
+  // np. pod GNOME. Wtedy okno jest bez dekoracji, a treść leży w środku ramki.
+  bool csd;
+  int ox() const { return csd ? plat::FRAME : 0; }          // przesunięcie treści
+  int oy() const { return csd ? plat::TITLE_H : 0; }
+  int extra_w() const { return csd ? 2 * plat::FRAME : 0; } // ramka razem
+  int extra_h() const { return csd ? plat::TITLE_H + plat::FRAME : 0; }
+  plat::Rect content_rect();  // położenie treści na ekranie (pełna wysokość)
 
   bool is_active();     // czy to okno ma fokus (wg menedżera okien)
   bool shaded();       // czy menedżer okien je zwinął
@@ -41,6 +49,20 @@ public:
   ~NWin() override;
   int handle(int e) override;   // skróty klawiszowe trafiają do globalnego paska menu
   void resize(int X, int Y, int W, int H) override;
+  void draw() override;
+
+private:
+  // stan własnej ramki
+  int csd_handle(int e);
+  int hit_button(int ex, int ey) const;
+  void csd_toggle_shade();
+  void csd_toggle_zoom();
+  void start_moveresize(int direction);
+  bool csd_shaded_ = false, csd_zoomed_ = false;
+  int full_h_ = 0, unzoom_[4] = {0, 0, 0, 0};
+  enum { NONE, PENDING, MOVE, GROW, BTN } drag_ = NONE;   // PENDING: wciśnięte, jeszcze bez ruchu
+  int press_x_ = 0, press_y_ = 0;
+  int drag_dx_ = 0, drag_dy_ = 0, armed_ = 0, pressed_ = 0;
 };
 
 class Desktop : public Fl_Double_Window {
@@ -53,6 +75,15 @@ public:
   void remember(NWin *w, bool open);
   void active_changed();          // menedżer okien zmienił aktywne okno
   int shortcut();                 // skrót z innego okna -> pasek menu
+
+  // Środowisko okien (wykrywane przy starcie)
+  bool csd_mode = false;          // menedżer okien to nie Insight: rysujemy ramki sami
+  bool wm_present = false;        // jakikolwiek menedżer okien zgodny z EWMH
+  bool wm_moveresize = false;     // WM obsługuje _NET_WM_MOVERESIZE (przesuwanie za nas)
+  NWin *manual_active = nullptr;  // aktywne okno, gdy nie ma menedżera okien
+  void redraw_frames();           // odśwież ramki (zmiana aktywnego okna)
+  void detect_wm();
+  plat::Rect desk_rect() { return {x_root(), y_root(), w(), h()}; }
 
   int handle(int e) override;
   void draw() override;

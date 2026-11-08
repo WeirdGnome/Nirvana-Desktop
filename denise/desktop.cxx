@@ -162,6 +162,7 @@ Desktop::Desktop(int W, int H, const std::string &home, bool root)
   fl_open_display();
   box(FL_NO_BOX);
   pattern_.reset(make_pattern());
+  detect_wm();
 
   menu_ = new Fl_Menu_Bar(0, 0, W, MENUBAR_H);
   menu_->box(MENUBAR_BOX);
@@ -310,12 +311,53 @@ static int x_watch(void *event, void *) {
   return 0;
 }
 
+// Kto zarządza oknami? Insight rysuje ramki Platinum sam; pod każdym innym
+// menedżerem (GNOME, KDE, Openbox...) albo bez menedżera rysujemy je w Ramblerze.
+static Window wm_check_window() {
+  Window root = DefaultRootWindow(fl_display), w = 0;
+  Atom type; int fmt; unsigned long n, after; unsigned char *data = nullptr;
+  if (XGetWindowProperty(fl_display, root, atom("_NET_SUPPORTING_WM_CHECK"), 0, 1, False,
+                         XA_WINDOW, &type, &fmt, &n, &after, &data) == Success && data) {
+    if (n) w = *(Window *)data;
+    XFree(data);
+  }
+  return w;
+}
+
+void Desktop::detect_wm() {
+  std::string name;
+  if (Window chk = wm_check_window()) {
+    wm_present = true;
+    Atom type; int fmt; unsigned long n, after; unsigned char *data = nullptr;
+    if (XGetWindowProperty(fl_display, chk, atom("_NET_WM_NAME"), 0, 64, False, AnyPropertyType,
+                           &type, &fmt, &n, &after, &data) == Success && data) {
+      name.assign((char *)data, n);
+      XFree(data);
+    }
+    // czy WM umie przesuwać okno za nas (_NET_WM_MOVERESIZE)
+    data = nullptr;
+    if (XGetWindowProperty(fl_display, DefaultRootWindow(fl_display), atom("_NET_SUPPORTED"), 0, 1024,
+                           False, XA_ATOM, &type, &fmt, &n, &after, &data) == Success && data) {
+      Atom mr = atom("_NET_WM_MOVERESIZE");
+      for (unsigned long i = 0; i < n; i++) if (((Atom *)data)[i] == mr) wm_moveresize = true;
+      XFree(data);
+    }
+  }
+  csd_mode = name != "insight";
+  if (const char *e = getenv("LISAOS_CSD")) csd_mode = !strcmp(e, "1");   // do testów
+}
+
+void Desktop::redraw_frames() {
+  for (auto *w : wins_) if (w->csd) w->redraw();
+}
+
 // ---------------------------------------------------------------------------
 // NWin - okno folderu lub dialogu
 // ---------------------------------------------------------------------------
 NWin::NWin(Desktop *d, int X, int Y, int W, int H, const char *title, bool dlg)
-    : Fl_Double_Window(X, Y, W, H), desk(d), dialog(dlg) {
+    : Fl_Double_Window(X, Y, W, H), desk(d), dialog(dlg), csd(d->csd_mode) {
   copy_label(title);
+  if (csd) border(0);   // menedżer okien bez dekoracji - ramkę rysujemy sami
   // Klasa "LisaOS-*" mówi Insightowi, że animacje otwierania robimy sami.
   xclass(dlg ? "LisaOS-Dialog" : "LisaOS-Rambler");
   callback([](Fl_Widget *w, void *) {
@@ -326,9 +368,14 @@ NWin::NWin(Desktop *d, int X, int Y, int W, int H, const char *title, bool dlg)
   });
 }
 
-bool NWin::is_active() { return shown() && net_active() == fl_xid(this); }
+bool NWin::is_active() {
+  if (!shown()) return false;
+  if (!desk->wm_present) return desk->manual_active == this;
+  return net_active() == fl_xid(this);
+}
 
 bool NWin::shaded() {
+  if (csd) return csd_shaded_;
   if (!shown()) return false;
   Atom type; int fmt; unsigned long n, after; unsigned char *data = nullptr;
   bool s = false;
@@ -342,17 +389,173 @@ bool NWin::shaded() {
 }
 
 void NWin::set_shaded(bool s) {
+  if (csd) { if (s != csd_shaded_) csd_toggle_shade(); return; }
   if (shown()) net_message(fl_xid(this), atom("_NET_WM_STATE"), s ? 1 : 0,
                            (long)atom("_NET_WM_STATE_SHADED"), 0);
 }
 
 void NWin::activate_window() {
   show();   // FLTK: okno już widoczne zostaje wyciągnięte na wierzch
-  net_message(fl_xid(this), atom("_NET_ACTIVE_WINDOW"), 1, CurrentTime, 0);
+  if (desk->wm_present) {
+    net_message(fl_xid(this), atom("_NET_ACTIVE_WINDOW"), 1, CurrentTime, 0);
+  } else {
+    XSetInputFocus(fl_display, fl_xid(this), RevertToPointerRoot, CurrentTime);
+    desk->manual_active = this;
+    desk->redraw_frames();
+  }
 }
 
 Rect NWin::frame_rect() {
+  if (csd) return {x(), y(), w(), h()};
   return {x() - FRAME, y() - TITLE_H, w() + 2 * FRAME, shaded() ? TITLE_H : h() + TITLE_H + FRAME};
+}
+
+Rect NWin::content_rect() {
+  int H = csd ? (csd_shaded_ ? full_h_ : h()) - extra_h() : h();
+  return {x() + ox(), y() + oy(), w() - extra_w(), H};
+}
+
+// --- własna ramka (CSD) -------------------------------------------------------
+void NWin::draw() {
+  if (!csd) { Fl_Double_Window::draw(); return; }
+  bool act = is_active();
+  draw_frame(0, 0, w(), h(), act, csd_shaded_);
+  draw_titlebar(0, 0, w(), label(), act, pressed_, !dialog);
+  if (csd_shaded_) return;
+  if (!dialog) {
+    fl_color(act ? SHADOW : MID);
+    fl_rect(ox() - 1, oy() - 1, w() - extra_w() + 2, h() - extra_h() + 2);
+  }
+  draw_children();
+}
+
+int NWin::hit_button(int ex, int ey) const {
+  if (dialog) return 0;
+  int by = (TITLE_H - BOX) / 2;
+  if (ey < by || ey >= by + BOX) return 0;
+  int zoom_x = w() - 8 - BOX, shade_x = zoom_x - BOX - 5;
+  if (ex >= 8 && ex < 8 + BOX) return 1;
+  if (ex >= zoom_x && ex < zoom_x + BOX) return 2;
+  if (ex >= shade_x && ex < shade_x + BOX) return 3;
+  return 0;
+}
+
+// Przesunięcie/zmiana rozmiaru przez menedżer okien (EWMH) - płynne i zgodne
+// z zachowaniem pulpitu (przyciąganie do krawędzi itd.).
+void NWin::start_moveresize(int direction) {
+  XUngrabPointer(fl_display, CurrentTime);   // oddaj wskaźnik menedżerowi okien
+  XEvent ev{};
+  ev.xclient.type = ClientMessage;
+  ev.xclient.window = fl_xid(this);
+  ev.xclient.message_type = atom("_NET_WM_MOVERESIZE");
+  ev.xclient.format = 32;
+  // punkt odniesienia: miejsce wciśnięcia przycisku (okno "dogoni" wskaźnik)
+  ev.xclient.data.l[0] = direction == 8 ? press_x_ : Fl::event_x_root();
+  ev.xclient.data.l[1] = direction == 8 ? press_y_ : Fl::event_y_root();
+  ev.xclient.data.l[2] = direction;           // 8 = przesuń, 4 = prawy dolny róg
+  ev.xclient.data.l[3] = Button1;
+  ev.xclient.data.l[4] = 1;
+  XSendEvent(fl_display, DefaultRootWindow(fl_display), False,
+             SubstructureRedirectMask | SubstructureNotifyMask, &ev);
+  XFlush(fl_display);
+}
+
+void NWin::csd_toggle_shade() {
+  Rect full = {x(), y(), w(), csd_shaded_ ? full_h_ : h()}, bar = {x(), y(), w(), TITLE_H};
+  if (csd_shaded_) zoom_rects(bar, full); else zoom_rects(full, bar);
+  if (!csd_shaded_) {
+    full_h_ = h();
+    csd_shaded_ = true;
+    resizable(nullptr);          // treść nie może się zgnieść do zera
+    init_sizes();
+    size(w(), TITLE_H);
+  } else {
+    csd_shaded_ = false;
+    size(w(), full_h_);
+    resizable(pane ? (Fl_Widget *)pane : nullptr);
+    init_sizes();
+  }
+  redraw();
+  if (pane) Fl::add_timeout(0.4, [](void *d) { auto *w = (NWin *)d; w->desk->remember(w, true); }, this);
+}
+
+void NWin::csd_toggle_zoom() {
+  if (csd_shaded_) csd_toggle_shade();
+  Rect before = {x(), y(), w(), h()};
+  if (!csd_zoomed_) {
+    unzoom_[0] = x(); unzoom_[1] = y(); unzoom_[2] = w(); unzoom_[3] = h();
+    Rect d = desk->desk_rect();
+    Rect to = {d.x + 8, d.y + MENUBAR_H + 6, d.w - 110, d.h - MENUBAR_H - 16};
+    zoom_rects(before, to);
+    resize(to.x, to.y, to.w, to.h);
+    csd_zoomed_ = true;
+  } else {
+    zoom_rects(before, {unzoom_[0], unzoom_[1], unzoom_[2], unzoom_[3]});
+    resize(unzoom_[0], unzoom_[1], unzoom_[2], unzoom_[3]);
+    csd_zoomed_ = false;
+  }
+}
+
+int NWin::csd_handle(int e) {
+  int ex = Fl::event_x(), ey = Fl::event_y();
+  switch (e) {
+  case FL_PUSH: {
+    if (!desk->wm_present) { desk->manual_active = this; desk->redraw_frames(); show(); }
+    if (Fl::event_button() != FL_LEFT_MOUSE) return 0;
+    bool in_title = ey < TITLE_H;
+    bool on_edge = !csd_shaded_ && !dialog &&
+                   (ex >= w() - FRAME || ey >= h() - FRAME || ex < FRAME);
+    if (!in_title && !on_edge) return 0;
+    if (in_title) {
+      if (int b = hit_button(ex, ey)) { drag_ = BTN; armed_ = pressed_ = b; redraw(); return 1; }
+      if (Fl::event_clicks() && !dialog) { Fl::event_clicks(0); csd_toggle_shade(); return 1; }
+    }
+    bool grow = on_edge && ex >= FRAME;      // prawa/dolna krawędź; lewa przesuwa
+    if (desk->wm_moveresize && grow) { start_moveresize(4); return 1; }
+    // Przesuwanie zaczynamy dopiero po ruchu myszy - inaczej podwójne kliknięcie
+    // (zwijanie) nigdy by do nas nie dotarło, bo wskaźnik przejąłby menedżer okien.
+    press_x_ = Fl::event_x_root(); press_y_ = Fl::event_y_root();
+    drag_ = grow ? GROW : PENDING;
+    drag_dx_ = grow ? w() - Fl::event_x_root() : Fl::event_x_root() - x();
+    drag_dy_ = grow ? h() - Fl::event_y_root() : Fl::event_y_root() - y();
+    return 1;
+  }
+  case FL_DRAG:
+    if (drag_ == PENDING) {
+      if (abs(Fl::event_x_root() - press_x_) + abs(Fl::event_y_root() - press_y_) < 4) return 1;
+      if (desk->wm_moveresize) { drag_ = NONE; start_moveresize(8); return 1; }
+      drag_ = MOVE;
+    }
+    if (drag_ == MOVE) {
+      position(Fl::event_x_root() - drag_dx_,
+               std::max(desk->desk_rect().y + MENUBAR_H, Fl::event_y_root() - drag_dy_));
+      return 1;
+    }
+    if (drag_ == GROW) {
+      size(std::max(MIN_W + extra_w(), Fl::event_x_root() + drag_dx_),
+           std::max(MIN_H + extra_h(), Fl::event_y_root() + drag_dy_));
+      return 1;
+    }
+    if (drag_ == BTN) {
+      int p = hit_button(ex, ey) == armed_ ? armed_ : 0;
+      if (p != pressed_) { pressed_ = p; redraw(); }
+      return 1;
+    }
+    return 0;
+  case FL_RELEASE:
+    if (drag_ == BTN) {
+      int b = pressed_;
+      drag_ = NONE; pressed_ = armed_ = 0;
+      redraw();
+      if (b == 1) { desk->close(this); return 1; }   // okno usuwane z opóźnieniem
+      if (b == 2) csd_toggle_zoom();
+      if (b == 3) csd_toggle_shade();
+      return 1;
+    }
+    if (drag_ != NONE) { drag_ = NONE; return 1; }
+    return 0;
+  }
+  return 0;
 }
 
 static void remember_later(void *d) {
@@ -363,6 +566,7 @@ static void remember_later(void *d) {
 NWin::~NWin() { Fl::remove_timeout(remember_later, this); }
 
 int NWin::handle(int e) {
+  if (csd && csd_handle(e)) return 1;
   int r = Fl_Double_Window::handle(e);
   // Pasek menu żyje w oknie biurka, a fokus ma okno folderu - przekaż skrót.
   if (!r && e == FL_SHORTCUT && !dialog) r = desk->shortcut();
@@ -410,15 +614,18 @@ void Desktop::active_changed() {
       wins_.erase(it);
       wins_.push_back(w);           // ostatnio aktywne na końcu listy
       if (icon_sel_ >= 0) { icon_sel_ = -1; redraw(); }
+      redraw_frames();
       return;
     }
   }
+  redraw_frames();
 }
 
 void Desktop::remember(NWin *w, bool open) {
   if (!w->pane || !known(w)) return;
   WinState s;
-  s.x = w->x(); s.y = w->y(); s.w = w->w(); s.h = w->h();
+  Rect cr = w->content_rect();   // zapisujemy położenie treści - bez ramki
+  s.x = cr.x; s.y = cr.y; s.w = cr.w; s.h = cr.h;
   s.shaded = w->shaded();
   s.open = open;
   spatial_.set(w->path, s);
@@ -497,11 +704,15 @@ void Desktop::open_folder(const std::string &path, bool animate) {
     zoom_rects(from, to);
   }
 
-  auto *win = new NWin(this, s.x, s.y, s.w, s.h, title_for(path).c_str(), false);
+  // przy własnej ramce okno jest większe o ramkę, a treść leży w środku
+  int ox = csd_mode ? FRAME : 0, oy = csd_mode ? TITLE_H : 0;
+  int ew = csd_mode ? 2 * FRAME : 0, eh = csd_mode ? TITLE_H + FRAME : 0;
+  auto *win = new NWin(this, s.x - ox, s.y - oy, s.w + ew, s.h + eh, title_for(path).c_str(), false);
   win->path = path;
-  win->pane = new FolderPane(0, 0, s.w, s.h, path, root_);
+  win->pane = new FolderPane(ox, oy, s.w, s.h, path, root_);
   win->resizable(win->pane);
-  win->size_range(MIN_W, MIN_H);
+  // przy własnej ramce zwinięte okno ma wysokość samego paska tytułu
+  win->size_range(MIN_W + ew, csd_mode ? TITLE_H : MIN_H);
   win->end();
   win->pane->view()->on_open = [this](const Entry &e) { open_entry(e); };
   win->pane->view()->is_open = [this](const std::string &p) { return find(p) != nullptr; };
@@ -639,24 +850,25 @@ void Desktop::dialog(const std::string &title, const std::string &text,
   int W = std::max(320, tw + 100), H = std::max(130, th + 80);
   int X = (w() - W) / 2, Y = (h() - H) / 3;
 
-  auto *win = new NWin(this, X, Y, W, H, title.c_str(), true);
+  int ox = csd_mode ? FRAME : 0, oy = csd_mode ? TITLE_H : 0;
+  auto *win = new NWin(this, X - ox, Y - oy, W + 2 * ox, H + oy + ox, title.c_str(), true);
   win->color(GRAY);
   // ikona-logo po lewej
   struct Logo : Fl_Widget {
     Logo(int X, int Y) : Fl_Widget(X, Y, 34, 34) {}
     void draw() override { draw_logo(x(), y(), 32); }
   };
-  new Logo(16, 16);
-  auto *msg = new Fl_Box(64, 14, W - 80, th + 8);
+  new Logo(ox + 16, oy + 16);
+  auto *msg = new Fl_Box(ox + 64, oy + 14, W - 80, th + 8);
   msg->copy_label(text.c_str());
   msg->labelfont(FONT_SYSTEM);
   msg->labelsize(SIZE_SYSTEM);
   msg->align(FL_ALIGN_LEFT | FL_ALIGN_TOP | FL_ALIGN_INSIDE | FL_ALIGN_WRAP);
 
-  int bx = W - 16;
+  int bx = ox + W - 16;
   for (int i = (int)buttons.size() - 1; i >= 0; i--) {
     bx -= 84;
-    auto *b = new Fl_Button(bx, H - 36, 76, 22);
+    auto *b = new Fl_Button(bx, oy + H - 36, 76, 22);
     b->copy_label(buttons[i].first.c_str());
     b->box(BUTTON_BOX);
     b->down_box(BUTTON_DOWN);
