@@ -31,7 +31,7 @@ jednego okna biurka. Docelowo:
 
 ## Model uprawnień
 
-- Tryb prosty: Denise nie otworzy niczego poza `$HOME` (sprawdzanie po
+- Tryb prosty: Viewer nie otworzy niczego poza `$HOME` (sprawdzanie po
   `weakly_canonical`, więc dowiązania symboliczne nie wyprowadzą poza Dom).
 - AppImage docelowo uruchamiane przez `bubblewrap`: zapis tylko w `$HOME`,
   system tylko do odczytu, bez dostępu do innych użytkowników.

@@ -77,7 +77,7 @@ public:
 };
 
 // ---------------------------------------------------------------------------
-// Menu "Okna": lista otwartych folderów i operacje na wszystkich oknach.
+// Menu aplikacji "Viewer": lista otwartych folderów i operacje na oknach.
 // Docelowo (lisaos-gary) stanie się przełącznikiem aplikacji.
 // ---------------------------------------------------------------------------
 class WindowsMenu : public Fl_Menu_Button {
@@ -120,7 +120,7 @@ public:
     }
     fl_font(FONT_SYSTEM, SIZE_SYSTEM);
     fl_color(open_ ? FL_WHITE : FL_BLACK);
-    fl_draw("Okna", x() + 28, y() + 14);
+    fl_draw("Viewer", x() + 28, y() + 14);
     // separator po lewej
     fl_color(SHADOW); fl_yxline(x(), y() + 3, y() + h() - 5);
     fl_color(LIGHT);  fl_yxline(x() + 1, y() + 3, y() + h() - 5);
@@ -215,8 +215,8 @@ Desktop::Desktop(int W, int H, const std::string &home, bool root)
     logo->image(img);
   }
 
-  extras_ = new MenuExtras(W - 84 - 150, 0, 150, MENUBAR_H);
-  auto *wm = new WindowsMenu(W - 84, 0, 84, MENUBAR_H);
+  extras_ = new MenuExtras(W - 92 - 150, 0, 150, MENUBAR_H);
+  auto *wm = new WindowsMenu(W - 92, 0, 92, MENUBAR_H);
   wm->selection_color(menu_->selection_color());
   wm->on_open = [this](WindowsMenu *m) { build_windows_menu(m); };
   end();
@@ -512,7 +512,7 @@ void Desktop::about() {
   std::string text = std::string("LisaOS 0.1 „Tempo”\n") +
                      "Środowisko w duchu Mac OS 9 i Amigi\n\n" +
                      "Pamięć wbudowana: " + mem + " GB\n" +
-                     "Menedżer plików: Denise 0.1 · FLTK " + std::to_string(Fl::api_version() / 10000) +
+                     "Menedżer plików: Viewer 0.1 · FLTK " + std::to_string(Fl::api_version() / 10000) +
                      "." + std::to_string(Fl::api_version() / 100 % 100) + "." +
                      std::to_string(Fl::api_version() % 100);
   dialog("O LisaOS", text, {{"OK", nullptr}});
@@ -615,7 +615,7 @@ void Desktop::quit() {
 }
 
 // ---------------------------------------------------------------------------
-// Menu "Okna"
+// Menu aplikacji "Viewer"
 // ---------------------------------------------------------------------------
 static std::string menu_escape(const std::string &s) {
   std::string r;
