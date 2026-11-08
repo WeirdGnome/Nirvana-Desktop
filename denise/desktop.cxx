@@ -6,6 +6,7 @@
 #include <FL/Fl.H>
 #include <FL/Fl_Box.H>
 #include <FL/Fl_Button.H>
+#include <FL/Fl_Secret_Input.H>
 #include <FL/Fl_Menu_Button.H>
 #include <FL/Fl_Multi_Label.H>
 #include <FL/Fl_Image_Surface.H>
@@ -24,6 +25,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <sys/inotify.h>
+#include <fcntl.h>
 
 namespace fs = std::filesystem;
 using namespace plat;
@@ -195,7 +197,8 @@ Desktop::Desktop(int W, int H, const std::string &home, bool root)
     {"Widok/jako ikony", FL_COMMAND + '1', &Desktop::view_icons, FL_MENU_RADIO | FL_MENU_VALUE},
     {"Widok/jako lista", FL_COMMAND + '2', &Desktop::view_list, FL_MENU_RADIO | FL_MENU_DIVIDER},
     {"Widok/Odśwież", FL_COMMAND + 'r', &Desktop::refresh_all, 0},
-    {"Specjalne/Opróżnij kosz…", 0, &Desktop::empty_trash, FL_MENU_DIVIDER},
+    {"Specjalne/Opróżnij kosz…", 0, &Desktop::empty_trash, 0},
+    {"Specjalne/Wysuń", FL_COMMAND + 'e', &Desktop::eject_selected, FL_MENU_DIVIDER},
     {root ? "Specjalne/Zakończ tryb root" : "Specjalne/Tryb root…", 0,
      root ? &Desktop::quit : &Desktop::ask_root, FL_MENU_DIVIDER},
     {"Specjalne/Uśpij", 0, nullptr, FL_MENU_INACTIVE},
@@ -236,6 +239,7 @@ Desktop::Desktop(int W, int H, const std::string &home, bool root)
 
   layout_icons();
   watch_trash();
+  watch_volumes();
 }
 
 // Kosz może się zmienić z zewnątrz (inny program, inne okno) - ikona pełny/pusty.
@@ -270,9 +274,18 @@ bool Desktop::trash_full() const {
 
 void Desktop::layout_icons() {
   icons_.clear();
-  int ix = w() - 90;
-  icons_.push_back({"LisaOS HD", home_, Icon::Home, ix, MENUBAR_H + 14});
-  if (root_) icons_.push_back({"System", "/", Icon::Home, ix, MENUBAR_H + 84});
+  int ix = w() - 90, iy = MENUBAR_H + 14;
+  icons_.push_back({"LisaOS HD", home_, Icon::Home, ix, iy});
+  iy += 70;
+  if (root_) { icons_.push_back({"System", "/", Icon::Home, ix, iy}); iy += 70; }
+  // dyski i płyty pod dyskiem LisaOS HD, jak w Mac OS
+  for (int i = 0; i < (int)vols_.size(); i++) {
+    if (iy > h() - 150) break;
+    DeskIcon d{vols_[i].name, vols_[i].mountpoint, vols_[i].icon, ix, iy};
+    d.vol = i;
+    icons_.push_back(d);
+    iy += 70;
+  }
   icons_.push_back({"Kosz", trash_dir(), trash_full() ? Icon::TrashFull : Icon::Trash, ix, h() - 74});
 }
 
@@ -289,15 +302,27 @@ bool Desktop::allowed(const std::string &path) const {
   std::error_code ec;
   std::string c = fs::weakly_canonical(path, ec).string();
   std::string h = fs::weakly_canonical(home_, ec).string();
-  return c == h || c.rfind(h + "/", 0) == 0;
+  if (c == h || c.rfind(h + "/", 0) == 0) return true;
+  return volume_at_path(c) >= 0;   // zamontowane dyski i płyty też są "nasze"
+}
+
+int Desktop::volume_at_path(const std::string &path) const {
+  for (int i = 0; i < (int)vols_.size(); i++) {
+    const std::string &mp = vols_[i].mountpoint;
+    if (!mp.empty() && (path == mp || path.rfind(mp + "/", 0) == 0)) return i;
+  }
+  return -1;
 }
 
 std::string Desktop::title_for(const std::string &path) const {
   if (path == home_) return "LisaOS HD";
   if (path == "/") return "System";
   if (path == trash_dir()) return "Kosz";
+  for (auto &v : vols_) if (!v.mountpoint.empty() && v.mountpoint == path) return v.name;
   return fs::path(path).filename().string();
 }
+
+Fl_Window *make_drag_ghost(const Entry &e, int n);   // niżej, przy przeciąganiu
 
 // ---------------------------------------------------------------------------
 // EWMH: rozmowa z menedżerem okien (Insight lub dowolny zgodny)
@@ -860,7 +885,9 @@ void Desktop::draw() {
   for (int i = 0; i < (int)icons_.size(); i++) {
     auto &ic = icons_[i];
     bool sel = i == icon_sel_ || i == icon_drop_;
-    draw_icon(ic.icon, ic.x + 24, ic.y, sel);
+    Icon shown = ic.icon;
+    if (vdragging_ && ic.path == trash_dir()) shown = Icon::Eject;   // jak w Mac OS
+    draw_icon(shown, ic.x + 24, ic.y, sel);
     int tw = (int)fl_width(ic.name.c_str());
     int tx = ic.x + 40 - tw / 2, ty = ic.y + 36;
     fl_color(sel ? FL_BLACK : FL_WHITE);
@@ -898,11 +925,49 @@ int Desktop::handle(int e) {
   if (e == FL_PUSH && Fl::event_y() >= MENUBAR_H) {
     int i = icon_at(Fl::event_x(), Fl::event_y());
     icon_sel_ = i;
+    vdrag_icon_ = (i >= 0 && icons_[i].vol >= 0) ? i : -1;   // dysk można przeciągnąć do kosza
+    vpress_x_ = Fl::event_x_root(); vpress_y_ = Fl::event_y_root();
     if (i >= 0 && Fl::event_clicks()) {
       Fl::event_clicks(0);
-      open_folder(icons_[i].path);
+      vdrag_icon_ = -1;
+      if (icons_[i].vol >= 0) open_volume(icons_[i].vol);
+      else open_folder(icons_[i].path);
     }
     redraw();
+    return 1;
+  }
+  if (e == FL_DRAG && vdrag_icon_ >= 0) {
+    int xr = Fl::event_x_root(), yr = Fl::event_y_root();
+    if (!vdragging_ && abs(xr - vpress_x_) + abs(yr - vpress_y_) > 4) {
+      vdragging_ = true;
+      Entry en;
+      en.icon = icons_[vdrag_icon_].icon;
+      vghost_ = make_drag_ghost(en, 1);
+      vghost_->show();
+      redraw();   // kosz zmienia się w symbol wysuwania
+    }
+    if (vdragging_) {
+      vghost_->position(xr + 8, yr + 8);
+      int over = icon_at(Fl::event_x(), Fl::event_y());
+      bool trash = over >= 0 && icons_[over].path == trash_dir();
+      int want = trash ? over : -1;
+      if (want != icon_drop_) { icon_drop_ = want; redraw(); }
+    }
+    return 1;
+  }
+  if (e == FL_RELEASE && vdrag_icon_ >= 0) {
+    int src = vdrag_icon_;
+    vdrag_icon_ = -1;
+    if (vdragging_) {
+      vdragging_ = false;
+      bool to_trash = icon_drop_ >= 0;
+      icon_drop_ = -1;
+      vghost_->hide();
+      Fl::delete_widget(vghost_);
+      vghost_ = nullptr;
+      redraw();
+      if (to_trash) eject_volume(icons_[src].vol);
+    }
     return 1;
   }
   return Fl_Double_Window::handle(e);
@@ -923,6 +988,11 @@ void Desktop::dialog(const std::string &title, const std::string &text,
   fl_font(FONT_SYSTEM, SIZE_SYSTEM);
   int tw = 0, th = 0;
   fl_measure(text.c_str(), tw, th, 0);
+  if (tw > 440) {   // długie komunikaty (np. błędy z systemu) zawijamy
+    tw = 440;
+    th = 0;
+    fl_measure(text.c_str(), tw, th, 0);
+  }
   int W = std::max(320, tw + 100), H = std::max(130, th + 80);
   int X = (w() - W) / 2, Y = (h() - H) / 3;
 
@@ -994,7 +1064,8 @@ void Desktop::open_selected() {
   if (NWin *a = active_folder()) {
     if (const Entry *e = a->pane->view()->selected()) open_entry(*e);
   } else if (icon_sel_ >= 0) {
-    open_folder(icons_[icon_sel_].path);
+    if (icons_[icon_sel_].vol >= 0) open_volume(icons_[icon_sel_].vol);
+    else open_folder(icons_[icon_sel_].path);
   }
 }
 
@@ -1458,6 +1529,8 @@ private:
   int n_;
 };
 
+Fl_Window *make_drag_ghost(const Entry &e, int n) { return new DragGhost(e, n); }
+
 // Czy okno w jest (pośrednio) wewnątrz top? Potrzebne, bo menedżer okien
 // opakowuje nasze okna w ramki.
 static bool is_under(Window top, Window w) {
@@ -1541,7 +1614,24 @@ void Desktop::drag_end(int xr, int yr, bool copy) {
 
   std::string dest;
   if (t.win) dest = t.item >= 0 ? t.win->pane->view()->entry(t.item)->path : t.win->path;
-  else if (t.icon >= 0) dest = icons_[t.icon].path;
+  else if (t.icon >= 0) {
+    dest = icons_[t.icon].path;
+    if (int vi = icons_[t.icon].vol; vi >= 0) {
+      copy = true;   // na inny dysk kopiujemy, jak w Mac OS
+      if (dest.empty()) {
+        if (vols_[vi].encrypted && !vols_[vi].unlocked) {
+          dialog("Dysk zaszyfrowany", "Najpierw otwórz dysk „" + vols_[vi].name + "” i podaj hasło.",
+                 {{"OK", nullptr}});
+          return;
+        }
+        std::string mp, err = vol::mount(vols_[vi], mp);
+        if (!err.empty()) { dialog("Dysk", err, {{"OK", nullptr}}); return; }
+        rescan_volumes();
+        dest = mp;
+      }
+      if (fs::path(dest) == fs::path(trash_dir())) dest.clear();
+    }
+  }
 
   if (dest.empty() || (t.win == src && t.item < 0 && !copy)) {
     // nietrafione upuszczenie: ikona "wraca" na miejsce, jak w Mac OS
@@ -1664,4 +1754,177 @@ void Desktop::drop_uris(const std::string &list, const std::string &dest) {
   }
   // z innego programu: kopiujemy (jak przeciąganie między dyskami w Mac OS)
   transfer(items, dest, true, false);
+}
+
+// ---------------------------------------------------------------------------
+// Dyski, płyty i zaszyfrowane wolumeny
+// ---------------------------------------------------------------------------
+// Zmiany: nowe/usunięte urządzenia (/dev), montowania (/proc/self/mounts)
+// oraz co kilka sekund (włożona płyta nie tworzy nowego urządzenia).
+void Desktop::watch_volumes() {
+  vols_ = vol::scan();
+  layout_icons();
+  int fd = inotify_init1(IN_NONBLOCK | IN_CLOEXEC);
+  if (fd >= 0 && inotify_add_watch(fd, "/dev", IN_CREATE | IN_DELETE) >= 0) {
+    Fl::add_fd(fd, FL_READ, [](int f, void *d) {
+      char buf[4096];
+      while (read(f, buf, sizeof buf) > 0) {}
+      Fl::remove_timeout(rescan_later, d);
+      Fl::add_timeout(0.8, rescan_later, d);   // udev potrzebuje chwili na rozpoznanie dysku
+    }, this);
+  }
+  int mfd = open("/proc/self/mounts", O_RDONLY | O_CLOEXEC);
+  if (mfd >= 0) {
+    Fl::add_fd(mfd, FL_EXCEPT, [](int, void *d) {
+      Fl::remove_timeout(rescan_later, d);
+      Fl::add_timeout(0.3, rescan_later, d);
+    }, this);
+  }
+  Fl::add_timeout(4.0, poll_volumes, this);
+}
+
+void Desktop::poll_volumes(void *d) {
+  ((Desktop *)d)->rescan_volumes();
+  Fl::repeat_timeout(4.0, poll_volumes, d);
+}
+
+void Desktop::rescan_later(void *d) { ((Desktop *)d)->rescan_volumes(); }
+
+void Desktop::rescan_volumes() {
+  auto now = vol::scan();
+  auto sig = [](const std::vector<vol::Volume> &v) {
+    std::string s;
+    for (auto &x : v) s += x.uuid + "|" + x.mountpoint + "|" + x.name + "|" + (x.unlocked ? "1" : "0") + ";";
+    return s;
+  };
+  if (sig(now) == sig(vols_)) return;
+  // dysk zniknął lub został odmontowany: zamknij okna z jego zawartością
+  for (auto &old : vols_) {
+    if (old.mountpoint.empty()) continue;
+    bool still = false;
+    for (auto &n : now) if (n.mountpoint == old.mountpoint) still = true;
+    if (!still) path_moved(old.mountpoint, "");
+  }
+  std::string sel_path = icon_sel_ >= 0 && icon_sel_ < (int)icons_.size() ? icons_[icon_sel_].name : "";
+  vols_ = now;
+  layout_icons();
+  icon_sel_ = -1;
+  for (int i = 0; i < (int)icons_.size(); i++) if (!sel_path.empty() && icons_[i].name == sel_path) icon_sel_ = i;
+  redraw();
+}
+
+void Desktop::open_volume(int vi) {
+  if (vi < 0 || vi >= (int)vols_.size()) return;
+  vol::Volume v = vols_[vi];
+  if (v.encrypted && !v.unlocked) { ask_password(v, ""); return; }
+  std::string mp = v.mountpoint;
+  if (mp.empty()) {
+    cursor(FL_CURSOR_WAIT);
+    Fl::flush();
+    std::string err = vol::mount(v, mp);
+    cursor(FL_CURSOR_DEFAULT);
+    if (!err.empty()) { dialog("Dysk", err, {{"OK", nullptr}}); return; }
+    rescan_volumes();
+  }
+  if (!mp.empty()) open_folder(mp);
+}
+
+// Hasło do dysku LUKS: osobny dialog z ukrytym polem (Fl_Secret_Input).
+void Desktop::ask_password(const vol::Volume &v, const std::string &msg) {
+  int ox = csd_mode ? FRAME : 0, oy = csd_mode ? TITLE_H : 0;
+  int W = 380, H = msg.empty() ? 150 : 170;
+  int X = (w() - W) / 2 + x_root(), Y = (h() - H) / 3 + y_root();
+  auto *win = new NWin(this, X - ox, Y - oy, W + 2 * ox, H + oy + ox, "Dysk zaszyfrowany", true);
+  win->color(GRAY);
+  struct Lock : Fl_Widget {
+    Lock(int X, int Y) : Fl_Widget(X, Y, 34, 34) {}
+    void draw() override { draw_icon(Icon::Encrypted, x(), y(), false); }
+  };
+  new Lock(ox + 16, oy + 16);
+  std::string text = "Dysk „" + v.name + "” jest zaszyfrowany.\nPodaj hasło, aby go otworzyć.";
+  auto *msgbox = new Fl_Box(ox + 64, oy + 12, W - 80, 36);
+  msgbox->copy_label(text.c_str());
+  msgbox->labelfont(FONT_SYSTEM);
+  msgbox->labelsize(SIZE_SYSTEM);
+  msgbox->align(FL_ALIGN_LEFT | FL_ALIGN_TOP | FL_ALIGN_INSIDE | FL_ALIGN_WRAP);
+  int iy = oy + 56;
+  if (!msg.empty()) {   // np. "Nieprawidłowe hasło."
+    auto *err = new Fl_Box(ox + 64, iy, W - 80, 18);
+    err->copy_label(msg.c_str());
+    err->labelfont(FONT_SYSTEM);
+    err->labelsize(SIZE_SMALL);
+    err->labelcolor(ROOT_TINT);
+    err->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
+    iy += 20;
+  }
+  auto *pass = new Fl_Secret_Input(ox + 64, iy, W - 80, 24);
+  pass->box(WELL_BOX);
+  pass->textfont(FONT_SMALL);
+  pass->textsize(SIZE_SYSTEM);
+  std::string uuid = v.uuid;
+  int bx = ox + W - 16 - 84;
+  auto make_button = [&](int X2, const char *label, bool def, int idx) {
+    auto *b = new Fl_Button(X2, oy + H - 36, 76, 22, label);
+    b->box(BUTTON_BOX);
+    b->down_box(BUTTON_DOWN);
+    b->color(GRAY);
+    b->labelfont(def ? FONT_SYSTEM : FONT_SMALL);
+    b->labelsize(SIZE_SYSTEM);
+    b->callback(dialog_cb, (void *)(long)idx);
+    if (def) b->shortcut(FL_Enter);
+  };
+  make_button(bx - 90, "Anuluj", false, 0);
+  make_button(bx, "Otwórz", true, 1);
+  win->actions.push_back(nullptr);
+  win->actions.push_back([this, pass, uuid] {
+    std::string p = pass->value();
+    // wyczyść pole od razu - hasło nie powinno wisieć w widżecie
+    pass->value("");
+    int vi = -1;
+    for (int i = 0; i < (int)vols_.size(); i++) if (vols_[i].uuid == uuid) vi = i;
+    if (vi < 0) { std::fill(p.begin(), p.end(), '\0'); return; }
+    vol::Volume v = vols_[vi];
+    cursor(FL_CURSOR_WAIT);
+    Fl::flush();
+    std::string err = vol::unlock(v, p);
+    std::fill(p.begin(), p.end(), '\0');
+    cursor(FL_CURSOR_DEFAULT);
+    if (!err.empty()) {
+      if (err == "Nieprawidłowe hasło.") ask_password(v, err);   // jeszcze raz
+      else dialog("Dysk zaszyfrowany", err, {{"OK", nullptr}});
+      return;
+    }
+    rescan_volumes();
+    for (int i = 0; i < (int)vols_.size(); i++)
+      if (vols_[i].uuid == uuid) { open_volume(i); break; }
+  });
+  win->end();
+  win->set_modal();
+  wins_.push_back(win);
+  win->show();
+  pass->take_focus();
+}
+
+void Desktop::eject_volume(int vi) {
+  if (vi < 0 || vi >= (int)vols_.size()) return;
+  vol::Volume v = vols_[vi];
+  // najpierw zamknij okna z zawartością dysku
+  if (!v.mountpoint.empty()) path_moved(v.mountpoint, "");
+  cursor(FL_CURSOR_WAIT);
+  Fl::flush();
+  std::string err = vol::eject(v);
+  cursor(FL_CURSOR_DEFAULT);
+  rescan_volumes();
+  if (!err.empty()) dialog("Wysuwanie", err, {{"OK", nullptr}});
+}
+
+void Desktop::eject_selected() {
+  if (icon_sel_ >= 0 && icon_sel_ < (int)icons_.size() && icons_[icon_sel_].vol >= 0) {
+    eject_volume(icons_[icon_sel_].vol);
+    return;
+  }
+  if (NWin *a = active_folder()) {   // aktywne okno z zawartością dysku
+    int vi = volume_at_path(a->path);
+    if (vi >= 0) eject_volume(vi);
+  }
 }

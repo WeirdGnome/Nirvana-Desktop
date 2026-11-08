@@ -42,8 +42,11 @@ add_executable(lisaos-denise
   denise/folder_view.cxx
   denise/spatial.cxx
   denise/appimage.cxx
-  denise/gary.cxx)
-target_link_libraries(lisaos-denise PRIVATE lisaos-platinum fltk::images)
+  denise/gary.cxx
+  denise/volumes.cxx)
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(DBUS REQUIRED IMPORTED_TARGET dbus-1)
+target_link_libraries(lisaos-denise PRIVATE lisaos-platinum fltk::images PkgConfig::DBUS)
 
 # --- insight: menedżer okien X11 ----------------------------------------------
 add_executable(lisaos-insight insight/main.cxx)

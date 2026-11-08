@@ -321,11 +321,19 @@ void launch(const std::string &path, const std::string &home) {
       "--bind-try", "/tmp/.X11-unix", "/tmp/.X11-unix",
       // inni użytkownicy i nośniki są niewidoczne
       "--tmpfs", "/home", "--tmpfs", "/root", "--tmpfs", "/mnt", "--tmpfs", "/media",
-      // LisaOS HD - jedyne miejsce z prawem zapisu
+      // LisaOS HD - jedyne miejsce z prawem zapisu (plus nośniki użytkownika niżej)
       "--bind", home, home,
       // sama aplikacja nie może się modyfikować
       "--ro-bind", dir, dir,
   };
+  // Zamontowane pendrive'y, płyty i dyski użytkownika (UDisks2 montuje je w
+  // /media/UŻYTKOWNIK albo /run/media/UŻYTKOWNIK) - żeby otworzyć z nich plik.
+  if (const char *user = getenv("USER")) {
+    for (std::string base : {"/media/", "/run/media/"}) {
+      std::string p = base + user;
+      a.insert(a.end(), {"--bind-try", p, p});
+    }
+  }
   if (const char *xa = getenv("XAUTHORITY")) {
     a.insert(a.end(), {"--ro-bind-try", xa, xa});
   }

@@ -18,6 +18,7 @@
 #include "anim.h"
 #include "folder_view.h"
 #include "gary.h"
+#include "volumes.h"
 #include "spatial.h"
 
 class Desktop;
@@ -104,6 +105,7 @@ public:
   void quit();
   void build_windows_menu(Fl_Menu_Button *m);
   void rename_selected();
+  void eject_selected();
   void duplicate();
   void copy_selected();
   void paste();
@@ -120,7 +122,22 @@ private:
     std::string name, path;
     plat::Icon icon;
     int x, y;
+    int vol = -1;   // indeks w vols_ dla ikon dysków
   };
+  // --- dyski i płyty ---
+  std::vector<vol::Volume> vols_;
+  void watch_volumes();
+  void rescan_volumes();
+  static void rescan_later(void *d);
+  static void poll_volumes(void *d);
+  void open_volume(int vi);
+  void eject_volume(int vi);
+  void ask_password(const vol::Volume &v, const std::string &msg);
+  int volume_at_path(const std::string &path) const;   // wolumen zawierający ścieżkę
+  // przeciąganie ikony dysku po biurku (do kosza = wysuń)
+  int vdrag_icon_ = -1, vpress_x_ = 0, vpress_y_ = 0;
+  bool vdragging_ = false;
+  Fl_Window *vghost_ = nullptr;
 
   NWin *find(const std::string &path);
   bool known(NWin *w) const;

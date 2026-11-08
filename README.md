@@ -28,7 +28,7 @@ Zależności (Devuan/Debian):
 
     sudo apt install build-essential cmake git libx11-dev libxft-dev \
         libxinerama-dev libxcursor-dev libxfixes-dev libxrender-dev \
-        squashfs-tools bubblewrap
+        squashfs-tools bubblewrap libdbus-1-dev udisks2 policykit-1
 
 Jeśli FLTK 1.4 nie jest zainstalowany, CMake sam pobierze i zbuduje wersję 1.4.4:
 
@@ -115,6 +115,29 @@ Sposób rysowania dobiera się sam:
 - `LISAOS_ANIM_MODE=xor` lub `ksztalt`: wymusza sposób rysowania
 - Jeśli FLTK zbudowano z backendem Wayland, animacje działają tylko w trybie X11:
   uruchom z `FLTK_BACKEND=x11`.
+
+## Dyski, płyty i zaszyfrowane wolumeny
+
+Podłączony pendrive, dysk USB, karta pamięci, płyta CD/DVD albo partycja z danymi
+pojawia się na biurku pod LisaOS HD, z ikoną pasującą do rodzaju nośnika:
+
+- **podwójne kliknięcie** montuje dysk i otwiera jego okno,
+- **dysk zaszyfrowany (LUKS)** ma ikonę z kłódką; po podwójnym kliknięciu pyta o hasło,
+  odblokowuje i montuje (złe hasło: komunikat i ponowne pytanie),
+- **przeciągnięcie ikony dysku do kosza wysuwa go** (kosz zmienia się w symbol
+  wysuwania, jak w Mac OS): odmontowanie, zamknięcie LUKS, wysunięcie płyty albo
+  wyłączenie dysku USB; to samo robi **Specjalne > Wysuń** (`Ctrl+E`),
+- pliki upuszczone na ikonę dysku są **kopiowane** na niego (dysk montuje się sam),
+- okna z zawartością dysku zamykają się, gdy dysk zostanie wysunięty lub wyjęty,
+- aplikacje AppImage w piaskownicy widzą zamontowane nośniki użytkownika.
+
+Pokazywane są nośniki wymienne oraz partycje wewnętrzne z systemem plików lub LUKS,
+o ile nie są częścią systemu (nie są zamontowane jako `/`, `/boot`, swap itd.).
+
+Pod spodem: wykrywanie przez `lsblk` (udev), a montowanie, odblokowywanie i wysuwanie
+przez **UDisks2** po D-Bus (ta sama usługa, której używają GNOME i KDE). Hasło LUKS jest
+przekazywane bezpośrednio w wywołaniu D-Bus i nie trafia do argumentów żadnego procesu.
+Na Devuanie potrzebne są `udisks2` i polkit z elogind; na Rocky: `udisks2`, `dbus-devel`.
 
 ## Przełącznik aplikacji (gary)
 

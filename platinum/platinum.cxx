@@ -268,6 +268,56 @@ static void trash(int x, int y, bool sel, bool full) {
   }
 }
 
+// Dysk wewnętrzny: szara obudowa z diodą (jak LisaOS HD, bez domku)
+static void hard_disk(int x, int y, bool sel) {
+  col(0xD8D8D8, sel); fl_rectf(x + 2, y + 10, 28, 15);
+  col(0xFFFFFF, sel); fl_xyline(x + 3, y + 11, x + 28);
+  col(0xA0A0A0, sel); fl_rectf(x + 3, y + 19, 26, 5);
+  col(0x22CC44, sel); fl_rectf(x + 24, y + 20, 3, 2);
+  fl_color(DARK); fl_rect(x + 2, y + 10, 28, 15);
+}
+
+// Pendrive: korpus z wtykiem USB
+static void removable(int x, int y, bool sel) {
+  col(0xC0C0C0, sel); fl_rectf(x + 20, y + 12, 8, 9);              // wtyk
+  col(0x707070, sel); fl_rectf(x + 23, y + 14, 2, 2); fl_rectf(x + 23, y + 18, 2, 2);
+  col(0x5B3FA0, sel); fl_rectf(x + 3, y + 9, 18, 15);              // korpus
+  col(0x8C74C8, sel); fl_xyline(x + 4, y + 10, x + 19);
+  col(0xF0C040, sel); fl_rectf(x + 6, y + 14, 6, 5);               // naklejka
+  fl_color(DARK);
+  fl_rect(x + 3, y + 9, 18, 15);
+  fl_rect(x + 20, y + 12, 8, 9);
+}
+
+// Płyta CD/DVD: srebrny krążek z otworem i tęczowym połyskiem
+static void optical(int x, int y, bool sel) {
+  col(0xE4E4EC, sel); fl_pie(x + 3, y + 3, 26, 26, 0, 360);
+  col(0xB8C8F0, sel); fl_pie(x + 3, y + 3, 26, 26, 20, 70);
+  col(0xF0D0E8, sel); fl_pie(x + 3, y + 3, 26, 26, 200, 250);
+  col(0xFFFFFF, sel); fl_pie(x + 11, y + 11, 10, 10, 0, 360);
+  fl_color(DARK);
+  fl_arc(x + 3, y + 3, 26, 26, 0, 360);
+  fl_arc(x + 13, y + 13, 6, 6, 0, 360);
+}
+
+// Dysk zaszyfrowany: dysk z kłódką
+static void encrypted(int x, int y, bool sel) {
+  hard_disk(x, y + 3, sel);
+  col(0xF0C040, sel); fl_rectf(x + 18, y + 13, 11, 9);             // korpus kłódki
+  fl_color(DARK); fl_rect(x + 18, y + 13, 11, 9);
+  fl_arc(x + 19, y + 6, 9, 12, 0, 180);                            // pałąk
+  fl_line(x + 19, y + 12, x + 19, y + 13);
+  fl_line(x + 27, y + 12, x + 27, y + 13);
+  fl_rectf(x + 23, y + 16, 1, 3);                                  // dziurka
+}
+
+// Symbol wysuwania (kosz podczas przeciągania dysku, jak w Mac OS)
+static void eject_icon(int x, int y, bool sel) {
+  col(0x404040, sel);
+  fl_polygon(x + 16, y + 5, x + 28, y + 19, x + 4, y + 19);
+  fl_rectf(x + 4, y + 23, 25, 5);
+}
+
 void draw_icon(Icon icon, int x, int y, bool sel) {
   switch (icon) {
   case Icon::Folder:      folder(x, y, sel, false); break;
@@ -302,6 +352,11 @@ void draw_icon(Icon icon, int x, int y, bool sel) {
   case Icon::Home:        home_disk(x, y, sel); break;
   case Icon::Trash:       trash(x, y, sel, false); break;
   case Icon::TrashFull:   trash(x, y, sel, true); break;
+  case Icon::HardDisk:    hard_disk(x, y, sel); break;
+  case Icon::Removable:   removable(x, y, sel); break;
+  case Icon::Optical:     optical(x, y, sel); break;
+  case Icon::Encrypted:   encrypted(x, y, sel); break;
+  case Icon::Eject:       eject_icon(x, y, sel); break;
   }
 }
 

@@ -43,7 +43,8 @@ void init(bool root = false);
 bool root_mode();
 
 // ---- Ikony (32x32, rysowane wektorowo) ------------------------------------
-enum class Icon { Folder, OpenFolder, Document, Application, Home, Trash, TrashFull, Image, Music };
+enum class Icon { Folder, OpenFolder, Document, Application, Home, Trash, TrashFull, Image, Music,
+                  HardDisk, Removable, Optical, Encrypted, Eject };
 void draw_icon(Icon icon, int x, int y, bool selected);
 void draw_logo(int x, int y, int size);   // logo LisaOS: mały chip w stylu Amigi
 
