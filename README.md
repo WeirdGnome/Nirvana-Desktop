@@ -88,13 +88,20 @@ Czcionkę systemową w stylu Chicago można podać przez `LISAOS_SYSTEM_FONT`
 Jak w klasycznym Mac OS: przy otwieraniu, zamykaniu, zwijaniu i powiększaniu
 okien po ekranie przelatują kontury prostokątów („zoom rects”). Foldery w Ramblerze
 wylatują z ikony, z której je otwarto, i wracają do niej przy zamknięciu.
-Kontury są rysowane metodą XOR prosto na ekranie, bez kompozytora.
+Sposób rysowania dobiera się sam:
+- **XOR na ekranie**: w sesji LisaOS na Xorg/XLibre bez kompozytora. Najlżejszy.
+- **Okno wycięte w kształt konturów** (rozszerzenie X SHAPE): pod XWaylandem
+  (np. GNOME na Waylandzie w Rocky/RHEL 10) i na pulpitach z kompozytorem, gdzie
+  rysunek na głównym oknie X byłby niewidoczny albo zamalowany.
 
 ![Animacje](docs/img/animacje.gif)
 
 - `LISAOS_ANIMATIONS=0`: wyłącza animacje
 - `LISAOS_ANIM_MS=200`: wolniejsze klatki (do testów; domyślnie 12 ms)
 - `LISAOS_ANIM_NOGRAB=1`: bez blokady serwera X na czas animacji (do zrzutów ekranu)
+- `LISAOS_ANIM_MODE=xor` lub `ksztalt`: wymusza sposób rysowania
+- Jeśli FLTK zbudowano z backendem Wayland, animacje działają tylko w trybie X11:
+  uruchom z `FLTK_BACKEND=x11`.
 
 ## Obsługa prototypu
 

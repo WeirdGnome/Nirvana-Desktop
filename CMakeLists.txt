@@ -33,7 +33,7 @@ add_library(lisaos-platinum STATIC
   platinum/anim.cxx)
 find_package(X11 REQUIRED)
 target_include_directories(lisaos-platinum PUBLIC platinum)
-target_link_libraries(lisaos-platinum PUBLIC fltk::fltk X11::X11)
+target_link_libraries(lisaos-platinum PUBLIC fltk::fltk X11::X11 X11::Xext)
 
 # --- denise: menedżer plików ---------------------------------------------------------
 add_executable(lisaos-denise
