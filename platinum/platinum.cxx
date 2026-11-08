@@ -469,11 +469,11 @@ static void title_button(int x, int y, int kind, bool pressed) {
   }
 }
 
-void draw_titlebar(int x, int y, int w, const char *title, bool active, int pressed, bool boxes) {
+void draw_titlebar(int x, int y, int w, const char *title, bool active, int pressed, int boxes) {
   int by = y + (TITLE_H - BOX) / 2;
   int close_x = x + 8;
   int zoom_x = x + w - 8 - BOX;
-  int shade_x = zoom_x - BOX - 5;
+  int shade_x = boxes == 2 ? zoom_x : zoom_x - BOX - 5;   // bez "zoom": zwijanie w rogu
 
   fl_font(FONT_SYSTEM, SIZE_SYSTEM);
   std::string t = ellipsize(title ? title : "", w - 2 * (BOX * 2 + 30));
@@ -500,7 +500,7 @@ void draw_titlebar(int x, int y, int w, const char *title, bool active, int pres
     if (boxes && active) {
       title_button(close_x, by, 1, pressed == 1);
       title_button(shade_x, by, 3, pressed == 3);
-      title_button(zoom_x, by, 2, pressed == 2);
+      if (boxes != 2) title_button(zoom_x, by, 2, pressed == 2);
     }
   } else if (active) {
     // Prążki: ciemna linia nad jasną, przerwane przy tytule i przyciskach.
@@ -518,10 +518,14 @@ void draw_titlebar(int x, int y, int w, const char *title, bool active, int pres
       stripe(close_x + BOX + 5, tx - 8);
       stripe(tx + tw + 8, shade_x - 6);
       stripe(x + 3, close_x - 4);
-      stripe(zoom_x + BOX + 4, x + w - 4);
       title_button(close_x, by, 1, pressed == 1);
       title_button(shade_x, by, 3, pressed == 3);
-      title_button(zoom_x, by, 2, pressed == 2);
+      if (boxes != 2) {
+        stripe(zoom_x + BOX + 4, x + w - 4);
+        title_button(zoom_x, by, 2, pressed == 2);
+      } else {
+        stripe(shade_x + BOX + 4, x + w - 4);
+      }
     }
   }
   fl_color(active ? TITLE_TEXT : TITLE_I_TEXT);

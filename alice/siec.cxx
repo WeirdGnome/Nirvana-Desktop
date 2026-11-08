@@ -5,6 +5,7 @@
 // w zasięgu z łączeniem, ukrytymi sieciami i zapominaniem. Wszystko przez
 // NetworkManagera (lisaos-net); zmiany z zewnątrz widać na bieżąco.
 #include "net.h"
+#include "framewin.h"
 #include "platinum.h"
 
 #include <FL/Fl.H>
@@ -32,7 +33,7 @@ namespace {
 net::State g_st;
 std::string g_iface;                 // wybrane urządzenie
 std::string g_conn;                  // jego aktywny profil
-Fl_Double_Window *g_win;
+FrameWindow *g_win;
 Fl_Hold_Browser *g_devs, *g_nets;
 Fl_Box *g_title, *g_status, *g_msg, *g_hint;
 Fl_Button *g_connect, *g_ipv4;
@@ -130,14 +131,14 @@ Fl_Button *button(int X, int Y, int W, const char *l) {
 
 // --- okienka modalne -------------------------------------------------------------
 // Pętla modalna: zwraca true po "Połącz"/"Zapisz", false po "Anuluj".
-bool run_modal(Fl_Double_Window *w, Fl_Button *ok, Fl_Button *cancel) {
+bool run_modal(FrameWindow *w, Fl_Button *ok, Fl_Button *cancel) {
   int result = -1;
   ok->callback([](Fl_Widget *, void *r) { *(int *)r = 1; }, &result);
   cancel->callback([](Fl_Widget *, void *r) { *(int *)r = 0; }, &result);
   w->callback([](Fl_Widget *, void *r) { *(int *)r = 0; }, &result);
   ok->shortcut(FL_Enter);
   w->set_modal();
-  w->position(g_win->x() + (g_win->w() - w->w()) / 2, g_win->y() + 60);
+  w->position(g_win->x() + (g_win->w() - w->w()) / 2, g_win->y() + 60);   // całe okna, z ramkami
   w->show();
   while (result < 0 && w->shown()) Fl::wait();
   w->hide();
@@ -149,7 +150,7 @@ struct WifiAnswer { std::string ssid, security, password; };
 // Hasło do sieci; hidden=true dodaje pola nazwy i rodzaju zabezpieczeń.
 bool ask_wifi(bool hidden, const std::string &ssid, const std::string &err, WifiAnswer &out) {
   int W = 420, H = hidden ? 250 : 180;
-  auto *w = new Fl_Double_Window(W, H, hidden ? "Inna sieć Wi-Fi" : "Sieć Wi-Fi");
+  auto *w = new FrameWindow(W, H, hidden ? "Inna sieć Wi-Fi" : "Sieć Wi-Fi", true);
   struct Pic : Fl_Widget {
     Pic(int X, int Y) : Fl_Widget(X, Y, 34, 34) {}
     void draw() override { draw_icon(Icon::Wifi, x(), y(), false); }
@@ -203,6 +204,7 @@ bool ask_wifi(bool hidden, const std::string &ssid, const std::string &err, Wifi
   auto *ok = button(W - 102, H - 38, 86, "Połącz");
   ok->labelfont(FONT_SYSTEM);
   w->end();
+  w->finish();
   (name ? (Fl_Widget *)name : pass)->take_focus();
   bool r = run_modal(w, ok, cancel);
   if (r) {
@@ -268,7 +270,7 @@ void ipv4_dialog() {
   if (g_conn.empty()) return;
   net::Details d = net::details(g_iface);
   int W = 400, H = 220;
-  auto *w = new Fl_Double_Window(W, H, "Ustawienia IPv4");
+  auto *w = new FrameWindow(W, H, "Ustawienia IPv4", true);
   std::string head = "Połączenie „" + g_conn + "”";
   auto *t = new Fl_Box(16, 10, W - 32, 22);
   t->copy_label(head.c_str());
@@ -299,6 +301,7 @@ void ipv4_dialog() {
   auto *ok = button(W - 102, H - 38, 86, "Zapisz");
   ok->labelfont(FONT_SYSTEM);
   w->end();
+  w->finish();
   if (run_modal(w, ok, cancel)) {
     bool manual = how->value() == 1;
     std::string dn = dns->value();
@@ -418,7 +421,7 @@ void refresh() {
 
 int panel_siec(bool hidden_dialog) {
   const int W = 640, H = 470;
-  g_win = new Fl_Double_Window(W, H, "Sieć");
+  g_win = new FrameWindow(W, H, "Sieć");
   g_win->xclass("lisaos-siec");
 
   auto *t1 = new Fl_Box(15, 8, 200, 20, "Połączenia");
@@ -522,10 +525,11 @@ int panel_siec(bool hidden_dialog) {
   close->labelfont(FONT_SYSTEM);
   close->callback([](Fl_Widget *, void *) { g_win->hide(); });
   g_win->end();
+  g_win->finish();
 
   int sx, sy, sw, sh;
   Fl::screen_work_area(sx, sy, sw, sh);
-  g_win->position(sx + (sw - W) / 2, sy + std::max(MENUBAR_H + 10, (sh - H) / 3));
+  g_win->place(sx + (sw - W) / 2, sy + std::max(MENUBAR_H + 10 + g_win->oy(), (sh - H) / 3));
 
   refresh();
   if (g_st.available) {

@@ -13,6 +13,7 @@
 #include <FL/Fl_Choice.H>
 #include <FL/Fl_Color_Chooser.H>
 #include <FL/Fl_Double_Window.H>
+#include "framewin.h"
 #include <FL/Fl_Hold_Browser.H>
 #include <FL/fl_draw.H>
 
@@ -26,7 +27,7 @@ using namespace plat;
 static std::vector<Scheme> g_schemes;
 static Appearance g_cur;            // ustawienia widoczne w panelu
 static int g_scheme = 0;            // indeks w g_schemes
-static Fl_Double_Window *g_win;
+static FrameWindow *g_win;
 static Fl_Hold_Browser *g_list;
 static Fl_Box *g_source;
 static Fl_Choice *g_style, *g_pattern;
@@ -185,7 +186,7 @@ int panel_wyglad() {
   g_schemes = list_schemes();
 
   const int W = 600, H = 410;
-  g_win = new Fl_Double_Window(W, H, "Wygląd");
+  g_win = new FrameWindow(W, H, "Wygląd");
   g_win->xclass("lisaos-alice");
 
   auto *t1 = new Fl_Box(15, 8, 220, 20, "Schemat kolorów");
@@ -257,13 +258,14 @@ int panel_wyglad() {
   desk->labelsize(SIZE_SMALL + 1);
   g_anim->labelsize(SIZE_SMALL + 1);
   g_win->end();
+  g_win->finish();   // pod GNOME/KDE: własna ramka Platinum
 
   fill_list();
   preview();
   // Na środku obszaru roboczego (pod paskiem menu LisaOS albo GNOME).
   int sx, sy, sw, sh;
   Fl::screen_work_area(sx, sy, sw, sh);
-  g_win->position(sx + (sw - W) / 2, sy + std::max(MENUBAR_H + 10, (sh - H) / 3));
+  g_win->place(sx + (sw - W) / 2, sy + std::max(MENUBAR_H + 10 + g_win->oy(), (sh - H) / 3));
   g_win->show();
   return Fl::run();
 }

@@ -31,7 +31,8 @@ add_library(lisaos-platinum STATIC
   platinum/platinum.cxx
   platinum/pwindow.cxx
   platinum/anim.cxx
-  platinum/theme.cxx)
+  platinum/theme.cxx
+  platinum/framewin.cxx)
 find_package(X11 REQUIRED)
 target_include_directories(lisaos-platinum PUBLIC platinum)
 target_link_libraries(lisaos-platinum PUBLIC fltk::fltk X11::X11 X11::Xext)

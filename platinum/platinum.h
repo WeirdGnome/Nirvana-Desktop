@@ -127,7 +127,7 @@ constexpr int MENUBAR_H = 20; // wysokość globalnego paska menu
 constexpr int SCROLL_W  = 15; // szerokość pasków przewijania
 void draw_titlebar(int x, int y, int w, const char *title, bool active,
                    int pressed_box = 0 /* 0 brak, 1 zamknij, 2 zoom, 3 zwiń */,
-                   bool boxes = true /* false: okno dialogowe bez przycisków */);
+                   int boxes = 1 /* 0: dialog bez przycisków, 1: wszystkie, 2: bez "zoom" */);
 void draw_frame(int x, int y, int w, int h, bool active, bool shaded);
 void draw_grow_box(int x, int y);
 
