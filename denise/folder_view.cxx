@@ -114,14 +114,10 @@ static IconPair file_icon(const std::string &file, int size) {
 
 // Ikony wektorowe 16x16 do widoku listy: rysujemy 32x32 do obrazu i zmniejszamy.
 static Fl_Image *small_icon(Icon icon, bool sel) {
-  static std::map<int, Fl_Image *> cache;
-  static Fl_Color bg = 0;   // ikony rysujemy na tle treści - po zmianie schematu od nowa
-  if (Fl::get_color(CONTENT) != bg) {
-    for (auto &kv : cache) delete kv.second;
-    cache.clear();
-    bg = Fl::get_color(CONTENT);
-  }
-  int key = (int)icon * 2 + sel;
+  // Ikony rysujemy na tle treści, więc klucz zawiera kolor tła. Starych nie
+  // usuwamy: menu aplikacji (gary) może jeszcze trzymać do nich wskaźniki.
+  static std::map<std::pair<Fl_Color, int>, Fl_Image *> cache;
+  std::pair<Fl_Color, int> key{Fl::get_color(CONTENT), (int)icon * 2 + sel};
   auto it = cache.find(key);
   if (it != cache.end()) return it->second;
   Fl_Image_Surface surf(32, 32);
@@ -136,6 +132,11 @@ static Fl_Image *small_icon(Icon icon, bool sel) {
   delete big;
   cache[key] = img;
   return img;
+}
+
+void warm_small_icons() {
+  for (int i = 0; i <= (int)Icon::Wifi; i++)
+    for (bool sel : {false, true}) small_icon((Icon)i, sel);
 }
 
 Fl_Image *entry_icon_image(const Entry &e, int size, bool sel) {

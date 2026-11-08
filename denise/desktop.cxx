@@ -230,7 +230,14 @@ Desktop::Desktop(int W, int H, const std::string &home, bool root)
     : Fl_Double_Window(0, 0, W, H, "LisaOS"),
       home_(home), root_path_(root ? "/" : home), root_(root), spatial_(home) {
   fl_open_display();
+  // Okna innych programów potrafią zniknąć, zanim odczytamy ich właściwości
+  // (lista aplikacji gary) - BadWindow to wtedy nie błąd, tylko wyścig.
+  static XErrorHandler fltk_handler = XSetErrorHandler([](Display *d, XErrorEvent *e) -> int {
+    if (e->error_code == BadWindow || e->error_code == BadDrawable) return 0;
+    return fltk_handler ? fltk_handler(d, e) : 0;
+  });
   box(FL_NO_BOX);
+  warm_small_icons();   // poza draw() - patrz appearance_changed()
   pattern_.reset(make_pattern());
   detect_wm();
 
@@ -1246,7 +1253,11 @@ void Desktop::appearance_changed() {
     logo->image(logo_img_);
     delete prev;
   }
-  Fl::redraw();
+  // Małe ikony 16x16 (rysowane na tle treści) przygotowujemy od razu. Gdyby
+  // powstały dopiero w draw() paska menu, Fl_Image_Surface w środku Fl::flush()
+  // przerywa odświeżanie pozostałych okien - zostawały w starych kolorach.
+  warm_small_icons();
+  for (Fl_Window *w = Fl::first_window(); w; w = Fl::next_window(w)) w->redraw();
 }
 
 static std::string alice_exe() {
@@ -1403,22 +1414,31 @@ static std::string menu_escape(const std::string &s) {
 // ---------------------------------------------------------------------------
 // gary: menu aplikacji
 // ---------------------------------------------------------------------------
-static bool is_ours(Window w) { return fl_find(w) != nullptr; }   // okna Ramblera i biurko
+// Okna Ramblera i biurko. Nie fl_find(): ono przestawia wewnętrzną listę okien
+// FLTK, a wołamy to z draw() paska menu - w trakcie Fl::flush(), które po tej
+// liście chodzi. Część okien nie była wtedy przerysowywana (np. po zmianie schematu).
+static bool is_ours(Window w) {
+  for (Fl_Window *x = Fl::first_window(); x; x = Fl::next_window(x))
+    if (fl_xid(x) == w) return true;
+  return false;
+}
 
 static Fl_Image *rambler_icon(bool dim) {
   Entry e;
   e.icon = Icon::Folder;
   e.dir = true;
-  static Fl_Image *dimmed = nullptr;
+  static std::map<Fl_Image *, Fl_Image *> dimmed;   // osobno dla każdego schematu kolorów
   Fl_Image *img = entry_icon_image(e, 16, false);
   if (!dim) return img;
-  if (!dimmed) { dimmed = img->copy(); dimmed->inactive(); }
-  return dimmed;
+  Fl_Image *&d = dimmed[img];
+  if (!d) { d = img->copy(); d->inactive(); }
+  return d;
 }
 
 static Fl_Image *app_icon(const gary::App &a, bool dim) {
   static std::map<std::string, std::pair<Fl_Image *, Fl_Image *>> cache;
-  std::string key = a.cls + "|" + a.icon_file;
+  // kolor tła w kluczu: domyślne ikony zależą od schematu kolorów
+  std::string key = a.cls + "|" + a.icon_file + "|" + std::to_string(Fl::get_color(CONTENT));
   auto it = cache.find(key);
   if (it == cache.end()) {
     Fl_Image *img = nullptr;

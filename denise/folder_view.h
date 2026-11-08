@@ -31,6 +31,9 @@ std::string kind_name(const Entry &e);   // "folder", "aplikacja", "dokument"...
 // Ikona elementu w rozmiarze 32 (widok ikon) lub 16 (lista) - także do przeciągania.
 void draw_entry_icon(const Entry &e, int x, int y, bool sel, int size, bool open = false);
 // Ta sama ikona jako obraz (np. do pozycji menu); obrazy są w pamięci podręcznej.
+// Wszystkie małe ikony wektorowe dla bieżącego schematu - wołać poza draw()
+// (rysowanie do Fl_Image_Surface w trakcie Fl::flush() psuje odświeżanie okien).
+void warm_small_icons();
 Fl_Image *entry_icon_image(const Entry &e, int size, bool sel);
 
 // Układ kolumn widoku listy - kolumny, które się nie mieszczą, są chowane
