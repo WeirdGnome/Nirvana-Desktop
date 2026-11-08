@@ -16,6 +16,7 @@
 #include <fstream>
 #include <functional>
 #include <regex>
+#include <set>
 #include <vector>
 
 namespace fs = std::filesystem;
@@ -185,8 +186,11 @@ std::string icon(const std::string &path, const std::string &home) {
   }
   uint64_t off;
   static bool tool = have("unsquashfs");
-  // Bez squashfs (np. DwarFS) ikonę pokażemy po instalacji - bez znacznika "brak".
-  if (!tool || !squashfs_offset(path, off)) return "";
+  // Bez squashfs (np. DwarFS) ikonę pokażemy po instalacji. Pamiętamy to w tej sesji,
+  // żeby przy każdym odświeżeniu folderu nie przeszukiwać od nowa dziesiątek MB pliku.
+  static std::set<std::string> no_payload;
+  if (no_payload.count(k)) return "";
+  if (!tool || !squashfs_offset(path, off)) { no_payload.insert(k); return ""; }
 
   fs::path tmp = cache / ("tmp-" + k);
   fs::remove_all(tmp, ec);

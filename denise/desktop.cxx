@@ -475,6 +475,14 @@ Rect NWin::content_rect() {
 // --- własna ramka (CSD) -------------------------------------------------------
 void NWin::draw() {
   if (!csd) { Fl_Double_Window::draw(); return; }
+  // Zmiana tylko w środku okna (np. przewijanie, przełączenie widoku): odświeżamy
+  // wyłącznie zmienione elementy. Ramka zostaje w buforze okna - gdybyśmy ją
+  // malowali za każdym razem, jej szare tło zamazałoby treść, a przewijany obszar
+  // dorysowuje tylko pasek, który wjechał na ekran.
+  if (!(damage() & ~FL_DAMAGE_CHILD)) {
+    for (int i = 0; i < children(); i++) update_child(*child(i));
+    return;
+  }
   bool act = is_active();
   draw_frame(0, 0, w(), h(), act, csd_shaded_);
   draw_titlebar(0, 0, w(), label(), act, pressed_, !dialog);
@@ -483,7 +491,7 @@ void NWin::draw() {
     fl_color(act ? SHADOW : MID);
     fl_rect(ox() - 1, oy() - 1, w() - extra_w() + 2, h() - extra_h() + 2);
   }
-  draw_children();
+  for (int i = 0; i < children(); i++) draw_child(*child(i));   // pełne odrysowanie treści
 }
 
 int NWin::hit_button(int ex, int ey) const {
