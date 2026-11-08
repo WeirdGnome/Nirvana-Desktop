@@ -165,6 +165,10 @@ public:
     Fl_Color off = fl_color_average(on, open_ ? selection_color() : GRAY, 0.3f);
     int ix = x() + (w() - 16) / 2, iy = y() + 3;
     net::Summary s = summary ? summary() : net::Summary();
+    if (!s.vpn.empty()) {   // aktywny VPN: kłódka obok ikony
+      ix -= 4;
+      draw_lock(ix + 17, iy + 4, on);
+    }
     if (s.kind == net::Summary::Wired) draw_wired(ix, iy, on);
     else if (s.kind == net::Summary::Wifi) draw_wifi(ix, iy, 1 + std::min(3, net::bars(s.signal)), on, off);
     else if (s.kind == net::Summary::Other) draw_wired(ix, iy, on);
@@ -197,6 +201,7 @@ static void net_label_measure(const Fl_Label *o, int &W, int &H) {
 }
 
 static std::vector<net::Network> g_menu_nets;
+static std::vector<net::Vpn> g_menu_vpns;
 static std::vector<std::string> g_menu_ifaces;
 
 // ---------------------------------------------------------------------------
@@ -1308,7 +1313,8 @@ void Desktop::build_net_menu(Fl_Menu_Button *m) {
   }
 
   if (net_.wifi_hw) {
-    item(net_.wifi_on ? "Wi-Fi: włączone" : "Wi-Fi: wyłączone", nullptr, 0, FL_MENU_INACTIVE);
+    item(!net_.hotspot_ssid.empty() ? "Wi-Fi: hotspot „" + net_.hotspot_ssid + "”"
+         : net_.wifi_on ? "Wi-Fi: włączone" : "Wi-Fi: wyłączone", nullptr, 0, FL_MENU_INACTIVE);
     item(net_.wifi_on ? "   Wyłącz Wi-Fi" : "   Włącz Wi-Fi", [](Fl_Widget *w, void *) {
       Desktop *d = (Desktop *)w->window();
       net::set_wifi(!d->net_state().wifi_on, [d](bool ok, const std::string &msg) {
@@ -1331,7 +1337,7 @@ void Desktop::build_net_menu(Fl_Menu_Button *m) {
       for (auto &d : net_.devices)
         if (d.type == "wifi" && d.state == net::DevState::Connected) {
           g_menu_ifaces.push_back(d.iface);
-          item("Rozłącz z „" + d.connection + "”", [](Fl_Widget *w, void *v) {
+          item(!net_.hotspot_ssid.empty() ? std::string("Wyłącz hotspot") : "Rozłącz z „" + d.connection + "”", [](Fl_Widget *w, void *v) {
             ((Desktop *)w->window())->net_action(false, g_menu_ifaces[(long)v]); },
             (long)g_menu_ifaces.size() - 1, 0);
         }
@@ -1339,7 +1345,44 @@ void Desktop::build_net_menu(Fl_Menu_Button *m) {
         spawn({alice_exe(), "siec", "--ukryta"}); }, 0, FL_MENU_DIVIDER);
     }
   }
+  // VPN
+  g_menu_vpns = net_.vpns;
+  if (!g_menu_vpns.empty()) {
+    item("VPN", nullptr, 0, FL_MENU_INACTIVE);
+    for (size_t i = 0; i < g_menu_vpns.size(); i++) {
+      auto &v = g_menu_vpns[i];
+      std::string t = "   " + v.name + (v.activating ? " (łączenie…)" : "");
+      item(t, [](Fl_Widget *w, void *d) { ((Desktop *)w->window())->vpn_toggle(g_menu_vpns[(long)d], ""); },
+           (long)i, FL_MENU_RADIO | (v.active ? FL_MENU_VALUE : 0) | (i + 1 == g_menu_vpns.size() ? FL_MENU_DIVIDER : 0));
+    }
+  }
+  item("Tryb samolotowy", [](Fl_Widget *w, void *) {
+    Desktop *d = (Desktop *)w->window();
+    net::set_airplane(!d->net_state().airplane(), [d](bool ok, const std::string &m) {
+      d->net_refresh();
+      if (!ok) d->dialog_message("Sieć", m);
+    });
+  }, 0, FL_MENU_TOGGLE | (net_.airplane() ? FL_MENU_VALUE : 0) | FL_MENU_DIVIDER);
   item("Ustawienia sieci…", [](Fl_Widget *w, void *) { ((Desktop *)w->window())->open_network(); }, 0, 0);
+}
+
+// VPN z menu sieci: połącz albo rozłącz. Hasło pytamy dopiero, gdy jest potrzebne;
+// gdy profil nie ma nazwy użytkownika, odsyłamy do panelu Sieć.
+void Desktop::vpn_toggle(const net::Vpn &v, const std::string &msg) {
+  auto done = [this, v](bool ok, const std::string &m) {
+    net_refresh();
+    if (ok) return;
+    if (m == net::NEED_PASSWORD || m == "Nieprawidłowe hasło.") vpn_toggle(v, m == net::NEED_PASSWORD ? " " : m);
+    else dialog_message("VPN", m);
+  };
+  if (v.active || v.activating) { net::vpn_down(v.uuid, done); return; }
+  if (msg.empty()) { net::vpn_up(v.uuid, "", "", done); return; }
+  std::string user = net::vpn_username(v.uuid);
+  if (user.empty()) { open_network(); return; }   // potrzebna też nazwa użytkownika
+  ask_secret("VPN", Icon::Encrypted, "Połączenie VPN „" + v.name + "” (" + user + ").\nPodaj hasło.",
+             msg == " " ? "" : msg, "Połącz", [v, done](std::string &p) {
+    if (!p.empty()) net::vpn_up(v.uuid, "", p, done);
+  });
 }
 
 void Desktop::net_refresh() {

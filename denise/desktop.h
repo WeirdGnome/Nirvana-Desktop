@@ -110,6 +110,7 @@ public:
   void build_net_menu(Fl_Menu_Button *m);
   void net_action(bool connect, const std::string &iface);
   void net_refresh();
+  void vpn_toggle(const net::Vpn &v, const std::string &msg);
   void wifi_connect(const net::Network &n, const std::string &msg);
   const net::State &net_state() const { return net_; }
   void dialog_message(const std::string &title, const std::string &text);

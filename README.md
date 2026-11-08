@@ -17,7 +17,7 @@ Lekkie środowisko graficzne dla Linuksa (baza: minimalny Devuan) w duchu
 | `lisaos-denise`     | Rambler: menedżer plików + biurko        | prototyp    |
 | `lisaos-insight`      | menedżer okien X11 (Xorg/XLibre), ramki Platinum | działa (0.1) |
 | `lisaos-gary`       | przełącznik aplikacji (na razie w procesie Ramblera) | działa (0.1) |
-| `lisaos-alice`      | panele sterowania (na razie: Wygląd)    | działa (0.1) |
+| `lisaos-alice`      | panele sterowania: Wygląd, Sieć          | działa (0.1) |
 | `lisaos-paula`      | dźwięk                                  | planowany   |
 | `lisaos-kickstart`  | logowanie i start sesji                 | planowany   |
 | `lisaos-guru`       | okno błędów, tryb root                  | planowany   |
@@ -28,7 +28,8 @@ Zależności (Devuan/Debian):
 
     sudo apt install build-essential cmake git libx11-dev libxft-dev \
         libxinerama-dev libxcursor-dev libxfixes-dev libxrender-dev \
-        squashfs-tools bubblewrap libdbus-1-dev udisks2 policykit-1
+        squashfs-tools bubblewrap libdbus-1-dev udisks2 policykit-1 \
+        network-manager network-manager-openvpn   # sieć i VPN
 
 Jeśli FLTK 1.4 nie jest zainstalowany, CMake sam pobierze i zbuduje wersję 1.4.4:
 
@@ -226,6 +227,42 @@ biurko=#5E6FA8           # opcjonalnie
 
 Schematy Redmond97 SE odtworzysz skryptem `tools/importuj-redmond97.py`
 (kolory z `builder/presets/theme_*.conf`).
+
+## Sieć: Wi-Fi, Ethernet, VPN, hotspot
+
+LisaOS zarządza siecią przez NetworkManagera (`nmcli` i D-Bus). Na Devuanie: pakiet
+`network-manager` (działa bez systemd, z elogind).
+
+- **Ikona na pasku menu**: siła sygnału Wi-Fi, symbol sieci przewodowej, kłódka przy
+  aktywnym VPN. Menu po kliknięciu:
+  - sieci Wi-Fi w zasięgu z kłódką i kreskami sygnału,
+  - połącz i rozłącz kabel,
+  - włącz i wyłącz Wi-Fi,
+  - VPN,
+  - tryb samolotowy.
+- **Panel Sieć** (logo → Panele sterowania → Sieć…):
+  - każde połączenie z adresami (IPv4, brama, DNS, IPv6, MAC, szybkość),
+  - ręczne lub automatyczne ustawienia IPv4,
+  - lista sieci Wi-Fi: łączenie, sieci ukryte („Inna sieć…”), zapominanie,
+  - hotspot (udostępnianie internetu przez Wi-Fi),
+  - tryb samolotowy.
+- **VPN**: import pliku konfiguracji i łączenie jednym kliknięciem:
+  - WireGuard (`.conf` z `[Interface]`), wbudowany w NetworkManagera,
+  - OpenVPN (`.ovpn`), pakiet `network-manager-openvpn`,
+  - Cisco VPNC (`.pcf`), pakiet `network-manager-vpnc`.
+
+  Profile innych wtyczek (OpenConnect, L2TP, PPTP, strongSwan…) też są na liście i łączą
+  się z panelu. Login i hasło VPN pytane są przy łączeniu.
+- **Hasła** nie trafiają do linii poleceń:
+  - Wi-Fi i hotspot idą przez D-Bus (`AddAndActivateConnection`),
+  - VPN idzie przez tymczasowy plik `passwd-file` (0600), usuwany zaraz po połączeniu.
+- Sieci firmowe Wi-Fi (WPA Enterprise / 802.1X) jeszcze nie: `nmtui`.
+
+![Panel Sieć: Wi-Fi](docs/img/siec-wifi.png)
+![Panel Sieć: VPN](docs/img/siec-vpn.png)
+
+Testy bez karty Wi-Fi: `LISAOS_NMCLI=tools/atrapa-nmcli.sh` udaje kartę `wlan0` i kilka
+sieci (resztę przekazuje do prawdziwego `nmcli`).
 
 ## Licencja
 

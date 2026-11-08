@@ -38,10 +38,20 @@ struct Details {
   std::string method;            // auto | manual (z profilu)
 };
 
+struct Vpn {                     // profil VPN (wtyczka NetworkManagera albo WireGuard)
+  std::string name, uuid;
+  std::string kind;              // openvpn, wireguard, openconnect, vpnc, pptp, l2tp, ...
+  bool active = false, activating = false;
+};
+
 struct State {
   bool available = false;        // NetworkManager działa
   std::string problem;           // dlaczego niedostępny
   bool wifi_hw = false, wifi_on = false;
+  bool wwan_on = true;
+  bool airplane() const { return !wifi_on && !wwan_on; }   // wszystkie radia wyłączone
+  std::vector<Vpn> vpns;
+  std::string hotspot_ssid;      // niepuste: ta maszyna udostępnia sieć Wi-Fi
   std::vector<Device> devices;   // bez lo i urządzeń niezarządzanych
   std::vector<Network> networks; // jedna pozycja na SSID (najsilniejsza)
   std::vector<std::string> saved_wifi;   // nazwy zapisanych profili Wi-Fi
@@ -61,6 +71,7 @@ struct Summary {
   bool connecting = false;
   int signal = 0;
   std::string name;
+  std::string vpn;                // nazwa aktywnego VPN (kłódka na ikonie)
 };
 Summary summary(const State &s);
 
@@ -80,6 +91,24 @@ void forget(const std::string &connection, Done done);
 // IPv4 profilu: manual=false -> DHCP; address w postaci 192.168.1.10/24.
 void set_ipv4(const std::string &connection, bool manual, const std::string &address,
               const std::string &gateway, const std::string &dns, Done done);
+
+// Tryb samolotowy: wyłącza (albo włącza) wszystkie radia - Wi-Fi i modem.
+void set_airplane(bool on, Done done);
+
+// --- VPN ---
+const char *vpn_kind_name(const std::string &kind);      // "OpenVPN", "WireGuard", ...
+std::vector<std::string> vpn_plugins();                   // zainstalowane wtyczki (bez WireGuard)
+// Import pliku konfiguracji: .conf z [Interface] -> WireGuard, .ovpn -> OpenVPN,
+// .pcf -> Cisco VPNC. Po imporcie done(ok, nazwa profilu albo błąd).
+void vpn_import(const std::string &file, Done done);
+std::string vpn_username(const std::string &uuid);       // z vpn.data (OpenVPN itp.)
+// Połącz; password niepuste -> przekazane plikiem haseł (passwd-file) z prawami 0600.
+void vpn_up(const std::string &uuid, const std::string &user, const std::string &password, Done done);
+void vpn_down(const std::string &uuid, Done done);
+void remove_connection(const std::string &uuid, Done done);
+
+// --- Hotspot: udostępnianie połączenia przez Wi-Fi (WPA2, IPv4 "shared") ---
+void hotspot(const std::string &ssid, const std::string &password, Done done);
 
 // Obserwowanie zmian (nmcli monitor). changed wołane z opóźnieniem ~0,3 s.
 void watch(std::function<void()> changed);

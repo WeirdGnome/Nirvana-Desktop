@@ -4,7 +4,8 @@
 #   LISAOS_NMCLI=tools/atrapa-nmcli.sh lisaos-alice siec
 # Stan: $ATRAPA_DIR (domyślnie /tmp/atrapa-nmcli): wifi (on/off), polaczona, zapisane
 D=${ATRAPA_DIR:-/tmp/atrapa-nmcli}
-mkdir -p "$D"; [ -f "$D/wifi" ] || echo on > "$D/wifi"; touch "$D/polaczona" "$D/zapisane"
+mkdir -p "$D"; [ -f "$D/wifi" ] || echo on > "$D/wifi"; [ -f "$D/wwan" ] || echo on > "$D/wwan"
+touch "$D/polaczona" "$D/zapisane" "$D/hotspot"
 [ -s "$D/zapisane" ] || echo "Dom:tajne123" > "$D/zapisane"
 REAL=$(command -v -p nmcli || echo /usr/bin/nmcli)
 args="$*"
@@ -21,7 +22,11 @@ L
 }
 saved() { cut -d: -f1 "$D/zapisane"; }
 case "$args" in
-  "-t -f WIFI radio") [ "$wifi" = on ] && echo enabled || echo disabled ;;
+  "-t -f WIFI,WWAN radio")
+    w=disabled; [ "$wifi" = on ] && w=enabled; m=disabled; [ "$(cat "$D/wwan")" = on ] && m=enabled
+    echo "$w:$m" ;;
+  "radio all off") echo off > "$D/wifi"; echo off > "$D/wwan"; : > "$D/polaczona"; : > "$D/hotspot" ;;
+  "radio all on") echo on > "$D/wifi"; echo on > "$D/wwan" ;;
   "radio wifi on") echo on > "$D/wifi" ;;
   "radio wifi off") echo off > "$D/wifi"; : > "$D/polaczona" ;;
   "-t -f DEVICE,TYPE,STATE,CONNECTION device")
@@ -29,8 +34,18 @@ case "$args" in
     if [ "$wifi" != on ]; then echo "wlan0:wifi:unavailable:"
     elif [ -n "$con" ]; then echo "wlan0:wifi:connected:$con"
     else echo "wlan0:wifi:disconnected:"; fi ;;
-  "-t -f NAME,TYPE connection show")
-    "$REAL" "$@"; saved | while read -r n; do echo "$n:802-11-wireless"; done ;;
+  "-t -f NAME,UUID,TYPE,STATE connection show")
+    "$REAL" "$@"
+    saved | while read -r n; do st=""; [ "$n" = "$con" ] && st=activated; echo "$n:atrapa-$n:802-11-wireless:$st"; done ;;
+  "-g 802-11-wireless.mode,802-11-wireless.ssid connection show id "*)
+    n=${args#-g 802-11-wireless.mode,802-11-wireless.ssid connection show id }
+    if [ "$n" = Hotspot ] && [ -s "$D/hotspot" ]; then echo ap; cat "$D/hotspot"
+    elif grep -qF "$n:" "$D/zapisane"; then echo infrastructure; echo "$n"
+    else exec "$REAL" "$@"; fi ;;
+  "device wifi hotspot ssid "*)
+    h=$(printf '%s\n' "$args" | sed -E 's/^device wifi hotspot ssid (.*) password .*$/\1/')
+    sleep 1; echo "$h" > "$D/hotspot"; echo Hotspot > "$D/polaczona"
+    echo "Device 'wlan0' successfully activated." ;;
   *"device wifi list"*)
     [ "$wifi" = on ] || exit 0
     siec | while IFS= read -r l; do
@@ -59,7 +74,7 @@ case "$args" in
     fi
     echo "$ssid" > "$D/polaczona"
     echo "Device 'wlan0' successfully activated." ;;
-  "device disconnect wlan0") : > "$D/polaczona"; echo "Device 'wlan0' successfully disconnected." ;;
+  "device disconnect wlan0") : > "$D/polaczona"; : > "$D/hotspot"; echo "Device 'wlan0' successfully disconnected." ;;
   "device connect wlan0") [ -n "$(saved | head -1)" ] && saved | head -1 > "$D/polaczona" ;;
   *"device show wlan0")
     echo "GENERAL.HWADDR:5C\:E0\:C5\:12\:34\:56"; echo "GENERAL.CONNECTION:${con:---}"

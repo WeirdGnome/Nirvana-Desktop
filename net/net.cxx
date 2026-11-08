@@ -9,7 +9,9 @@
 #include <csignal>
 #include <cstdlib>
 #include <cstring>
+#include <dirent.h>
 #include <fcntl.h>
+#include <sys/stat.h>
 #include <map>
 #include <memory>
 #include <sys/prctl.h>
@@ -83,7 +85,8 @@ static int run(const std::vector<std::string> &args, std::string &out) {
 extern const char *const NEED_PASSWORD;
 static std::string pl_error(const std::string &raw, bool had_password = false) {
   auto has = [&](const char *s) { return strcasestr(raw.c_str(), s) != nullptr; };
-  if (has("Secrets were required") || has("no secrets") || has("802-1x"))
+  if (has("Secrets were required") || has("no secrets") || has("802-1x") || has("password is required") ||
+      has("secrets are required") || has("No agents were available"))
     return had_password ? "Nieprawidłowe hasło." : "Ta sieć wymaga hasła.";
   if (has("No network with SSID")) return "Nie znaleziono tej sieci w zasięgu.";
   if (has("not authorized") || has("Insufficient privileges") || has("PermissionDenied"))
@@ -96,6 +99,10 @@ static std::string pl_error(const std::string &raw, bool had_password = false) {
   if (has("invalid IP") || has("invalid address") || has("ipv4.addresses") || has("ipv4.gateway"))
     return "Nieprawidłowy adres IP.";
   if (has("unknown connection")) return "Nie ma takiego połączenia.";
+  if (has("WireGuard interface") && has("not supported"))
+    return "Jądro systemu nie obsługuje WireGuard (brak modułu wireguard).";
+  if (has("plugin") && has("not installed"))
+    return "Brak wtyczki VPN NetworkManagera dla tego połączenia.";
   if (has("No such file") && has("nmcli")) return "Brak programu nmcli (NetworkManager).";
   std::string m = raw.substr(0, raw.find('\n'));
   if (m.rfind("Error: ", 0) == 0) m = m.substr(7);
@@ -185,7 +192,11 @@ State query() {
   }
   st.available = true;
   out.clear();
-  if (run({"-t", "-f", "WIFI", "radio"}, out) == 0) st.wifi_on = out.find("enabled") != std::string::npos;
+  if (run({"-t", "-f", "WIFI,WWAN", "radio"}, out) == 0) {
+    auto f = fields(lines(out).empty() ? "" : lines(out)[0]);
+    st.wifi_on = f.size() > 0 && f[0] == "enabled";
+    st.wwan_on = f.size() > 1 && f[1] == "enabled";
+  }
 
   out.clear();
   run({"-t", "-f", "DEVICE,TYPE,STATE,CONNECTION", "device"}, out);
@@ -209,11 +220,34 @@ State query() {
                    [&](const Device &a, const Device &b) { return rank(a) < rank(b); });
 
   out.clear();
-  run({"-t", "-f", "NAME,TYPE", "connection", "show"}, out);
+  run({"-t", "-f", "NAME,UUID,TYPE,STATE", "connection", "show"}, out);
   for (auto &l : lines(out)) {
     auto f = fields(l);
-    if (f.size() >= 2 && f[1] == "802-11-wireless") st.saved_wifi.push_back(f[0]);
+    if (f.size() < 4) continue;
+    if (f[2] == "802-11-wireless") st.saved_wifi.push_back(f[0]);
+    if (f[2] == "vpn" || f[2] == "wireguard") {
+      Vpn v;
+      v.name = f[0]; v.uuid = f[1];
+      v.active = f[3] == "activated";
+      v.activating = f[3] == "activating";
+      if (f[2] == "wireguard") v.kind = "wireguard";
+      else {
+        std::string t;
+        run({"-g", "vpn.service-type", "connection", "show", "uuid", v.uuid}, t);
+        t = t.substr(0, t.find('\n'));
+        v.kind = t.substr(t.rfind('.') + 1);   // org.freedesktop.NetworkManager.openvpn -> openvpn
+      }
+      st.vpns.push_back(v);
+    }
   }
+  // hotspot: aktywne połączenie Wi-Fi w trybie punktu dostępu
+  for (auto &d : st.devices)
+    if (d.type == "wifi" && d.state == DevState::Connected) {
+      std::string m;
+      run({"-g", "802-11-wireless.mode,802-11-wireless.ssid", "connection", "show", "id", d.connection}, m);
+      auto ls = lines(m);
+      if (ls.size() >= 2 && ls[0] == "ap") st.hotspot_ssid = ls[1];
+    }
 
   if (st.wifi_hw && st.wifi_on) {
     out.clear();
@@ -304,6 +338,7 @@ int bars(int signal) { return signal >= 75 ? 4 : signal >= 50 ? 3 : signal >= 30
 Summary summary(const State &s) {
   Summary r;
   if (!s.available) return r;
+  for (auto &v : s.vpns) if (v.active) r.vpn = v.name;
   for (auto &d : s.devices) {
     if (d.state == DevState::Connecting && r.kind == Summary::Brak) { r.connecting = true; r.name = d.connection; }
     if (d.state != DevState::Connected) continue;
@@ -326,6 +361,160 @@ Summary summary(const State &s) {
 void rescan() { run_async({"device", "wifi", "rescan"}, nullptr); }
 
 void set_wifi(bool on, Done done) { simple({"radio", "wifi", on ? "on" : "off"}, done); }
+void set_airplane(bool on, Done done) {
+  simple({"radio", "all", on ? "off" : "on"}, done, on ? "Tryb samolotowy włączony." : "Tryb samolotowy wyłączony.");
+}
+void remove_connection(const std::string &uuid, Done done) {
+  simple({"connection", "delete", "uuid", uuid}, done, "Usunięto połączenie.");
+}
+
+// ---------------------------------------------------------------------------
+// VPN
+// ---------------------------------------------------------------------------
+const char *vpn_kind_name(const std::string &k) {
+  if (k == "wireguard") return "WireGuard";
+  if (k == "openvpn") return "OpenVPN";
+  if (k == "openconnect") return "OpenConnect (AnyConnect)";
+  if (k == "vpnc") return "Cisco VPNC";
+  if (k == "pptp") return "PPTP";
+  if (k == "l2tp") return "L2TP/IPsec";
+  if (k == "strongswan") return "IPsec (strongSwan)";
+  if (k == "libreswan" || k == "openswan") return "IPsec (Libreswan)";
+  if (k == "fortisslvpn") return "Fortinet SSL";
+  if (k == "sstp") return "SSTP";
+  return "VPN";
+}
+
+std::vector<std::string> vpn_plugins() {
+  // wtyczki NetworkManagera opisują pliki *.name: service=org.freedesktop.NetworkManager.openvpn
+  std::vector<std::string> out;
+  for (const char *dir : {"/usr/lib/NetworkManager/VPN", "/etc/NetworkManager/VPN", "/usr/lib64/NetworkManager/VPN"}) {
+    std::string ls;
+    DIR *d = opendir(dir);
+    if (!d) continue;
+    while (dirent *e = readdir(d)) {
+      std::string n = e->d_name;
+      if (n.size() < 6 || n.compare(n.size() - 5, 5, ".name")) continue;
+      FILE *f = fopen((std::string(dir) + "/" + n).c_str(), "r");
+      if (!f) continue;
+      char line[512];
+      while (fgets(line, sizeof line, f)) {
+        if (strncmp(line, "service=", 8)) continue;
+        std::string sv = line + 8;
+        while (!sv.empty() && isspace((unsigned char)sv.back())) sv.pop_back();
+        std::string k = sv.substr(sv.rfind('.') + 1);
+        if (std::find(out.begin(), out.end(), k) == out.end()) out.push_back(k);
+      }
+      fclose(f);
+    }
+    closedir(d);
+  }
+  return out;
+}
+
+void vpn_import(const std::string &file, Done done) {
+  // rodzaj po zawartości i rozszerzeniu
+  std::string type, lower = file;
+  for (auto &c : lower) c = (char)tolower((unsigned char)c);
+  auto ends = [&](const char *e) { size_t n = strlen(e); return lower.size() >= n && lower.compare(lower.size() - n, n, e) == 0; };
+  std::string head;
+  if (FILE *f = fopen(file.c_str(), "r")) {
+    char buf[4096];
+    size_t n = fread(buf, 1, sizeof buf, f);
+    head.assign(buf, n);
+    fclose(f);
+  } else {
+    done(false, "Nie można odczytać pliku.");
+    return;
+  }
+  if (head.find("[Interface]") != std::string::npos) type = "wireguard";
+  else if (ends(".ovpn") || head.find("\nremote ") != std::string::npos || head.rfind("client", 0) == 0) type = "openvpn";
+  else if (ends(".pcf")) type = "vpnc";
+  else { done(false, "Nieznany format. Obsługiwane: WireGuard (.conf), OpenVPN (.ovpn), Cisco VPNC (.pcf)."); return; }
+  if (type != "wireguard") {
+    auto pl = vpn_plugins();
+    if (std::find(pl.begin(), pl.end(), type) == pl.end()) {
+      done(false, std::string("Brak wtyczki NetworkManagera dla ") + vpn_kind_name(type) +
+                  ": zainstaluj pakiet network-manager-" + type + ".");
+      return;
+    }
+  }
+  // WireGuard: nazwa profilu = nazwa pliku (bez .conf) i musi być poprawną nazwą interfejsu
+  run_async({"connection", "import", "type", type, "file", file}, [done, type](int code, const std::string &out) {
+    if (code != 0) {
+      if (type == "wireguard" && strcasestr(out.c_str(), "interface name"))
+        done(false, "Nazwa pliku WireGuard musi być krótką nazwą interfejsu (np. wg0.conf, firma.conf).");
+      else done(false, pl_error(out));
+      return;
+    }
+    // "Connection 'Firma' (uuid) successfully added."
+    std::string name;
+    auto a = out.find('\''), b = out.find('\'', a + 1);
+    if (a != std::string::npos && b != std::string::npos) name = out.substr(a + 1, b - a - 1);
+    done(true, name);
+  });
+}
+
+std::string vpn_username(const std::string &uuid) {
+  std::string out;
+  run({"-g", "vpn.data", "connection", "show", "uuid", uuid}, out);
+  // "connection-type = password, username = jan, remote = ..."
+  auto p = out.find("username = ");
+  if (p == std::string::npos) return "";
+  p += 11;
+  auto e = out.find_first_of(",\n", p);
+  return out.substr(p, e == std::string::npos ? std::string::npos : e - p);
+}
+
+void vpn_up(const std::string &uuid, const std::string &user, const std::string &password, Done done) {
+  auto go = [uuid, password, done]() {
+    std::vector<std::string> a = {"--wait", "40", "connection", "up", "uuid", uuid};
+    std::string pf;
+    if (!password.empty()) {
+      // Hasło przez plik (0600) zamiast w argumentach, które widać w `ps`.
+      const char *rt = getenv("XDG_RUNTIME_DIR");
+      std::string dir = rt && *rt ? rt : "/tmp";
+      char tmpl[512];
+      snprintf(tmpl, sizeof tmpl, "%s/lisaos-vpn-XXXXXX", dir.c_str());
+      int fd = mkstemp(tmpl);
+      if (fd < 0) { done(false, "Nie można utworzyć pliku tymczasowego."); return; }
+      fchmod(fd, 0600);
+      std::string body = "vpn.secrets.password:" + password + "\n";
+      if (write(fd, body.data(), body.size()) != (ssize_t)body.size()) {}
+      std::fill(body.begin(), body.end(), '\0');
+      close(fd);
+      pf = tmpl;
+      a.insert(a.end(), {"passwd-file", pf});
+    }
+    run_async(a, [done, pf, uuid, had = !password.empty()](int code, const std::string &out) {
+      if (!pf.empty()) unlink(pf.c_str());
+      if (code == 3) {
+        // Limit czasu: np. OpenVPN po złym haśle ponawia logowanie bez końca.
+        // Przerywamy próbę, żeby połączenie nie wisiało w stanie "łączenie".
+        run_async({"connection", "down", "uuid", uuid}, [done, had](int, const std::string &) {
+          if (done) done(false, had ? "Serwer VPN nie odpowiada albo odrzucił logowanie. Sprawdź nazwę użytkownika i hasło."
+                                    : "Przekroczono czas oczekiwania na połączenie VPN.");
+        });
+        return;
+      }
+      if (done) done(code == 0, code == 0 ? "Połączono z VPN." : pl_error(out, had));
+    });
+  };
+  if (!user.empty() && user != vpn_username(uuid)) {
+    // nazwa użytkownika trafia do profilu (to nie sekret)
+    run_async({"connection", "modify", "uuid", uuid, "+vpn.data", "username=" + user},
+              [go, done](int code, const std::string &out) {
+                if (code != 0) { done(false, pl_error(out)); return; }
+                go();
+              });
+    return;
+  }
+  go();
+}
+
+void vpn_down(const std::string &uuid, Done done) {
+  simple({"connection", "down", "uuid", uuid}, done, "Rozłączono VPN.");
+}
 void connect_device(const std::string &iface, Done done) {
   simple({"--wait", "45", "device", "connect", iface}, done, "Połączono.");
 }
@@ -494,7 +683,7 @@ static void watch_activation(void *d) {
 // AddAndActivateConnection: profil Wi-Fi z hasłem przekazanym przez D-Bus.
 static std::string add_and_activate(DBusConnection *c, const std::string &dev, const std::string &ssid,
                                     const std::string &security, const std::string &password, bool hidden,
-                                    std::string &conn_path, std::string &active_path) {
+                                    std::string &conn_path, std::string &active_path, bool ap = false) {
   std::string err;
   std::string key_mgmt = security.find("WEP") != std::string::npos ? "none"
                        : security.find("WPA3") != std::string::npos && security.find("WPA2") == std::string::npos &&
@@ -504,13 +693,19 @@ static std::string add_and_activate(DBusConnection *c, const std::string &dev, c
   dbus_message_iter_init_append(m, &it);
   dbus_message_iter_open_container(&it, DBUS_TYPE_ARRAY, "{sa{sv}}", &top);
   section(&top, "connection", [&](DBusMessageIter *d) {
-    put_var_str(d, "id", ssid);
+    put_var_str(d, "id", ap ? std::string("Hotspot") : ssid);
     put_var_str(d, "type", "802-11-wireless");
+    if (ap) put_var_bool(d, "autoconnect", false);
   });
   section(&top, "802-11-wireless", [&](DBusMessageIter *d) {
     put_var_bytes(d, "ssid", ssid);
     if (hidden) put_var_bool(d, "hidden", true);
+    if (ap) { put_var_str(d, "mode", "ap"); put_var_str(d, "band", "bg"); }
   });
+  if (ap) {   // punkt dostępu: NetworkManager rozdaje adresy i udostępnia połączenie (NAT)
+    section(&top, "ipv4", [&](DBusMessageIter *d) { put_var_str(d, "method", "shared"); });
+    section(&top, "ipv6", [&](DBusMessageIter *d) { put_var_str(d, "method", "ignore"); });
+  }
   if (!password.empty()) {
     section(&top, "802-11-wireless-security", [&](DBusMessageIter *d) {
       put_var_str(d, "key-mgmt", key_mgmt);
@@ -585,6 +780,33 @@ void connect_wifi(const std::string &ssid, const std::string &security,
     }
     if (done) done(false, pl_error(out));
   });
+}
+
+void hotspot(const std::string &ssid, const std::string &password, Done done) {
+  if (password.size() < 8) { done(false, "Hasło hotspotu musi mieć co najmniej 8 znaków."); return; }
+  if (getenv("LISAOS_NMCLI")) {   // atrapa (testy bez karty Wi-Fi)
+    simple({"device", "wifi", "hotspot", "ssid", ssid, "password", password}, done, "Hotspot włączony.");
+    return;
+  }
+  State st = query();
+  std::string iface;
+  for (auto &d : st.devices) if (d.type == "wifi") { iface = d.iface; break; }
+  if (iface.empty()) { done(false, "Brak karty Wi-Fi."); return; }
+  std::string o;
+  run({"connection", "delete", "id", "Hotspot"}, o);   // poprzedni hotspot (inne hasło/nazwa)
+  std::string err;
+  DBusConnection *c = bus(err);
+  if (!c) { done(false, "Brak połączenia z magistralą systemową D-Bus."); return; }
+  std::string dev = device_path(c, iface, err);
+  if (dev.empty()) { done(false, pl_error(err)); return; }
+  std::string conn, act;
+  err = add_and_activate(c, dev, ssid, "WPA2", password, false, conn, act, true);
+  if (!err.empty()) { done(false, pl_error(err)); return; }
+  auto *p = new Pending{act, "", [done](bool ok, const std::string &m) {
+    done(ok, ok ? "Hotspot włączony." : (m == "Nie udało się połączyć. Sprawdź hasło."
+                                          ? "Nie udało się włączyć hotspotu (karta może nie obsługiwać trybu AP)." : m));
+  }};
+  Fl::add_timeout(0.75, watch_activation, p);
 }
 
 // ---------------------------------------------------------------------------

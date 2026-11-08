@@ -95,6 +95,10 @@ int main(int argc, char **argv) {
       return normal;
     };
     XSync(fl_display, False);
+    // Najpierw niech menedżer okien skończy przyjmować okno (WM_STATE=Normal). Gdyby
+    // wycofanie wyprzedziło jego MapRequest, zdjąłby biurko już po naszym ponownym
+    // mapowaniu i ekran zostawał czarny (zdarzało się pod Openboxem).
+    for (int i = 0; desk.wm_present && i < 150 && !normal_state(); i++) usleep(10000);
     bool managed = normal_state();   // bez menedżera okien nie ma na co czekać
     XUnmapWindow(fl_display, xid);
     XEvent ev{};
