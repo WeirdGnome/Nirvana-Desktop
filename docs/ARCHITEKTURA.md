@@ -11,16 +11,21 @@ Wszystkie komponenty linkują `lisaos-platinum`, więc wygląd jest jeden.
 FLTK 1.4 ma backend Wayland, dlatego przy ewentualnym przejściu na Waylanda
 wymieniamy tylko `insight` (kompozytor na wlroots), a resztę zostawiamy.
 
-## Prototyp a docelowy podział
+## Okna: kto za co odpowiada
 
-W prototypie `denise` sam rysuje okna (klasa `plat::PWindow`) wewnątrz
-jednego okna biurka. Docelowo:
-
-1. `insight` rysuje ramki Platinum wokół prawdziwych okien X11, korzystając z
-   `plat::draw_frame` / `plat::draw_titlebar` / `plat::draw_grow_box`.
-2. `denise` otwiera każdy folder jako osobne okno X11, a biurko staje się oknem
-   typu `_NET_WM_WINDOW_TYPE_DESKTOP`.
-3. Pasek menu z `denise` przechodzi do `gary`.
+- **Insight** (menedżer okien) rysuje ramki Platinum, przesuwa, zwija, powiększa
+  i zamyka wszystkie okna, także okna Ramblera. Aktywne okno publikuje
+  w `_NET_ACTIVE_WINDOW`, a zwinięcie w `_NET_WM_STATE_SHADED`.
+- **Rambler** pokazuje biurko (jedno okno typu DESKTOP z globalnym paskiem menu)
+  oraz każdy folder i każdy dialog jako **osobne okno X**. Pasek menu działa na
+  aktywny folder (odczyt `_NET_ACTIVE_WINDOW`); klik w pasek nie zmienia aktywnego
+  okna, a skróty klawiszowe z okien folderów trafiają do paska menu.
+- Pozycje okien zapisuje się jako położenie treści (bez ramki). FLTK ustawia
+  `StaticGravity`, a Insight stawia ramkę tak, by treść wróciła w to samo miejsce.
+- Okna o klasie `LisaOS-*` same animują otwieranie i zamykanie (z ikony do okna),
+  więc Insight pomija dla nich własną animację. `LisaOS-Dialog` dostaje ramkę
+  dialogu: bez przycisków i zmiany rozmiaru.
+- Działa też pod innym menedżerem okien zgodnym z EWMH, np. pod GNOME.
 
 ## Globalny pasek menu (`gary`)
 

@@ -1,4 +1,9 @@
-// LisaOS - denise: biurko, pasek menu i zarządzanie oknami menedżera plików
+// LisaOS - denise: biurko, pasek menu i okna menedżera plików (Rambler)
+//
+// Biurko (wzór, ikony dysku i kosza, globalny pasek menu) to jedno okno X
+// typu DESKTOP. Każdy folder i każdy dialog to osobne okno X - ramki,
+// przesuwanie, zwijanie i fokus zapewnia menedżer okien (Insight).
+// Pasek menu działa na aktywne okno, które odczytujemy z _NET_ACTIVE_WINDOW.
 #pragma once
 
 #include <FL/Fl_Double_Window.H>
@@ -12,8 +17,31 @@
 
 #include "anim.h"
 #include "folder_view.h"
-#include "pwindow.h"
 #include "spatial.h"
+
+class Desktop;
+
+// Okno najwyższego poziomu Ramblera: folder albo dialog.
+class NWin : public Fl_Double_Window {
+public:
+  NWin(Desktop *d, int X, int Y, int W, int H, const char *title, bool dialog);
+
+  Desktop *desk;
+  FolderPane *pane = nullptr;                  // nullptr dla dialogów
+  std::string path;
+  std::vector<std::function<void()>> actions;  // akcje przycisków dialogu
+  bool dialog;
+
+  bool is_active();     // czy to okno ma fokus (wg menedżera okien)
+  bool shaded();       // czy menedżer okien je zwinął
+  void set_shaded(bool s);    // poproś menedżer okien o zwinięcie/rozwinięcie
+  void activate_window();     // wyciągnij na wierzch i daj fokus
+  plat::Rect frame_rect();   // przybliżony obrys z ramką (do animacji)
+
+  ~NWin() override;
+  int handle(int e) override;   // skróty klawiszowe trafiają do globalnego paska menu
+  void resize(int X, int Y, int W, int H) override;
+};
 
 class Desktop : public Fl_Double_Window {
 public:
@@ -21,6 +49,10 @@ public:
 
   void open_folder(const std::string &path, bool animate = true);
   void restore();                 // otwórz okna zapamiętane z poprzedniej sesji
+  void close(NWin *w);            // zamknięcie okna (przycisk ramki, Ctrl+W, dialog)
+  void remember(NWin *w, bool open);
+  void active_changed();          // menedżer okien zmienił aktywne okno
+  int shortcut();                 // skrót z innego okna -> pasek menu
 
   int handle(int e) override;
   void draw() override;
@@ -40,25 +72,15 @@ public:
   void close_all();
 
 private:
-  struct Win {
-    plat::PWindow *win = nullptr;
-    FolderPane *pane = nullptr;     // nullptr dla okien dialogowych
-    std::string path;
-    std::vector<std::function<void()>> actions;   // przyciski dialogu
-  };
   struct DeskIcon {
     std::string name, path;
     plat::Icon icon;
     int x, y;
   };
 
-  Win *find(plat::PWindow *w);
-  Win *find(const std::string &path);
-  Win *top();
-  void raise(plat::PWindow *w);
-  void close(plat::PWindow *w);
-  void remember(Win &w, bool open);
-  void wire(plat::PWindow *w);
+  NWin *find(const std::string &path);
+  bool known(NWin *w) const;
+  NWin *active_folder();          // aktywne okno folderu (lub nullptr)
   void layout_icons();
   int icon_at(int ex, int ey) const;
   bool allowed(const std::string &path) const;
@@ -78,7 +100,7 @@ private:
   std::string home_, root_path_;
   bool root_;
   Spatial spatial_;
-  std::vector<Win> wins_;
+  std::vector<NWin *> wins_;      // kolejność: ostatnio aktywne na końcu
   std::vector<DeskIcon> icons_;
   int icon_sel_ = -1;
   Fl_Menu_Bar *menu_;

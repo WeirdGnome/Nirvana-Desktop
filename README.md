@@ -61,7 +61,9 @@ Czcionkę systemową w stylu Chicago można podać przez `LISAOS_SYSTEM_FONT`
 - pasek tytułu: przeciąganie przesuwa okno, podwójne kliknięcie je zwija
 - przyciski: zamknij (z lewej, uprzejmie przez `WM_DELETE_WINDOW`), zwiń i zoom (z prawej)
 - prawa i dolna krawędź ramki oraz prawy dolny róg: zmiana rozmiaru
-- klik w okno aplikacji aktywuje je i wyciąga na wierzch; klik w biurko dezaktywuje okna
+- klik w okno aplikacji aktywuje je i wyciąga na wierzch; klik w biurko dezaktywuje okna,
+  a klik w pasek menu nie zmienia aktywnego okna (menu działa na nie)
+- foldery i dialogi Ramblera to zwykłe okna X, więc zachowują się jak każda aplikacja
 - okna nie wchodzą pod pasek menu; biurko Ramblera zawsze leży na dole
 - bez kompozytora: aplikacje rysują prosto na ekran (mniej pamięci)
 

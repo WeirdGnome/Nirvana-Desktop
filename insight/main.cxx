@@ -38,7 +38,7 @@ static int screen_w, screen_h;
 
 static Atom A_WM_PROTOCOLS, A_WM_DELETE, A_WM_STATE, A_NET_WM_NAME, A_UTF8,
     A_NET_WM_TYPE, A_NET_WM_TYPE_DESKTOP, A_NET_WM_TYPE_DOCK, A_NET_SUPPORTED,
-    A_NET_CHECK, A_NET_ACTIVE;
+    A_NET_CHECK, A_NET_ACTIVE, A_NET_WM_STATE, A_NET_WM_STATE_SHADED, A_NET_WM_TYPE_DIALOG;
 
 class Frame;
 
@@ -50,6 +50,8 @@ struct Client {
   int full_h = 0;                 // wysokość ramki przed zwinięciem
   int unzoom[4] = {0, 0, 0, 0};
   int ignore_unmap = 0;           // UnmapNotify wywołane przez nas (reparent)
+  bool dialog = false;            // okno dialogowe: bez przycisków i zmiany rozmiaru
+  bool own_anim = false;          // programy LisaOS same animują otwieranie/zamykanie
 };
 
 static std::map<Window, Client *> clients;   // okno aplikacji -> klient
@@ -110,6 +112,25 @@ static bool is_desktop(Window w) {
   return d || has_atom(w, A_NET_WM_TYPE, A_NET_WM_TYPE_DESKTOP);
 }
 
+static std::string get_class(Window w) {
+  XClassHint ch;
+  std::string r;
+  if (XGetClassHint(dpy, w, &ch)) {
+    if (ch.res_class) { r = ch.res_class; XFree(ch.res_class); }
+    if (ch.res_name) XFree(ch.res_name);
+  }
+  return r;
+}
+
+// _NET_WM_STATE: informujemy aplikację (np. Ramblera), czy okno jest zwinięte.
+static void publish_state(Client *c) {
+  if (c->shaded)
+    XChangeProperty(dpy, c->win, A_NET_WM_STATE, XA_ATOM, 32, PropModeReplace,
+                    (unsigned char *)&A_NET_WM_STATE_SHADED, 1);
+  else
+    XChangeProperty(dpy, c->win, A_NET_WM_STATE, XA_ATOM, 32, PropModeReplace, nullptr, 0);
+}
+
 static bool supports_delete(Window w) {
   Atom *protos; int n;
   bool ok = false;
@@ -166,8 +187,8 @@ public:
   void draw() override {
     bool act = c == g_active;
     draw_frame(0, 0, w(), h(), act, c->shaded);
-    draw_titlebar(0, 0, w(), c->title.c_str(), act, pressed_);
-    if (!c->shaded) {
+    draw_titlebar(0, 0, w(), c->title.c_str(), act, pressed_, !c->dialog);
+    if (!c->shaded && !c->dialog) {
       fl_color(act ? SHADOW : MID);
       fl_rect(FRAME - 1, TITLE_H - 1, cw() + 2, ch() + 2);
       // uchwyt zmiany rozmiaru na ramce w prawym dolnym rogu
@@ -178,6 +199,7 @@ public:
   }
 
   int hit_button(int ex, int ey) const {
+    if (c->dialog) return 0;
     int by = (TITLE_H - BOX) / 2;
     if (ey < by || ey >= by + BOX) return 0;
     int zoom_x = w() - 8 - BOX, shade_x = zoom_x - BOX - 5;
@@ -200,6 +222,7 @@ public:
       c->shaded = false;
       size(w(), c->full_h);
     }
+    publish_state(c);
     redraw();
   }
 
@@ -240,9 +263,9 @@ public:
       ::focus(c);
       if (ey < TITLE_H) {
         if (int b = hit_button(ex, ey)) { drag_ = BTN; armed_ = pressed_ = b; redraw(); return 1; }
-        if (Fl::event_clicks()) { Fl::event_clicks(0); toggle_shade(); drag_ = NONE; return 1; }
+        if (Fl::event_clicks() && !c->dialog) { Fl::event_clicks(0); toggle_shade(); drag_ = NONE; return 1; }
         drag_ = MOVE;
-      } else if (!c->shaded && (ex >= w() - 16 || ey >= h() - FRAME)) {
+      } else if (!c->shaded && !c->dialog && (ex >= w() - 16 || ey >= h() - FRAME)) {
         drag_ = GROW;          // prawa lub dolna krawędź / prawy dolny róg
       } else {
         drag_ = MOVE;          // lewa krawędź ramki
@@ -322,8 +345,22 @@ static void manage(Window w, bool existing) {
   auto *c = new Client;
   c->win = w;
   c->title = get_title(w);
+  std::string cls = get_class(w);
+  c->own_anim = cls.rfind("LisaOS-", 0) == 0;
+  Window tf = 0;
+  c->dialog = (XGetTransientForHint(dpy, w, &tf) && tf) ||
+              has_atom(w, A_NET_WM_TYPE, A_NET_WM_TYPE_DIALOG) || cls == "LisaOS-Dialog";
 
   int x = wa.x, y = wa.y;
+  // StaticGravity (FLTK, wiele innych programów): podana pozycja dotyczy samego
+  // okna aplikacji, więc ramkę stawiamy tak, żeby treść wylądowała dokładnie tam.
+  XSizeHints sh;
+  long supplied;
+  if (XGetWMNormalHints(dpy, w, &sh, &supplied) && (sh.flags & PWinGravity) &&
+      sh.win_gravity == StaticGravity && (x || y)) {
+    x -= FRAME;
+    y -= TITLE_H;
+  }
   if (!existing && x == 0 && y == 0) {
     static int cascade = 0;
     x = 60 + 26 * (cascade % 8);
@@ -334,7 +371,7 @@ static void manage(Window w, bool existing) {
   int fw = wa.width + 2 * FRAME, fh = wa.height + TITLE_H + FRAME;
 
   // nowe okno "wylatuje" ze środka miejsca, w którym się pojawi
-  if (!existing) zoom_rects(center_of({x, y, fw, fh}), {x, y, fw, fh});
+  if (!existing && !c->own_anim) zoom_rects(center_of({x, y, fw, fh}), {x, y, fw, fh});
   c->frame = new Frame(c, x, y, fw, fh);
   c->frame->xclass("LisaOS-Frame");
   c->frame->show();
@@ -367,7 +404,7 @@ static void unmanage(Client *c, bool destroyed) {
   Rect gone = c->frame->geom();
   c->frame->hide();
   XSync(dpy, False);
-  zoom_rects(gone, center_of(gone));   // zamykane okno "zapada się" do środka
+  if (!c->own_anim) zoom_rects(gone, center_of(gone));   // zamykane okno "zapada się" do środka
   Fl::delete_widget(c->frame);
   delete c;
   // fokus na najwyższe pozostałe okno
@@ -449,17 +486,36 @@ static int x_handler(void *event, void *) {
       return 1;
     }
     if (desktop_win && e->xbutton.window == desktop_win) {
+      // Pasek menu działa na aktywne okno - klik w niego niczego nie zmienia.
+      if (e->xbutton.y_root < MENUBAR_H) {
+        XAllowEvents(dpy, ReplayPointer, CurrentTime);
+        return 1;
+      }
       // klik w biurko: żadne okno nie jest aktywne
       Client *old = g_active;
       g_active = nullptr;
       if (old) old->frame->redraw();
       XSetInputFocus(dpy, desktop_win, RevertToPointerRoot, CurrentTime);
+      Window none = None;
+      XChangeProperty(dpy, root, A_NET_ACTIVE, XA_WINDOW, 32, PropModeReplace, (unsigned char *)&none, 1);
       XAllowEvents(dpy, ReplayPointer, CurrentTime);
       return 1;
     }
     return 0;
 
   case ClientMessage:
+    if (e->xclient.message_type == A_NET_WM_STATE) {
+      // data.l[0]: 0 usuń, 1 dodaj, 2 przełącz; l[1], l[2]: właściwości
+      Client *c = client_of(e->xclient.window);
+      if (!c) return 0;
+      long act = e->xclient.data.l[0];
+      if ((Atom)e->xclient.data.l[1] == A_NET_WM_STATE_SHADED ||
+          (Atom)e->xclient.data.l[2] == A_NET_WM_STATE_SHADED) {
+        bool want = act == 2 ? !c->shaded : act == 1;
+        if (want != c->shaded && !c->dialog) c->frame->toggle_shade();
+      }
+      return 1;
+    }
     if (e->xclient.message_type == A_NET_ACTIVE) {
       if (Client *c = client_of(e->xclient.window)) {
         if (c->shaded) c->frame->toggle_shade();
@@ -509,6 +565,9 @@ int main(int argc, char **argv) {
   A_NET_SUPPORTED = XInternAtom(dpy, "_NET_SUPPORTED", False);
   A_NET_CHECK = XInternAtom(dpy, "_NET_SUPPORTING_WM_CHECK", False);
   A_NET_ACTIVE = XInternAtom(dpy, "_NET_ACTIVE_WINDOW", False);
+  A_NET_WM_STATE = XInternAtom(dpy, "_NET_WM_STATE", False);
+  A_NET_WM_STATE_SHADED = XInternAtom(dpy, "_NET_WM_STATE_SHADED", False);
+  A_NET_WM_TYPE_DIALOG = XInternAtom(dpy, "_NET_WM_WINDOW_TYPE_DIALOG", False);
 
   // Minimalne EWMH: kto jest menedżerem okien i co obsługuje.
   Window check = XCreateSimpleWindow(dpy, root, -1, -1, 1, 1, 0, 0, 0);
@@ -516,7 +575,8 @@ int main(int argc, char **argv) {
   XChangeProperty(dpy, check, A_NET_CHECK, XA_WINDOW, 32, PropModeReplace, (unsigned char *)&check, 1);
   XChangeProperty(dpy, check, A_NET_WM_NAME, A_UTF8, 8, PropModeReplace, (unsigned char *)"insight", 7);
   Atom supported[] = {A_NET_WM_NAME, A_NET_WM_TYPE, A_NET_WM_TYPE_DESKTOP, A_NET_WM_TYPE_DOCK,
-                      A_NET_ACTIVE, A_NET_CHECK};
+                      A_NET_ACTIVE, A_NET_CHECK, A_NET_WM_STATE, A_NET_WM_STATE_SHADED,
+                      A_NET_WM_TYPE_DIALOG};
   XChangeProperty(dpy, root, A_NET_SUPPORTED, XA_ATOM, 32, PropModeReplace,
                   (unsigned char *)supported, sizeof supported / sizeof supported[0]);
 

@@ -4,6 +4,7 @@
 #include <FL/Fl.H>
 #include <FL/fl_draw.H>
 #include <FL/Fl_RGB_Image.H>
+#include <FL/Fl_Window.H>
 #include <FL/Fl_Shared_Image.H>
 #include <map>
 
@@ -263,4 +264,31 @@ void FolderPane::draw() {
   std::string t = ellipsize(info_, w() - 10);
   fl_draw(t.c_str(), x(), y(), w(), INFO_H - 1, FL_ALIGN_CENTER);
   draw_children();
+  // uchwyt zmiany rozmiaru w rogu między paskami przewijania (jak w Mac OS 9)
+  draw_grow_box(x() + w() - SCROLL_W, y() + h() - SCROLL_W);
+}
+
+int FolderPane::handle(int e) {
+  int gx = x() + w() - SCROLL_W, gy = y() + h() - SCROLL_W;
+  Fl_Window *win = window();
+  switch (e) {
+  case FL_PUSH:
+    if (win && Fl::event_x() >= gx && Fl::event_y() >= gy) {
+      growing_ = true;
+      grow_dx_ = win->w() - Fl::event_x_root();
+      grow_dy_ = win->h() - Fl::event_y_root();
+      return 1;
+    }
+    break;
+  case FL_DRAG:
+    if (growing_) {
+      win->size(std::max(200, Fl::event_x_root() + grow_dx_), std::max(120, Fl::event_y_root() + grow_dy_));
+      return 1;
+    }
+    break;
+  case FL_RELEASE:
+    if (growing_) { growing_ = false; return 1; }
+    break;
+  }
+  return Fl_Group::handle(e);
 }

@@ -10,6 +10,8 @@
 #include <FL/Fl_RGB_Image.H>
 #include <FL/fl_draw.H>
 #include <FL/platform.H>
+#include <X11/Xatom.h>
+#include <X11/Xlib.h>
 
 #include <algorithm>
 #include <chrono>
@@ -266,46 +268,160 @@ std::string Desktop::title_for(const std::string &path) const {
 }
 
 // ---------------------------------------------------------------------------
+// EWMH: rozmowa z menedżerem okien (Insight lub dowolny zgodny)
+// ---------------------------------------------------------------------------
+static Desktop *g_desk = nullptr;
+static constexpr int MIN_W = 200, MIN_H = 120;
+
+static Atom atom(const char *name) { return XInternAtom(fl_display, name, False); }
+
+static Window net_active() {
+  Atom type; int fmt; unsigned long n, after; unsigned char *data = nullptr;
+  Window w = 0;
+  if (XGetWindowProperty(fl_display, DefaultRootWindow(fl_display), atom("_NET_ACTIVE_WINDOW"), 0, 1,
+                         False, XA_WINDOW, &type, &fmt, &n, &after, &data) == Success && data) {
+    if (n) w = *(Window *)data;
+    XFree(data);
+  }
+  return w;
+}
+
+static void net_message(Window w, Atom type, long l0, long l1, long l2) {
+  XEvent ev{};
+  ev.xclient.type = ClientMessage;
+  ev.xclient.window = w;
+  ev.xclient.message_type = type;
+  ev.xclient.format = 32;
+  ev.xclient.data.l[0] = l0;
+  ev.xclient.data.l[1] = l1;
+  ev.xclient.data.l[2] = l2;
+  ev.xclient.data.l[3] = 1;   // źródło: aplikacja
+  XSendEvent(fl_display, DefaultRootWindow(fl_display), False,
+             SubstructureRedirectMask | SubstructureNotifyMask, &ev);
+  XFlush(fl_display);
+}
+
+// Zmiana aktywnego okna (właściwość na oknie głównym X).
+static int x_watch(void *event, void *) {
+  XEvent *e = (XEvent *)event;
+  if (e->type == PropertyNotify && e->xproperty.window == DefaultRootWindow(fl_display) &&
+      e->xproperty.atom == atom("_NET_ACTIVE_WINDOW") && g_desk)
+    g_desk->active_changed();
+  return 0;
+}
+
+// ---------------------------------------------------------------------------
+// NWin - okno folderu lub dialogu
+// ---------------------------------------------------------------------------
+NWin::NWin(Desktop *d, int X, int Y, int W, int H, const char *title, bool dlg)
+    : Fl_Double_Window(X, Y, W, H), desk(d), dialog(dlg) {
+  copy_label(title);
+  // Klasa "LisaOS-*" mówi Insightowi, że animacje otwierania robimy sami.
+  xclass(dlg ? "LisaOS-Dialog" : "LisaOS-Rambler");
+  callback([](Fl_Widget *w, void *) {
+    auto *n = (NWin *)w;
+    // Escape zamyka dialog, ale nie okno folderu (jak w Mac OS)
+    if (!n->dialog && Fl::event() == FL_SHORTCUT && Fl::event_key() == FL_Escape) return;
+    n->desk->close(n);
+  });
+}
+
+bool NWin::is_active() { return shown() && net_active() == fl_xid(this); }
+
+bool NWin::shaded() {
+  if (!shown()) return false;
+  Atom type; int fmt; unsigned long n, after; unsigned char *data = nullptr;
+  bool s = false;
+  if (XGetWindowProperty(fl_display, fl_xid(this), atom("_NET_WM_STATE"), 0, 32, False, XA_ATOM,
+                         &type, &fmt, &n, &after, &data) == Success && data) {
+    Atom shaded_atom = atom("_NET_WM_STATE_SHADED");
+    for (unsigned long i = 0; i < n; i++) if (((Atom *)data)[i] == shaded_atom) s = true;
+    XFree(data);
+  }
+  return s;
+}
+
+void NWin::set_shaded(bool s) {
+  if (shown()) net_message(fl_xid(this), atom("_NET_WM_STATE"), s ? 1 : 0,
+                           (long)atom("_NET_WM_STATE_SHADED"), 0);
+}
+
+void NWin::activate_window() {
+  show();   // FLTK: okno już widoczne zostaje wyciągnięte na wierzch
+  net_message(fl_xid(this), atom("_NET_ACTIVE_WINDOW"), 1, CurrentTime, 0);
+}
+
+Rect NWin::frame_rect() {
+  return {x() - FRAME, y() - TITLE_H, w() + 2 * FRAME, shaded() ? TITLE_H : h() + TITLE_H + FRAME};
+}
+
+static void remember_later(void *d) {
+  auto *w = (NWin *)d;
+  w->desk->remember(w, true);
+}
+
+NWin::~NWin() { Fl::remove_timeout(remember_later, this); }
+
+int NWin::handle(int e) {
+  int r = Fl_Double_Window::handle(e);
+  // Pasek menu żyje w oknie biurka, a fokus ma okno folderu - przekaż skrót.
+  if (!r && e == FL_SHORTCUT && !dialog) r = desk->shortcut();
+  return r;
+}
+
+// Zapamiętaj położenie po przesunięciu lub zmianie rozmiaru - z opóźnieniem,
+// bo podczas przeciągania menedżer okien przysyła wiele zmian.
+void NWin::resize(int X, int Y, int W, int H) {
+  Fl_Double_Window::resize(X, Y, W, H);
+  if (pane && shown()) {
+    Fl::remove_timeout(remember_later, this);
+    Fl::add_timeout(0.4, remember_later, this);
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Okna
 // ---------------------------------------------------------------------------
-Desktop::Win *Desktop::find(PWindow *w) {
-  for (auto &x : wins_) if (x.win == w) return &x;
+NWin *Desktop::find(const std::string &path) {
+  for (auto *w : wins_) if (w->pane && w->path == path) return w;
   return nullptr;
 }
-Desktop::Win *Desktop::find(const std::string &path) {
-  for (auto &x : wins_) if (x.pane && x.path == path) return &x;
+
+bool Desktop::known(NWin *w) const {
+  return std::find(wins_.begin(), wins_.end(), w) != wins_.end();
+}
+
+NWin *Desktop::active_folder() {
+  Window a = net_active();
+  for (auto *w : wins_) if (w->pane && w->shown() && fl_xid(w) == a) return w;
   return nullptr;
 }
-Desktop::Win *Desktop::top() {
-  // okno najwyżej w kolejności rysowania
-  Win *best = nullptr;
-  int bi = -1;
-  for (auto &x : wins_) {
-    int i = Fl_Group::find(x.win);
-    if (i > bi) { bi = i; best = &x; }
+
+int Desktop::shortcut() {
+  // Uwaga: Fl_Menu_::test_shortcut() sam wywołuje akcję znalezionej pozycji.
+  return menu_->test_shortcut() ? 1 : 0;
+}
+
+void Desktop::active_changed() {
+  Window a = net_active();
+  for (auto it = wins_.begin(); it != wins_.end(); ++it) {
+    if ((*it)->shown() && fl_xid(*it) == a) {
+      NWin *w = *it;
+      wins_.erase(it);
+      wins_.push_back(w);           // ostatnio aktywne na końcu listy
+      if (icon_sel_ >= 0) { icon_sel_ = -1; redraw(); }
+      return;
+    }
   }
-  return best;
 }
 
-void Desktop::raise(PWindow *w) {
-  insert(*w, Fl_Group::find(menu_));
-  for (auto &x : wins_) x.win->set_active(x.win == w);
-  icon_sel_ = -1;
-  if (Win *x = find(w); x && x->pane) Fl::focus(x->pane->view());
-  redraw();
-}
-
-void Desktop::remember(Win &w, bool open) {
-  if (!w.pane) return;
+void Desktop::remember(NWin *w, bool open) {
+  if (!w->pane || !known(w)) return;
   WinState s;
-  s.x = w.win->x(); s.y = w.win->y(); s.w = w.win->w();
-  s.h = w.win->shaded() ? 0 : w.win->h();
-  WinState old;
-  if (w.win->shaded() && spatial_.get(w.path, old)) s.h = old.h;   // zachowaj pełną wysokość
-  if (s.h == 0) s.h = 300;
-  s.shaded = w.win->shaded();
+  s.x = w->x(); s.y = w->y(); s.w = w->w(); s.h = w->h();
+  s.shaded = w->shaded();
   s.open = open;
-  spatial_.set(w.path, s);
+  spatial_.set(w->path, s);
 }
 
 bool Desktop::source_rect(const std::string &path, Rect &out) {
@@ -313,37 +429,32 @@ bool Desktop::source_rect(const std::string &path, Rect &out) {
   for (auto &ic : icons_)
     if (ic.path == path) { out = to_screen({ic.x + 24, ic.y, 32, 32}); return true; }
   // Pozostałe foldery - ikona w oknie folderu nadrzędnego, jeśli jest otwarte
-  Win *parent_win = find(fs::path(path).parent_path().string());
-  if (parent_win && !parent_win->win->shaded() && parent_win->pane->view()->icon_rect(path, out)) {
-    out = to_screen(out);
+  NWin *parent_win = find(fs::path(path).parent_path().string());
+  if (parent_win && parent_win->shown() && !parent_win->shaded() &&
+      parent_win->pane->view()->icon_rect(path, out)) {
+    out = {out.x + parent_win->x(), out.y + parent_win->y(), out.w, out.h};
     return true;
   }
   return false;
 }
 
-void Desktop::close(PWindow *w) {
-  auto it = std::find_if(wins_.begin(), wins_.end(), [&](const Win &x) { return x.win == w; });
-  if (it == wins_.end()) return;
-  // folder wraca do swojej ikony (albo zapada się do środka)
-  Rect from = to_screen({w->x(), w->y(), w->w(), w->h()}), to;
-  bool animate = it->pane != nullptr;
-  if (animate && !source_rect(it->path, to)) to = center_of(from);
-  remember(*it, false);
-  wins_.erase(it);
-  remove(w);
+void Desktop::close(NWin *w) {
+  if (!known(w)) return;
+  bool folder = w->pane != nullptr;
+  Rect from = w->frame_rect(), to;
+  if (folder && !source_rect(w->path, to)) to = center_of(from);
+  if (folder) remember(w, false);
+  Fl::remove_timeout(remember_later, w);
+  wins_.erase(std::find(wins_.begin(), wins_.end(), w));
+  w->hide();
   Fl::delete_widget(w);
-  if (Win *t = top()) t->win->set_active(true);
-  redraw();          // ikony folderów tracą kreskowanie "otwarty"
-  if (animate) {
+  // ikony folderów w pozostałych oknach tracą kreskowanie "otwarty"
+  for (auto *o : wins_) if (o->pane) o->pane->view()->redraw();
+  if (folder) {
     Fl::flush();     // najpierw zniknięcie okna, potem kontury
+    XSync(fl_display, False);
     zoom_rects(from, to);
   }
-}
-
-void Desktop::wire(PWindow *w) {
-  w->on_raise = [this](PWindow *p) { if (!p->is_active() || Fl_Group::find(p) + 1 != Fl_Group::find(menu_)) raise(p); };
-  w->on_close = [this](PWindow *p) { close(p); };
-  w->on_geometry = [this](PWindow *p) { if (Win *x = find(p)) remember(*x, true); };
 }
 
 void Desktop::open_folder(const std::string &path, bool animate) {
@@ -355,55 +466,51 @@ void Desktop::open_folder(const std::string &path, bool animate) {
   }
   std::error_code ec;
   if (path == trash_dir()) fs::create_directories(path, ec);
-  if (Win *x = find(path)) {
+  if (NWin *w = find(path)) {
     // już otwarty: jak w Mac OS - kontury pokazują, gdzie jest jego okno
     Rect src;
-    if (animate && source_rect(path, src))
-      zoom_rects(src, to_screen({x->win->x(), x->win->y(), x->win->w(), x->win->h()}));
-    if (x->win->shaded()) x->win->toggle_shade();
-    raise(x->win);
+    if (animate && source_rect(path, src)) zoom_rects(src, w->frame_rect());
+    if (w->shaded()) w->set_shaded(false);
+    w->activate_window();
     return;
   }
+  // Pozycja dotyczy treści okna (bez ramki) - tak zapisuje ją FLTK.
   WinState s;
-  bool known = spatial_.get(path, s);
-  if (!known) {
-    int n = (int)wins_.size();
+  bool known_pos = spatial_.get(path, s);
+  if (!known_pos) {
+    int n = 0;
+    for (auto *w : wins_) if (w->pane) n++;
     s.x = 40 + 26 * (n % 8);
-    s.y = MENUBAR_H + 30 + 26 * (n % 8);
-    s.w = 440; s.h = 290;
+    s.y = MENUBAR_H + TITLE_H + 24 + 26 * (n % 8);
+    s.w = 440; s.h = 270;
   }
-  s.x = std::clamp(s.x, 0, std::max(0, w() - 120));
-  s.y = std::clamp(s.y, MENUBAR_H, std::max(MENUBAR_H, h() - 60));
+  s.w = std::max(s.w, MIN_W);
+  s.h = std::max(s.h, MIN_H);
+  s.x = std::clamp(s.x, FRAME, std::max(FRAME, w() - 120));
+  s.y = std::clamp(s.y, MENUBAR_H + TITLE_H, std::max(MENUBAR_H + TITLE_H, h() - 60));
 
   if (animate) {
-    Rect to = to_screen({s.x, s.y, std::max(s.w, PWindow::MIN_W), std::max(s.h, PWindow::MIN_H)});
+    Rect to = {s.x - FRAME, s.y - TITLE_H, s.w + 2 * FRAME, s.h + TITLE_H + FRAME};
+    if (known_pos && s.shaded) to.h = TITLE_H;
     Rect from;
-    if (known && s.shaded) to.h = TITLE_H + 1;
     if (!source_rect(path, from)) from = center_of(to);
     zoom_rects(from, to);
   }
 
-  begin();
-  auto *pw = new PWindow(s.x, s.y, std::max(s.w, PWindow::MIN_W), std::max(s.h, PWindow::MIN_H),
-                         title_for(path).c_str());
-  pw->content()->begin();
-  auto *c = pw->content();
-  auto *pane = new FolderPane(c->x(), c->y(), c->w(), c->h(), path, root_);
-  c->resizable(pane);
-  pw->content()->end();
-  end();
-
-  pane->view()->on_open = [this](const Entry &e) { open_entry(e); };
-  pane->view()->is_open = [this](const std::string &p) { return find(p) != nullptr; };
-  wire(pw);
-  wins_.push_back({pw, pane, path, {}});
-  if (known && s.shaded) {
-    animations_suspend(true);       // od razu zwinięte, bez dodatkowej animacji
-    pw->toggle_shade();
-    animations_suspend(false);
-  }
-  raise(pw);
-  remember(wins_.back(), true);
+  auto *win = new NWin(this, s.x, s.y, s.w, s.h, title_for(path).c_str(), false);
+  win->path = path;
+  win->pane = new FolderPane(0, 0, s.w, s.h, path, root_);
+  win->resizable(win->pane);
+  win->size_range(MIN_W, MIN_H);
+  win->end();
+  win->pane->view()->on_open = [this](const Entry &e) { open_entry(e); };
+  win->pane->view()->is_open = [this](const std::string &p) { return find(p) != nullptr; };
+  wins_.push_back(win);
+  win->show();
+  if (known_pos && s.shaded) win->set_shaded(true);
+  // ikona folderu w oknie nadrzędnym dostaje kreskowanie "otwarty"
+  for (auto *o : wins_) if (o->pane && o != win) o->pane->view()->redraw();
+  remember(win, true);
 }
 
 void Desktop::open_entry(const Entry &e) {
@@ -449,9 +556,11 @@ void Desktop::open_appimage(const std::string &path) {
 
 void Desktop::run_app(const std::string &path) {
   if (!appimage::is_installed(path, home_)) {
+    for (auto *w : wins_) w->cursor(FL_CURSOR_WAIT);
     cursor(FL_CURSOR_WAIT);
     Fl::flush();
     std::string err = appimage::install(path, home_);
+    for (auto *w : wins_) w->cursor(FL_CURSOR_DEFAULT);
     cursor(FL_CURSOR_DEFAULT);
     if (!err.empty()) {
       dialog("Nie można uruchomić", err, {{"OK", nullptr}});
@@ -462,6 +571,14 @@ void Desktop::run_app(const std::string &path) {
 }
 
 void Desktop::restore() {
+  g_desk = this;
+  // śledź zmiany aktywnego okna (bez nadpisywania masek, które ustawił FLTK)
+  XWindowAttributes wa;
+  Window rootw = DefaultRootWindow(fl_display);
+  XGetWindowAttributes(fl_display, rootw, &wa);
+  XSelectInput(fl_display, rootw, wa.your_event_mask | PropertyChangeMask);
+  Fl::add_system_handler(x_watch, nullptr);
+
   int n = 0;
   for (auto &p : spatial_.open_paths()) {
     std::error_code ec;
@@ -474,8 +591,6 @@ void Desktop::restore() {
 // Rysowanie i zdarzenia biurka
 // ---------------------------------------------------------------------------
 void Desktop::draw() {
-  // Zawsze pełne odrysowanie (z podwójnym buforem): okna nachodzą na siebie,
-  // a FLTK nie pilnuje kolejności przy częściowych odświeżeniach.
   pattern_->draw(0, 0, w(), h());
   fl_font(FONT_SMALL, SIZE_SMALL);
   for (int i = 0; i < (int)icons_.size(); i++) {
@@ -494,15 +609,8 @@ void Desktop::draw() {
 
 int Desktop::handle(int e) {
   if (e == FL_PUSH && Fl::event_y() >= MENUBAR_H) {
-    // najpierw okna (od góry), potem ikony biurka
-    for (int i = children() - 1; i >= 0; i--) {
-      Fl_Widget *c = child(i);
-      if (c == menu_ || c == extras_ || !c->visible()) continue;
-      if (Fl::event_inside(c)) return Fl_Double_Window::handle(e);
-    }
     int i = icon_at(Fl::event_x(), Fl::event_y());
     icon_sel_ = i;
-    for (auto &x : wins_) x.win->set_active(false);
     if (i >= 0 && Fl::event_clicks()) {
       Fl::event_clicks(0);
       open_folder(icons_[i].path);
@@ -514,16 +622,12 @@ int Desktop::handle(int e) {
 }
 
 // ---------------------------------------------------------------------------
-// Dialogi - to też okna Platinum w obrębie biurka
+// Dialogi - osobne, modalne okna; Insight rysuje im ramkę bez przycisków
 // ---------------------------------------------------------------------------
 void Desktop::dialog_cb(Fl_Widget *b, void *idx) {
-  Fl_Widget *p = b->parent();
-  while (p && !dynamic_cast<PWindow *>(p)) p = p->parent();
-  auto *self = (Desktop *)b->window();
-  Win *x = self->find((PWindow *)p);
-  if (!x) return;
-  auto action = x->actions[(long)idx];
-  self->close((PWindow *)p);
+  auto *p = (NWin *)b->window();
+  auto action = p->actions[(long)idx];
+  p->desk->close(p);
   if (action) action();
 }
 
@@ -532,34 +636,27 @@ void Desktop::dialog(const std::string &title, const std::string &text,
   fl_font(FONT_SYSTEM, SIZE_SYSTEM);
   int tw = 0, th = 0;
   fl_measure(text.c_str(), tw, th, 0);
-  int W = std::max(320, tw + 100), H = std::max(150, th + 100);
+  int W = std::max(320, tw + 100), H = std::max(130, th + 80);
   int X = (w() - W) / 2, Y = (h() - H) / 3;
 
-  begin();
-  auto *pw = new PWindow(X, Y, W, H, title.c_str());
-  pw->set_dialog(true);
-  auto *c = pw->content();
-  c->begin();
-  auto *bg = new Fl_Box(c->x(), c->y(), c->w(), c->h());
-  bg->box(FL_FLAT_BOX);
-  bg->color(GRAY);
+  auto *win = new NWin(this, X, Y, W, H, title.c_str(), true);
+  win->color(GRAY);
   // ikona-logo po lewej
   struct Logo : Fl_Widget {
     Logo(int X, int Y) : Fl_Widget(X, Y, 34, 34) {}
     void draw() override { draw_logo(x(), y(), 32); }
   };
-  new Logo(c->x() + 16, c->y() + 16);
-  auto *msg = new Fl_Box(c->x() + 64, c->y() + 14, c->w() - 80, th + 8);
+  new Logo(16, 16);
+  auto *msg = new Fl_Box(64, 14, W - 80, th + 8);
   msg->copy_label(text.c_str());
   msg->labelfont(FONT_SYSTEM);
   msg->labelsize(SIZE_SYSTEM);
   msg->align(FL_ALIGN_LEFT | FL_ALIGN_TOP | FL_ALIGN_INSIDE | FL_ALIGN_WRAP);
 
-  Win rec{pw, nullptr, "", {}};
-  int bx = c->x() + c->w() - 16;
+  int bx = W - 16;
   for (int i = (int)buttons.size() - 1; i >= 0; i--) {
     bx -= 84;
-    auto *b = new Fl_Button(bx, c->y() + c->h() - 36, 76, 22);
+    auto *b = new Fl_Button(bx, H - 36, 76, 22);
     b->copy_label(buttons[i].first.c_str());
     b->box(BUTTON_BOX);
     b->down_box(BUTTON_DOWN);
@@ -570,12 +667,11 @@ void Desktop::dialog(const std::string &title, const std::string &text,
     if (i == (int)buttons.size() - 1) b->shortcut(FL_Enter);
     bx -= 6;
   }
-  for (auto &b : buttons) rec.actions.push_back(b.second);
-  c->end();
-  end();
-  wire(pw);
-  wins_.push_back(std::move(rec));
-  raise(pw);
+  for (auto &b : buttons) win->actions.push_back(b.second);
+  win->end();
+  win->set_modal();
+  wins_.push_back(win);
+  win->show();
 }
 
 // ---------------------------------------------------------------------------
@@ -596,8 +692,8 @@ void Desktop::about() {
 }
 
 void Desktop::new_folder() {
-  Win *t = top();
-  std::string dir = (t && t->pane && t->win->is_active()) ? t->path : home_;
+  NWin *a = active_folder();
+  std::string dir = a ? a->path : home_;
   std::string base = dir + "/bez nazwy";
   std::string p = base;
   std::error_code ec;
@@ -607,23 +703,23 @@ void Desktop::new_folder() {
 }
 
 void Desktop::open_selected() {
-  Win *t = top();
-  if (t && t->pane && t->win->is_active()) {
-    if (const Entry *e = t->pane->view()->selected()) open_entry(*e);
+  if (NWin *a = active_folder()) {
+    if (const Entry *e = a->pane->view()->selected()) open_entry(*e);
   } else if (icon_sel_ >= 0) {
     open_folder(icons_[icon_sel_].path);
   }
 }
 
 void Desktop::close_active() {
-  Win *t = top();
-  if (t && t->win->is_active()) close(t->win);
+  Window a = net_active();
+  for (auto *w : wins_)
+    if (w->shown() && fl_xid(w) == a) { close(w); return; }
 }
 
 void Desktop::move_to_trash() {
-  Win *t = top();
-  if (!t || !t->pane || !t->win->is_active()) return;
-  const Entry *e = t->pane->view()->selected();
+  NWin *a = active_folder();
+  if (!a) return;
+  const Entry *e = a->pane->view()->selected();
   if (!e) return;
   // Kosz zgodny ze specyfikacją freedesktop.org
   std::string files = trash_dir(), info = home_ + "/.local/share/Trash/info";
@@ -632,10 +728,10 @@ void Desktop::move_to_trash() {
   fs::create_directories(info, ec);
   std::string name = e->name, dest = files + "/" + name;
   for (int i = 2; fs::exists(dest, ec); i++) { name = e->name + "." + std::to_string(i); dest = files + "/" + name; }
-  std::string src = e->path;
+  std::string src = e->path, shown_name = e->name;
   fs::rename(src, dest, ec);
   if (ec) {
-    dialog("Kosz", "Nie udało się przenieść „" + e->name + "” do kosza:\n" + ec.message(), {{"OK", nullptr}});
+    dialog("Kosz", "Nie udało się przenieść „" + shown_name + "” do kosza:\n" + ec.message(), {{"OK", nullptr}});
     return;
   }
   char date[32];
@@ -681,13 +777,15 @@ void Desktop::ask_root() {
 }
 
 void Desktop::refresh_all() {
-  for (auto &x : wins_) if (x.pane) x.pane->refresh();
+  for (auto *w : wins_) if (w->pane) w->pane->refresh();
   layout_icons();
   redraw();
 }
 
 void Desktop::quit() {
-  for (auto &x : wins_) remember(x, true);
+  for (auto *w : wins_) if (w->pane) remember(w, true);
+  std::vector<NWin *> all = wins_;
+  for (auto *w : all) w->hide();
   hide();
 }
 
@@ -706,28 +804,26 @@ static std::string menu_escape(const std::string &s) {
 
 void Desktop::build_windows_menu(Fl_Menu_Button *m) {
   m->clear();
-  // okna w kolejności od najwyższego
-  std::vector<Win *> order;
-  for (auto &x : wins_) if (x.pane) order.push_back(&x);
-  std::sort(order.begin(), order.end(), [this](Win *a, Win *b) {
-    return Fl_Group::find(a->win) > Fl_Group::find(b->win);
-  });
+  // okna od ostatnio aktywnego
+  std::vector<NWin *> order;
+  for (auto it = wins_.rbegin(); it != wins_.rend(); ++it) if ((*it)->pane) order.push_back(*it);
   if (order.empty()) {
     m->add("Brak otwartych okien", 0, nullptr, nullptr, FL_MENU_INACTIVE | FL_MENU_DIVIDER);
   }
+  Window a = net_active();
   for (size_t i = 0; i < order.size(); i++) {
-    Win *x = order[i];
-    int flags = FL_MENU_RADIO | (x->win->is_active() ? FL_MENU_VALUE : 0);
+    NWin *w = order[i];
+    int flags = FL_MENU_RADIO | (w->shown() && fl_xid(w) == a ? FL_MENU_VALUE : 0);
     if (i + 1 == order.size()) flags |= FL_MENU_DIVIDER;
-    m->add(menu_escape(x->win->label()).c_str(), 0,
-           [](Fl_Widget *w, void *d) {
-             auto *self = (Desktop *)w->window();
-             auto *pw = (PWindow *)d;
-             if (!self->find(pw)) return;
-             if (pw->shaded()) pw->toggle_shade();
-             self->raise(pw);
+    m->add(menu_escape(w->label()).c_str(), 0,
+           [](Fl_Widget *mw, void *d) {
+             auto *self = (Desktop *)mw->window();
+             auto *w = (NWin *)d;
+             if (!self->known(w)) return;
+             if (w->shaded()) w->set_shaded(false);
+             w->activate_window();
            },
-           x->win, flags);
+           w, flags);
   }
   int on = order.empty() ? FL_MENU_INACTIVE : 0;
   m->add("Zwiń wszystkie", 0, [](Fl_Widget *w, void *) { ((Desktop *)w->window())->shade_all(true); }, nullptr, on);
@@ -736,13 +832,12 @@ void Desktop::build_windows_menu(Fl_Menu_Button *m) {
 }
 
 void Desktop::shade_all(bool shade) {
-  for (auto &x : wins_)
-    if (x.pane && x.win->shaded() != shade) x.win->toggle_shade();
-  redraw();
+  for (auto *w : wins_)
+    if (w->pane && w->shaded() != shade) w->set_shaded(shade);
 }
 
 void Desktop::close_all() {
-  std::vector<PWindow *> v;
-  for (auto &x : wins_) if (x.pane) v.push_back(x.win);
+  std::vector<NWin *> v;
+  for (auto *w : wins_) if (w->pane) v.push_back(w);
   for (auto *w : v) close(w);
 }

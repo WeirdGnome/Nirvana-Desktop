@@ -55,6 +55,7 @@ public:
   const std::string &path() const { return path_; }
   void resize(int X, int Y, int W, int H) override;
   void draw() override;
+  int handle(int e) override;   // uchwyt zmiany rozmiaru w prawym dolnym rogu
 
   static constexpr int INFO_H = 18;
 
@@ -64,4 +65,6 @@ private:
   Fl_Scroll *scroll_;
   FolderView *view_;
   void update_info();
+  bool growing_ = false;
+  int grow_dx_ = 0, grow_dy_ = 0;
 };
