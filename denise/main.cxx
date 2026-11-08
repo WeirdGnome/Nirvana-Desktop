@@ -6,6 +6,8 @@
 //   lisaos-denise --home DIR      inny katalog domowy (np. do testów)
 //   lisaos-denise --size 1024x768 rozmiar biurka (domyślnie cały ekran)
 #include <FL/Fl.H>
+#include <FL/platform.H>
+#include <X11/Xatom.h>
 #include <csignal>
 #include <cstdio>
 #include <cstdlib>
@@ -41,7 +43,15 @@ int main(int argc, char **argv) {
 
   Desktop desk(W, H, home, root);
   desk.border(0);
+  desk.xclass("LisaOS-Desktop");   // agnus rozpozna biurko i nie da mu ramki
   desk.show();
+  // Dla innych menedżerów okien: standardowe oznaczenie okna biurka (EWMH).
+  {
+    Atom type = XInternAtom(fl_display, "_NET_WM_WINDOW_TYPE", False);
+    Atom desk_t = XInternAtom(fl_display, "_NET_WM_WINDOW_TYPE_DESKTOP", False);
+    XChangeProperty(fl_display, fl_xid(&desk), type, XA_ATOM, 32, PropModeReplace,
+                    (unsigned char *)&desk_t, 1);
+  }
   desk.restore();
   return Fl::run();
 }

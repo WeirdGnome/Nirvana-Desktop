@@ -41,4 +41,11 @@ add_executable(lisaos-denise
   denise/spatial.cxx)
 target_link_libraries(lisaos-denise PRIVATE lisaos-platinum)
 
-install(TARGETS lisaos-denise RUNTIME DESTINATION bin)
+# --- agnus: menedżer okien X11 ----------------------------------------------
+find_package(X11 REQUIRED)
+add_executable(lisaos-agnus agnus/main.cxx)
+target_link_libraries(lisaos-agnus PRIVATE lisaos-platinum X11::X11)
+
+install(TARGETS lisaos-denise lisaos-agnus RUNTIME DESTINATION bin)
+install(PROGRAMS session/lisaos-session DESTINATION bin)
+install(FILES session/lisaos.desktop DESTINATION share/xsessions)

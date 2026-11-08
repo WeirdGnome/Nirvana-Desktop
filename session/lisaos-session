@@ -1,0 +1,19 @@
+#!/bin/sh
+# LisaOS - start sesji graficznej
+# Uruchamia menedżer okien (agnus), a potem biurko i menedżer plików (Rambler).
+# Użycie:  startx /usr/bin/lisaos-session
+#     albo z ekranu logowania (plik /usr/share/xsessions/lisaos.desktop)
+
+BIN="$(dirname "$(readlink -f "$0")")"
+# przy uruchamianiu z katalogu źródeł binarki leżą w build/
+[ -x "$BIN/lisaos-agnus" ] || BIN="$BIN/../build"
+
+"$BIN/lisaos-agnus" &
+AGNUS=$!
+
+# daj agnusowi chwilę na przejęcie ekranu
+sleep 0.5
+
+# Rambler działa przez całą sesję; jego zamknięcie (Specjalne > Wyłącz) kończy sesję.
+"$BIN/lisaos-denise" "$@"
+kill $AGNUS 2>/dev/null

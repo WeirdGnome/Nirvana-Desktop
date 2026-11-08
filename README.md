@@ -15,7 +15,7 @@ Lekkie środowisko graficzne dla Linuksa (baza: minimalny Devuan) w duchu
 |---------------------|----------------------------------------|-------------|
 | `lisaos-platinum`   | biblioteka wyglądu: kolory, ramki, ikony, chrome okien | prototyp |
 | `lisaos-denise`     | Rambler: menedżer plików + biurko        | prototyp    |
-| `lisaos-agnus`      | menedżer okien X11 (chrome z libplatinum) | planowany |
+| `lisaos-agnus`      | menedżer okien X11 (Xorg/XLibre), ramki Platinum | działa (0.1) |
 | `lisaos-gary`       | globalny pasek menu, przełącznik aplikacji | planowany |
 | `lisaos-alice`      | panele sterowania                       | planowany   |
 | `lisaos-paula`      | dźwięk                                  | planowany   |
@@ -38,14 +38,31 @@ Z własnym FLTK: `-DFLTK_DIR=/ścieżka/do/share/fltk`.
 
 ## Uruchamianie
 
-Najwygodniej w zagnieżdżonym serwerze X:
+**Pełna sesja** (agnus + biurko Ramblera), np. w zagnieżdżonym serwerze X:
 
     Xephyr :2 -screen 1024x768 &
-    DISPLAY=:2 ./build/lisaos-denise
+    DISPLAY=:2 ./session/lisaos-session
 
-Opcje: `--root`, `--home KATALOG`, `--size 1024x768`.
+Na Devuanie po `sudo cmake --install build`:
+
+    startx /usr/local/bin/lisaos-session
+
+albo wybierz „LisaOS” na ekranie logowania (plik `share/xsessions/lisaos.desktop`).
+
+**Sam Rambler** (bez menedżera okien, np. pod GNOME): `./build/lisaos-denise --size 1024x768`.
+
+Opcje Ramblera: `--root`, `--home KATALOG`, `--size 1024x768`.
 Czcionkę systemową w stylu Chicago można podać przez `LISAOS_SYSTEM_FONT`
 (np. wolny font ChicagoFLF).
+
+## Agnus: obsługa okien
+
+- pasek tytułu: przeciąganie przesuwa okno, podwójne kliknięcie je zwija
+- przyciski: zamknij (z lewej, uprzejmie przez `WM_DELETE_WINDOW`), zwiń i zoom (z prawej)
+- prawa i dolna krawędź ramki oraz prawy dolny róg: zmiana rozmiaru
+- klik w okno aplikacji aktywuje je i wyciąga na wierzch; klik w biurko dezaktywuje okna
+- okna nie wchodzą pod pasek menu; biurko Ramblera zawsze leży na dole
+- bez kompozytora: aplikacje rysują prosto na ekran (mniej pamięci)
 
 ## Obsługa prototypu
 
