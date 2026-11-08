@@ -777,6 +777,7 @@ void Desktop::run_app(const std::string &path) {
       dialog("Nie można uruchomić", err, {{"OK", nullptr}});
       return;
     }
+    refresh_all();   // ikona części AppImage (np. DwarFS) jest dostępna dopiero po rozpakowaniu
   }
   appimage::launch(path, home_);
 }

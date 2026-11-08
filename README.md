@@ -80,6 +80,11 @@ Czcionkę systemową w stylu Chicago można podać przez `LISAOS_SYSTEM_FONT`
   wyłącznie w LisaOS HD, inni użytkownicy, `/root`, `/mnt` i `/media` niewidoczne,
   własny `/tmp` i własna przestrzeń procesów; sama aplikacja jest tylko do odczytu.
   Bez bubblewrap aplikacja startuje normalnie, a dialog instalacji o tym ostrzega.
+- **Różne runtime'y**: obraz squashfs jest szukany za nagłówkiem ELF (z weryfikacją
+  superbloku), więc działa też z runtime'ami, które dodają wyrównanie. Gdy w środku
+  nie ma squashfs (np. DwarFS w „uruntime”), AppImage rozpakowuje się sam przez
+  `--appimage-extract`, ale w piaskownicy bez sieci i z zapisem tylko do katalogu
+  tymczasowego. Ikona takiej aplikacji pojawia się po instalacji.
 - Testowe AppImage: `tools/testowe-appimage.sh KATALOG`. „Zegar” zapisuje
   `~/piaskownica.txt` z tym, co widzi z wnętrza piaskownicy.
 

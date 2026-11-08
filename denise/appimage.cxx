@@ -74,26 +74,66 @@ static bool have(const char *prog) {
 // ---------------------------------------------------------------------------
 // ELF i squashfs
 // ---------------------------------------------------------------------------
-bool squashfs_offset(const std::string &path, uint64_t &offset) {
+// Koniec obrazu ELF = koniec tablicy nagłówków sekcji.
+static bool elf_end(const std::string &path, uint64_t &end) {
   std::ifstream f(path, std::ios::binary);
   unsigned char id[EI_NIDENT];
   if (!f.read((char *)id, EI_NIDENT) || memcmp(id, ELFMAG, SELFMAG) != 0) return false;
   f.seekg(0);
-  // Koniec ELF-a = koniec tablicy nagłówków sekcji; tam zaczyna się squashfs.
   if (id[EI_CLASS] == ELFCLASS64) {
     Elf64_Ehdr h;
     if (!f.read((char *)&h, sizeof h)) return false;
-    offset = h.e_shoff + (uint64_t)h.e_shentsize * h.e_shnum;
+    end = h.e_shoff + (uint64_t)h.e_shentsize * h.e_shnum;
   } else if (id[EI_CLASS] == ELFCLASS32) {
     Elf32_Ehdr h;
     if (!f.read((char *)&h, sizeof h)) return false;
-    offset = h.e_shoff + (uint64_t)h.e_shentsize * h.e_shnum;
+    end = h.e_shoff + (uint64_t)h.e_shentsize * h.e_shnum;
   } else {
     return false;
   }
-  char magic[4];
-  f.seekg((std::streamoff)offset);
-  return f.read(magic, 4) && memcmp(magic, "hsqs", 4) == 0;
+  return true;
+}
+
+// Prawdziwy superblok squashfs 4.x, a nie przypadkowe "hsqs" w danych.
+static bool squashfs_super(const unsigned char *p) {
+  if (memcmp(p, "hsqs", 4) != 0) return false;
+  uint32_t block_size; uint16_t block_log, major;
+  memcpy(&block_size, p + 12, 4);
+  memcpy(&block_log, p + 22, 2);
+  memcpy(&major, p + 28, 2);
+  return major == 4 && block_log >= 12 && block_log <= 20 && block_size == (1u << block_log);
+}
+
+// Szuka obrazu za ELF-em. Klasyczny runtime AppImage kładzie go dokładnie na końcu
+// ELF-a, ale nowsze (np. uruntime) potrafią dodać wyrównanie albo dane pośrodku.
+// kind: "squashfs", "dwarfs" albo "" (nie znaleziono).
+static bool find_payload(const std::string &path, uint64_t &offset, std::string &kind) {
+  kind.clear();
+  uint64_t start;
+  if (!elf_end(path, start)) return false;
+  std::ifstream f(path, std::ios::binary);
+  const uint64_t LIMIT = 64ull << 20;          // szukamy w pierwszych 64 MB za ELF-em
+  const size_t CHUNK = 1 << 20, OVER = 64;
+  std::vector<unsigned char> buf(CHUNK + OVER);
+  for (uint64_t pos = start; pos < start + LIMIT; pos += CHUNK) {
+    f.clear();
+    f.seekg((std::streamoff)pos);
+    f.read((char *)buf.data(), (std::streamsize)buf.size());
+    size_t got = (size_t)f.gcount();
+    if (got < 32) break;
+    for (size_t k = 0; k + 32 <= got && k < CHUNK; k++) {
+      if (buf[k] == 'h' && squashfs_super(&buf[k])) { offset = pos + k; kind = "squashfs"; return true; }
+      if (buf[k] == 'D' && k + 6 <= got && !memcmp(&buf[k], "DWARFS", 6)) {
+        offset = pos + k; kind = "dwarfs"; return false;   // nie umiemy czytać bez uruchamiania
+      }
+    }
+  }
+  return false;
+}
+
+bool squashfs_offset(const std::string &path, uint64_t &offset) {
+  std::string kind;
+  return find_payload(path, offset, kind);
 }
 
 // Klucz pliku: zmienia się, gdy plik zostanie podmieniony na inną wersję.
@@ -128,8 +168,24 @@ std::string icon(const std::string &path, const std::string &home) {
   if (fs::exists(cache / (k + ".brak"), ec)) return "";   // już wiemy, że ikony nie ma
 
   fs::create_directories(cache, ec);
+  auto store = [&](const std::string &data) -> std::string {
+    const char *ext = nullptr;
+    if (data.size() > 8 && !memcmp(data.data(), "\x89PNG", 4)) ext = ".png";
+    else if (data.find("<svg") != std::string::npos) ext = ".svg";
+    if (!ext) return "";
+    std::ofstream(cache / (k + ext), std::ios::binary) << data;
+    return (cache / (k + ext)).string();
+  };
+  // Aplikacja już zainstalowana (np. rozpakowana przez własny runtime) - ikona jest na dysku.
+  fs::path installed_icon = fs::path(install_dir(path, home)) / ".DirIcon";
+  if (fs::exists(installed_icon, ec)) {
+    std::ifstream in(installed_icon, std::ios::binary);
+    std::string r = store(std::string((std::istreambuf_iterator<char>(in)), {}));
+    if (!r.empty()) return r;
+  }
   uint64_t off;
   static bool tool = have("unsquashfs");
+  // Bez squashfs (np. DwarFS) ikonę pokażemy po instalacji - bez znacznika "brak".
   if (!tool || !squashfs_offset(path, off)) return "";
 
   fs::path tmp = cache / ("tmp-" + k);
@@ -138,14 +194,7 @@ std::string icon(const std::string &path, const std::string &home) {
   if (extract(path, off, tmp.string(), {".DirIcon"})) {
     fs::path ic = tmp / ".DirIcon";
     std::ifstream in(ic, std::ios::binary);   // dowiązanie wskazuje na rozpakowany plik
-    std::string data((std::istreambuf_iterator<char>(in)), {});
-    const char *ext = nullptr;
-    if (data.size() > 8 && !memcmp(data.data(), "\x89PNG", 4)) ext = ".png";
-    else if (data.find("<svg") != std::string::npos) ext = ".svg";
-    if (ext) {
-      std::ofstream(cache / (k + ext), std::ios::binary) << data;
-      result = (cache / (k + ext)).string();
-    }
+    result = store(std::string((std::istreambuf_iterator<char>(in)), {}));
   }
   fs::remove_all(tmp, ec);
   if (result.empty()) std::ofstream(cache / (k + ".brak"));
@@ -175,21 +224,66 @@ bool is_installed(const std::string &path, const std::string &home) {
   return fs::exists(fs::path(install_dir(path, home)) / "AppRun", ec);
 }
 
+// Awaryjnie: niech AppImage rozpakuje się sam (--appimage-extract). Robimy to
+// w piaskownicy bez sieci, z zapisem tylko do katalogu tymczasowego.
+static bool self_extract(const std::string &path, const fs::path &tmp) {
+  std::error_code ec;
+  fs::create_directories(tmp, ec);
+  chmod(path.c_str(), 0755);
+  int r;
+  if (sandbox_available()) {
+    r = run_wait({"bwrap", "--ro-bind", "/", "/", "--dev", "/dev", "--proc", "/proc",
+                  "--tmpfs", "/tmp", "--bind", tmp.string(), tmp.string(),
+                  "--ro-bind", path, path,           // sam plik AppImage, tylko do odczytu
+                  "--unshare-all", "--new-session", "--die-with-parent",
+                  "--setenv", "HOME", tmp.string(), "--chdir", tmp.string(),
+                  path, "--appimage-extract"});
+  } else {
+    r = run_wait({"sh", "-c", "cd \"$1\" && exec \"$2\" --appimage-extract", "sh", tmp.string(), path});
+  }
+  return r == 0;
+}
+
+// Katalog z AppRun wewnątrz tego, co rozpakował runtime ("squashfs-root", "AppDir"...).
+static fs::path find_appdir(const fs::path &tmp) {
+  std::error_code ec;
+  if (fs::exists(tmp / "AppRun", ec)) return tmp;
+  for (auto &e : fs::directory_iterator(tmp, ec))
+    if (e.is_directory(ec) && fs::exists(e.path() / "AppRun", ec)) return e.path();
+  return {};
+}
+
 std::string install(const std::string &path, const std::string &home) {
-  if (!have("unsquashfs")) return "Brak programu unsquashfs (pakiet squashfs-tools).";
-  uint64_t off;
-  if (!squashfs_offset(path, off)) return "To nie jest obsługiwany AppImage (typ 2).";
   fs::path dir = install_dir(path, home), tmp = dir.string() + ".tmp";
   std::error_code ec;
   fs::create_directories(dir.parent_path(), ec);
   fs::remove_all(tmp, ec);
-  if (!extract(path, off, tmp.string())) {
-    fs::remove_all(tmp, ec);
-    return "Nie udało się rozpakować aplikacji.";
+
+  uint64_t off;
+  std::string kind;
+  bool sqfs = find_payload(path, off, kind);
+  fs::path appdir;
+  if (sqfs && have("unsquashfs")) {
+    // Droga podstawowa: rozpakowanie bez uruchamiania czegokolwiek z AppImage.
+    if (extract(path, off, tmp.string())) appdir = find_appdir(tmp);
   }
-  if (!fs::exists(tmp / "AppRun", ec)) {
+  if (appdir.empty()) {
     fs::remove_all(tmp, ec);
-    return "W obrazie brakuje pliku AppRun.";
+    uint64_t e;
+    if (!elf_end(path, e)) return "To nie jest plik AppImage (brak nagłówka ELF).";
+    if (self_extract(path, tmp)) appdir = find_appdir(tmp);
+  }
+  if (appdir.empty()) {
+    fs::remove_all(tmp, ec);
+    if (kind == "dwarfs")
+      return "Ten AppImage używa formatu DwarFS, a jego runtime\nnie potrafił się rozpakować.";
+    return "Nie udało się rozpakować aplikacji.\nTo może nie być AppImage albo plik jest uszkodzony.";
+  }
+  if (appdir != tmp) {          // przenieś katalog aplikacji na miejsce tymczasowego
+    fs::path moved = tmp.string() + "-appdir";
+    fs::rename(appdir, moved, ec);
+    fs::remove_all(tmp, ec);
+    fs::rename(moved, tmp, ec);
   }
   // Starsze wersje tej samej aplikacji są już niepotrzebne.
   std::string prefix = dir.filename().string();
