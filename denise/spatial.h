@@ -10,6 +10,7 @@ struct WinState {
   int x = 0, y = 0, w = 0, h = 0;
   bool shaded = false;
   bool open = false;
+  bool list = false;   // widok listy zamiast ikon
 };
 
 class Spatial {

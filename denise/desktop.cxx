@@ -182,13 +182,15 @@ Desktop::Desktop(int W, int H, const std::string &home, bool root)
     {"Plik/Nowy folder", FL_COMMAND + 'n', &Desktop::new_folder, 0},
     {"Plik/Otwórz", FL_COMMAND + 'o', &Desktop::open_selected, 0},
     {"Plik/Zamknij okno", FL_COMMAND + 'w', &Desktop::close_active, FL_MENU_DIVIDER},
+    {"Plik/Zmień nazwę", FL_F + 2, &Desktop::rename_selected, 0},
     {"Plik/Przenieś do kosza", FL_COMMAND + FL_BackSpace, &Desktop::move_to_trash, 0},
     {"Edycja/Cofnij", FL_COMMAND + 'z', nullptr, FL_MENU_INACTIVE | FL_MENU_DIVIDER},
     {"Edycja/Wytnij", FL_COMMAND + 'x', nullptr, FL_MENU_INACTIVE},
     {"Edycja/Kopiuj", FL_COMMAND + 'c', nullptr, FL_MENU_INACTIVE},
-    {"Edycja/Wklej", FL_COMMAND + 'v', nullptr, FL_MENU_INACTIVE},
-    {"Widok/jako ikony", 0, nullptr, FL_MENU_RADIO | FL_MENU_VALUE},
-    {"Widok/jako lista", 0, nullptr, FL_MENU_RADIO | FL_MENU_INACTIVE | FL_MENU_DIVIDER},
+    {"Edycja/Wklej", FL_COMMAND + 'v', nullptr, FL_MENU_INACTIVE | FL_MENU_DIVIDER},
+    {"Edycja/Zaznacz wszystko", FL_COMMAND + 'a', &Desktop::select_all, 0},
+    {"Widok/jako ikony", FL_COMMAND + '1', &Desktop::view_icons, FL_MENU_RADIO | FL_MENU_VALUE},
+    {"Widok/jako lista", FL_COMMAND + '2', &Desktop::view_list, FL_MENU_RADIO | FL_MENU_DIVIDER},
     {"Widok/Odśwież", FL_COMMAND + 'r', &Desktop::refresh_all, 0},
     {"Specjalne/Opróżnij kosz…", 0, &Desktop::empty_trash, FL_MENU_DIVIDER},
     {root ? "Specjalne/Zakończ tryb root" : "Specjalne/Tryb root…", 0,
@@ -615,10 +617,12 @@ void Desktop::active_changed() {
       wins_.push_back(w);           // ostatnio aktywne na końcu listy
       if (icon_sel_ >= 0) { icon_sel_ = -1; redraw(); }
       redraw_frames();
+      sync_view_menu();
       return;
     }
   }
   redraw_frames();
+  sync_view_menu();
 }
 
 void Desktop::remember(NWin *w, bool open) {
@@ -628,6 +632,7 @@ void Desktop::remember(NWin *w, bool open) {
   s.x = cr.x; s.y = cr.y; s.w = cr.w; s.h = cr.h;
   s.shaded = w->shaded();
   s.open = open;
+  s.list = w->pane->view()->mode() == FolderView::List;
   spatial_.set(w->path, s);
 }
 
@@ -716,6 +721,12 @@ void Desktop::open_folder(const std::string &path, bool animate) {
   win->end();
   win->pane->view()->on_open = [this](const Entry &e) { open_entry(e); };
   win->pane->view()->is_open = [this](const std::string &p) { return find(p) != nullptr; };
+  win->pane->view()->on_drag_start = [this, win](const std::vector<Entry> &v) { drag_start(win, v); };
+  win->pane->view()->on_drag_move = [this](int xr, int yr) { drag_move(xr, yr); };
+  win->pane->view()->on_drag_end = [this](int xr, int yr, bool copy) { drag_end(xr, yr, copy); };
+  win->pane->on_rename_commit = [this](const std::string &o, const std::string &n) { return rename_path(o, n); };
+  win->pane->on_error = [this](const std::string &m) { dialog("Zmiana nazwy", m, {{"OK", nullptr}}); };
+  if (known_pos && s.list) win->pane->set_mode(FolderView::List);
   wins_.push_back(win);
   win->show();
   if (known_pos && s.shaded) win->set_shaded(true);
@@ -807,7 +818,7 @@ void Desktop::draw() {
   fl_font(FONT_SMALL, SIZE_SMALL);
   for (int i = 0; i < (int)icons_.size(); i++) {
     auto &ic = icons_[i];
-    bool sel = i == icon_sel_;
+    bool sel = i == icon_sel_ || i == icon_drop_;
     draw_icon(ic.icon, ic.x + 24, ic.y, sel);
     int tw = (int)fl_width(ic.name.c_str());
     int tx = ic.x + 40 - tw / 2, ty = ic.y + 36;
@@ -929,30 +940,40 @@ void Desktop::close_active() {
     if (w->shown() && fl_xid(w) == a) { close(w); return; }
 }
 
-void Desktop::move_to_trash() {
-  NWin *a = active_folder();
-  if (!a) return;
-  const Entry *e = a->pane->view()->selected();
-  if (!e) return;
-  // Kosz zgodny ze specyfikacją freedesktop.org
+// Kosz zgodny ze specyfikacją freedesktop.org
+bool Desktop::trash_path(const std::string &src, std::string &err) {
   std::string files = trash_dir(), info = home_ + "/.local/share/Trash/info";
   std::error_code ec;
   fs::create_directories(files, ec);
   fs::create_directories(info, ec);
-  std::string name = e->name, dest = files + "/" + name;
-  for (int i = 2; fs::exists(dest, ec); i++) { name = e->name + "." + std::to_string(i); dest = files + "/" + name; }
-  std::string src = e->path, shown_name = e->name;
+  std::string base = fs::path(src).filename().string(), name = base, dest = files + "/" + name;
+  for (int i = 2; fs::exists(dest, ec); i++) { name = base + "." + std::to_string(i); dest = files + "/" + name; }
   fs::rename(src, dest, ec);
-  if (ec) {
-    dialog("Kosz", "Nie udało się przenieść „" + shown_name + "” do kosza:\n" + ec.message(), {{"OK", nullptr}});
-    return;
+  if (ec) {   // inny system plików: kopia i usunięcie
+    ec.clear();
+    fs::copy(src, dest, fs::copy_options::recursive | fs::copy_options::copy_symlinks, ec);
+    if (!ec) fs::remove_all(src, ec);
   }
+  if (ec) { err = "„" + base + "”: " + ec.message(); return false; }
   char date[32];
   time_t now = time(nullptr);
   strftime(date, sizeof date, "%Y-%m-%dT%H:%M:%S", localtime(&now));
   std::ofstream(info + "/" + name + ".trashinfo")
       << "[Trash Info]\nPath=" << src << "\nDeletionDate=" << date << "\n";
+  path_moved(src, "");
+  return true;
+}
+
+void Desktop::move_to_trash() {
+  NWin *a = active_folder();
+  if (!a) return;
+  std::string errors;
+  for (auto &e : a->pane->view()->selection()) {
+    std::string err;
+    if (!trash_path(e.path, err)) errors += err + "\n";
+  }
   refresh_all();
+  if (!errors.empty()) dialog("Kosz", "Nie udało się przenieść do kosza:\n" + errors, {{"OK", nullptr}});
 }
 
 void Desktop::empty_trash() {
@@ -1053,4 +1074,286 @@ void Desktop::close_all() {
   std::vector<NWin *> v;
   for (auto *w : wins_) if (w->pane) v.push_back(w);
   for (auto *w : v) close(w);
+}
+
+// ---------------------------------------------------------------------------
+// Zmiana nazwy, zaznaczanie, widok
+// ---------------------------------------------------------------------------
+void Desktop::rename_selected() {
+  NWin *a = active_folder();
+  if (!a) return;
+  if (const Entry *e = a->pane->view()->selected())
+    a->pane->start_rename(a->pane->view()->index_of(e->path));
+}
+
+void Desktop::select_all() {
+  if (NWin *a = active_folder()) a->pane->view()->select_all();
+}
+
+void Desktop::view_icons() {
+  if (NWin *a = active_folder()) { a->pane->set_mode(FolderView::Icons); remember(a, true); }
+  sync_view_menu();
+}
+
+void Desktop::view_list() {
+  if (NWin *a = active_folder()) { a->pane->set_mode(FolderView::List); remember(a, true); }
+  sync_view_menu();
+}
+
+// Radio "jako ikony / jako lista" pokazuje tryb aktywnego okna.
+void Desktop::sync_view_menu() {
+  NWin *a = active_folder();
+  bool list = a && a->pane->view()->mode() == FolderView::List;
+  auto *icons = (Fl_Menu_Item *)menu_->find_item("Widok/jako ikony");
+  auto *lst = (Fl_Menu_Item *)menu_->find_item("Widok/jako lista");
+  if (icons && lst) {
+    if (list) { icons->clear(); lst->set(); } else { icons->set(); lst->clear(); }
+  }
+}
+
+std::string Desktop::rename_path(const std::string &old, const std::string &name) {
+  if (name.find('/') != std::string::npos) return "Nazwa nie może zawierać znaku „/”.";
+  if (name == "." || name == "..") return "Taka nazwa jest zarezerwowana.";
+  fs::path to = fs::path(old).parent_path() / name;
+  std::error_code ec;
+  if (fs::exists(to, ec)) return "Element o nazwie „" + name + "” już istnieje.";
+  fs::rename(old, to, ec);
+  if (ec) return "Nie udało się zmienić nazwy:\n" + ec.message();
+  path_moved(old, to.string());
+  refresh_all();
+  if (NWin *w = find(fs::path(old).parent_path().string())) w->pane->view()->select_path(to.string());
+  return "";
+}
+
+// Folder (lub plik) zmienił miejsce: popraw otwarte okna i pamięć pozycji.
+// to == "" oznacza usunięcie (kosz) - okna tego folderu i podfolderów są zamykane.
+void Desktop::path_moved(const std::string &from, const std::string &to) {
+  std::vector<NWin *> to_close;
+  for (auto *w : wins_) {
+    if (!w->pane) continue;
+    bool same = w->path == from, inside = w->path.rfind(from + "/", 0) == 0;
+    if (!same && !inside) continue;
+    if (to.empty()) { to_close.push_back(w); continue; }
+    std::string np = to + w->path.substr(from.size());
+    WinState s;
+    if (spatial_.get(w->path, s)) spatial_.set(np, s);
+    w->path = np;
+    w->pane->set_path(np);
+    w->copy_label(title_for(np).c_str());
+  }
+  for (auto *w : to_close) close(w);
+}
+
+// ---------------------------------------------------------------------------
+// Przenoszenie i kopiowanie
+// ---------------------------------------------------------------------------
+static std::string copy_name(const fs::path &dir, const std::string &name) {
+  fs::path p(name);
+  std::string stem = p.stem().string(), ext = p.extension().string();
+  if (stem.empty()) { stem = name; ext.clear(); }
+  std::error_code ec;
+  std::string n = stem + " kopia" + ext;
+  for (int i = 2; fs::exists(dir / n, ec); i++) n = stem + " kopia " + std::to_string(i) + ext;
+  return n;
+}
+
+void Desktop::transfer(const std::vector<Entry> &items, const std::string &dest, bool copy, bool replace) {
+  if (!allowed(dest)) {
+    dialog("Brak dostępu", "Folder docelowy jest poza LisaOS HD.", {{"OK", nullptr}});
+    return;
+  }
+  std::error_code ec;
+  // folder do samego siebie lub do własnego podfolderu
+  for (auto &e : items) {
+    if (e.dir && (dest == e.path || dest.rfind(e.path + "/", 0) == 0)) {
+      dialog("Nie można przenieść", "Folderu „" + e.label + "” nie można umieścić w nim samym.",
+             {{"OK", nullptr}});
+      return;
+    }
+  }
+  // konflikty nazw (pomijamy kopiowanie w obrębie tego samego folderu - dostaje "kopia")
+  if (!replace) {
+    std::vector<std::string> clash;
+    for (auto &e : items) {
+      bool same_dir = fs::path(e.path).parent_path() == fs::path(dest);
+      if (same_dir) continue;
+      if (fs::exists(fs::path(dest) / e.name, ec)) clash.push_back(e.name);
+    }
+    if (!clash.empty()) {
+      std::string what = clash.size() == 1 ? "element „" + clash[0] + "”"
+                                           : polish_items((int)clash.size());
+      dialog(copy ? "Kopiowanie" : "Przenoszenie",
+             "W folderze „" + title_for(dest) + "” jest już " + what + ".\nZastąpić?",
+             {{"Anuluj", nullptr},
+              {"Zastąp", [this, items, dest, copy] { transfer(items, dest, copy, true); }}});
+      return;
+    }
+  }
+  std::string errors;
+  for (auto &e : items) {
+    fs::path src = e.path, dst = fs::path(dest) / e.name;
+    bool same_dir = src.parent_path() == fs::path(dest);
+    if (same_dir && !copy) continue;                      // przeniesienie w to samo miejsce
+    if (same_dir && copy) dst = fs::path(dest) / copy_name(dest, e.name);
+    ec.clear();
+    if (fs::exists(dst, ec) && replace && !same_dir) fs::remove_all(dst, ec);
+    ec.clear();
+    if (copy) {
+      fs::copy(src, dst, fs::copy_options::recursive | fs::copy_options::copy_symlinks, ec);
+    } else {
+      fs::rename(src, dst, ec);
+      if (ec) {   // inny system plików: kopia i usunięcie
+        ec.clear();
+        fs::copy(src, dst, fs::copy_options::recursive | fs::copy_options::copy_symlinks, ec);
+        if (!ec) fs::remove_all(src, ec);
+      }
+      if (!ec) path_moved(src.string(), dst.string());
+    }
+    if (ec) { errors += "„" + e.name + "”: " + ec.message() + "\n"; continue; }
+    // AppImage wrzucony do Aplikacji jest gotowy do uruchomienia (instalacja przeciągnięciem)
+    if (is_appimage(e.name) && fs::path(dest) == fs::path(apps_dir())) chmod(dst.c_str(), 0755);
+  }
+  refresh_all();
+  if (!errors.empty())
+    dialog(copy ? "Kopiowanie" : "Przenoszenie", "Wystąpiły błędy:\n" + errors, {{"OK", nullptr}});
+}
+
+// ---------------------------------------------------------------------------
+// Przeciąganie
+// ---------------------------------------------------------------------------
+// "Duch" przeciąganych elementów: małe okno bez ramki podążające za kursorem.
+class DragGhost : public Fl_Double_Window {
+public:
+  DragGhost(const Entry &e, int n) : Fl_Double_Window(0, 0, 40, 40), entry_(e), n_(n) {
+    clear_border();
+    set_override();     // poza menedżerem okien, zawsze na wierzchu
+    end();
+  }
+  void draw() override {
+    fl_color(GRAY);
+    fl_rectf(0, 0, w(), h());
+    fl_color(SHADOW);
+    fl_rect(0, 0, w(), h());
+    draw_entry_icon(entry_, 4, 4, true, 32);
+    if (n_ > 1) {   // licznik przeciąganych elementów
+      std::string s = std::to_string(n_);
+      fl_font(FONT_SYSTEM, 10);
+      int bw = (int)fl_width(s.c_str()) + 8;
+      fl_color(fl_rgb_color(0xC0, 0x39, 0x2B));
+      fl_rounded_rectf(w() - bw - 1, 1, bw, 13, 6);
+      fl_color(FL_WHITE);
+      fl_draw(s.c_str(), w() - bw + 3, 11);
+    }
+  }
+private:
+  Entry entry_;
+  int n_;
+};
+
+// Czy okno w jest (pośrednio) wewnątrz top? Potrzebne, bo menedżer okien
+// opakowuje nasze okna w ramki.
+static bool is_under(Window top, Window w) {
+  Display *d = fl_display;
+  Window root = DefaultRootWindow(d);
+  for (int depth = 0; w && w != root && depth < 16; depth++) {
+    if (w == top) return true;
+    Window r, parent, *kids = nullptr;
+    unsigned n = 0;
+    if (!XQueryTree(d, w, &r, &parent, &kids, &n)) return false;
+    if (kids) XFree(kids);
+    w = parent;
+  }
+  return false;
+}
+
+Desktop::DropTarget Desktop::target_at(int xr, int yr) {
+  DropTarget t;
+  Window rootret, child = 0;
+  int rx, ry, wx, wy;
+  unsigned mask;
+  XQueryPointer(fl_display, DefaultRootWindow(fl_display), &rootret, &child, &rx, &ry, &wx, &wy, &mask);
+  if (!child) return t;
+  for (auto *w : wins_) {
+    if (!w->pane || !w->shown() || !is_under(child, fl_xid(w))) continue;
+    t.win = w;
+    int lx = xr - w->x(), ly = yr - w->y();
+    Fl_Widget *area = w->pane->view()->parent();   // widoczna część listy plików
+    bool inside = area && lx >= area->x() && ly >= area->y() &&
+                  lx < area->x() + area->w() && ly < area->y() + area->h();
+    t.item = (inside && !w->shaded()) ? w->pane->view()->drop_target_at(lx, ly) : -1;
+    return t;
+  }
+  if (is_under(child, fl_xid(this))) t.icon = icon_at(xr - x_root(), yr - y_root());
+  return t;
+}
+
+void Desktop::clear_drop_highlight() {
+  if (drag_.hl_win && known(drag_.hl_win)) drag_.hl_win->pane->view()->set_drop_target(-2);
+  drag_.hl_win = nullptr;
+  if (icon_drop_ >= 0) { icon_drop_ = -1; redraw(); }
+}
+
+void Desktop::drag_start(NWin *src, const std::vector<Entry> &items) {
+  if (items.empty()) return;
+  drag_.active = true;
+  drag_.src = src;
+  drag_.items = items;
+  drag_.ghost = new DragGhost(items[0], (int)items.size());
+  drag_.ghost->position(Fl::event_x_root() + 8, Fl::event_y_root() + 8);
+  drag_.ghost->show();
+}
+
+void Desktop::drag_move(int xr, int yr) {
+  if (!drag_.active) return;
+  // duch jest przesunięty od kursora, więc nie zasłania celu pod kursorem
+  drag_.ghost->position(xr + 8, yr + 8);
+  DropTarget t = target_at(xr, yr);
+  clear_drop_highlight();
+  if (t.win) {
+    // ten sam folder co źródło (bez wskazania podfolderu) nie jest celem
+    bool same = t.win == drag_.src && t.item < 0;
+    if (!same) { t.win->pane->view()->set_drop_target(t.item); drag_.hl_win = t.win; }
+  } else if (t.icon >= 0) {
+    icon_drop_ = t.icon;
+    redraw();
+  }
+}
+
+void Desktop::drag_end(int xr, int yr, bool copy) {
+  if (!drag_.active) return;
+  DropTarget t = target_at(xr, yr);
+  clear_drop_highlight();
+  Rect ghost = {drag_.ghost->x(), drag_.ghost->y(), drag_.ghost->w(), drag_.ghost->h()};
+  drag_.ghost->hide();
+  Fl::delete_widget(drag_.ghost);
+  drag_.ghost = nullptr;
+  drag_.active = false;
+  std::vector<Entry> items = drag_.items;
+  NWin *src = drag_.src;
+
+  std::string dest;
+  if (t.win) dest = t.item >= 0 ? t.win->pane->view()->entry(t.item)->path : t.win->path;
+  else if (t.icon >= 0) dest = icons_[t.icon].path;
+
+  if (dest.empty() || (t.win == src && t.item < 0 && !copy)) {
+    // nietrafione upuszczenie: ikona "wraca" na miejsce, jak w Mac OS
+    Rect back;
+    if (known(src) && src->pane->view()->icon_rect(items[0].path, back)) {
+      back = {back.x + src->x(), back.y + src->y(), back.w, back.h};
+      Fl::flush();
+      zoom_rects(ghost, back);
+    }
+    return;
+  }
+  if (dest == trash_dir()) {
+    std::string errors;
+    for (auto &e : items) {
+      std::string err;
+      if (!trash_path(e.path, err)) errors += err + "\n";
+    }
+    refresh_all();
+    if (!errors.empty()) dialog("Kosz", "Nie udało się przenieść do kosza:\n" + errors, {{"OK", nullptr}});
+    return;
+  }
+  transfer(items, dest, copy, false);
 }

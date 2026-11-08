@@ -99,6 +99,10 @@ public:
   void refresh_all();
   void quit();
   void build_windows_menu(Fl_Menu_Button *m);
+  void rename_selected();
+  void select_all();
+  void view_icons();
+  void view_list();
   void shade_all(bool shade);
   void close_all();
 
@@ -124,6 +128,27 @@ private:
   void open_appimage(const std::string &path);
   void run_app(const std::string &path);
   std::string apps_dir() const;
+  // operacje na plikach
+  std::string rename_path(const std::string &old, const std::string &name);
+  bool trash_path(const std::string &path, std::string &err);
+  void transfer(const std::vector<Entry> &items, const std::string &dest, bool copy, bool replace);
+  void path_moved(const std::string &from, const std::string &to);   // okna i pamięć pozycji
+  void sync_view_menu();
+  // przeciąganie
+  struct DropTarget { NWin *win = nullptr; int item = -2; int icon = -1; };
+  DropTarget target_at(int xr, int yr);
+  void drag_start(NWin *src, const std::vector<Entry> &items);
+  void drag_move(int xr, int yr);
+  void drag_end(int xr, int yr, bool copy);
+  void clear_drop_highlight();
+  struct {
+    bool active = false;
+    NWin *src = nullptr;
+    std::vector<Entry> items;
+    Fl_Window *ghost = nullptr;
+    NWin *hl_win = nullptr;
+  } drag_;
+  int icon_drop_ = -1;            // ikona biurka podświetlona jako cel upuszczania
   void dialog(const std::string &title, const std::string &text,
               std::vector<std::pair<std::string, std::function<void()>>> buttons);
   static void dialog_cb(Fl_Widget *b, void *idx);

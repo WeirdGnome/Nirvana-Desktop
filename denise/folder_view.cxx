@@ -1,20 +1,23 @@
-// LisaOS - denise: widok folderu (ikony) z paskiem informacji
+// LisaOS - denise: widok folderu (ikony lub lista) z paskiem informacji
 #include "folder_view.h"
 
 #include <FL/Fl.H>
-#include <FL/fl_draw.H>
+#include <FL/Fl_Image_Surface.H>
 #include <FL/Fl_RGB_Image.H>
-#include <FL/Fl_Window.H>
 #include <FL/Fl_Shared_Image.H>
-#include <map>
+#include <FL/Fl_Window.H>
+#include <FL/fl_draw.H>
 
-#include "appimage.h"
 #include <algorithm>
 #include <cstdio>
-#include <filesystem>
 #include <cstring>
+#include <filesystem>
+#include <map>
 #include <strings.h>
+#include <sys/stat.h>
 #include <sys/statvfs.h>
+
+#include "appimage.h"
 
 namespace fs = std::filesystem;
 using namespace plat;
@@ -36,43 +39,110 @@ Icon icon_for(const std::string &name, bool dir) {
   return Icon::Document;
 }
 
-// ---------------------------------------------------------------------------
-FolderView::FolderView(int X, int Y, int W, int H) : Fl_Widget(X, Y, W, H) {}
+std::string kind_name(const Entry &e) {
+  if (e.dir) return "folder";
+  switch (e.icon) {
+  case Icon::Application: return "aplikacja";
+  case Icon::Image: return "obraz";
+  case Icon::Music: return "dźwięk";
+  default: return "dokument";
+  }
+}
 
+// "8 lis 2026, 21:40"
+static std::string polish_date(time_t t) {
+  static const char *mon[] = {"sty", "lut", "mar", "kwi", "maj", "cze",
+                              "lip", "sie", "wrz", "paź", "lis", "gru"};
+  struct tm tm;
+  localtime_r(&t, &tm);
+  char buf[64];
+  snprintf(buf, sizeof buf, "%d %s %d, %02d:%02d", tm.tm_mday, mon[tm.tm_mon], tm.tm_year + 1900,
+           tm.tm_hour, tm.tm_min);
+  return buf;
+}
+
+// "12 KB", "3,4 MB"
+static std::string human_size(uintmax_t b) {
+  if (b < 1024) return std::to_string(b) + " B";
+  const char *u[] = {"KB", "MB", "GB", "TB"};
+  double v = (double)b;
+  int i = -1;
+  do { v /= 1024; i++; } while (v >= 1024 && i < 3);
+  char buf[32];
+  if (v < 10) snprintf(buf, sizeof buf, "%.1f %s", v, u[i]);
+  else snprintf(buf, sizeof buf, "%.0f %s", v, u[i]);
+  for (char *p = buf; *p; p++) if (*p == '.') *p = ',';
+  return buf;
+}
+
+// ---------------------------------------------------------------------------
+// Ikony
+// ---------------------------------------------------------------------------
 static std::string g_home;
 void FolderView::set_home(const std::string &home) { g_home = home; }
 
-// Ikony z plików: normalna i przyciemniona (zaznaczona), 32x32, wspólny cache.
+// Ikony z plików (np. z AppImage): normalna i przyciemniona, w danym rozmiarze.
 struct IconPair { Fl_Image *normal = nullptr, *selected = nullptr; };
-static IconPair file_icon(const std::string &file) {
+static IconPair file_icon(const std::string &file, int size) {
   static std::map<std::string, IconPair> cache;
   static bool registered = false;
   if (!registered) { fl_register_images(); registered = true; }
-  auto it = cache.find(file);
+  std::string key = file + "@" + std::to_string(size);
+  auto it = cache.find(key);
   if (it != cache.end()) return it->second;
   IconPair p;
   Fl_Image::RGB_scaling(FL_RGB_SCALING_BILINEAR);
   if (Fl_Shared_Image *img = Fl_Shared_Image::get(file.c_str())) {
     if (img->w() > 0 && img->h() > 0) {
-      // dwie niezależne kopie - kopia w tym samym rozmiarze współdzieliłaby piksele
       // Kopiujemy obraz źródłowy (nie Fl_Shared_Image, które dzieli dane między
       // kopiami), więc przyciemnienie wersji "zaznaczonej" nie psuje normalnej.
       const Fl_Image *base = img->image() ? img->image() : img;
-      p.normal = base->copy(32, 32);
-      if (auto *r = dynamic_cast<Fl_RGB_Image *>(p.normal)) r->normalize();   // SVG: rasteryzacja od razu
-      p.selected = base->copy(32, 32);
+      p.normal = base->copy(size, size);
+      if (auto *r = dynamic_cast<Fl_RGB_Image *>(p.normal)) r->normalize();   // SVG
+      p.selected = base->copy(size, size);
       if (auto *r = dynamic_cast<Fl_RGB_Image *>(p.selected)) r->normalize();
       p.selected->color_average(FL_BLACK, 0.5f);
     }
     img->release();
   }
-  cache[file] = p;
+  cache[key] = p;
   return p;
 }
 
+// Ikony wektorowe 16x16 do widoku listy: rysujemy 32x32 do obrazu i zmniejszamy.
+static Fl_Image *small_icon(Icon icon, bool sel) {
+  static std::map<int, Fl_Image *> cache;
+  int key = (int)icon * 2 + sel;
+  auto it = cache.find(key);
+  if (it != cache.end()) return it->second;
+  Fl_Image_Surface surf(32, 32);
+  Fl_Surface_Device::push_current(&surf);
+  fl_color(FL_WHITE);
+  fl_rectf(0, 0, 32, 32);
+  draw_icon(icon, 0, 0, sel);
+  Fl_Surface_Device::pop_current();
+  Fl_RGB_Image *big = surf.image();
+  Fl_Image::RGB_scaling(FL_RGB_SCALING_BILINEAR);
+  Fl_Image *img = big->copy(16, 16);
+  delete big;
+  cache[key] = img;
+  return img;
+}
+
+void draw_entry_icon(const Entry &e, int x, int y, bool sel, int size, bool open) {
+  Icon ic = (e.dir && open) ? Icon::OpenFolder : e.icon;
+  IconPair fi;
+  if (!e.icon_file.empty()) fi = file_icon(e.icon_file, size);
+  if (fi.normal) { (sel ? fi.selected : fi.normal)->draw(x, y); return; }
+  if (size == 32) draw_icon(ic, x, y, sel);
+  else small_icon(ic, sel)->draw(x, y);
+}
+
+// ---------------------------------------------------------------------------
+FolderView::FolderView(int X, int Y, int W, int H) : Fl_Widget(X, Y, W, H) {}
+
 void FolderView::load(const std::string &path, bool show_hidden) {
   entries_.clear();
-  sel_ = -1;
   std::error_code ec;
   for (auto &de : fs::directory_iterator(path, fs::directory_options::skip_permission_denied, ec)) {
     std::string name = de.path().filename().string();
@@ -84,6 +154,11 @@ void FolderView::load(const std::string &path, bool show_hidden) {
     e.dir = de.is_directory(ec2);
     e.icon = icon_for(name, e.dir);
     e.label = name;
+    struct stat st;
+    if (stat(e.path.c_str(), &st) == 0) {
+      e.mtime = st.st_mtime;
+      if (!e.dir) e.size = (uintmax_t)st.st_size;
+    }
     if (!e.dir && is_appimage(name)) {
       e.label = appimage::display_name(name);
       if (!g_home.empty()) e.icon_file = appimage::icon(e.path, g_home);
@@ -94,31 +169,47 @@ void FolderView::load(const std::string &path, bool show_hidden) {
   std::sort(entries_.begin(), entries_.end(), [](const Entry &a, const Entry &b) {
     return strcasecmp(a.label.c_str(), b.label.c_str()) < 0;
   });
+  sel_.assign(entries_.size(), 0);
+  anchor_ = -1;
+  drop_ = -2;
+  state_ = IDLE;
+  Fl::remove_timeout(rename_timeout, this);
   redraw();
 }
 
 void FolderView::relayout(int avail_w, int min_h) {
-  cols_ = std::max(1, (avail_w - 8) / CELL_W);
-  int rows = ((int)entries_.size() + cols_ - 1) / cols_;
-  size(avail_w, std::max(min_h, rows * CELL_H + 12));
-}
-
-bool FolderView::icon_rect(const std::string &path, Rect &out) const {
-  for (int i = 0; i < (int)entries_.size(); i++) {
-    if (entries_[i].path != path) continue;
-    int cx = x() + 4 + (i % cols_) * CELL_W + (CELL_W - 32) / 2;
-    int cy = y() + 6 + (i / cols_) * CELL_H + 2;
-    out = {cx, cy, 32, 32};
-    // ikona musi być w widocznej części przewijanego obszaru
-    const Fl_Widget *p = parent();
-    if (p && (cy + 32 <= p->y() || cy >= p->y() + p->h() - SCROLL_W ||
-              cx + 32 <= p->x() || cx >= p->x() + p->w() - SCROLL_W)) return false;
-    return visible_r();
+  if (mode_ == Icons) {
+    cols_ = std::max(1, (avail_w - 8) / CELL_W);
+    int rows = ((int)entries_.size() + cols_ - 1) / cols_;
+    size(avail_w, std::max(min_h, rows * CELL_H + 12));
+  } else {
+    cols_ = 1;
+    size(avail_w, std::max(min_h, (int)entries_.size() * ROW_H + 4));
   }
-  return false;
 }
 
-int FolderView::index_at(int ex, int ey) const {
+// --- geometria -------------------------------------------------------------
+static int name_col_w(int w) {
+  return std::max(120, w - FolderView::COL_DATE - FolderView::COL_SIZE - FolderView::COL_KIND - 8);
+}
+
+Rect FolderView::item_rect(int i) const {
+  if (mode_ == Icons) {
+    int cx = x() + 4 + (i % cols_) * CELL_W, cy = y() + 6 + (i / cols_) * CELL_H;
+    return {cx + 4, cy, CELL_W - 8, 54};
+  }
+  return {x() + 4, y() + 2 + i * ROW_H, name_col_w(w()), ROW_H};
+}
+
+int FolderView::index_at(int ex, int ey, bool *on_label) const {
+  if (on_label) *on_label = false;
+  if (mode_ == List) {
+    int i = (ey - y() - 2) / ROW_H;
+    if (ey < y() + 2 || i < 0 || i >= (int)entries_.size()) return -1;
+    if (ex < x() + 4 || ex >= x() + 4 + name_col_w(w())) return -1;   // tylko kolumna nazwy
+    if (on_label) *on_label = ex >= x() + 26;
+    return i;
+  }
   int cx = (ex - x() - 4) / CELL_W, cy = (ey - y() - 6) / CELL_H;
   if (ex < x() + 4 || ey < y() + 6 || cx >= cols_) return -1;
   int i = cy * cols_ + cx;
@@ -126,30 +217,122 @@ int FolderView::index_at(int ex, int ey) const {
   // trafienie liczymy tylko w ikonę i etykietę, nie w całą komórkę
   int lx = ex - (x() + 4 + cx * CELL_W), ly = ey - (y() + 6 + cy * CELL_H);
   bool on_icon = lx >= (CELL_W - 32) / 2 && lx < (CELL_W + 32) / 2 && ly < 36;
-  bool on_label = ly >= 36 && ly < 54;
-  return (on_icon || on_label) ? i : -1;
+  bool lbl = ly >= 36 && ly < 54;
+  if (on_label) *on_label = lbl;
+  return (on_icon || lbl) ? i : -1;
 }
 
+int FolderView::index_of(const std::string &path) const {
+  for (int i = 0; i < (int)entries_.size(); i++) if (entries_[i].path == path) return i;
+  return -1;
+}
+
+static bool visible_in_parent(const Fl_Widget *w, int X, int Y, int W, int H) {
+  const Fl_Widget *p = w->parent();
+  if (!p) return true;
+  return !(Y + H <= p->y() || Y >= p->y() + p->h() - SCROLL_W ||
+           X + W <= p->x() || X >= p->x() + p->w() - SCROLL_W);
+}
+
+bool FolderView::icon_rect(const std::string &path, Rect &out) const {
+  int i = index_of(path);
+  if (i < 0) return false;
+  if (mode_ == Icons) {
+    int cx = x() + 4 + (i % cols_) * CELL_W + (CELL_W - 32) / 2;
+    int cy = y() + 6 + (i / cols_) * CELL_H + 2;
+    out = {cx, cy, 32, 32};
+  } else {
+    out = {x() + 6, y() + 3 + i * ROW_H, 16, 16};
+  }
+  return visible_in_parent(this, out.x, out.y, out.w, out.h) && visible_r();
+}
+
+bool FolderView::label_rect(int i, Rect &out) const {
+  if (i < 0 || i >= count()) return false;
+  if (mode_ == Icons) {
+    int cx = x() + 4 + (i % cols_) * CELL_W, cy = y() + 6 + (i / cols_) * CELL_H;
+    out = {cx - 6, cy + 35, CELL_W + 12, 18};
+  } else {
+    out = {x() + 24, y() + 2 + i * ROW_H, name_col_w(w()) - 24, ROW_H};
+  }
+  return visible_in_parent(this, out.x, out.y, out.w, out.h);
+}
+
+int FolderView::drop_target_at(int ex, int ey) const {
+  int i = index_at(ex, ey);
+  if (i >= 0 && entries_[i].dir && !sel_[i]) return i;   // na folder (nie na samego siebie)
+  return -1;                                                // do tego folderu
+}
+
+// --- zaznaczenie -------------------------------------------------------------
+const Entry *FolderView::selected() const {
+  for (int i = 0; i < count(); i++) if (sel_[i]) return &entries_[i];
+  return nullptr;
+}
+
+std::vector<Entry> FolderView::selection() const {
+  std::vector<Entry> v;
+  for (int i = 0; i < count(); i++) if (sel_[i]) v.push_back(entries_[i]);
+  return v;
+}
+
+void FolderView::select_only(int i) {
+  std::fill(sel_.begin(), sel_.end(), 0);
+  if (i >= 0 && i < count()) sel_[i] = 1;
+  anchor_ = i;
+  redraw();
+}
+
+void FolderView::select_all() {
+  std::fill(sel_.begin(), sel_.end(), 1);
+  redraw();
+}
+
+void FolderView::select_path(const std::string &path) { select_only(index_of(path)); }
+
+void FolderView::select_paths(const std::vector<std::string> &paths) {
+  std::fill(sel_.begin(), sel_.end(), 0);
+  for (auto &p : paths) if (int i = index_of(p); i >= 0) { sel_[i] = 1; anchor_ = i; }
+  redraw();
+}
+
+// --- rysowanie ---------------------------------------------------------------
 void FolderView::draw() {
   fl_color(FL_WHITE);
   fl_rectf(x(), y(), w(), h());
+  if (mode_ == Icons) draw_icons(); else draw_list();
+
+  // prostokąt zaznaczania (kropkowany, jak w Finderze)
+  if (state_ == BANDING) {
+    int x0 = std::min(band_x_, press_x_), y0 = std::min(band_y_, press_y_);
+    int x1 = std::max(band_x_, press_x_), y1 = std::max(band_y_, press_y_);
+    fl_color(SHADOW);
+    fl_line_style(FL_DOT);
+    fl_rect(x0, y0, x1 - x0 + 1, y1 - y0 + 1);
+    fl_line_style(0);
+  }
+  // cały folder jest celem upuszczania: gruba ramka wokół widocznej części
+  if (drop_ == -1 && parent()) {
+    const Fl_Widget *p = parent();
+    fl_color(FL_BLACK);
+    fl_rect(p->x() + 1, p->y() + 1, p->w() - SCROLL_W - 2, p->h() - SCROLL_W - 2);
+    fl_rect(p->x() + 2, p->y() + 2, p->w() - SCROLL_W - 4, p->h() - SCROLL_W - 4);
+  }
+}
+
+void FolderView::draw_icons() {
   fl_font(FONT_SMALL, SIZE_SMALL);
-  for (int i = 0; i < (int)entries_.size(); i++) {
+  for (int i = 0; i < count(); i++) {
     const Entry &e = entries_[i];
-    int cx = x() + 4 + (i % cols_) * CELL_W;
-    int cy = y() + 6 + (i / cols_) * CELL_H;
-    bool sel = i == sel_;
-    Icon ic = e.icon;
-    if (e.dir && is_open && is_open(e.path)) ic = Icon::OpenFolder;
-    IconPair fi;
-    if (!e.icon_file.empty()) fi = file_icon(e.icon_file);
-    if (fi.normal) (sel ? fi.selected : fi.normal)->draw(cx + (CELL_W - 32) / 2, cy + 2);
-    else draw_icon(ic, cx + (CELL_W - 32) / 2, cy + 2, sel);
+    int cx = x() + 4 + (i % cols_) * CELL_W, cy = y() + 6 + (i / cols_) * CELL_H;
+    bool sel = sel_[i] || drop_ == i;
+    bool open = e.dir && is_open && is_open(e.path);
+    draw_entry_icon(e, cx + (CELL_W - 32) / 2, cy + 2, sel, 32, open);
 
     std::string lbl = ellipsize(e.label, CELL_W - 6);
     int tw = (int)fl_width(lbl.c_str());
     int tx = cx + (CELL_W - tw) / 2, ty = cy + 38;
-    if (sel) {
+    if (sel_[i]) {
       fl_color(FL_BLACK);
       fl_rectf(tx - 2, ty, tw + 4, fl_height());
       fl_color(FL_WHITE);
@@ -160,43 +343,154 @@ void FolderView::draw() {
   }
 }
 
+void FolderView::draw_list() {
+  fl_font(FONT_SMALL, SIZE_SMALL);
+  int nw = name_col_w(w());
+  int xd = x() + 4 + nw, xs = xd + COL_DATE, xk = xs + COL_SIZE;
+  for (int i = 0; i < count(); i++) {
+    const Entry &e = entries_[i];
+    int ry = y() + 2 + i * ROW_H;
+    if (ry + ROW_H < y() || ry > y() + h()) continue;
+    bool sel = sel_[i] || drop_ == i;
+    bool open = e.dir && is_open && is_open(e.path);
+    draw_entry_icon(e, x() + 6, ry + 1, sel, 16, open);
+    int base = ry + ROW_H / 2 + fl_height() / 2 - fl_descent();
+    std::string name = ellipsize(e.label, nw - 32);
+    int tw = (int)fl_width(name.c_str());
+    if (sel_[i]) {
+      fl_color(FL_BLACK);
+      fl_rectf(x() + 25, ry + 2, tw + 4, ROW_H - 3);
+      fl_color(FL_WHITE);
+    } else {
+      fl_color(FL_BLACK);
+    }
+    fl_draw(name.c_str(), x() + 27, base);
+    fl_color(FL_BLACK);
+    fl_draw(polish_date(e.mtime).c_str(), xd + 4, base);
+    std::string sz = e.dir ? "—" : human_size(e.size);
+    fl_draw(sz.c_str(), xs + COL_SIZE - 8 - (int)fl_width(sz.c_str()), base);
+    fl_draw(kind_name(e).c_str(), xk + 4, base);
+  }
+}
+
+// --- zdarzenia ---------------------------------------------------------------
+void FolderView::rename_timeout(void *d) {
+  auto *v = (FolderView *)d;
+  if (v->state_ != IDLE) return;
+  int n = 0, idx = -1;
+  for (int i = 0; i < v->count(); i++) if (v->sel_[i]) { n++; idx = i; }
+  if (n == 1 && v->on_rename) v->on_rename(idx);
+}
+
 int FolderView::handle(int e) {
   switch (e) {
   case FL_PUSH: {
-    int i = index_at(Fl::event_x(), Fl::event_y());
-    if (i != sel_) { sel_ = i; redraw(); }
     Fl::focus(this);
+    Fl::remove_timeout(rename_timeout, this);
+    bool on_label = false;
+    int i = index_at(Fl::event_x(), Fl::event_y(), &on_label);
+    press_x_ = Fl::event_x(); press_y_ = Fl::event_y();
+    bool mod = Fl::event_state() & (FL_SHIFT | FL_CTRL | FL_META);
     if (i >= 0 && Fl::event_clicks() && on_open) {
       Fl::event_clicks(0);
+      select_only(i);
+      state_ = IDLE;
       Entry copy = entries_[i];   // kopia - callback może przebudować widok
       on_open(copy);
+      return 1;
     }
+    if (i >= 0) {
+      was_selected_ = sel_[i];
+      if (mod) sel_[i] = !sel_[i];
+      else if (!sel_[i]) select_only(i);
+      anchor_ = i;
+      state_ = PRESSED;
+      press_index_ = i;
+      press_label_ = on_label;
+    } else {
+      if (!mod) std::fill(sel_.begin(), sel_.end(), 0);
+      band_base_ = sel_;
+      band_x_ = press_x_; band_y_ = press_y_;
+      state_ = BANDING;
+    }
+    redraw();
+    return 1;
+  }
+  case FL_DRAG:
+    if (state_ == PRESSED) {
+      int moved = abs(Fl::event_x() - press_x_) + abs(Fl::event_y() - press_y_);
+      if (moved > 4 && press_index_ >= 0 && sel_[press_index_]) {
+        state_ = DRAGGING;
+        if (on_drag_start) on_drag_start(selection());
+      }
+    }
+    if (state_ == DRAGGING) {
+      if (on_drag_move) on_drag_move(Fl::event_x_root(), Fl::event_y_root());
+      return 1;
+    }
+    if (state_ == BANDING) {
+      band_x_ = Fl::event_x(); band_y_ = Fl::event_y();
+      int x0 = std::min(band_x_, press_x_), y0 = std::min(band_y_, press_y_);
+      int x1 = std::max(band_x_, press_x_), y1 = std::max(band_y_, press_y_);
+      for (int i = 0; i < count(); i++) {
+        Rect r = item_rect(i);
+        bool hit = r.x < x1 && r.x + r.w > x0 && r.y < y1 && r.y + r.h > y0;
+        sel_[i] = band_base_[i] || hit;
+      }
+      redraw();
+      return 1;
+    }
+    return 1;
+  case FL_RELEASE: {
+    bool mod = Fl::event_state() & (FL_SHIFT | FL_CTRL | FL_META);
+    if (state_ == DRAGGING) {
+      state_ = IDLE;
+      bool copy = Fl::event_state() & (FL_CTRL | FL_ALT);
+      if (on_drag_end) on_drag_end(Fl::event_x_root(), Fl::event_y_root(), copy);
+      return 1;
+    }
+    if (state_ == PRESSED && !mod && press_index_ >= 0) {
+      // klik w już zaznaczony element bez przeciągania
+      int n = 0;
+      for (char s : sel_) n += s;
+      if (n > 1) select_only(press_index_);
+      else if (was_selected_ && press_label_)
+        Fl::add_timeout(0.6, rename_timeout, this);   // jak w Finderze: chwila i edycja nazwy
+    }
+    state_ = IDLE;
+    redraw();
     return 1;
   }
   case FL_FOCUS:
   case FL_UNFOCUS:
     return 1;
   case FL_KEYBOARD: {
-    int k = Fl::event_key(), n = (int)entries_.size();
+    int k = Fl::event_key(), n = count();
     if (!n) return 0;
-    int s = sel_ < 0 ? 0 : sel_;
-    if (k == FL_Right) s = std::min(n - 1, s + 1);
-    else if (k == FL_Left) s = std::max(0, s - 1);
-    else if (k == FL_Down) s = std::min(n - 1, s + cols_);
-    else if (k == FL_Up) s = std::max(0, s - cols_);
-    else if ((k == FL_Enter || k == FL_KP_Enter) && sel_ >= 0 && on_open) {
-      Entry copy = entries_[sel_];
-      on_open(copy);
+    if (k == FL_F + 2) {
+      if (const Entry *s = selected()) if (on_rename) on_rename(index_of(s->path));
       return 1;
-    } else return 0;
-    sel_ = s;
-    redraw();
+    }
+    if ((k == FL_Enter || k == FL_KP_Enter) && on_open) {
+      if (const Entry *s = selected()) { Entry copy = *s; on_open(copy); }
+      return 1;
+    }
+    int s = anchor_ < 0 ? 0 : anchor_;
+    int step = mode_ == Icons ? cols_ : 1;
+    if (k == FL_Right && mode_ == Icons) s = std::min(n - 1, s + 1);
+    else if (k == FL_Left && mode_ == Icons) s = std::max(0, s - 1);
+    else if (k == FL_Down) s = std::min(n - 1, s + step);
+    else if (k == FL_Up) s = std::max(0, s - step);
+    else return 0;
+    select_only(s);
     return 1;
   }
   }
   return Fl_Widget::handle(e);
 }
 
+// ---------------------------------------------------------------------------
+// FolderPane
 // ---------------------------------------------------------------------------
 FolderPane::FolderPane(int X, int Y, int W, int H, const std::string &path, bool hidden)
     : Fl_Group(X, Y, W, H), path_(path), hidden_(hidden) {
@@ -215,6 +509,7 @@ FolderPane::FolderPane(int X, int Y, int W, int H, const std::string &path, bool
   view_ = new FolderView(X, Y + INFO_H, W - SCROLL_W, H - INFO_H - SCROLL_W);
   scroll_->end();
   end();
+  view_->on_rename = [this](int i) { start_rename(i); };
   refresh();
 }
 
@@ -230,19 +525,35 @@ void FolderPane::update_info() {
 }
 
 void FolderPane::refresh() {
+  cancel_rename();
+  // zachowaj zaznaczenie po odświeżeniu (np. po zmianie nazwy innego pliku)
+  std::vector<std::string> keep;
+  for (auto &e : view_->selection()) keep.push_back(e.path);
   view_->load(path_, hidden_);
+  view_->select_paths(keep);
   update_info();
+  resize(x(), y(), w(), h());
+  redraw();
+}
+
+void FolderPane::set_mode(FolderView::Mode m) {
+  if (m == view_->mode()) return;
+  cancel_rename();
+  view_->set_mode(m);
+  scroll_->scroll_to(0, 0);
   resize(x(), y(), w(), h());
   redraw();
 }
 
 void FolderPane::resize(int X, int Y, int W, int H) {
   Fl_Widget::resize(X, Y, W, H);
+  if (editor_) cancel_rename();
+  int top = top_h();
   int sx = scroll_->xposition(), sy = scroll_->yposition();
-  scroll_->resize(X, Y + INFO_H, W, H - INFO_H);
-  int inner_w = W - SCROLL_W, inner_h = H - INFO_H - SCROLL_W;
+  scroll_->resize(X, Y + top, W, H - top);
+  int inner_w = W - SCROLL_W, inner_h = H - top - SCROLL_W;
   view_->relayout(inner_w, inner_h);
-  view_->position(X - sx, Y + INFO_H - sy);
+  view_->position(X - sx, Y + top - sy);
   scroll_->scroll_to(0, std::min(sy, std::max(0, view_->h() - inner_h)));
   // Gdy wszystko się mieści, pasek jest wygaszony (szary suwak), jak w Mac OS 9.
   bool need = view_->h() > inner_h;
@@ -263,16 +574,95 @@ void FolderPane::draw() {
   fl_color(FL_BLACK);
   std::string t = ellipsize(info_, w() - 10);
   fl_draw(t.c_str(), x(), y(), w(), INFO_H - 1, FL_ALIGN_CENTER);
+
+  if (view_->mode() == FolderView::List) {
+    // nagłówki kolumn
+    int hy = y() + INFO_H;
+    fl_color(GRAY);
+    fl_rectf(x(), hy, w(), HEADER_H);
+    fl_color(SHADOW);
+    fl_xyline(x(), hy + HEADER_H - 1, x() + w() - 1);
+    int nw = std::max(120, (w() - SCROLL_W) - FolderView::COL_DATE - FolderView::COL_SIZE -
+                               FolderView::COL_KIND - 8);
+    int xd = x() + 4 + nw, xs = xd + FolderView::COL_DATE, xk = xs + FolderView::COL_SIZE;
+    fl_font(FONT_SYSTEM, SIZE_SMALL);
+    int base = hy + HEADER_H / 2 + fl_height() / 2 - fl_descent();
+    fl_color(FL_BLACK);
+    fl_draw("Nazwa", x() + 27, base);
+    fl_draw("Data modyfikacji", xd + 4, base);
+    fl_draw("Rozmiar", xs + FolderView::COL_SIZE - 8 - (int)fl_width("Rozmiar"), base);
+    fl_draw("Rodzaj", xk + 4, base);
+    for (int cx : {xd, xs, xk}) {
+      fl_color(SHADOW); fl_yxline(cx, hy + 2, hy + HEADER_H - 3);
+      fl_color(LIGHT);  fl_yxline(cx + 1, hy + 2, hy + HEADER_H - 3);
+    }
+  }
   draw_children();
   // uchwyt zmiany rozmiaru w rogu między paskami przewijania (jak w Mac OS 9)
   draw_grow_box(x() + w() - SCROLL_W, y() + h() - SCROLL_W);
 }
 
+// --- zmiana nazwy w miejscu --------------------------------------------------
+void FolderPane::start_rename(int index) {
+  cancel_rename();
+  Rect r;
+  const Entry *e = view_->entry(index);
+  if (!e || !view_->label_rect(index, r)) return;
+  editing_path_ = e->path;
+  begin();
+  editor_ = new Fl_Input(r.x, r.y, r.w, r.h);
+  end();
+  editor_->box(FL_BORDER_BOX);
+  editor_->textfont(FONT_SMALL);
+  editor_->textsize(SIZE_SMALL);
+  editor_->value(e->name.c_str());
+  editor_->when(FL_WHEN_ENTER_KEY_ALWAYS | FL_WHEN_RELEASE_ALWAYS);
+  editor_->callback(rename_cb, this);
+  // zaznacz nazwę bez rozszerzenia (jak w Finderze)
+  size_t dot = e->dir ? std::string::npos : e->name.rfind('.');
+  int end_sel = (dot == std::string::npos || dot == 0) ? (int)e->name.size() : (int)dot;
+  editor_->insert_position(0, end_sel);
+  editor_->take_focus();
+  redraw();
+}
+
+void FolderPane::cancel_rename() {
+  if (!editor_) return;
+  Fl_Input *ed = editor_;
+  editor_ = nullptr;
+  remove(ed);
+  Fl::delete_widget(ed);
+  editing_path_.clear();
+  redraw();
+}
+
+void FolderPane::rename_cb(Fl_Widget *, void *d) { ((FolderPane *)d)->commit_rename(); }
+
+void FolderPane::commit_rename() {
+  if (!editor_) return;
+  std::string name = editor_->value(), old = editing_path_;
+  cancel_rename();
+  view_->take_focus();
+  if (name.empty() || name == fs::path(old).filename().string()) return;
+  if (on_rename_commit) {
+    std::string err = on_rename_commit(old, name);
+    if (!err.empty() && on_error) on_error(err);
+  }
+}
+
 int FolderPane::handle(int e) {
+  // Escape w polu nazwy: anuluj edycję
+  if (editor_ && (e == FL_KEYBOARD || e == FL_SHORTCUT) && Fl::event_key() == FL_Escape) {
+    cancel_rename();
+    view_->take_focus();
+    return 1;
+  }
   int gx = x() + w() - SCROLL_W, gy = y() + h() - SCROLL_W;
   Fl_Window *win = window();
   switch (e) {
   case FL_PUSH:
+    // klik poza polem nazwy zatwierdza edycję
+    if (editor_ && !Fl::event_inside(editor_)) commit_rename();
     if (win && Fl::event_x() >= gx && Fl::event_y() >= gy) {
       growing_ = true;
       grow_dx_ = win->w() - Fl::event_x_root();

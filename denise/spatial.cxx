@@ -16,7 +16,7 @@ Spatial::Spatial(const std::string &home) {
   fs::create_directories(dir, ec);
   file_ = (dir / "denise.okna").string();
 
-  // Format linii: x y w h zwinięte otwarte<TAB>ścieżka
+  // Format linii: x y w h zwinięte otwarte [lista]<TAB>ścieżka
   std::ifstream in(file_);
   std::string line;
   while (std::getline(in, line)) {
@@ -27,6 +27,8 @@ Spatial::Spatial(const std::string &home) {
     int sh = 0, op = 0;
     if (ss >> s.x >> s.y >> s.w >> s.h >> sh >> op) {
       s.shaded = sh; s.open = op;
+      int li = 0;
+      if (ss >> li) s.list = li;   // pole dodane w Ramblerze 0.2 - starsze pliki go nie mają
       map_[line.substr(tab + 1)] = s;
     }
   }
@@ -57,7 +59,7 @@ void Spatial::save() const {
     std::ofstream out(tmp);
     for (auto &[p, s] : map_)
       out << s.x << ' ' << s.y << ' ' << s.w << ' ' << s.h << ' '
-          << s.shaded << ' ' << s.open << '\t' << p << '\n';
+          << s.shaded << ' ' << s.open << ' ' << s.list << '\t' << p << '\n';
   }
   std::error_code ec;
   fs::rename(tmp, file_, ec);
