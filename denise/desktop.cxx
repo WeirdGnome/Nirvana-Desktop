@@ -240,7 +240,7 @@ bool Desktop::trash_full() const {
 void Desktop::layout_icons() {
   icons_.clear();
   int ix = w() - 90;
-  icons_.push_back({"Dom", home_, Icon::Home, ix, MENUBAR_H + 14});
+  icons_.push_back({"LisaOS", home_, Icon::Home, ix, MENUBAR_H + 14});
   if (root_) icons_.push_back({"System", "/", Icon::Home, ix, MENUBAR_H + 84});
   icons_.push_back({"Kosz", trash_dir(), trash_full() ? Icon::TrashFull : Icon::Trash, ix, h() - 74});
 }
@@ -262,7 +262,7 @@ bool Desktop::allowed(const std::string &path) const {
 }
 
 std::string Desktop::title_for(const std::string &path) const {
-  if (path == home_) return "Dom";
+  if (path == home_) return "LisaOS";
   if (path == "/") return "System";
   if (path == trash_dir()) return "Kosz";
   return fs::path(path).filename().string();
@@ -331,7 +331,7 @@ void Desktop::wire(PWindow *w) {
 void Desktop::open_folder(const std::string &path) {
   if (!allowed(path)) {
     dialog("Brak dostępu",
-           "Ten folder znajduje się poza Twoim Domem.\nAby go otworzyć, przełącz się w tryb root.",
+           "Ten folder znajduje się poza folderem LisaOS.\nAby go otworzyć, przełącz się w tryb root.",
            {{"OK", nullptr}});
     return;
   }

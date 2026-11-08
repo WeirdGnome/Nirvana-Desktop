@@ -3,7 +3,7 @@
 // PWindow to grupa FLTK rysująca pełne "chrome" okna Mac OS 9:
 // prążkowany pasek tytułu, przycisk zamknięcia, zoom, zwijanie (windowshade)
 // i uchwyt zmiany rozmiaru. Na etapie prototypu okna żyją wewnątrz biurka
-// (jeden proces). Te same funkcje rysujące wykorzysta później lisaos-agnus,
+// (jeden proces). Te same funkcje rysujące wykorzysta później lisaos-insight,
 // rysując ramki wokół prawdziwych okien X11.
 #pragma once
 

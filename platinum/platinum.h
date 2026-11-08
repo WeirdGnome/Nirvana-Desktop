@@ -1,6 +1,6 @@
 // LisaOS - libplatinum
 // Wygląd "Platinum" (w duchu wytycznych Mac OS 8/9) dla FLTK 1.4.
-// Wszystkie komponenty LisaOS (agnus, denise, gary, alice...) rysują
+// Wszystkie komponenty LisaOS (insight, denise, gary, alice...) rysują
 // przez tę bibliotekę, żeby całość wyglądała spójnie.
 #pragma once
 

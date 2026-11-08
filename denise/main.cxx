@@ -43,7 +43,7 @@ int main(int argc, char **argv) {
 
   Desktop desk(W, H, home, root);
   desk.border(0);
-  desk.xclass("LisaOS-Desktop");   // agnus rozpozna biurko i nie da mu ramki
+  desk.xclass("LisaOS-Desktop");   // insight rozpozna biurko i nie da mu ramki
   desk.show();
   // Dla innych menedżerów okien: standardowe oznaczenie okna biurka (EWMH).
   {

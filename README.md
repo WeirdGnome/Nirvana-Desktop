@@ -3,7 +3,7 @@
 Lekkie środowisko graficzne dla Linuksa (baza: minimalny Devuan) w duchu
 **Mac OS 9 (Platinum)** z nutą **Amigi**. Napisane w C++ i FLTK 1.4.
 
-- **Tryb prosty**: użytkownik widzi tylko swój Dom (`$HOME`), jak w Androidzie.
+- **Tryb prosty**: użytkownik widzi tylko swój folder LisaOS (czyli `$HOME`), jak w Androidzie.
   Aplikacje to pliki AppImage leżące w `~/Aplikacje`; instalacja = przeciągnięcie pliku.
 - **Tryb root**: pełny system plików i ustawienia zaawansowane, uruchamiany przez
   `pkexec`, wyraźnie oznaczony (czerwony chip w logo, plakietka ROOT).
@@ -15,7 +15,7 @@ Lekkie środowisko graficzne dla Linuksa (baza: minimalny Devuan) w duchu
 |---------------------|----------------------------------------|-------------|
 | `lisaos-platinum`   | biblioteka wyglądu: kolory, ramki, ikony, chrome okien | prototyp |
 | `lisaos-denise`     | Rambler: menedżer plików + biurko        | prototyp    |
-| `lisaos-agnus`      | menedżer okien X11 (Xorg/XLibre), ramki Platinum | działa (0.1) |
+| `lisaos-insight`      | menedżer okien X11 (Xorg/XLibre), ramki Platinum | działa (0.1) |
 | `lisaos-gary`       | globalny pasek menu, przełącznik aplikacji | planowany |
 | `lisaos-alice`      | panele sterowania                       | planowany   |
 | `lisaos-paula`      | dźwięk                                  | planowany   |
@@ -38,7 +38,7 @@ Z własnym FLTK: `-DFLTK_DIR=/ścieżka/do/share/fltk`.
 
 ## Uruchamianie
 
-**Pełna sesja** (agnus + biurko Ramblera), np. w zagnieżdżonym serwerze X:
+**Pełna sesja** (insight + biurko Ramblera), np. w zagnieżdżonym serwerze X:
 
     Xephyr :2 -screen 1024x768 &
     DISPLAY=:2 ./session/lisaos-session
@@ -55,7 +55,7 @@ Opcje Ramblera: `--root`, `--home KATALOG`, `--size 1024x768`.
 Czcionkę systemową w stylu Chicago można podać przez `LISAOS_SYSTEM_FONT`
 (np. wolny font ChicagoFLF).
 
-## Agnus: obsługa okien
+## Insight: obsługa okien
 
 - pasek tytułu: przeciąganie przesuwa okno, podwójne kliknięcie je zwija
 - przyciski: zamknij (z lewej, uprzejmie przez `WM_DELETE_WINDOW`), zwiń i zoom (z prawej)

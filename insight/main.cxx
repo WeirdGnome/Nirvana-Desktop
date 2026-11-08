@@ -1,6 +1,6 @@
-// LisaOS - lisaos-agnus: menedżer okien X11 w stylu Platinum
+// LisaOS - lisaos-insight: menedżer okien X11 w stylu Platinum
 //
-// Agnus to klasyczny "reparenting" window manager:
+// Insight to klasyczny "reparenting" window manager:
 //   * każde okno aplikacji dostaje ramkę (okno FLTK rysowane przez libplatinum),
 //   * aplikacja zostaje przeniesiona do wnętrza ramki (XReparentWindow),
 //   * pasek tytułu obsługuje przesuwanie, zamykanie, zoom i windowshade,
@@ -131,7 +131,7 @@ class Frame : public Fl_Double_Window {
 public:
   Client *c;
   Frame(Client *cl, int X, int Y, int W, int H)
-      : Fl_Double_Window(X, Y, W, H, "agnus-ramka"), c(cl) {
+      : Fl_Double_Window(X, Y, W, H, "insight-ramka"), c(cl) {
     border(0);
     box(FL_NO_BOX);
     end();
@@ -299,7 +299,7 @@ static void manage(Window w, bool existing) {
   XWindowAttributes wa;
   if (!XGetWindowAttributes(dpy, w, &wa) || wa.override_redirect) return;
   for (auto &[cw, c] : clients) if (fl_xid(c->frame) == w) return;   // nasze ramki
-  if (fl_find(w)) return;                                          // inne okna FLTK agnusa
+  if (fl_find(w)) return;                                          // inne okna FLTK insighta
 
   if (is_desktop(w)) {
     // Biurko: bez ramki, pełny ekran, zawsze na dole.
@@ -464,7 +464,7 @@ static int x_handler(void *event, void *) {
 int main(int argc, char **argv) {
   for (int i = 1; i < argc; i++)
     if (!strcmp(argv[i], "--help")) {
-      printf("lisaos-agnus: menedżer okien LisaOS (X11)\n");
+      printf("lisaos-insight: menedżer okien LisaOS (X11)\n");
       return 0;
     }
 
@@ -481,7 +481,7 @@ int main(int argc, char **argv) {
   XSelectInput(dpy, root, SubstructureRedirectMask | SubstructureNotifyMask | PropertyChangeMask);
   XSync(dpy, False);
   if (wm_running) {
-    fprintf(stderr, "agnus: inny menedżer okien już działa\n");
+    fprintf(stderr, "insight: inny menedżer okien już działa\n");
     return 1;
   }
   XSetErrorHandler(ignore_errors);   // okna znikają w dowolnym momencie - to normalne
@@ -502,7 +502,7 @@ int main(int argc, char **argv) {
   Window check = XCreateSimpleWindow(dpy, root, -1, -1, 1, 1, 0, 0, 0);
   XChangeProperty(dpy, root, A_NET_CHECK, XA_WINDOW, 32, PropModeReplace, (unsigned char *)&check, 1);
   XChangeProperty(dpy, check, A_NET_CHECK, XA_WINDOW, 32, PropModeReplace, (unsigned char *)&check, 1);
-  XChangeProperty(dpy, check, A_NET_WM_NAME, A_UTF8, 8, PropModeReplace, (unsigned char *)"agnus", 5);
+  XChangeProperty(dpy, check, A_NET_WM_NAME, A_UTF8, 8, PropModeReplace, (unsigned char *)"insight", 7);
   Atom supported[] = {A_NET_WM_NAME, A_NET_WM_TYPE, A_NET_WM_TYPE_DESKTOP, A_NET_WM_TYPE_DOCK,
                       A_NET_ACTIVE, A_NET_CHECK};
   XChangeProperty(dpy, root, A_NET_SUPPORTED, XA_ATOM, 32, PropModeReplace,
