@@ -17,7 +17,7 @@ Lekkie środowisko graficzne dla Linuksa (baza: minimalny Devuan) w duchu
 | `lisaos-denise`     | Rambler: menedżer plików + biurko        | prototyp    |
 | `lisaos-insight`      | menedżer okien X11 (Xorg/XLibre), ramki Platinum | działa (0.1) |
 | `lisaos-gary`       | przełącznik aplikacji (na razie w procesie Ramblera) | działa (0.1) |
-| `lisaos-alice`      | panele sterowania                       | planowany   |
+| `lisaos-alice`      | panele sterowania (na razie: Wygląd)    | działa (0.1) |
 | `lisaos-paula`      | dźwięk                                  | planowany   |
 | `lisaos-kickstart`  | logowanie i start sesji                 | planowany   |
 | `lisaos-guru`       | okno błędów, tryb root                  | planowany   |
@@ -109,7 +109,7 @@ Sposób rysowania dobiera się sam:
 
 ![Animacje](docs/img/animacje.gif)
 
-- `LISAOS_ANIMATIONS=0`: wyłącza animacje
+- `LISAOS_ANIMATIONS=0`: wyłącza animacje (ma pierwszeństwo przed panelem Wygląd)
 - `LISAOS_ANIM_MS=200`: wolniejsze klatki (do testów; domyślnie 12 ms)
 - `LISAOS_ANIM_NOGRAB=1`: bez blokady serwera X na czas animacji (do zrzutów ekranu)
 - `LISAOS_ANIM_MODE=xor` lub `ksztalt`: wymusza sposób rysowania
@@ -184,7 +184,51 @@ okno biurka nie przyjmuje fokusu, żeby klik w pasek menu nie zmieniał aktywnej
 
 Pozycje i tryb widoku okien: `~/.config/lisaos/denise.okna`.
 
+## Wygląd (panel lisaos-alice)
+
+Logo LisaOS → **Panele sterowania → Wygląd…** otwiera panel z listą schematów
+kolorów i podglądem. Klik na schemacie zmienia od razu sam panel, a **Zastosuj**/**OK**
+przestawia cały system: Rambler i Insight przeładowują paletę bez restartu.
+
+- **Schemat kolorów**: wbudowane *Platinum*, *Grafit* (ciemny) i *Workbench 2*
+  (ukłon w stronę Amigi) oraz ponad 40 schematów z
+  [Redmond97 SE](https://codeberg.org/Sliver_X/Redmond97-SE) (GPL-3.0).
+- **Pasek tytułu**: jak w schemacie, prążki Platinum, jednolity kolor albo gradient.
+- **Kolor i wzór biurka**: gładki, kropki, krata, ukośne prążki, cegiełki, raster.
+- **Animacje okien**: włączone lub wyłączone.
+
+![Wygląd: Platinum](docs/img/wyglad-platinum.png)
+![Wygląd: In Tenebris z gradientem i cegiełkami](docs/img/wyglad-in-tenebris.png)
+
+Ustawienia: `~/.config/lisaos/wyglad.conf`. Schematy to proste pliki `klucz=wartość`
+w katalogu `schematy/`, szukane kolejno w `~/.local/share/lisaos/schematy`,
+`<prefiks>/share/lisaos/schematy`, `/usr/local/share/...` i `/usr/share/...`.
+Własny schemat wystarczy tam wrzucić, np. `~/.local/share/lisaos/schematy/moj.conf`:
+
+```ini
+nazwa=Mój schemat
+styl_paska=prazki        # prazki | kolor | gradient
+okno=#DDDDDD             # tło okien
+tekst=#000000
+tresc=#FFFFFF            # wnętrze list i pól
+tekst_tresci=#000000
+zaznaczenie=#4444AA
+tekst_zaznaczenia=#FFFFFF
+obramowanie=#000000
+pasek=#4444AA            # pasek tytułu (styl kolor/gradient)
+pasek2=#8888DD           # drugi kolor gradientu
+tekst_paska=#FFFFFF
+pasek_nieaktywny=#AAAAAA
+tekst_paska_nieaktywnego=#555555
+akcent=#AAAAE6           # suwak przewijania (opcjonalnie)
+biurko=#5E6FA8           # opcjonalnie
+```
+
+Schematy Redmond97 SE odtworzysz skryptem `tools/importuj-redmond97.py`
+(kolory z `builder/presets/theme_*.conf`).
+
 ## Licencja
 
 Do ustalenia (proponowana: GPL-3.0-or-later; FLTK jest na LGPL z wyjątkiem
 pozwalającym na linkowanie statyczne).
+Schematy w `schematy/redmond97-se/` pochodzą z Redmond97 SE (Sliver X, matthewmx86) i są na GPL-3.0.

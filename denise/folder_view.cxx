@@ -115,12 +115,18 @@ static IconPair file_icon(const std::string &file, int size) {
 // Ikony wektorowe 16x16 do widoku listy: rysujemy 32x32 do obrazu i zmniejszamy.
 static Fl_Image *small_icon(Icon icon, bool sel) {
   static std::map<int, Fl_Image *> cache;
+  static Fl_Color bg = 0;   // ikony rysujemy na tle treści - po zmianie schematu od nowa
+  if (Fl::get_color(CONTENT) != bg) {
+    for (auto &kv : cache) delete kv.second;
+    cache.clear();
+    bg = Fl::get_color(CONTENT);
+  }
   int key = (int)icon * 2 + sel;
   auto it = cache.find(key);
   if (it != cache.end()) return it->second;
   Fl_Image_Surface surf(32, 32);
   Fl_Surface_Device::push_current(&surf);
-  fl_color(FL_WHITE);
+  fl_color(CONTENT);
   fl_rectf(0, 0, 32, 32);
   draw_icon(icon, 0, 0, sel);
   Fl_Surface_Device::pop_current();
@@ -343,7 +349,7 @@ void FolderView::select_paths(const std::vector<std::string> &paths) {
 
 // --- rysowanie ---------------------------------------------------------------
 void FolderView::draw() {
-  fl_color(FL_WHITE);
+  fl_color(CONTENT);
   fl_rectf(x(), y(), w(), h());
   if (mode_ == Icons) draw_icons(); else draw_list();
 
@@ -359,7 +365,7 @@ void FolderView::draw() {
   // cały folder jest celem upuszczania: gruba ramka wokół widocznej części
   if (drop_ == -1 && parent()) {
     const Fl_Widget *p = parent();
-    fl_color(FL_BLACK);
+    fl_color(CONTENT_TEXT);
     fl_rect(p->x() + 1, p->y() + 1, p->w() - SCROLL_W - 2, p->h() - SCROLL_W - 2);
     fl_rect(p->x() + 2, p->y() + 2, p->w() - SCROLL_W - 4, p->h() - SCROLL_W - 4);
   }
@@ -378,11 +384,11 @@ void FolderView::draw_icons() {
     int tw = (int)fl_width(lbl.c_str());
     int tx = cx + (CELL_W - tw) / 2, ty = cy + 38;
     if (sel_[i]) {
-      fl_color(FL_BLACK);
+      fl_color(ICON_SEL);
       fl_rectf(tx - 2, ty, tw + 4, fl_height());
-      fl_color(FL_WHITE);
+      fl_color(ICON_SEL_TEXT);
     } else {
-      fl_color(FL_BLACK);
+      fl_color(CONTENT_TEXT);
     }
     fl_draw(lbl.c_str(), tx, ty + fl_height() - fl_descent());
   }
@@ -403,14 +409,14 @@ void FolderView::draw_list() {
     std::string name = ellipsize(e.label, nw - 32);
     int tw = (int)fl_width(name.c_str());
     if (sel_[i]) {
-      fl_color(FL_BLACK);
+      fl_color(ICON_SEL);
       fl_rectf(x() + 25, ry + 2, tw + 4, ROW_H - 3);
-      fl_color(FL_WHITE);
+      fl_color(ICON_SEL_TEXT);
     } else {
-      fl_color(FL_BLACK);
+      fl_color(CONTENT_TEXT);
     }
     fl_draw(name.c_str(), x() + 27, base);
-    fl_color(FL_BLACK);
+    fl_color(CONTENT_TEXT);
     if (lc.date) fl_draw(ellipsize(polish_date(e.mtime), COL_DATE - 8).c_str(), xd + 4, base);
     if (lc.size) {
       std::string sz = e.dir ? "—" : human_size(e.size);
@@ -564,13 +570,13 @@ FolderPane::FolderPane(int X, int Y, int W, int H, const std::string &path, bool
   scroll_ = new Fl_Scroll(X, Y + INFO_H, W, H - INFO_H);
   scroll_->type(Fl_Scroll::BOTH_ALWAYS);
   scroll_->box(FL_FLAT_BOX);
-  scroll_->color(FL_WHITE);
+  scroll_->color(CONTENT);
   scroll_->scrollbar_size(SCROLL_W);
   for (Fl_Scrollbar *sb : {&scroll_->scrollbar, &scroll_->hscrollbar}) {
     sb->box(TRACK_BOX);
     sb->slider(THUMB_BOX);
     sb->color(MID);
-    sb->selection_color(fl_rgb_color(0xAA, 0xAA, 0xE6));
+    sb->selection_color(HILITE);
   }
   view_ = new FolderView(X, Y + INFO_H, W - SCROLL_W, H - INFO_H - SCROLL_W);
   scroll_->end();
@@ -653,7 +659,7 @@ void FolderPane::resize(int X, int Y, int W, int H) {
   scroll_->scroll_to(0, std::min(sy, std::max(0, view_->h() - inner_h)));
   // Gdy wszystko się mieści, pasek jest wygaszony (szary suwak), jak w Mac OS 9.
   bool need = view_->h() > inner_h;
-  scroll_->scrollbar.selection_color(need ? fl_rgb_color(0xAA, 0xAA, 0xE6) : GRAY);
+  scroll_->scrollbar.selection_color(need ? HILITE : GRAY);
   scroll_->hscrollbar.selection_color(GRAY);
   scroll_->redraw();
 }
@@ -667,7 +673,7 @@ void FolderPane::draw() {
   fl_color(SHADOW);
   fl_xyline(x(), y() + INFO_H - 1, x() + w() - 1);
   fl_font(FONT_SMALL, SIZE_SMALL);
-  fl_color(FL_BLACK);
+  fl_color(TEXT);
   std::string t = ellipsize(info_, w() - 10);
   fl_draw(t.c_str(), x(), y(), w(), INFO_H - 1, FL_ALIGN_CENTER);
 
@@ -688,7 +694,7 @@ void FolderPane::draw() {
         fl_color(MID);
         fl_rectf(cx + 2, hy + 1, cw - 2, HEADER_H - 2);
       }
-      fl_color(FL_BLACK);
+      fl_color(TEXT);
       int tw = (int)fl_width(txt);
       int tx = right ? cx + cw - 8 - tw : (key == FolderView::ByName ? x() + 27 : cx + 4);
       fl_draw(txt, tx, base);

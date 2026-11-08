@@ -102,6 +102,8 @@ public:
   void empty_trash();
   void ask_root();
   void refresh_all();
+  void appearance_changed();      // panel Wygląd zmienił schemat (_LISAOS_WYGLAD)
+  void open_appearance();         // uruchom panel Wygląd (lisaos-alice)
   void quit();
   void build_windows_menu(Fl_Menu_Button *m);
   void rename_selected();
@@ -192,4 +194,5 @@ private:
   int active_app_index(const std::vector<gary::App> &apps);
   Fl_Widget *extras_;
   std::unique_ptr<Fl_Tiled_Image> pattern_;
+  Fl_RGB_Image *logo_img_ = nullptr;
 };

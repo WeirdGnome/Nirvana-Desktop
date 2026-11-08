@@ -8,7 +8,6 @@
 
 namespace plat {
 
-Fl_Color GRAY, LIGHT, MID, SHADOW, DARK, HILITE, DESK_A, DESK_B, ROOT_TINT;
 Fl_Boxtype UP_BOX, DOWN_BOX, BUTTON_BOX, BUTTON_DOWN, WELL_BOX, MENUBAR_BOX,
            THUMB_BOX, TRACK_BOX;
 Fl_Font FONT_SYSTEM = FL_HELVETICA_BOLD;
@@ -126,21 +125,8 @@ static void track_box(int x, int y, int w, int h, Fl_Color) {
 
 void init(bool root) {
   g_root = root;
-  GRAY      = rgb(0xDDDDDD);
-  LIGHT     = rgb(0xFFFFFF);
-  MID       = rgb(0xAAAAAA);
-  SHADOW    = rgb(0x777777);
-  DARK      = rgb(0x000000);
-  HILITE    = rgb(0xCCCCFF);
-  DESK_A    = rgb(0x5E6FA8);
-  DESK_B    = rgb(0x6A7BB4);
-  ROOT_TINT = rgb(0xC0392B);
-
   Fl::scheme("none");
-  Fl::background(0xDD, 0xDD, 0xDD);
-  Fl::background2(0xFF, 0xFF, 0xFF);
-  Fl::foreground(0, 0, 0);
-  Fl::set_color(FL_SELECTION_COLOR, root ? 0xA0, 0x30, 0x28 : 0x44, 0x44, 0xAA);
+  reload_appearance();   // schemat kolorów z ~/.config/lisaos/wyglad.conf
 
   int f = FL_FREE_BOXTYPE;
   UP_BOX      = Fl_Boxtype(f++); Fl::set_boxtype(UP_BOX, up_box, 1, 1, 2, 2);
@@ -363,7 +349,7 @@ void draw_icon(Icon icon, int x, int y, bool sel) {
 // Logo LisaOS: chip DIP (ukłon w stronę układów Amigi) z literą "L".
 void draw_logo(int x, int y, int s) {
   Fl_Color body = g_root ? ROOT_TINT : rgb(0x4B3590);
-  fl_color(SHADOW);
+  fl_color(rgb(0x777777));   // logo ma stałe kolory, niezależne od schematu
   for (int i = 0; i < 4; i++) {
     int px = x + 3 + i * (s - 6) / 3;
     fl_rectf(px, y, 2, 2);
@@ -371,9 +357,9 @@ void draw_logo(int x, int y, int s) {
   }
   fl_color(body);
   fl_rectf(x + 1, y + 2, s - 2, s - 4);
-  fl_color(DARK);
+  fl_color(FL_BLACK);
   fl_rect(x + 1, y + 2, s - 2, s - 4);
-  fl_color(LIGHT);
+  fl_color(FL_WHITE);
   int lx = x + s / 2 - 3, ly = y + 4;
   fl_rectf(lx, ly, 2, s - 8);
   fl_rectf(lx, ly + s - 10, 6, 2);
@@ -410,12 +396,34 @@ void draw_titlebar(int x, int y, int w, const char *title, bool active, int pres
   int tw = (int)fl_width(t.c_str());
   int tx = x + (w - tw) / 2;
 
-  if (active) {
+  TitleStyle st = title_style();
+  if (st != TitleStyle::Stripes) {
+    // Kolorowy pasek (schematy w stylu Redmond97): jednolity albo gradient.
+    const Scheme &sc = current_scheme();
+    unsigned c1 = active ? sc.title : sc.title_i, c2 = active ? sc.title2 : sc.title_i2;
+    int fx = x + 3, fw = w - 6, fy = y + 3, fh = TITLE_H - 5;
+    if (st == TitleStyle::Solid || c1 == c2) {
+      fl_color(fl_rgb_color(c1 >> 16, (c1 >> 8) & 0xFF, c1 & 0xFF));
+      fl_rectf(fx, fy, fw, fh);
+    } else {
+      for (int i = 0; i < fw; i++) {
+        double t = fw > 1 ? (double)i / (fw - 1) : 0;
+        auto ch = [&](int sh) { return (uchar)(((c1 >> sh) & 0xFF) * (1 - t) + ((c2 >> sh) & 0xFF) * t + 0.5); };
+        fl_color(fl_rgb_color(ch(16), ch(8), ch(0)));
+        fl_yxline(fx + i, fy, fy + fh - 1);
+      }
+    }
+    if (boxes && active) {
+      title_button(close_x, by, 1, pressed == 1);
+      title_button(shade_x, by, 3, pressed == 3);
+      title_button(zoom_x, by, 2, pressed == 2);
+    }
+  } else if (active) {
     // Prążki: ciemna linia nad jasną, przerwane przy tytule i przyciskach.
     auto stripe = [&](int x0, int x1) {
       if (x1 <= x0) return;
       for (int yy = y + 4; yy <= y + TITLE_H - 6; yy += 2) {
-        fl_color(fl_rgb_color(0x8C, 0x8C, 0x8C)); fl_xyline(x0, yy, x1);
+        fl_color(STRIPE); fl_xyline(x0, yy, x1);
         fl_color(LIGHT); fl_xyline(x0, yy + 1, x1);
       }
     };
@@ -423,16 +431,16 @@ void draw_titlebar(int x, int y, int w, const char *title, bool active, int pres
       stripe(x + 3, tx - 8);
       stripe(tx + tw + 8, x + w - 4);
     } else {
-    stripe(close_x + BOX + 5, tx - 8);
-    stripe(tx + tw + 8, shade_x - 6);
-    stripe(x + 3, close_x - 4);
-    stripe(zoom_x + BOX + 4, x + w - 4);
-    title_button(close_x, by, 1, pressed == 1);
-    title_button(shade_x, by, 3, pressed == 3);
-    title_button(zoom_x, by, 2, pressed == 2);
+      stripe(close_x + BOX + 5, tx - 8);
+      stripe(tx + tw + 8, shade_x - 6);
+      stripe(x + 3, close_x - 4);
+      stripe(zoom_x + BOX + 4, x + w - 4);
+      title_button(close_x, by, 1, pressed == 1);
+      title_button(shade_x, by, 3, pressed == 3);
+      title_button(zoom_x, by, 2, pressed == 2);
     }
   }
-  fl_color(active ? DARK : SHADOW);
+  fl_color(active ? TITLE_TEXT : TITLE_I_TEXT);
   fl_draw(t.c_str(), tx, y + TITLE_H / 2 + fl_height() / 2 - fl_descent());
 }
 

@@ -13,6 +13,7 @@
 //
 // Wybór jest automatyczny; można go wymusić zmienną LISAOS_ANIM_MODE=xor|ksztalt.
 #include "anim.h"
+#include "platinum.h"
 
 #include <FL/Fl.H>
 #include <FL/platform.H>
@@ -38,8 +39,10 @@ void animations_suspend(bool s) { g_suspend = s; }
 
 bool animations_enabled() {
   if (g_suspend) return false;
-  const char *e = getenv("LISAOS_ANIMATIONS");
-  return !(e && (!strcmp(e, "0") || !strcmp(e, "no") || !strcmp(e, "off")));
+  // Zmienna środowiskowa ma pierwszeństwo przed ustawieniem z panelu Wygląd.
+  if (const char *e = getenv("LISAOS_ANIMATIONS"))
+    return !(!strcmp(e, "0") || !strcmp(e, "no") || !strcmp(e, "off"));
+  return current_appearance().animations;
 }
 
 #if defined(FLTK_USE_X11)

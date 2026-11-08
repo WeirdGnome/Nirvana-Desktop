@@ -66,7 +66,7 @@ public:
     time_t t = time(nullptr);
     strftime(buf, sizeof buf, "%H:%M", localtime(&t));
     int cx = x() + w() - 10 - (int)fl_width(buf);
-    fl_color(FL_BLACK);
+    fl_color(TEXT);
     fl_draw(buf, cx, y() + 14);
     if (root_mode()) {
       const char *r = "ROOT";
@@ -122,7 +122,7 @@ public:
     int tw = (int)fl_width(name.c_str());
     int tx = x() + w() - 8 - tw;
     if (icon) icon->draw(tx - 20, y() + 2);
-    fl_color(open_ ? FL_WHITE : FL_BLACK);
+    fl_color(open_ ? SEL_TEXT : TEXT);
     fl_draw(name.c_str(), tx, y() + 14);
     // separator po lewej
     fl_color(SHADOW); fl_yxline(x(), y() + 3, y() + h() - 5);
@@ -133,20 +133,19 @@ private:
 };
 
 // ---------------------------------------------------------------------------
-// Wzór biurka: kafelek 64x64 w dwóch odcieniach (do zmiany w panelu Wygląd)
+// Wzór biurka: kafelek w dwóch odcieniach (wybierany w panelu Wygląd)
 // ---------------------------------------------------------------------------
 static Fl_Tiled_Image *make_pattern() {
-  static unsigned char data[64 * 64 * 3];
-  uchar ar, ag, ab, br, bg, bb;
-  Fl::get_color(DESK_A, ar, ag, ab);
-  Fl::get_color(DESK_B, br, bg, bb);
+  int w, h;
+  unsigned char *tile = pattern_tile(current_appearance().pattern, w, h);
+  // Powielamy mały kafelek do 64x64, żeby rysować mniej kawałków.
+  unsigned char *big = new unsigned char[64 * 64 * 3];
   for (int y = 0; y < 64; y++)
-    for (int x = 0; x < 64; x++) {
-      bool dot = (x % 4 == 0 && y % 4 == 0) || (x % 4 == 2 && y % 4 == 2);
-      unsigned char *p = data + (y * 64 + x) * 3;
-      p[0] = dot ? br : ar; p[1] = dot ? bg : ag; p[2] = dot ? bb : ab;
-    }
-  return new Fl_Tiled_Image(new Fl_RGB_Image(data, 64, 64, 3));
+    for (int x = 0; x < 64; x++) memcpy(big + (y * 64 + x) * 3, tile + ((y % h) * w + x % w) * 3, 3);
+  delete[] tile;
+  auto *img = new Fl_RGB_Image(big, 64, 64, 3);
+  img->alloc_array = 1;   // obraz zwalnia kafelek
+  return new Fl_Tiled_Image(img, 0, 0);
 }
 
 static Fl_RGB_Image *make_logo_image() {
@@ -174,14 +173,14 @@ Desktop::Desktop(int W, int H, const std::string &home, bool root)
   menu_->textfont(FONT_SYSTEM);
   menu_->textsize(SIZE_SYSTEM);
   menu_->down_box(FL_FLAT_BOX);
-  menu_->selection_color(root ? fl_rgb_color(0xA0, 0x30, 0x28) : fl_rgb_color(0x44, 0x44, 0xAA));
+  menu_->selection_color(SEL);
 
   // Fl_Callback nie przyjmie lambdy z przechwyceniem, więc wskaźniki do
   // metod trzymamy w statycznej tablicy, a w user_data podajemy indeks.
   struct Item { const char *path; int shortcut; void (Desktop::*m)(); int flags; };
   std::vector<Item> items = {
     {"logo/O LisaOS…", 0, &Desktop::about, FL_MENU_DIVIDER},
-    {"logo/Panele sterowania", 0, nullptr, FL_MENU_INACTIVE},
+    {"logo/Panele sterowania/Wygląd…", 0, &Desktop::open_appearance, 0},
     {"logo/Ostatnie aplikacje", 0, nullptr, FL_MENU_INACTIVE},
     {"Plik/Nowy folder", FL_COMMAND + 'n', &Desktop::new_folder, 0},
     {"Plik/Otwórz", FL_COMMAND + 'o', &Desktop::open_selected, 0},
@@ -219,8 +218,8 @@ Desktop::Desktop(int W, int H, const std::string &home, bool root)
   }
   // pierwsze menu ma zamiast tekstu logo LisaOS
   if (Fl_Menu_Item *logo = (Fl_Menu_Item *)menu_->find_item("logo")) {
-    static Fl_RGB_Image *img = make_logo_image();
-    logo->image(img);
+    logo_img_ = make_logo_image();
+    logo->image(logo_img_);
   }
 
   extras_ = new MenuExtras(W - 170 - 150, 0, 150, MENUBAR_H);
@@ -364,6 +363,7 @@ static int x_watch(void *event, void *) {
   if (e->type == PropertyNotify && e->xproperty.window == DefaultRootWindow(fl_display) && g_desk) {
     if (e->xproperty.atom == atom("_NET_ACTIVE_WINDOW")) g_desk->active_changed();
     else if (e->xproperty.atom == atom("_NET_CLIENT_LIST")) g_desk->clients_changed();
+    else if (e->xproperty.atom == atom(APPEARANCE_ATOM)) g_desk->appearance_changed();
   }
   return 0;
 }
@@ -898,9 +898,9 @@ void Desktop::draw() {
     draw_icon(shown, ic.x + 24, ic.y, sel);
     int tw = (int)fl_width(ic.name.c_str());
     int tx = ic.x + 40 - tw / 2, ty = ic.y + 36;
-    fl_color(sel ? FL_BLACK : FL_WHITE);
+    fl_color(sel ? ICON_SEL : CONTENT);
     fl_rectf(tx - 2, ty, tw + 4, fl_height());
-    fl_color(sel ? FL_WHITE : FL_BLACK);
+    fl_color(sel ? ICON_SEL_TEXT : CONTENT_TEXT);
     fl_draw(ic.name.c_str(), tx, ty + fl_height() - fl_descent());
   }
   for (int i = 0; i < children(); i++) draw_child(*child(i));
@@ -1151,6 +1151,29 @@ void Desktop::ask_root() {
                dialog("Tryb root", "Nie znaleziono pkexec (pakiet polkit).", {{"OK", nullptr}});
              }
            }}});
+}
+
+// Panel Wygląd zapisał nowe ustawienia: nowa paleta, wzór biurka i logo.
+// Widgety trzymają indeksy palety, więc wystarczy je przerysować.
+void Desktop::appearance_changed() {
+  reload_appearance();
+  Fl_Image *old = pattern_ ? pattern_->image() : nullptr;
+  pattern_.reset(make_pattern());
+  delete old;
+  if (Fl_Menu_Item *logo = (Fl_Menu_Item *)menu_->find_item("logo")) {
+    Fl_RGB_Image *prev = logo_img_;
+    logo_img_ = make_logo_image();
+    logo->image(logo_img_);
+    delete prev;
+  }
+  Fl::redraw();
+}
+
+void Desktop::open_appearance() {
+  std::string exe = self_exe();
+  std::string alice = exe.substr(0, exe.rfind('/') + 1) + "lisaos-alice";
+  if (access(alice.c_str(), X_OK) != 0) alice = "lisaos-alice";   // z PATH
+  spawn({alice});
 }
 
 void Desktop::refresh_all() {
@@ -1526,7 +1549,7 @@ public:
       std::string s = std::to_string(n_);
       fl_font(FONT_SYSTEM, 10);
       int bw = (int)fl_width(s.c_str()) + 8;
-      fl_color(fl_rgb_color(0xC0, 0x39, 0x2B));
+      fl_color(ROOT_TINT);
       fl_rounded_rectf(w() - bw - 1, 1, bw, 13, 6);
       fl_color(FL_WHITE);
       fl_draw(s.c_str(), w() - bw + 3, 11);

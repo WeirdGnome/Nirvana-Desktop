@@ -38,6 +38,7 @@ static Display *dpy;
 static Window root;
 static int screen_w, screen_h;
 
+static Atom A_WYGLAD;
 static Atom A_WM_PROTOCOLS, A_WM_DELETE, A_WM_STATE, A_NET_WM_NAME, A_UTF8,
     A_NET_WM_TYPE, A_NET_WM_TYPE_DESKTOP, A_NET_WM_TYPE_DOCK, A_NET_SUPPORTED,
     A_NET_CHECK, A_NET_ACTIVE, A_NET_WM_STATE, A_NET_WM_STATE_SHADED, A_NET_WM_TYPE_DIALOG,
@@ -532,6 +533,20 @@ static void alt_tab_end() {
   XUngrabKeyboard(dpy, CurrentTime);
 }
 
+// Panel Wygląd zmienił schemat: nowa paleta, tło głównego okna, ramki.
+static void set_root_background() {
+  uchar r, g, b;
+  Fl::get_color(plat::DESK_A, r, g, b);
+  XSetWindowBackground(dpy, root, ((unsigned long)r << 16) | (g << 8) | b);   // TrueColor
+  XClearWindow(dpy, root);
+}
+
+static void appearance_changed() {
+  plat::reload_appearance();
+  set_root_background();
+  for (auto &[w, c] : clients) c->frame->redraw();
+}
+
 // Surowe zdarzenia X - obsługujemy te, które dotyczą okien aplikacji i korzenia.
 static int x_handler(void *event, void *) {
   XEvent *e = (XEvent *)event;
@@ -598,6 +613,10 @@ static int x_handler(void *event, void *) {
     return 0;
 
   case PropertyNotify:
+    if (e->xproperty.window == root && e->xproperty.atom == A_WYGLAD) {
+      appearance_changed();
+      return 0;   // niech zobaczą to też inne obsługi
+    }
     if (Client *c = client_of(e->xproperty.window)) {
       if (e->xproperty.atom == XA_WM_NAME || e->xproperty.atom == A_NET_WM_NAME) {
         c->title = get_title(c->win);
@@ -703,6 +722,7 @@ int main(int argc, char **argv) {
   A_NET_SUPPORTED = XInternAtom(dpy, "_NET_SUPPORTED", False);
   A_NET_CHECK = XInternAtom(dpy, "_NET_SUPPORTING_WM_CHECK", False);
   A_NET_ACTIVE = XInternAtom(dpy, "_NET_ACTIVE_WINDOW", False);
+  A_WYGLAD = XInternAtom(dpy, plat::APPEARANCE_ATOM, False);
   A_NET_WM_STATE = XInternAtom(dpy, "_NET_WM_STATE", False);
   A_NET_WM_STATE_SHADED = XInternAtom(dpy, "_NET_WM_STATE_SHADED", False);
   A_NET_WM_TYPE_DIALOG = XInternAtom(dpy, "_NET_WM_WINDOW_TYPE_DIALOG", False);
@@ -724,8 +744,7 @@ int main(int argc, char **argv) {
                   (unsigned char *)supported, sizeof supported / sizeof supported[0]);
 
   XDefineCursor(dpy, root, XCreateFontCursor(dpy, XC_left_ptr));
-  XSetWindowBackground(dpy, root, 0x5E6FA8);   // kolor biurka zanim wstanie Rambler
-  XClearWindow(dpy, root);
+  set_root_background();   // kolor biurka ze schematu, zanim wstanie Rambler
 
   Fl::add_system_handler(x_handler, nullptr);
 

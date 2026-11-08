@@ -30,7 +30,8 @@ endif()
 add_library(lisaos-platinum STATIC
   platinum/platinum.cxx
   platinum/pwindow.cxx
-  platinum/anim.cxx)
+  platinum/anim.cxx
+  platinum/theme.cxx)
 find_package(X11 REQUIRED)
 target_include_directories(lisaos-platinum PUBLIC platinum)
 target_link_libraries(lisaos-platinum PUBLIC fltk::fltk X11::X11 X11::Xext)
@@ -52,6 +53,11 @@ target_link_libraries(lisaos-denise PRIVATE lisaos-platinum fltk::images PkgConf
 add_executable(lisaos-insight insight/main.cxx)
 target_link_libraries(lisaos-insight PRIVATE lisaos-platinum X11::X11)
 
-install(TARGETS lisaos-denise lisaos-insight RUNTIME DESTINATION bin)
+# --- alice: panele sterowania (Wygląd) -------------------------------------------
+add_executable(lisaos-alice alice/main.cxx)
+target_link_libraries(lisaos-alice PRIVATE lisaos-platinum)
+
+install(TARGETS lisaos-denise lisaos-insight lisaos-alice RUNTIME DESTINATION bin)
+install(DIRECTORY schematy/ DESTINATION share/lisaos/schematy)
 install(PROGRAMS session/lisaos-session DESTINATION bin)
 install(FILES session/lisaos.desktop DESTINATION share/xsessions)

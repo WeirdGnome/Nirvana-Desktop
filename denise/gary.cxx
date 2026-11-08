@@ -11,6 +11,7 @@
 #include <cctype>
 #include <chrono>
 #include <cstring>
+#include <strings.h>
 #include <filesystem>
 #include <fstream>
 #include <map>
@@ -105,6 +106,7 @@ static bool has_atom(Window w, const char *prop, const char *value) {
 
 // "org.gnome.Nautilus" -> "Nautilus", "firefox" -> "Firefox"
 static std::string pretty(const std::string &cls) {
+  if (!strcasecmp(cls.c_str(), "lisaos-alice")) return "Wygląd";   // panele sterowania LisaOS (FLTK zmienia "l" na "L")
   std::string s = cls;
   if (auto dot = s.rfind('.'); dot != std::string::npos && dot + 1 < s.size()) s = s.substr(dot + 1);
   if (!s.empty() && islower((unsigned char)s[0])) s[0] = (char)toupper((unsigned char)s[0]);

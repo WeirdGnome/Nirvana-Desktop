@@ -42,6 +42,24 @@ wymieniamy tylko `insight` (kompozytor na wlroots), a resztę zostawiamy.
 - Obce aplikacje (GTK/Qt w AppImage) zachowują menu w oknie; `gary` pokazuje
   dla nich tylko menu logo i przełącznik aplikacji.
 
+## Wygląd i schematy kolorów
+
+Kolory libplatinum (`plat::GRAY`, `TEXT`, `CONTENT`, `SEL`, `LIGHT`, `SHADOW`…) to
+**indeksy palety FLTK**, nie wartości RGB. Cztery z nich to standardowe kolory FLTK
+(`FL_BACKGROUND_COLOR`, `FL_FOREGROUND_COLOR`, `FL_BACKGROUND2_COLOR`,
+`FL_SELECTION_COLOR`), reszta zajmuje wolne indeksy `FL_FREE_COLOR`..`+15`.
+Widget, który raz dostał `color(plat::GRAY)`, po zmianie schematu sam ma nowy kolor:
+wystarczy `Fl::set_color()` i przerysowanie.
+
+Przebieg zmiany:
+1. `lisaos-alice` zapisuje `~/.config/lisaos/wyglad.conf`.
+2. Ustawia właściwość `_LISAOS_WYGLAD` na oknie głównym X.
+3. Rambler i Insight dostają `PropertyNotify`, wołają `plat::reload_appearance()`
+   i przerysowują okna (Rambler odbudowuje też wzór biurka, Insight tło okna głównego).
+
+Odcienie wypukłości (`LIGHT`, `MID`, `SHADOW`) i prążki paska są wyliczane z koloru okna,
+chyba że schemat poda je wprost (`jasny`, `cien_sredni`, `cien`).
+
 ## Model uprawnień
 
 - Tryb prosty: Rambler nie otworzy niczego poza `$HOME` (sprawdzanie po
