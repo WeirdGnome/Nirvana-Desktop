@@ -64,6 +64,19 @@ Czcionkę systemową w stylu Chicago można podać przez `LISAOS_SYSTEM_FONT`
 - okna nie wchodzą pod pasek menu; biurko Ramblera zawsze leży na dole
 - bez kompozytora: aplikacje rysują prosto na ekran (mniej pamięci)
 
+## Animacje okien
+
+Jak w klasycznym Mac OS: przy otwieraniu, zamykaniu, zwijaniu i powiększaniu
+okien po ekranie przelatują kontury prostokątów („zoom rects”). Foldery w Ramblerze
+wylatują z ikony, z której je otwarto, i wracają do niej przy zamknięciu.
+Kontury są rysowane metodą XOR prosto na ekranie, bez kompozytora.
+
+![Animacje](docs/img/animacje.gif)
+
+- `LISAOS_ANIMATIONS=0`: wyłącza animacje
+- `LISAOS_ANIM_MS=200`: wolniejsze klatki (do testów; domyślnie 12 ms)
+- `LISAOS_ANIM_NOGRAB=1`: bez blokady serwera X na czas animacji (do zrzutów ekranu)
+
 ## Obsługa prototypu
 
 - podwójne kliknięcie: otwiera folder / uruchamia AppImage / `xdg-open` dla plików

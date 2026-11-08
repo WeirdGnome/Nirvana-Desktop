@@ -61,6 +61,21 @@ void FolderView::relayout(int avail_w, int min_h) {
   size(avail_w, std::max(min_h, rows * CELL_H + 12));
 }
 
+bool FolderView::icon_rect(const std::string &path, Rect &out) const {
+  for (int i = 0; i < (int)entries_.size(); i++) {
+    if (entries_[i].path != path) continue;
+    int cx = x() + 4 + (i % cols_) * CELL_W + (CELL_W - 32) / 2;
+    int cy = y() + 6 + (i / cols_) * CELL_H + 2;
+    out = {cx, cy, 32, 32};
+    // ikona musi być w widocznej części przewijanego obszaru
+    const Fl_Widget *p = parent();
+    if (p && (cy + 32 <= p->y() || cy >= p->y() + p->h() - SCROLL_W ||
+              cx + 32 <= p->x() || cx >= p->x() + p->w() - SCROLL_W)) return false;
+    return visible_r();
+  }
+  return false;
+}
+
 int FolderView::index_at(int ex, int ey) const {
   int cx = (ex - x() - 4) / CELL_W, cy = (ey - y() - 6) / CELL_H;
   if (ex < x() + 4 || ey < y() + 6 || cx >= cols_) return -1;

@@ -29,9 +29,11 @@ endif()
 # --- libplatinum: wygląd i chrome okien wspólny dla wszystkich komponentów --
 add_library(lisaos-platinum STATIC
   platinum/platinum.cxx
-  platinum/pwindow.cxx)
+  platinum/pwindow.cxx
+  platinum/anim.cxx)
+find_package(X11 REQUIRED)
 target_include_directories(lisaos-platinum PUBLIC platinum)
-target_link_libraries(lisaos-platinum PUBLIC fltk::fltk)
+target_link_libraries(lisaos-platinum PUBLIC fltk::fltk X11::X11)
 
 # --- denise: menedżer plików ---------------------------------------------------------
 add_executable(lisaos-denise
@@ -42,7 +44,6 @@ add_executable(lisaos-denise
 target_link_libraries(lisaos-denise PRIVATE lisaos-platinum)
 
 # --- insight: menedżer okien X11 ----------------------------------------------
-find_package(X11 REQUIRED)
 add_executable(lisaos-insight insight/main.cxx)
 target_link_libraries(lisaos-insight PRIVATE lisaos-platinum X11::X11)
 

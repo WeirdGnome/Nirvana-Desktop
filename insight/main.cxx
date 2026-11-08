@@ -27,6 +27,7 @@
 #include <map>
 #include <string>
 
+#include "anim.h"
 #include "platinum.h"
 
 using namespace plat;
@@ -186,7 +187,11 @@ public:
     return 0;
   }
 
+  Rect geom(int H = -1) const { return {x(), y(), w(), H < 0 ? h() : H}; }
+
   void toggle_shade() {
+    Rect full = geom(c->shaded ? c->full_h : h()), bar = geom(TITLE_H);
+    if (c->shaded) zoom_rects(bar, full); else zoom_rects(full, bar);
     if (!c->shaded) {
       c->full_h = h();
       c->shaded = true;
@@ -202,9 +207,11 @@ public:
     if (c->shaded) toggle_shade();
     if (!c->zoomed) {
       c->unzoom[0] = x(); c->unzoom[1] = y(); c->unzoom[2] = w(); c->unzoom[3] = h();
+      zoom_rects(geom(), {4, MENUBAR_H + 4, screen_w - 100, screen_h - MENUBAR_H - 10});
       resize(4, MENUBAR_H + 4, screen_w - 100, screen_h - MENUBAR_H - 10);
       c->zoomed = true;
     } else {
+      zoom_rects(geom(), {c->unzoom[0], c->unzoom[1], c->unzoom[2], c->unzoom[3]});
       resize(c->unzoom[0], c->unzoom[1], c->unzoom[2], c->unzoom[3]);
       c->zoomed = false;
     }
@@ -326,6 +333,8 @@ static void manage(Window w, bool existing) {
   y = std::max(y, MENUBAR_H);
   int fw = wa.width + 2 * FRAME, fh = wa.height + TITLE_H + FRAME;
 
+  // nowe okno "wylatuje" ze środka miejsca, w którym się pojawi
+  if (!existing) zoom_rects(center_of({x, y, fw, fh}), {x, y, fw, fh});
   c->frame = new Frame(c, x, y, fw, fh);
   c->frame->xclass("LisaOS-Frame");
   c->frame->show();
@@ -355,7 +364,10 @@ static void unmanage(Client *c, bool destroyed) {
   }
   clients.erase(c->win);
   if (g_active == c) g_active = nullptr;
+  Rect gone = c->frame->geom();
   c->frame->hide();
+  XSync(dpy, False);
+  zoom_rects(gone, center_of(gone));   // zamykane okno "zapada się" do środka
   Fl::delete_widget(c->frame);
   delete c;
   // fokus na najwyższe pozostałe okno

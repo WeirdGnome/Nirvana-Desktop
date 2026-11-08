@@ -8,6 +8,7 @@
 #include <string>
 #include <vector>
 
+#include "anim.h"
 #include "platinum.h"
 
 struct Entry {
@@ -26,6 +27,8 @@ public:
   void relayout(int avail_w, int min_h);
   const Entry *selected() const { return sel_ >= 0 ? &entries_[sel_] : nullptr; }
   int count() const { return (int)entries_.size(); }
+  // Prostokąt ikony danego elementu (współrzędne okna), jeśli jest widoczna.
+  bool icon_rect(const std::string &path, plat::Rect &out) const;
 
   std::function<void(const Entry &)> on_open;            // podwójne kliknięcie / Enter
   std::function<bool(const std::string &)> is_open;      // czy folder ma otwarte okno

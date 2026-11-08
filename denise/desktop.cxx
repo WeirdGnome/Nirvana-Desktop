@@ -311,15 +311,36 @@ void Desktop::remember(Win &w, bool open) {
   spatial_.set(w.path, s);
 }
 
+bool Desktop::source_rect(const std::string &path, Rect &out) {
+  // Dysk i kosz mają ikony na biurku
+  for (auto &ic : icons_)
+    if (ic.path == path) { out = to_screen({ic.x + 24, ic.y, 32, 32}); return true; }
+  // Pozostałe foldery - ikona w oknie folderu nadrzędnego, jeśli jest otwarte
+  Win *parent_win = find(fs::path(path).parent_path().string());
+  if (parent_win && !parent_win->win->shaded() && parent_win->pane->view()->icon_rect(path, out)) {
+    out = to_screen(out);
+    return true;
+  }
+  return false;
+}
+
 void Desktop::close(PWindow *w) {
   auto it = std::find_if(wins_.begin(), wins_.end(), [&](const Win &x) { return x.win == w; });
   if (it == wins_.end()) return;
+  // folder wraca do swojej ikony (albo zapada się do środka)
+  Rect from = to_screen({w->x(), w->y(), w->w(), w->h()}), to;
+  bool animate = it->pane != nullptr;
+  if (animate && !source_rect(it->path, to)) to = center_of(from);
   remember(*it, false);
   wins_.erase(it);
   remove(w);
   Fl::delete_widget(w);
   if (Win *t = top()) t->win->set_active(true);
   redraw();          // ikony folderów tracą kreskowanie "otwarty"
+  if (animate) {
+    Fl::flush();     // najpierw zniknięcie okna, potem kontury
+    zoom_rects(from, to);
+  }
 }
 
 void Desktop::wire(PWindow *w) {
@@ -328,7 +349,7 @@ void Desktop::wire(PWindow *w) {
   w->on_geometry = [this](PWindow *p) { if (Win *x = find(p)) remember(*x, true); };
 }
 
-void Desktop::open_folder(const std::string &path) {
+void Desktop::open_folder(const std::string &path, bool animate) {
   if (!allowed(path)) {
     dialog("Brak dostępu",
            "Ten folder znajduje się poza LisaOS HD.\nAby go otworzyć, przełącz się w tryb root.",
@@ -338,6 +359,10 @@ void Desktop::open_folder(const std::string &path) {
   std::error_code ec;
   if (path == trash_dir()) fs::create_directories(path, ec);
   if (Win *x = find(path)) {
+    // już otwarty: jak w Mac OS - kontury pokazują, gdzie jest jego okno
+    Rect src;
+    if (animate && source_rect(path, src))
+      zoom_rects(src, to_screen({x->win->x(), x->win->y(), x->win->w(), x->win->h()}));
     if (x->win->shaded()) x->win->toggle_shade();
     raise(x->win);
     return;
@@ -353,6 +378,14 @@ void Desktop::open_folder(const std::string &path) {
   s.x = std::clamp(s.x, 0, std::max(0, w() - 120));
   s.y = std::clamp(s.y, MENUBAR_H, std::max(MENUBAR_H, h() - 60));
 
+  if (animate) {
+    Rect to = to_screen({s.x, s.y, std::max(s.w, PWindow::MIN_W), std::max(s.h, PWindow::MIN_H)});
+    Rect from;
+    if (known && s.shaded) to.h = TITLE_H + 1;
+    if (!source_rect(path, from)) from = center_of(to);
+    zoom_rects(from, to);
+  }
+
   begin();
   auto *pw = new PWindow(s.x, s.y, std::max(s.w, PWindow::MIN_W), std::max(s.h, PWindow::MIN_H),
                          title_for(path).c_str());
@@ -367,7 +400,11 @@ void Desktop::open_folder(const std::string &path) {
   pane->view()->is_open = [this](const std::string &p) { return find(p) != nullptr; };
   wire(pw);
   wins_.push_back({pw, pane, path, {}});
-  if (known && s.shaded) pw->toggle_shade();
+  if (known && s.shaded) {
+    animations_suspend(true);       // od razu zwinięte, bez dodatkowej animacji
+    pw->toggle_shade();
+    animations_suspend(false);
+  }
   raise(pw);
   remember(wins_.back(), true);
 }
@@ -388,9 +425,9 @@ void Desktop::restore() {
   int n = 0;
   for (auto &p : spatial_.open_paths()) {
     std::error_code ec;
-    if (fs::is_directory(p, ec) && allowed(p)) { open_folder(p); n++; }
+    if (fs::is_directory(p, ec) && allowed(p)) { open_folder(p, false); n++; }
   }
-  if (!n) open_folder(root_path_);
+  if (!n) open_folder(root_path_, false);
 }
 
 // ---------------------------------------------------------------------------

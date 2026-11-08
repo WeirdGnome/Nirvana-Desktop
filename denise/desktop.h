@@ -10,6 +10,7 @@
 #include <string>
 #include <vector>
 
+#include "anim.h"
 #include "folder_view.h"
 #include "pwindow.h"
 #include "spatial.h"
@@ -18,7 +19,7 @@ class Desktop : public Fl_Double_Window {
 public:
   Desktop(int W, int H, const std::string &home, bool root);
 
-  void open_folder(const std::string &path);
+  void open_folder(const std::string &path, bool animate = true);
   void restore();                 // otwórz okna zapamiętane z poprzedniej sesji
 
   int handle(int e) override;
@@ -61,6 +62,8 @@ private:
   void layout_icons();
   int icon_at(int ex, int ey) const;
   bool allowed(const std::string &path) const;
+  bool source_rect(const std::string &path, plat::Rect &out);  // ikona, z której "wylatuje" okno
+  plat::Rect to_screen(plat::Rect r) const { return {r.x + x_root(), r.y + y_root(), r.w, r.h}; }
   std::string title_for(const std::string &path) const;
   std::string trash_dir() const;
   bool trash_full() const;

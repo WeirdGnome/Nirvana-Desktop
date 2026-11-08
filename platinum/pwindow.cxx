@@ -1,6 +1,9 @@
 // LisaOS - libplatinum: okno w stylu Platinum
 #include "pwindow.h"
 #include "platinum.h"
+#include "anim.h"
+
+#include <FL/Fl_Window.H>
 
 #include <FL/Fl.H>
 #include <FL/fl_draw.H>
@@ -50,7 +53,17 @@ bool PWindow::in_grow(int ex, int ey) const {
   return ex >= gx && ex < gx + SCROLL_W && ey >= gy && ey < gy + SCROLL_W;
 }
 
+// Geometria widżetu we współrzędnych ekranu (do animacji)
+static Rect screen_rect(Fl_Widget *w, int X, int Y, int W, int H) {
+  Fl_Window *win = w->window();
+  int ox = win ? win->x_root() : 0, oy = win ? win->y_root() : 0;
+  return {ox + X, oy + Y, W, H};
+}
+
 void PWindow::toggle_shade() {
+  Rect full = screen_rect(this, x(), y(), w(), shaded_ ? full_h_ : h());
+  Rect bar = screen_rect(this, x(), y(), w(), TITLE_H + 1);
+  if (shaded_) zoom_rects(bar, full); else zoom_rects(full, bar);
   if (!shaded_) {
     full_h_ = h();
     shaded_ = true;
@@ -67,13 +80,16 @@ void PWindow::toggle_shade() {
 
 void PWindow::toggle_zoom() {
   if (shaded_) toggle_shade();
+  Rect before = screen_rect(this, x(), y(), w(), h());
   if (!zoomed_) {
     unzoom_[0] = x(); unzoom_[1] = y(); unzoom_[2] = w(); unzoom_[3] = h();
     Fl_Widget *p = parent();
     int px = p ? p->x() : 0, pw = p ? p->w() : 800, ph = p ? p->h() : 600;
+    zoom_rects(before, screen_rect(this, px + 12, MENUBAR_H + 8, pw - 120, ph - MENUBAR_H - 20));
     resize(px + 12, MENUBAR_H + 8, pw - 120, ph - MENUBAR_H - 20);
     zoomed_ = true;
   } else {
+    zoom_rects(before, screen_rect(this, unzoom_[0], unzoom_[1], unzoom_[2], unzoom_[3]));
     resize(unzoom_[0], unzoom_[1], unzoom_[2], unzoom_[3]);
     zoomed_ = false;
   }
