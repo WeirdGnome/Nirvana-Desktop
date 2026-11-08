@@ -14,6 +14,8 @@
 #include <cstring>
 #include <string>
 
+#include <filesystem>
+
 #include "desktop.h"
 #include "platinum.h"
 
@@ -33,8 +35,12 @@ int main(int argc, char **argv) {
   }
   while (home.size() > 1 && home.back() == '/') home.pop_back();
 
-  signal(SIGCHLD, SIG_IGN);   // uruchomione aplikacje nie zostawiają zombie
   plat::init(root);
+  FolderView::set_home(home);
+  {
+    std::error_code ec;   // folder na aplikacje zawsze istnieje
+    std::filesystem::create_directories(home + "/Aplikacje", ec);
+  }
 
   if (!W || !H) {
     int sx, sy;

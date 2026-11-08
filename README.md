@@ -27,7 +27,8 @@ Lekkie środowisko graficzne dla Linuksa (baza: minimalny Devuan) w duchu
 Zależności (Devuan/Debian):
 
     sudo apt install build-essential cmake git libx11-dev libxft-dev \
-        libxinerama-dev libxcursor-dev libxfixes-dev libxrender-dev
+        libxinerama-dev libxcursor-dev libxfixes-dev libxrender-dev \
+        squashfs-tools bubblewrap
 
 Jeśli FLTK 1.4 nie jest zainstalowany, CMake sam pobierze i zbuduje wersję 1.4.4:
 
@@ -63,6 +64,22 @@ Czcionkę systemową w stylu Chicago można podać przez `LISAOS_SYSTEM_FONT`
 - klik w okno aplikacji aktywuje je i wyciąga na wierzch; klik w biurko dezaktywuje okna
 - okna nie wchodzą pod pasek menu; biurko Ramblera zawsze leży na dole
 - bez kompozytora: aplikacje rysują prosto na ekran (mniej pamięci)
+
+## Aplikacje (AppImage)
+
+- **Ikony i nazwy**: Rambler czyta ikonę (`.DirIcon`, PNG lub SVG) prosto z obrazu
+  squashfs wewnątrz AppImage, **bez uruchamiania go**. Offset obrazu liczy z nagłówka
+  ELF i używa `unsquashfs`. Nazwa jest oczyszczana: `Firefox-128.0-x86_64.AppImage` → „Firefox”.
+  Ikony trafiają do `~/.cache/lisaos/ikony`.
+- **Instalacja**: otwarcie AppImage spoza folderu Aplikacje (np. z Pobranych) pyta,
+  czy zainstalować. Plik trafia do `~/Aplikacje`, a jego zawartość jest rozpakowywana
+  do `~/.local/share/lisaos/aplikacje/`. Bez FUSE i bez wykonywania runtime'u AppImage.
+- **Uruchamianie w piaskownicy** (bubblewrap): cały system tylko do odczytu, zapis
+  wyłącznie w LisaOS HD, inni użytkownicy, `/root`, `/mnt` i `/media` niewidoczne,
+  własny `/tmp` i własna przestrzeń procesów; sama aplikacja jest tylko do odczytu.
+  Bez bubblewrap aplikacja startuje normalnie, a dialog instalacji o tym ostrzega.
+- Testowe AppImage: `tools/testowe-appimage.sh KATALOG`. „Zegar” zapisuje
+  `~/piaskownica.txt` z tym, co widzi z wnętrza piaskownicy.
 
 ## Animacje okien
 

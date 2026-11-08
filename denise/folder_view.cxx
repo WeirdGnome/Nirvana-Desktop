@@ -3,6 +3,11 @@
 
 #include <FL/Fl.H>
 #include <FL/fl_draw.H>
+#include <FL/Fl_RGB_Image.H>
+#include <FL/Fl_Shared_Image.H>
+#include <map>
+
+#include "appimage.h"
 #include <algorithm>
 #include <cstdio>
 #include <filesystem>
@@ -33,6 +38,37 @@ Icon icon_for(const std::string &name, bool dir) {
 // ---------------------------------------------------------------------------
 FolderView::FolderView(int X, int Y, int W, int H) : Fl_Widget(X, Y, W, H) {}
 
+static std::string g_home;
+void FolderView::set_home(const std::string &home) { g_home = home; }
+
+// Ikony z plików: normalna i przyciemniona (zaznaczona), 32x32, wspólny cache.
+struct IconPair { Fl_Image *normal = nullptr, *selected = nullptr; };
+static IconPair file_icon(const std::string &file) {
+  static std::map<std::string, IconPair> cache;
+  static bool registered = false;
+  if (!registered) { fl_register_images(); registered = true; }
+  auto it = cache.find(file);
+  if (it != cache.end()) return it->second;
+  IconPair p;
+  Fl_Image::RGB_scaling(FL_RGB_SCALING_BILINEAR);
+  if (Fl_Shared_Image *img = Fl_Shared_Image::get(file.c_str())) {
+    if (img->w() > 0 && img->h() > 0) {
+      // dwie niezależne kopie - kopia w tym samym rozmiarze współdzieliłaby piksele
+      // Kopiujemy obraz źródłowy (nie Fl_Shared_Image, które dzieli dane między
+      // kopiami), więc przyciemnienie wersji "zaznaczonej" nie psuje normalnej.
+      const Fl_Image *base = img->image() ? img->image() : img;
+      p.normal = base->copy(32, 32);
+      if (auto *r = dynamic_cast<Fl_RGB_Image *>(p.normal)) r->normalize();   // SVG: rasteryzacja od razu
+      p.selected = base->copy(32, 32);
+      if (auto *r = dynamic_cast<Fl_RGB_Image *>(p.selected)) r->normalize();
+      p.selected->color_average(FL_BLACK, 0.5f);
+    }
+    img->release();
+  }
+  cache[file] = p;
+  return p;
+}
+
 void FolderView::load(const std::string &path, bool show_hidden) {
   entries_.clear();
   sel_ = -1;
@@ -46,11 +82,16 @@ void FolderView::load(const std::string &path, bool show_hidden) {
     std::error_code ec2;
     e.dir = de.is_directory(ec2);
     e.icon = icon_for(name, e.dir);
+    e.label = name;
+    if (!e.dir && is_appimage(name)) {
+      e.label = appimage::display_name(name);
+      if (!g_home.empty()) e.icon_file = appimage::icon(e.path, g_home);
+    }
     entries_.push_back(std::move(e));
   }
   // Mac OS sortuje alfabetycznie bez wyróżniania folderów.
   std::sort(entries_.begin(), entries_.end(), [](const Entry &a, const Entry &b) {
-    return strcasecmp(a.name.c_str(), b.name.c_str()) < 0;
+    return strcasecmp(a.label.c_str(), b.label.c_str()) < 0;
   });
   redraw();
 }
@@ -99,9 +140,12 @@ void FolderView::draw() {
     bool sel = i == sel_;
     Icon ic = e.icon;
     if (e.dir && is_open && is_open(e.path)) ic = Icon::OpenFolder;
-    draw_icon(ic, cx + (CELL_W - 32) / 2, cy + 2, sel);
+    IconPair fi;
+    if (!e.icon_file.empty()) fi = file_icon(e.icon_file);
+    if (fi.normal) (sel ? fi.selected : fi.normal)->draw(cx + (CELL_W - 32) / 2, cy + 2);
+    else draw_icon(ic, cx + (CELL_W - 32) / 2, cy + 2, sel);
 
-    std::string lbl = ellipsize(e.name, CELL_W - 6);
+    std::string lbl = ellipsize(e.label, CELL_W - 6);
     int tw = (int)fl_width(lbl.c_str());
     int tx = cx + (CELL_W - tw) / 2, ty = cy + 38;
     if (sel) {

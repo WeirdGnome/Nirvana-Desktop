@@ -1,5 +1,6 @@
 // LisaOS - denise: biurko, pasek menu i zarządzanie oknami menedżera plików
 #include "desktop.h"
+#include "appimage.h"
 
 #include <FL/Fl.H>
 #include <FL/Fl_Box.H>
@@ -25,15 +26,11 @@ using namespace plat;
 // ---------------------------------------------------------------------------
 // Uruchamianie programów (AppImage, xdg-open, pkexec)
 // ---------------------------------------------------------------------------
-static void spawn(std::vector<std::string> args) {
-  pid_t pid = fork();
-  if (pid != 0) return;            // rodzic (lub błąd) - wracamy
-  setsid();
-  std::vector<char *> argv;
-  for (auto &a : args) argv.push_back(a.data());
+static void spawn(const std::vector<std::string> &args) {
+  std::vector<const char *> argv;
+  for (auto &a : args) argv.push_back(a.c_str());
   argv.push_back(nullptr);
-  execvp(argv[0], argv.data());
-  _exit(127);
+  appimage::spawn(argv.data());    // podwójny fork - bez procesów zombie
 }
 
 static std::string self_exe() {
@@ -411,14 +408,57 @@ void Desktop::open_folder(const std::string &path, bool animate) {
 
 void Desktop::open_entry(const Entry &e) {
   if (e.dir) { open_folder(e.path); return; }
-  if (is_appimage(e.name)) {
-    // AppImage: nadaj prawo wykonywania i uruchom.
-    // TODO: uruchamiać przez bubblewrap z dostępem tylko do $HOME.
-    chmod(e.path.c_str(), 0755);
-    spawn({e.path});
+  if (is_appimage(e.name)) { open_appimage(e.path); return; }
+  spawn({"xdg-open", e.path});
+}
+
+std::string Desktop::apps_dir() const { return home_ + "/Aplikacje"; }
+
+// AppImage spoza folderu Aplikacje: zaproponuj instalację (jak sklep w telefonie,
+// tylko bez sklepu). Z folderu Aplikacje: uruchom, w razie potrzeby rozpakowując.
+void Desktop::open_appimage(const std::string &path) {
+  std::string name = appimage::display_name(fs::path(path).filename().string());
+  if (fs::path(path).parent_path() != fs::path(apps_dir())) {
+    dialog("Instalacja",
+           "Zainstalować aplikację „" + name + "”?\n"
+           "Plik zostanie przeniesiony do folderu Aplikacje.\n" +
+           (appimage::sandbox_available()
+                ? "Aplikacja będzie działać w piaskownicy: zobaczy tylko LisaOS HD."
+                : "Uwaga: brak bubblewrap - aplikacja będzie działać bez piaskownicy."),
+           {{"Anuluj", nullptr},
+            {"Zainstaluj", [this, path] {
+               std::error_code ec;
+               fs::create_directories(apps_dir(), ec);
+               fs::path dest = fs::path(apps_dir()) / fs::path(path).filename();
+               for (int i = 2; fs::exists(dest, ec); i++)
+                 dest = fs::path(apps_dir()) / (fs::path(path).stem().string() + " " +
+                                                std::to_string(i) + ".AppImage");
+               fs::rename(path, dest, ec);
+               if (ec) {
+                 dialog("Instalacja", "Nie udało się przenieść pliku:\n" + ec.message(), {{"OK", nullptr}});
+                 return;
+               }
+               chmod(dest.c_str(), 0755);
+               refresh_all();
+               run_app(dest.string());
+             }}});
     return;
   }
-  spawn({"xdg-open", e.path});
+  run_app(path);
+}
+
+void Desktop::run_app(const std::string &path) {
+  if (!appimage::is_installed(path, home_)) {
+    cursor(FL_CURSOR_WAIT);
+    Fl::flush();
+    std::string err = appimage::install(path, home_);
+    cursor(FL_CURSOR_DEFAULT);
+    if (!err.empty()) {
+      dialog("Nie można uruchomić", err, {{"OK", nullptr}});
+      return;
+    }
+  }
+  appimage::launch(path, home_);
 }
 
 void Desktop::restore() {

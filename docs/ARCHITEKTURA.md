@@ -33,8 +33,13 @@ jednego okna biurka. Docelowo:
 
 - Tryb prosty: Rambler nie otworzy niczego poza `$HOME` (sprawdzanie po
   `weakly_canonical`, więc dowiązania symboliczne nie wyprowadzą poza LisaOS HD).
-- AppImage docelowo uruchamiane przez `bubblewrap`: zapis tylko w `$HOME`,
-  system tylko do odczytu, bez dostępu do innych użytkowników.
+- AppImage są rozpakowywane przy instalacji (`unsquashfs` z offsetem z nagłówka
+  ELF; runtime AppImage nigdy nie jest wykonywany) i uruchamiane przez
+  `bubblewrap`: zapis tylko w `$HOME`, system tylko do odczytu, ukryte `/home`
+  innych, `/root`, `/mnt`, `/media`, własny `/tmp` i PID namespace.
+  Udostępniane: gniazdo X11, `XAUTHORITY`, PulseAudio/PipeWire i szyna sesji D-Bus.
+  Uwaga: dostęp do serwera X oznacza, że aplikacja może podglądać inne okna -
+  to ograniczenie X11 (do rozważenia: osobny serwer Xephyr lub rozszerzenie XACE).
 - Tryb root: `pkexec lisaos-denise --root`, osobny proces, wyraźne oznaczenie.
 
 ## Nazewnictwo

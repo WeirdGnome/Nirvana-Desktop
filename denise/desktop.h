@@ -68,6 +68,9 @@ private:
   std::string trash_dir() const;
   bool trash_full() const;
   void open_entry(const Entry &e);
+  void open_appimage(const std::string &path);
+  void run_app(const std::string &path);
+  std::string apps_dir() const;
   void dialog(const std::string &title, const std::string &text,
               std::vector<std::pair<std::string, std::function<void()>>> buttons);
   static void dialog_cb(Fl_Widget *b, void *idx);

@@ -15,6 +15,8 @@ struct Entry {
   std::string name, path;
   bool dir = false;
   plat::Icon icon = plat::Icon::Document;
+  std::string label;       // nazwa wyświetlana (np. AppImage bez ".AppImage" i wersji)
+  std::string icon_file;   // własna ikona (PNG/SVG), np. wyciągnięta z AppImage
 };
 
 plat::Icon icon_for(const std::string &name, bool dir);
@@ -37,6 +39,7 @@ public:
   int handle(int e) override;
 
   static constexpr int CELL_W = 80, CELL_H = 66;
+  static void set_home(const std::string &home);   // potrzebne do cache ikon AppImage
 
 private:
   int index_at(int ex, int ey) const;
