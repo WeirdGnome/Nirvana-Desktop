@@ -77,7 +77,7 @@ public:
 };
 
 // ---------------------------------------------------------------------------
-// Menu aplikacji "Viewer": lista otwartych folderów i operacje na oknach.
+// Menu aplikacji "Rambler": lista otwartych folderów i operacje na oknach.
 // Docelowo (lisaos-gary) stanie się przełącznikiem aplikacji.
 // ---------------------------------------------------------------------------
 class WindowsMenu : public Fl_Menu_Button {
@@ -120,7 +120,7 @@ public:
     }
     fl_font(FONT_SYSTEM, SIZE_SYSTEM);
     fl_color(open_ ? FL_WHITE : FL_BLACK);
-    fl_draw("Viewer", x() + 28, y() + 14);
+    fl_draw("Rambler", x() + 28, y() + 14);
     // separator po lewej
     fl_color(SHADOW); fl_yxline(x(), y() + 3, y() + h() - 5);
     fl_color(LIGHT);  fl_yxline(x() + 1, y() + 3, y() + h() - 5);
@@ -512,7 +512,7 @@ void Desktop::about() {
   std::string text = std::string("LisaOS 0.1 „Tempo”\n") +
                      "Środowisko w duchu Mac OS 9 i Amigi\n\n" +
                      "Pamięć wbudowana: " + mem + " GB\n" +
-                     "Menedżer plików: Viewer 0.1 · FLTK " + std::to_string(Fl::api_version() / 10000) +
+                     "Menedżer plików: Rambler 0.1 · FLTK " + std::to_string(Fl::api_version() / 10000) +
                      "." + std::to_string(Fl::api_version() / 100 % 100) + "." +
                      std::to_string(Fl::api_version() % 100);
   dialog("O LisaOS", text, {{"OK", nullptr}});
@@ -615,7 +615,7 @@ void Desktop::quit() {
 }
 
 // ---------------------------------------------------------------------------
-// Menu aplikacji "Viewer"
+// Menu aplikacji "Rambler"
 // ---------------------------------------------------------------------------
 static std::string menu_escape(const std::string &s) {
   std::string r;
