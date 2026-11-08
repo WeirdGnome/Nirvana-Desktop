@@ -21,6 +21,7 @@
 #include <fstream>
 #include <sys/stat.h>
 #include <unistd.h>
+#include <sys/inotify.h>
 
 namespace fs = std::filesystem;
 using namespace plat;
@@ -183,11 +184,12 @@ Desktop::Desktop(int W, int H, const std::string &home, bool root)
     {"Plik/Otwórz", FL_COMMAND + 'o', &Desktop::open_selected, 0},
     {"Plik/Zamknij okno", FL_COMMAND + 'w', &Desktop::close_active, FL_MENU_DIVIDER},
     {"Plik/Zmień nazwę", FL_F + 2, &Desktop::rename_selected, 0},
+    {"Plik/Duplikuj", FL_COMMAND + 'd', &Desktop::duplicate, 0},
     {"Plik/Przenieś do kosza", FL_COMMAND + FL_BackSpace, &Desktop::move_to_trash, 0},
     {"Edycja/Cofnij", FL_COMMAND + 'z', nullptr, FL_MENU_INACTIVE | FL_MENU_DIVIDER},
     {"Edycja/Wytnij", FL_COMMAND + 'x', nullptr, FL_MENU_INACTIVE},
-    {"Edycja/Kopiuj", FL_COMMAND + 'c', nullptr, FL_MENU_INACTIVE},
-    {"Edycja/Wklej", FL_COMMAND + 'v', nullptr, FL_MENU_INACTIVE | FL_MENU_DIVIDER},
+    {"Edycja/Kopiuj", FL_COMMAND + 'c', &Desktop::copy_selected, 0},
+    {"Edycja/Wklej", FL_COMMAND + 'v', &Desktop::paste, FL_MENU_DIVIDER},
     {"Edycja/Zaznacz wszystko", FL_COMMAND + 'a', &Desktop::select_all, 0},
     {"Widok/jako ikony", FL_COMMAND + '1', &Desktop::view_icons, FL_MENU_RADIO | FL_MENU_VALUE},
     {"Widok/jako lista", FL_COMMAND + '2', &Desktop::view_list, FL_MENU_RADIO | FL_MENU_DIVIDER},
@@ -230,6 +232,30 @@ Desktop::Desktop(int W, int H, const std::string &home, bool root)
   });
 
   layout_icons();
+  watch_trash();
+}
+
+// Kosz może się zmienić z zewnątrz (inny program, inne okno) - ikona pełny/pusty.
+void Desktop::watch_trash() {
+  std::error_code ec;
+  fs::create_directories(trash_dir(), ec);
+  int fd = inotify_init1(IN_NONBLOCK | IN_CLOEXEC);
+  if (fd < 0) return;
+  if (inotify_add_watch(fd, trash_dir().c_str(), IN_CREATE | IN_DELETE | IN_MOVED_FROM | IN_MOVED_TO) < 0) {
+    ::close(fd);
+    return;
+  }
+  Fl::add_fd(fd, FL_READ, [](int f, void *data) {
+    char buf[4096];
+    while (read(f, buf, sizeof buf) > 0) {}
+    auto *self = (Desktop *)data;
+    bool full = self->trash_full();
+    for (auto &ic : self->icons_)
+      if (ic.path == self->trash_dir()) {
+        Icon want = full ? Icon::TrashFull : Icon::Trash;
+        if (ic.icon != want) { ic.icon = want; self->redraw(); }
+      }
+  }, this);
 }
 
 std::string Desktop::trash_dir() const { return home_ + "/.local/share/Trash/files"; }
@@ -724,6 +750,9 @@ void Desktop::open_folder(const std::string &path, bool animate) {
   win->pane->view()->on_drag_start = [this, win](const std::vector<Entry> &v) { drag_start(win, v); };
   win->pane->view()->on_drag_move = [this](int xr, int yr) { drag_move(xr, yr); };
   win->pane->view()->on_drag_end = [this](int xr, int yr, bool copy) { drag_end(xr, yr, copy); };
+  win->pane->view()->on_drop_uris = [this, win](const std::string &uris, const std::string &dest) {
+    drop_uris(uris, dest.empty() ? win->path : dest);
+  };
   win->pane->on_rename_commit = [this](const std::string &o, const std::string &n) { return rename_path(o, n); };
   win->pane->on_error = [this](const std::string &m) { dialog("Zmiana nazwy", m, {{"OK", nullptr}}); };
   if (known_pos && s.list) win->pane->set_mode(FolderView::List);
@@ -831,6 +860,29 @@ void Desktop::draw() {
 }
 
 int Desktop::handle(int e) {
+  switch (e) {   // pliki z innych programów upuszczane na ikony kosza i dysku
+  case FL_DND_ENTER:
+    return 1;
+  case FL_DND_DRAG: {
+    int i = icon_at(Fl::event_x(), Fl::event_y());
+    if (i != icon_drop_) { icon_drop_ = i; redraw(); }
+    return 1;
+  }
+  case FL_DND_LEAVE:
+    if (icon_drop_ >= 0) { icon_drop_ = -1; redraw(); }
+    return 1;
+  case FL_DND_RELEASE:
+    return icon_drop_ >= 0 ? 1 : 0;
+  case FL_PASTE:
+    if (icon_drop_ >= 0) {
+      std::string dest = icons_[icon_drop_].path;
+      icon_drop_ = -1;
+      redraw();
+      if (Fl::event_text()) drop_uris(Fl::event_text(), dest);
+      return 1;
+    }
+    break;
+  }
   if (e == FL_PUSH && Fl::event_y() >= MENUBAR_H) {
     int i = icon_at(Fl::event_x(), Fl::event_y());
     icon_sel_ = i;
@@ -1356,4 +1408,104 @@ void Desktop::drag_end(int xr, int yr, bool copy) {
     return;
   }
   transfer(items, dest, copy, false);
+}
+
+// ---------------------------------------------------------------------------
+// Kopiuj / Wklej / Duplikuj
+// ---------------------------------------------------------------------------
+static Entry entry_for(const std::string &path) {
+  Entry e;
+  e.path = path;
+  e.name = fs::path(path).filename().string();
+  std::error_code ec;
+  e.dir = fs::is_directory(path, ec);
+  e.label = e.name;
+  e.icon = icon_for(e.name, e.dir);
+  return e;
+}
+
+static std::string uri_encode(const std::string &path) {
+  static const char *hex = "0123456789ABCDEF";
+  std::string r = "file://";
+  for (unsigned char c : path) {
+    if (isalnum(c) || strchr("/-_.~", c)) r += (char)c;
+    else { r += '%'; r += hex[c >> 4]; r += hex[c & 15]; }
+  }
+  return r;
+}
+
+void Desktop::duplicate() {
+  NWin *a = active_folder();
+  if (!a) return;
+  auto items = a->pane->view()->selection();
+  if (!items.empty()) transfer(items, a->path, true, false);   // w tym samym folderze -> "kopia"
+}
+
+void Desktop::copy_selected() {
+  NWin *a = active_folder();
+  if (!a) return;
+  auto items = a->pane->view()->selection();
+  if (items.empty()) return;
+  clipboard_.clear();
+  std::string uris;
+  for (auto &e : items) {
+    clipboard_.push_back(e.path);
+    uris += uri_encode(e.path) + "\r\n";
+  }
+  // także dla innych programów: schowek systemowy jako lista adresów plików
+  Fl::copy(uris.c_str(), (int)uris.size(), 1, Fl::clipboard_plain_text);
+}
+
+void Desktop::paste() {
+  std::string dest = active_folder() ? active_folder()->path : home_;
+  std::vector<Entry> items;
+  std::error_code ec;
+  for (auto &p : clipboard_) if (fs::exists(p, ec)) items.push_back(entry_for(p));
+  if (items.empty()) return;
+  transfer(items, dest, true, false);
+}
+
+static std::string uri_decode(const std::string &s) {
+  std::string r;
+  for (size_t i = 0; i < s.size(); i++) {
+    if (s[i] == '%' && i + 2 < s.size() && isxdigit((unsigned char)s[i + 1]) &&
+        isxdigit((unsigned char)s[i + 2])) {
+      r += (char)std::stoi(s.substr(i + 1, 2), nullptr, 16);
+      i += 2;
+    } else r += s[i];
+  }
+  return r;
+}
+
+void Desktop::drop_uris(const std::string &list, const std::string &dest) {
+  std::vector<Entry> items;
+  std::error_code ec;
+  size_t pos = 0;
+  while (pos < list.size()) {
+    size_t nl = list.find('\n', pos);
+    std::string line = list.substr(pos, nl == std::string::npos ? std::string::npos : nl - pos);
+    pos = nl == std::string::npos ? list.size() : nl + 1;
+    while (!line.empty() && (line.back() == '\r' || line.back() == ' ')) line.pop_back();
+    if (line.empty() || line[0] == '#') continue;
+    std::string path;
+    if (line.rfind("file://", 0) == 0) {
+      path = uri_decode(line.substr(7));
+      if (!path.empty() && path[0] != '/') path = path.substr(path.find('/'));   // file://host/...
+    } else if (line[0] == '/') {
+      path = line;   // niektóre programy podają zwykłą ścieżkę
+    } else {
+      continue;
+    }
+    if (fs::exists(path, ec)) items.push_back(entry_for(path));
+  }
+  if (items.empty()) return;
+  if (dest == trash_dir()) {
+    std::string errors;
+    for (auto &e : items) { std::string err; if (!trash_path(e.path, err)) errors += err + "\n"; }
+    refresh_all();
+    if (!errors.empty()) dialog("Kosz", "Nie udało się przenieść do kosza:\n" + errors, {{"OK", nullptr}});
+    return;
+  }
+  // z innego programu: kopiujemy (jak przeciąganie między dyskami w Mac OS)
+  transfer(items, dest, true, false);
 }

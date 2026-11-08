@@ -100,6 +100,11 @@ public:
   void quit();
   void build_windows_menu(Fl_Menu_Button *m);
   void rename_selected();
+  void duplicate();
+  void copy_selected();
+  void paste();
+  // pliki przeciągnięte z innych programów (lista file://) - kopiujemy do dest
+  void drop_uris(const std::string &uri_list, const std::string &dest);
   void select_all();
   void view_icons();
   void view_list();
@@ -117,6 +122,7 @@ private:
   bool known(NWin *w) const;
   NWin *active_folder();          // aktywne okno folderu (lub nullptr)
   void layout_icons();
+  void watch_trash();
   int icon_at(int ex, int ey) const;
   bool allowed(const std::string &path) const;
   bool source_rect(const std::string &path, plat::Rect &out);  // ikona, z której "wylatuje" okno
@@ -149,6 +155,7 @@ private:
     NWin *hl_win = nullptr;
   } drag_;
   int icon_drop_ = -1;            // ikona biurka podświetlona jako cel upuszczania
+  std::vector<std::string> clipboard_;   // ścieżki skopiowane przez Edycja > Kopiuj
   void dialog(const std::string &title, const std::string &text,
               std::vector<std::pair<std::string, std::function<void()>>> buttons);
   static void dialog_cb(Fl_Widget *b, void *idx);

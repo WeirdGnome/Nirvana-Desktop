@@ -108,15 +108,29 @@ Sposób rysowania dobiera się sam:
 - Jeśli FLTK zbudowano z backendem Wayland, animacje działają tylko w trybie X11:
   uruchom z `FLTK_BACKEND=x11`.
 
-## Obsługa prototypu
+## Rambler: praca z plikami
 
-- podwójne kliknięcie: otwiera folder / uruchamia AppImage / `xdg-open` dla plików
-- podwójne kliknięcie w pasek tytułu albo przycisk z kreskami: zwinięcie okna (windowshade)
-- przycisk z kwadratem: zoom, prawy dolny róg: zmiana rozmiaru
-- `Ctrl+N` nowy folder, `Ctrl+O` otwórz, `Ctrl+W` zamknij okno,
-  `Ctrl+Backspace` do kosza (kosz zgodny z freedesktop.org), `Ctrl+R` odśwież, `Ctrl+Q` wyłącz
+- **Otwieranie**: podwójne kliknięcie lub Enter. AppImage z innego folderu proponuje instalację.
+- **Zaznaczanie**: klik, Shift/Ctrl+klik dodaje lub odejmuje, ramka zaznaczania myszą, `Ctrl+A`.
+- **Zmiana nazwy**: `F2` albo klik w nazwę już zaznaczonego elementu (jak w Finderze).
+  Zmiana nazwy folderu aktualizuje jego otwarte okna i zapamiętane pozycje.
+- **Przeciąganie**: między oknami przenosi, z `Ctrl` kopiuje; na folder w oknie wrzuca do
+  środka; na ikonę Kosza wyrzuca, na LisaOS HD przenosi do katalogu domowego. Nietrafione
+  upuszczenie „odlatuje” z powrotem na miejsce.
+- **Z innych programów** (XDND, np. przeglądarka, inny menedżer plików): pliki są kopiowane
+  do folderu, na którym je upuszczono; upuszczone na Kosz trafiają do kosza.
+- **Edycja > Kopiuj / Wklej** (`Ctrl+C` / `Ctrl+V`), **Plik > Duplikuj** (`Ctrl+D`) tworzy
+  „nazwa kopia”. Kopiuj zapisuje też adresy `file://` w schowku systemowym.
+- **Konflikty nazw** pytają o zastąpienie; folderu nie da się wrzucić w niego samego.
+- **Widok**: `Ctrl+1` ikony, `Ctrl+2` lista (zapamiętywane dla każdego okna). W liście klik
+  w nagłówek sortuje po nazwie, dacie, rozmiarze lub rodzaju; drugi klik odwraca kolejność.
+  Kolumny, które się nie mieszczą, są chowane.
+- **Automatyczne odświeżanie** (inotify): zmiany z zewnątrz pojawiają się same, ikona kosza
+  zmienia się na pełny/pusty.
+- `Ctrl+W` zamyka okno, `Ctrl+Backspace` przenosi zaznaczone do kosza, `Ctrl+N` nowy folder,
+  `Ctrl+R` odświeża, `Ctrl+Q` wyłącza.
 
-Pozycje okien: `~/.config/lisaos/denise.okna`.
+Pozycje i tryb widoku okien: `~/.config/lisaos/denise.okna`.
 
 ## Licencja
 

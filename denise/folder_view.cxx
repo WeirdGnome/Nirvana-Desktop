@@ -10,12 +10,15 @@
 
 #include <algorithm>
 #include <cstdio>
+#include <cstdlib>
 #include <cstring>
 #include <filesystem>
 #include <map>
 #include <strings.h>
 #include <sys/stat.h>
+#include <sys/inotify.h>
 #include <sys/statvfs.h>
+#include <unistd.h>
 
 #include "appimage.h"
 
@@ -165,16 +168,37 @@ void FolderView::load(const std::string &path, bool show_hidden) {
     }
     entries_.push_back(std::move(e));
   }
-  // Mac OS sortuje alfabetycznie bez wyróżniania folderów.
-  std::sort(entries_.begin(), entries_.end(), [](const Entry &a, const Entry &b) {
-    return strcasecmp(a.label.c_str(), b.label.c_str()) < 0;
-  });
+  sort_entries();
   sel_.assign(entries_.size(), 0);
   anchor_ = -1;
   drop_ = -2;
   state_ = IDLE;
   Fl::remove_timeout(rename_timeout, this);
   redraw();
+}
+
+// Mac OS sortuje alfabetycznie bez wyróżniania folderów; w liście można
+// sortować także po dacie, rozmiarze i rodzaju (remis: po nazwie).
+void FolderView::sort_entries() {
+  SortKey k = sort_;
+  bool desc = desc_;
+  std::stable_sort(entries_.begin(), entries_.end(), [k, desc](const Entry &a, const Entry &b) {
+    int c = 0;
+    if (k == ByDate) c = a.mtime < b.mtime ? -1 : a.mtime > b.mtime;
+    else if (k == BySize) c = a.size < b.size ? -1 : a.size > b.size;
+    else if (k == ByKind) c = kind_name(a).compare(kind_name(b));
+    if (c == 0) c = strcasecmp(a.label.c_str(), b.label.c_str());
+    return desc ? c > 0 : c < 0;
+  });
+}
+
+void FolderView::set_sort(SortKey k) {
+  if (k == sort_) desc_ = !desc_;
+  else { sort_ = k; desc_ = (k == ByDate || k == BySize); }   // najnowsze / największe na górze
+  std::vector<std::string> keep;
+  for (auto &e : selection()) keep.push_back(e.path);
+  sort_entries();
+  select_paths(keep);
 }
 
 void FolderView::relayout(int avail_w, int min_h) {
@@ -189,9 +213,22 @@ void FolderView::relayout(int avail_w, int min_h) {
 }
 
 // --- geometria -------------------------------------------------------------
-static int name_col_w(int w) {
-  return std::max(120, w - FolderView::COL_DATE - FolderView::COL_SIZE - FolderView::COL_KIND - 8);
+ListCols list_cols(int x0, int w) {
+  ListCols c;
+  int avail = w - 8, min_name = 140;
+  c.kind = avail - FolderView::COL_DATE - FolderView::COL_SIZE - FolderView::COL_KIND >= min_name;
+  c.size = avail - FolderView::COL_DATE - FolderView::COL_SIZE >= min_name;
+  c.date = avail - FolderView::COL_DATE >= min_name;
+  c.name_x = x0;
+  c.name_w = avail - (c.date ? FolderView::COL_DATE : 0) - (c.size ? FolderView::COL_SIZE : 0) -
+             (c.kind ? FolderView::COL_KIND : 0);
+  c.date_x = c.name_x + c.name_w;
+  c.size_x = c.date_x + (c.date ? FolderView::COL_DATE : 0);
+  c.kind_x = c.size_x + (c.size ? FolderView::COL_SIZE : 0);
+  return c;
 }
+
+static int name_col_w(int w) { return list_cols(0, w).name_w; }
 
 Rect FolderView::item_rect(int i) const {
   if (mode_ == Icons) {
@@ -345,8 +382,8 @@ void FolderView::draw_icons() {
 
 void FolderView::draw_list() {
   fl_font(FONT_SMALL, SIZE_SMALL);
-  int nw = name_col_w(w());
-  int xd = x() + 4 + nw, xs = xd + COL_DATE, xk = xs + COL_SIZE;
+  ListCols lc = list_cols(x() + 4, w());
+  int nw = lc.name_w, xd = lc.date_x, xs = lc.size_x, xk = lc.kind_x;
   for (int i = 0; i < count(); i++) {
     const Entry &e = entries_[i];
     int ry = y() + 2 + i * ROW_H;
@@ -366,10 +403,12 @@ void FolderView::draw_list() {
     }
     fl_draw(name.c_str(), x() + 27, base);
     fl_color(FL_BLACK);
-    fl_draw(polish_date(e.mtime).c_str(), xd + 4, base);
-    std::string sz = e.dir ? "—" : human_size(e.size);
-    fl_draw(sz.c_str(), xs + COL_SIZE - 8 - (int)fl_width(sz.c_str()), base);
-    fl_draw(kind_name(e).c_str(), xk + 4, base);
+    if (lc.date) fl_draw(ellipsize(polish_date(e.mtime), COL_DATE - 8).c_str(), xd + 4, base);
+    if (lc.size) {
+      std::string sz = e.dir ? "—" : human_size(e.size);
+      fl_draw(sz.c_str(), xs + COL_SIZE - 8 - (int)fl_width(sz.c_str()), base);
+    }
+    if (lc.kind) fl_draw(ellipsize(kind_name(e), COL_KIND - 8).c_str(), xk + 4, base);
   }
 }
 
@@ -464,6 +503,25 @@ int FolderView::handle(int e) {
   case FL_FOCUS:
   case FL_UNFOCUS:
     return 1;
+  // --- pliki przeciągane z innych programów (XDND) ---
+  case FL_DND_ENTER:
+    return on_drop_uris ? 1 : 0;
+  case FL_DND_DRAG:
+    set_drop_target(drop_target_at(Fl::event_x(), Fl::event_y()));
+    return 1;
+  case FL_DND_LEAVE:
+    set_drop_target(-2);
+    return 1;
+  case FL_DND_RELEASE:
+    return 1;
+  case FL_PASTE: {
+    std::string dest;
+    if (drop_ >= 0 && drop_ < count()) dest = entries_[drop_].path;
+    set_drop_target(-2);
+    std::string text = Fl::event_text() ? Fl::event_text() : "";
+    if (on_drop_uris && !text.empty()) on_drop_uris(text, dest);
+    return 1;
+  }
   case FL_KEYBOARD: {
     int k = Fl::event_key(), n = count();
     if (!n) return 0;
@@ -511,6 +569,7 @@ FolderPane::FolderPane(int X, int Y, int W, int H, const std::string &path, bool
   end();
   view_->on_rename = [this](int i) { start_rename(i); };
   refresh();
+  watch();
 }
 
 void FolderPane::update_info() {
@@ -522,6 +581,35 @@ void FolderPane::update_info() {
     for (char *p = buf; *p; p++) if (*p == '.') { *p = ','; break; }
   }
   info_ = polish_items(view_->count()) + (buf[0] ? std::string(", ") + buf : "");
+}
+
+// --- obserwacja zmian w folderze -------------------------------------------
+void FolderPane::watch() {
+  if (ino_fd_ >= 0) { Fl::remove_fd(ino_fd_); close(ino_fd_); ino_fd_ = -1; }
+  ino_fd_ = inotify_init1(IN_NONBLOCK | IN_CLOEXEC);
+  if (ino_fd_ < 0) return;
+  uint32_t mask = IN_CREATE | IN_DELETE | IN_MOVED_FROM | IN_MOVED_TO | IN_CLOSE_WRITE | IN_ATTRIB;
+  if (inotify_add_watch(ino_fd_, path_.c_str(), mask) < 0) { close(ino_fd_); ino_fd_ = -1; return; }
+  Fl::add_fd(ino_fd_, FL_READ, inotify_cb, this);
+}
+
+void FolderPane::inotify_cb(int fd, void *d) {
+  char buf[4096];
+  while (read(fd, buf, sizeof buf) > 0) {}   // tylko odbieramy; szczegóły nie są potrzebne
+  // zbieramy serię zmian (np. kopiowanie wielu plików) w jedno odświeżenie
+  Fl::remove_timeout(refresh_later, d);
+  Fl::add_timeout(0.25, refresh_later, d);
+}
+
+void FolderPane::refresh_later(void *d) {
+  auto *p = (FolderPane *)d;
+  if (p->editor_) { Fl::add_timeout(0.5, refresh_later, d); return; }   // nie przerywaj zmiany nazwy
+  p->refresh();
+}
+
+FolderPane::~FolderPane() {
+  Fl::remove_timeout(refresh_later, this);
+  if (ino_fd_ >= 0) { Fl::remove_fd(ino_fd_); close(ino_fd_); }
 }
 
 void FolderPane::refresh() {
@@ -582,20 +670,36 @@ void FolderPane::draw() {
     fl_rectf(x(), hy, w(), HEADER_H);
     fl_color(SHADOW);
     fl_xyline(x(), hy + HEADER_H - 1, x() + w() - 1);
-    int nw = std::max(120, (w() - SCROLL_W) - FolderView::COL_DATE - FolderView::COL_SIZE -
-                               FolderView::COL_KIND - 8);
-    int xd = x() + 4 + nw, xs = xd + FolderView::COL_DATE, xk = xs + FolderView::COL_SIZE;
+    ListCols lc = list_cols(x() + 4, w() - SCROLL_W);
+    fl_push_clip(x(), hy, w() - SCROLL_W, HEADER_H);
     fl_font(FONT_SYSTEM, SIZE_SMALL);
     int base = hy + HEADER_H / 2 + fl_height() / 2 - fl_descent();
-    fl_color(FL_BLACK);
-    fl_draw("Nazwa", x() + 27, base);
-    fl_draw("Data modyfikacji", xd + 4, base);
-    fl_draw("Rozmiar", xs + FolderView::COL_SIZE - 8 - (int)fl_width("Rozmiar"), base);
-    fl_draw("Rodzaj", xk + 4, base);
-    for (int cx : {xd, xs, xk}) {
+    auto header = [&](FolderView::SortKey key, int cx, int cw, const char *txt, bool right) {
+      bool on = view_->sort_key() == key;
+      if (on) {   // kolumna sortowania jest ciemniejsza, jak w Finderze
+        fl_color(MID);
+        fl_rectf(cx + 2, hy + 1, cw - 2, HEADER_H - 2);
+      }
+      fl_color(FL_BLACK);
+      int tw = (int)fl_width(txt);
+      int tx = right ? cx + cw - 8 - tw : (key == FolderView::ByName ? x() + 27 : cx + 4);
+      fl_draw(txt, tx, base);
+      if (on) {   // strzałka kierunku
+        int ax = right ? tx - 10 : tx + tw + 5, ay = hy + HEADER_H / 2;
+        if (view_->sort_desc()) fl_polygon(ax, ay - 2, ax + 6, ay - 2, ax + 3, ay + 2);
+        else fl_polygon(ax, ay + 2, ax + 6, ay + 2, ax + 3, ay - 2);
+      }
+    };
+    header(FolderView::ByName, x(), lc.date_x - x(), "Nazwa", false);
+    if (lc.date) header(FolderView::ByDate, lc.date_x, FolderView::COL_DATE, "Data modyfikacji", false);
+    if (lc.size) header(FolderView::BySize, lc.size_x, FolderView::COL_SIZE, "Rozmiar", true);
+    if (lc.kind) header(FolderView::ByKind, lc.kind_x, FolderView::COL_KIND, "Rodzaj", false);
+    for (int cx : {lc.date_x, lc.size_x, lc.kind_x}) {
+      if (cx >= x() + w() - SCROLL_W) continue;
       fl_color(SHADOW); fl_yxline(cx, hy + 2, hy + HEADER_H - 3);
       fl_color(LIGHT);  fl_yxline(cx + 1, hy + 2, hy + HEADER_H - 3);
     }
+    fl_pop_clip();
   }
   draw_children();
   // uchwyt zmiany rozmiaru w rogu między paskami przewijania (jak w Mac OS 9)
@@ -663,6 +767,19 @@ int FolderPane::handle(int e) {
   case FL_PUSH:
     // klik poza polem nazwy zatwierdza edycję
     if (editor_ && !Fl::event_inside(editor_)) commit_rename();
+    // klik w nagłówek kolumny: sortowanie
+    if (view_->mode() == FolderView::List && Fl::event_y() >= y() + INFO_H &&
+        Fl::event_y() < y() + INFO_H + HEADER_H && Fl::event_x() < x() + w() - SCROLL_W) {
+      ListCols lc = list_cols(x() + 4, w() - SCROLL_W);
+      int ex = Fl::event_x();
+      FolderView::SortKey k = FolderView::ByName;
+      if (lc.kind && ex >= lc.kind_x) k = FolderView::ByKind;
+      else if (lc.size && ex >= lc.size_x) k = FolderView::BySize;
+      else if (lc.date && ex >= lc.date_x) k = FolderView::ByDate;
+      view_->set_sort(k);
+      redraw();
+      return 1;
+    }
     if (win && Fl::event_x() >= gx && Fl::event_y() >= gy) {
       growing_ = true;
       grow_dx_ = win->w() - Fl::event_x_root();

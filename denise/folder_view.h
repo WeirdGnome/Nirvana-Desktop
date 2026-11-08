@@ -30,9 +30,22 @@ std::string kind_name(const Entry &e);   // "folder", "aplikacja", "dokument"...
 // Ikona elementu w rozmiarze 32 (widok ikon) lub 16 (lista) - także do przeciągania.
 void draw_entry_icon(const Entry &e, int x, int y, bool sel, int size, bool open = false);
 
+// Układ kolumn widoku listy - kolumny, które się nie mieszczą, są chowane
+// (najpierw "Rodzaj", potem "Rozmiar", na końcu data).
+struct ListCols {
+  int name_x, name_w;
+  bool date, size, kind;
+  int date_x, size_x, kind_x;
+};
+ListCols list_cols(int x0, int w);
+
 class FolderView : public Fl_Widget {
 public:
   enum Mode { Icons, List };
+  enum SortKey { ByName, ByDate, BySize, ByKind };
+  void set_sort(SortKey k);          // to samo pole drugi raz: odwrotna kolejność
+  SortKey sort_key() const { return sort_; }
+  bool sort_desc() const { return desc_; }
 
   FolderView(int x, int y, int w, int h);
   void load(const std::string &path, bool show_hidden);
@@ -64,6 +77,9 @@ public:
   std::function<void(const std::vector<Entry> &)> on_drag_start;
   std::function<void(int xr, int yr)> on_drag_move;
   std::function<void(int xr, int yr, bool copy)> on_drag_end;
+  // pliki upuszczone z innego programu (XDND): lista file:// i folder docelowy
+  // (pusty = folder tego widoku)
+  std::function<void(const std::string &uris, const std::string &dest)> on_drop_uris;
 
   void draw() override;
   int handle(int e) override;
@@ -81,6 +97,9 @@ private:
   void select_only(int i);
   static void rename_timeout(void *d);
 
+  void sort_entries();
+  SortKey sort_ = ByName;
+  bool desc_ = false;
   std::vector<Entry> entries_;
   std::vector<char> sel_;
   Mode mode_ = Icons;
@@ -99,7 +118,8 @@ public:
   void refresh();
   FolderView *view() { return view_; }
   const std::string &path() const { return path_; }
-  void set_path(const std::string &p) { path_ = p; }   // folder przeniesiony / przemianowany
+  void set_path(const std::string &p) { path_ = p; watch(); }   // folder przeniesiony / przemianowany
+  ~FolderPane() override;
   void set_mode(FolderView::Mode m);
   void start_rename(int index);
   void cancel_rename();
@@ -124,6 +144,11 @@ private:
   Fl_Input *editor_ = nullptr;
   std::string editing_path_;
   void update_info();
+  // obserwacja folderu (inotify): zmiany z zewnątrz odświeżają widok
+  void watch();
+  static void inotify_cb(int fd, void *d);
+  static void refresh_later(void *d);
+  int ino_fd_ = -1;
   bool growing_ = false;
   int grow_dx_ = 0, grow_dy_ = 0;
 };

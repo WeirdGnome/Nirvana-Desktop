@@ -376,6 +376,9 @@ static void manage(Window w, bool existing) {
   c->frame->xclass("LisaOS-Frame");
   c->frame->show();
   Window fx = fl_xid(c->frame);
+  // FLTK oznacza swoje okna jako cele XDND. Ramka nim nie jest - inaczej pliki
+  // przeciągane z innych programów trafiałyby w ramkę, a nie w okno aplikacji.
+  XDeleteProperty(dpy, fx, XInternAtom(dpy, "XdndAware", False));
 
   XAddToSaveSet(dpy, w);
   XSetWindowBorderWidth(dpy, w, 0);
