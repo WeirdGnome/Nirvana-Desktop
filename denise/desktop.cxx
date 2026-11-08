@@ -133,6 +133,73 @@ private:
 };
 
 // ---------------------------------------------------------------------------
+// Sieć na pasku menu: ikona stanu (Wi-Fi z siłą sygnału, przewodowe,
+// brak połączenia), a po kliknięciu menu z sieciami.
+// ---------------------------------------------------------------------------
+class NetMenu : public Fl_Menu_Button {
+public:
+  std::function<void(NetMenu *)> on_open;
+  std::function<net::Summary()> summary;
+  NetMenu(int X, int Y, int W, int H) : Fl_Menu_Button(X, Y, W, H) {
+    box(FL_FLAT_BOX);
+    down_box(FL_FLAT_BOX);
+    textfont(FONT_SYSTEM);
+    textsize(SIZE_SYSTEM);
+  }
+  int handle(int e) override {
+    if (e == FL_PUSH) {
+      if (on_open) on_open(this);
+      open_ = true; redraw(); Fl::flush();
+      int r = Fl_Menu_Button::handle(e);
+      open_ = false; redraw();
+      return r;
+    }
+    return Fl_Menu_Button::handle(e);
+  }
+  void draw() override {
+    fl_push_clip(x(), y(), w(), h());
+    draw_box(MENUBAR_BOX, GRAY);
+    fl_pop_clip();
+    if (open_) { fl_color(selection_color()); fl_rectf(x(), y(), w(), h() - 1); }
+    Fl_Color on = open_ ? SEL_TEXT : TEXT;
+    Fl_Color off = fl_color_average(on, open_ ? selection_color() : GRAY, 0.3f);
+    int ix = x() + (w() - 16) / 2, iy = y() + 3;
+    net::Summary s = summary ? summary() : net::Summary();
+    if (s.kind == net::Summary::Wired) draw_wired(ix, iy, on);
+    else if (s.kind == net::Summary::Wifi) draw_wifi(ix, iy, 1 + std::min(3, net::bars(s.signal)), on, off);
+    else if (s.kind == net::Summary::Other) draw_wired(ix, iy, on);
+    else if (s.connecting) draw_wifi(ix, iy, 1 + (int)(time(nullptr) % 4), on, off);
+    else draw_wifi(ix, iy, 0, on, off);
+  }
+private:
+  bool open_ = false;
+};
+
+// Pozycja menu z siecią Wi-Fi: nazwa, kłódka i kreski sygnału po prawej.
+// Tekst etykiety: cyfra 0-4 (sygnał), '0'/'1' (zabezpieczona), potem SSID.
+static const Fl_Labeltype NET_LABEL = FL_FREE_LABELTYPE;
+static void net_label_draw(const Fl_Label *o, int X, int Y, int W, int H, Fl_Align) {
+  const char *v = o->value;
+  if (!v || strlen(v) < 2) return;
+  int level = v[0] - '0';
+  bool lock = v[1] == '1';
+  fl_font(o->font, o->size);
+  Fl_Color c = (Fl_Color)o->color;
+  fl_color(c);
+  fl_draw(ellipsize(v + 2, W - 44).c_str(), X, Y, W - 44, H, FL_ALIGN_LEFT);
+  if (lock) draw_lock(X + W - 36, Y + (H - 9) / 2, c);
+  draw_signal(X + W - 22, Y + (H - 10) / 2, level, c, fl_color_average(c, GRAY, 0.3f));
+}
+static void net_label_measure(const Fl_Label *o, int &W, int &H) {
+  fl_font(o->font, o->size);
+  W = (int)fl_width(o->value ? o->value + 2 : "") + 52;
+  H = fl_height();
+}
+
+static std::vector<net::Network> g_menu_nets;
+static std::vector<std::string> g_menu_ifaces;
+
+// ---------------------------------------------------------------------------
 // Wzór biurka: kafelek w dwóch odcieniach (wybierany w panelu Wygląd)
 // ---------------------------------------------------------------------------
 static Fl_Tiled_Image *make_pattern() {
@@ -180,6 +247,7 @@ Desktop::Desktop(int W, int H, const std::string &home, bool root)
   struct Item { const char *path; int shortcut; void (Desktop::*m)(); int flags; };
   std::vector<Item> items = {
     {"logo/O LisaOS…", 0, &Desktop::about, FL_MENU_DIVIDER},
+    {"logo/Panele sterowania/Sieć…", 0, &Desktop::open_network, 0},
     {"logo/Panele sterowania/Wygląd…", 0, &Desktop::open_appearance, 0},
     {"logo/Ostatnie aplikacje", 0, nullptr, FL_MENU_INACTIVE},
     {"Plik/Nowy folder", FL_COMMAND + 'n', &Desktop::new_folder, 0},
@@ -222,7 +290,14 @@ Desktop::Desktop(int W, int H, const std::string &home, bool root)
     logo->image(logo_img_);
   }
 
-  extras_ = new MenuExtras(W - 170 - 150, 0, 150, MENUBAR_H);
+  extras_ = new MenuExtras(W - 170 - 120, 0, 120, MENUBAR_H);
+  if (net::installed()) {
+    auto *nm = new NetMenu(W - 170 - 120 - 30, 0, 30, MENUBAR_H);
+    net_menu_ = nm;
+    nm->selection_color(SEL);
+    nm->on_open = [this](NetMenu *m) { build_net_menu(m); };
+    nm->summary = [this] { return net::summary(net_); };
+  }
   auto *wm = new WindowsMenu(W - 170, 0, 170, MENUBAR_H);
   app_menu_ = wm;
   wm->selection_color(menu_->selection_color());
@@ -239,6 +314,11 @@ Desktop::Desktop(int W, int H, const std::string &home, bool root)
   layout_icons();
   watch_trash();
   watch_volumes();
+  if (net_menu_) {
+    Fl::set_labeltype(NET_LABEL, net_label_draw, net_label_measure);
+    net_ = net::query();
+    net::watch([this] { net_refresh(); });
+  }
 }
 
 // Kosz może się zmienić z zewnątrz (inny program, inne okno) - ikona pełny/pusty.
@@ -1169,11 +1249,129 @@ void Desktop::appearance_changed() {
   Fl::redraw();
 }
 
-void Desktop::open_appearance() {
+static std::string alice_exe() {
   std::string exe = self_exe();
   std::string alice = exe.substr(0, exe.rfind('/') + 1) + "lisaos-alice";
   if (access(alice.c_str(), X_OK) != 0) alice = "lisaos-alice";   // z PATH
-  spawn({alice});
+  return alice;
+}
+void Desktop::open_appearance() { spawn({alice_exe(), "wyglad"}); }
+void Desktop::open_network() { spawn({alice_exe(), "siec"}); }
+
+// --- sieć ----------------------------------------------------------------------
+// Menu sieci budujemy przy każdym otwarciu z ostatniego znanego stanu, a przy
+// okazji prosimy o nowe skanowanie Wi-Fi (wyniki przyjdą przez net::watch).
+void Desktop::build_net_menu(Fl_Menu_Button *m) {
+  m->clear();
+  g_menu_nets.clear();
+  g_menu_ifaces.clear();
+  auto item = [m](const std::string &text, Fl_Callback *cb, long data, int flags) {
+    int at = m->add("x", 0, cb, (void *)data, flags);
+    m->replace(at, text.c_str());   // replace() nie traktuje "/" jak podmenu
+    return at;
+  };
+  auto self = [](Fl_Widget *w) { return (Desktop *)w->window(); };
+  (void)self;
+  if (!net_.available) {
+    item(net_.problem.empty() ? "Sieć niedostępna" : net_.problem, nullptr, 0, FL_MENU_INACTIVE | FL_MENU_DIVIDER);
+    item("Ustawienia sieci…", [](Fl_Widget *w, void *) { ((Desktop *)w->window())->open_network(); }, 0, 0);
+    return;
+  }
+  net::rescan();
+
+  // urządzenia inne niż Wi-Fi: stan i Połącz/Rozłącz
+  for (auto &d : net_.devices) {
+    if (d.type == "wifi") continue;
+    std::string head = std::string(net::type_name(d.type)) + " (" + d.iface + "): " + net::state_name(d.state);
+    item(head, nullptr, 0, FL_MENU_INACTIVE);
+    g_menu_ifaces.push_back(d.iface);
+    long idx = (long)g_menu_ifaces.size() - 1;
+    if (d.state == net::DevState::Connected || d.state == net::DevState::Connecting)
+      item("   Rozłącz", [](Fl_Widget *w, void *v) {
+        ((Desktop *)w->window())->net_action(false, g_menu_ifaces[(long)v]); }, idx, FL_MENU_DIVIDER);
+    else if (d.state == net::DevState::Disconnected)
+      item("   Połącz", [](Fl_Widget *w, void *v) {
+        ((Desktop *)w->window())->net_action(true, g_menu_ifaces[(long)v]); }, idx, FL_MENU_DIVIDER);
+    else
+      item("   Kabel odłączony", nullptr, 0, FL_MENU_INACTIVE | FL_MENU_DIVIDER);
+  }
+
+  if (net_.wifi_hw) {
+    item(net_.wifi_on ? "Wi-Fi: włączone" : "Wi-Fi: wyłączone", nullptr, 0, FL_MENU_INACTIVE);
+    item(net_.wifi_on ? "   Wyłącz Wi-Fi" : "   Włącz Wi-Fi", [](Fl_Widget *w, void *) {
+      Desktop *d = (Desktop *)w->window();
+      net::set_wifi(!d->net_state().wifi_on, [d](bool ok, const std::string &msg) {
+        d->net_refresh();
+        if (!ok) d->dialog_message("Sieć", msg);
+      });
+    }, 0, FL_MENU_DIVIDER);
+    if (net_.wifi_on) {
+      int shown = 0;
+      for (auto &n : net_.networks) {
+        if (shown++ >= 14) break;
+        g_menu_nets.push_back(n);
+        std::string text = std::string(1, char('0' + net::bars(n.signal))) + (n.secured() ? "1" : "0") + n.ssid;
+        int at = item(text, [](Fl_Widget *w, void *v) {
+          ((Desktop *)w->window())->wifi_connect(g_menu_nets[(long)v], "");
+        }, (long)g_menu_nets.size() - 1, FL_MENU_RADIO | (n.in_use ? FL_MENU_VALUE : 0));
+        ((Fl_Menu_Item *)&m->menu()[at])->labeltype(NET_LABEL);
+      }
+      if (net_.networks.empty()) item("Szukam sieci…", nullptr, 0, FL_MENU_INACTIVE);
+      for (auto &d : net_.devices)
+        if (d.type == "wifi" && d.state == net::DevState::Connected) {
+          g_menu_ifaces.push_back(d.iface);
+          item("Rozłącz z „" + d.connection + "”", [](Fl_Widget *w, void *v) {
+            ((Desktop *)w->window())->net_action(false, g_menu_ifaces[(long)v]); },
+            (long)g_menu_ifaces.size() - 1, 0);
+        }
+      item("Inna sieć…", [](Fl_Widget *w, void *) {
+        spawn({alice_exe(), "siec", "--ukryta"}); }, 0, FL_MENU_DIVIDER);
+    }
+  }
+  item("Ustawienia sieci…", [](Fl_Widget *w, void *) { ((Desktop *)w->window())->open_network(); }, 0, 0);
+}
+
+void Desktop::net_refresh() {
+  net_ = net::query();
+  if (net_menu_) net_menu_->redraw();
+}
+
+void Desktop::net_action(bool connect, const std::string &iface) {
+  auto done = [this](bool ok, const std::string &msg) { net_refresh(); if (!ok) dialog_message("Sieć", msg); };
+  if (connect) net::connect_device(iface, done);
+  else net::disconnect_device(iface, done);
+}
+
+void Desktop::dialog_message(const std::string &title, const std::string &text) {
+  dialog(title, text, {{"OK", nullptr}});
+}
+
+void Desktop::wifi_connect(const net::Network &n, const std::string &msg) {
+  if (n.enterprise()) {
+    dialog_message("Sieć Wi-Fi", "Sieci firmowe (WPA Enterprise, 802.1X) nie są jeszcze obsługiwane.\n"
+                                 "Skonfiguruj je narzędziem nmtui albo nm-connection-editor.");
+    return;
+  }
+  auto done = [this, n](bool ok, const std::string &m) {
+    net_refresh();
+    if (ok) return;
+    if (m == net::NEED_PASSWORD || m == "Nieprawidłowe hasło." ||
+        m == "Nie udało się połączyć. Sprawdź hasło.")
+      wifi_connect(n, m == net::NEED_PASSWORD ? "" : m);   // zapytaj (jeszcze raz) o hasło
+    else
+      dialog_message("Sieć Wi-Fi", m);
+  };
+  // znana albo otwarta sieć: bez pytania; przy błędzie hasła pytamy
+  if (msg.empty() && (!n.secured() || n.known)) {
+    net::connect_wifi(n.ssid, n.security, "", false, done);
+    return;
+  }
+  ask_secret("Sieć Wi-Fi", Icon::Wifi,
+             "Sieć „" + n.ssid + "” jest zabezpieczona.\nPodaj hasło, aby się połączyć.", msg, "Połącz",
+             [n, done](std::string &p) {
+    if (p.empty()) return;
+    net::connect_wifi(n.ssid, n.security, p, false, done);
+  });
 }
 
 void Desktop::refresh_all() {
@@ -1861,22 +2059,27 @@ void Desktop::open_volume(int vi) {
 }
 
 // Hasło do dysku LUKS: osobny dialog z ukrytym polem (Fl_Secret_Input).
-void Desktop::ask_password(const vol::Volume &v, const std::string &msg) {
+// Ogólne okno z polem hasła (dysk zaszyfrowany, sieć Wi-Fi).
+void Desktop::ask_secret(const std::string &title, Icon icon, const std::string &text,
+                         const std::string &msg, const char *ok_label,
+                         std::function<void(std::string &)> on_ok) {
   int ox = csd_mode ? FRAME : 0, oy = csd_mode ? TITLE_H : 0;
   int W = 380, H = msg.empty() ? 150 : 170;
   int X = (w() - W) / 2 + x_root(), Y = (h() - H) / 3 + y_root();
-  auto *win = new NWin(this, X - ox, Y - oy, W + 2 * ox, H + oy + ox, "Dysk zaszyfrowany", true);
+  auto *win = new NWin(this, X - ox, Y - oy, W + 2 * ox, H + oy + ox, "", true);
+  win->copy_label(title.c_str());
   win->color(GRAY);
-  struct Lock : Fl_Widget {
-    Lock(int X, int Y) : Fl_Widget(X, Y, 34, 34) {}
-    void draw() override { draw_icon(Icon::Encrypted, x(), y(), false); }
+  struct Pic : Fl_Widget {
+    Icon ic;
+    Pic(int X, int Y, Icon i) : Fl_Widget(X, Y, 34, 34), ic(i) {}
+    void draw() override { draw_icon(ic, x(), y(), false); }
   };
-  new Lock(ox + 16, oy + 16);
-  std::string text = "Dysk „" + v.name + "” jest zaszyfrowany.\nPodaj hasło, aby go otworzyć.";
+  new Pic(ox + 16, oy + 16, icon);
   auto *msgbox = new Fl_Box(ox + 64, oy + 12, W - 80, 36);
   msgbox->copy_label(text.c_str());
   msgbox->labelfont(FONT_SYSTEM);
   msgbox->labelsize(SIZE_SYSTEM);
+  msgbox->labelcolor(TEXT);
   msgbox->align(FL_ALIGN_LEFT | FL_ALIGN_TOP | FL_ALIGN_INSIDE | FL_ALIGN_WRAP);
   int iy = oy + 56;
   if (!msg.empty()) {   // np. "Nieprawidłowe hasło."
@@ -1892,7 +2095,6 @@ void Desktop::ask_password(const vol::Volume &v, const std::string &msg) {
   pass->box(WELL_BOX);
   pass->textfont(FONT_SMALL);
   pass->textsize(SIZE_SYSTEM);
-  std::string uuid = v.uuid;
   int bx = ox + W - 16 - 84;
   auto make_button = [&](int X2, const char *label, bool def, int idx) {
     auto *b = new Fl_Button(X2, oy + H - 36, 76, 22, label);
@@ -1905,20 +2107,34 @@ void Desktop::ask_password(const vol::Volume &v, const std::string &msg) {
     if (def) b->shortcut(FL_Enter);
   };
   make_button(bx - 90, "Anuluj", false, 0);
-  make_button(bx, "Otwórz", true, 1);
+  make_button(bx, ok_label, true, 1);
   win->actions.push_back(nullptr);
-  win->actions.push_back([this, pass, uuid] {
+  win->actions.push_back([pass, on_ok] {
     std::string p = pass->value();
     // wyczyść pole od razu - hasło nie powinno wisieć w widżecie
     pass->value("");
+    on_ok(p);
+    std::fill(p.begin(), p.end(), '\0');
+  });
+  win->end();
+  win->set_modal();
+  wins_.push_back(win);
+  win->show();
+  pass->take_focus();
+}
+
+void Desktop::ask_password(const vol::Volume &v, const std::string &msg) {
+  std::string uuid = v.uuid;
+  ask_secret("Dysk zaszyfrowany", Icon::Encrypted,
+             "Dysk „" + v.name + "” jest zaszyfrowany.\nPodaj hasło, aby go otworzyć.", msg, "Otwórz",
+             [this, uuid](std::string &p) {
     int vi = -1;
     for (int i = 0; i < (int)vols_.size(); i++) if (vols_[i].uuid == uuid) vi = i;
-    if (vi < 0) { std::fill(p.begin(), p.end(), '\0'); return; }
+    if (vi < 0) return;
     vol::Volume v = vols_[vi];
     cursor(FL_CURSOR_WAIT);
     Fl::flush();
     std::string err = vol::unlock(v, p);
-    std::fill(p.begin(), p.end(), '\0');
     cursor(FL_CURSOR_DEFAULT);
     if (!err.empty()) {
       if (err == "Nieprawidłowe hasło.") ask_password(v, err);   // jeszcze raz
@@ -1929,11 +2145,6 @@ void Desktop::ask_password(const vol::Volume &v, const std::string &msg) {
     for (int i = 0; i < (int)vols_.size(); i++)
       if (vols_[i].uuid == uuid) { open_volume(i); break; }
   });
-  win->end();
-  win->set_modal();
-  wins_.push_back(win);
-  win->show();
-  pass->take_focus();
 }
 
 void Desktop::eject_volume(int vi) {

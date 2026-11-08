@@ -18,6 +18,7 @@
 #include "anim.h"
 #include "folder_view.h"
 #include "gary.h"
+#include "net.h"
 #include "volumes.h"
 #include "spatial.h"
 
@@ -104,6 +105,14 @@ public:
   void refresh_all();
   void appearance_changed();      // panel Wygląd zmienił schemat (_LISAOS_WYGLAD)
   void open_appearance();         // uruchom panel Wygląd (lisaos-alice)
+  void open_network();            // panel Sieć
+  // sieć (pasek menu)
+  void build_net_menu(Fl_Menu_Button *m);
+  void net_action(bool connect, const std::string &iface);
+  void net_refresh();
+  void wifi_connect(const net::Network &n, const std::string &msg);
+  const net::State &net_state() const { return net_; }
+  void dialog_message(const std::string &title, const std::string &text);
   void quit();
   void build_windows_menu(Fl_Menu_Button *m);
   void rename_selected();
@@ -135,6 +144,9 @@ private:
   void open_volume(int vi);
   void eject_volume(int vi);
   void ask_password(const vol::Volume &v, const std::string &msg);
+  void ask_secret(const std::string &title, plat::Icon icon, const std::string &text,
+                  const std::string &msg, const char *ok_label,
+                  std::function<void(std::string &)> on_ok);
   int volume_at_path(const std::string &path) const;   // wolumen zawierający ścieżkę
   // przeciąganie ikony dysku po biurku (do kosza = wysuń)
   int vdrag_icon_ = -1, vpress_x_ = 0, vpress_y_ = 0;
@@ -195,4 +207,6 @@ private:
   Fl_Widget *extras_;
   std::unique_ptr<Fl_Tiled_Image> pattern_;
   Fl_RGB_Image *logo_img_ = nullptr;
+  net::State net_;
+  Fl_Widget *net_menu_ = nullptr;
 };

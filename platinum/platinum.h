@@ -108,9 +108,16 @@ bool root_mode();
 
 // ---- Ikony (32x32, rysowane wektorowo) ------------------------------------
 enum class Icon { Folder, OpenFolder, Document, Application, Home, Trash, TrashFull, Image, Music,
-                  HardDisk, Removable, Optical, Encrypted, Eject };
+                  HardDisk, Removable, Optical, Encrypted, Eject, Network, Wifi };
 void draw_icon(Icon icon, int x, int y, bool selected);
-void draw_logo(int x, int y, int size);   // logo LisaOS: mały chip w stylu Amigi
+void draw_logo(int x, int y, int size);
+
+// Małe ikony sieci (pasek menu, listy). on - kolor zapalonych elementów,
+// off - przygaszonych.
+void draw_wifi(int x, int y, int level /*0-4, -1: wyłączone*/, Fl_Color on, Fl_Color off);   // 16x13
+void draw_wired(int x, int y, Fl_Color c);                       // 16x13
+void draw_signal(int x, int y, int level /*0-4*/, Fl_Color on, Fl_Color off);   // 13x10
+void draw_lock(int x, int y, Fl_Color c);                        // 7x9   // logo LisaOS: mały chip w stylu Amigi
 
 // ---- Chrome okna -------------------------------------------------------------
 constexpr int TITLE_H = 20;   // wysokość paska tytułu

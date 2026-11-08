@@ -36,6 +36,13 @@ find_package(X11 REQUIRED)
 target_include_directories(lisaos-platinum PUBLIC platinum)
 target_link_libraries(lisaos-platinum PUBLIC fltk::fltk X11::X11 X11::Xext)
 
+# --- lisaos-net: sieć przez NetworkManager (nmcli + D-Bus) --------------------
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(DBUS REQUIRED IMPORTED_TARGET dbus-1)
+add_library(lisaos-net STATIC net/net.cxx)
+target_include_directories(lisaos-net PUBLIC net)
+target_link_libraries(lisaos-net PUBLIC fltk::fltk PkgConfig::DBUS)
+
 # --- denise: menedżer plików ---------------------------------------------------------
 add_executable(lisaos-denise
   denise/main.cxx
@@ -45,17 +52,15 @@ add_executable(lisaos-denise
   denise/appimage.cxx
   denise/gary.cxx
   denise/volumes.cxx)
-find_package(PkgConfig REQUIRED)
-pkg_check_modules(DBUS REQUIRED IMPORTED_TARGET dbus-1)
-target_link_libraries(lisaos-denise PRIVATE lisaos-platinum fltk::images PkgConfig::DBUS)
+target_link_libraries(lisaos-denise PRIVATE lisaos-platinum lisaos-net fltk::images PkgConfig::DBUS)
 
 # --- insight: menedżer okien X11 ----------------------------------------------
 add_executable(lisaos-insight insight/main.cxx)
 target_link_libraries(lisaos-insight PRIVATE lisaos-platinum X11::X11)
 
 # --- alice: panele sterowania (Wygląd) -------------------------------------------
-add_executable(lisaos-alice alice/main.cxx)
-target_link_libraries(lisaos-alice PRIVATE lisaos-platinum)
+add_executable(lisaos-alice alice/main.cxx alice/wyglad.cxx alice/siec.cxx)
+target_link_libraries(lisaos-alice PRIVATE lisaos-platinum lisaos-net)
 
 install(TARGETS lisaos-denise lisaos-insight lisaos-alice RUNTIME DESTINATION bin)
 install(DIRECTORY schematy/ DESTINATION share/lisaos/schematy)

@@ -5,6 +5,7 @@
 #include <FL/fl_draw.H>
 #include <FL/fl_utf8.h>
 #include <cstdlib>
+#include <utility>
 
 namespace plat {
 
@@ -304,6 +305,87 @@ static void eject_icon(int x, int y, bool sel) {
   fl_rectf(x + 4, y + 23, 25, 5);
 }
 
+// Sieć: kula ziemska z wtyczką (panel Sieć, okna dialogowe)
+static void network_icon(int x, int y, bool sel) {
+  col(0x3A78C8, sel);
+  fl_pie(x + 4, y + 2, 24, 24, 0, 360);
+  col(0x55A84A, sel);
+  fl_begin_complex_polygon();
+  for (auto [px, py] : {std::pair{9, 7}, {15, 5}, {16, 11}, {11, 15}, {8, 12}}) fl_vertex(x + px, y + py);
+  fl_end_complex_polygon();
+  fl_polygon(x + 17, y + 15, x + 24, y + 13, x + 23, y + 21, x + 18, y + 23);
+  col(0x1E3E6A, sel);
+  fl_arc(x + 4, y + 2, 24, 24, 0, 360);
+  fl_arc(x + 10, y + 2, 12, 24, 0, 360);
+  fl_xyline(x + 5, y + 14, x + 27);
+  // kabel z wtyczką
+  col(0x404040, sel);
+  fl_line_style(FL_SOLID, 2);
+  fl_line(x + 16, y + 26, x + 16, y + 29);
+  fl_line_style(0);
+  fl_rectf(x + 12, y + 28, 9, 4);
+}
+
+static void wifi_icon(int x, int y, bool sel) {
+  Fl_Color c = sel ? fl_color_average(fl_rgb_color(0x30, 0x30, 0x30), FL_BLACK, 0.5f) : fl_rgb_color(0x30, 0x30, 0x30);
+  fl_color(c);
+  fl_line_style(FL_SOLID | FL_CAP_ROUND, 3);
+  for (int i = 1; i <= 3; i++) {
+    int r = i * 8;
+    fl_arc(x + 16 - r, y + 26 - r, 2 * r, 2 * r, 45, 135);
+  }
+  fl_line_style(0);
+  fl_pie(x + 13, y + 23, 6, 6, 0, 360);
+}
+
+void draw_wifi(int x, int y, int level, Fl_Color on, Fl_Color off) {
+  // kropka i trzy łuki rozchodzące się w górę (16x13)
+  int cx = x + 8, by = y + 12;
+  fl_color(level >= 1 ? on : off);
+  fl_pie(cx - 1, by - 2, 3, 3, 0, 360);
+  fl_line_style(FL_SOLID, 2);
+  for (int i = 1; i <= 3; i++) {
+    fl_color(level >= i + 1 ? on : off);
+    int r = i * 4;
+    fl_arc(cx - r, by - r, 2 * r + 1, 2 * r + 1, 45, 135);
+  }
+  fl_line_style(0);
+  if (level < 0) {   // wyłączone: ukośna kreska
+    fl_color(on);
+    fl_line_style(FL_SOLID, 2);
+    fl_line(x + 2, y + 1, x + 14, y + 12);
+    fl_line_style(0);
+  }
+}
+
+void draw_wired(int x, int y, Fl_Color c) {
+  // trzy połączone kwadraty - klasyczny symbol sieci
+  fl_color(c);
+  fl_rectf(x + 5, y, 6, 5);
+  fl_rectf(x, y + 8, 6, 5);
+  fl_rectf(x + 10, y + 8, 6, 5);
+  fl_xyline(x + 3, y + 6, x + 13);
+  fl_yxline(x + 8, y + 5, y + 6);
+  fl_yxline(x + 3, y + 6, y + 8);
+  fl_yxline(x + 13, y + 6, y + 8);
+}
+
+void draw_signal(int x, int y, int level, Fl_Color on, Fl_Color off) {
+  for (int i = 0; i < 4; i++) {
+    int h = 3 + i * 2 + (i == 3);
+    fl_color(level > i ? on : off);
+    fl_rectf(x + i * 3, y + 10 - h, 2, h);
+  }
+}
+
+void draw_lock(int x, int y, Fl_Color c) {
+  fl_color(c);
+  fl_rectf(x, y + 4, 7, 5);
+  fl_xyline(x + 2, y, x + 4);
+  fl_yxline(x + 1, y + 1, y + 3);
+  fl_yxline(x + 5, y + 1, y + 3);
+}
+
 void draw_icon(Icon icon, int x, int y, bool sel) {
   switch (icon) {
   case Icon::Folder:      folder(x, y, sel, false); break;
@@ -343,6 +425,8 @@ void draw_icon(Icon icon, int x, int y, bool sel) {
   case Icon::Optical:     optical(x, y, sel); break;
   case Icon::Encrypted:   encrypted(x, y, sel); break;
   case Icon::Eject:       eject_icon(x, y, sel); break;
+  case Icon::Network:     network_icon(x, y, sel); break;
+  case Icon::Wifi:        wifi_icon(x, y, sel); break;
   }
 }
 
