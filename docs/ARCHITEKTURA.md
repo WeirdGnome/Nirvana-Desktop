@@ -32,7 +32,7 @@ jednego okna biurka. Docelowo:
 ## Model uprawnień
 
 - Tryb prosty: Rambler nie otworzy niczego poza `$HOME` (sprawdzanie po
-  `weakly_canonical`, więc dowiązania symboliczne nie wyprowadzą poza folder LisaOS).
+  `weakly_canonical`, więc dowiązania symboliczne nie wyprowadzą poza LisaOS HD).
 - AppImage docelowo uruchamiane przez `bubblewrap`: zapis tylko w `$HOME`,
   system tylko do odczytu, bez dostępu do innych użytkowników.
 - Tryb root: `pkexec lisaos-denise --root`, osobny proces, wyraźne oznaczenie.

@@ -3,7 +3,7 @@
 Lekkie środowisko graficzne dla Linuksa (baza: minimalny Devuan) w duchu
 **Mac OS 9 (Platinum)** z nutą **Amigi**. Napisane w C++ i FLTK 1.4.
 
-- **Tryb prosty**: użytkownik widzi tylko swój folder LisaOS (czyli `$HOME`), jak w Androidzie.
+- **Tryb prosty**: użytkownik widzi tylko swój dysk LisaOS HD (czyli `$HOME`), jak w Androidzie.
   Aplikacje to pliki AppImage leżące w `~/Aplikacje`; instalacja = przeciągnięcie pliku.
 - **Tryb root**: pełny system plików i ustawienia zaawansowane, uruchamiany przez
   `pkexec`, wyraźnie oznaczony (czerwony chip w logo, plakietka ROOT).
