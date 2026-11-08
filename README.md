@@ -7,14 +7,14 @@ Lekkie środowisko graficzne dla Linuksa (baza: minimalny Devuan) w duchu
   Aplikacje to pliki AppImage leżące w `~/Aplikacje`; instalacja = przeciągnięcie pliku.
 - **Tryb root**: pełny system plików i ustawienia zaawansowane, uruchamiany przez
   `pkexec`, wyraźnie oznaczony (czerwony chip w logo, plakietka ROOT).
-- **Finder przestrzenny**: jeden folder = jedno okno, które pamięta swoje położenie.
+- **Przestrzenny menedżer plików (Denise)**: jeden folder = jedno okno, które pamięta swoje położenie.
 
 ## Komponenty
 
 | Pakiet              | Rola                                   | Stan        |
 |---------------------|----------------------------------------|-------------|
 | `lisaos-platinum`   | biblioteka wyglądu: kolory, ramki, ikony, chrome okien | prototyp |
-| `lisaos-denise`     | Finder + biurko                         | prototyp    |
+| `lisaos-denise`     | menedżer plików + biurko                | prototyp    |
 | `lisaos-agnus`      | menedżer okien X11 (chrome z libplatinum) | planowany |
 | `lisaos-gary`       | globalny pasek menu, przełącznik aplikacji | planowany |
 | `lisaos-alice`      | panele sterowania                       | planowany   |

@@ -4,7 +4,7 @@
 
     Devuan (runit, elogind, polkit)  ->  X11 (Xorg/XLibre)  ->  lisaos-agnus (WM)
                                                               ->  lisaos-gary (pasek menu)
-                                                              ->  lisaos-denise (Finder/biurko)
+                                                              ->  lisaos-denise (pliki/biurko)
                                                               ->  aplikacje AppImage
 
 Wszystkie komponenty linkują `lisaos-platinum`, więc wygląd jest jeden.
@@ -31,7 +31,7 @@ jednego okna biurka. Docelowo:
 
 ## Model uprawnień
 
-- Tryb prosty: Finder nie otworzy niczego poza `$HOME` (sprawdzanie po
+- Tryb prosty: Denise nie otworzy niczego poza `$HOME` (sprawdzanie po
   `weakly_canonical`, więc dowiązania symboliczne nie wyprowadzą poza Dom).
 - AppImage docelowo uruchamiane przez `bubblewrap`: zapis tylko w `$HOME`,
   system tylko do odczytu, bez dostępu do innych użytkowników.

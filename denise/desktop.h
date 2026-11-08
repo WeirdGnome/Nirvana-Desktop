@@ -1,8 +1,9 @@
-// LisaOS - denise: biurko, pasek menu i zarządzanie oknami Findera
+// LisaOS - denise: biurko, pasek menu i zarządzanie oknami menedżera plików
 #pragma once
 
 #include <FL/Fl_Double_Window.H>
 #include <FL/Fl_Menu_Bar.H>
+#include <FL/Fl_Menu_Button.H>
 #include <FL/Fl_Tiled_Image.H>
 #include <functional>
 #include <memory>
@@ -33,6 +34,9 @@ public:
   void ask_root();
   void refresh_all();
   void quit();
+  void build_windows_menu(Fl_Menu_Button *m);
+  void shade_all(bool shade);
+  void close_all();
 
 private:
   struct Win {

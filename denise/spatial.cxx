@@ -1,4 +1,4 @@
-// LisaOS - denise: pamięć przestrzenna Findera
+// LisaOS - denise: pamięć przestrzenna menedżera plików
 #include "spatial.h"
 
 #include <cstdlib>

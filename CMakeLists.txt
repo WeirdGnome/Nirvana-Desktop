@@ -33,7 +33,7 @@ add_library(lisaos-platinum STATIC
 target_include_directories(lisaos-platinum PUBLIC platinum)
 target_link_libraries(lisaos-platinum PUBLIC fltk::fltk)
 
-# --- denise: Finder ----------------------------------------------------------
+# --- denise: menedżer plików ---------------------------------------------------------
 add_executable(lisaos-denise
   denise/main.cxx
   denise/desktop.cxx

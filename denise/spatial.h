@@ -1,4 +1,4 @@
-// LisaOS - denise: pamięć przestrzenna Findera
+// LisaOS - denise: pamięć przestrzenna menedżera plików
 // Każdy folder pamięta, gdzie i jak duże było jego okno oraz czy było otwarte.
 // Plik: $XDG_CONFIG_HOME/lisaos/denise.okna (domyślnie ~/.config/...)
 #pragma once

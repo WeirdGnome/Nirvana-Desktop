@@ -1,4 +1,4 @@
-// LisaOS - lisaos-denise (Finder)
+// LisaOS - lisaos-denise (menedżer plików i biurko)
 //
 // Użycie:
 //   lisaos-denise                 tryb prosty: widać tylko $HOME

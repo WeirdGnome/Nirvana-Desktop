@@ -1,9 +1,10 @@
-// LisaOS - denise: biurko, pasek menu i zarządzanie oknami Findera
+// LisaOS - denise: biurko, pasek menu i zarządzanie oknami menedżera plików
 #include "desktop.h"
 
 #include <FL/Fl.H>
 #include <FL/Fl_Box.H>
 #include <FL/Fl_Button.H>
+#include <FL/Fl_Menu_Button.H>
 #include <FL/Fl_Image_Surface.H>
 #include <FL/Fl_RGB_Image.H>
 #include <FL/fl_draw.H>
@@ -41,7 +42,7 @@ static std::string self_exe() {
 }
 
 // ---------------------------------------------------------------------------
-// Prawa strona paska menu: tryb, zegar, bieżąca aplikacja
+// Prawa strona paska menu: plakietka ROOT i zegar
 // ---------------------------------------------------------------------------
 class MenuExtras : public Fl_Widget {
 public:
@@ -53,28 +54,14 @@ public:
     Fl::repeat_timeout(15.0, tick, d);
   }
   void draw() override {
-    menubar_box_like();
+    fl_push_clip(x(), y(), w(), h());
+    draw_box(MENUBAR_BOX, GRAY);
+    fl_pop_clip();
     fl_font(FONT_SYSTEM, SIZE_SYSTEM);
-    int cx = x() + w() - 8;
-    // aplikacja na pierwszym planie (później obsłuży to lisaos-gary)
-    const char *app = "Finder";
-    int aw = (int)fl_width(app);
-    cx -= aw;
-    fl_color(FL_BLACK);
-    fl_draw(app, cx, y() + 14);
-    cx -= 20;
-    draw_icon_small(cx, y() + 2);
-    cx -= 8;
-    fl_color(SHADOW);
-    fl_yxline(cx, y() + 3, y() + h() - 5);
-    fl_color(LIGHT);
-    fl_yxline(cx + 1, y() + 3, y() + h() - 5);
-    // zegar
     char buf[16];
     time_t t = time(nullptr);
     strftime(buf, sizeof buf, "%H:%M", localtime(&t));
-    int tw = (int)fl_width(buf);
-    cx -= tw + 10;
+    int cx = x() + w() - 10 - (int)fl_width(buf);
     fl_color(FL_BLACK);
     fl_draw(buf, cx, y() + 14);
     if (root_mode()) {
@@ -87,26 +74,59 @@ public:
       fl_draw(r, cx + 5, y() + 14);
     }
   }
+};
 
-private:
-  void menubar_box_like() {
+// ---------------------------------------------------------------------------
+// Menu "Okna": lista otwartych folderów i operacje na wszystkich oknach.
+// Docelowo (lisaos-gary) stanie się przełącznikiem aplikacji.
+// ---------------------------------------------------------------------------
+class WindowsMenu : public Fl_Menu_Button {
+public:
+  std::function<void(WindowsMenu *)> on_open;
+  WindowsMenu(int X, int Y, int W, int H) : Fl_Menu_Button(X, Y, W, H) {
+    box(FL_FLAT_BOX);   // FL_NO_BOX zamieniłby przycisk w menu prawego klawisza
+    textfont(FONT_SYSTEM);
+    textsize(SIZE_SYSTEM);
+    down_box(FL_FLAT_BOX);
+  }
+  int handle(int e) override {
+    if (e == FL_PUSH) {
+      if (on_open) on_open(this);
+      open_ = true; redraw(); Fl::flush();
+      int r = Fl_Menu_Button::handle(e);
+      open_ = false; redraw();
+      return r;
+    }
+    return Fl_Menu_Button::handle(e);
+  }
+  void draw() override {
     fl_push_clip(x(), y(), w(), h());
     draw_box(MENUBAR_BOX, GRAY);
     fl_pop_clip();
+    if (open_) {
+      fl_color(selection_color());
+      fl_rectf(x(), y(), w(), h() - 1);
+    }
+    // ikona: dwa nachodzące na siebie okienka
+    int ix = x() + 8, iy = y() + 4;
+    for (int i = 0; i < 2; i++) {
+      int ox = ix + i * 4, oy = iy + i * 3;
+      fl_color(FL_WHITE);
+      fl_rectf(ox, oy, 11, 9);
+      fl_color(open_ ? fl_lighter(selection_color()) : MID);
+      fl_rectf(ox, oy, 11, 3);
+      fl_color(FL_BLACK);
+      fl_rect(ox, oy, 11, 9);
+    }
+    fl_font(FONT_SYSTEM, SIZE_SYSTEM);
+    fl_color(open_ ? FL_WHITE : FL_BLACK);
+    fl_draw("Okna", x() + 28, y() + 14);
+    // separator po lewej
+    fl_color(SHADOW); fl_yxline(x(), y() + 3, y() + h() - 5);
+    fl_color(LIGHT);  fl_yxline(x() + 1, y() + 3, y() + h() - 5);
   }
-  void draw_icon_small(int X, int Y) {
-    // miniaturka ikony Findera: ikona folderu 16x16 rysowana w skali 1/2
-    fl_push_matrix();
-    fl_translate(X, Y);
-    fl_scale(0.5);
-    fl_color(fl_rgb_color(0xA8, 0xA8, 0xF0));
-    fl_begin_polygon(); fl_vertex(2, 9); fl_vertex(4, 6); fl_vertex(13, 6); fl_vertex(15, 9);
-    fl_vertex(30, 9); fl_vertex(30, 28); fl_vertex(2, 28); fl_end_polygon();
-    fl_color(FL_BLACK);
-    fl_begin_loop(); fl_vertex(2, 9); fl_vertex(4, 6); fl_vertex(13, 6); fl_vertex(15, 9);
-    fl_vertex(30, 9); fl_vertex(30, 28); fl_vertex(2, 28); fl_end_loop();
-    fl_pop_matrix();
-  }
+private:
+  bool open_ = false;
 };
 
 // ---------------------------------------------------------------------------
@@ -195,7 +215,10 @@ Desktop::Desktop(int W, int H, const std::string &home, bool root)
     logo->image(img);
   }
 
-  extras_ = new MenuExtras(W - 220, 0, 220, MENUBAR_H);
+  extras_ = new MenuExtras(W - 84 - 150, 0, 150, MENUBAR_H);
+  auto *wm = new WindowsMenu(W - 84, 0, 84, MENUBAR_H);
+  wm->selection_color(menu_->selection_color());
+  wm->on_open = [this](WindowsMenu *m) { build_windows_menu(m); };
   end();
 
   // Escape nie może zamknąć biurka
@@ -489,7 +512,7 @@ void Desktop::about() {
   std::string text = std::string("LisaOS 0.1 „Tempo”\n") +
                      "Środowisko w duchu Mac OS 9 i Amigi\n\n" +
                      "Pamięć wbudowana: " + mem + " GB\n" +
-                     "Finder: lisaos-denise 0.1 · FLTK " + std::to_string(Fl::api_version() / 10000) +
+                     "Menedżer plików: Denise 0.1 · FLTK " + std::to_string(Fl::api_version() / 10000) +
                      "." + std::to_string(Fl::api_version() / 100 % 100) + "." +
                      std::to_string(Fl::api_version() % 100);
   dialog("O LisaOS", text, {{"OK", nullptr}});
@@ -589,4 +612,60 @@ void Desktop::refresh_all() {
 void Desktop::quit() {
   for (auto &x : wins_) remember(x, true);
   hide();
+}
+
+// ---------------------------------------------------------------------------
+// Menu "Okna"
+// ---------------------------------------------------------------------------
+static std::string menu_escape(const std::string &s) {
+  std::string r;
+  for (char c : s) {
+    if (c == '/' || c == '\\' || c == '_') r += '\\';
+    if (c == '&') r += '&';
+    r += c;
+  }
+  return r;
+}
+
+void Desktop::build_windows_menu(Fl_Menu_Button *m) {
+  m->clear();
+  // okna w kolejności od najwyższego
+  std::vector<Win *> order;
+  for (auto &x : wins_) if (x.pane) order.push_back(&x);
+  std::sort(order.begin(), order.end(), [this](Win *a, Win *b) {
+    return Fl_Group::find(a->win) > Fl_Group::find(b->win);
+  });
+  if (order.empty()) {
+    m->add("Brak otwartych okien", 0, nullptr, nullptr, FL_MENU_INACTIVE | FL_MENU_DIVIDER);
+  }
+  for (size_t i = 0; i < order.size(); i++) {
+    Win *x = order[i];
+    int flags = FL_MENU_RADIO | (x->win->is_active() ? FL_MENU_VALUE : 0);
+    if (i + 1 == order.size()) flags |= FL_MENU_DIVIDER;
+    m->add(menu_escape(x->win->label()).c_str(), 0,
+           [](Fl_Widget *w, void *d) {
+             auto *self = (Desktop *)w->window();
+             auto *pw = (PWindow *)d;
+             if (!self->find(pw)) return;
+             if (pw->shaded()) pw->toggle_shade();
+             self->raise(pw);
+           },
+           x->win, flags);
+  }
+  int on = order.empty() ? FL_MENU_INACTIVE : 0;
+  m->add("Zwiń wszystkie", 0, [](Fl_Widget *w, void *) { ((Desktop *)w->window())->shade_all(true); }, nullptr, on);
+  m->add("Rozwiń wszystkie", 0, [](Fl_Widget *w, void *) { ((Desktop *)w->window())->shade_all(false); }, nullptr, on | FL_MENU_DIVIDER);
+  m->add("Zamknij wszystkie", 0, [](Fl_Widget *w, void *) { ((Desktop *)w->window())->close_all(); }, nullptr, on);
+}
+
+void Desktop::shade_all(bool shade) {
+  for (auto &x : wins_)
+    if (x.pane && x.win->shaded() != shade) x.win->toggle_shade();
+  redraw();
+}
+
+void Desktop::close_all() {
+  std::vector<PWindow *> v;
+  for (auto &x : wins_) if (x.pane) v.push_back(x.win);
+  for (auto *w : v) close(w);
 }
