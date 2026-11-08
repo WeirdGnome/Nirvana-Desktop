@@ -1,11 +1,13 @@
 // LisaOS - denise: biurko, pasek menu i zarządzanie oknami menedżera plików
 #include "desktop.h"
 #include "appimage.h"
+#include "gary.h"
 
 #include <FL/Fl.H>
 #include <FL/Fl_Box.H>
 #include <FL/Fl_Button.H>
 #include <FL/Fl_Menu_Button.H>
+#include <FL/Fl_Multi_Label.H>
 #include <FL/Fl_Image_Surface.H>
 #include <FL/Fl_RGB_Image.H>
 #include <FL/fl_draw.H>
@@ -83,6 +85,8 @@ public:
 class WindowsMenu : public Fl_Menu_Button {
 public:
   std::function<void(WindowsMenu *)> on_open;
+  // aktywna aplikacja: nazwa i ikona 16x16 (gary)
+  std::function<void(std::string &, Fl_Image *&)> current;
   WindowsMenu(int X, int Y, int W, int H) : Fl_Menu_Button(X, Y, W, H) {
     box(FL_FLAT_BOX);   // FL_NO_BOX zamieniłby przycisk w menu prawego klawisza
     textfont(FONT_SYSTEM);
@@ -107,20 +111,17 @@ public:
       fl_color(selection_color());
       fl_rectf(x(), y(), w(), h() - 1);
     }
-    // ikona: dwa nachodzące na siebie okienka
-    int ix = x() + 8, iy = y() + 4;
-    for (int i = 0; i < 2; i++) {
-      int ox = ix + i * 4, oy = iy + i * 3;
-      fl_color(FL_WHITE);
-      fl_rectf(ox, oy, 11, 9);
-      fl_color(open_ ? fl_lighter(selection_color()) : MID);
-      fl_rectf(ox, oy, 11, 3);
-      fl_color(FL_BLACK);
-      fl_rect(ox, oy, 11, 9);
-    }
+    // Jak w Mac OS 9: ikona i nazwa aplikacji na pierwszym planie, wyrównane do prawej.
+    std::string name = "Rambler";
+    Fl_Image *icon = nullptr;
+    if (current) current(name, icon);
     fl_font(FONT_SYSTEM, SIZE_SYSTEM);
+    name = ellipsize(name, w() - 40);
+    int tw = (int)fl_width(name.c_str());
+    int tx = x() + w() - 8 - tw;
+    if (icon) icon->draw(tx - 20, y() + 2);
     fl_color(open_ ? FL_WHITE : FL_BLACK);
-    fl_draw("Rambler", x() + 28, y() + 14);
+    fl_draw(name.c_str(), tx, y() + 14);
     // separator po lewej
     fl_color(SHADOW); fl_yxline(x(), y() + 3, y() + h() - 5);
     fl_color(LIGHT);  fl_yxline(x() + 1, y() + 3, y() + h() - 5);
@@ -219,10 +220,12 @@ Desktop::Desktop(int W, int H, const std::string &home, bool root)
     logo->image(img);
   }
 
-  extras_ = new MenuExtras(W - 92 - 150, 0, 150, MENUBAR_H);
-  auto *wm = new WindowsMenu(W - 92, 0, 92, MENUBAR_H);
+  extras_ = new MenuExtras(W - 170 - 150, 0, 150, MENUBAR_H);
+  auto *wm = new WindowsMenu(W - 170, 0, 170, MENUBAR_H);
+  app_menu_ = wm;
   wm->selection_color(menu_->selection_color());
   wm->on_open = [this](WindowsMenu *m) { build_windows_menu(m); };
+  wm->current = [this](std::string &name, Fl_Image *&icon) { current_app(name, icon); };
   end();
 
   // Escape nie może zamknąć biurka
@@ -333,9 +336,10 @@ static void net_message(Window w, Atom type, long l0, long l1, long l2) {
 // Zmiana aktywnego okna (właściwość na oknie głównym X).
 static int x_watch(void *event, void *) {
   XEvent *e = (XEvent *)event;
-  if (e->type == PropertyNotify && e->xproperty.window == DefaultRootWindow(fl_display) &&
-      e->xproperty.atom == atom("_NET_ACTIVE_WINDOW") && g_desk)
-    g_desk->active_changed();
+  if (e->type == PropertyNotify && e->xproperty.window == DefaultRootWindow(fl_display) && g_desk) {
+    if (e->xproperty.atom == atom("_NET_ACTIVE_WINDOW")) g_desk->active_changed();
+    else if (e->xproperty.atom == atom("_NET_CLIENT_LIST")) g_desk->clients_changed();
+  }
   return 0;
 }
 
@@ -635,6 +639,7 @@ int Desktop::shortcut() {
 }
 
 void Desktop::active_changed() {
+  if (app_menu_) app_menu_->redraw();   // nazwa i ikona aktywnej aplikacji na pasku
   Window a = net_active();
   for (auto it = wins_.begin(); it != wins_.end(); ++it) {
     if ((*it)->shown() && fl_xid(*it) == a) {
@@ -823,6 +828,9 @@ void Desktop::run_app(const std::string &path) {
     }
     refresh_all();   // ikona części AppImage (np. DwarFS) jest dostępna dopiero po rozpakowaniu
   }
+  // gary: pierwsze nowe okno to ta aplikacja - dostanie nazwę i ikonę z AppImage
+  gary::note_launch(appimage::display_name(fs::path(path).filename().string()),
+                    appimage::icon(path, home_));
   appimage::launch(path, home_);
 }
 
@@ -1092,20 +1100,164 @@ static std::string menu_escape(const std::string &s) {
   return r;
 }
 
+// ---------------------------------------------------------------------------
+// gary: menu aplikacji
+// ---------------------------------------------------------------------------
+static bool is_ours(Window w) { return fl_find(w) != nullptr; }   // okna Ramblera i biurko
+
+static Fl_Image *rambler_icon(bool dim) {
+  Entry e;
+  e.icon = Icon::Folder;
+  e.dir = true;
+  static Fl_Image *dimmed = nullptr;
+  Fl_Image *img = entry_icon_image(e, 16, false);
+  if (!dim) return img;
+  if (!dimmed) { dimmed = img->copy(); dimmed->inactive(); }
+  return dimmed;
+}
+
+static Fl_Image *app_icon(const gary::App &a, bool dim) {
+  static std::map<std::string, std::pair<Fl_Image *, Fl_Image *>> cache;
+  std::string key = a.cls + "|" + a.icon_file;
+  auto it = cache.find(key);
+  if (it == cache.end()) {
+    Fl_Image *img = nullptr;
+    if (!a.icon_file.empty()) {
+      Entry e;
+      e.icon_file = a.icon_file;
+      e.icon = Icon::Application;
+      img = entry_icon_image(e, 16, false);
+    }
+    if (!img && !a.wins.empty()) img = gary::window_icon(a.wins[0]);
+    if (!img) { Entry e; e.icon = Icon::Application; img = entry_icon_image(e, 16, false); }
+    Fl_Image *d = img->copy();
+    d->inactive();
+    it = cache.emplace(key, std::make_pair(img, d)).first;
+  }
+  return dim ? it->second.second : it->second.first;
+}
+
+std::vector<NWin *> Desktop::folder_windows() {
+  std::vector<NWin *> v;
+  for (auto *w : wins_) if (w->pane && w->shown()) v.push_back(w);
+  return v;
+}
+
+// Aktywna aplikacja: okno z _NET_ACTIVE_WINDOW; biurko i okna Ramblera = Rambler.
+int Desktop::active_app_index(const std::vector<gary::App> &apps) {
+  Window a = gary::active_window();
+  if (!a || is_ours(a)) return -1;
+  for (int i = 0; i < (int)apps.size(); i++)
+    for (Window w : apps[i].wins) if (w == a) return i;
+  return -1;
+}
+
+void Desktop::current_app(std::string &name, Fl_Image *&icon) {
+  auto apps = gary::list_apps(is_ours);
+  int i = active_app_index(apps);
+  if (i < 0) { name = "Rambler"; icon = rambler_icon(false); return; }
+  name = apps[i].name;
+  icon = app_icon(apps[i], false);
+}
+
+void Desktop::clients_changed() {
+  gary::clients_changed();
+  if (app_menu_) app_menu_->redraw();
+}
+
+// Stan menu w chwili otwarcia: akcje działają na tej migawce.
+static std::vector<gary::App> g_menu_apps;
+static int g_menu_active = -1;   // -1 = Rambler
+
+static void hide_app(Desktop *d, int i) {
+  if (i < 0) { for (NWin *w : d->folder_windows()) gary::hide(fl_xid(w)); return; }
+  for (Window w : g_menu_apps[i].wins) gary::hide(w);
+}
+
+static void show_app(Desktop *d, int i) {
+  if (i < 0) {
+    auto f = d->folder_windows();
+    for (NWin *w : f) gary::activate(fl_xid(w));
+    if (f.empty()) gary::activate(fl_xid(d));
+    return;
+  }
+  for (Window w : g_menu_apps[i].wins) gary::activate(w);   // ostatnie aktywowane dostaje fokus
+}
+
 void Desktop::build_windows_menu(Fl_Menu_Button *m) {
   m->clear();
-  // okna od ostatnio aktywnego
+  static std::vector<std::unique_ptr<Fl_Multi_Label>> labels;
+  static std::vector<std::string> texts;
+  labels.clear();
+  texts.clear();
+  texts.reserve(64);
+
+  g_menu_apps = gary::list_apps(is_ours);
+  g_menu_active = active_app_index(g_menu_apps);
+
+  // pozycja z ikoną: ikona + tekst (Fl_Multi_Label)
+  auto add_app = [&](const std::string &name, Fl_Image *icon, long idx, bool active, bool last) {
+    texts.push_back(" " + name);
+    auto ml = std::make_unique<Fl_Multi_Label>();
+    ml->labela = (const char *)icon;
+    ml->typea = _FL_IMAGE_LABEL;
+    ml->labelb = texts.back().c_str();
+    ml->typeb = FL_NORMAL_LABEL;
+    int flags = FL_MENU_RADIO | (active ? FL_MENU_VALUE : 0) | (last ? FL_MENU_DIVIDER : 0);
+    int at = m->add("x", 0,
+                    [](Fl_Widget *w, void *d) {
+                      auto *self = (Desktop *)w->window();
+                      show_app(self, (int)(long)d);
+                    },
+                    (void *)idx, flags);
+    ml->label((Fl_Menu_Item *)&m->menu()[at]);
+    labels.push_back(std::move(ml));
+  };
+
+  bool rambler_hidden = true;
+  for (NWin *w : folder_windows()) if (!gary::is_hidden(fl_xid(w))) rambler_hidden = false;
+  if (folder_windows().empty()) rambler_hidden = false;
+  add_app("Rambler", rambler_icon(rambler_hidden), -1, g_menu_active < 0, g_menu_apps.empty());
+  for (int i = 0; i < (int)g_menu_apps.size(); i++)
+    add_app(g_menu_apps[i].name, app_icon(g_menu_apps[i], g_menu_apps[i].hidden), i,
+            i == g_menu_active, i + 1 == (int)g_menu_apps.size());
+
+  std::string cur = g_menu_active < 0 ? "Rambler" : g_menu_apps[g_menu_active].name;
+  texts.push_back("Ukryj " + menu_escape(cur));
+  m->add(texts.back().c_str(), 0, [](Fl_Widget *w, void *) {
+    hide_app((Desktop *)w->window(), g_menu_active);
+  }, nullptr, 0);
+  m->add("Ukryj inne", 0, [](Fl_Widget *w, void *) {
+    auto *self = (Desktop *)w->window();
+    if (g_menu_active >= 0) hide_app(self, -1);
+    for (int i = 0; i < (int)g_menu_apps.size(); i++) if (i != g_menu_active) hide_app(self, i);
+  }, nullptr, 0);
+  m->add("Pokaż wszystkie", 0, [](Fl_Widget *w, void *) {
+    auto *self = (Desktop *)w->window();
+    Window keep = gary::active_window();
+    for (NWin *f : self->folder_windows())
+      if (gary::is_hidden(fl_xid(f))) gary::activate(fl_xid(f));
+    for (auto &a : g_menu_apps)
+      for (Window x : a.wins) if (gary::is_hidden(x)) gary::activate(x);
+    if (keep) gary::activate(keep);   // fokus wraca tam, gdzie był
+  }, nullptr, FL_MENU_DIVIDER);
+  texts.push_back("Zakończ " + menu_escape(cur));
+  m->add(texts.back().c_str(), 0, [](Fl_Widget *, void *) {
+    if (g_menu_active >= 0) for (Window x : g_menu_apps[g_menu_active].wins) gary::close(x);
+  }, nullptr, (g_menu_active < 0 ? FL_MENU_INACTIVE : 0) | FL_MENU_DIVIDER);
+
+  // okna Ramblera w podmenu
   std::vector<NWin *> order;
   for (auto it = wins_.rbegin(); it != wins_.rend(); ++it) if ((*it)->pane) order.push_back(*it);
-  if (order.empty()) {
-    m->add("Brak otwartych okien", 0, nullptr, nullptr, FL_MENU_INACTIVE | FL_MENU_DIVIDER);
-  }
+  if (order.empty())
+    m->add("Okna Ramblera/Brak otwartych okien", 0, nullptr, nullptr, FL_MENU_INACTIVE | FL_MENU_DIVIDER);
   Window a = net_active();
   for (size_t i = 0; i < order.size(); i++) {
     NWin *w = order[i];
     int flags = FL_MENU_RADIO | (w->shown() && fl_xid(w) == a ? FL_MENU_VALUE : 0);
     if (i + 1 == order.size()) flags |= FL_MENU_DIVIDER;
-    m->add(menu_escape(w->label()).c_str(), 0,
+    texts.push_back("Okna Ramblera/" + menu_escape(w->label()));
+    m->add(texts.back().c_str(), 0,
            [](Fl_Widget *mw, void *d) {
              auto *self = (Desktop *)mw->window();
              auto *w = (NWin *)d;
@@ -1116,9 +1268,9 @@ void Desktop::build_windows_menu(Fl_Menu_Button *m) {
            w, flags);
   }
   int on = order.empty() ? FL_MENU_INACTIVE : 0;
-  m->add("Zwiń wszystkie", 0, [](Fl_Widget *w, void *) { ((Desktop *)w->window())->shade_all(true); }, nullptr, on);
-  m->add("Rozwiń wszystkie", 0, [](Fl_Widget *w, void *) { ((Desktop *)w->window())->shade_all(false); }, nullptr, on | FL_MENU_DIVIDER);
-  m->add("Zamknij wszystkie", 0, [](Fl_Widget *w, void *) { ((Desktop *)w->window())->close_all(); }, nullptr, on);
+  m->add("Okna Ramblera/Zwiń wszystkie", 0, [](Fl_Widget *w, void *) { ((Desktop *)w->window())->shade_all(true); }, nullptr, on);
+  m->add("Okna Ramblera/Rozwiń wszystkie", 0, [](Fl_Widget *w, void *) { ((Desktop *)w->window())->shade_all(false); }, nullptr, on | FL_MENU_DIVIDER);
+  m->add("Okna Ramblera/Zamknij wszystkie", 0, [](Fl_Widget *w, void *) { ((Desktop *)w->window())->close_all(); }, nullptr, on);
 }
 
 void Desktop::shade_all(bool shade) {

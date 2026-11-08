@@ -132,6 +132,14 @@ static Fl_Image *small_icon(Icon icon, bool sel) {
   return img;
 }
 
+Fl_Image *entry_icon_image(const Entry &e, int size, bool sel) {
+  if (!e.icon_file.empty()) {
+    IconPair fi = file_icon(e.icon_file, size);
+    if (fi.normal) return sel ? fi.selected : fi.normal;
+  }
+  return small_icon(e.icon, sel);   // wektorowa ikona 16x16
+}
+
 void draw_entry_icon(const Entry &e, int x, int y, bool sel, int size, bool open) {
   Icon ic = (e.dir && open) ? Icon::OpenFolder : e.icon;
   IconPair fi;

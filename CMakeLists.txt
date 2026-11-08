@@ -41,7 +41,8 @@ add_executable(lisaos-denise
   denise/desktop.cxx
   denise/folder_view.cxx
   denise/spatial.cxx
-  denise/appimage.cxx)
+  denise/appimage.cxx
+  denise/gary.cxx)
 target_link_libraries(lisaos-denise PRIVATE lisaos-platinum fltk::images)
 
 # --- insight: menedżer okien X11 ----------------------------------------------

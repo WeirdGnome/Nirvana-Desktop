@@ -2,6 +2,7 @@
 #pragma once
 
 #include <FL/Fl_Group.H>
+#include <FL/Fl_Image.H>
 #include <FL/Fl_Input.H>
 #include <FL/Fl_Scroll.H>
 #include <FL/Fl_Widget.H>
@@ -29,6 +30,8 @@ bool is_appimage(const std::string &name);
 std::string kind_name(const Entry &e);   // "folder", "aplikacja", "dokument"...
 // Ikona elementu w rozmiarze 32 (widok ikon) lub 16 (lista) - także do przeciągania.
 void draw_entry_icon(const Entry &e, int x, int y, bool sel, int size, bool open = false);
+// Ta sama ikona jako obraz (np. do pozycji menu); obrazy są w pamięci podręcznej.
+Fl_Image *entry_icon_image(const Entry &e, int size, bool sel);
 
 // Układ kolumn widoku listy - kolumny, które się nie mieszczą, są chowane
 // (najpierw "Rodzaj", potem "Rozmiar", na końcu data).

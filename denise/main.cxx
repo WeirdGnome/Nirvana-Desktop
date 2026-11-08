@@ -24,6 +24,7 @@
 #include <filesystem>
 
 #include "desktop.h"
+#include "gary.h"
 #include "platinum.h"
 
 int main(int argc, char **argv) {
@@ -67,6 +68,7 @@ int main(int argc, char **argv) {
   }
 
   Desktop desk(W, H, home, root);
+  gary::init(home);
   desk.position(X, Y);
   desk.border(0);
   desk.xclass("LisaOS-Desktop");   // insight rozpozna biurko i nie da mu ramki
@@ -112,6 +114,18 @@ int main(int argc, char **argv) {
                      XInternAtom(fl_display, "_NET_WM_STATE_SKIP_PAGER", False)};
     XChangeProperty(fl_display, xid, XInternAtom(fl_display, "_NET_WM_STATE", False), XA_ATOM, 32,
                     PropModeReplace, (unsigned char *)states, 3);
+    // Pod obcym menedżerem okien (GNOME, Openbox...) klik w pasek menu LisaOS nie może
+    // zabierać aktywności oknu, w którym pracujesz - menu aplikacji i Plik/Edycja działają
+    // na nie. Dlatego biurko nie przyjmuje fokusu (ICCCM: WM_HINTS input = False).
+    // Insight obsługuje biurko sam i ten wyjątek nie jest mu potrzebny.
+    if (desk.csd_mode) {
+      if (XWMHints *hints = XGetWMHints(fl_display, xid)) {
+        hints->flags |= InputHint;
+        hints->input = False;
+        XSetWMHints(fl_display, xid, hints);
+        XFree(hints);
+      }
+    }
     XMapWindow(fl_display, xid);
     XMoveWindow(fl_display, xid, X, Y);   // menedżer okien mógł zmienić pozycję przy pierwszym mapowaniu
     XLowerWindow(fl_display, xid);

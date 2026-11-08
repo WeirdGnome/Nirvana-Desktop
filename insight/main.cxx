@@ -20,11 +20,13 @@
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 #include <X11/cursorfont.h>
+#include <X11/keysym.h>
 
 #include <algorithm>
 #include <cstdio>
 #include <cstring>
 #include <map>
+#include <vector>
 #include <string>
 
 #include "anim.h"
@@ -38,7 +40,8 @@ static int screen_w, screen_h;
 
 static Atom A_WM_PROTOCOLS, A_WM_DELETE, A_WM_STATE, A_NET_WM_NAME, A_UTF8,
     A_NET_WM_TYPE, A_NET_WM_TYPE_DESKTOP, A_NET_WM_TYPE_DOCK, A_NET_SUPPORTED,
-    A_NET_CHECK, A_NET_ACTIVE, A_NET_WM_STATE, A_NET_WM_STATE_SHADED, A_NET_WM_TYPE_DIALOG;
+    A_NET_CHECK, A_NET_ACTIVE, A_NET_WM_STATE, A_NET_WM_STATE_SHADED, A_NET_WM_TYPE_DIALOG,
+    A_NET_CLIENT_LIST, A_NET_CLOSE, A_NET_WM_STATE_HIDDEN, A_WM_CHANGE_STATE;
 
 class Frame;
 
@@ -52,6 +55,9 @@ struct Client {
   int ignore_unmap = 0;           // UnmapNotify wywołane przez nas (reparent)
   bool dialog = false;            // okno dialogowe: bez przycisków i zmiany rozmiaru
   bool own_anim = false;          // programy LisaOS same animują otwieranie/zamykanie
+  bool hidden = false;            // ukryte (Ukryj / Ukryj inne w menu aplikacji)
+  unsigned long mru = 0;          // kiedy ostatnio aktywne (do Alt+Tab)
+  std::string cls;                // WM_CLASS - okna jednej aplikacji mają tę samą klasę
 };
 
 static std::map<Window, Client *> clients;   // okno aplikacji -> klient
@@ -124,11 +130,11 @@ static std::string get_class(Window w) {
 
 // _NET_WM_STATE: informujemy aplikację (np. Ramblera), czy okno jest zwinięte.
 static void publish_state(Client *c) {
-  if (c->shaded)
-    XChangeProperty(dpy, c->win, A_NET_WM_STATE, XA_ATOM, 32, PropModeReplace,
-                    (unsigned char *)&A_NET_WM_STATE_SHADED, 1);
-  else
-    XChangeProperty(dpy, c->win, A_NET_WM_STATE, XA_ATOM, 32, PropModeReplace, nullptr, 0);
+  Atom st[2];
+  int n = 0;
+  if (c->shaded) st[n++] = A_NET_WM_STATE_SHADED;
+  if (c->hidden) st[n++] = A_NET_WM_STATE_HIDDEN;
+  XChangeProperty(dpy, c->win, A_NET_WM_STATE, XA_ATOM, 32, PropModeReplace, (unsigned char *)st, n);
 }
 
 static bool supports_delete(Window w) {
@@ -311,7 +317,56 @@ private:
 // ---------------------------------------------------------------------------
 // Zarządzanie oknami
 // ---------------------------------------------------------------------------
+static std::vector<Window> client_order;   // kolejność pojawiania się (EWMH)
+static unsigned long mru_clock = 0;
+
+// _NET_CLIENT_LIST: lista okien dla przełącznika aplikacji (i innych programów)
+static void publish_client_list() {
+  XChangeProperty(dpy, root, A_NET_CLIENT_LIST, XA_WINDOW, 32, PropModeReplace,
+                  (unsigned char *)client_order.data(), (int)client_order.size());
+}
+
+static void set_active_none() {
+  g_active = nullptr;
+  Window none = None;
+  XChangeProperty(dpy, root, A_NET_ACTIVE, XA_WINDOW, 32, PropModeReplace, (unsigned char *)&none, 1);
+  if (desktop_win) XSetInputFocus(dpy, desktop_win, RevertToPointerRoot, CurrentTime);
+}
+
+// Najświeższe widoczne okno poza wskazanym - dostaje fokus po ukryciu/zamknięciu.
+static Client *most_recent_visible(Client *except) {
+  Client *best = nullptr;
+  for (auto &[w, c] : clients)
+    if (c != except && !c->hidden && (!best || c->mru > best->mru)) best = c;
+  return best;
+}
+
+static void show_client(Client *c) {
+  if (!c->hidden) return;
+  c->hidden = false;
+  XMapWindow(dpy, fl_xid(c->frame));
+  set_wm_state(c->win, NormalState);
+  publish_state(c);
+}
+
+static void hide_client(Client *c) {
+  if (c->hidden) return;
+  c->hidden = true;
+  // Ramkę zdejmujemy surowym XUnmapWindow - hide() w FLTK zniszczyłoby okno X
+  // ramki razem z oknem aplikacji w środku.
+  XUnmapWindow(dpy, fl_xid(c->frame));
+  set_wm_state(c->win, IconicState);
+  publish_state(c);
+  if (g_active == c) {
+    g_active = nullptr;
+    if (Client *n = most_recent_visible(c)) focus(n);
+    else set_active_none();
+  }
+}
+
 static void focus(Client *c) {
+  if (c && c->hidden) show_client(c);
+  if (c) c->mru = ++mru_clock;
   Client *old = g_active;
   g_active = c;
   if (old && old != c && clients.count(old->win)) old->frame->redraw();
@@ -346,6 +401,7 @@ static void manage(Window w, bool existing) {
   c->win = w;
   c->title = get_title(w);
   std::string cls = get_class(w);
+  c->cls = cls;
   c->own_anim = cls.rfind("LisaOS-", 0) == 0;
   Window tf = 0;
   c->dialog = (XGetTransientForHint(dpy, w, &tf) && tf) ||
@@ -391,6 +447,8 @@ static void manage(Window w, bool existing) {
   XGrabButton(dpy, AnyButton, AnyModifier, w, False, ButtonPressMask, GrabModeSync,
               GrabModeAsync, None, None);
   clients[w] = c;
+  client_order.push_back(w);
+  publish_client_list();
   c->frame->sync_client();
   focus(c);
 }
@@ -403,6 +461,8 @@ static void unmanage(Client *c, bool destroyed) {
     set_wm_state(c->win, WithdrawnState);
   }
   clients.erase(c->win);
+  client_order.erase(std::remove(client_order.begin(), client_order.end(), c->win), client_order.end());
+  publish_client_list();
   if (g_active == c) g_active = nullptr;
   Rect gone = c->frame->geom();
   c->frame->hide();
@@ -410,16 +470,10 @@ static void unmanage(Client *c, bool destroyed) {
   if (!c->own_anim) zoom_rects(gone, center_of(gone));   // zamykane okno "zapada się" do środka
   Fl::delete_widget(c->frame);
   delete c;
-  // fokus na najwyższe pozostałe okno
+  // fokus na ostatnio używane widoczne okno
   if (!g_active) {
-    Window r, p, *kids = nullptr;
-    unsigned n = 0;
-    if (XQueryTree(dpy, root, &r, &p, &kids, &n)) {
-      for (int i = (int)n - 1; i >= 0 && !g_active; i--)
-        for (auto &[w, cl] : clients)
-          if (fl_xid(cl->frame) == kids[i] && !cl->shaded) { focus(cl); break; }
-      if (kids) XFree(kids);
-    }
+    if (Client *n = most_recent_visible(nullptr)) focus(n);
+    else set_active_none();
   }
 }
 
@@ -428,10 +482,77 @@ static Client *client_of(Window w) {
   return it == clients.end() ? nullptr : it->second;
 }
 
+// ---------------------------------------------------------------------------
+// Alt+Tab: przełączanie aplikacji (jak Cmd+Tab w Mac OS 9)
+// ---------------------------------------------------------------------------
+static bool cycling = false;
+static std::vector<Client *> cycle_list;
+static int cycle_idx = 0;
+
+// Wyciąga na wierzch wszystkie okna aplikacji, a fokus daje wybranemu.
+static void bring_app_forward(Client *c) {
+  std::vector<Client *> same;
+  for (auto &[w, o] : clients)
+    if (o != c && o->cls == c->cls && !o->dialog) same.push_back(o);
+  std::sort(same.begin(), same.end(), [](Client *a, Client *b) { return a->mru < b->mru; });
+  for (Client *o : same) {
+    if (o->hidden) show_client(o);
+    XRaiseWindow(dpy, fl_xid(o->frame));
+  }
+  focus(c);
+}
+
+static void alt_tab(bool backwards) {
+  if (!cycling) {
+    // aplikacje od ostatnio używanej; każda reprezentowana przez najświeższe okno
+    std::vector<Client *> all;
+    for (auto &[w, c] : clients) if (!c->dialog) all.push_back(c);
+    std::sort(all.begin(), all.end(), [](Client *a, Client *b) { return a->mru > b->mru; });
+    cycle_list.clear();
+    for (Client *c : all) {
+      bool seen = false;
+      for (Client *o : cycle_list) if (o->cls == c->cls) seen = true;
+      if (!seen) cycle_list.push_back(c);
+    }
+    if (cycle_list.size() < 2) return;
+    cycling = true;
+    cycle_idx = 0;
+    // klawiatura do nas, żeby zauważyć puszczenie Alt
+    XGrabKeyboard(dpy, root, True, GrabModeAsync, GrabModeAsync, CurrentTime);
+  }
+  int n = (int)cycle_list.size();
+  cycle_idx = (cycle_idx + (backwards ? -1 : 1) + n) % n;
+  Client *c = cycle_list[cycle_idx];
+  if (clients.count(c->win)) bring_app_forward(c);
+}
+
+static void alt_tab_end() {
+  if (!cycling) return;
+  cycling = false;
+  XUngrabKeyboard(dpy, CurrentTime);
+}
+
 // Surowe zdarzenia X - obsługujemy te, które dotyczą okien aplikacji i korzenia.
 static int x_handler(void *event, void *) {
   XEvent *e = (XEvent *)event;
   switch (e->type) {
+  case KeyPress: {
+    KeySym ks = XLookupKeysym(&e->xkey, 0);
+    if (ks == XK_Tab && (e->xkey.state & Mod1Mask)) {
+      alt_tab(e->xkey.state & ShiftMask);
+      return 1;
+    }
+    if (cycling && ks == XK_Escape) { alt_tab_end(); return 1; }
+    return cycling ? 1 : 0;
+  }
+  case KeyRelease: {
+    KeySym ks = XLookupKeysym(&e->xkey, 0);
+    if (cycling && (ks == XK_Alt_L || ks == XK_Alt_R || ks == XK_Meta_L || ks == XK_Meta_R)) {
+      alt_tab_end();
+      return 1;
+    }
+    return cycling ? 1 : 0;
+  }
   case MapRequest:
     if (e->xmaprequest.window == desktop_win) {
       // biurko pokazane ponownie (np. Rambler przestawił mu typ na DESKTOP)
@@ -526,8 +647,18 @@ static int x_handler(void *event, void *) {
     if (e->xclient.message_type == A_NET_ACTIVE) {
       if (Client *c = client_of(e->xclient.window)) {
         if (c->shaded) c->frame->toggle_shade();
-        focus(c);
+        focus(c);                 // ukryte okno zostaje też pokazane
       }
+      return 1;
+    }
+    if (e->xclient.message_type == A_WM_CHANGE_STATE) {
+      // ICCCM: aplikacja (lub przełącznik) prosi o ukrycie okna
+      if (Client *c = client_of(e->xclient.window))
+        if (e->xclient.data.l[0] == IconicState) hide_client(c);
+      return 1;
+    }
+    if (e->xclient.message_type == A_NET_CLOSE) {
+      if (Client *c = client_of(e->xclient.window)) c->frame->close_client();
       return 1;
     }
     return 0;
@@ -575,6 +706,10 @@ int main(int argc, char **argv) {
   A_NET_WM_STATE = XInternAtom(dpy, "_NET_WM_STATE", False);
   A_NET_WM_STATE_SHADED = XInternAtom(dpy, "_NET_WM_STATE_SHADED", False);
   A_NET_WM_TYPE_DIALOG = XInternAtom(dpy, "_NET_WM_WINDOW_TYPE_DIALOG", False);
+  A_NET_CLIENT_LIST = XInternAtom(dpy, "_NET_CLIENT_LIST", False);
+  A_NET_CLOSE = XInternAtom(dpy, "_NET_CLOSE_WINDOW", False);
+  A_NET_WM_STATE_HIDDEN = XInternAtom(dpy, "_NET_WM_STATE_HIDDEN", False);
+  A_WM_CHANGE_STATE = XInternAtom(dpy, "WM_CHANGE_STATE", False);
 
   // Minimalne EWMH: kto jest menedżerem okien i co obsługuje.
   Window check = XCreateSimpleWindow(dpy, root, -1, -1, 1, 1, 0, 0, 0);
@@ -583,7 +718,8 @@ int main(int argc, char **argv) {
   XChangeProperty(dpy, check, A_NET_WM_NAME, A_UTF8, 8, PropModeReplace, (unsigned char *)"insight", 7);
   Atom supported[] = {A_NET_WM_NAME, A_NET_WM_TYPE, A_NET_WM_TYPE_DESKTOP, A_NET_WM_TYPE_DOCK,
                       A_NET_ACTIVE, A_NET_CHECK, A_NET_WM_STATE, A_NET_WM_STATE_SHADED,
-                      A_NET_WM_TYPE_DIALOG};
+                      A_NET_WM_TYPE_DIALOG, A_NET_CLIENT_LIST, A_NET_CLOSE,
+                      A_NET_WM_STATE_HIDDEN};
   XChangeProperty(dpy, root, A_NET_SUPPORTED, XA_ATOM, 32, PropModeReplace,
                   (unsigned char *)supported, sizeof supported / sizeof supported[0]);
 
@@ -592,6 +728,12 @@ int main(int argc, char **argv) {
   XClearWindow(dpy, root);
 
   Fl::add_system_handler(x_handler, nullptr);
+
+  // Alt+Tab i Alt+Shift+Tab - także przy włączonym NumLocku i CapsLocku
+  KeyCode tab = XKeysymToKeycode(dpy, XK_Tab);
+  for (unsigned extra : {0u, (unsigned)Mod2Mask, (unsigned)LockMask, (unsigned)(Mod2Mask | LockMask)})
+    for (unsigned shift : {0u, (unsigned)ShiftMask})
+      XGrabKey(dpy, tab, Mod1Mask | shift | extra, root, True, GrabModeAsync, GrabModeAsync);
 
   // Przejmij okna, które już istnieją.
   Window r, p, *kids = nullptr;

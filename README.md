@@ -16,7 +16,7 @@ Lekkie środowisko graficzne dla Linuksa (baza: minimalny Devuan) w duchu
 | `lisaos-platinum`   | biblioteka wyglądu: kolory, ramki, ikony, chrome okien | prototyp |
 | `lisaos-denise`     | Rambler: menedżer plików + biurko        | prototyp    |
 | `lisaos-insight`      | menedżer okien X11 (Xorg/XLibre), ramki Platinum | działa (0.1) |
-| `lisaos-gary`       | globalny pasek menu, przełącznik aplikacji | planowany |
+| `lisaos-gary`       | przełącznik aplikacji (na razie w procesie Ramblera) | działa (0.1) |
 | `lisaos-alice`      | panele sterowania                       | planowany   |
 | `lisaos-paula`      | dźwięk                                  | planowany   |
 | `lisaos-kickstart`  | logowanie i start sesji                 | planowany   |
@@ -115,6 +115,27 @@ Sposób rysowania dobiera się sam:
 - `LISAOS_ANIM_MODE=xor` lub `ksztalt`: wymusza sposób rysowania
 - Jeśli FLTK zbudowano z backendem Wayland, animacje działają tylko w trybie X11:
   uruchom z `FLTK_BACKEND=x11`.
+
+## Przełącznik aplikacji (gary)
+
+Prawy górny róg paska menu pokazuje ikonę i nazwę aplikacji na pierwszym planie,
+jak w Mac OS 9. Po kliknięciu:
+
+- lista uruchomionych aplikacji z ikonami; wybór wyciąga wszystkie jej okna na wierzch,
+  ukryte aplikacje mają wyszarzoną ikonę,
+- **Ukryj …**, **Ukryj inne**, **Pokaż wszystkie**, **Zakończ …**,
+- podmenu **Okna Ramblera**: otwarte foldery, zwiń/rozwiń/zamknij wszystkie.
+
+Aplikacja to grupa okien o tej samej klasie `WM_CLASS`. AppImage uruchomione z Ramblera
+pojawiają się pod swoją nazwą i ikoną (np. „Zegar” zamiast „XClock”); przypisanie jest
+zapamiętywane w `~/.config/lisaos/aplikacje.klasy`.
+
+**Alt+Tab** (Insight): przytrzymaj Alt i naciskaj Tab, żeby przechodzić po aplikacjach
+od ostatnio używanej; Shift cofa, Escape przerywa, puszczenie Alt wybiera.
+
+Działa na standardzie EWMH (`_NET_CLIENT_LIST`, `_NET_ACTIVE_WINDOW`, `WM_CHANGE_STATE`,
+`_NET_CLOSE_WINDOW`), więc także pod GNOME, KDE czy Openboksem. Pod obcym menedżerem
+okno biurka nie przyjmuje fokusu, żeby klik w pasek menu nie zmieniał aktywnej aplikacji.
 
 ## Rambler: praca z plikami
 

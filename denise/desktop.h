@@ -17,6 +17,7 @@
 
 #include "anim.h"
 #include "folder_view.h"
+#include "gary.h"
 #include "spatial.h"
 
 class Desktop;
@@ -74,6 +75,9 @@ public:
   void close(NWin *w);            // zamknięcie okna (przycisk ramki, Ctrl+W, dialog)
   void remember(NWin *w, bool open);
   void active_changed();          // menedżer okien zmienił aktywne okno
+  void clients_changed();         // zmieniła się lista okien (_NET_CLIENT_LIST)
+  void current_app(std::string &name, Fl_Image *&icon);   // aktywna aplikacja dla paska
+  std::vector<NWin *> folder_windows();                    // widoczne okna folderów
   int shortcut();                 // skrót z innego okna -> pasek menu
 
   // Środowisko okien (wykrywane przy starcie)
@@ -167,6 +171,8 @@ private:
   std::vector<DeskIcon> icons_;
   int icon_sel_ = -1;
   Fl_Menu_Bar *menu_;
+  Fl_Widget *app_menu_ = nullptr;   // gary: menu aplikacji w prawym górnym rogu
+  int active_app_index(const std::vector<gary::App> &apps);
   Fl_Widget *extras_;
   std::unique_ptr<Fl_Tiled_Image> pattern_;
 };
