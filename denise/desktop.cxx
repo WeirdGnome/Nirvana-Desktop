@@ -655,7 +655,8 @@ void Desktop::remember(NWin *w, bool open) {
   if (!w->pane || !known(w)) return;
   WinState s;
   Rect cr = w->content_rect();   // zapisujemy położenie treści - bez ramki
-  s.x = cr.x; s.y = cr.y; s.w = cr.w; s.h = cr.h;
+  // pozycja względem biurka - biurko może stać w różnych miejscach (np. --center)
+  s.x = cr.x - x_root(); s.y = cr.y - y_root(); s.w = cr.w; s.h = cr.h;
   s.shaded = w->shaded();
   s.open = open;
   s.list = w->pane->view()->mode() == FolderView::List;
@@ -727,8 +728,11 @@ void Desktop::open_folder(const std::string &path, bool animate) {
   s.x = std::clamp(s.x, FRAME, std::max(FRAME, w() - 120));
   s.y = std::clamp(s.y, MENUBAR_H + TITLE_H, std::max(MENUBAR_H + TITLE_H, h() - 60));
 
+  // zapisane pozycje są względem biurka - zamiana na współrzędne ekranu
+  int ax = s.x + x_root(), ay = s.y + y_root();
+
   if (animate) {
-    Rect to = {s.x - FRAME, s.y - TITLE_H, s.w + 2 * FRAME, s.h + TITLE_H + FRAME};
+    Rect to = {ax - FRAME, ay - TITLE_H, s.w + 2 * FRAME, s.h + TITLE_H + FRAME};
     if (known_pos && s.shaded) to.h = TITLE_H;
     Rect from;
     if (!source_rect(path, from)) from = center_of(to);
@@ -738,7 +742,7 @@ void Desktop::open_folder(const std::string &path, bool animate) {
   // przy własnej ramce okno jest większe o ramkę, a treść leży w środku
   int ox = csd_mode ? FRAME : 0, oy = csd_mode ? TITLE_H : 0;
   int ew = csd_mode ? 2 * FRAME : 0, eh = csd_mode ? TITLE_H + FRAME : 0;
-  auto *win = new NWin(this, s.x - ox, s.y - oy, s.w + ew, s.h + eh, title_for(path).c_str(), false);
+  auto *win = new NWin(this, ax - ox, ay - oy, s.w + ew, s.h + eh, title_for(path).c_str(), false);
   win->path = path;
   win->pane = new FolderPane(ox, oy, s.w, s.h, path, root_);
   win->resizable(win->pane);

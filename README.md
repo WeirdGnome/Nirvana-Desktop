@@ -50,9 +50,17 @@ Na Devuanie po `sudo cmake --install build`:
 
 albo wybierz „LisaOS” na ekranie logowania (plik `share/xsessions/lisaos.desktop`).
 
-**Sam Rambler** (bez menedżera okien, np. pod GNOME): `./build/lisaos-denise --size 1024x768`.
+**Sam Rambler pod innym pulpitem** (np. GNOME na Rocky/RHEL):
 
-Opcje Ramblera: `--root`, `--home KATALOG`, `--size 1024x768`.
+    ./build/lisaos-denise --center                  # cały obszar pod paskiem GNOME
+    ./build/lisaos-denise --center --size 1024x768  # okno 1024x768 na środku
+
+`--center` (albo zmienna `LISAOS_CENTER=1`) stawia biurko na środku obszaru roboczego,
+czyli z ominięciem pasków pulpitu, więc górny pasek GNOME nie zasłania paska menu LisaOS.
+Bez `--size` biurko wypełnia cały obszar roboczy. Pozycje okien folderów są zapisywane
+względem biurka, więc przesuwają się razem z nim.
+
+Opcje Ramblera: `--root`, `--home KATALOG`, `--size 1024x768`, `--center`.
 Czcionkę systemową w stylu Chicago można podać przez `LISAOS_SYSTEM_FONT`
 (np. wolny font ChicagoFLF).
 

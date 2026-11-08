@@ -5,10 +5,15 @@
 //   lisaos-denise --root          tryb root: cały system plików (uruchamiany przez pkexec)
 //   lisaos-denise --home DIR      inny katalog domowy (np. do testów)
 //   lisaos-denise --size 1024x768 rozmiar biurka (domyślnie cały ekran)
+//   lisaos-denise --center        biurko na środku obszaru roboczego, czyli z ominięciem
+//                                 pasków innego pulpitu (np. górnego paska GNOME);
+//                                 bez --size wypełnia cały obszar roboczy.
+//                                 To samo: zmienna LISAOS_CENTER=1
 #include <FL/Fl.H>
 #include <FL/platform.H>
 #include <X11/Xatom.h>
 #include <X11/Xutil.h>
+#include <algorithm>
 #include <csignal>
 #include <cstdio>
 #include <cstdlib>
@@ -25,13 +30,17 @@ int main(int argc, char **argv) {
   bool root = false;
   std::string home = getenv("HOME") ? getenv("HOME") : "/";
   int W = 0, H = 0;
+  bool center = getenv("LISAOS_CENTER") && !strcmp(getenv("LISAOS_CENTER"), "1");
 
   for (int i = 1; i < argc; i++) {
     if (!strcmp(argv[i], "--root")) root = true;
     else if (!strcmp(argv[i], "--home") && i + 1 < argc) home = argv[++i];
     else if (!strcmp(argv[i], "--size") && i + 1 < argc) sscanf(argv[++i], "%dx%d", &W, &H);
+    else if (!strcmp(argv[i], "--center") || !strcmp(argv[i], "--srodek")) center = true;
     else if (!strcmp(argv[i], "--help")) {
-      printf("lisaos-denise [--root] [--home KATALOG] [--size SZERxWYS]\n");
+      printf("lisaos-denise [--root] [--home KATALOG] [--size SZERxWYS] [--center]\n"
+             "  --center  biurko na środku obszaru roboczego (np. pod paskiem GNOME);\n"
+             "            bez --size wypełnia cały obszar roboczy (też: LISAOS_CENTER=1)\n");
       return 0;
     }
   }
@@ -44,12 +53,21 @@ int main(int argc, char **argv) {
     std::filesystem::create_directories(home + "/Aplikacje", ec);
   }
 
-  if (!W || !H) {
+  int X = 0, Y = 0;
+  if (center) {
+    // Obszar roboczy = ekran bez pasków pulpitu (z _NET_WORKAREA menedżera okien).
+    int wx, wy, ww, wh;
+    Fl::screen_work_area(wx, wy, ww, wh);
+    if (!W || !H) { W = ww; H = wh; }
+    X = std::max(wx, wx + (ww - W) / 2);
+    Y = std::max(wy, wy + (wh - H) / 2);
+  } else if (!W || !H) {
     int sx, sy;
     Fl::screen_xywh(sx, sy, W, H);
   }
 
   Desktop desk(W, H, home, root);
+  desk.position(X, Y);
   desk.border(0);
   desk.xclass("LisaOS-Desktop");   // insight rozpozna biurko i nie da mu ramki
   desk.show();
@@ -88,7 +106,14 @@ int main(int argc, char **argv) {
     for (int i = 0; managed && i < 100 && normal_state(); i++) usleep(10000);
     XChangeProperty(fl_display, xid, type, XA_ATOM, 32, PropModeReplace,
                     (unsigned char *)&desk_t, 1);
+    // Stan początkowy: zawsze pod innymi oknami i bez wpisu na liście zadań pulpitu.
+    Atom states[] = {XInternAtom(fl_display, "_NET_WM_STATE_BELOW", False),
+                     XInternAtom(fl_display, "_NET_WM_STATE_SKIP_TASKBAR", False),
+                     XInternAtom(fl_display, "_NET_WM_STATE_SKIP_PAGER", False)};
+    XChangeProperty(fl_display, xid, XInternAtom(fl_display, "_NET_WM_STATE", False), XA_ATOM, 32,
+                    PropModeReplace, (unsigned char *)states, 3);
     XMapWindow(fl_display, xid);
+    XMoveWindow(fl_display, xid, X, Y);   // menedżer okien mógł zmienić pozycję przy pierwszym mapowaniu
     XLowerWindow(fl_display, xid);
     XSync(fl_display, False);
   }
