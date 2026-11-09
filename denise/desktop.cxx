@@ -1128,37 +1128,60 @@ void Desktop::open_entry(const Entry &e) {
 
 std::string Desktop::apps_dir() const { return home_ + "/Aplikacje"; }
 
+// Czy plik leży w ~/Aplikacje (także w podfolderze kategorii).
+bool Desktop::in_apps(const std::string &path) const {
+  std::string a = apps_dir() + "/";
+  return path.compare(0, a.size(), a) == 0;
+}
+
+// Docelowe miejsce AppImage w ~/Aplikacje: folder kategorii (Gry, Grafika...).
+std::string Desktop::app_destination(const std::string &path) const {
+  return (fs::path(apps_dir()) / appimage::category_folder(path, home_) / fs::path(path).filename()).string();
+}
+
 // AppImage spoza folderu Aplikacje: zaproponuj instalację (jak sklep w telefonie,
 // tylko bez sklepu). Z folderu Aplikacje: uruchom, w razie potrzeby rozpakowując.
 void Desktop::open_appimage(const std::string &path) {
-  std::string name = appimage::display_name(fs::path(path).filename().string());
-  if (fs::path(path).parent_path() != fs::path(apps_dir())) {
+  if (in_apps(path)) { run_app(path); return; }
+  std::string name = appimage::label(path, home_);
+  fs::path dest = app_destination(path);
+  std::string folder = "Aplikacje/" + dest.parent_path().filename().string();
+  std::error_code ec;
+  auto install = [this, path, dest] {
+    std::error_code ec;
+    fs::create_directories(dest.parent_path(), ec);
+    if (fs::exists(dest, ec)) fs::remove(dest, ec);   // "Zastąp": ta sama wersja
+    fs::rename(path, dest, ec);
+    if (ec) {   // inny system plików (pendrive): kopia i usunięcie
+      ec.clear();
+      fs::copy_file(path, dest, ec);
+      if (!ec) fs::remove(path, ec);
+    }
+    if (ec) {
+      dialog("Instalacja", "Nie udało się przenieść pliku:\n" + ec.message(), {{"OK", nullptr}});
+      return;
+    }
+    chmod(dest.c_str(), 0755);
+    path_moved(path, dest.string());
+    refresh_all();
+    run_app(dest.string());
+  };
+  if (fs::exists(dest, ec)) {   // ta sama wersja już jest - inne wersje mogą stać obok
     dialog("Instalacja",
-           "Zainstalować aplikację „" + name + "”?\n"
-           "Plik zostanie przeniesiony do folderu Aplikacje.\n" +
-           (appimage::sandbox_available()
-                ? "Aplikacja będzie działać w piaskownicy: zobaczy tylko LisaOS HD."
-                : "Uwaga: brak bubblewrap - aplikacja będzie działać bez piaskownicy."),
+           "„" + name + "” jest już zainstalowany w folderze " + folder + ".\n"
+           "Inne wersje tego programu mogą być zainstalowane obok.",
            {{"Anuluj", nullptr},
-            {"Zainstaluj", [this, path] {
-               std::error_code ec;
-               fs::create_directories(apps_dir(), ec);
-               fs::path dest = fs::path(apps_dir()) / fs::path(path).filename();
-               for (int i = 2; fs::exists(dest, ec); i++)
-                 dest = fs::path(apps_dir()) / (fs::path(path).stem().string() + " " +
-                                                std::to_string(i) + ".AppImage");
-               fs::rename(path, dest, ec);
-               if (ec) {
-                 dialog("Instalacja", "Nie udało się przenieść pliku:\n" + ec.message(), {{"OK", nullptr}});
-                 return;
-               }
-               chmod(dest.c_str(), 0755);
-               refresh_all();
-               run_app(dest.string());
-             }}});
+            {"Zastąp", install},
+            {"Uruchom", [this, dest] { run_app(dest.string()); }}});
     return;
   }
-  run_app(path);
+  dialog("Instalacja",
+         "Zainstalować aplikację „" + name + "”?\n"
+         "Plik zostanie przeniesiony do folderu " + folder + ".\n" +
+         (appimage::sandbox_available()
+              ? "Aplikacja będzie działać w piaskownicy: zobaczy tylko LisaOS HD."
+              : "Uwaga: brak bubblewrap - aplikacja będzie działać bez piaskownicy."),
+         {{"Anuluj", nullptr}, {"Zainstaluj", install}});
 }
 
 void Desktop::run_app(const std::string &path) {
@@ -1176,7 +1199,7 @@ void Desktop::run_app(const std::string &path) {
     refresh_all();   // ikona części AppImage (np. DwarFS) jest dostępna dopiero po rozpakowaniu
   }
   // gary: pierwsze nowe okno to ta aplikacja - dostanie nazwę i ikonę z AppImage
-  gary::note_launch(appimage::display_name(fs::path(path).filename().string()),
+  gary::note_launch(appimage::label(path, home_),
                     appimage::icon(path, home_));
   appimage::launch(path, home_, split_args(tooltypes(path)));   // parametry z okna Informacje
 }
@@ -1969,6 +1992,13 @@ void Desktop::path_moved(const std::string &from, const std::string &to) {
     w->copy_label(title_for(np).c_str());
   }
   for (auto *w : to_close) close(w);
+  // dok idzie za przeniesionym plikiem (np. AppImage zainstalowany do Aplikacje/Gry)
+  bool dock_changed = false;
+  for (auto &p : dock_) {
+    if (p != from && p.rfind(from + "/", 0) != 0) continue;
+    if (!to.empty()) { p = to + p.substr(from.size()); dock_changed = true; }
+  }
+  if (dock_changed) { save_dock(); layout_icons(); redraw(); }
 }
 
 // ---------------------------------------------------------------------------
@@ -2038,7 +2068,17 @@ void Desktop::transfer(const std::vector<Entry> &items, const std::string &dest,
     }
     if (ec) { errors += "„" + e.name + "”: " + ec.message() + "\n"; continue; }
     // AppImage wrzucony do Aplikacji jest gotowy do uruchomienia (instalacja przeciągnięciem)
-    if (is_appimage(e.name) && fs::path(dest) == fs::path(apps_dir())) chmod(dst.c_str(), 0755);
+    // i od razu trafia do folderu swojej kategorii (Gry, Grafika...)
+    if (is_appimage(e.name) && fs::path(dest) == fs::path(apps_dir())) {
+      chmod(dst.c_str(), 0755);
+      fs::path cat = app_destination(dst.string());
+      if (!fs::exists(cat, ec)) {
+        fs::create_directories(cat.parent_path(), ec);
+        fs::rename(dst, cat, ec);
+        if (!ec) path_moved(dst.string(), cat.string());
+        ec.clear();
+      }
+    }
   }
   refresh_all();
   if (!errors.empty())
@@ -2229,8 +2269,8 @@ static Entry entry_for(const std::string &path) {
   e.label = e.name;
   e.icon = icon_for(e.name, e.dir);
   if (!e.dir && is_appimage(e.name)) {   // nazwa i ikona z wnętrza AppImage, jak w oknach
-    e.label = appimage::display_name(e.name);
     const char *h = getenv("HOME");
+    e.label = appimage::label(path, h ? h : "/");
     e.icon_file = appimage::icon(path, h ? h : "/");
   }
   return e;

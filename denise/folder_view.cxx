@@ -236,7 +236,7 @@ void FolderView::load(const std::string &path, bool show_hidden) {
       if (!e.dir) e.size = (uintmax_t)st.st_size;
     }
     if (!e.dir && is_appimage(name)) {
-      e.label = appimage::display_name(name);
+      e.label = !g_home.empty() ? appimage::label(e.path, g_home) : appimage::display_name(name);
       if (!g_home.empty()) e.icon_file = appimage::icon(e.path, g_home);
     }
     entries_.push_back(std::move(e));

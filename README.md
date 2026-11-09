@@ -85,11 +85,31 @@ Czcionkę systemową w stylu Chicago można podać przez `LISAOS_SYSTEM_FONT`
 
 - **Ikony i nazwy**: Rambler czyta ikonę (`.DirIcon`, PNG lub SVG) prosto z obrazu
   squashfs wewnątrz AppImage, **bez uruchamiania go**. Offset obrazu liczy z nagłówka
-  ELF i używa `unsquashfs`. Nazwa jest oczyszczana: `Firefox-128.0-x86_64.AppImage` → „Firefox”.
-  Ikony trafiają do `~/.cache/lisaos/ikony`.
+  ELF i używa `unsquashfs`.
+- **Nazwa z wersją**: `Firefox-128.0.3-x86_64.AppImage` → „Firefox 128.0.3”. Gdy nazwa pliku
+  nie ma wersji, Rambler bierze ją z `X-AppImage-Version` w pliku .desktop. Dzięki temu kilka
+  wersji tego samego programu da się rozróżnić i mieć zainstalowane jednocześnie.
+  Ikony i dane z .desktop są zapamiętywane w `~/.cache/lisaos/ikony`.
 - **Instalacja**: otwarcie AppImage spoza folderu Aplikacje (np. z Pobranych) pyta,
-  czy zainstalować. Plik trafia do `~/Aplikacje`, a jego zawartość jest rozpakowywana
-  do `~/.local/share/lisaos/aplikacje/`. Bez FUSE i bez wykonywania runtime'u AppImage.
+  czy zainstalować. Plik trafia do folderu swojej kategorii w `~/Aplikacje`, a jego zawartość
+  jest rozpakowywana do `~/.local/share/lisaos/aplikacje/`. Bez FUSE i bez wykonywania
+  runtime'u AppImage.
+- **Foldery kategorii** według `Categories=` z pliku .desktop wewnątrz AppImage. Folder
+  powstaje przy pierwszej aplikacji danego rodzaju.
+
+  | Kategoria | Folder | Kategoria | Folder |
+  |-----------|--------|-----------|--------|
+  | Game | Gry | Office | Biuro |
+  | Graphics | Grafika | Development | Programowanie |
+  | AudioVideo, Audio, Video | Multimedia | Education | Edukacja |
+  | Network | Internet | Science | Nauka |
+  | System, Settings | System | Utility | Akcesoria |
+
+  AppImage bez kategorii trafia do folderu `Inne`. AppImage przeciągnięty prosto do folderu
+  Aplikacje też trafia do folderu swojej kategorii. Próba instalacji wersji, która już jest
+  zainstalowana, pyta, czy ją zastąpić albo uruchomić.
+
+  ![Dwie wersje gry obok siebie](docs/img/gry.png)
 - **Uruchamianie w piaskownicy** (bubblewrap): cały system tylko do odczytu, zapis
   wyłącznie w LisaOS HD, inni użytkownicy, `/root`, `/mnt` i `/media` niewidoczne,
   własny `/tmp` i własna przestrzeń procesów; sama aplikacja jest tylko do odczytu.

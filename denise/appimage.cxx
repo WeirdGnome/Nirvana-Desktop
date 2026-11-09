@@ -45,6 +45,33 @@ static int run_wait(const std::vector<std::string> &args) {
   return WIFEXITED(st) ? WEXITSTATUS(st) : -1;
 }
 
+// Uruchom i zbierz standardowe wyjście (stderr do /dev/null).
+static std::string run_capture(const std::vector<std::string> &args) {
+  int fds[2];
+  if (pipe(fds) < 0) return "";
+  pid_t pid = fork();
+  if (pid < 0) { close(fds[0]); close(fds[1]); return ""; }
+  if (pid == 0) {
+    close(fds[0]);
+    dup2(fds[1], 1);
+    int null = open("/dev/null", O_RDWR);
+    if (null >= 0) dup2(null, 2);
+    std::vector<char *> argv;
+    for (auto &a : args) argv.push_back(const_cast<char *>(a.c_str()));
+    argv.push_back(nullptr);
+    execvp(argv[0], argv.data());
+    _exit(127);
+  }
+  close(fds[1]);
+  std::string out;
+  char buf[4096];
+  ssize_t n;
+  while ((n = read(fds[0], buf, sizeof buf)) > 0) out.append(buf, (size_t)n);
+  close(fds[0]);
+  waitpid(pid, nullptr, 0);
+  return out;
+}
+
 // Podwójny fork: aplikacja staje się dzieckiem init, więc nie zostawia zombie,
 // a Rambler może bezpiecznie czekać na własne procesy (unsquashfs).
 void spawn(const char *const argv[]) {
@@ -205,16 +232,155 @@ std::string icon(const std::string &path, const std::string &home) {
   return result;
 }
 
-std::string display_name(const std::string &filename) {
+// Nazwa pliku bez rozszerzenia i architektury: "Firefox-128.0-x86_64.AppImage" -> "Firefox-128.0"
+static std::string strip(const std::string &filename) {
   std::string s = filename;
   if (s.size() > 9 && strcasecmp(s.c_str() + s.size() - 9, ".appimage") == 0) s.resize(s.size() - 9);
-  // architektura i numer wersji na końcu nazwy
-  static const std::regex arch(R"([-_. ](x86[-_]64|amd64|aarch64|arm64|armhf|i[36]86)$)", std::regex::icase);
-  static const std::regex ver(R"([-_ ]v?[0-9][0-9A-Za-z.\-_+~]*$)");
+  static const std::regex arch(R"([-_. ](x86[-_]64|x64|amd64|aarch64|arm64|armhf|i[36]86)$)", std::regex::icase);
   s = std::regex_replace(s, arch, "");
-  s = std::regex_replace(s, ver, "");
+  static const std::regex tag(R"([-_ ]AppImage(?=[-_ ]|$))", std::regex::icase);   // "GIMP_AppImage-git"
+  return std::regex_replace(s, tag, "");
+}
+static const std::regex &ver_re() {
+  static const std::regex ver(R"([-_ ]v?([0-9][0-9A-Za-z.\-_+~]*)$)");
+  return ver;
+}
+
+std::string app_name(const std::string &filename) {
+  std::string s = std::regex_replace(strip(filename), ver_re(), "");
   for (char &c : s) if (c == '_') c = ' ';
   return s.empty() ? filename : s;
+}
+
+std::string version(const std::string &filename) {
+  std::smatch m;
+  std::string s = strip(filename);
+  if (!std::regex_search(s, m, ver_re())) return "";
+  // sam numer wersji z ewentualnym dopiskiem: "2.10.25-20210610-withplugins" -> "2.10.25",
+  // "24.8.2.1.basic" -> "24.8.2.1", "3.0-beta2" -> "3.0-beta2"
+  static const std::regex num(R"(^[0-9]+(\.[0-9]+)*([-~.]?(alpha|beta|rc|pre|a|b)[0-9]*(?![A-Za-z]))?)", std::regex::icase);
+  std::string tail = m[1].str();
+  std::smatch n;
+  return std::regex_search(tail, n, num) ? n[0].str() : tail;
+}
+
+std::string display_name(const std::string &filename) {
+  std::string v = version(filename);
+  return v.empty() ? app_name(filename) : app_name(filename) + " " + v;
+}
+
+// ---------------------------------------------------------------------------
+// Metadane z pliku .desktop w AppImage: kategorie i wersja
+// ---------------------------------------------------------------------------
+static Meta parse_desktop(std::istream &in) {
+  Meta m;
+  std::string line;
+  bool entry = false;
+  while (std::getline(in, line)) {
+    if (!line.empty() && line.back() == '\r') line.pop_back();
+    if (!line.empty() && line[0] == '[') { entry = line == "[Desktop Entry]"; continue; }
+    if (!entry) continue;
+    auto val = [&](const char *k) -> const char * {
+      size_t n = strlen(k);
+      return line.compare(0, n, k) == 0 ? line.c_str() + n : nullptr;
+    };
+    if (const char *v = val("Categories=")) m.categories = v;
+    else if (const char *v = val("X-AppImage-Version=")) m.version = v;
+  }
+  return m;
+}
+
+static Meta read_meta_file(const fs::path &f) {
+  std::ifstream in(f);
+  Meta m;
+  std::string line;
+  while (std::getline(in, line)) {
+    if (line.rfind("wersja=", 0) == 0) m.version = line.substr(7);
+    else if (line.rfind("kategorie=", 0) == 0) m.categories = line.substr(10);
+  }
+  return m;
+}
+
+Meta meta(const std::string &path, const std::string &home) {
+  std::string k = key(path);
+  if (k.empty()) return {};
+  fs::path cache = fs::path(home) / ".cache/lisaos/ikony";
+  fs::path mf = cache / (k + ".meta");
+  std::error_code ec;
+  if (fs::exists(mf, ec)) return read_meta_file(mf);
+  fs::create_directories(cache, ec);
+
+  Meta m;
+  bool found = false;
+  auto from_dir = [&](const fs::path &dir) {
+    for (auto &e : fs::directory_iterator(dir, ec))
+      if (e.path().extension() == ".desktop") {
+        std::ifstream in(e.path());   // dowiązanie wskazuje na plik w usr/share/applications
+        m = parse_desktop(in);
+        found = true;
+        return;
+      }
+  };
+  fs::path inst = install_dir(path, home);
+  if (fs::exists(inst / "AppRun", ec)) from_dir(inst);
+  static bool tool = have("unsquashfs");
+  uint64_t off;
+  if (!found && tool && squashfs_offset(path, off)) {
+    // nazwa pliku .desktop w korzeniu obrazu, potem rozpakowanie tylko jego
+    std::string list = run_capture({"unsquashfs", "-o", std::to_string(off), "-l", "-d", "", path});
+    std::string name;
+    size_t pos = 0;
+    while (pos < list.size()) {
+      size_t nl = list.find('\n', pos);
+      std::string l = list.substr(pos, nl == std::string::npos ? std::string::npos : nl - pos);
+      pos = nl == std::string::npos ? list.size() : nl + 1;
+      if (!l.empty() && l[0] == '/') l.erase(0, 1);
+      if (l.find('/') == std::string::npos && l.size() > 8 && l.compare(l.size() - 8, 8, ".desktop") == 0) {
+        name = l;
+        break;
+      }
+    }
+    if (!name.empty()) {
+      fs::path tmp = cache / ("tmp-meta-" + k);
+      fs::remove_all(tmp, ec);
+      if (extract(path, off, tmp.string(), {name})) from_dir(tmp);
+      fs::remove_all(tmp, ec);
+    }
+  }
+  // Zapamiętujemy też brak danych (bez szukania przy każdym odświeżeniu folderu),
+  // ale nie zanim aplikacja w formacie innym niż squashfs zostanie zainstalowana.
+  if (found || (tool && squashfs_offset(path, off))) {
+    std::ofstream out(mf);
+    out << "wersja=" << m.version << "\nkategorie=" << m.categories << "\n";
+  }
+  return m;
+}
+
+std::string label(const std::string &path, const std::string &home) {
+  std::string file = fs::path(path).filename().string();
+  if (!version(file).empty()) return display_name(file);
+  std::string v = meta(path, home).version;
+  return v.empty() ? app_name(file) : app_name(file) + " " + v;
+}
+
+std::string category_folder(const std::string &path, const std::string &home) {
+  // główne kategorie freedesktop.org -> foldery w ~/Aplikacje
+  static const std::pair<const char *, const char *> map[] = {
+    {"Game", "Gry"},            {"Graphics", "Grafika"},       {"AudioVideo", "Multimedia"},
+    {"Audio", "Multimedia"},    {"Video", "Multimedia"},       {"Network", "Internet"},
+    {"Office", "Biuro"},        {"Development", "Programowanie"}, {"Education", "Edukacja"},
+    {"Science", "Nauka"},       {"System", "System"},          {"Settings", "System"},
+    {"Utility", "Akcesoria"},
+  };
+  std::string cats = meta(path, home).categories;
+  size_t pos = 0;
+  while (pos < cats.size()) {
+    size_t sc = cats.find(';', pos);
+    std::string c = cats.substr(pos, sc == std::string::npos ? std::string::npos : sc - pos);
+    pos = sc == std::string::npos ? cats.size() : sc + 1;
+    for (auto &[k, v] : map) if (c == k) return v;
+  }
+  return "Inne";
 }
 
 std::string install_dir(const std::string &path, const std::string &home) {

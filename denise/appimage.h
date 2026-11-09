@@ -23,7 +23,25 @@ bool squashfs_offset(const std::string &path, uint64_t &offset);
 std::string icon(const std::string &path, const std::string &home);
 
 // "Firefox-128.0-x86_64.AppImage" -> "Firefox"
+std::string app_name(const std::string &filename);
+// "Firefox-128.0-x86_64.AppImage" -> "128.0" ("" gdy nazwa nie ma wersji)
+std::string version(const std::string &filename);
+// "Firefox-128.0-x86_64.AppImage" -> "Firefox 128.0" (tylko z nazwy pliku)
 std::string display_name(const std::string &filename);
+
+// Dane z pliku .desktop w AppImage (zapamiętywane w ~/.cache/lisaos/ikony).
+struct Meta {
+  std::string version;      // X-AppImage-Version
+  std::string categories;   // Categories, np. "Game;ArcadeGame;"
+};
+Meta meta(const std::string &path, const std::string &home);
+
+// Podpis ikony: nazwa i wersja (z nazwy pliku, a gdy jej tam nie ma - z .desktop).
+// Dzięki wersji kilka wydań tego samego programu da się rozróżnić obok siebie.
+std::string label(const std::string &path, const std::string &home);
+
+// Folder w ~/Aplikacje według kategorii: "Gry", "Grafika", "Internet"... albo "Inne".
+std::string category_folder(const std::string &path, const std::string &home);
 
 // Katalog z rozpakowaną aplikacją (może jeszcze nie istnieć).
 std::string install_dir(const std::string &path, const std::string &home);

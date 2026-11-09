@@ -220,6 +220,8 @@ private:
   void open_appimage(const std::string &path);
   void run_app(const std::string &path);
   std::string apps_dir() const;
+  bool in_apps(const std::string &path) const;
+  std::string app_destination(const std::string &path) const;
   // operacje na plikach
   std::string rename_path(const std::string &old, const std::string &name);
   bool trash_path(const std::string &path, std::string &err);
