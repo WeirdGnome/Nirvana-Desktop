@@ -6,7 +6,9 @@
 #include "platinum.h"
 
 #include <FL/Fl.H>
+#include <FL/Fl_Box.H>
 #include <FL/Fl_Button.H>
+#include <FL/Fl_Choice.H>
 #include <FL/fl_draw.H>
 
 #include <algorithm>
@@ -73,13 +75,13 @@ public:
 }  // namespace
 
 int panel_ustawienia() {
-  const int W = 340, H = 120;
-  auto *win = new FrameWindow(W, H, "Preferencje");
+  const int W = 340, H = 196;
+  auto *win = new FrameWindow(W, H, _("Preferencje"));
   win->xclass("lisaos-preferencje");
   struct P { PanelIcon::Kind k; const char *label, *arg; } panels[] = {
-      {PanelIcon::Appearance, "Wygląd", "wyglad"},
-      {PanelIcon::Network, "Sieć", "siec"},
-      {PanelIcon::Power, "Zasilanie", "zasilanie"},
+      {PanelIcon::Appearance, _("Wygląd"), "wyglad"},
+      {PanelIcon::Network, _("Sieć"), "siec"},
+      {PanelIcon::Power, _("Zasilanie"), "zasilanie"},
   };
   int x = 14;
   for (auto &p : panels) {
@@ -87,6 +89,30 @@ int panel_ustawienia() {
     b->callback([](Fl_Widget *, void *a) { open_panel((const char *)a); }, (void *)p.arg);
     x += 106;
   }
+
+  // Język interfejsu - zapisywany w ~/.config/lisaos/jezyk, działa po ponownym uruchomieniu
+  static std::vector<std::string> codes;
+  codes = {""};
+  auto *lang = new Fl_Choice(110, 112, W - 124, 22, _("Język:"));
+  lang->labelfont(FONT_SYSTEM);
+  lang->labelsize(SIZE_SYSTEM);
+  lang->textsize(SIZE_SMALL + 1);
+  lang->add(_("Automatycznie (jak w systemie)"));
+  for (auto &[code, name] : available_languages()) {
+    codes.push_back(code);
+    lang->add(name.c_str());
+  }
+  std::string cur = language_setting();
+  lang->value(0);
+  for (size_t i = 0; i < codes.size(); i++) if (codes[i] == cur) lang->value((int)i);
+  auto *note = new Fl_Box(14, 140, W - 28, 44);
+  note->labelsize(SIZE_SMALL);
+  note->align(FL_ALIGN_INSIDE | FL_ALIGN_TOP_LEFT | FL_ALIGN_WRAP);
+  note->label(_("Nowy język zobaczysz po ponownym uruchomieniu LisaOS albo po Narzędzia > Resetuj LISA."));
+  lang->callback([](Fl_Widget *w, void *) {
+    int v = ((Fl_Choice *)w)->value();
+    if (v >= 0 && v < (int)codes.size()) set_language_setting(codes[v]);
+  });
   win->end();
   win->finish();
   int sx, sy, sw, sh;

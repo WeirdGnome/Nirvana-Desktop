@@ -95,7 +95,7 @@ static std::string get_title(Window w) {
     XFree(name);
     return s;
   }
-  return "bez tytułu";
+  return _("bez tytułu");
 }
 
 static bool has_atom(Window w, Atom prop, Atom value) {

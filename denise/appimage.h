@@ -41,7 +41,12 @@ Meta meta(const std::string &path, const std::string &home);
 std::string label(const std::string &path, const std::string &home);
 
 // Folder w ~/Aplikacje według kategorii: "Gry", "Grafika", "Internet"... albo "Inne".
+// Nazwa w języku interfejsu - chyba że folder już istnieje pod polską nazwą
+// (zmiana języka nie rozdziela zainstalowanych aplikacji na dwa foldery).
 std::string category_folder(const std::string &path, const std::string &home);
+
+// ~/Aplikacje (albo ~/Applications po angielsku - jak wyżej).
+std::string apps_dir(const std::string &home);
 
 // Katalog z rozpakowaną aplikacją (może jeszcze nie istnieć).
 std::string install_dir(const std::string &path, const std::string &home);

@@ -67,12 +67,12 @@ const unsigned PAL_DARK[16] = {0x2E3436, 0xCC0000, 0x4E9A06, 0xC4A000, 0x3465A4,
                                0x555753, 0xEF2929, 0x8AE234, 0xFCE94F, 0x729FCF, 0xAD7FA8, 0x34E2E2, 0xEEEEEC};
 
 Profile PROFILES[] = {
-    {"klasyczny", "Klasyczny (jasny)", 0x000000, 0xFFFFFF, 0x000000, 0xB4C8FF, {}},
-    {"ciemny", "Ciemny", 0xD3D7CF, 0x1E1F22, 0xD3D7CF, 0x3D4F7A, {}},
-    {"zielony", "Zielony fosfor", 0x33FF66, 0x081208, 0x33FF66, 0x1E5A2A, {}},
-    {"bursztyn", "Bursztynowy", 0xFFB000, 0x160E00, 0xFFB000, 0x5A3E00, {}},
-    {"workbench", "Workbench (Amiga)", 0xFFFFFF, 0x0055AA, 0xFF8800, 0x000022, {}},
-    {"schemat", "Jak schemat kolorów", 0, 0, 0, 0, {}},   // kolory LisaOS
+    {"klasyczny", N_("Klasyczny (jasny)"), 0x000000, 0xFFFFFF, 0x000000, 0xB4C8FF, {}},
+    {"ciemny", N_("Ciemny"), 0xD3D7CF, 0x1E1F22, 0xD3D7CF, 0x3D4F7A, {}},
+    {"zielony", N_("Zielony fosfor"), 0x33FF66, 0x081208, 0x33FF66, 0x1E5A2A, {}},
+    {"bursztyn", N_("Bursztynowy"), 0xFFB000, 0x160E00, 0xFFB000, 0x5A3E00, {}},
+    {"workbench", N_("Workbench (Amiga)"), 0xFFFFFF, 0x0055AA, 0xFF8800, 0x000022, {}},
+    {"schemat", N_("Jak schemat kolorów"), 0, 0, 0, 0, {}},   // kolory LisaOS
 };
 const int NPROFILES = sizeof PROFILES / sizeof PROFILES[0];
 
@@ -595,7 +595,7 @@ bool ask_close(Term *t, const std::string &prog) {
     void draw() override { draw_icon(Icon::Application, x(), y(), false); }
   };
   new Pic(16, 16);
-  std::string msg = "W tym oknie działa „" + prog + "”.\nZamknąć je mimo to?";
+  std::string msg = plat::fmt(_("W tym oknie działa „%1”.\nZamknąć je mimo to?"), prog);
   auto *b = new Fl_Box(64, 14, W - 80, 50);
   b->copy_label(msg.c_str());
   b->labelfont(FONT_SYSTEM);
@@ -611,8 +611,8 @@ bool ask_close(Term *t, const std::string &prog) {
     bt->argument(v);
     return bt;
   };
-  mk(W - 196, "Anuluj", 0);
-  auto *ok = mk(W - 102, "Zamknij", 1);
+  mk(W - 196, _("Anuluj"), 0);
+  auto *ok = mk(W - 102, _("Zamknij"), 1);
   ok->labelfont(FONT_SYSTEM);
   ok->shortcut(FL_Enter);
   w->user_data(&result);
@@ -651,21 +651,21 @@ void context_menu(Term *t) {
   m.textsize(SIZE_SYSTEM);
   m.box(FL_NO_BOX);
   int sel = t->sel_active ? 0 : FL_MENU_INACTIVE;
-  m.add("Nowe okno", FL_CTRL | FL_SHIFT | 'n', nullptr, (void *)1L, FL_MENU_DIVIDER);
-  m.add("Kopiuj", FL_CTRL | FL_SHIFT | 'c', nullptr, (void *)2L, sel);
-  m.add("Wklej", FL_CTRL | FL_SHIFT | 'v', nullptr, (void *)3L);
-  m.add("Zaznacz wszystko", 0, nullptr, (void *)4L, FL_MENU_DIVIDER);
+  m.add(_("Nowe okno"), FL_CTRL | FL_SHIFT | 'n', nullptr, (void *)1L, FL_MENU_DIVIDER);
+  m.add(_("Kopiuj"), FL_CTRL | FL_SHIFT | 'c', nullptr, (void *)2L, sel);
+  m.add(_("Wklej"), FL_CTRL | FL_SHIFT | 'v', nullptr, (void *)3L);
+  m.add(_("Zaznacz wszystko"), 0, nullptr, (void *)4L, FL_MENU_DIVIDER);
   for (int i = 0; i < NPROFILES; i++) {
-    std::string l = std::string("Profil/") + PROFILES[i].name;
+    std::string l = plat::tr_path(P_("Profil")) + "/" + _(PROFILES[i].name);
     m.add(l.c_str(), 0, nullptr, (void *)(long)(100 + i),
           FL_MENU_RADIO | (!strcmp(t->prof.id, PROFILES[i].id) ? FL_MENU_VALUE : 0));
   }
-  m.add("Czcionka/Większa", FL_CTRL | FL_SHIFT | '=', nullptr, (void *)5L);
-  m.add("Czcionka/Mniejsza", FL_CTRL | FL_SHIFT | '-', nullptr, (void *)6L);
-  m.add("Czcionka/Normalna", FL_CTRL | FL_SHIFT | '0', nullptr, (void *)7L, FL_MENU_DIVIDER);
-  m.add("Wyczyść przewijanie", 0, nullptr, (void *)8L);
-  m.add("Resetuj terminal", 0, nullptr, (void *)9L, FL_MENU_DIVIDER);
-  m.add("Zamknij okno", FL_CTRL | FL_SHIFT | 'w', nullptr, (void *)10L);
+  m.add(plat::tr_path(P_("Czcionka/Większa")).c_str(), FL_CTRL | FL_SHIFT | '=', nullptr, (void *)5L);
+  m.add(plat::tr_path(P_("Czcionka/Mniejsza")).c_str(), FL_CTRL | FL_SHIFT | '-', nullptr, (void *)6L);
+  m.add(plat::tr_path(P_("Czcionka/Normalna")).c_str(), FL_CTRL | FL_SHIFT | '0', nullptr, (void *)7L, FL_MENU_DIVIDER);
+  m.add(_("Wyczyść przewijanie"), 0, nullptr, (void *)8L);
+  m.add(_("Resetuj terminal"), 0, nullptr, (void *)9L, FL_MENU_DIVIDER);
+  m.add(_("Zamknij okno"), FL_CTRL | FL_SHIFT | 'w', nullptr, (void *)10L);
   const Fl_Menu_Item *it = m.menu()->popup(Fl::event_x(), Fl::event_y(), nullptr, nullptr, &m);
   if (!it) return;
   long v = (long)it->user_data();

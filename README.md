@@ -31,7 +31,8 @@ Zależności (Devuan/Debian):
         libxinerama-dev libxcursor-dev libxfixes-dev libxrender-dev \
         squashfs-tools bubblewrap libdbus-1-dev udisks2 policykit-1 \
         network-manager network-manager-openvpn \  # sieć i VPN
-        libxss-dev pulseaudio-utils alsa-utils    # aplety dźwięku i zasilania
+        libxss-dev pulseaudio-utils alsa-utils \ # aplety dźwięku i zasilania
+        gettext                                   # tłumaczenia (msgfmt)
 
 Opcjonalnie: `power-profiles-daemon` (profile zasilania), `xsecurelock`, `i3lock`
 albo `slock` (blokada ekranu). Na Rocky: `libXScrnSaver-devel pulseaudio-utils`.
@@ -485,6 +486,34 @@ Panel **Zasilanie** (logo → Panele sterowania) ustawia dla sesji LisaOS:
 - reakcję na 3% baterii; przy 10% pojawia się ostrzeżenie.
 
 ![Zasilanie i tryb projekcji](docs/img/zasilanie-projekcja.png)
+
+## Języki
+
+Interfejs jest po polsku (teksty w kodzie) i po angielsku (`po/en.po`). Język
+wybiera się w **Preferencjach** (logo → Preferencje…): *Automatycznie* bierze
+język systemu (`LANGUAGE`, `LC_ALL`, `LC_MESSAGES`, `LANG`); przy systemie w
+języku bez tłumaczenia albo `LANG=C` interfejs jest po angielsku. Wybór trafia
+do `~/.config/lisaos/jezyk` i działa po ponownym uruchomieniu albo
+**Narzędzia → Resetuj LISA**.
+
+Po angielsku menu nazywają się jak w Mac OS (*Window*, *Icons*, *Special*),
+liczby mają kropkę dziesiętną, a nowe foldery to `~/Applications/Games`… –
+istniejące `~/Aplikacje/Gry` zostają w użyciu, więc zmiana języka nie rozdziela
+zainstalowanych aplikacji.
+
+![LisaOS po angielsku](docs/img/jezyk-angielski.png)
+
+Nowy język albo poprawki:
+
+    tools/i18n/pot.py          # po/lisaos.pot z kodu + aktualizacja po/*.po
+    msginit -i po/lisaos.pot -l de -o po/de.po   # nowy język (albo kopia en.po)
+    cmake --build build        # msgfmt --check → build/locale/<język>/…
+
+W kodzie: `_("tekst")`, `N_("…")` w tablicach statycznych, `P_("Okno/Sortuj")`
+dla ścieżek menu (tłumaczony każdy człon), `trp(n, "1 element", "elementy",
+"elementów")` dla liczby mnogiej i `fmt(_("Usunąć „%1”?"), nazwa)` zamiast
+sklejania zdań. Katalogi `.mo` LisaOS czyta sam, więc nie potrzeba
+wygenerowanych locale systemu (`en_US.UTF-8`).
 
 ## Licencja
 

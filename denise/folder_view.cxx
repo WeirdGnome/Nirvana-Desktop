@@ -44,26 +44,17 @@ Icon icon_for(const std::string &name, bool dir) {
 }
 
 std::string kind_name(const Entry &e) {
-  if (e.dir) return "folder";
+  if (e.dir) return _("folder");
   switch (e.icon) {
-  case Icon::Application: return "aplikacja";
-  case Icon::Image: return "obraz";
-  case Icon::Music: return "dźwięk";
-  default: return "dokument";
+  case Icon::Application: return _("aplikacja");
+  case Icon::Image: return _("obraz");
+  case Icon::Music: return _("dźwięk");
+  default: return _("dokument");
   }
 }
 
 // "8 lis 2026, 21:40"
-static std::string polish_date(time_t t) {
-  static const char *mon[] = {"sty", "lut", "mar", "kwi", "maj", "cze",
-                              "lip", "sie", "wrz", "paź", "lis", "gru"};
-  struct tm tm;
-  localtime_r(&t, &tm);
-  char buf[64];
-  snprintf(buf, sizeof buf, "%d %s %d, %02d:%02d", tm.tm_mday, mon[tm.tm_mon], tm.tm_year + 1900,
-           tm.tm_hour, tm.tm_min);
-  return buf;
-}
+static std::string polish_date(time_t t) { return plat::date_time(t); }
 
 // "12 KB", "3,4 MB"
 static std::string human_size(uintmax_t b) {
@@ -75,8 +66,7 @@ static std::string human_size(uintmax_t b) {
   char buf[32];
   if (v < 10) snprintf(buf, sizeof buf, "%.1f %s", v, u[i]);
   else snprintf(buf, sizeof buf, "%.0f %s", v, u[i]);
-  for (char *p = buf; *p; p++) if (*p == '.') *p = ',';
-  return buf;
+  return plat::decimal(buf);
 }
 
 // ---------------------------------------------------------------------------
@@ -774,10 +764,9 @@ void FolderPane::update_info() {
   char buf[64] = "";
   if (statvfs(path_.c_str(), &st) == 0) {
     double gb = (double)st.f_bavail * st.f_frsize / 1e9;
-    snprintf(buf, sizeof buf, "%.1f GB wolne", gb);
-    for (char *p = buf; *p; p++) if (*p == '.') { *p = ','; break; }
+    snprintf(buf, sizeof buf, "%.1f GB", gb);
   }
-  info_ = polish_items(view_->count()) + (buf[0] ? std::string(", ") + buf : "");
+  info_ = polish_items(view_->count()) + (buf[0] ? ", " + plat::fmt(_("%1 wolne"), plat::decimal(buf)) : "");
 }
 
 // --- obserwacja zmian w folderze -------------------------------------------
@@ -893,10 +882,10 @@ void FolderPane::draw() {
         else fl_polygon(ax, ay + 2, ax + 6, ay + 2, ax + 3, ay - 2);
       }
     };
-    header(FolderView::ByName, x(), lc.date_x - x(), "Nazwa", false);
-    if (lc.date) header(FolderView::ByDate, lc.date_x, FolderView::COL_DATE, "Data modyfikacji", false);
-    if (lc.size) header(FolderView::BySize, lc.size_x, FolderView::COL_SIZE, "Rozmiar", true);
-    if (lc.kind) header(FolderView::ByKind, lc.kind_x, FolderView::COL_KIND, "Rodzaj", false);
+    header(FolderView::ByName, x(), lc.date_x - x(), _("Nazwa"), false);
+    if (lc.date) header(FolderView::ByDate, lc.date_x, FolderView::COL_DATE, _("Data modyfikacji"), false);
+    if (lc.size) header(FolderView::BySize, lc.size_x, FolderView::COL_SIZE, _("Rozmiar"), true);
+    if (lc.kind) header(FolderView::ByKind, lc.kind_x, FolderView::COL_KIND, _("Rodzaj"), false);
     for (int cx : {lc.date_x, lc.size_x, lc.kind_x}) {
       if (cx >= x() + w() - SCROLL_W) continue;
       fl_color(SHADOW); fl_yxline(cx, hy + 2, hy + HEADER_H - 3);

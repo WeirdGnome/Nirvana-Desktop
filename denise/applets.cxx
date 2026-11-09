@@ -301,7 +301,7 @@ public:
     out = in = Row{};
     const audio::State &s = g_audio;
     if (s.backend == audio::State::Brak) {
-      text_box(12, y, W - 24, "Dźwięk", true);
+      text_box(12, y, W - 24, _("Dźwięk"), true);
       y += 22;
       auto *b = text_box(12, y, W - 24, s.problem.c_str(), false, 36);
       b->align(FL_ALIGN_LEFT | FL_ALIGN_TOP | FL_ALIGN_INSIDE | FL_ALIGN_WRAP);
@@ -310,15 +310,15 @@ public:
       auto device_rows = [&](bool output, Row &row, int &y) {
         const audio::Device *d = output ? s.sink() : s.source();
         const auto &list = output ? s.sinks : s.sources;
-        text_box(12, y, 160, output ? "Głośność" : "Mikrofon", true);
+        text_box(12, y, 160, output ? _("Głośność") : _("Mikrofon"), true);
         if (!d) {
           y += 22;
-          text_box(12, y, W - 24, output ? "Brak wyjścia dźwięku." : "Brak mikrofonu.");
+          text_box(12, y, W - 24, output ? _("Brak wyjścia dźwięku.") : _("Brak mikrofonu."));
           y += 24;
           return;
         }
         std::string dev = d->name;
-        row.mute = check(W - 92, y - 1, 84, "Wycisz", d->mute, [output, dev](bool v) {
+        row.mute = check(W - 92, y - 1, 84, _("Wycisz"), d->mute, [output, dev](bool v) {
           audio::set_mute(g_audio, output, dev, v);
         });
         y += 22;
@@ -339,7 +339,7 @@ public:
         y += 26;
         // wybór urządzenia (i portu, gdy ma kilka: głośniki/słuchawki)
         if (s.backend == audio::State::Pulse && (list.size() > 1 || d->ports.size() > 1)) {
-          auto *ch = new GrabChoice(82, y, W - 94, 22, output ? "Wyjście:" : "Wejście:");
+          auto *ch = new GrabChoice(82, y, W - 94, 22, output ? _("Wyjście:") : _("Wejście:"));
           static std::vector<std::pair<std::string, std::string>> opts_out, opts_in;   // urządzenie, port
           auto &opts = output ? opts_out : opts_in;
           opts.clear();
@@ -383,7 +383,7 @@ public:
       if (!s.streams.empty()) {
         new Sep(8, y, W - 16);
         y += 10;
-        text_box(12, y, W - 24, "Aplikacje", true);
+        text_box(12, y, W - 24, _("Aplikacje"), true);
         y += 24;
         for (auto &t : s.streams) {
           if (streams.size() >= 8) break;
@@ -392,7 +392,7 @@ public:
           int idx = t.index;
           r.mute = new Fl_Check_Button(112, y, 20, 20);
           r.mute->value(!t.mute);   // zaznaczone = słychać
-          r.mute->tooltip("Słychać tę aplikację");
+          r.mute->tooltip(_("Słychać tę aplikację"));
           r.mute->callback([](Fl_Widget *w, void *i) {
             audio::set_stream_mute((int)(long)i, !((Fl_Check_Button *)w)->value());
           }, (void *)(long)idx);
@@ -502,7 +502,7 @@ public:
     pop->resizable(nullptr);
     pop->begin();
     int y = 8;
-    std::string head = g_power.percent >= 0 ? "Bateria: " + power::battery_text(g_power) : "Zasilanie sieciowe";
+    std::string head = g_power.percent >= 0 ? plat::fmt(_("Bateria: %1"), power::battery_text(g_power)) : std::string(_("Zasilanie sieciowe"));
     bat_label = text_box(12, y, W - 24, head.c_str(), true);
     y += 24;
     if (g_power.brightness >= 0) {
@@ -520,7 +520,7 @@ public:
       bright = nullptr;
     }
     if (!g_power.profiles.empty()) {
-      auto *ch = new GrabChoice(70, y, W - 82, 22, "Profil:");
+      auto *ch = new GrabChoice(70, y, W - 82, 22, _("Profil:"));
       int sel = 0;
       for (size_t i = 0; i < g_power.profiles.size(); i++) {
         ch->add(power::profile_name(g_power.profiles[i]));
@@ -535,14 +535,14 @@ public:
     }
     new Sep(8, y, W - 16);
     y += 10;
-    auto *pj = check(10, y, W - 20, "Tryb projekcji", power::projection(), [](bool on) {
+    auto *pj = check(10, y, W - 20, _("Tryb projekcji"), power::projection(), [](bool on) {
       power::set_projection(on);
       if (g_pow) g_pow->redraw();
     });
     pj->labelfont(FONT_SYSTEM);
     pj->labelsize(SIZE_SYSTEM);
     y += 22;
-    auto *hint = text_box(30, y, W - 40, "Ekran nie wygaśnie ani się nie zablokuje, a komputer nie uśnie.", false, 30);
+    auto *hint = text_box(30, y, W - 40, _("Ekran nie wygaśnie ani się nie zablokuje, a komputer nie uśnie."), false, 30);
     hint->labelsize(SIZE_SMALL);
     hint->align(FL_ALIGN_LEFT | FL_ALIGN_TOP | FL_ALIGN_INSIDE | FL_ALIGN_WRAP);
     y += 32;
@@ -551,24 +551,24 @@ public:
     struct Item { const char *label; long id; bool ok; };
     std::string lock = power::locker();
     Item items[] = {
-        {"Zablokuj ekran", 1, !lock.empty()},
-        {"Uśpij", 2, g_power.can_suspend},
-        {"Hibernuj", 3, g_power.can_hibernate},
+        {_("Zablokuj ekran"), 1, !lock.empty()},
+        {_("Uśpij"), 2, g_power.can_suspend},
+        {_("Hibernuj"), 3, g_power.can_hibernate},
     };
     for (auto &it : items) {
       if (it.id == 3 && !g_power.can_hibernate) continue;
       auto *r = new MenuRow(2, y, W - 4, it.label);
       r->callback(act, (void *)it.id);
       if (!it.ok) r->deactivate();
-      if (it.id == 1 && lock.empty()) r->tooltip("Zainstaluj program blokady: xsecurelock, i3lock albo slock.");
+      if (it.id == 1 && lock.empty()) r->tooltip(_("Zainstaluj program blokady: xsecurelock, i3lock albo slock."));
       y += 20;
     }
     new Sep(8, y, W - 16);
     y += 8;
     Item items2[] = {
-        {"Wyloguj…", 4, true},
-        {"Uruchom ponownie…", 5, g_power.can_reboot},
-        {"Wyłącz…", 6, g_power.can_poweroff},
+        {_("Wyloguj…"), 4, true},
+        {_("Uruchom ponownie…"), 5, g_power.can_reboot},
+        {_("Wyłącz…"), 6, g_power.can_poweroff},
     };
     for (auto &it : items2) {
       auto *r = new MenuRow(2, y, W - 4, it.label);
@@ -578,7 +578,7 @@ public:
     }
     new Sep(8, y, W - 16);
     y += 8;
-    auto *r = new MenuRow(2, y, W - 4, "Ustawienia zasilania…");
+    auto *r = new MenuRow(2, y, W - 4, _("Ustawienia zasilania…"));
     r->callback(act, (void *)7L);
     y += 22;
     pop->end();
@@ -605,7 +605,7 @@ public:
     redraw();
     if (!pop || !pop->shown()) return;
     if (bat_label) {
-      std::string head = g_power.percent >= 0 ? "Bateria: " + power::battery_text(g_power) : "Zasilanie sieciowe";
+      std::string head = g_power.percent >= 0 ? plat::fmt(_("Bateria: %1"), power::battery_text(g_power)) : std::string(_("Zasilanie sieciowe"));
       bat_label->copy_label(head.c_str());
       bat_label->redraw();
     }
@@ -614,11 +614,11 @@ public:
 };
 
 static void confirm(const char *title, const char *text, const char *yes, std::function<void()> f) {
-  if (g_host.dialog) g_host.dialog(title, text, {{"Anuluj", nullptr}, {yes, f}});
+  if (g_host.dialog) g_host.dialog(_(title), _(text), {{_("Anuluj"), nullptr}, {_(yes), f}});
   else f();
 }
 static void report(const std::string &err) {
-  if (!err.empty() && g_host.dialog) g_host.dialog("Zasilanie", err, {{"OK", nullptr}});
+  if (!err.empty() && g_host.dialog) g_host.dialog(_("Zasilanie"), err, {{"OK", nullptr}});
 }
 
 void PowerApplet::act(Fl_Widget *, void *d) {
@@ -627,27 +627,27 @@ void PowerApplet::act(Fl_Widget *, void *d) {
   switch (id) {
     case 1: power::lock_screen(); break;
     case 2:
-      if (power::projection()) { report("Tryb projekcji jest włączony - wyłącz go, żeby uśpić komputer."); break; }
+      if (power::projection()) { report(_("Tryb projekcji jest włączony - wyłącz go, żeby uśpić komputer.")); break; }
       if (g_host.lisaos_session) power::lock_screen();   // po wybudzeniu ekran jest zablokowany
       report(power::suspend());
       break;
     case 3:
-      if (power::projection()) { report("Tryb projekcji jest włączony - wyłącz go, żeby hibernować komputer."); break; }
+      if (power::projection()) { report(_("Tryb projekcji jest włączony - wyłącz go, żeby hibernować komputer.")); break; }
       report(power::hibernate());
       break;
     case 4:
-      confirm("Wyloguj", "Zakończyć sesję? Otwarte programy zostaną zamknięte.", "Wyloguj", [] {
+      confirm(N_("Wyloguj"), N_("Zakończyć sesję? Otwarte programy zostaną zamknięte."), N_("Wyloguj"), [] {
         if (g_host.logout) g_host.logout();
       });
       break;
     case 5:
-      confirm("Uruchom ponownie", "Uruchomić komputer ponownie?", "Uruchom", [] {
+      confirm(N_("Uruchom ponownie"), N_("Uruchomić komputer ponownie?"), N_("Uruchom ponownie"), [] {
         if (g_host.before_shutdown) g_host.before_shutdown();
         report(power::reboot());
       });
       break;
     case 6:
-      confirm("Wyłącz", "Wyłączyć komputer?", "Wyłącz", [] {
+      confirm(N_("Wyłącz"), N_("Wyłączyć komputer?"), N_("Wyłącz"), [] {
         if (g_host.before_shutdown) g_host.before_shutdown();
         report(power::poweroff());
       });
@@ -750,8 +750,7 @@ static void power_tick(void *) {
   if (g_power.percent >= 0 && !g_power.on_ac) {
     if (g_power.percent <= 10 && !g_warned_low && g_host.dialog) {
       g_warned_low = true;
-      g_host.dialog("Bateria", "Bateria jest prawie wyczerpana (" + std::to_string(g_power.percent) +
-                                   "%). Podłącz zasilacz.", {{"OK", nullptr}});
+      g_host.dialog(_("Bateria"), plat::fmt(_("Bateria jest prawie wyczerpana (%1%). Podłącz zasilacz."), std::to_string(g_power.percent)), {{"OK", nullptr}});
     }
     if (g_power.percent <= 3 && !g_critical_done && g_idle.critical_action && g_host.lisaos_session) {
       g_critical_done = true;

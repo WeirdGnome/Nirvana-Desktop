@@ -40,14 +40,14 @@ const char *const PATTERNS[] = {"gladki", "kropki", "groszki", "krata", "kratka"
                                 "ukosne", "paski_poziome", "paski_pionowe", "cegly", "raster", "romby",
                                 "krzyzyki", "zygzak", "jodelka", "tkanina", "fale", "luski", "gwiazdki",
                                 "piasek", nullptr};
-const char *const PATTERN_NAMES[] = {"Gładki", "Kropki", "Groszki", "Krata", "Drobna kratka", "Szachownica",
-                                     "Ukośne prążki", "Paski poziome", "Paski pionowe", "Cegiełki",
-                                     "Raster (Amiga)", "Romby", "Krzyżyki", "Zygzak", "Jodełka", "Tkanina",
-                                     "Fale", "Łuski", "Gwiazdki", "Piasek", nullptr};
+const char *const PATTERN_NAMES[] = {N_("Gładki"), N_("Kropki"), N_("Groszki"), N_("Krata"), N_("Drobna kratka"), N_("Szachownica"),
+                                     N_("Ukośne prążki"), N_("Paski poziome"), N_("Paski pionowe"), N_("Cegiełki"),
+                                     N_("Raster (Amiga)"), N_("Romby"), N_("Krzyżyki"), N_("Zygzak"), N_("Jodełka"), N_("Tkanina"),
+                                     N_("Fale"), N_("Łuski"), N_("Gwiazdki"), N_("Piasek"), nullptr};
 const char *const BACKGROUNDS[] = {"wzor", "kolor", "gradient", nullptr};
-const char *const BACKGROUND_NAMES[] = {"Wzór", "Jednolity kolor", "Gradient", nullptr};
+const char *const BACKGROUND_NAMES[] = {N_("Wzór"), N_("Jednolity kolor"), N_("Gradient"), nullptr};
 const char *const GRADIENTS[] = {"pionowy", "poziomy", "ukosny", "promienisty", nullptr};
-const char *const GRADIENT_NAMES[] = {"Pionowy", "Poziomy", "Ukośny", "Promienisty", nullptr};
+const char *const GRADIENT_NAMES[] = {N_("Pionowy"), N_("Poziomy"), N_("Ukośny"), N_("Promienisty"), nullptr};
 
 static Scheme g_scheme;
 static Appearance g_app;
@@ -121,6 +121,9 @@ std::vector<std::string> scheme_dirs() {
   for (auto &x : d) if (is_dir(x)) out.push_back(x);
   return out;
 }
+
+// nazwy schematów z plików w schematy/ - do tłumaczenia (panel Wygląd woła _(nazwa))
+[[maybe_unused]] static const char *const SCHEME_NAMES[] = {N_("Grafit")};
 
 Scheme builtin_platinum() {
   Scheme s;

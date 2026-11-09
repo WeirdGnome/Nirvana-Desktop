@@ -130,6 +130,7 @@ static void track_box(int x, int y, int w, int h, Fl_Color) {
 }
 
 void init(bool root) {
+  init_i18n();   // przed pierwszym tekstem interfejsu
   g_root = root;
   Fl::scheme("none");
   reload_appearance();   // schemat kolorów z ~/.config/lisaos/wyglad.conf
@@ -158,11 +159,11 @@ void init(bool root) {
     FONT_SYSTEM = FL_FREE_FONT;
   }
   // przyciski okien dialogowych FLTK (fl_alert, wybór koloru...) po polsku
-  fl_ok = "OK";
-  fl_cancel = "Anuluj";
-  fl_yes = "Tak";
-  fl_no = "Nie";
-  fl_close = "Zamknij";
+  fl_ok = _("OK");
+  fl_cancel = _("Anuluj");
+  fl_yes = _("Tak");
+  fl_no = _("Nie");
+  fl_close = _("Zamknij");
   // podpowiedzi (dok, aplety, gary): dymek pomocy jak w Mac OS
   Fl_Tooltip::font(FONT_SMALL);
   Fl_Tooltip::size(SIZE_SMALL + 1);
@@ -693,32 +694,27 @@ std::string ellipsize(const std::string &s, int max_w) {
 }
 
 std::string polish_items(int n) {
-  const char *word;
-  int d = n % 10, dd = n % 100;
-  if (n == 1) word = "element";
-  else if (d >= 2 && d <= 4 && !(dd >= 12 && dd <= 14)) word = "elementy";
-  else word = "elementów";
-  return std::to_string(n) + " " + word;
+  return fmt(trp(n, "%1 element", "%1 elementy", "%1 elementów"), std::to_string(n));
 }
 
 // Okno wyboru pliku FLTK po polsku (Sieć: import VPN, Wygląd: tapeta).
 void polish_file_chooser() {
-  fl_cancel = "Anuluj";
-  fl_ok = "Wybierz";
-  Fl_File_Chooser::add_favorites_label = "Dodaj do ulubionych";
-  Fl_File_Chooser::all_files_label = "Wszystkie pliki (*)";
-  Fl_File_Chooser::custom_filter_label = "Własny filtr";
-  Fl_File_Chooser::existing_file_label = "Plik już istnieje. Zastąpić go?";
-  Fl_File_Chooser::favorites_label = "Ulubione";
-  Fl_File_Chooser::filename_label = "Plik:";
-  Fl_File_Chooser::filesystems_label = "Dyski";
-  Fl_File_Chooser::hidden_label = "Ukryte pliki";
-  Fl_File_Chooser::manage_favorites_label = "Zarządzaj ulubionymi";
-  Fl_File_Chooser::new_directory_label = "Nazwa nowego folderu:";
-  Fl_File_Chooser::new_directory_tooltip = "Nowy folder";
-  Fl_File_Chooser::preview_label = "Podgląd";
-  Fl_File_Chooser::save_label = "Zapisz";
-  Fl_File_Chooser::show_label = "Pokaż:";
+  fl_cancel = _("Anuluj");
+  fl_ok = _("Wybierz");
+  Fl_File_Chooser::add_favorites_label = _("Dodaj do ulubionych");
+  Fl_File_Chooser::all_files_label = _("Wszystkie pliki (*)");
+  Fl_File_Chooser::custom_filter_label = _("Własny filtr");
+  Fl_File_Chooser::existing_file_label = _("Plik już istnieje. Zastąpić go?");
+  Fl_File_Chooser::favorites_label = _("Ulubione");
+  Fl_File_Chooser::filename_label = _("Plik:");
+  Fl_File_Chooser::filesystems_label = _("Dyski");
+  Fl_File_Chooser::hidden_label = _("Ukryte pliki");
+  Fl_File_Chooser::manage_favorites_label = _("Zarządzaj ulubionymi");
+  Fl_File_Chooser::new_directory_label = _("Nazwa nowego folderu:");
+  Fl_File_Chooser::new_directory_tooltip = _("Nowy folder");
+  Fl_File_Chooser::preview_label = _("Podgląd");
+  Fl_File_Chooser::save_label = _("Zapisz");
+  Fl_File_Chooser::show_label = _("Pokaż:");
 }
 
 } // namespace plat

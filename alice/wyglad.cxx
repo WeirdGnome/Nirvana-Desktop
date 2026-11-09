@@ -87,7 +87,7 @@ public:
     fl_color(TEXT);
     fl_draw("Lisa", x() + 27, y() + 14);
     int mx = x() + 34 + (int)fl_width("Lisa");
-    const char *menus[] = {"Okno", "Ikony", "Narzędzia"};
+    const char *menus[] = {_("Okno"), _("Ikony"), _("Narzędzia")};
     for (int i = 0; i < 3; i++) {
       int mw = (int)fl_width(menus[i]) + 14;
       if (i == 1) { fl_color(SEL); fl_rectf(mx, y(), mw, MENUBAR_H - 1); }
@@ -98,7 +98,7 @@ public:
 
     // okno w tle (nieaktywne)
     int bx = x() + 14, by = y() + 34, bw = 170, bh = 104;
-    draw_window(bx, by, bw, bh, "Dokumenty", false);
+    draw_window(bx, by, bw, bh, _("Dokumenty"), false);
     // okno na wierzchu (aktywne)
     int fx = x() + 104, fy = y() + 70, fw = w() - 118, fh = h() - 82;
     draw_window(fx, fy, fw, fh, "LisaOS HD", true);
@@ -132,7 +132,7 @@ private:
     fl_color(SHADOW); fl_xyline(cx, cy + INFO - 1, cx + cw - 1);
     fl_font(FONT_SMALL, 10);
     fl_color(TEXT);
-    fl_draw(active ? "3 elementy, 12,4 GB wolne" : "2 elementy", cx, cy, cw, INFO - 1, FL_ALIGN_CENTER);
+    fl_draw(active ? _("3 elementy, 12,4 GB wolne") : _("2 elementy"), cx, cy, cw, INFO - 1, FL_ALIGN_CENTER);
     // treść
     int ty = cy + INFO, th = ch - INFO;
     fl_color(CONTENT); fl_rectf(cx, ty, cw - SCROLL_W, th);
@@ -141,14 +141,14 @@ private:
       fl_draw_box(THUMB_BOX, cx + cw - SCROLL_W, ty + 8, SCROLL_W, th / 2, HILITE);
       fl_push_clip(cx, ty, cw - SCROLL_W, th);
       fl_font(FONT_SMALL, SIZE_SMALL);
-      label_icon(Icon::Folder, cx + 34, ty + 8, "Muzyka", false);
-      label_icon(Icon::Document, cx + 98, ty + 8, "List.txt", true);
-      label_icon(Icon::Application, cx + 162, ty + 8, "Gra", false);
+      label_icon(Icon::Folder, cx + 34, ty + 8, _("Muzyka"), false);
+      label_icon(Icon::Document, cx + 98, ty + 8, _("List.txt"), true);
+      label_icon(Icon::Application, cx + 162, ty + 8, _("Gra"), false);
       fl_pop_clip();
     } else {
       fl_push_clip(cx, ty, cw - SCROLL_W, th);
       fl_font(FONT_SMALL, SIZE_SMALL);
-      label_icon(Icon::Folder, cx + 34, ty + 8, "Zdjęcia", false);
+      label_icon(Icon::Folder, cx + 34, ty + 8, _("Zdjęcia"), false);
       fl_pop_clip();
     }
   }
@@ -175,7 +175,7 @@ static void preview() {
   if (g_scheme >= 0 && g_scheme < (int)g_schemes.size()) apply(g_schemes[g_scheme], g_cur);
   const Scheme &s = g_schemes[g_scheme];
   static std::string src;
-  src = "Źródło: " + (s.source.empty() ? std::string("własny") : s.source);
+  src = fmt(_("Źródło: %1"), s.source.empty() ? std::string(_("własny")) : s.source);
   if (s.source.find("Redmond97") != std::string::npos) src += " (GPL-3.0)";
   g_source->label(src.c_str());
   g_desk_default->deactivate();
@@ -201,7 +201,7 @@ static void fill_list() {
       group = gname;
       g_list->add(("@b@." + gname).c_str(), (void *)(long)-1);
     }
-    g_list->add(("   " + s.name).c_str(), (void *)(long)i);
+    g_list->add(("   " + std::string(_(s.name.c_str()))).c_str(), (void *)(long)i);
     if (s.id == g_cur.scheme) { g_scheme = i; g_list->value(g_list->size()); }
   }
 }
@@ -229,10 +229,10 @@ int panel_wyglad() {
   g_schemes = list_schemes();
 
   const int W = 600, H = 530;
-  g_win = new FrameWindow(W, H, "Wygląd");
+  g_win = new FrameWindow(W, H, _("Wygląd"));
   g_win->xclass("lisaos-alice");
 
-  auto *t1 = new Fl_Box(15, 8, 220, 20, "Schemat kolorów");
+  auto *t1 = new Fl_Box(15, 8, 220, 20, _("Schemat kolorów"));
   t1->labelfont(FONT_SYSTEM); t1->labelsize(SIZE_SYSTEM);
   t1->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
   g_list = new Fl_Hold_Browser(15, 30, 220, 432);
@@ -245,69 +245,69 @@ int panel_wyglad() {
   g_source->labelsize(10);
   g_source->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
 
-  auto *t2 = new Fl_Box(250, 8, 220, 20, "Podgląd");
+  auto *t2 = new Fl_Box(250, 8, 220, 20, _("Podgląd"));
   t2->labelfont(FONT_SYSTEM); t2->labelsize(SIZE_SYSTEM);
   t2->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
   auto *pw = new Fl_Box(250, 30, 335, 215);
   pw->box(WELL_BOX);
   new Preview(252, 32, 331, 211);
 
-  g_style = new Fl_Choice(400, 256, 185, 22, "Pasek tytułu:");
-  g_style->add("Jak w schemacie|Prążki (Platinum)|Jednolity kolor|Gradient");
+  g_style = new Fl_Choice(400, 256, 185, 22, _("Pasek tytułu:"));
+  g_style->add(_("Jak w schemacie|Prążki (Platinum)|Jednolity kolor|Gradient"));
   g_style->value(g_cur.style + 1);
   g_style->callback([](Fl_Widget *, void *) { g_cur.style = g_style->value() - 1; preview(); });
 
-  g_bg = new Fl_Choice(400, 284, 185, 22, "Tło biurka:");
+  g_bg = new Fl_Choice(400, 284, 185, 22, _("Tło biurka:"));
   for (int i = 0; BACKGROUNDS[i]; i++) {
-    g_bg->add(BACKGROUND_NAMES[i]);
+    g_bg->add(_(BACKGROUND_NAMES[i]));
     if (g_cur.background == BACKGROUNDS[i]) g_bg->value(i);
   }
   g_bg->callback([](Fl_Widget *, void *) { g_cur.background = BACKGROUNDS[g_bg->value()]; preview(); });
 
   auto *desk = new Swatch(400, 312, 40, 24);
-  desk->label("Kolory:");
+  desk->label(_("Kolory:"));
   desk->align(FL_ALIGN_LEFT);
-  desk->tooltip("Kolor biurka (początek gradientu)");
+  desk->tooltip(_("Kolor biurka (początek gradientu)"));
   desk->callback([](Fl_Widget *, void *) {
     uchar r, g, b;
     Fl::get_color(DESK_A, r, g, b);
-    if (fl_color_chooser("Kolor biurka", r, g, b, 1)) {
+    if (fl_color_chooser(_("Kolor biurka"), r, g, b, 1)) {
       g_cur.desk = (r << 16) | (g << 8) | b;
       preview();
     }
   });
   auto *desk2 = new Swatch(443, 312, 40, 24);
   desk2->second = true;
-  desk2->tooltip("Drugi kolor gradientu");
+  desk2->tooltip(_("Drugi kolor gradientu"));
   g_desk2 = desk2;
   desk2->callback([](Fl_Widget *, void *) {
     unsigned c = gradient_second(g_cur);
     uchar r = c >> 16, g = c >> 8 & 255, b = c & 255;
-    if (fl_color_chooser("Drugi kolor gradientu", r, g, b, 1)) {
+    if (fl_color_chooser(_("Drugi kolor gradientu"), r, g, b, 1)) {
       g_cur.desk2 = (r << 16) | (g << 8) | b;
       preview();
     }
   });
-  g_desk_default = new Fl_Button(488, 312, 97, 24, "Ze schematu");
+  g_desk_default = new Fl_Button(488, 312, 97, 24, _("Ze schematu"));
   g_desk_default->labelsize(SIZE_SMALL + 1);
   g_desk_default->box(BUTTON_BOX); g_desk_default->down_box(BUTTON_DOWN);
   g_desk_default->callback([](Fl_Widget *, void *) { g_cur.desk = g_cur.desk2 = -1; preview(); });
 
-  g_pattern = new Fl_Choice(400, 342, 185, 22, "Wzór biurka:");
+  g_pattern = new Fl_Choice(400, 342, 185, 22, _("Wzór biurka:"));
   for (int i = 0; PATTERNS[i]; i++) {
-    g_pattern->add(PATTERN_NAMES[i]);
+    g_pattern->add(_(PATTERN_NAMES[i]));
     if (g_cur.pattern == PATTERNS[i]) g_pattern->value(i);
   }
   g_pattern->callback([](Fl_Widget *, void *) { g_cur.pattern = PATTERNS[g_pattern->value()]; preview(); });
-  g_grad = new Fl_Choice(400, 342, 185, 22, "Kierunek:");
+  g_grad = new Fl_Choice(400, 342, 185, 22, _("Kierunek:"));
   for (int i = 0; GRADIENTS[i]; i++) {
-    g_grad->add(GRADIENT_NAMES[i]);
+    g_grad->add(_(GRADIENT_NAMES[i]));
     if (g_cur.gradient == GRADIENTS[i]) g_grad->value(i);
   }
   g_grad->callback([](Fl_Widget *, void *) { g_cur.gradient = GRADIENTS[g_grad->value()]; preview(); });
 
   // tapeta: gotowe obrazy (LisaOS, systemowe, ~/Obrazy) albo dowolny plik
-  g_wall = new Fl_Choice(400, 370, 185, 22, "Tapeta:");
+  g_wall = new Fl_Choice(400, 370, 185, 22, _("Tapeta:"));
   g_walls.clear();
   g_walls.push_back("");
   for (auto &p : wallpaper_candidates()) g_walls.push_back(p);
@@ -320,8 +320,8 @@ int panel_wyglad() {
     g_wall->replace(i, label.c_str());
   };
   for (size_t i = 0; i < g_walls.size(); i++) {
-    if (i == 0) add_item("Brak (sam wzór)");
-    else if (g_walls[i] == "*") add_item("Inny plik…");
+    if (i == 0) add_item(_("Brak (sam wzór)"));
+    else if (g_walls[i] == "*") add_item(_("Inny plik…"));
     else add_item(wallpaper_title(g_walls[i]));
     if (g_walls[i] == g_cur.wallpaper) g_wall->value((int)i);
   }
@@ -334,7 +334,7 @@ int panel_wyglad() {
       const char *h = getenv("HOME");
       std::string start = std::string(h ? h : "/") + "/Obrazy/";
       polish_file_chooser();
-      const char *f = fl_file_chooser("Wybierz tapetę", "Obrazy (*.{png,jpg,jpeg,gif,bmp,svg,svgz,xpm})",
+      const char *f = fl_file_chooser(_("Wybierz tapetę"), _("Obrazy (*.{png,jpg,jpeg,gif,bmp,svg,svgz,xpm})"),
                                       start.c_str(), 0);
       if (!f) {   // anulowano - wracamy do poprzedniej pozycji
         auto it = std::find(g_walls.begin(), g_walls.end(), g_cur.wallpaper);
@@ -342,8 +342,8 @@ int panel_wyglad() {
         return;
       }
       if (!image_loadable(f)) {
-        fl_message_title("Tapeta");
-        fl_alert("Nie udało się otworzyć tego obrazu.\nPlik może być uszkodzony albo w nieobsługiwanym formacie.");
+        fl_message_title(_("Tapeta"));
+        fl_alert("%s", _("Nie udało się otworzyć tego obrazu.\nPlik może być uszkodzony albo w nieobsługiwanym formacie."));
         auto it = std::find(g_walls.begin(), g_walls.end(), g_cur.wallpaper);
         g_wall->value(it == g_walls.end() ? 0 : (int)(it - g_walls.begin()));
         return;
@@ -363,9 +363,9 @@ int panel_wyglad() {
     }
     preview();
   });
-  g_wall_mode = new Fl_Choice(400, 398, 185, 22, "Układ tapety:");
+  g_wall_mode = new Fl_Choice(400, 398, 185, 22, _("Układ tapety:"));
   for (int i = 0; WALLPAPER_MODES[i]; i++) {
-    g_wall_mode->add(WALLPAPER_MODE_NAMES[i]);
+    g_wall_mode->add(_(WALLPAPER_MODE_NAMES[i]));
     if (g_cur.wallpaper_mode == WALLPAPER_MODES[i]) g_wall_mode->value(i);
   }
   g_wall_mode->callback([](Fl_Widget *, void *) {
@@ -373,15 +373,15 @@ int panel_wyglad() {
     preview();
   });
 
-  g_icons = new Fl_Choice(400, 428, 185, 22, "Styl ikon:");
-  g_icons->add("Workbench (Amiga)|Platinum (Mac OS)");
+  g_icons = new Fl_Choice(400, 428, 185, 22, _("Styl ikon:"));
+  g_icons->add(_("Workbench (Amiga)|Platinum (Mac OS)"));
   g_icons->value(g_cur.icons == "platinum" ? 1 : 0);
   g_icons->callback([](Fl_Widget *, void *) {
     g_cur.icons = g_icons->value() == 1 ? "platinum" : "workbench";
     preview();
   });
 
-  g_anim = new Fl_Check_Button(396, 456, 190, 22, "Animacje okien");
+  g_anim = new Fl_Check_Button(396, 456, 190, 22, _("Animacje okien"));
   g_anim->value(g_cur.animations);
   g_anim->callback([](Fl_Widget *, void *) { g_cur.animations = g_anim->value(); });
 
@@ -390,9 +390,9 @@ int panel_wyglad() {
     b->box(BUTTON_BOX); b->down_box(BUTTON_DOWN);
     return b;
   };
-  button(311, "Anuluj")->callback([](Fl_Widget *, void *) { g_win->hide(); });
-  button(405, "Zastosuj")->callback([](Fl_Widget *, void *) { save(); });
-  auto *ok = button(499, "OK");
+  button(311, _("Anuluj"))->callback([](Fl_Widget *, void *) { g_win->hide(); });
+  button(405, _("Zastosuj"))->callback([](Fl_Widget *, void *) { save(); });
+  auto *ok = button(499, _("OK"));
   ok->shortcut(FL_Enter);
   ok->callback([](Fl_Widget *, void *) { save(); g_win->hide(); });
 

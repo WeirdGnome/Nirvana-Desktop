@@ -1,5 +1,6 @@
 // LisaOS - dźwięk: implementacja (pactl / amixer)
 #include "audio.h"
+#include "i18n.h"
 
 #include <FL/Fl.H>
 
@@ -195,7 +196,7 @@ static bool alsa_control(const char *ctl, Device &d) {
   }
   if (!n) return false;
   d.name = ctl;
-  d.desc = !strcmp(ctl, "Master") ? "Karta dźwiękowa (ALSA)" : "Mikrofon (ALSA)";
+  d.desc = !strcmp(ctl, "Master") ? _("Karta dźwiękowa (ALSA)") : _("Mikrofon (ALSA)");
   d.volume = (sum + n / 2) / n;
   d.mute = has_switch && !any_on;
   d.index = 0;
@@ -250,8 +251,8 @@ State query() {
       return st;
     }
   }
-  st.problem = have("pactl") ? "Serwer dźwięku (PulseAudio/PipeWire) nie działa."
-                             : "Brak pactl (pulseaudio-utils) i amixer (alsa-utils).";
+  st.problem = have("pactl") ? _("Serwer dźwięku (PulseAudio/PipeWire) nie działa.")
+                             : _("Brak pactl (pulseaudio-utils) i amixer (alsa-utils).");
   return st;
 }
 

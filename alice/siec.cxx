@@ -156,7 +156,7 @@ protected:
     fl_font(FONT_SMALL, SIZE_SMALL);
     fl_color(dim);
     fl_draw(net::vpn_kind_name(kind), X + 22, Y + 29);
-    const char *state = st == 'A' ? "połączono" : st == 'C' ? "łączenie…" : "";
+    const char *state = st == 'A' ? _("połączono") : st == 'C' ? _("łączenie…") : "";
     fl_color(st == 'A' ? fg : dim);
     fl_draw(state, X + W - 8 - (int)fl_width(state), Y + 15);
   }
@@ -191,14 +191,14 @@ struct WifiAnswer { std::string ssid, security, password; };
 // Hasło do sieci; hidden=true dodaje pola nazwy i rodzaju zabezpieczeń.
 bool ask_wifi(bool hidden, const std::string &ssid, const std::string &err, WifiAnswer &out) {
   int W = 420, H = hidden ? 250 : 180;
-  auto *w = new FrameWindow(W, H, hidden ? "Inna sieć Wi-Fi" : "Sieć Wi-Fi", true);
+  auto *w = new FrameWindow(W, H, hidden ? _("Inna sieć Wi-Fi") : _("Sieć Wi-Fi"), true);
   struct Pic : Fl_Widget {
     Pic(int X, int Y) : Fl_Widget(X, Y, 34, 34) {}
     void draw() override { draw_icon(Icon::Wifi, x(), y(), false); }
   };
   new Pic(16, 16);
-  std::string text = hidden ? std::string("Połącz z siecią, która nie rozgłasza nazwy.")
-                            : "Sieć „" + ssid + "” jest zabezpieczona.\nPodaj hasło, aby się połączyć.";
+  std::string text = hidden ? std::string(_("Połącz z siecią, która nie rozgłasza nazwy."))
+                            : fmt(_("Sieć „%1” jest zabezpieczona.\nPodaj hasło, aby się połączyć."), ssid);
   auto *t = new Fl_Box(64, 12, W - 80, 36);
   t->copy_label(text.c_str());
   t->labelfont(FONT_SYSTEM);
@@ -217,19 +217,19 @@ bool ask_wifi(bool hidden, const std::string &ssid, const std::string &err, Wifi
   Fl_Input *name = nullptr;
   Fl_Choice *sec = nullptr;
   if (hidden) {
-    name = new Fl_Input(170, y, W - 186, 24, "Nazwa sieci:");
+    name = new Fl_Input(170, y, W - 186, 24, _("Nazwa sieci:"));
     name->box(WELL_BOX);
     name->value(ssid.c_str());
     y += 32;
-    sec = new Fl_Choice(170, y, W - 186, 24, "Zabezpieczenia:");
-    sec->add("WPA\\/WPA2 Personal|WPA3 Personal|Brak");
+    sec = new Fl_Choice(170, y, W - 186, 24, _("Zabezpieczenia:"));
+    sec->add(_("WPA\\/WPA2 Personal|WPA3 Personal|Brak"));
     sec->value(0);
     y += 32;
   }
-  auto *pass = new Fl_Secret_Input(170, y, W - 186, 24, "Hasło:");
+  auto *pass = new Fl_Secret_Input(170, y, W - 186, 24, _("Hasło:"));
   pass->box(WELL_BOX);
   y += 28;
-  auto *show = new Fl_Check_Button(166, y, 160, 20, "Pokaż hasło");
+  auto *show = new Fl_Check_Button(166, y, 160, 20, _("Pokaż hasło"));
   show->labelsize(SIZE_SMALL);
   show->callback([](Fl_Widget *b, void *p) {
     auto *in = (Fl_Input *)p;
@@ -241,8 +241,8 @@ bool ask_wifi(bool hidden, const std::string &ssid, const std::string &err, Wifi
       auto *in = (Fl_Input *)p;
       if (((Fl_Choice *)c)->value() == 2) in->deactivate(); else in->activate();
     }, pass);
-  auto *cancel = button(W - 196, H - 38, 86, "Anuluj");
-  auto *ok = button(W - 102, H - 38, 86, "Połącz");
+  auto *cancel = button(W - 196, H - 38, 86, _("Anuluj"));
+  auto *ok = button(W - 102, H - 38, 86, _("Połącz"));
   ok->labelfont(FONT_SYSTEM);
   w->end();
   w->finish();
@@ -271,26 +271,26 @@ net::Done report(const std::string &what) {
 
 void connect_network(const net::Network &n, const std::string &err) {
   if (n.enterprise()) {
-    message("Sieci firmowe (802.1X) nie są jeszcze obsługiwane - użyj nmtui.", true);
+    message(_("Sieci firmowe (802.1X) nie są jeszcze obsługiwane - użyj nmtui."), true);
     return;
   }
   auto done = [n](bool ok, const std::string &m) {
-    if (!ok && (m == net::NEED_PASSWORD || m == "Nieprawidłowe hasło." ||
-                m == "Nie udało się połączyć. Sprawdź hasło.")) {
+    if (!ok && (m == net::NEED_PASSWORD || m == _("Nieprawidłowe hasło.") ||
+                m == _("Nie udało się połączyć. Sprawdź hasło."))) {
       connect_network(n, m == net::NEED_PASSWORD ? "" : m);
       return;
     }
-    message(ok ? "Połączono z siecią „" + n.ssid + "”." : m, !ok);
+    message(ok ? fmt(_("Połączono z siecią „%1”."), n.ssid) : m, !ok);
     refresh();
   };
   if (err.empty() && (!n.secured() || n.known)) {
-    message("Łączenie z „" + n.ssid + "”…");
+    message(fmt(_("Łączenie z „%1”…"), n.ssid));
     net::connect_wifi(n.ssid, n.security, "", false, done);
     return;
   }
   WifiAnswer a;
   if (!ask_wifi(false, n.ssid, err, a)) return;
-  message("Łączenie z „" + n.ssid + "”…");
+  message(fmt(_("Łączenie z „%1”…"), n.ssid));
   net::connect_wifi(n.ssid, n.security, a.password, false, done);
   std::fill(a.password.begin(), a.password.end(), '\0');
 }
@@ -298,10 +298,10 @@ void connect_network(const net::Network &n, const std::string &err) {
 void connect_hidden() {
   WifiAnswer a;
   if (!ask_wifi(true, "", "", a)) return;
-  message("Łączenie z „" + a.ssid + "”…");
+  message(fmt(_("Łączenie z „%1”…"), a.ssid));
   std::string ssid = a.ssid;
   net::connect_wifi(a.ssid, a.security, a.password, true, [ssid](bool ok, const std::string &m) {
-    message(ok ? "Połączono z siecią „" + ssid + "”." : m, !ok);
+    message(ok ? fmt(_("Połączono z siecią „%1”."), ssid) : m, !ok);
     refresh();
   });
   std::fill(a.password.begin(), a.password.end(), '\0');
@@ -311,18 +311,18 @@ void ipv4_dialog() {
   if (g_conn.empty()) return;
   net::Details d = net::details(g_iface);
   int W = 400, H = 220;
-  auto *w = new FrameWindow(W, H, "Ustawienia IPv4", true);
-  std::string head = "Połączenie „" + g_conn + "”";
+  auto *w = new FrameWindow(W, H, _("Ustawienia IPv4"), true);
+  std::string head = fmt(_("Połączenie „%1”"), g_conn);
   auto *t = new Fl_Box(16, 10, W - 32, 22);
   t->copy_label(head.c_str());
   t->labelfont(FONT_SYSTEM);
   t->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
-  auto *how = new Fl_Choice(150, 40, W - 166, 24, "Konfiguracja:");
-  how->add("Automatycznie (DHCP)|Ręcznie");
+  auto *how = new Fl_Choice(150, 40, W - 166, 24, _("Konfiguracja:"));
+  how->add(_("Automatycznie (DHCP)|Ręcznie"));
   how->value(d.method == "manual" ? 1 : 0);
-  auto *addr = new Fl_Input(150, 72, W - 166, 24, "Adres/prefiks:");
-  auto *gw = new Fl_Input(150, 102, W - 166, 24, "Brama:");
-  auto *dns = new Fl_Input(150, 132, W - 166, 24, "Serwery DNS:");
+  auto *addr = new Fl_Input(150, 72, W - 166, 24, _("Adres/prefiks:"));
+  auto *gw = new Fl_Input(150, 102, W - 166, 24, _("Brama:"));
+  auto *dns = new Fl_Input(150, 132, W - 166, 24, _("Serwery DNS:"));
   std::string a0 = d.ip4.substr(0, d.ip4.find(','));
   addr->value(a0.c_str());
   gw->value(d.gateway.c_str());
@@ -338,8 +338,8 @@ void ipv4_dialog() {
   ins[0] = addr; ins[1] = gw; ins[2] = dns;
   how->callback(sync, ins);
   sync(how, ins);
-  auto *cancel = button(W - 196, H - 38, 86, "Anuluj");
-  auto *ok = button(W - 102, H - 38, 86, "Zapisz");
+  auto *cancel = button(W - 196, H - 38, 86, _("Anuluj"));
+  auto *ok = button(W - 102, H - 38, 86, _("Zapisz"));
   ok->labelfont(FONT_SYSTEM);
   w->end();
   w->finish();
@@ -347,10 +347,10 @@ void ipv4_dialog() {
     bool manual = how->value() == 1;
     std::string dn = dns->value();
     std::replace(dn.begin(), dn.end(), ' ', ',');
-    if (manual && !*addr->value()) message("Podaj adres IPv4, np. 192.168.1.20/24.", true);
+    if (manual && !*addr->value()) message(_("Podaj adres IPv4, np. 192.168.1.20/24."), true);
     else {
-      message("Zapisywanie ustawień IPv4…");
-      net::set_ipv4(g_conn, manual, addr->value(), gw->value(), dn, report("Zapisano ustawienia IPv4."));
+      message(_("Zapisywanie ustawień IPv4…"));
+      net::set_ipv4(g_conn, manual, addr->value(), gw->value(), dn, report(_("Zapisano ustawienia IPv4.")));
     }
   }
   Fl::delete_widget(w);
@@ -366,7 +366,7 @@ bool ask_vpn(const net::Vpn &v, const std::string &err, std::string &user, std::
     void draw() override { draw_icon(Icon::Encrypted, x(), y(), false); }
   };
   new Pic(16, 16);
-  std::string text = "Połączenie VPN „" + v.name + "” wymaga logowania.";
+  std::string text = fmt(_("Połączenie VPN „%1” wymaga logowania."), v.name);
   auto *t = new Fl_Box(64, 12, W - 80, 36);
   t->copy_label(text.c_str());
   t->labelfont(FONT_SYSTEM);
@@ -381,13 +381,13 @@ bool ask_vpn(const net::Vpn &v, const std::string &err, std::string &user, std::
     e->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
     y += 20;
   }
-  auto *u = new Fl_Input(170, y, W - 186, 24, "Użytkownik:");
+  auto *u = new Fl_Input(170, y, W - 186, 24, _("Użytkownik:"));
   u->box(WELL_BOX);
   u->value(user.c_str());
-  auto *p = new Fl_Secret_Input(170, y + 32, W - 186, 24, "Hasło:");
+  auto *p = new Fl_Secret_Input(170, y + 32, W - 186, 24, _("Hasło:"));
   p->box(WELL_BOX);
-  auto *cancel = button(W - 196, H - 38, 86, "Anuluj");
-  auto *ok = button(W - 102, H - 38, 86, "Połącz");
+  auto *cancel = button(W - 196, H - 38, 86, _("Anuluj"));
+  auto *ok = button(W - 102, H - 38, 86, _("Połącz"));
   ok->labelfont(FONT_SYSTEM);
   w->end();
   w->finish();
@@ -405,13 +405,13 @@ void vpn_connect(const net::Vpn &v, const std::string &err) {
     user = net::vpn_username(v.uuid);
     if (!ask_vpn(v, err == net::NEED_PASSWORD ? "" : err, user, pass)) return;
   }
-  message("Łączenie z VPN „" + v.name + "”…");
+  message(fmt(_("Łączenie z VPN „%1”…"), v.name));
   net::vpn_up(v.uuid, user, pass, [v](bool ok, const std::string &m) {
-    if (!ok && (m == net::NEED_PASSWORD || m == "Nieprawidłowe hasło.")) {
+    if (!ok && (m == net::NEED_PASSWORD || m == _("Nieprawidłowe hasło."))) {
       vpn_connect(v, m);
       return;
     }
-    message(ok ? "Połączono z VPN „" + v.name + "”." : m, !ok);
+    message(ok ? fmt(_("Połączono z VPN „%1”."), v.name) : m, !ok);
     refresh();
   });
   std::fill(pass.begin(), pass.end(), '\0');
@@ -424,7 +424,7 @@ const net::Vpn *selected_vpn() {
 
 void vpn_buttons() {
   const net::Vpn *v = selected_vpn();
-  g_vpn_toggle->label(v && (v->active || v->activating) ? "Rozłącz" : "Połącz");
+  g_vpn_toggle->label(v && (v->active || v->activating) ? _("Rozłącz") : _("Połącz"));
   g_vpn_toggle->redraw();
 }
 
@@ -433,10 +433,10 @@ void show_vpn() {
   g_title->label("VPN");
   const net::Vpn *act = nullptr;
   for (auto &v : g_st.vpns) if (v.active) act = &v;
-  status = act ? "Połączono z „" + act->name + "” (" + net::vpn_kind_name(act->kind) + ")."
-               : g_st.vpns.empty() ? "Nie masz jeszcze żadnego połączenia VPN. Zaimportuj plik od administratora "
-                                     "albo dostawcy VPN."
-                                   : "Brak aktywnego połączenia VPN.";
+  status = act ? fmt(_("Połączono z „%1” (%2)."), act->name, net::vpn_kind_name(act->kind))
+               : g_st.vpns.empty() ? _("Nie masz jeszcze żadnego połączenia VPN. Zaimportuj plik od administratora "
+                                       "albo dostawcy VPN.")
+                                   : _("Brak aktywnego połączenia VPN.");
   g_status->label(status.c_str());
   std::string keep;
   if (const net::Vpn *v = selected_vpn()) keep = v->uuid;
@@ -449,9 +449,9 @@ void show_vpn() {
     if (v.uuid == keep) g_vpns->value(g_vpns->size());
   }
   if (!g_vpns->value() && !g_list_vpns.empty()) g_vpns->value(1);
-  note = "Obsługiwane: WireGuard";
-  for (auto &k : net::vpn_plugins()) note += std::string(", ") + net::vpn_kind_name(k);
-  note += ". Inne rodzaje wymagają wtyczki NetworkManagera (pakiety network-manager-…).";
+  std::string kinds = "WireGuard";
+  for (auto &k : net::vpn_plugins()) kinds += std::string(", ") + net::vpn_kind_name(k);
+  note = fmt(_("Obsługiwane: %1. Inne rodzaje wymagają wtyczki NetworkManagera (pakiety network-manager-…)."), kinds);
   g_vpn_note->label(note.c_str());
   vpn_buttons();
   g_vpn->show();
@@ -460,13 +460,13 @@ void show_vpn() {
 
 void vpn_import_dialog() {
   polish_file_chooser();
-  const char *f = fl_file_chooser("Importuj konfigurację VPN", "Konfiguracje VPN (*.{conf,ovpn,pcf})\tWszystkie pliki (*)",
+  const char *f = fl_file_chooser(_("Importuj konfigurację VPN"), "Konfiguracje VPN (*.{conf,ovpn,pcf})\tWszystkie pliki (*)",
                                   getenv("HOME"), 0);
   if (!f) return;
   std::string file = f;
-  message("Importowanie…");
+  message(_("Importowanie…"));
   net::vpn_import(file, [](bool ok, const std::string &m) {
-    message(ok ? "Dodano połączenie VPN „" + m + "”." : m, !ok);
+    message(ok ? fmt(_("Dodano połączenie VPN „%1”."), m) : m, !ok);
     refresh();
   });
 }
@@ -474,33 +474,33 @@ void vpn_import_dialog() {
 // Hotspot: udostępnianie połączenia przez Wi-Fi.
 void hotspot_dialog() {
   int W = 420, H = 200;
-  auto *w = new FrameWindow(W, H, "Hotspot", true);
+  auto *w = new FrameWindow(W, H, _("Hotspot"), true);
   struct Pic : Fl_Widget {
     Pic(int X, int Y) : Fl_Widget(X, Y, 34, 34) {}
     void draw() override { draw_icon(Icon::Wifi, x(), y(), false); }
   };
   new Pic(16, 16);
-  auto *t = new Fl_Box(64, 12, W - 80, 36, "Udostępnij połączenie z internetem innym urządzeniom przez Wi-Fi.");
+  auto *t = new Fl_Box(64, 12, W - 80, 36, _("Udostępnij połączenie z internetem innym urządzeniom przez Wi-Fi."));
   t->labelfont(FONT_SYSTEM);
   t->align(FL_ALIGN_LEFT | FL_ALIGN_TOP | FL_ALIGN_INSIDE | FL_ALIGN_WRAP);
-  auto *n = new Fl_Input(170, 60, W - 186, 24, "Nazwa sieci:");
+  auto *n = new Fl_Input(170, 60, W - 186, 24, _("Nazwa sieci:"));
   n->box(WELL_BOX);
   char host[64] = "lisaos";
   gethostname(host, sizeof host - 1);
   std::string def = std::string("LisaOS-") + host;
   n->value(def.c_str());
-  auto *p = new Fl_Input(170, 92, W - 186, 24, "Hasło (min. 8):");
+  auto *p = new Fl_Input(170, 92, W - 186, 24, _("Hasło (min. 8):"));
   p->box(WELL_BOX);
-  auto *cancel = button(W - 196, H - 38, 86, "Anuluj");
-  auto *ok = button(W - 102, H - 38, 86, "Włącz");
+  auto *cancel = button(W - 196, H - 38, 86, _("Anuluj"));
+  auto *ok = button(W - 102, H - 38, 86, _("Włącz"));
   ok->labelfont(FONT_SYSTEM);
   w->end();
   w->finish();
   p->take_focus();
   if (run_modal(w, ok, cancel)) {
-    message("Włączanie hotspotu…");
+    message(_("Włączanie hotspotu…"));
     std::string ssid = n->value(), pw = p->value();
-    net::hotspot(ssid, pw, report("Hotspot włączony."));
+    net::hotspot(ssid, pw, report(_("Hotspot włączony.")));
     std::fill(pw.begin(), pw.end(), '\0');
   }
   p->value("");
@@ -523,18 +523,18 @@ void show_device() {
   g_ipv4->hide();
   g_hint->hide();
   if (!g_st.available) {
-    g_title->label("Sieć niedostępna");
+    g_title->label(_("Sieć niedostępna"));
     static std::string p;
-    p = g_st.problem + "\nLisaOS zarządza siecią przez NetworkManagera: zainstaluj pakiet "
-        "network-manager i uruchom usługę NetworkManager.";
+    p = g_st.problem + "\n" + _("LisaOS zarządza siecią przez NetworkManagera: zainstaluj pakiet "
+                                 "network-manager i uruchom usługę NetworkManager.");
     g_status->label(p.c_str());
     g_win->redraw();
     return;
   }
   if (g_iface == VPN_ID) { show_vpn(); return; }
   if (!d) {
-    g_title->label("Brak połączeń");
-    g_status->label("Nie znaleziono kart sieciowych zarządzanych przez NetworkManagera.");
+    g_title->label(_("Brak połączeń"));
+    g_status->label(_("Nie znaleziono kart sieciowych zarządzanych przez NetworkManagera."));
     g_win->redraw();
     return;
   }
@@ -545,22 +545,22 @@ void show_device() {
   switch (d->state) {
     case net::DevState::Connected:
       status = d->type == "wifi" ? (!g_st.hotspot_ssid.empty()
-                                       ? "Hotspot: udostępniasz połączenie jako sieć „" + g_st.hotspot_ssid + "”."
-                                       : "Połączono z siecią „" + d->connection + "”.")
-                                 : "Połączono („" + d->connection + "”).";
+                                       ? fmt(_("Hotspot: udostępniasz połączenie jako sieć „%1”."), g_st.hotspot_ssid)
+                                       : fmt(_("Połączono z siecią „%1”."), d->connection))
+                                 : fmt(_("Połączono („%1”)."), d->connection);
       break;
-    case net::DevState::Connecting: status = "Łączenie…"; break;
+    case net::DevState::Connecting: status = _("Łączenie…"); break;
     case net::DevState::Unavailable:
-      status = d->type == "wifi" ? (g_st.wifi_on ? "Karta Wi-Fi niedostępna." : "Wi-Fi jest wyłączone.")
-                                 : "Kabel sieciowy jest odłączony.";
+      status = d->type == "wifi" ? (g_st.wifi_on ? _("Karta Wi-Fi niedostępna.") : _("Wi-Fi jest wyłączone."))
+                                 : _("Kabel sieciowy jest odłączony.");
       break;
-    default: status = "Rozłączono."; break;
+    default: status = _("Rozłączono."); break;
   }
   g_status->label(status.c_str());
 
   bool up = d->state == net::DevState::Connected || d->state == net::DevState::Connecting;
   if (d->state != net::DevState::Unavailable) {
-    g_connect->label(up ? "Rozłącz" : "Połącz");
+    g_connect->label(up ? _("Rozłącz") : _("Połącz"));
     g_connect->show();
   }
   if (!g_conn.empty()) g_ipv4->show();
@@ -592,7 +592,7 @@ void show_device() {
       g_nets->add(line.c_str());
       if (n.ssid == keep) g_nets->value(g_nets->size());
     }
-    if (g_list_nets.empty()) g_nets->add(g_st.wifi_on ? "0x00Szukam sieci…" : "0x00(Wi-Fi wyłączone)");
+    if (g_list_nets.empty()) g_nets->add((std::string("0x00") + (g_st.wifi_on ? _("Szukam sieci…") : _("(Wi-Fi wyłączone)"))).c_str());
     g_wifi->show();
   }
   g_win->redraw();
@@ -612,7 +612,7 @@ void refresh() {
   if (g_st.available) {
     const net::Vpn *act = nullptr;
     for (auto &v : g_st.vpns) if (v.active) act = &v;
-    std::string st = act ? "połączono" : g_st.vpns.empty() ? "brak połączeń" : "rozłączono";
+    std::string st = act ? _("połączono") : g_st.vpns.empty() ? _("brak połączeń") : _("rozłączono");
     g_devs->add((std::string("vpn\t\t") + st + "\t" + (act ? act->name : "") + "\t" + (act ? "1" : "0")).c_str());
     if (g_iface == VPN_ID) sel = g_devs->size();
   }
@@ -625,10 +625,10 @@ void refresh() {
 
 int panel_siec(bool hidden_dialog) {
   const int W = 640, H = 470;
-  g_win = new FrameWindow(W, H, "Sieć");
+  g_win = new FrameWindow(W, H, _("Sieć"));
   g_win->xclass("lisaos-siec");
 
-  auto *t1 = new Fl_Box(15, 8, 200, 20, "Połączenia");
+  auto *t1 = new Fl_Box(15, 8, 200, 20, _("Połączenia"));
   t1->labelfont(FONT_SYSTEM);
   t1->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
   g_devs = new DevList(15, 30, 200, H - 80);
@@ -648,24 +648,24 @@ int panel_siec(bool hidden_dialog) {
   g_status->labelsize(SIZE_SYSTEM);
   g_status->align(FL_ALIGN_LEFT | FL_ALIGN_TOP | FL_ALIGN_INSIDE | FL_ALIGN_WRAP);
 
-  g_ipv4 = button(RX + RW - 190, 8, 90, "IPv4…");
+  g_ipv4 = button(RX + RW - 190, 8, 90, _("IPv4…"));
   g_ipv4->callback([](Fl_Widget *, void *) { ipv4_dialog(); });
-  g_connect = button(RX + RW - 94, 8, 94, "Połącz");
+  g_connect = button(RX + RW - 94, 8, 94, _("Połącz"));
   g_connect->labelfont(FONT_SYSTEM);
   g_connect->callback([](Fl_Widget *, void *) {
     const net::Device *d = selected_device();
     if (!d) return;
     bool up = d->state == net::DevState::Connected || d->state == net::DevState::Connecting;
     std::string iface = d->iface;
-    if (up) { message("Rozłączanie…"); net::disconnect_device(iface, report("Rozłączono.")); }
+    if (up) { message(_("Rozłączanie…")); net::disconnect_device(iface, report(_("Rozłączono."))); }
     else if (d->type == "wifi" && g_nets->value() > 0 && g_nets->value() <= (int)g_list_nets.size())
       connect_network(g_list_nets[g_nets->value() - 1], "");
-    else { message("Łączenie…"); net::connect_device(iface, report("Połączono.")); }
+    else { message(_("Łączenie…")); net::connect_device(iface, report(_("Połączono."))); }
   });
 
   // szczegóły połączenia
   g_info = new Fl_Group(RX, 70, RW, 130);
-  const char *labels[] = {"Adres IPv4:", "Brama:", "Serwery DNS:", "Adres IPv6:", "Adres MAC:", "Szybkość:"};
+  const char *labels[] = {_("Adres IPv4:"), _("Brama:"), _("Serwery DNS:"), _("Adres IPv6:"), _("Adres MAC:"), _("Szybkość:")};
   for (int i = 0; i < 6; i++) {
     g_out[i] = new Fl_Output(RX + 110, 72 + i * 21, RW - 110, 20, labels[i]);
     g_out[i]->box(FL_FLAT_BOX);
@@ -675,21 +675,21 @@ int panel_siec(bool hidden_dialog) {
   }
   g_info->end();
   g_hint = new Fl_Box(RX, 76, RW, 60,
-                      "Podłącz kabel albo kliknij „Połącz”. Adres zostanie pobrany automatycznie (DHCP), "
-                      "chyba że w „IPv4…” ustawisz go ręcznie.");
+                      _("Podłącz kabel albo kliknij „Połącz”. Adres zostanie pobrany automatycznie (DHCP), "
+                        "chyba że w „IPv4…” ustawisz go ręcznie."));
   g_hint->labelsize(SIZE_SMALL);
   g_hint->align(FL_ALIGN_LEFT | FL_ALIGN_TOP | FL_ALIGN_INSIDE | FL_ALIGN_WRAP);
 
   // Wi-Fi
   g_wifi = new Fl_Group(RX, 206, RW, H - 206 - 50);
-  g_wifi_on = new Fl_Check_Button(RX - 4, 208, 200, 22, "Wi-Fi włączone");
+  g_wifi_on = new Fl_Check_Button(RX - 4, 208, 200, 22, _("Wi-Fi włączone"));
   g_wifi_on->labelfont(FONT_SYSTEM);
   g_wifi_on->callback([](Fl_Widget *, void *) {
     bool on = g_wifi_on->value();
-    message(on ? "Włączanie Wi-Fi…" : "Wyłączanie Wi-Fi…");
-    net::set_wifi(on, report(on ? "Wi-Fi włączone." : "Wi-Fi wyłączone."));
+    message(on ? _("Włączanie Wi-Fi…") : _("Wyłączanie Wi-Fi…"));
+    net::set_wifi(on, report(on ? _("Wi-Fi włączone.") : _("Wi-Fi wyłączone.")));
   });
-  auto *lab = new Fl_Box(RX, 232, RW, 18, "Sieci w zasięgu:");
+  auto *lab = new Fl_Box(RX, 232, RW, 18, _("Sieci w zasięgu:"));
   lab->labelsize(SIZE_SMALL + 1);
   lab->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
   g_nets = new NetList(RX, 252, RW, H - 252 - 86);
@@ -702,21 +702,21 @@ int panel_siec(bool hidden_dialog) {
     }
   });
   int by = H - 80;
-  button(RX, by, 90, "Połącz")->callback([](Fl_Widget *, void *) {
+  button(RX, by, 90, _("Połącz"))->callback([](Fl_Widget *, void *) {
     int v = g_nets->value();
     if (v > 0 && v <= (int)g_list_nets.size()) connect_network(g_list_nets[v - 1], "");
-    else message("Wybierz sieć z listy.", true);
+    else message(_("Wybierz sieć z listy."), true);
   });
-  button(RX + 96, by, 100, "Inna sieć…")->callback([](Fl_Widget *, void *) { connect_hidden(); });
-  button(RX + 202, by, 90, "Zapomnij")->callback([](Fl_Widget *, void *) {
+  button(RX + 96, by, 100, _("Inna sieć…"))->callback([](Fl_Widget *, void *) { connect_hidden(); });
+  button(RX + 202, by, 90, _("Zapomnij"))->callback([](Fl_Widget *, void *) {
     int v = g_nets->value();
     if (v <= 0 || v > (int)g_list_nets.size() || !g_list_nets[v - 1].known) {
-      message("Wybierz zapisaną sieć.", true);
+      message(_("Wybierz zapisaną sieć."), true);
       return;
     }
-    net::forget(g_list_nets[v - 1].ssid, report("Zapomniano sieć."));
+    net::forget(g_list_nets[v - 1].ssid, report(_("Zapomniano sieć.")));
   });
-  button(RX + RW - 90, by, 90, "Hotspot…")->callback([](Fl_Widget *, void *) { hotspot_dialog(); });
+  button(RX + RW - 90, by, 90, _("Hotspot…"))->callback([](Fl_Widget *, void *) { hotspot_dialog(); });
   g_wifi->end();
 
   // VPN
@@ -728,24 +728,24 @@ int panel_siec(bool hidden_dialog) {
     if (Fl::event_clicks()) { Fl::event_clicks(0); g_vpn_toggle->do_callback(); }
   });
   int vy = H - 56 - 60;
-  g_vpn_toggle = button(RX, vy, 90, "Połącz");
+  g_vpn_toggle = button(RX, vy, 90, _("Połącz"));
   g_vpn_toggle->labelfont(FONT_SYSTEM);
   g_vpn_toggle->callback([](Fl_Widget *, void *) {
     const net::Vpn *v = selected_vpn();
-    if (!v) { message("Wybierz połączenie VPN.", true); return; }
+    if (!v) { message(_("Wybierz połączenie VPN."), true); return; }
     if (v->active || v->activating) {
-      message("Rozłączanie VPN…");
-      net::vpn_down(v->uuid, report("Rozłączono VPN."));
+      message(_("Rozłączanie VPN…"));
+      net::vpn_down(v->uuid, report(_("Rozłączono VPN.")));
     } else {
       vpn_connect(*v, "");
     }
   });
-  button(RX + 96, vy, 100, "Importuj…")->callback([](Fl_Widget *, void *) { vpn_import_dialog(); });
-  button(RX + 202, vy, 90, "Usuń")->callback([](Fl_Widget *, void *) {
+  button(RX + 96, vy, 100, _("Importuj…"))->callback([](Fl_Widget *, void *) { vpn_import_dialog(); });
+  button(RX + 202, vy, 90, _("Usuń"))->callback([](Fl_Widget *, void *) {
     const net::Vpn *v = selected_vpn();
-    if (!v) { message("Wybierz połączenie VPN.", true); return; }
-    if (fl_choice("Usunąć połączenie VPN „%s”?", "Anuluj", "Usuń", nullptr, v->name.c_str()) != 1) return;
-    net::remove_connection(v->uuid, report("Usunięto połączenie VPN."));
+    if (!v) { message(_("Wybierz połączenie VPN."), true); return; }
+    if (fl_choice(_("Usunąć połączenie VPN „%s”?"), _("Anuluj"), _("Usuń"), nullptr, v->name.c_str()) != 1) return;
+    net::remove_connection(v->uuid, report(_("Usunięto połączenie VPN.")));
   });
   g_vpn_note = new Fl_Box(RX, vy + 30, RW, 34);
   g_vpn_note->labelsize(SIZE_SMALL);
@@ -753,17 +753,17 @@ int panel_siec(bool hidden_dialog) {
   g_vpn->end();
   g_vpn->hide();
 
-  g_air = new Fl_Check_Button(11, H - 38, 160, 24, "Tryb samolotowy");
+  g_air = new Fl_Check_Button(11, H - 38, 160, 24, _("Tryb samolotowy"));
   g_air->labelsize(SIZE_SMALL + 1);
   g_air->callback([](Fl_Widget *, void *) {
     bool on = g_air->value();
-    message(on ? "Wyłączanie wszystkich radiów…" : "Włączanie radiów…");
-    net::set_airplane(on, report(on ? "Tryb samolotowy włączony." : "Tryb samolotowy wyłączony."));
+    message(on ? _("Wyłączanie wszystkich radiów…") : _("Włączanie radiów…"));
+    net::set_airplane(on, report(on ? _("Tryb samolotowy włączony.") : _("Tryb samolotowy wyłączony.")));
   });
   g_msg = new Fl_Box(175, H - 38, W - 300, 24);
   g_msg->labelsize(SIZE_SMALL + 1);
   g_msg->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE | FL_ALIGN_CLIP);
-  auto *close = button(W - 110, H - 38, 95, "Zamknij");
+  auto *close = button(W - 110, H - 38, 95, _("Zamknij"));
   close->labelfont(FONT_SYSTEM);
   close->callback([](Fl_Widget *, void *) { g_win->hide(); });
   g_win->end();

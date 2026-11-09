@@ -1,5 +1,6 @@
 // LisaOS - zasilanie: implementacja
 #include "power.h"
+#include "i18n.h"
 
 #include <FL/Fl.H>
 #include <FL/platform.H>
@@ -148,7 +149,7 @@ static std::string login_can(DBusConnection *c, const char *what) {
 
 static std::string login_action(const char *method) {
   DBusConnection *c = bus(DBUS_BUS_SYSTEM);
-  if (!c) return "Brak magistrali systemowej D-Bus.";
+  if (!c) return _("Brak magistrali systemowej D-Bus.");
   DBusMessage *m = dbus_message_new_method_call(LOGIN, LOGIN_PATH, LOGIN_MGR, method);
   dbus_bool_t interactive = TRUE;   // polkit może zapytać o hasło
   dbus_message_append_args(m, DBUS_TYPE_BOOLEAN, &interactive, DBUS_TYPE_INVALID);
@@ -156,10 +157,10 @@ static std::string login_action(const char *method) {
   DBusMessage *r = call(c, m, &err, 30000);
   if (!r) {
     if (err.find("inhibit") != std::string::npos || err.find("Inhibit") != std::string::npos)
-      return "Wstrzymane przez inny program albo tryb projekcji.";
+      return _("Wstrzymane przez inny program albo tryb projekcji.");
     if (err.find("ServiceUnknown") != std::string::npos || err.find("was not provided") != std::string::npos)
-      return "Brak usługi logind/elogind.";
-    return "Nie udało się: " + err;
+      return _("Brak usługi logind/elogind.");
+    return plat::fmt(_("Nie udało się: %1"), err);
   }
   dbus_message_unref(r);
   return "";
@@ -261,22 +262,23 @@ State query() {
 }
 
 std::string battery_text(const State &s) {
-  if (s.percent < 0) return "Zasilanie sieciowe";
-  std::string t = std::to_string(s.percent) + "%";
-  if (s.charging) t += ", ładowanie";
-  else if (s.on_ac) t += ", zasilacz";
+  using plat::fmt;
+  if (s.percent < 0) return _("Zasilanie sieciowe");
+  std::string pct = std::to_string(s.percent) + "%";
+  std::string tm;
   if (s.minutes > 0 && s.minutes < 60 * 48) {
     int h = s.minutes / 60, m = s.minutes % 60;
-    std::string tm = (h ? std::to_string(h) + " h " : "") + std::to_string(m) + " min";
-    t += s.charging ? " (pełna za ok. " + tm + ")" : !s.on_ac ? ", zostało ok. " + tm : "";
+    tm = h ? fmt(_("%1 h %2 min"), std::to_string(h), std::to_string(m)) : fmt(_("%1 min"), std::to_string(m));
   }
-  return t;
+  if (s.charging) return tm.empty() ? fmt(_("%1, ładowanie"), pct) : fmt(_("%1, ładowanie (pełna za ok. %2)"), pct, tm);
+  if (s.on_ac) return fmt(_("%1, zasilacz"), pct);
+  return tm.empty() ? pct : fmt(_("%1, zostało ok. %2"), pct, tm);
 }
 
 const char *profile_name(const std::string &p) {
-  if (p == "power-saver") return "Oszczędzanie energii";
-  if (p == "balanced") return "Zrównoważony";
-  if (p == "performance") return "Wydajność";
+  if (p == "power-saver") return _("Oszczędzanie energii");
+  if (p == "balanced") return _("Zrównoważony");
+  if (p == "performance") return _("Wydajność");
   return p.c_str();
 }
 
@@ -370,7 +372,7 @@ std::vector<std::string> set_projection(bool on) {
   int ev, er;
   if (on) {
     // 1. ekran X: wygaszacz i DPMS
-    if (XScreenSaverQueryExtension(dpy, &ev, &er)) { XScreenSaverSuspend(dpy, True); done.push_back("wygaszanie ekranu"); }
+    if (XScreenSaverQueryExtension(dpy, &ev, &er)) { XScreenSaverSuspend(dpy, True); done.push_back(_("wygaszanie ekranu")); }
     if (DPMSQueryExtension(dpy, &ev, &er) && DPMSCapable(dpy)) {
       CARD16 level; BOOL st;
       DPMSInfo(dpy, &level, &st);
@@ -389,7 +391,7 @@ std::vector<std::string> set_projection(bool on) {
         int fd = -1;
         if (dbus_message_get_args(r, nullptr, DBUS_TYPE_UNIX_FD, &fd, DBUS_TYPE_INVALID) && fd >= 0) {
           g_inhibit_fd = fd;
-          done.push_back("usypianie (logind)");
+          done.push_back(_("usypianie (logind)"));
         }
         dbus_message_unref(r);
       }
@@ -413,7 +415,7 @@ std::vector<std::string> set_projection(bool on) {
       if (DBusMessage *r = call(c, m, nullptr, 2000)) {
         dbus_message_get_args(r, nullptr, DBUS_TYPE_UINT32, &g_fdo_cookie, DBUS_TYPE_INVALID);
         dbus_message_unref(r);
-        done.push_back("wygaszacz pulpitu");
+        done.push_back(_("wygaszacz pulpitu"));
       }
     }
     g_proj = true;

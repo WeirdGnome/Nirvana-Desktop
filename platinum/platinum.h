@@ -4,6 +4,8 @@
 // przez tę bibliotekę, żeby całość wyglądała spójnie.
 #pragma once
 
+#include "i18n.h"
+
 #include <FL/Enumerations.H>
 #include <string>
 #include <vector>

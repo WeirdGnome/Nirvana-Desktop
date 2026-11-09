@@ -24,6 +24,7 @@
 #include <filesystem>
 
 #include "desktop.h"
+#include "appimage.h"
 #include "gary.h"
 #include "platinum.h"
 
@@ -51,7 +52,7 @@ int main(int argc, char **argv) {
   FolderView::set_home(home);
   {
     std::error_code ec;   // folder na aplikacje zawsze istnieje
-    std::filesystem::create_directories(home + "/Aplikacje", ec);
+    std::filesystem::create_directories(appimage::apps_dir(home), ec);
   }
 
   int X = 0, Y = 0;

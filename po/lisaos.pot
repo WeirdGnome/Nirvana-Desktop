@@ -1,0 +1,2226 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the LisaOS package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: LisaOS 0.1\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-11-09 12:52+0000\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=INTEGER; plural=EXPRESSION;\n"
+
+#: alice/main.cxx:25
+msgid "Nie ma schematu: %1"
+msgstr ""
+
+#: alice/siec.cxx:159 alice/siec.cxx:615 net/net.cxx:331
+msgid "połączono"
+msgstr ""
+
+#: alice/siec.cxx:159 net/net.cxx:332
+msgid "łączenie…"
+msgstr ""
+
+#: alice/siec.cxx:194
+msgid "Inna sieć Wi-Fi"
+msgstr ""
+
+#: alice/siec.cxx:194 denise/desktop.cxx:1815 denise/desktop.cxx:1826
+#: denise/desktop.cxx:1833
+msgid "Sieć Wi-Fi"
+msgstr ""
+
+#: alice/siec.cxx:200
+msgid "Połącz z siecią, która nie rozgłasza nazwy."
+msgstr ""
+
+#: alice/siec.cxx:201 denise/desktop.cxx:1834
+msgid ""
+"Sieć „%1” jest zabezpieczona.\n"
+"Podaj hasło, aby się połączyć."
+msgstr ""
+
+#: alice/siec.cxx:220 alice/siec.cxx:486
+msgid "Nazwa sieci:"
+msgstr ""
+
+#: alice/siec.cxx:224
+msgid "Zabezpieczenia:"
+msgstr ""
+
+#: alice/siec.cxx:225
+msgid "WPA\\/WPA2 Personal|WPA3 Personal|Brak"
+msgstr ""
+
+#: alice/siec.cxx:229 alice/siec.cxx:387
+msgid "Hasło:"
+msgstr ""
+
+#: alice/siec.cxx:232
+msgid "Pokaż hasło"
+msgstr ""
+
+#: alice/siec.cxx:244 alice/siec.cxx:341 alice/siec.cxx:389 alice/siec.cxx:494
+#: alice/siec.cxx:747 alice/wyglad.cxx:393 alice/zasilanie.cxx:127
+#: denise/applets.cxx:617 denise/desktop.cxx:1271 denise/desktop.cxx:1282
+#: denise/desktop.cxx:1608 denise/desktop.cxx:1623 denise/desktop.cxx:2176
+#: denise/desktop.cxx:2618 denise/menus.cxx:242 denise/menus.cxx:300
+#: denise/menus.cxx:309 denise/menus.cxx:581 denise/menus.cxx:690
+#: denise/menus.cxx:695 platinum/platinum.cxx:163 platinum/platinum.cxx:702
+#: shell/main.cxx:614
+msgid "Anuluj"
+msgstr ""
+
+#: alice/siec.cxx:245 alice/siec.cxx:390 alice/siec.cxx:427 alice/siec.cxx:563
+#: alice/siec.cxx:653 alice/siec.cxx:705 alice/siec.cxx:731
+#: denise/desktop.cxx:1719 denise/desktop.cxx:1793 denise/desktop.cxx:1834
+msgid "Połącz"
+msgstr ""
+
+#: alice/siec.cxx:274
+msgid "Sieci firmowe (802.1X) nie są jeszcze obsługiwane - użyj nmtui."
+msgstr ""
+
+#: alice/siec.cxx:278 alice/siec.cxx:410 denise/desktop.cxx:1785
+#: denise/desktop.cxx:1822 denise/desktop.cxx:2649 denise/volumes.cxx:317
+#: net/net.cxx:93
+msgid "Nieprawidłowe hasło."
+msgstr ""
+
+#: alice/siec.cxx:279 denise/desktop.cxx:1823 net/net.cxx:683 net/net.cxx:809
+msgid "Nie udało się połączyć. Sprawdź hasło."
+msgstr ""
+
+#: alice/siec.cxx:283 alice/siec.cxx:304 alice/siec.cxx:549
+msgid "Połączono z siecią „%1”."
+msgstr ""
+
+#: alice/siec.cxx:287 alice/siec.cxx:293 alice/siec.cxx:301
+msgid "Łączenie z „%1”…"
+msgstr ""
+
+#: alice/siec.cxx:314
+msgid "Ustawienia IPv4"
+msgstr ""
+
+#: alice/siec.cxx:315
+msgid "Połączenie „%1”"
+msgstr ""
+
+#: alice/siec.cxx:320
+msgid "Konfiguracja:"
+msgstr ""
+
+#: alice/siec.cxx:321
+msgid "Automatycznie (DHCP)|Ręcznie"
+msgstr ""
+
+#: alice/siec.cxx:323
+msgid "Adres/prefiks:"
+msgstr ""
+
+#: alice/siec.cxx:324 alice/siec.cxx:668
+msgid "Brama:"
+msgstr ""
+
+#: alice/siec.cxx:325 alice/siec.cxx:668
+msgid "Serwery DNS:"
+msgstr ""
+
+#: alice/siec.cxx:342 platinum/platinum.cxx:716
+msgid "Zapisz"
+msgstr ""
+
+#: alice/siec.cxx:350
+msgid "Podaj adres IPv4, np. 192.168.1.20/24."
+msgstr ""
+
+#: alice/siec.cxx:352
+msgid "Zapisywanie ustawień IPv4…"
+msgstr ""
+
+#: alice/siec.cxx:353 net/net.cxx:544
+msgid "Zapisano ustawienia IPv4."
+msgstr ""
+
+#: alice/siec.cxx:369
+msgid "Połączenie VPN „%1” wymaga logowania."
+msgstr ""
+
+#: alice/siec.cxx:384
+msgid "Użytkownik:"
+msgstr ""
+
+#: alice/siec.cxx:408
+msgid "Łączenie z VPN „%1”…"
+msgstr ""
+
+#: alice/siec.cxx:414
+msgid "Połączono z VPN „%1”."
+msgstr ""
+
+#: alice/siec.cxx:427 alice/siec.cxx:563 denise/desktop.cxx:1716
+msgid "Rozłącz"
+msgstr ""
+
+#: alice/siec.cxx:436
+msgid "Połączono z „%1” (%2)."
+msgstr ""
+
+#: alice/siec.cxx:437
+msgid ""
+"Nie masz jeszcze żadnego połączenia VPN. Zaimportuj plik od administratora "
+"albo dostawcy VPN."
+msgstr ""
+
+#: alice/siec.cxx:439
+msgid "Brak aktywnego połączenia VPN."
+msgstr ""
+
+#: alice/siec.cxx:454
+msgid ""
+"Obsługiwane: %1. Inne rodzaje wymagają wtyczki NetworkManagera (pakiety "
+"network-manager-…)."
+msgstr ""
+
+#: alice/siec.cxx:463
+msgid "Importuj konfigurację VPN"
+msgstr ""
+
+#: alice/siec.cxx:467
+msgid "Importowanie…"
+msgstr ""
+
+#: alice/siec.cxx:469
+msgid "Dodano połączenie VPN „%1”."
+msgstr ""
+
+#: alice/siec.cxx:477
+msgid "Hotspot"
+msgstr ""
+
+#: alice/siec.cxx:483
+msgid "Udostępnij połączenie z internetem innym urządzeniom przez Wi-Fi."
+msgstr ""
+
+#: alice/siec.cxx:492
+msgid "Hasło (min. 8):"
+msgstr ""
+
+#: alice/siec.cxx:495
+msgid "Włącz"
+msgstr ""
+
+#: alice/siec.cxx:501
+msgid "Włączanie hotspotu…"
+msgstr ""
+
+#: alice/siec.cxx:503 net/net.cxx:791 net/net.cxx:809
+msgid "Hotspot włączony."
+msgstr ""
+
+#: alice/siec.cxx:526 denise/desktop.cxx:1702
+msgid "Sieć niedostępna"
+msgstr ""
+
+#: alice/siec.cxx:528
+msgid ""
+"LisaOS zarządza siecią przez NetworkManagera: zainstaluj pakiet network-"
+"manager i uruchom usługę NetworkManager."
+msgstr ""
+
+#: alice/siec.cxx:536
+msgid "Brak połączeń"
+msgstr ""
+
+#: alice/siec.cxx:537
+msgid "Nie znaleziono kart sieciowych zarządzanych przez NetworkManagera."
+msgstr ""
+
+#: alice/siec.cxx:548
+msgid "Hotspot: udostępniasz połączenie jako sieć „%1”."
+msgstr ""
+
+#: alice/siec.cxx:550
+msgid "Połączono („%1”)."
+msgstr ""
+
+#: alice/siec.cxx:552 alice/siec.cxx:663
+msgid "Łączenie…"
+msgstr ""
+
+#: alice/siec.cxx:554
+msgid "Karta Wi-Fi niedostępna."
+msgstr ""
+
+#: alice/siec.cxx:554
+msgid "Wi-Fi jest wyłączone."
+msgstr ""
+
+#: alice/siec.cxx:555
+msgid "Kabel sieciowy jest odłączony."
+msgstr ""
+
+#: alice/siec.cxx:557 alice/siec.cxx:660 net/net.cxx:525
+msgid "Rozłączono."
+msgstr ""
+
+#: alice/siec.cxx:595 denise/desktop.cxx:1746
+msgid "Szukam sieci…"
+msgstr ""
+
+#: alice/siec.cxx:595
+msgid "(Wi-Fi wyłączone)"
+msgstr ""
+
+#: alice/siec.cxx:615
+msgid "brak połączeń"
+msgstr ""
+
+#: alice/siec.cxx:615 net/net.cxx:335
+msgid "rozłączono"
+msgstr ""
+
+#: alice/siec.cxx:628 alice/ustawienia.cxx:83 denise/desktop.cxx:1732
+#: denise/desktop.cxx:1773 denise/desktop.cxx:1804 denise/gary.cxx:111
+#: net/net.cxx:326
+msgid "Sieć"
+msgstr ""
+
+#: alice/siec.cxx:631
+msgid "Połączenia"
+msgstr ""
+
+#: alice/siec.cxx:651
+msgid "IPv4…"
+msgstr ""
+
+#: alice/siec.cxx:660
+msgid "Rozłączanie…"
+msgstr ""
+
+#: alice/siec.cxx:663 net/net.cxx:522 net/net.cxx:676 net/net.cxx:768
+#: net/net.cxx:778
+msgid "Połączono."
+msgstr ""
+
+#: alice/siec.cxx:668
+msgid "Adres IPv4:"
+msgstr ""
+
+#: alice/siec.cxx:668
+msgid "Adres IPv6:"
+msgstr ""
+
+#: alice/siec.cxx:668
+msgid "Adres MAC:"
+msgstr ""
+
+#: alice/siec.cxx:668
+msgid "Szybkość:"
+msgstr ""
+
+#: alice/siec.cxx:678
+msgid ""
+"Podłącz kabel albo kliknij „Połącz”. Adres zostanie pobrany automatycznie "
+"(DHCP), chyba że w „IPv4…” ustawisz go ręcznie."
+msgstr ""
+
+#: alice/siec.cxx:685
+msgid "Wi-Fi włączone"
+msgstr ""
+
+#: alice/siec.cxx:689
+msgid "Włączanie Wi-Fi…"
+msgstr ""
+
+#: alice/siec.cxx:689
+msgid "Wyłączanie Wi-Fi…"
+msgstr ""
+
+#: alice/siec.cxx:690
+msgid "Wi-Fi włączone."
+msgstr ""
+
+#: alice/siec.cxx:690
+msgid "Wi-Fi wyłączone."
+msgstr ""
+
+#: alice/siec.cxx:692
+msgid "Sieci w zasięgu:"
+msgstr ""
+
+#: alice/siec.cxx:708
+msgid "Wybierz sieć z listy."
+msgstr ""
+
+#: alice/siec.cxx:710 denise/desktop.cxx:1754
+msgid "Inna sieć…"
+msgstr ""
+
+#: alice/siec.cxx:711
+msgid "Zapomnij"
+msgstr ""
+
+#: alice/siec.cxx:714
+msgid "Wybierz zapisaną sieć."
+msgstr ""
+
+#: alice/siec.cxx:717 net/net.cxx:528
+msgid "Zapomniano sieć."
+msgstr ""
+
+#: alice/siec.cxx:719
+msgid "Hotspot…"
+msgstr ""
+
+#: alice/siec.cxx:735 alice/siec.cxx:746
+msgid "Wybierz połączenie VPN."
+msgstr ""
+
+#: alice/siec.cxx:737
+msgid "Rozłączanie VPN…"
+msgstr ""
+
+#: alice/siec.cxx:738 net/net.cxx:519
+msgid "Rozłączono VPN."
+msgstr ""
+
+#: alice/siec.cxx:743
+msgid "Importuj…"
+msgstr ""
+
+#: alice/siec.cxx:744 alice/siec.cxx:747
+msgid "Usuń"
+msgstr ""
+
+#: alice/siec.cxx:747
+#, c-format
+msgid "Usunąć połączenie VPN „%s”?"
+msgstr ""
+
+#: alice/siec.cxx:748
+msgid "Usunięto połączenie VPN."
+msgstr ""
+
+#: alice/siec.cxx:756 denise/desktop.cxx:1769
+msgid "Tryb samolotowy"
+msgstr ""
+
+#: alice/siec.cxx:760
+msgid "Wyłączanie wszystkich radiów…"
+msgstr ""
+
+#: alice/siec.cxx:760
+msgid "Włączanie radiów…"
+msgstr ""
+
+#: alice/siec.cxx:761 net/net.cxx:368
+msgid "Tryb samolotowy włączony."
+msgstr ""
+
+#: alice/siec.cxx:761 net/net.cxx:368
+msgid "Tryb samolotowy wyłączony."
+msgstr ""
+
+#: alice/siec.cxx:766 platinum/platinum.cxx:166 shell/main.cxx:615
+msgid "Zamknij"
+msgstr ""
+
+#: alice/ustawienia.cxx:79 denise/gary.cxx:114
+msgid "Preferencje"
+msgstr ""
+
+#: alice/ustawienia.cxx:82 alice/wyglad.cxx:232 denise/gary.cxx:110
+msgid "Wygląd"
+msgstr ""
+
+#: alice/ustawienia.cxx:84 alice/zasilanie.cxx:79 denise/applets.cxx:621
+#: denise/gary.cxx:113
+msgid "Zasilanie"
+msgstr ""
+
+#: alice/ustawienia.cxx:96
+msgid "Język:"
+msgstr ""
+
+#: alice/ustawienia.cxx:100
+msgid "Automatycznie (jak w systemie)"
+msgstr ""
+
+#: alice/ustawienia.cxx:111
+msgid ""
+"Nowy język zobaczysz po ponownym uruchomieniu LisaOS albo po Narzędzia > "
+"Resetuj LISA."
+msgstr ""
+
+#: alice/wyglad.cxx:90
+msgid "Okno"
+msgstr ""
+
+#: alice/wyglad.cxx:90
+msgid "Ikony"
+msgstr ""
+
+#: alice/wyglad.cxx:90
+msgid "Narzędzia"
+msgstr ""
+
+#: alice/wyglad.cxx:101
+msgid "Dokumenty"
+msgstr ""
+
+#: alice/wyglad.cxx:135
+msgid "3 elementy, 12,4 GB wolne"
+msgstr ""
+
+#: alice/wyglad.cxx:135
+msgid "2 elementy"
+msgstr ""
+
+#: alice/wyglad.cxx:144
+msgid "Muzyka"
+msgstr ""
+
+#: alice/wyglad.cxx:145
+msgid "List.txt"
+msgstr ""
+
+#: alice/wyglad.cxx:146
+msgid "Gra"
+msgstr ""
+
+#: alice/wyglad.cxx:151
+msgid "Zdjęcia"
+msgstr ""
+
+#: alice/wyglad.cxx:178
+msgid "Źródło: %1"
+msgstr ""
+
+#: alice/wyglad.cxx:178
+msgid "własny"
+msgstr ""
+
+#: alice/wyglad.cxx:235
+msgid "Schemat kolorów"
+msgstr ""
+
+#: alice/wyglad.cxx:248 platinum/platinum.cxx:715
+msgid "Podgląd"
+msgstr ""
+
+#: alice/wyglad.cxx:255
+msgid "Pasek tytułu:"
+msgstr ""
+
+#: alice/wyglad.cxx:256
+msgid "Jak w schemacie|Prążki (Platinum)|Jednolity kolor|Gradient"
+msgstr ""
+
+#: alice/wyglad.cxx:260
+msgid "Tło biurka:"
+msgstr ""
+
+#: alice/wyglad.cxx:268
+msgid "Kolory:"
+msgstr ""
+
+#: alice/wyglad.cxx:270
+msgid "Kolor biurka (początek gradientu)"
+msgstr ""
+
+#: alice/wyglad.cxx:274
+msgid "Kolor biurka"
+msgstr ""
+
+#: alice/wyglad.cxx:281 alice/wyglad.cxx:286
+msgid "Drugi kolor gradientu"
+msgstr ""
+
+#: alice/wyglad.cxx:291
+msgid "Ze schematu"
+msgstr ""
+
+#: alice/wyglad.cxx:296
+msgid "Wzór biurka:"
+msgstr ""
+
+#: alice/wyglad.cxx:302
+msgid "Kierunek:"
+msgstr ""
+
+#: alice/wyglad.cxx:310
+msgid "Tapeta:"
+msgstr ""
+
+#: alice/wyglad.cxx:323
+msgid "Brak (sam wzór)"
+msgstr ""
+
+#: alice/wyglad.cxx:324
+msgid "Inny plik…"
+msgstr ""
+
+#: alice/wyglad.cxx:337
+msgid "Wybierz tapetę"
+msgstr ""
+
+#: alice/wyglad.cxx:337
+msgid "Obrazy (*.{png,jpg,jpeg,gif,bmp,svg,svgz,xpm})"
+msgstr ""
+
+#: alice/wyglad.cxx:345 denise/menus.cxx:207 denise/menus.cxx:214
+msgid "Tapeta"
+msgstr ""
+
+#: alice/wyglad.cxx:346
+msgid ""
+"Nie udało się otworzyć tego obrazu.\n"
+"Plik może być uszkodzony albo w nieobsługiwanym formacie."
+msgstr ""
+
+#: alice/wyglad.cxx:366
+msgid "Układ tapety:"
+msgstr ""
+
+#: alice/wyglad.cxx:376
+msgid "Styl ikon:"
+msgstr ""
+
+#: alice/wyglad.cxx:377
+msgid "Workbench (Amiga)|Platinum (Mac OS)"
+msgstr ""
+
+#: alice/wyglad.cxx:384
+msgid "Animacje okien"
+msgstr ""
+
+#: alice/wyglad.cxx:394 alice/zasilanie.cxx:128
+msgid "Zastosuj"
+msgstr ""
+
+#: alice/wyglad.cxx:395 alice/zasilanie.cxx:129 denise/desktop.cxx:1259
+#: denise/desktop.cxx:1534 platinum/platinum.cxx:162
+msgid "OK"
+msgstr ""
+
+#: alice/zasilanie.cxx:36 power/power.cxx:271
+msgid "%1 min"
+msgstr ""
+
+#: alice/zasilanie.cxx:36
+msgid "Nigdy"
+msgstr ""
+
+#: alice/zasilanie.cxx:37
+msgid "1 godzina"
+msgstr ""
+
+#: alice/zasilanie.cxx:38
+msgid "2 godziny"
+msgstr ""
+
+#: alice/zasilanie.cxx:82
+msgid "Ekran"
+msgstr ""
+
+#: alice/zasilanie.cxx:84
+msgid "Wygaś ekran po bezczynności:"
+msgstr ""
+
+#: alice/zasilanie.cxx:86
+msgid "Blokuj ekran przy wygaszeniu"
+msgstr ""
+
+#: alice/zasilanie.cxx:91
+msgid ""
+"Brak programu blokady ekranu - zainstaluj xsecurelock, i3lock albo slock."
+msgstr ""
+
+#: alice/zasilanie.cxx:92
+msgid "Program blokady: %1."
+msgstr ""
+
+#: alice/zasilanie.cxx:96
+msgid "Usypianie komputera"
+msgstr ""
+
+#: alice/zasilanie.cxx:98
+msgid "Na baterii po bezczynności:"
+msgstr ""
+
+#: alice/zasilanie.cxx:100
+msgid "Z zasilacza po bezczynności:"
+msgstr ""
+
+#: alice/zasilanie.cxx:103 denise/applets.cxx:753
+msgid "Bateria"
+msgstr ""
+
+#: alice/zasilanie.cxx:105
+msgid "Przy 3% baterii:"
+msgstr ""
+
+#: alice/zasilanie.cxx:106
+msgid "Nic nie rób|Hibernuj|Uśpij"
+msgstr ""
+
+#: alice/zasilanie.cxx:111
+msgid "Teraz: %1. Przy 10% pojawi się ostrzeżenie."
+msgstr ""
+
+#: alice/zasilanie.cxx:112
+msgid "Ten komputer nie ma baterii."
+msgstr ""
+
+#: alice/zasilanie.cxx:116
+msgid ""
+"Tryb projekcji (menu baterii na pasku menu) wstrzymuje wygaszanie, blokadę i "
+"usypianie."
+msgstr ""
+
+#: alice/zasilanie.cxx:118
+msgid ""
+"W sesji GNOME/KDE ekranem i usypianiem zarządza tamto środowisko - te "
+"ustawienia działają w sesji LisaOS."
+msgstr ""
+
+#: audio/audio.cxx:199
+msgid "Karta dźwiękowa (ALSA)"
+msgstr ""
+
+#: audio/audio.cxx:199
+msgid "Mikrofon (ALSA)"
+msgstr ""
+
+#: audio/audio.cxx:254
+msgid "Serwer dźwięku (PulseAudio/PipeWire) nie działa."
+msgstr ""
+
+#: audio/audio.cxx:255
+msgid "Brak pactl (pulseaudio-utils) i amixer (alsa-utils)."
+msgstr ""
+
+#: denise/appimage.cxx:374 denise/applets.cxx:386
+msgid "Aplikacje"
+msgstr ""
+
+#: denise/appimage.cxx:380
+msgid "Gry"
+msgstr ""
+
+#: denise/appimage.cxx:380
+msgid "Grafika"
+msgstr ""
+
+#: denise/appimage.cxx:380 denise/appimage.cxx:381
+msgid "Multimedia"
+msgstr ""
+
+#: denise/appimage.cxx:381
+msgid "Internet"
+msgstr ""
+
+#: denise/appimage.cxx:382
+msgid "Biuro"
+msgstr ""
+
+#: denise/appimage.cxx:382
+msgid "Programowanie"
+msgstr ""
+
+#: denise/appimage.cxx:382
+msgid "Edukacja"
+msgstr ""
+
+#: denise/appimage.cxx:383
+msgid "Nauka"
+msgstr ""
+
+#: denise/appimage.cxx:383
+msgid "System"
+msgstr ""
+
+#: denise/appimage.cxx:384
+msgid "Akcesoria"
+msgstr ""
+
+#: denise/appimage.cxx:394
+msgid "Inne"
+msgstr ""
+
+#: denise/appimage.cxx:454
+msgid "To nie jest plik AppImage (brak nagłówka ELF)."
+msgstr ""
+
+#: denise/appimage.cxx:460
+msgid ""
+"Ten AppImage używa formatu DwarFS, a jego runtime\n"
+"nie potrafił się rozpakować."
+msgstr ""
+
+#: denise/appimage.cxx:461
+msgid ""
+"Nie udało się rozpakować aplikacji.\n"
+"To może nie być AppImage albo plik jest uszkodzony."
+msgstr ""
+
+#: denise/appimage.cxx:479
+msgid "Nie udało się zapisać aplikacji: %1"
+msgstr ""
+
+#: denise/applets.cxx:304
+msgid "Dźwięk"
+msgstr ""
+
+#: denise/applets.cxx:313
+msgid "Głośność"
+msgstr ""
+
+#: denise/applets.cxx:313
+msgid "Mikrofon"
+msgstr ""
+
+#: denise/applets.cxx:316
+msgid "Brak wyjścia dźwięku."
+msgstr ""
+
+#: denise/applets.cxx:316
+msgid "Brak mikrofonu."
+msgstr ""
+
+#: denise/applets.cxx:321
+msgid "Wycisz"
+msgstr ""
+
+#: denise/applets.cxx:342
+msgid "Wyjście:"
+msgstr ""
+
+#: denise/applets.cxx:342
+msgid "Wejście:"
+msgstr ""
+
+#: denise/applets.cxx:395
+msgid "Słychać tę aplikację"
+msgstr ""
+
+#: denise/applets.cxx:505 denise/applets.cxx:608
+msgid "Bateria: %1"
+msgstr ""
+
+#: denise/applets.cxx:505 denise/applets.cxx:608 power/power.cxx:266
+msgid "Zasilanie sieciowe"
+msgstr ""
+
+#: denise/applets.cxx:523
+msgid "Profil:"
+msgstr ""
+
+#: denise/applets.cxx:538
+msgid "Tryb projekcji"
+msgstr ""
+
+#: denise/applets.cxx:545
+msgid "Ekran nie wygaśnie ani się nie zablokuje, a komputer nie uśnie."
+msgstr ""
+
+#: denise/applets.cxx:554
+msgid "Zablokuj ekran"
+msgstr ""
+
+#: denise/applets.cxx:555 denise/menus.cxx:291 denise/menus.cxx:295
+msgid "Uśpij"
+msgstr ""
+
+#: denise/applets.cxx:556
+msgid "Hibernuj"
+msgstr ""
+
+#: denise/applets.cxx:563
+msgid "Zainstaluj program blokady: xsecurelock, i3lock albo slock."
+msgstr ""
+
+#: denise/applets.cxx:569
+msgid "Wyloguj…"
+msgstr ""
+
+#: denise/applets.cxx:570
+msgid "Uruchom ponownie…"
+msgstr ""
+
+#: denise/applets.cxx:571
+msgid "Wyłącz…"
+msgstr ""
+
+#: denise/applets.cxx:581
+msgid "Ustawienia zasilania…"
+msgstr ""
+
+#: denise/applets.cxx:630
+msgid "Tryb projekcji jest włączony - wyłącz go, żeby uśpić komputer."
+msgstr ""
+
+#: denise/applets.cxx:635
+msgid "Tryb projekcji jest włączony - wyłącz go, żeby hibernować komputer."
+msgstr ""
+
+#: denise/applets.cxx:639 denise/menus.cxx:310
+msgid "Wyloguj"
+msgstr ""
+
+#: denise/applets.cxx:639
+msgid "Zakończyć sesję? Otwarte programy zostaną zamknięte."
+msgstr ""
+
+#: denise/applets.cxx:644 denise/menus.cxx:299 denise/menus.cxx:300
+#: denise/menus.cxx:303
+msgid "Uruchom ponownie"
+msgstr ""
+
+#: denise/applets.cxx:644 denise/menus.cxx:299
+msgid "Uruchomić komputer ponownie?"
+msgstr ""
+
+#: denise/applets.cxx:650 denise/menus.cxx:315 denise/menus.cxx:318
+msgid "Wyłącz"
+msgstr ""
+
+#: denise/applets.cxx:650
+msgid "Wyłączyć komputer?"
+msgstr ""
+
+#: denise/applets.cxx:753
+msgid "Bateria jest prawie wyczerpana (%1%). Podłącz zasilacz."
+msgstr ""
+
+#: denise/desktop.cxx:152
+msgid "%1 wolnej pamięci     %2 wolnego dysku"
+msgstr ""
+
+#: denise/desktop.cxx:153
+msgid "%1 pamięci   %2 dysku"
+msgstr ""
+
+#: denise/desktop.cxx:154
+msgid "Pamięć: wolne %1 z %2"
+msgstr ""
+
+#: denise/desktop.cxx:155
+msgid "Dysk (%1): wolne %2 z %3"
+msgstr ""
+
+#: denise/desktop.cxx:224
+msgid "Aplikacje - teraz: %1"
+msgstr ""
+
+#: denise/desktop.cxx:609 denise/desktop.cxx:717 denise/desktop.cxx:1597
+#: denise/desktop.cxx:1605 denise/desktop.cxx:2386 denise/desktop.cxx:2490
+msgid "Kosz"
+msgstr ""
+
+#: denise/desktop.cxx:1139 denise/desktop.cxx:2151
+msgid "Brak dostępu"
+msgstr ""
+
+#: denise/desktop.cxx:1140
+msgid ""
+"Ten folder znajduje się poza LisaOS HD.\n"
+"Aby go otworzyć, przełącz się w tryb root."
+msgstr ""
+
+#: denise/desktop.cxx:1200
+msgid "Zmiana nazwy"
+msgstr ""
+
+#. TRANSLATORS: %s = kod wyjścia programu (zostaw %s)
+#: denise/desktop.cxx:1219 denise/menus.cxx:253
+#, c-format
+msgid "[kod wyjścia %s] Enter zamyka okno…"
+msgstr ""
+
+#: denise/desktop.cxx:1259 denise/desktop.cxx:1268 denise/desktop.cxx:1276
+msgid "Instalacja"
+msgstr ""
+
+#: denise/desktop.cxx:1259
+msgid "Nie udało się przenieść pliku:"
+msgstr ""
+
+#: denise/desktop.cxx:1269
+msgid ""
+"„%1” jest już zainstalowany w folderze %2.\n"
+"Inne wersje tego programu mogą być zainstalowane obok."
+msgstr ""
+
+#: denise/desktop.cxx:1272 denise/desktop.cxx:2177
+msgid "Zastąp"
+msgstr ""
+
+#: denise/desktop.cxx:1273
+msgid "Uruchom"
+msgstr ""
+
+#: denise/desktop.cxx:1277
+msgid ""
+"Zainstalować aplikację „%1”?\n"
+"Plik zostanie przeniesiony do folderu %2."
+msgstr ""
+
+#: denise/desktop.cxx:1280
+msgid "Aplikacja będzie działać w piaskownicy: zobaczy tylko LisaOS HD."
+msgstr ""
+
+#: denise/desktop.cxx:1281
+msgid "Uwaga: brak bubblewrap - aplikacja będzie działać bez piaskownicy."
+msgstr ""
+
+#: denise/desktop.cxx:1282
+msgid "Zainstaluj"
+msgstr ""
+
+#: denise/desktop.cxx:1294
+msgid "Nie można uruchomić"
+msgstr ""
+
+#: denise/desktop.cxx:1531
+msgid "Środowisko w duchu Mac OS 9 i Amigi"
+msgstr ""
+
+#: denise/desktop.cxx:1532
+msgid "Pamięć wbudowana: %1 GB"
+msgstr ""
+
+#: denise/desktop.cxx:1533
+msgid "Menedżer plików: Rambler 0.1 · FLTK %1"
+msgstr ""
+
+#: denise/desktop.cxx:1534
+msgid "O LisaOS"
+msgstr ""
+
+#: denise/desktop.cxx:1540
+msgid "bez nazwy"
+msgstr ""
+
+#: denise/desktop.cxx:1597 denise/desktop.cxx:2386 denise/desktop.cxx:2490
+msgid "Nie udało się przenieść do kosza:"
+msgstr ""
+
+#: denise/desktop.cxx:1605
+msgid "Kosz jest pusty."
+msgstr ""
+
+#: denise/desktop.cxx:1606
+msgid "Opróżnij kosz"
+msgstr ""
+
+#: denise/desktop.cxx:1607
+msgid ""
+"Kosz zawiera %1.\n"
+"Czy na pewno usunąć je na zawsze?"
+msgstr ""
+
+#: denise/desktop.cxx:1609
+msgid "Opróżnij"
+msgstr ""
+
+#: denise/desktop.cxx:1620 denise/desktop.cxx:1629
+msgid "Tryb root"
+msgstr ""
+
+#: denise/desktop.cxx:1621
+msgid ""
+"Tryb root daje pełny dostęp do systemu plików\n"
+"i ustawień zaawansowanych. Wymaga hasła administratora."
+msgstr ""
+
+#: denise/desktop.cxx:1624
+msgid "Przełącz"
+msgstr ""
+
+#: denise/desktop.cxx:1629
+msgid "Nie znaleziono pkexec (pakiet polkit)."
+msgstr ""
+
+#: denise/desktop.cxx:1703 denise/desktop.cxx:1776
+msgid "Ustawienia sieci…"
+msgstr ""
+
+#: denise/desktop.cxx:1711
+msgid "%1 (%2): %3"
+msgstr ""
+
+#: denise/desktop.cxx:1722
+msgid "Kabel odłączony"
+msgstr ""
+
+#: denise/desktop.cxx:1726
+msgid "Wi-Fi: hotspot „%1”"
+msgstr ""
+
+#: denise/desktop.cxx:1727
+msgid "Wi-Fi: włączone"
+msgstr ""
+
+#: denise/desktop.cxx:1727
+msgid "Wi-Fi: wyłączone"
+msgstr ""
+
+#: denise/desktop.cxx:1728
+msgid "Wyłącz Wi-Fi"
+msgstr ""
+
+#: denise/desktop.cxx:1728
+msgid "Włącz Wi-Fi"
+msgstr ""
+
+#: denise/desktop.cxx:1750
+msgid "Wyłącz hotspot"
+msgstr ""
+
+#: denise/desktop.cxx:1750
+msgid "Rozłącz z „%1”"
+msgstr ""
+
+#: denise/desktop.cxx:1764
+msgid "(łączenie…)"
+msgstr ""
+
+#: denise/desktop.cxx:1792
+msgid ""
+"Połączenie VPN „%1” (%2).\n"
+"Podaj hasło."
+msgstr ""
+
+#: denise/desktop.cxx:1815
+msgid ""
+"Sieci firmowe (WPA Enterprise, 802.1X) nie są jeszcze obsługiwane.\n"
+"Skonfiguruj je narzędziem nmtui albo nm-connection-editor."
+msgstr ""
+
+#: denise/desktop.cxx:2000
+msgid "Ukryj %1"
+msgstr ""
+
+#: denise/desktop.cxx:2004
+msgid "Ukryj inne"
+msgstr ""
+
+#: denise/desktop.cxx:2009
+msgid "Pokaż wszystkie"
+msgstr ""
+
+#: denise/desktop.cxx:2018
+msgid "Zakończ %1"
+msgstr ""
+
+#: denise/desktop.cxx:2097
+msgid "Nazwa nie może zawierać znaku „/”."
+msgstr ""
+
+#: denise/desktop.cxx:2098
+msgid "Taka nazwa jest zarezerwowana."
+msgstr ""
+
+#: denise/desktop.cxx:2101
+msgid "Element o nazwie „%1” już istnieje."
+msgstr ""
+
+#: denise/desktop.cxx:2103
+msgid "Nie udało się zmienić nazwy:"
+msgstr ""
+
+#: denise/desktop.cxx:2151
+msgid "Folder docelowy jest poza LisaOS HD."
+msgstr ""
+
+#: denise/desktop.cxx:2158
+msgid "Nie można przenieść"
+msgstr ""
+
+#: denise/desktop.cxx:2158
+msgid "Folderu „%1” nie można umieścić w nim samym."
+msgstr ""
+
+#: denise/desktop.cxx:2172
+msgid "element „%1”"
+msgstr ""
+
+#: denise/desktop.cxx:2174 denise/desktop.cxx:2217
+msgid "Kopiowanie"
+msgstr ""
+
+#: denise/desktop.cxx:2174 denise/desktop.cxx:2217
+msgid "Przenoszenie"
+msgstr ""
+
+#: denise/desktop.cxx:2175
+msgid ""
+"W folderze „%1” jest już %2.\n"
+"Zastąpić?"
+msgstr ""
+
+#: denise/desktop.cxx:2217
+msgid "Wystąpiły błędy:"
+msgstr ""
+
+#: denise/desktop.cxx:2345 denise/desktop.cxx:2637 denise/desktop.cxx:2650
+msgid "Dysk zaszyfrowany"
+msgstr ""
+
+#: denise/desktop.cxx:2345
+msgid "Najpierw otwórz dysk „%1” i podaj hasło."
+msgstr ""
+
+#: denise/desktop.cxx:2350 denise/desktop.cxx:2564
+msgid "Dysk"
+msgstr ""
+
+#: denise/desktop.cxx:2638
+msgid ""
+"Dysk „%1” jest zaszyfrowany.\n"
+"Podaj hasło, aby go otworzyć."
+msgstr ""
+
+#: denise/desktop.cxx:2638
+msgid "Otwórz"
+msgstr ""
+
+#: denise/desktop.cxx:2669
+msgid "Wysuwanie"
+msgstr ""
+
+#: denise/folder_view.cxx:47 denise/menus.cxx:523
+msgid "folder"
+msgstr ""
+
+#: denise/folder_view.cxx:49
+msgid "aplikacja"
+msgstr ""
+
+#: denise/folder_view.cxx:50
+msgid "obraz"
+msgstr ""
+
+#: denise/folder_view.cxx:51
+msgid "dźwięk"
+msgstr ""
+
+#: denise/folder_view.cxx:52
+msgid "dokument"
+msgstr ""
+
+#: denise/folder_view.cxx:769
+msgid "%1 wolne"
+msgstr ""
+
+#: denise/folder_view.cxx:885
+msgid "Nazwa"
+msgstr ""
+
+#: denise/folder_view.cxx:886
+msgid "Data modyfikacji"
+msgstr ""
+
+#: denise/folder_view.cxx:887
+msgid "Rozmiar"
+msgstr ""
+
+#: denise/folder_view.cxx:888
+msgid "Rodzaj"
+msgstr ""
+
+#: denise/gary.cxx:112
+msgid "Lisa Shell"
+msgstr ""
+
+#: denise/menus.cxx:207
+msgid ""
+"Nie udało się otworzyć obrazu „%1”.\n"
+"Plik może być uszkodzony albo w nieobsługiwanym formacie."
+msgstr ""
+
+#: denise/menus.cxx:214
+msgid "Nie udało się zapisać ustawień wyglądu."
+msgstr ""
+
+#: denise/menus.cxx:230
+msgid "Wykonaj polecenie"
+msgstr ""
+
+#: denise/menus.cxx:231
+msgid "Polecenie do wykonania (w folderze „%1”):"
+msgstr ""
+
+#: denise/menus.cxx:238
+msgid "Pokaż wynik w Lisa Shell"
+msgstr ""
+
+#: denise/menus.cxx:242
+msgid "Wykonaj"
+msgstr ""
+
+#: denise/menus.cxx:291
+msgid ""
+"Tryb projekcji jest włączony - wyłącz go w menu baterii, żeby uśpić komputer."
+msgstr ""
+
+#: denise/menus.cxx:308
+msgid "Zakończ"
+msgstr ""
+
+#: denise/menus.cxx:308
+msgid "Zakończyć pracę z LisaOS?"
+msgstr ""
+
+#: denise/menus.cxx:409
+msgid "ponad %1 (liczenie przerwane)"
+msgstr ""
+
+#: denise/menus.cxx:411
+msgid "%1, plików: %2"
+msgstr ""
+
+#: denise/menus.cxx:498
+msgid "Informacje: %1"
+msgstr ""
+
+#: denise/menus.cxx:512 denise/menus.cxx:523
+msgid "Rodzaj:"
+msgstr ""
+
+#: denise/menus.cxx:512
+msgid "płyta"
+msgstr ""
+
+#: denise/menus.cxx:512
+msgid "dysk wymienny"
+msgstr ""
+
+#: denise/menus.cxx:512
+msgid "dysk"
+msgstr ""
+
+#: denise/menus.cxx:513 denise/menus.cxx:684
+msgid "System plików:"
+msgstr ""
+
+#: denise/menus.cxx:513
+msgid "brak (niesformatowany)"
+msgstr ""
+
+#: denise/menus.cxx:514
+msgid "Pojemność:"
+msgstr ""
+
+#: denise/menus.cxx:517
+msgid "Wolne:"
+msgstr ""
+
+#: denise/menus.cxx:518
+msgid "Urządzenie:"
+msgstr ""
+
+#: denise/menus.cxx:519
+msgid "Zamontowany:"
+msgstr ""
+
+#: denise/menus.cxx:519
+msgid "nie"
+msgstr ""
+
+#: denise/menus.cxx:520
+msgid "Szyfrowanie:"
+msgstr ""
+
+#: denise/menus.cxx:520
+msgid "LUKS (otwarty)"
+msgstr ""
+
+#: denise/menus.cxx:520
+msgid "LUKS (zamknięty)"
+msgstr ""
+
+#: denise/menus.cxx:520
+msgid "brak"
+msgstr ""
+
+#: denise/menus.cxx:524
+msgid "Rozmiar:"
+msgstr ""
+
+#: denise/menus.cxx:525
+msgid "Położenie:"
+msgstr ""
+
+#: denise/menus.cxx:529
+msgid "Utworzono:"
+msgstr ""
+
+#: denise/menus.cxx:530
+msgid "Zmieniono:"
+msgstr ""
+
+#: denise/menus.cxx:531
+msgid "Otwarto:"
+msgstr ""
+
+#: denise/menus.cxx:539
+msgid "Właściciel:"
+msgstr ""
+
+#: denise/menus.cxx:542
+msgid "Uprawnienia:"
+msgstr ""
+
+#: denise/menus.cxx:548
+msgid "Flagi:"
+msgstr ""
+
+#: denise/menus.cxx:549
+msgid "Tylko do odczytu"
+msgstr ""
+
+#: denise/menus.cxx:553
+msgid "Program"
+msgstr ""
+
+#: denise/menus.cxx:556
+msgid "Prawo uruchamiania (jak flaga e w Workbenchu)"
+msgstr ""
+
+#: denise/menus.cxx:561
+msgid "Komentarz:"
+msgstr ""
+
+#: denise/menus.cxx:566
+msgid "Ten system plików nie obsługuje komentarzy."
+msgstr ""
+
+#: denise/menus.cxx:569
+msgid "Parametry:"
+msgstr ""
+
+#: denise/menus.cxx:575
+msgid "Parametry uruchamiania programu (ToolTypes), np. --fullscreen"
+msgstr ""
+
+#: denise/menus.cxx:588
+msgid "Nie udało się zmienić flag."
+msgstr ""
+
+#: denise/menus.cxx:593
+msgid "Informacje"
+msgstr ""
+
+#: denise/menus.cxx:662 denise/menus.cxx:673 denise/menus.cxx:694
+#: denise/menus.cxx:698 denise/menus.cxx:706
+msgid "Formatuj dysk"
+msgstr ""
+
+#: denise/menus.cxx:662
+msgid "Zaznacz na biurku ikonę dysku, który chcesz sformatować."
+msgstr ""
+
+#: denise/menus.cxx:674
+msgid "Formatowanie „%1” (%2)."
+msgstr ""
+
+#: denise/menus.cxx:675
+msgid "Wszystkie dane na tym dysku zostaną usunięte!"
+msgstr ""
+
+#: denise/menus.cxx:680
+msgid "Nazwa:"
+msgstr ""
+
+#: denise/menus.cxx:687
+msgid ""
+"FAT32 (pendrive - działa wszędzie)|exFAT (duże pliki, Windows i Mac)|ext4 "
+"(Linux)|NTFS (Windows)"
+msgstr ""
+
+#: denise/menus.cxx:690 denise/menus.cxx:695
+msgid "Formatuj"
+msgstr ""
+
+#: denise/menus.cxx:694
+msgid "Na pewno sformatować „%1”? Tej operacji nie da się cofnąć."
+msgstr ""
+
+#: denise/menus.cxx:698
+msgid "Dysk zniknął."
+msgstr ""
+
+#: denise/menus.cxx:706
+msgid "Dysk „%1” jest gotowy."
+msgstr ""
+
+#: denise/volumes.cxx:152
+msgid "Płyta"
+msgstr ""
+
+#: denise/volumes.cxx:153
+msgid "Zaszyfrowany dysk %1"
+msgstr ""
+
+#: denise/volumes.cxx:154
+msgid "Niesformatowany %1"
+msgstr ""
+
+#: denise/volumes.cxx:155
+msgid "Dysk USB %1"
+msgstr ""
+
+#: denise/volumes.cxx:156
+msgid "Dysk %1"
+msgstr ""
+
+#: denise/volumes.cxx:217
+msgid ""
+"Brak uprawnień do tej operacji.\n"
+"(Potrzebny jest agent polkit albo uprawnienia administratora.)"
+msgstr ""
+
+#: denise/volumes.cxx:219
+msgid ""
+"Dysk jest w użyciu - zamknij pliki i programy, które z niego korzystają."
+msgstr ""
+
+#: denise/volumes.cxx:229
+msgid "Brak połączenia z systemową szyną D-Bus."
+msgstr ""
+
+#: denise/volumes.cxx:239
+msgid "nieznany błąd"
+msgstr ""
+
+#: denise/volumes.cxx:287
+msgid "Dysk jest zaszyfrowany - najpierw podaj hasło."
+msgstr ""
+
+#: denise/volumes.cxx:292
+msgid "Nie udało się zamontować „%1”:"
+msgstr ""
+
+#: denise/volumes.cxx:303
+msgid "Nie udało się odmontować „%1”:"
+msgstr ""
+
+#: denise/volumes.cxx:318
+msgid "Nie udało się odblokować dysku:"
+msgstr ""
+
+#: denise/volumes.cxx:325
+msgid "Nie udało się zamknąć zaszyfrowanego dysku:"
+msgstr ""
+
+#: denise/volumes.cxx:329
+msgid "Płyt nie da się tu formatować."
+msgstr ""
+
+#: denise/volumes.cxx:362
+msgid "Nie udało się sformatować „%1”:"
+msgstr ""
+
+#: insight/main.cxx:98
+msgid "bez tytułu"
+msgstr ""
+
+#: net/net.cxx:94
+msgid "Nie znaleziono tej sieci w zasięgu."
+msgstr ""
+
+#: net/net.cxx:96
+msgid "Brak uprawnień do zmiany ustawień sieci."
+msgstr ""
+
+#: net/net.cxx:98 net/net.cxx:193
+msgid "NetworkManager nie działa."
+msgstr ""
+
+#: net/net.cxx:99 net/net.cxx:682
+msgid "Przekroczono czas oczekiwania na połączenie."
+msgstr ""
+
+#: net/net.cxx:101
+msgid "Nie udało się uzyskać adresu IP."
+msgstr ""
+
+#: net/net.cxx:103
+msgid "Nieprawidłowy adres IP."
+msgstr ""
+
+#: net/net.cxx:104
+msgid "Nie ma takiego połączenia."
+msgstr ""
+
+#: net/net.cxx:106
+msgid "Jądro systemu nie obsługuje WireGuard (brak modułu wireguard)."
+msgstr ""
+
+#: net/net.cxx:108
+msgid "Brak wtyczki VPN NetworkManagera dla tego połączenia."
+msgstr ""
+
+#: net/net.cxx:109
+msgid "Brak programu nmcli (NetworkManager)."
+msgstr ""
+
+#: net/net.cxx:112
+msgid "Operacja się nie udała."
+msgstr ""
+
+#: net/net.cxx:112 power/power.cxx:163
+msgid "Nie udało się: %1"
+msgstr ""
+
+#: net/net.cxx:191
+msgid "Brak programu nmcli (pakiet network-manager)."
+msgstr ""
+
+#: net/net.cxx:322
+msgid "Modem komórkowy"
+msgstr ""
+
+#: net/net.cxx:333
+msgid "niedostępne"
+msgstr ""
+
+#: net/net.cxx:334
+msgid "poza NetworkManagerem"
+msgstr ""
+
+#: net/net.cxx:371
+msgid "Usunięto połączenie."
+msgstr ""
+
+#: net/net.cxx:430
+msgid "Nie można odczytać pliku."
+msgstr ""
+
+#: net/net.cxx:436
+msgid ""
+"Nieznany format. Obsługiwane: WireGuard (.conf), OpenVPN (.ovpn), Cisco VPNC "
+"(.pcf)."
+msgstr ""
+
+#: net/net.cxx:440
+msgid ""
+"Brak wtyczki NetworkManagera dla %1: zainstaluj pakiet network-manager-%2."
+msgstr ""
+
+#: net/net.cxx:449
+msgid ""
+"Nazwa pliku WireGuard musi być krótką nazwą interfejsu (np. wg0.conf, firma."
+"conf)."
+msgstr ""
+
+#: net/net.cxx:483
+msgid "Nie można utworzyć pliku tymczasowego."
+msgstr ""
+
+#: net/net.cxx:498
+msgid ""
+"Serwer VPN nie odpowiada albo odrzucił logowanie. Sprawdź nazwę użytkownika "
+"i hasło."
+msgstr ""
+
+#: net/net.cxx:499
+msgid "Przekroczono czas oczekiwania na połączenie VPN."
+msgstr ""
+
+#: net/net.cxx:503
+msgid "Połączono z VPN."
+msgstr ""
+
+#: net/net.cxx:744 net/net.cxx:797
+msgid "Brak karty Wi-Fi."
+msgstr ""
+
+#: net/net.cxx:751 net/net.cxx:802
+msgid "Brak połączenia z magistralą systemową D-Bus."
+msgstr ""
+
+#: net/net.cxx:789
+msgid "Hasło hotspotu musi mieć co najmniej 8 znaków."
+msgstr ""
+
+#: net/net.cxx:810
+msgid "Nie udało się włączyć hotspotu (karta może nie obsługiwać trybu AP)."
+msgstr ""
+
+#: platinum/i18n.cxx:162
+msgid "sty"
+msgstr ""
+
+#: platinum/i18n.cxx:162
+msgid "lut"
+msgstr ""
+
+#: platinum/i18n.cxx:162
+msgid "mar"
+msgstr ""
+
+#: platinum/i18n.cxx:162
+msgid "kwi"
+msgstr ""
+
+#: platinum/i18n.cxx:162
+msgid "maj"
+msgstr ""
+
+#: platinum/i18n.cxx:162
+msgid "cze"
+msgstr ""
+
+#: platinum/i18n.cxx:163
+msgid "lip"
+msgstr ""
+
+#: platinum/i18n.cxx:163
+msgid "sie"
+msgstr ""
+
+#: platinum/i18n.cxx:163
+msgid "wrz"
+msgstr ""
+
+#: platinum/i18n.cxx:163
+msgid "paź"
+msgstr ""
+
+#: platinum/i18n.cxx:163
+msgid "lis"
+msgstr ""
+
+#: platinum/i18n.cxx:163
+msgid "gru"
+msgstr ""
+
+#. TRANSLATORS: data: %1 dzień, %2 miesiąc (skrót), %3 rok, %4 godzina - można zmienić szyk
+#: platinum/i18n.cxx:170
+msgid "%1 %2 %3, %4"
+msgstr ""
+
+#: platinum/platinum.cxx:164
+msgid "Tak"
+msgstr ""
+
+#: platinum/platinum.cxx:165
+msgid "Nie"
+msgstr ""
+
+#: platinum/platinum.cxx:697
+msgid "%1 element"
+msgid_plural "%1 elementy"
+msgstr[0] ""
+msgstr[1] ""
+
+#: platinum/platinum.cxx:703
+msgid "Wybierz"
+msgstr ""
+
+#: platinum/platinum.cxx:704
+msgid "Dodaj do ulubionych"
+msgstr ""
+
+#: platinum/platinum.cxx:705
+msgid "Wszystkie pliki (*)"
+msgstr ""
+
+#: platinum/platinum.cxx:706
+msgid "Własny filtr"
+msgstr ""
+
+#: platinum/platinum.cxx:707
+msgid "Plik już istnieje. Zastąpić go?"
+msgstr ""
+
+#: platinum/platinum.cxx:708
+msgid "Ulubione"
+msgstr ""
+
+#: platinum/platinum.cxx:709
+msgid "Plik:"
+msgstr ""
+
+#: platinum/platinum.cxx:710
+msgid "Dyski"
+msgstr ""
+
+#: platinum/platinum.cxx:711
+msgid "Ukryte pliki"
+msgstr ""
+
+#: platinum/platinum.cxx:712
+msgid "Zarządzaj ulubionymi"
+msgstr ""
+
+#: platinum/platinum.cxx:713
+msgid "Nazwa nowego folderu:"
+msgstr ""
+
+#: platinum/platinum.cxx:714
+msgid "Nowy folder"
+msgstr ""
+
+#: platinum/platinum.cxx:717
+msgid "Pokaż:"
+msgstr ""
+
+#: platinum/theme.cxx:43
+msgid "Gładki"
+msgstr ""
+
+#: platinum/theme.cxx:43
+msgid "Kropki"
+msgstr ""
+
+#: platinum/theme.cxx:43
+msgid "Groszki"
+msgstr ""
+
+#: platinum/theme.cxx:43
+msgid "Krata"
+msgstr ""
+
+#: platinum/theme.cxx:43
+msgid "Drobna kratka"
+msgstr ""
+
+#: platinum/theme.cxx:43
+msgid "Szachownica"
+msgstr ""
+
+#: platinum/theme.cxx:44
+msgid "Ukośne prążki"
+msgstr ""
+
+#: platinum/theme.cxx:44
+msgid "Paski poziome"
+msgstr ""
+
+#: platinum/theme.cxx:44
+msgid "Paski pionowe"
+msgstr ""
+
+#: platinum/theme.cxx:44
+msgid "Cegiełki"
+msgstr ""
+
+#: platinum/theme.cxx:45
+msgid "Raster (Amiga)"
+msgstr ""
+
+#: platinum/theme.cxx:45
+msgid "Romby"
+msgstr ""
+
+#: platinum/theme.cxx:45
+msgid "Krzyżyki"
+msgstr ""
+
+#: platinum/theme.cxx:45
+msgid "Zygzak"
+msgstr ""
+
+#: platinum/theme.cxx:45
+msgid "Jodełka"
+msgstr ""
+
+#: platinum/theme.cxx:45
+msgid "Tkanina"
+msgstr ""
+
+#: platinum/theme.cxx:46
+msgid "Fale"
+msgstr ""
+
+#: platinum/theme.cxx:46
+msgid "Łuski"
+msgstr ""
+
+#: platinum/theme.cxx:46
+msgid "Gwiazdki"
+msgstr ""
+
+#: platinum/theme.cxx:46
+msgid "Piasek"
+msgstr ""
+
+#: platinum/theme.cxx:48
+msgid "Wzór"
+msgstr ""
+
+#: platinum/theme.cxx:48
+msgid "Jednolity kolor"
+msgstr ""
+
+#: platinum/theme.cxx:48
+msgid "Gradient"
+msgstr ""
+
+#: platinum/theme.cxx:50
+msgid "Pionowy"
+msgstr ""
+
+#: platinum/theme.cxx:50
+msgid "Poziomy"
+msgstr ""
+
+#: platinum/theme.cxx:50
+msgid "Ukośny"
+msgstr ""
+
+#: platinum/theme.cxx:50
+msgid "Promienisty"
+msgstr ""
+
+#: platinum/theme.cxx:126
+msgid "Grafit"
+msgstr ""
+
+#: platinum/wallpaper.cxx:27
+msgid "Wypełnij ekran"
+msgstr ""
+
+#: platinum/wallpaper.cxx:27
+msgid "Dopasuj"
+msgstr ""
+
+#: platinum/wallpaper.cxx:27
+msgid "Rozciągnij"
+msgstr ""
+
+#: platinum/wallpaper.cxx:27
+msgid "Na środku"
+msgstr ""
+
+#: platinum/wallpaper.cxx:28
+msgid "Sąsiadująco"
+msgstr ""
+
+#: power/power.cxx:152
+msgid "Brak magistrali systemowej D-Bus."
+msgstr ""
+
+#: power/power.cxx:160
+msgid "Wstrzymane przez inny program albo tryb projekcji."
+msgstr ""
+
+#: power/power.cxx:162
+msgid "Brak usługi logind/elogind."
+msgstr ""
+
+#: power/power.cxx:271
+msgid "%1 h %2 min"
+msgstr ""
+
+#: power/power.cxx:273
+msgid "%1, ładowanie"
+msgstr ""
+
+#: power/power.cxx:273
+msgid "%1, ładowanie (pełna za ok. %2)"
+msgstr ""
+
+#: power/power.cxx:274
+msgid "%1, zasilacz"
+msgstr ""
+
+#: power/power.cxx:275
+msgid "%1, zostało ok. %2"
+msgstr ""
+
+#: power/power.cxx:279
+msgid "Oszczędzanie energii"
+msgstr ""
+
+#: power/power.cxx:280
+msgid "Zrównoważony"
+msgstr ""
+
+#: power/power.cxx:281
+msgid "Wydajność"
+msgstr ""
+
+#: power/power.cxx:375
+msgid "wygaszanie ekranu"
+msgstr ""
+
+#: power/power.cxx:394
+msgid "usypianie (logind)"
+msgstr ""
+
+#: power/power.cxx:418
+msgid "wygaszacz pulpitu"
+msgstr ""
+
+#: shell/main.cxx:70
+msgid "Klasyczny (jasny)"
+msgstr ""
+
+#: shell/main.cxx:71
+msgid "Ciemny"
+msgstr ""
+
+#: shell/main.cxx:72
+msgid "Zielony fosfor"
+msgstr ""
+
+#: shell/main.cxx:73
+msgid "Bursztynowy"
+msgstr ""
+
+#: shell/main.cxx:74
+msgid "Workbench (Amiga)"
+msgstr ""
+
+#: shell/main.cxx:75
+msgid "Jak schemat kolorów"
+msgstr ""
+
+#: shell/main.cxx:598
+msgid ""
+"W tym oknie działa „%1”.\n"
+"Zamknąć je mimo to?"
+msgstr ""
+
+#: shell/main.cxx:654
+msgid "Nowe okno"
+msgstr ""
+
+#: shell/main.cxx:655
+msgid "Kopiuj"
+msgstr ""
+
+#: shell/main.cxx:656
+msgid "Wklej"
+msgstr ""
+
+#: shell/main.cxx:657
+msgid "Zaznacz wszystko"
+msgstr ""
+
+#: shell/main.cxx:666
+msgid "Wyczyść przewijanie"
+msgstr ""
+
+#: shell/main.cxx:667
+msgid "Resetuj terminal"
+msgstr ""
+
+#: shell/main.cxx:668
+msgid "Zamknij okno"
+msgstr ""
+
+#: denise/desktop.cxx:403
+msgid "O systemie…"
+msgstr ""
+
+#: denise/desktop.cxx:404
+msgid "Preferencje…"
+msgstr ""
+
+#: denise/desktop.cxx:405
+msgid "Wykonaj polecenie…"
+msgstr ""
+
+#: denise/desktop.cxx:407
+msgid "Otwórz dziennik"
+msgstr ""
+
+#: denise/desktop.cxx:408
+msgid "Przerysuj wszystko"
+msgstr ""
+
+#: denise/desktop.cxx:409
+msgid "Uaktualnij wszystko"
+msgstr ""
+
+#: denise/desktop.cxx:412
+msgid "Zakończ…"
+msgstr ""
+
+#: denise/desktop.cxx:415 denise/menus.cxx:159
+msgid "Otwórz katalog nadrzędny"
+msgstr ""
+
+#: denise/desktop.cxx:417 denise/menus.cxx:160
+msgid "Uaktualnij"
+msgstr ""
+
+#: denise/desktop.cxx:418 denise/menus.cxx:160
+msgid "Zaznacz zawartość"
+msgstr ""
+
+#: denise/desktop.cxx:419 denise/menus.cxx:163
+msgid "Uporządkuj"
+msgstr ""
+
+#: denise/desktop.cxx:420 denise/menus.cxx:164
+msgid "Pokaż ukryte pliki"
+msgstr ""
+
+#: denise/desktop.cxx:421 denise/desktop.cxx:422 denise/desktop.cxx:2089
+#: denise/desktop.cxx:2090 denise/menus.cxx:160 denise/menus.cxx:167
+#: denise/menus.cxx:168
+msgid "Pokaż jako"
+msgstr ""
+
+#: denise/desktop.cxx:422 denise/desktop.cxx:2090 denise/menus.cxx:168
+msgid "Listę"
+msgstr ""
+
+#: denise/desktop.cxx:423 denise/desktop.cxx:424 denise/desktop.cxx:425
+#: denise/desktop.cxx:426 denise/menus.cxx:161 denise/menus.cxx:169
+#: denise/menus.cxx:170 denise/menus.cxx:171 denise/menus.cxx:172
+msgid "Sortuj"
+msgstr ""
+
+#: denise/desktop.cxx:423 denise/menus.cxx:169
+msgid "według nazwy"
+msgstr ""
+
+#: denise/desktop.cxx:424 denise/menus.cxx:170
+msgid "według daty"
+msgstr ""
+
+#: denise/desktop.cxx:425 denise/menus.cxx:171
+msgid "według rozmiaru"
+msgstr ""
+
+#: denise/desktop.cxx:426 denise/menus.cxx:172
+msgid "według rodzaju"
+msgstr ""
+
+#: denise/desktop.cxx:427 denise/desktop.cxx:428 denise/desktop.cxx:429
+#: denise/menus.cxx:161 denise/menus.cxx:173 denise/menus.cxx:174
+#: denise/menus.cxx:175
+msgid "Wielkość ikon"
+msgstr ""
+
+#: denise/desktop.cxx:427 denise/menus.cxx:173
+msgid "Małe"
+msgstr ""
+
+#: denise/desktop.cxx:428 denise/menus.cxx:174
+msgid "Normalne"
+msgstr ""
+
+#: denise/desktop.cxx:429 denise/menus.cxx:175
+msgid "Duże"
+msgstr ""
+
+#: denise/desktop.cxx:434 denise/menus.cxx:181
+msgid "Duplikuj"
+msgstr ""
+
+#: denise/desktop.cxx:435 denise/menus.cxx:182
+msgid "Zmień nazwę…"
+msgstr ""
+
+#: denise/desktop.cxx:437 denise/menus.cxx:184
+msgid "Informacje…"
+msgstr ""
+
+#: denise/desktop.cxx:438 denise/menus.cxx:187
+msgid "Ustaw jako tapetę"
+msgstr ""
+
+#: denise/desktop.cxx:439 denise/menus.cxx:189
+msgid "Zamroź"
+msgstr ""
+
+#: denise/desktop.cxx:440 denise/menus.cxx:190
+msgid "Odmroź"
+msgstr ""
+
+#: denise/desktop.cxx:441 denise/menus.cxx:195
+msgid "Połóż na doku"
+msgstr ""
+
+#: denise/desktop.cxx:442 denise/menus.cxx:196
+msgid "Zdejmij z doku"
+msgstr ""
+
+#: denise/desktop.cxx:443 denise/menus.cxx:197
+msgid "Wysuń"
+msgstr ""
+
+#: denise/desktop.cxx:445 denise/menus.cxx:198
+msgid "Formatuj dysk…"
+msgstr ""
+
+#: denise/desktop.cxx:446
+msgid "Opróżnij kosz…"
+msgstr ""
+
+#: denise/desktop.cxx:447
+msgid "Zakończ tryb root"
+msgstr ""
+
+#: denise/desktop.cxx:447
+msgid "Tryb root…"
+msgstr ""
+
+#: denise/desktop.cxx:449
+msgid "Resetuj LISA"
+msgstr ""
+
+#: denise/desktop.cxx:2027 denise/desktop.cxx:2033 denise/desktop.cxx:2045
+#: denise/desktop.cxx:2046 denise/desktop.cxx:2047
+msgid "Okna Ramblera"
+msgstr ""
+
+#: denise/desktop.cxx:2027
+msgid "Brak otwartych okien"
+msgstr ""
+
+#: denise/desktop.cxx:2045
+msgid "Zwiń wszystkie"
+msgstr ""
+
+#: denise/desktop.cxx:2046
+msgid "Rozwiń wszystkie"
+msgstr ""
+
+#: denise/desktop.cxx:2047
+msgid "Zamknij wszystkie"
+msgstr ""
+
+#: denise/menus.cxx:161
+msgid "Lisa Shell tutaj"
+msgstr ""
+
+#: shell/main.cxx:659
+msgid "Profil"
+msgstr ""
+
+#: shell/main.cxx:663 shell/main.cxx:664 shell/main.cxx:665
+msgid "Czcionka"
+msgstr ""
+
+#: shell/main.cxx:663
+msgid "Większa"
+msgstr ""
+
+#: shell/main.cxx:664
+msgid "Mniejsza"
+msgstr ""
+
+#: shell/main.cxx:665
+msgid "Normalna"
+msgstr ""

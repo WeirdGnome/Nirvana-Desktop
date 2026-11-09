@@ -1,5 +1,6 @@
 // LisaOS - denise: obsługa AppImage
 #include "appimage.h"
+#include "i18n.h"
 
 #include <elf.h>
 #include <fcntl.h>
@@ -363,14 +364,24 @@ std::string label(const std::string &path, const std::string &home) {
   return v.empty() ? app_name(file) : app_name(file) + " " + v;
 }
 
+// Nazwa folderu: polska, gdy taki folder już jest, inaczej przetłumaczona.
+static std::string folder_name(const std::string &parent, const char *pl) {
+  std::error_code ec;
+  if (fs::is_directory(fs::path(parent) / pl, ec)) return pl;
+  return _(pl);
+}
+
+std::string apps_dir(const std::string &home) { return home + "/" + folder_name(home, N_("Aplikacje")); }
+
 std::string category_folder(const std::string &path, const std::string &home) {
+  std::string parent = apps_dir(home);
   // główne kategorie freedesktop.org -> foldery w ~/Aplikacje
   static const std::pair<const char *, const char *> map[] = {
-    {"Game", "Gry"},            {"Graphics", "Grafika"},       {"AudioVideo", "Multimedia"},
-    {"Audio", "Multimedia"},    {"Video", "Multimedia"},       {"Network", "Internet"},
-    {"Office", "Biuro"},        {"Development", "Programowanie"}, {"Education", "Edukacja"},
-    {"Science", "Nauka"},       {"System", "System"},          {"Settings", "System"},
-    {"Utility", "Akcesoria"},
+    {"Game", N_("Gry")},          {"Graphics", N_("Grafika")},   {"AudioVideo", N_("Multimedia")},
+    {"Audio", N_("Multimedia")},  {"Video", N_("Multimedia")},   {"Network", N_("Internet")},
+    {"Office", N_("Biuro")},      {"Development", N_("Programowanie")}, {"Education", N_("Edukacja")},
+    {"Science", N_("Nauka")},     {"System", N_("System")},      {"Settings", N_("System")},
+    {"Utility", N_("Akcesoria")},
   };
   std::string cats = meta(path, home).categories;
   size_t pos = 0;
@@ -378,9 +389,9 @@ std::string category_folder(const std::string &path, const std::string &home) {
     size_t sc = cats.find(';', pos);
     std::string c = cats.substr(pos, sc == std::string::npos ? std::string::npos : sc - pos);
     pos = sc == std::string::npos ? cats.size() : sc + 1;
-    for (auto &[k, v] : map) if (c == k) return v;
+    for (auto &[k, v] : map) if (c == k) return folder_name(parent, v);
   }
-  return "Inne";
+  return folder_name(parent, N_("Inne"));
 }
 
 std::string install_dir(const std::string &path, const std::string &home) {
@@ -440,14 +451,14 @@ std::string install(const std::string &path, const std::string &home) {
   if (appdir.empty()) {
     fs::remove_all(tmp, ec);
     uint64_t e;
-    if (!elf_end(path, e)) return "To nie jest plik AppImage (brak nagłówka ELF).";
+    if (!elf_end(path, e)) return _("To nie jest plik AppImage (brak nagłówka ELF).");
     if (self_extract(path, tmp)) appdir = find_appdir(tmp);
   }
   if (appdir.empty()) {
     fs::remove_all(tmp, ec);
     if (kind == "dwarfs")
-      return "Ten AppImage używa formatu DwarFS, a jego runtime\nnie potrafił się rozpakować.";
-    return "Nie udało się rozpakować aplikacji.\nTo może nie być AppImage albo plik jest uszkodzony.";
+      return _("Ten AppImage używa formatu DwarFS, a jego runtime\nnie potrafił się rozpakować.");
+    return _("Nie udało się rozpakować aplikacji.\nTo może nie być AppImage albo plik jest uszkodzony.");
   }
   if (appdir != tmp) {          // przenieś katalog aplikacji na miejsce tymczasowego
     fs::path moved = tmp.string() + "-appdir";
@@ -465,7 +476,7 @@ std::string install(const std::string &path, const std::string &home) {
   }
   fs::remove_all(dir, ec);
   fs::rename(tmp, dir, ec);
-  return ec ? "Nie udało się zapisać aplikacji: " + ec.message() : "";
+  return ec ? plat::fmt(_("Nie udało się zapisać aplikacji: %1"), ec.message()) : "";
 }
 
 bool sandbox_available() {

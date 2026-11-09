@@ -26,6 +26,28 @@ if(NOT FLTK_FOUND)
   FetchContent_MakeAvailable(fltk)
 endif()
 
+# --- tłumaczenia (gettext): biblioteka i katalogi .mo z po/*.po ---------------
+add_library(lisaos-i18n STATIC platinum/i18n.cxx)
+target_include_directories(lisaos-i18n PUBLIC platinum)
+find_program(MSGFMT msgfmt)
+file(GLOB LISAOS_PO po/*.po)
+set(LISAOS_MO)
+if(MSGFMT)
+  foreach(po ${LISAOS_PO})
+    get_filename_component(lang ${po} NAME_WE)
+    set(mo ${CMAKE_BINARY_DIR}/locale/${lang}/LC_MESSAGES/lisaos.mo)
+    add_custom_command(OUTPUT ${mo}
+      COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_BINARY_DIR}/locale/${lang}/LC_MESSAGES
+      COMMAND ${MSGFMT} --check -o ${mo} ${po}
+      DEPENDS ${po} COMMENT "Tłumaczenie: ${lang}")
+    list(APPEND LISAOS_MO ${mo})
+    install(FILES ${mo} DESTINATION share/locale/${lang}/LC_MESSAGES)
+  endforeach()
+else()
+  message(WARNING "Brak msgfmt (pakiet gettext) - interfejs będzie tylko po polsku")
+endif()
+add_custom_target(lisaos-translations ALL DEPENDS ${LISAOS_MO})
+
 # --- libplatinum: wygląd i chrome okien wspólny dla wszystkich komponentów --
 add_library(lisaos-platinum STATIC
   platinum/platinum.cxx
@@ -37,23 +59,23 @@ add_library(lisaos-platinum STATIC
   platinum/framewin.cxx)
 find_package(X11 REQUIRED)
 target_include_directories(lisaos-platinum PUBLIC platinum)
-target_link_libraries(lisaos-platinum PUBLIC fltk::fltk fltk::images X11::X11 X11::Xext)
+target_link_libraries(lisaos-platinum PUBLIC lisaos-i18n fltk::fltk fltk::images X11::X11 X11::Xext)
 
 # --- lisaos-net: sieć przez NetworkManager (nmcli + D-Bus) --------------------
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(DBUS REQUIRED IMPORTED_TARGET dbus-1)
 add_library(lisaos-net STATIC net/net.cxx)
 target_include_directories(lisaos-net PUBLIC net)
-target_link_libraries(lisaos-net PUBLIC fltk::fltk PkgConfig::DBUS)
+target_link_libraries(lisaos-net PUBLIC lisaos-i18n fltk::fltk PkgConfig::DBUS)
 
 # --- lisaos-audio i lisaos-power: aplety głośności i zasilania -------------------
 pkg_check_modules(XSS REQUIRED IMPORTED_TARGET xscrnsaver)
 add_library(lisaos-audio STATIC audio/audio.cxx)
 target_include_directories(lisaos-audio PUBLIC audio)
-target_link_libraries(lisaos-audio PUBLIC fltk::fltk)
+target_link_libraries(lisaos-audio PUBLIC lisaos-i18n fltk::fltk)
 add_library(lisaos-power STATIC power/power.cxx)
 target_include_directories(lisaos-power PUBLIC power)
-target_link_libraries(lisaos-power PUBLIC fltk::fltk PkgConfig::DBUS PkgConfig::XSS X11::Xext X11::X11)
+target_link_libraries(lisaos-power PUBLIC lisaos-i18n fltk::fltk PkgConfig::DBUS PkgConfig::XSS X11::Xext X11::X11)
 
 # --- denise: menedżer plików ---------------------------------------------------------
 add_executable(lisaos-denise

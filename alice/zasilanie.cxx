@@ -33,9 +33,9 @@ Fl_Choice *minutes_choice(int X, int Y, int W, const char *l, const int *vals, i
   auto *c = new Fl_Choice(X, Y, W, 22, l);
   int sel = n - 1;
   for (int i = 0; i < n; i++) {
-    std::string t = vals[i] ? std::to_string(vals[i]) + (vals[i] < 60 ? " min" : " min") : "Nigdy";
-    if (vals[i] == 60) t = "1 godzina";
-    if (vals[i] == 120) t = "2 godziny";
+    std::string t = vals[i] ? fmt(_("%1 min"), std::to_string(vals[i])) : _("Nigdy");
+    if (vals[i] == 60) t = _("1 godzina");
+    if (vals[i] == 120) t = _("2 godziny");
     c->add(t.c_str());
     if (vals[i] == cur) sel = i;
   }
@@ -76,46 +76,46 @@ int panel_zasilanie() {
   g_s = power::read_idle();
   power::State st = power::query();
   const int W = 500, H = 380;
-  g_win = new FrameWindow(W, H, "Zasilanie");
+  g_win = new FrameWindow(W, H, _("Zasilanie"));
   g_win->xclass("lisaos-zasilanie");
   int y = 10;
-  heading(15, y, "Ekran");
+  heading(15, y, _("Ekran"));
   y += 26;
-  g_blank = minutes_choice(230, y, 150, "Wygaś ekran po bezczynności:", BLANK, 8, g_s.blank_min);
+  g_blank = minutes_choice(230, y, 150, _("Wygaś ekran po bezczynności:"), BLANK, 8, g_s.blank_min);
   y += 30;
-  g_lock = new Fl_Check_Button(226, y, 260, 22, "Blokuj ekran przy wygaszeniu");
+  g_lock = new Fl_Check_Button(226, y, 260, 22, _("Blokuj ekran przy wygaszeniu"));
   g_lock->labelsize(SIZE_SMALL + 1);
   g_lock->value(g_s.lock_on_blank);
   y += 22;
   std::string l = power::locker();
-  std::string lt = l.empty() ? "Brak programu blokady ekranu - zainstaluj xsecurelock, i3lock albo slock."
-                             : "Program blokady: " + l.substr(0, l.find(' ')) + ".";
+  std::string lt = l.empty() ? _("Brak programu blokady ekranu - zainstaluj xsecurelock, i3lock albo slock.")
+                             : fmt(_("Program blokady: %1."), l.substr(0, l.find(' ')));
   note(230, y, W - 245, 30, lt.c_str());
   y += 36;
 
-  heading(15, y, "Usypianie komputera");
+  heading(15, y, _("Usypianie komputera"));
   y += 26;
-  g_bat = minutes_choice(230, y, 150, "Na baterii po bezczynności:", SLEEP, 9, g_s.sleep_battery_min);
+  g_bat = minutes_choice(230, y, 150, _("Na baterii po bezczynności:"), SLEEP, 9, g_s.sleep_battery_min);
   y += 30;
-  g_ac = minutes_choice(230, y, 150, "Z zasilacza po bezczynności:", SLEEP, 9, g_s.sleep_ac_min);
+  g_ac = minutes_choice(230, y, 150, _("Z zasilacza po bezczynności:"), SLEEP, 9, g_s.sleep_ac_min);
   y += 36;
 
-  heading(15, y, "Bateria");
+  heading(15, y, _("Bateria"));
   y += 26;
-  g_crit = new Fl_Choice(230, y, 150, 22, "Przy 3% baterii:");
-  g_crit->add("Nic nie rób|Hibernuj|Uśpij");
+  g_crit = new Fl_Choice(230, y, 150, 22, _("Przy 3% baterii:"));
+  g_crit->add(_("Nic nie rób|Hibernuj|Uśpij"));
   g_crit->value(g_s.critical_action);
   g_crit->labelsize(SIZE_SMALL + 1);
   g_crit->textsize(SIZE_SMALL + 1);
   y += 28;
-  std::string bt = st.percent >= 0 ? "Teraz: " + power::battery_text(st) + ". Przy 10% pojawi się ostrzeżenie."
-                                   : "Ten komputer nie ma baterii.";
+  std::string bt = st.percent >= 0 ? fmt(_("Teraz: %1. Przy 10% pojawi się ostrzeżenie."), power::battery_text(st))
+                                   : _("Ten komputer nie ma baterii.");
   note(230, y, W - 245, 30, bt.c_str());
   y += 34;
 
-  std::string info = "Tryb projekcji (menu baterii na pasku menu) wstrzymuje wygaszanie, blokadę i usypianie.";
+  std::string info = _("Tryb projekcji (menu baterii na pasku menu) wstrzymuje wygaszanie, blokadę i usypianie.");
   if (!FrameWindow::wm_is_insight())
-    info += " W sesji GNOME/KDE ekranem i usypianiem zarządza tamto środowisko - te ustawienia działają w sesji LisaOS.";
+    info += std::string(" ") + _("W sesji GNOME/KDE ekranem i usypianiem zarządza tamto środowisko - te ustawienia działają w sesji LisaOS.");
   note(15, y, W - 30, 44, info.c_str());
 
   auto button = [&](int X, const char *t) {
@@ -124,9 +124,9 @@ int panel_zasilanie() {
     b->down_box(BUTTON_DOWN);
     return b;
   };
-  button(W - 290, "Anuluj")->callback([](Fl_Widget *, void *) { g_win->hide(); });
-  button(W - 196, "Zastosuj")->callback([](Fl_Widget *, void *) { save(); });
-  auto *ok = button(W - 102, "OK");
+  button(W - 290, _("Anuluj"))->callback([](Fl_Widget *, void *) { g_win->hide(); });
+  button(W - 196, _("Zastosuj"))->callback([](Fl_Widget *, void *) { save(); });
+  auto *ok = button(W - 102, _("OK"));
   ok->labelfont(FONT_SYSTEM);
   ok->shortcut(FL_Enter);
   ok->callback([](Fl_Widget *, void *) { save(); g_win->hide(); });
