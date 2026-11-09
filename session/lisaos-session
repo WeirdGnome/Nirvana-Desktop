@@ -1,12 +1,25 @@
 #!/bin/sh
 # LisaOS - start sesji graficznej
-# Uruchamia menedżer okien (insight), a potem biurko i menedżer plików (Rambler).
-# Użycie:  startx /usr/bin/lisaos-session
+# Uruchamia menedżer okien (insight), programy z autostartu XDG, a potem biurko
+# i menedżer plików (Rambler). Zamknięcie Ramblera (Lisa > Zakończ…) kończy sesję.
+#
+# Użycie:  startx /usr/bin/lisaos-session      (albo "exec lisaos-session" w ~/.xinitrc)
 #     albo z ekranu logowania (plik /usr/share/xsessions/lisaos.desktop)
 
 BIN="$(dirname "$(readlink -f "$0")")"
 # przy uruchamianiu z katalogu źródeł binarki leżą w build/
 [ -x "$BIN/lisaos-insight" ] || BIN="$BIN/../build"
+
+# Bez systemd nikt nie uruchomi magistrali sesji (startx, slim) - zrób to sami.
+# Zasobnik, aplety i panele potrzebują D-Bus sesji.
+if [ -z "$DBUS_SESSION_BUS_ADDRESS" ] && [ -z "$LISAOS_DBUS" ] && command -v dbus-run-session >/dev/null 2>&1; then
+  LISAOS_DBUS=1 exec dbus-run-session -- "$0" "$@"
+fi
+
+export XDG_CURRENT_DESKTOP=LisaOS
+export XDG_SESSION_DESKTOP=LisaOS
+export DESKTOP_SESSION=lisaos
+[ -f "$HOME/.Xresources" ] && command -v xrdb >/dev/null 2>&1 && xrdb -merge "$HOME/.Xresources"
 
 "$BIN/lisaos-insight" &
 INSIGHT=$!
@@ -14,6 +27,10 @@ INSIGHT=$!
 # daj insightowi chwilę na przejęcie ekranu
 sleep 0.5
 
-# Rambler działa przez całą sesję; jego zamknięcie (Specjalne > Wyłącz) kończy sesję.
+# autostart XDG: PipeWire/PulseAudio, nm-applet, agent polkit... (na Devuanie
+# bez systemd to jedyne miejsce, skąd te usługi sesji się uruchamiają)
+[ -x "$BIN/lisaos-autostart" ] && "$BIN/lisaos-autostart"
+
 "$BIN/lisaos-denise" "$@"
 kill $INSIGHT 2>/dev/null
+# programy z autostartu kończą się razem z magistralą sesji / serwerem X

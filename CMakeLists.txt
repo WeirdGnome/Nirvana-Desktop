@@ -41,7 +41,9 @@ if(MSGFMT)
       COMMAND ${MSGFMT} --check -o ${mo} ${po}
       DEPENDS ${po} COMMENT "Tłumaczenie: ${lang}")
     list(APPEND LISAOS_MO ${mo})
-    install(FILES ${mo} DESTINATION share/locale/${lang}/LC_MESSAGES)
+    # share/lisaos/locale, nie share/locale: localepurge i "path-exclude" w
+    # minimalnych instalacjach usuwają pliki .mo spoza wybranych języków
+    install(FILES ${mo} DESTINATION share/lisaos/locale/${lang}/LC_MESSAGES COMPONENT lisaos)
   endforeach()
 else()
   message(WARNING "Brak msgfmt (pakiet gettext) - interfejs będzie tylko po polsku")
@@ -113,8 +115,37 @@ endif()
 add_executable(lisaos-shell shell/main.cxx)
 target_link_libraries(lisaos-shell PRIVATE lisaos-platinum ${LISAOS_VTERM} util)
 
-install(TARGETS lisaos-denise lisaos-insight lisaos-alice lisaos-shell RUNTIME DESTINATION bin)
-install(DIRECTORY schematy/ DESTINATION share/lisaos/schematy)
-install(DIRECTORY tapety/ DESTINATION share/lisaos/tapety)
-install(PROGRAMS session/lisaos-session DESTINATION bin)
-install(FILES session/lisaos.desktop DESTINATION share/xsessions)
+# Wszystko z komponentem "lisaos" - paczka .deb nie zabierze plików FLTK
+# (FetchContent dokłada własne reguły install dla nagłówków i bibliotek).
+install(TARGETS lisaos-denise lisaos-insight lisaos-alice lisaos-shell RUNTIME DESTINATION bin COMPONENT lisaos)
+install(DIRECTORY schematy/ DESTINATION share/lisaos/schematy COMPONENT lisaos)
+install(DIRECTORY tapety/ DESTINATION share/lisaos/tapety COMPONENT lisaos)
+install(PROGRAMS session/lisaos-session session/lisaos-autostart DESTINATION bin COMPONENT lisaos)
+install(FILES session/lisaos.desktop DESTINATION share/xsessions COMPONENT lisaos)
+install(FILES README.md DESTINATION share/doc/lisaos COMPONENT lisaos)
+
+# --- paczka .deb (Devuan 6 "Excalibur" / Debian 13): cpack -G DEB ----------------
+# Zależności od bibliotek liczy dpkg-shlibdeps; resztę (programy, z których
+# LisaOS korzysta w czasie pracy) podajemy ręcznie. Recommends instaluje apt
+# domyślnie; brakujące w repozytorium pakiety z Recommends apt po prostu pomija.
+set(CPACK_GENERATOR DEB)
+set(CPACK_PACKAGE_NAME lisaos)
+set(CPACK_PACKAGE_VENDOR "LisaOS")
+set(CPACK_PACKAGE_CONTACT "LisaOS <lisaos@localhost>")
+set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "lekkie środowisko graficzne w duchu Mac OS 9 i Amigi")
+set(CPACK_PACKAGE_DESCRIPTION "LisaOS to sesja X11 zbudowana na FLTK: menedżer okien Insight, biurko i
+menedżer plików Rambler, przełącznik aplikacji, panele sterowania (Alice)
+i terminal Lisa Shell. Interfejs po polsku i po angielsku.")
+set(CPACK_PACKAGING_INSTALL_PREFIX /usr)
+set(CPACK_INSTALL_CMAKE_PROJECTS "${CMAKE_BINARY_DIR};LisaOS;lisaos;/")
+set(CPACK_DEBIAN_FILE_NAME DEB-DEFAULT)
+set(CPACK_DEBIAN_PACKAGE_SECTION x11)
+set(CPACK_DEBIAN_PACKAGE_PRIORITY optional)
+set(CPACK_DEBIAN_PACKAGE_SHLIBDEPS ON)
+set(CPACK_DEBIAN_PACKAGE_DEPENDS "dbus-bin | dbus")
+set(CPACK_DEBIAN_PACKAGE_RECOMMENDS
+  "xserver-xorg, xinit, fonts-dejavu-core, libpam-elogind | elogind, polkitd, pkexec, lxpolkit, \
+udisks2, network-manager, pulseaudio-utils, alsa-utils, squashfs-tools, bubblewrap, xsecurelock, xdg-utils")
+set(CPACK_DEBIAN_PACKAGE_SUGGESTS
+  "lightdm, network-manager-openvpn, network-manager-vpnc, wireguard-tools, power-profiles-daemon, pipewire-pulse")
+include(CPack)

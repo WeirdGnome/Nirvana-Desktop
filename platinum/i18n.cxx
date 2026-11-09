@@ -110,8 +110,10 @@ static std::vector<std::string> locale_dirs() {
   fs::path exe = fs::read_symlink("/proc/self/exe", ec);
   if (!ec) {
     d.push_back((exe.parent_path() / "locale").string());                   // build/locale
-    d.push_back((exe.parent_path() / "../share/locale").string());          // prefiks/share/locale
+    d.push_back((exe.parent_path() / "../share/lisaos/locale").string());   // prefiks/share/lisaos/locale
+    d.push_back((exe.parent_path() / "../share/locale").string());          // starsze instalacje
   }
+  d.push_back("/usr/share/lisaos/locale");
   d.push_back("/usr/local/share/locale");
   d.push_back("/usr/share/locale");
   return d;

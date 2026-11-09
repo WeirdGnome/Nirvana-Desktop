@@ -23,6 +23,42 @@ Lekkie środowisko graficzne dla Linuksa (baza: minimalny Devuan) w duchu
 | `lisaos-kickstart`  | logowanie i start sesji                 | planowany   |
 | `lisaos-guru`       | okno błędów, tryb root                  | planowany   |
 
+## Instalacja na Devuanie 6 „Excalibur” (Debian 13)
+
+Rozpakuj źródła i uruchom instalator:
+
+    tar xzf lisaos-0.1.tar.gz && cd lisaos
+    sudo ./instaluj.sh                 # albo: sudo ./instaluj.sh --logowanie
+
+Instalator:
+
+1. doinstalowuje narzędzia i biblioteki do budowania (apt),
+2. buduje LisaOS (za pierwszym razem pobiera FLTK 1.4 z GitHuba – potrzebny internet),
+3. tworzy paczkę `build-deb/lisaos_0.1.0_amd64.deb` i instaluje ją przez apt –
+   razem z programami, z których LisaOS korzysta: NetworkManager, udisks2, polkit
+   z agentem `lxpolkit`, PulseAudio/PipeWire, bubblewrap, xsecurelock…
+4. dokłada serwer X, jeśli go nie ma, i proponuje PipeWire, jeśli nie ma dźwięku.
+
+Opcje:
+
+| opcja | co robi |
+|---|---|
+| `--logowanie` | instaluje LightDM i ustawia LisaOS jako domyślną sesję |
+| `--xinitrc` | zapisuje `~/.xinitrc` z `exec lisaos-session` (wtedy wystarczy `startx`) |
+| `--tylko-paczka` | tylko buduje `.deb` (np. na innym komputerze: `sudo apt install ./lisaos_*.deb`) |
+| `--bez-x` | nie instaluje serwera X |
+| `--tak` | bez pytań |
+| `--odinstaluj` | `apt remove lisaos`; ustawienia w katalogu domowym zostają |
+
+Po instalacji wybierz sesję **LisaOS** na ekranie logowania albo uruchom
+`startx /usr/bin/lisaos-session` z konsoli. Sesja sama uruchamia magistralę D-Bus
+(`dbus-run-session`), programy z autostartu XDG (`lisaos-autostart`, np. PipeWire)
+i agenta polkit. Aplet `nm-applet` jest pomijany – LisaOS ma własne menu sieci
+(`LISAOS_NM_APPLET=1` go przywraca).
+
+Jeśli karty sieciowe są opisane w `/etc/network/interfaces`, NetworkManager ich
+nie obsłuży – instalator o tym przypomina; zostaw tam tylko `lo`.
+
 ## Budowanie
 
 Zależności (Devuan/Debian):
@@ -51,11 +87,8 @@ Z własnym FLTK: `-DFLTK_DIR=/ścieżka/do/share/fltk`.
     Xephyr :2 -screen 1024x768 &
     DISPLAY=:2 ./session/lisaos-session
 
-Na Devuanie po `sudo cmake --install build`:
-
-    startx /usr/local/bin/lisaos-session
-
-albo wybierz „LisaOS” na ekranie logowania (plik `share/xsessions/lisaos.desktop`).
+Po instalacji (patrz wyżej): `startx /usr/bin/lisaos-session` albo sesja „LisaOS”
+na ekranie logowania (plik `/usr/share/xsessions/lisaos.desktop`).
 
 **Sam Rambler pod innym pulpitem** (np. GNOME na Rocky/RHEL):
 
