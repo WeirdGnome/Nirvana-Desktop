@@ -157,6 +157,12 @@ void init(bool root) {
     Fl::set_font(FL_FREE_FONT, ff);
     FONT_SYSTEM = FL_FREE_FONT;
   }
+  // przyciski okien dialogowych FLTK (fl_alert, wybór koloru...) po polsku
+  fl_ok = "OK";
+  fl_cancel = "Anuluj";
+  fl_yes = "Tak";
+  fl_no = "Nie";
+  fl_close = "Zamknij";
   // podpowiedzi (dok, aplety, gary): dymek pomocy jak w Mac OS
   Fl_Tooltip::font(FONT_SMALL);
   Fl_Tooltip::size(SIZE_SMALL + 1);

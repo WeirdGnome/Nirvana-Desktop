@@ -1,6 +1,6 @@
 // LisaOS - alice: panel "Wygląd".
-// Schemat kolorów, styl paska tytułu, kolor
-// i wzór biurka, tapeta, animacje okien. Zmiany widać od razu w samym panelu
+// Schemat kolorów, styl paska tytułu, tło biurka (wzór, kolor albo
+// gradient), tapeta, animacje okien. Zmiany widać od razu w samym panelu
 // (podgląd na żywo); "Zastosuj" zapisuje ~/.config/lisaos/wyglad.conf i
 // ustawia właściwość _LISAOS_WYGLAD na oknie głównym X - Rambler i Insight
 // przeładowują wtedy paletę bez restartu.
@@ -34,7 +34,8 @@ static int g_scheme = 0;            // indeks w g_schemes
 static FrameWindow *g_win;
 static Fl_Hold_Browser *g_list;
 static Fl_Box *g_source;
-static Fl_Choice *g_style, *g_pattern, *g_wall, *g_wall_mode;
+static Fl_Choice *g_style, *g_pattern, *g_wall, *g_wall_mode, *g_bg, *g_grad;
+static Fl_Button *g_desk2;
 static std::vector<std::string> g_walls;   // pozycje listy tapet (0 = brak, ostatnia = "Inny plik…")
 static Fl_Check_Button *g_anim;
 static Fl_Button *g_desk_default;
@@ -47,12 +48,14 @@ public:
   Preview(int X, int Y, int W, int H) : Fl_Widget(X, Y, W, H) {}
   void draw() override {
     fl_push_clip(x(), y(), w(), h());
-    if (!g_cur.wallpaper.empty()) {
-      // tapeta: biurko w wielkości ekranu, zmniejszone do podglądu (układ jak naprawdę)
+    if (!g_cur.wallpaper.empty() || g_cur.background != "wzor") {
+      // tapeta albo gradient: biurko w wielkości ekranu, zmniejszone do podglądu
+      // (układ i przejście kolorów jak naprawdę)
       uchar r, g, b;
       Fl::get_color(DESK_A, r, g, b);
       std::string key = g_cur.wallpaper + "|" + g_cur.wallpaper_mode + "|" + g_cur.pattern + "|" +
-                        std::to_string((r << 16) | (g << 8) | b);
+                        std::to_string((r << 16) | (g << 8) | b) + "|" + g_cur.background + "|" +
+                        g_cur.gradient + "|" + std::to_string(gradient_second(g_cur));
       if (key != key_) {
         key_ = key;
         int sx, sy, sw, sh;
@@ -155,10 +158,15 @@ private:
 // ---------------------------------------------------------------------------
 class Swatch : public Fl_Button {
 public:
+  bool second = false;   // drugi kolor gradientu
   Swatch(int X, int Y, int W, int H) : Fl_Button(X, Y, W, H) { box(BUTTON_BOX); down_box(BUTTON_DOWN); }
   void draw() override {
     Fl_Button::draw();
-    fl_draw_box(WELL_BOX, x() + 5, y() + 4, w() - 10, h() - 8, DESK_A);
+    Fl_Color c = second ? fl_rgb_color(gradient_second(g_cur) >> 16, gradient_second(g_cur) >> 8 & 255,
+                                       gradient_second(g_cur) & 255)
+                        : DESK_A;
+    if (!active_r()) c = fl_color_average(c, GRAY, 0.35f);
+    fl_draw_box(WELL_BOX, x() + 5, y() + 4, w() - 10, h() - 8, c);
   }
 };
 
@@ -170,7 +178,13 @@ static void preview() {
   if (s.source.find("Redmond97") != std::string::npos) src += " (GPL-3.0)";
   g_source->label(src.c_str());
   g_desk_default->deactivate();
-  if (g_cur.desk >= 0) g_desk_default->activate();
+  if (g_cur.desk >= 0 || g_cur.desk2 >= 0) g_desk_default->activate();
+  // wzór albo kierunek gradientu, zależnie od rodzaju tła
+  bool grad = g_cur.background == "gradient";
+  if (grad) { g_pattern->hide(); g_grad->show(); g_desk2->activate(); }
+  else { g_grad->hide(); g_pattern->show(); g_desk2->deactivate(); }
+  if (g_cur.background == "kolor") g_pattern->deactivate();
+  else g_pattern->activate();
   if (g_cur.wallpaper.empty()) g_wall_mode->deactivate();
   else g_wall_mode->activate();
   g_win->redraw();
@@ -213,20 +227,20 @@ int panel_wyglad() {
   g_cur = current_appearance();
   g_schemes = list_schemes();
 
-  const int W = 600, H = 470;
+  const int W = 600, H = 500;
   g_win = new FrameWindow(W, H, "Wygląd");
   g_win->xclass("lisaos-alice");
 
   auto *t1 = new Fl_Box(15, 8, 220, 20, "Schemat kolorów");
   t1->labelfont(FONT_SYSTEM); t1->labelsize(SIZE_SYSTEM);
   t1->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
-  g_list = new Fl_Hold_Browser(15, 30, 220, 372);
+  g_list = new Fl_Hold_Browser(15, 30, 220, 402);
   g_list->box(WELL_BOX);
   g_list->textfont(FONT_SMALL);
   g_list->textsize(SIZE_SMALL + 1);
   g_list->callback(list_cb);
   g_list->when(FL_WHEN_CHANGED);
-  g_source = new Fl_Box(15, 404, 220, 20);
+  g_source = new Fl_Box(15, 434, 220, 20);
   g_source->labelsize(10);
   g_source->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
 
@@ -242,9 +256,17 @@ int panel_wyglad() {
   g_style->value(g_cur.style + 1);
   g_style->callback([](Fl_Widget *, void *) { g_cur.style = g_style->value() - 1; preview(); });
 
-  auto *desk = new Swatch(400, 284, 60, 24);
-  desk->label("Kolor biurka:");
+  g_bg = new Fl_Choice(400, 284, 185, 22, "Tło biurka:");
+  for (int i = 0; BACKGROUNDS[i]; i++) {
+    g_bg->add(BACKGROUND_NAMES[i]);
+    if (g_cur.background == BACKGROUNDS[i]) g_bg->value(i);
+  }
+  g_bg->callback([](Fl_Widget *, void *) { g_cur.background = BACKGROUNDS[g_bg->value()]; preview(); });
+
+  auto *desk = new Swatch(400, 312, 40, 24);
+  desk->label("Kolory:");
   desk->align(FL_ALIGN_LEFT);
+  desk->tooltip("Kolor biurka (początek gradientu)");
   desk->callback([](Fl_Widget *, void *) {
     uchar r, g, b;
     Fl::get_color(DESK_A, r, g, b);
@@ -253,19 +275,38 @@ int panel_wyglad() {
       preview();
     }
   });
-  g_desk_default = new Fl_Button(466, 284, 119, 24, "Ze schematu");
+  auto *desk2 = new Swatch(443, 312, 40, 24);
+  desk2->second = true;
+  desk2->tooltip("Drugi kolor gradientu");
+  g_desk2 = desk2;
+  desk2->callback([](Fl_Widget *, void *) {
+    unsigned c = gradient_second(g_cur);
+    uchar r = c >> 16, g = c >> 8 & 255, b = c & 255;
+    if (fl_color_chooser("Drugi kolor gradientu", r, g, b, 1)) {
+      g_cur.desk2 = (r << 16) | (g << 8) | b;
+      preview();
+    }
+  });
+  g_desk_default = new Fl_Button(488, 312, 97, 24, "Ze schematu");
+  g_desk_default->labelsize(SIZE_SMALL + 1);
   g_desk_default->box(BUTTON_BOX); g_desk_default->down_box(BUTTON_DOWN);
-  g_desk_default->callback([](Fl_Widget *, void *) { g_cur.desk = -1; preview(); });
+  g_desk_default->callback([](Fl_Widget *, void *) { g_cur.desk = g_cur.desk2 = -1; preview(); });
 
-  g_pattern = new Fl_Choice(400, 314, 185, 22, "Wzór biurka:");
+  g_pattern = new Fl_Choice(400, 342, 185, 22, "Wzór biurka:");
   for (int i = 0; PATTERNS[i]; i++) {
     g_pattern->add(PATTERN_NAMES[i]);
     if (g_cur.pattern == PATTERNS[i]) g_pattern->value(i);
   }
   g_pattern->callback([](Fl_Widget *, void *) { g_cur.pattern = PATTERNS[g_pattern->value()]; preview(); });
+  g_grad = new Fl_Choice(400, 342, 185, 22, "Kierunek:");
+  for (int i = 0; GRADIENTS[i]; i++) {
+    g_grad->add(GRADIENT_NAMES[i]);
+    if (g_cur.gradient == GRADIENTS[i]) g_grad->value(i);
+  }
+  g_grad->callback([](Fl_Widget *, void *) { g_cur.gradient = GRADIENTS[g_grad->value()]; preview(); });
 
   // tapeta: gotowe obrazy (LisaOS, systemowe, ~/Obrazy) albo dowolny plik
-  g_wall = new Fl_Choice(400, 344, 185, 22, "Tapeta:");
+  g_wall = new Fl_Choice(400, 370, 185, 22, "Tapeta:");
   g_walls.clear();
   g_walls.push_back("");
   for (auto &p : wallpaper_candidates()) g_walls.push_back(p);
@@ -321,7 +362,7 @@ int panel_wyglad() {
     }
     preview();
   });
-  g_wall_mode = new Fl_Choice(400, 372, 185, 22, "Układ tapety:");
+  g_wall_mode = new Fl_Choice(400, 398, 185, 22, "Układ tapety:");
   for (int i = 0; WALLPAPER_MODES[i]; i++) {
     g_wall_mode->add(WALLPAPER_MODE_NAMES[i]);
     if (g_cur.wallpaper_mode == WALLPAPER_MODES[i]) g_wall_mode->value(i);
@@ -331,7 +372,7 @@ int panel_wyglad() {
     preview();
   });
 
-  g_anim = new Fl_Check_Button(396, 402, 190, 22, "Animacje okien");
+  g_anim = new Fl_Check_Button(396, 428, 190, 22, "Animacje okien");
   g_anim->value(g_cur.animations);
   g_anim->callback([](Fl_Widget *, void *) { g_cur.animations = g_anim->value(); });
 
@@ -346,7 +387,7 @@ int panel_wyglad() {
   ok->shortcut(FL_Enter);
   ok->callback([](Fl_Widget *, void *) { save(); g_win->hide(); });
 
-  for (Fl_Choice *c : {g_style, g_pattern, g_wall, g_wall_mode}) {
+  for (Fl_Choice *c : {g_style, g_pattern, g_wall, g_wall_mode, g_bg, g_grad}) {
     c->labelsize(SIZE_SMALL + 1);
     c->textsize(SIZE_SMALL + 1);
   }

@@ -271,7 +271,21 @@ przestawia cały system: Rambler i Insight przeładowują paletę bez restartu.
   (ukłon w stronę Amigi) oraz ponad 40 schematów z
   [Redmond97 SE](https://codeberg.org/Sliver_X/Redmond97-SE) (GPL-3.0).
 - **Pasek tytułu**: jak w schemacie, prążki Platinum, jednolity kolor albo gradient.
-- **Kolor i wzór biurka**: gładki, kropki, krata, ukośne prążki, cegiełki, raster.
+- **Tło biurka**: *Wzór*, *Jednolity kolor* albo *Gradient*.
+  - Kolory wybiera się z dwóch próbek. Drugi kolor gradientu domyślnie jest ciemniejszą
+    (albo, na ciemnym tle, jaśniejszą) wersją pierwszego. *Ze schematu* wraca do kolorów
+    schematu.
+  - Gradient: pionowy, poziomy, ukośny albo promienisty. Ma dithering (macierz Bayera),
+    więc nawet przy subtelnych przejściach nie widać pasów.
+  - 20 wzorów w dwóch odcieniach koloru biurka: gładki, kropki, groszki, krata, drobna
+    kratka, szachownica, ukośne prążki, paski poziome i pionowe, cegiełki, raster (Amiga),
+    romby, krzyżyki, zygzak, jodełka, tkanina, fale, łuski, gwiazdki, piasek.
+  - Tapeta leży na tym tle: widać je w pasach przy układzie *Dopasuj*, wokół obrazu
+    *Na środku* i pod przezroczystymi fragmentami PNG.
+
+  ![Wzory biurka](docs/img/wzory.png)
+  ![Gradient promienisty](docs/img/tlo-gradient.png)
+
 - **Tapeta**: wybierana z listy albo przez *Inny plik…* (PNG, JPEG, GIF, BMP, SVG, XPM).
   - Lista zawiera tapety LisaOS (*Lisa Desktop*, *Góry o świcie*, *Miedź*, *Platyna*), tapety systemowe
     z `/usr/share/backgrounds` i `/usr/share/wallpapers` oraz obrazy z `~/Obrazy`.

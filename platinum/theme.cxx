@@ -36,9 +36,18 @@ Fl_Color CONTENT_TEXT  = FL_FREE_COLOR + 0, SEL_TEXT     = FL_FREE_COLOR + 1,
          DESK_A        = FL_FREE_COLOR + 12, DESK_B       = FL_FREE_COLOR + 13,
          ROOT_TINT     = FL_FREE_COLOR + 14;
 
-const char *const PATTERNS[] = {"gladki", "kropki", "krata", "ukosne", "cegly", "raster", nullptr};
-const char *const PATTERN_NAMES[] = {"Gładki", "Kropki", "Krata", "Ukośne prążki", "Cegiełki",
-                                     "Raster (Amiga)", nullptr};
+const char *const PATTERNS[] = {"gladki", "kropki", "groszki", "krata", "kratka", "szachownica",
+                                "ukosne", "paski_poziome", "paski_pionowe", "cegly", "raster", "romby",
+                                "krzyzyki", "zygzak", "jodelka", "tkanina", "fale", "luski", "gwiazdki",
+                                "piasek", nullptr};
+const char *const PATTERN_NAMES[] = {"Gładki", "Kropki", "Groszki", "Krata", "Drobna kratka", "Szachownica",
+                                     "Ukośne prążki", "Paski poziome", "Paski pionowe", "Cegiełki",
+                                     "Raster (Amiga)", "Romby", "Krzyżyki", "Zygzak", "Jodełka", "Tkanina",
+                                     "Fale", "Łuski", "Gwiazdki", "Piasek", nullptr};
+const char *const BACKGROUNDS[] = {"wzor", "kolor", "gradient", nullptr};
+const char *const BACKGROUND_NAMES[] = {"Wzór", "Jednolity kolor", "Gradient", nullptr};
+const char *const GRADIENTS[] = {"pionowy", "poziomy", "ukosny", "promienisty", nullptr};
+const char *const GRADIENT_NAMES[] = {"Pionowy", "Poziomy", "Ukośny", "Promienisty", nullptr};
 
 static Scheme g_scheme;
 static Appearance g_app;
@@ -247,6 +256,12 @@ Appearance read_appearance() {
       for (int i = 0; PATTERNS[i]; i++) if (v == PATTERNS[i]) a.pattern = v;
     } else if (k == "animacje") a.animations = !(v == "0" || v == "nie");
     else if (k == "tapeta") a.wallpaper = v;
+    else if (k == "tlo") {
+      for (int i = 0; BACKGROUNDS[i]; i++) if (v == BACKGROUNDS[i]) a.background = v;
+    } else if (k == "biurko2") a.desk2 = parse_color(v, c) ? (int)c : -1;
+    else if (k == "gradient") {
+      for (int i = 0; GRADIENTS[i]; i++) if (v == GRADIENTS[i]) a.gradient = v;
+    }
     else if (k == "tapeta_uklad") {
       for (int i = 0; WALLPAPER_MODES[i]; i++) if (v == WALLPAPER_MODES[i]) a.wallpaper_mode = v;
     }
@@ -269,7 +284,10 @@ bool write_appearance(const Appearance &a) {
         << "schemat=" << a.scheme << "\n"
         << "styl_paska=" << (a.style < 0 ? "" : st[a.style]) << "\n"
         << "biurko=" << (a.desk < 0 ? "" : color_str((unsigned)a.desk)) << "\n"
+        << "tlo=" << a.background << "\n"
         << "wzor=" << a.pattern << "\n"
+        << "biurko2=" << (a.desk2 < 0 ? "" : color_str((unsigned)a.desk2)) << "\n"
+        << "gradient=" << a.gradient << "\n"
         << "animacje=" << (a.animations ? 1 : 0) << "\n"
         << "tapeta=" << a.wallpaper << "\n"
         << "tapeta_uklad=" << a.wallpaper_mode << "\n";
@@ -342,22 +360,67 @@ void reload_appearance() {
 // ---------------------------------------------------------------------------
 unsigned char *pattern_tile(const std::string &pattern, int &w, int &h) {
   w = h = 8;
-  if (pattern == "cegly") w = h = 16;
+  if (pattern == "cegly" || pattern == "gwiazdki" || pattern == "piasek" || pattern == "luski") w = h = 16;
+  else if (pattern == "fale") { w = 16; h = 8; }
   unsigned char *d = new unsigned char[w * h * 3];
   uchar a[3], b[3];
   Fl::get_color(DESK_A, a[0], a[1], a[2]);
   Fl::get_color(DESK_B, b[0], b[1], b[2]);
+  unsigned seed = 12345;   // "Piasek": zawsze ten sam, powtarzalny szum
   for (int y = 0; y < h; y++)
     for (int x = 0; x < w; x++) {
       bool on = false;
-      if (pattern == "kropki") on = (x % 4 == 0 && y % 4 == 0) || (x % 4 == 2 && y % 4 == 2);
-      else if (pattern == "krata") on = x % 8 == 0 || y % 8 == 0;
-      else if (pattern == "ukosne") on = (x + y) % 4 == 0;
-      else if (pattern == "cegly") on = y % 8 == 0 || (y < 8 ? x == 0 : x == 8);
-      else if (pattern == "raster") on = (x + y) % 2 == 0;
+      const std::string &p = pattern;
+      if (p == "kropki") on = (x % 4 == 0 && y % 4 == 0) || (x % 4 == 2 && y % 4 == 2);
+      else if (p == "groszki") on = (x % 4 < 2 && y % 4 < 2 && ((x / 4 + y / 4) % 2 == 0));
+      else if (p == "krata") on = x % 8 == 0 || y % 8 == 0;
+      else if (p == "kratka") on = x % 4 == 0 || y % 4 == 0;
+      else if (p == "szachownica") on = (x / 4 + y / 4) % 2 == 0;
+      else if (p == "ukosne") on = (x + y) % 4 == 0;
+      else if (p == "paski_poziome") on = y % 4 == 0;
+      else if (p == "paski_pionowe") on = x % 4 == 0;
+      else if (p == "cegly") on = y % 8 == 0 || (y < 8 ? x == 0 : x == 8);
+      else if (p == "raster") on = (x + y) % 2 == 0;
+      else if (p == "romby") on = x == y || x + y == 8 || (x == 0 && y == 8);   // siatka ukośnych linii
+      else if (p == "krzyzyki") {
+        int dx = x - 3, dy = y - 3;
+        on = (dx == dy || dx == -dy) && std::abs(dx) <= 1;
+      } else if (p == "zygzak") on = y == std::abs(x - 4) || y == std::abs(x - 4) + 4;
+      else if (p == "jodelka") on = x < 4 ? (x + y) % 4 == 0 : ((x - y) % 4 + 4) % 4 == 0;
+      else if (p == "tkanina") on = ((x / 4 + y / 4) % 2 == 0) ? y % 2 == 0 : x % 2 == 0;
+      else if (p == "fale") on = y == (int)std::lround(3.5 + 2.5 * std::sin(x * 2 * M_PI / 16));
+      else if (p == "luski") {
+        // rzędy półkoli, co drugi przesunięty o pół łuski
+        int row = y / 8;
+        double cy = row * 8, best = 1e9;
+        for (int cx = (row % 2 ? 0 : 8) - 16; cx <= 32; cx += 16)
+          best = std::min(best, std::hypot(x - cx + 0.5, y - cy + 0.5));
+        on = std::abs(best - 7.6) < 0.7;
+      } else if (p == "gwiazdki") {
+        // duża gwiazdka (krzyżyk o ramionach 2) i mała (ramiona 1), na przemian
+        auto star = [&](int cx, int cy, int r) {
+          int dx = std::abs(x - cx), dy = std::abs(y - cy);
+          return (dx == 0 && dy <= r) || (dy == 0 && dx <= r);
+        };
+        on = star(3, 3, 2) || star(11, 11, 1);
+      } else if (p == "piasek") {
+        seed = seed * 1103515245u + 12345u;
+        on = ((seed >> 16) % 100) < 18;
+      }
       memcpy(d + (y * w + x) * 3, on ? b : a, 3);
     }
   return d;
+}
+
+unsigned gradient_second(const Appearance &a) {
+  if (a.desk2 >= 0) return (unsigned)a.desk2;
+  uchar r, g, b;
+  Fl::get_color(DESK_A, r, g, b);
+  // bez wyboru: ten sam kolor, wyraźnie ciemniejszy (jasne biurka) albo jaśniejszy (ciemne)
+  double l = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+  double k = l > 0.25 ? 0.55 : 1.8;
+  auto c = [&](uchar v) { return (unsigned)std::min(255.0, v * k + (k > 1 ? 18 : 0)); };
+  return (c(r) << 16) | (c(g) << 8) | c(b);
 }
 
 // ---------------------------------------------------------------------------

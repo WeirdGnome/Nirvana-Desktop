@@ -56,7 +56,10 @@ struct Appearance {                 // ~/.config/lisaos/wyglad.conf
   std::string scheme = "platinum";
   int style = -1;                   // -1: jak w schemacie, inaczej (int)TitleStyle
   int desk = -1;                    // -1: kolor biurka ze schematu
-  std::string pattern = "kropki";   // gladki, kropki, krata, ukosne, cegly, raster
+  std::string background = "wzor";  // wzor, kolor (jednolity), gradient
+  int desk2 = -1;                   // drugi kolor gradientu; -1: ciemniejszy odcień koloru biurka
+  std::string gradient = "pionowy"; // pionowy, poziomy, ukosny, promienisty
+  std::string pattern = "kropki";   // patrz PATTERNS
   bool animations = true;
   std::string wallpaper;            // plik tapety; pusty = sam wzór
   std::string wallpaper_mode = "wypelnij";   // patrz WALLPAPER_MODES
@@ -90,6 +93,12 @@ std::string wallpaper_title(const std::string &path);   // "Góry" z ".../Góry.
 // Biurko W x H: wzór w kolorach schematu, na nim tapeta (jeśli jest i da się wczytać).
 // *loaded = false, gdy tapety nie udało się otworzyć.
 ::Fl_RGB_Image *render_desktop(const Appearance &a, int W, int H, bool *loaded = nullptr);
+
+extern const char *const BACKGROUNDS[];       // wzor, kolor, gradient
+extern const char *const BACKGROUND_NAMES[];
+extern const char *const GRADIENTS[];         // pionowy, poziomy, ukosny, promienisty
+extern const char *const GRADIENT_NAMES[];
+unsigned gradient_second(const Appearance &a); // drugi kolor gradientu (RGB)
 
 extern const char *const PATTERNS[];        // identyfikatory wzorów (nullptr na końcu)
 extern const char *const PATTERN_NAMES[];   // nazwy do wyświetlenia

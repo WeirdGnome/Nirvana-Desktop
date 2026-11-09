@@ -378,10 +378,10 @@ Desktop::Desktop(int W, int H, const std::string &home, bool root)
   box(FL_NO_BOX);
   warm_small_icons();   // poza draw() - patrz appearance_changed()
   pattern_.reset(make_pattern());
-  if (!current_appearance().wallpaper.empty()) {
+  if (!current_appearance().wallpaper.empty() || current_appearance().background != "wzor") {
     bool ok = false;
     wallpaper_.reset(render_desktop(current_appearance(), W, H, &ok));
-    if (!ok) wallpaper_.reset();
+    if (!ok && current_appearance().background == "wzor") wallpaper_.reset();
   }
   detect_wm();
 
@@ -1640,10 +1640,11 @@ void Desktop::appearance_changed() {
   set_logo();
   tray::recolor();
   wallpaper_.reset();
-  if (!current_appearance().wallpaper.empty()) {
+  if (!current_appearance().wallpaper.empty() || current_appearance().background != "wzor") {
     bool ok = false;
     wallpaper_.reset(render_desktop(current_appearance(), w(), h(), &ok));
-    if (!ok) wallpaper_.reset();   // pliku nie ma albo nie jest obrazem - zostaje wzór
+    // pliku tapety nie ma albo nie jest obrazem - przy tle "wzór" wystarczy szybki kafelek
+    if (!ok && current_appearance().background == "wzor") wallpaper_.reset();
   }
   // Małe ikony 16x16 (rysowane na tle treści) przygotowujemy od razu. Gdyby
   // powstały dopiero w draw() paska menu, Fl_Image_Surface w środku Fl::flush()

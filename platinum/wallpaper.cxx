@@ -10,6 +10,7 @@
 #include <FL/Fl_Shared_Image.H>
 
 #include <algorithm>
+#include <cmath>
 #include <cstring>
 #include <filesystem>
 #include <map>
@@ -157,10 +158,39 @@ static void blit(std::vector<unsigned char> &buf, int W, int H, Fl_Image *img, i
   }
 }
 
-Fl_RGB_Image *render_desktop(const Appearance &a, int W, int H, bool *loaded) {
-  if (loaded) *loaded = false;
-  W = std::max(1, W); H = std::max(1, H);
-  std::vector<unsigned char> buf((size_t)W * H * 3);
+// Tło pod tapetą: wzór, jednolity kolor albo gradient.
+static void fill_background(const Appearance &a, std::vector<unsigned char> &buf, int W, int H) {
+  uchar c1[3];
+  Fl::get_color(DESK_A, c1[0], c1[1], c1[2]);
+  if (a.background == "kolor") {
+    for (size_t i = 0; i < (size_t)W * H; i++) memcpy(&buf[i * 3], c1, 3);
+    return;
+  }
+  if (a.background == "gradient") {
+    unsigned c2v = gradient_second(a);
+    double c2[3] = {double(c2v >> 16 & 255), double(c2v >> 8 & 255), double(c2v & 255)};
+    // macierz Bayera 4x4: dithering zamiast pasów w płynnych przejściach
+    static const int bayer[4][4] = {{0, 8, 2, 10}, {12, 4, 14, 6}, {3, 11, 1, 9}, {15, 7, 13, 5}};
+    const std::string &g = a.gradient;
+    double cx = (W - 1) / 2.0, cy = (H - 1) / 2.0, rmax = std::hypot(cx, cy);
+    for (int y = 0; y < H; y++) {
+      unsigned char *row = &buf[(size_t)y * W * 3];
+      for (int x = 0; x < W; x++) {
+        double t;
+        if (g == "poziomy") t = W > 1 ? x / double(W - 1) : 0;
+        else if (g == "ukosny") t = (W + H > 2) ? (x + y) / double(W + H - 2) : 0;
+        else if (g == "promienisty") t = rmax > 0 ? std::hypot(x - cx, y - cy) / rmax : 0;
+        else t = H > 1 ? y / double(H - 1) : 0;
+        double dth = (bayer[y & 3][x & 3] + 0.5) / 16.0;
+        for (int k = 0; k < 3; k++) {
+          double v = c1[k] + (c2[k] - c1[k]) * t;
+          int iv = (int)std::floor(v + dth);
+          row[x * 3 + k] = (unsigned char)std::clamp(iv, 0, 255);
+        }
+      }
+    }
+    return;
+  }
   int tw, th;
   unsigned char *tile = pattern_tile(a.pattern, tw, th);
   for (int y = 0; y < H; y++) {
@@ -169,6 +199,13 @@ Fl_RGB_Image *render_desktop(const Appearance &a, int W, int H, bool *loaded) {
     for (int x = 0; x < W; x++) memcpy(row + x * 3, trow + (x % tw) * 3, 3);
   }
   delete[] tile;
+}
+
+Fl_RGB_Image *render_desktop(const Appearance &a, int W, int H, bool *loaded) {
+  if (loaded) *loaded = false;
+  W = std::max(1, W); H = std::max(1, H);
+  std::vector<unsigned char> buf((size_t)W * H * 3);
+  fill_background(a, buf, W, H);
 
   if (!a.wallpaper.empty()) {
     static bool reg = false;
