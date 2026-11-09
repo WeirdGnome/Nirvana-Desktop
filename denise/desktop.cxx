@@ -8,6 +8,7 @@
 #include <FL/Fl_Box.H>
 #include <FL/Fl_Button.H>
 #include <FL/Fl_Secret_Input.H>
+#include <FL/Fl_Tooltip.H>
 #include <FL/Fl_Menu_Button.H>
 #include <FL/Fl_Multi_Label.H>
 #include <FL/Fl_Image_Surface.H>
@@ -311,7 +312,11 @@ static void net_label_measure(const Fl_Label *o, int &W, int &H) {
 
 static std::string alice_exe();
 static Entry entry_for(const std::string &path);
-static const int DOCK_TILE = 44;   // kafelek ikony na doku
+// Dok jak Control Strip z Mac OS: pasek kafelków przy lewej i dolnej krawędzi ekranu,
+// nazwy w podpowiedziach. Po lewej zakładka zwijania, po prawej zaokrąglony koniec.
+static const int DOCK_TILE = 40;   // kafelek (ikona 32 + ramka)
+static const int DOCK_TAB = 14;    // zakładka zwijania
+static const int DOCK_END = 12;    // zaokrąglony koniec paska
 static std::vector<net::Network> g_menu_nets;
 static std::vector<net::Vpn> g_menu_vpns;
 static std::vector<std::string> g_menu_ifaces;
@@ -490,7 +495,10 @@ Desktop::Desktop(int W, int H, const std::string &home, bool root)
     const char *x = getenv("XDG_CONFIG_HOME");
     std::ifstream in((x && *x ? std::string(x) : home_ + "/.config") + "/lisaos/rambler.conf");
     std::string line;
-    while (std::getline(in, line)) if (line == "ukryte=1") show_hidden_ = true;
+    while (std::getline(in, line)) {
+      if (line == "ukryte=1") show_hidden_ = true;
+      if (line == "dok_zwiniety=1") dock_collapsed_ = true;
+    }
   }
   load_dock();
   layout_icons();
@@ -565,31 +573,86 @@ void Desktop::layout_icons() {
     iy += 70;
   }
   icons_.push_back({"Kosz", trash_dir(), trash_full() ? Icon::TrashFull : Icon::Trash, ix, h() - 74});
-  // dok: ikony wyciągnięte na biurko, w lewym dolnym rogu (Leave Out z Workbencha)
-  int dx = 10;
-  for (auto &p : dock_) {
-    std::error_code ec;
-    if (!fs::exists(p, ec)) continue;
-    DeskIcon d;
-    d.path = p;
-    d.dock = true;
-    d.entry = entry_for(p);
-    d.name = d.entry.label;
-    d.icon = d.entry.icon;
-    d.x = dx;
-    d.y = h() - 80;   // podpis na wysokości podpisu kosza
-    icons_.push_back(d);
-    dx += 70;
-    if (dx > ix - 70) break;
+  // dok: ikony wyciągnięte na biurko (Leave Out z Workbencha), jako pasek w lewym
+  // dolnym rogu. Pozycja ikony jak u innych: rysunek w (x + 24, y).
+  dock_shown_ = 0;
+  if (!dock_collapsed_) {
+    int tx = DOCK_TAB;
+    for (auto &p : dock_) {
+      std::error_code ec;
+      if (!fs::exists(p, ec)) continue;
+      if (tx + DOCK_TILE + DOCK_END > ix - 10) break;   // nie wchodzimy pod kosz i dyski
+      DeskIcon d;
+      d.path = p;
+      d.dock = true;
+      d.entry = entry_for(p);
+      d.name = d.entry.label;
+      d.icon = d.entry.icon;
+      d.x = tx + 4 - 24;
+      d.y = h() - DOCK_TILE + 4;
+      icons_.push_back(d);
+      tx += DOCK_TILE;
+      dock_shown_++;
+    }
   }
+}
+
+// Prostokąt całego paska doku (z zakładką i końcem); pusty, gdy dok jest pusty.
+void Desktop::dock_rect(int &X, int &Y, int &W, int &H) const {
+  X = 0; H = DOCK_TILE; Y = h() - H;
+  W = dock_.empty() ? 0 : DOCK_TAB + dock_shown_ * DOCK_TILE + DOCK_END;
+}
+
+void Desktop::draw_dock() {
+  int X, Y, W, H;
+  dock_rect(X, Y, W, H);
+  if (!W) return;
+  // zaokrąglony koniec: tło z obrysem, z prawej strony łuk
+  int ex = X + W - DOCK_END - 6;
+  fl_color(DARK);
+  fl_rounded_rectf(ex, Y, DOCK_END + 6, H, 7);
+  fl_color(GRAY);
+  fl_rounded_rectf(ex + 1, Y + 1, DOCK_END + 4, H - 1, 6);
+  fl_color(LIGHT);
+  fl_xyline(ex + 1, Y + 1, X + W - 6);
+  fl_color(SHADOW);
+  for (int i = 0; i < 3; i++) fl_yxline(X + W - 9 + i * 2 - 2, Y + 12, Y + H - 12);   // uchwyt
+  // zakładka zwijania
+  fl_draw_box(UP_BOX, X, Y, DOCK_TAB, H, GRAY);
+  fl_color(DARK);
+  fl_rect(X, Y, DOCK_TAB + 1, H + 1);
+  int cx = X + DOCK_TAB / 2, cy = Y + H / 2;
+  fl_color(TEXT);
+  if (dock_collapsed_) fl_polygon(cx - 2, cy - 4, cx + 2, cy, cx - 2, cy + 4);
+  else fl_polygon(cx + 2, cy - 4, cx - 2, cy, cx + 2, cy + 4);
+  // kafelki
+  for (int i = 0; i < (int)icons_.size(); i++) {
+    auto &ic = icons_[i];
+    if (!ic.dock) continue;
+    bool sel = i == icon_sel_ || i == icon_drop_;
+    int bx = ic.x + 20, by = ic.y - 4;
+    fl_draw_box(sel ? DOWN_BOX : UP_BOX, bx, by, DOCK_TILE, DOCK_TILE,
+                sel ? fl_color_average(GRAY, SHADOW, 0.6f) : GRAY);
+    fl_color(DARK);
+    fl_rect(bx, by, DOCK_TILE + 1, DOCK_TILE + 1);
+    draw_entry_icon(ic.entry, ic.x + 24, ic.y, false, 32);
+  }
+}
+
+void Desktop::toggle_dock() {
+  dock_collapsed_ = !dock_collapsed_;
+  if (dock_collapsed_ && icon_sel_ >= 0 && icon_sel_ < (int)icons_.size() && icons_[icon_sel_].dock) icon_sel_ = -1;
+  save_rambler_conf();
+  layout_icons();
+  redraw();
 }
 
 int Desktop::icon_at(int ex, int ey) const {
   for (int i = 0; i < (int)icons_.size(); i++) {
     const auto &ic = icons_[i];
-    if (ic.dock) {   // cały kafelek i podpis
-      int bx = ic.x + 40 - DOCK_TILE / 2, by = ic.y + 16 - DOCK_TILE / 2;
-      if (ex >= bx && ex < bx + DOCK_TILE && ey >= by && ey < by + DOCK_TILE + 18) return i;
+    if (ic.dock) {   // cały kafelek
+      int bx = ic.x + 20, by = ic.y - 4;
+      if (ex >= bx && ex < bx + DOCK_TILE && ey >= by && ey < by + DOCK_TILE) return i;
       continue;
     }
     if (ex >= ic.x + 24 && ex < ic.x + 56 && ey >= ic.y && ey < ic.y + 52) return i;
@@ -1232,29 +1295,44 @@ void Desktop::draw() {
     bool sel = i == icon_sel_ || i == icon_drop_;
     Icon shown = ic.icon;
     if (vdragging_ && ic.path == trash_dir()) shown = Icon::Eject;   // jak w Mac OS
-    if (ic.dock) {
-      // kafelek doku: kwadrat w kolorach schematu, ikona w środku
-      int bx = ic.x + 40 - DOCK_TILE / 2, by = ic.y + 16 - DOCK_TILE / 2;
-      fl_draw_box(sel ? DOWN_BOX : UP_BOX, bx, by, DOCK_TILE, DOCK_TILE,
-                  sel ? fl_color_average(GRAY, SHADOW, 0.6f) : GRAY);
-      fl_color(DARK);
-      fl_rect(bx - 1, by - 1, DOCK_TILE + 2, DOCK_TILE + 2);
-      draw_entry_icon(ic.entry, ic.x + 24, ic.y, false, 32);
-    } else {
-      draw_icon(shown, ic.x + 24, ic.y, sel);
-    }
+    if (ic.dock) continue;   // dok rysuje draw_dock(): kafelki bez podpisów
+    draw_icon(shown, ic.x + 24, ic.y, sel);
     std::string nm = ellipsize(ic.name, 76);
     int tw = (int)fl_width(nm.c_str());
-    int tx = ic.x + 40 - tw / 2, ty = ic.y + (ic.dock ? 16 + DOCK_TILE / 2 + 4 : 36);
+    int tx = ic.x + 40 - tw / 2, ty = ic.y + 36;
     fl_color(sel ? ICON_SEL : CONTENT);
     fl_rectf(tx - 2, ty, tw + 4, fl_height());
     fl_color(sel ? ICON_SEL_TEXT : CONTENT_TEXT);
     fl_draw(nm.c_str(), tx, ty + fl_height() - fl_descent());
   }
+  draw_dock();
   for (int i = 0; i < children(); i++) draw_child(*child(i));
 }
 
 int Desktop::handle(int e) {
+  // dok: nazwy w podpowiedziach, zakładka zwija i rozwija pasek
+  if (e == FL_MOVE || e == FL_ENTER) {
+    int i = icon_at(Fl::event_x(), Fl::event_y());
+    static std::string tip;
+    if (i >= 0 && icons_[i].dock) {
+      if (i != tip_icon_) {
+        tip_icon_ = i;
+        tip = icons_[i].name;
+        Fl_Tooltip::enter_area(this, icons_[i].x + 20, icons_[i].y - 4, DOCK_TILE, DOCK_TILE, tip.c_str());
+      }
+    } else if (tip_icon_ >= 0) {
+      tip_icon_ = -1;
+      Fl_Tooltip::enter_area(this, 0, 0, 0, 0, nullptr);
+    }
+  }
+  if (e == FL_LEAVE && tip_icon_ >= 0) {
+    tip_icon_ = -1;
+    Fl_Tooltip::enter_area(this, 0, 0, 0, 0, nullptr);
+  }
+  if (e == FL_PUSH && !dock_.empty() && Fl::event_x() < DOCK_TAB && Fl::event_y() >= h() - DOCK_TILE) {
+    toggle_dock();
+    return 1;
+  }
   switch (e) {   // pliki z innych programów upuszczane na ikony kosza i dysku
   case FL_DND_ENTER:
     return 1;
@@ -1283,14 +1361,22 @@ int Desktop::handle(int e) {
     icon_sel_ = i;
     vdrag_icon_ = (i >= 0 && icons_[i].vol >= 0) ? i : -1;   // dysk można przeciągnąć do kosza
     vpress_x_ = Fl::event_x_root(); vpress_y_ = Fl::event_y_root();
-    if (i >= 0 && Fl::event_clicks()) {
+    dock_press_ = (i >= 0 && icons_[i].dock) ? i : -1;   // dok: jedno kliknięcie, jak Control Strip
+    if (dock_press_ < 0 && i >= 0 && Fl::event_clicks()) {
       Fl::event_clicks(0);
       vdrag_icon_ = -1;
       if (icons_[i].vol >= 0) open_volume(icons_[i].vol);
-      else if (icons_[i].dock) open_entry(icons_[i].entry);
       else open_folder(icons_[i].path);
     }
+    if (tip_icon_ >= 0) Fl_Tooltip::enter_area(this, 0, 0, 0, 0, nullptr);
     redraw();
+    return 1;
+  }
+  if (e == FL_RELEASE && dock_press_ >= 0) {
+    int i = dock_press_;
+    dock_press_ = -1;
+    Fl::event_clicks(0);
+    if (icon_at(Fl::event_x(), Fl::event_y()) == i) open_entry(icons_[i].entry);
     return 1;
   }
   if (e == FL_DRAG && vdrag_icon_ >= 0) {

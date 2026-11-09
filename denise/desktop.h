@@ -179,6 +179,14 @@ private:
   };
   // dok: ścieżki w ~/.config/lisaos/dok
   std::vector<std::string> dock_;
+  bool dock_collapsed_ = false;   // dok zwinięty do samej zakładki
+  int dock_shown_ = 0;            // ile ikon doku się zmieściło
+  int dock_press_ = -1;           // wciśnięty kafelek doku (otwarcie po puszczeniu)
+  int tip_icon_ = -1;             // kafelek z widoczną podpowiedzią
+  void dock_rect(int &X, int &Y, int &W, int &H) const;
+  void draw_dock();
+  void toggle_dock();
+  void save_rambler_conf();
   void load_dock();
   void save_dock();
   void format_dialog(int vi);

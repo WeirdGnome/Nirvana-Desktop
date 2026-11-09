@@ -241,12 +241,17 @@ Pozycje, które w danej chwili nic by nie zrobiły, są wyszarzone, np. Wysuń b
     uruchomieniu.
 
   Plik z flagą *Program* otwiera się w Lisa Shell.
-- **Dok**: *Połóż na doku* wystawia ikonę pliku, folderu albo aplikacji w lewym dolnym rogu
-  biurka, *Zdejmij z doku* ją chowa (plik zostaje na miejscu). Lista jest w `~/.config/lisaos/dok`.
-  Każda ikona stoi na kwadratowym kafelku w kolorach bieżącego schematu. AppImage pokazują
-  ikonę i nazwę wyciągnięte ze środka paczki, tak samo jak w oknach.
+- **Dok** (w stylu Control Strip z Mac OS): *Połóż na doku* wystawia ikonę pliku, folderu
+  albo aplikacji na pasek w lewym dolnym rogu ekranu, *Zdejmij z doku* ją chowa (plik zostaje
+  na miejscu).
+  - Kafelki w kolorach schematu przylegają do siebie i do krawędzi ekranu.
+  - Nazwy pokazują się w podpowiedziach. AppImage mają swoją ikonę i nazwę z wersją.
+  - Jedno kliknięcie otwiera.
+  - Zakładka po lewej zwija pasek, a stan jest zapamiętywany.
 
-  ![Dok w trzech schematach](docs/img/dok.png)
+  Lista ikon jest w `~/.config/lisaos/dok`.
+
+  ![Dok w trzech schematach i podpowiedź](docs/img/dok.png)
 - **Formatuj dysk**: zaznacz ikonę dysku na biurku i wybierz FAT32, exFAT, ext4 albo NTFS
   (UDisks2). Niesformatowane pendrive'y też pojawiają się na biurku.
 - **Resetuj LISA** uruchamia Insighta i Ramblera od nowa. Okna programów zostają.

@@ -319,7 +319,12 @@ void Desktop::clean_up() {
 void Desktop::toggle_hidden() {
   show_hidden_ = !show_hidden_;
   for (auto *w : wins_) if (w->pane) w->pane->set_hidden(show_hidden_);
-  std::ofstream(config_dir() + "/rambler.conf") << "ukryte=" << (show_hidden_ ? 1 : 0) << "\n";
+  save_rambler_conf();
+}
+
+void Desktop::save_rambler_conf() {
+  std::ofstream(config_dir() + "/rambler.conf") << "ukryte=" << (show_hidden_ ? 1 : 0) << "\n"
+                                               << "dok_zwiniety=" << (dock_collapsed_ ? 1 : 0) << "\n";
 }
 
 void Desktop::set_sort(FolderView::SortKey k) {

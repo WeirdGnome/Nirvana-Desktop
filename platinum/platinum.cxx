@@ -3,6 +3,7 @@
 
 #include <FL/Fl.H>
 #include <FL/fl_draw.H>
+#include <FL/Fl_Tooltip.H>
 #include <FL/fl_utf8.h>
 #include <algorithm>
 #include <cmath>
@@ -154,6 +155,13 @@ void init(bool root) {
     Fl::set_font(FL_FREE_FONT, ff);
     FONT_SYSTEM = FL_FREE_FONT;
   }
+  // podpowiedzi (dok, aplety, gary): dymek pomocy jak w Mac OS
+  Fl_Tooltip::font(FONT_SMALL);
+  Fl_Tooltip::size(SIZE_SMALL + 1);
+  Fl_Tooltip::color(fl_rgb_color(255, 255, 204));
+  Fl_Tooltip::textcolor(FL_BLACK);
+  Fl_Tooltip::margin_width(5);
+  Fl_Tooltip::margin_height(3);
 }
 
 // ---------------------------------------------------------------------------
