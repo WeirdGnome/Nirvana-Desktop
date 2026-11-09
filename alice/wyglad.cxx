@@ -1,6 +1,6 @@
 // LisaOS - alice: panel "Wygląd".
 // Schemat kolorów, styl paska tytułu, tło biurka (wzór, kolor albo
-// gradient), tapeta, animacje okien. Zmiany widać od razu w samym panelu
+// gradient), tapeta, styl ikon, animacje okien. Zmiany widać od razu w samym panelu
 // (podgląd na żywo); "Zastosuj" zapisuje ~/.config/lisaos/wyglad.conf i
 // ustawia właściwość _LISAOS_WYGLAD na oknie głównym X - Rambler i Insight
 // przeładowują wtedy paletę bez restartu.
@@ -36,6 +36,7 @@ static Fl_Hold_Browser *g_list;
 static Fl_Box *g_source;
 static Fl_Choice *g_style, *g_pattern, *g_wall, *g_wall_mode, *g_bg, *g_grad;
 static Fl_Button *g_desk2;
+static Fl_Choice *g_icons;
 static std::vector<std::string> g_walls;   // pozycje listy tapet (0 = brak, ostatnia = "Inny plik…")
 static Fl_Check_Button *g_anim;
 static Fl_Button *g_desk_default;
@@ -227,20 +228,20 @@ int panel_wyglad() {
   g_cur = current_appearance();
   g_schemes = list_schemes();
 
-  const int W = 600, H = 500;
+  const int W = 600, H = 530;
   g_win = new FrameWindow(W, H, "Wygląd");
   g_win->xclass("lisaos-alice");
 
   auto *t1 = new Fl_Box(15, 8, 220, 20, "Schemat kolorów");
   t1->labelfont(FONT_SYSTEM); t1->labelsize(SIZE_SYSTEM);
   t1->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
-  g_list = new Fl_Hold_Browser(15, 30, 220, 402);
+  g_list = new Fl_Hold_Browser(15, 30, 220, 432);
   g_list->box(WELL_BOX);
   g_list->textfont(FONT_SMALL);
   g_list->textsize(SIZE_SMALL + 1);
   g_list->callback(list_cb);
   g_list->when(FL_WHEN_CHANGED);
-  g_source = new Fl_Box(15, 434, 220, 20);
+  g_source = new Fl_Box(15, 464, 220, 20);
   g_source->labelsize(10);
   g_source->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
 
@@ -372,7 +373,15 @@ int panel_wyglad() {
     preview();
   });
 
-  g_anim = new Fl_Check_Button(396, 428, 190, 22, "Animacje okien");
+  g_icons = new Fl_Choice(400, 428, 185, 22, "Styl ikon:");
+  g_icons->add("Workbench (Amiga)|Platinum (Mac OS)");
+  g_icons->value(g_cur.icons == "platinum" ? 1 : 0);
+  g_icons->callback([](Fl_Widget *, void *) {
+    g_cur.icons = g_icons->value() == 1 ? "platinum" : "workbench";
+    preview();
+  });
+
+  g_anim = new Fl_Check_Button(396, 456, 190, 22, "Animacje okien");
   g_anim->value(g_cur.animations);
   g_anim->callback([](Fl_Widget *, void *) { g_cur.animations = g_anim->value(); });
 
@@ -387,7 +396,7 @@ int panel_wyglad() {
   ok->shortcut(FL_Enter);
   ok->callback([](Fl_Widget *, void *) { save(); g_win->hide(); });
 
-  for (Fl_Choice *c : {g_style, g_pattern, g_wall, g_wall_mode, g_bg, g_grad}) {
+  for (Fl_Choice *c : {g_style, g_pattern, g_wall, g_wall_mode, g_bg, g_grad, g_icons}) {
     c->labelsize(SIZE_SMALL + 1);
     c->textsize(SIZE_SMALL + 1);
   }

@@ -61,6 +61,7 @@ struct Appearance {                 // ~/.config/lisaos/wyglad.conf
   std::string gradient = "pionowy"; // pionowy, poziomy, ukosny, promienisty
   std::string pattern = "kropki";   // patrz PATTERNS
   bool animations = true;
+  std::string icons = "workbench";  // styl ikon: workbench (Amiga) albo platinum (Mac OS)
   std::string wallpaper;            // plik tapety; pusty = sam wzór
   std::string wallpaper_mode = "wypelnij";   // patrz WALLPAPER_MODES
 };
@@ -136,7 +137,9 @@ bool root_mode();
 // ---- Ikony (32x32, rysowane wektorowo) ------------------------------------
 enum class Icon { Folder, OpenFolder, Document, Application, Home, Trash, TrashFull, Image, Music,
                   HardDisk, Removable, Optical, Encrypted, Eject, Network, Wifi };
-void draw_icon(Icon icon, int x, int y, bool selected);
+void draw_icon(Icon icon, int x, int y, bool selected);   // w stylu z ustawień wyglądu
+bool draw_icon_workbench(Icon icon, int x, int y, bool selected);
+int icon_style();   // 0 = Workbench, 1 = Platinum (klucz dla pamięci podręcznych ikon)
 void draw_logo(int x, int y, int size);
 
 // Małe ikony sieci (pasek menu, listy). on - kolor zapalonych elementów,

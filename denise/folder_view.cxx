@@ -118,7 +118,7 @@ static Fl_Image *small_icon(Icon icon, bool sel) {
   // Ikony rysujemy na tle treści, więc klucz zawiera kolor tła. Starych nie
   // usuwamy: menu aplikacji (gary) może jeszcze trzymać do nich wskaźniki.
   static std::map<std::pair<Fl_Color, int>, Fl_Image *> cache;
-  std::pair<Fl_Color, int> key{Fl::get_color(CONTENT), (int)icon * 2 + sel};
+  std::pair<Fl_Color, int> key{Fl::get_color(CONTENT), ((int)icon * 2 + sel) * 2 + icon_style()};
   auto it = cache.find(key);
   if (it != cache.end()) return it->second;
   Fl_Image_Surface surf(32, 32);
@@ -139,7 +139,7 @@ static Fl_Image *small_icon(Icon icon, bool sel) {
 // piksele jak na ekranie Amigi czy starego Maca.
 static Fl_Image *big_icon(Icon icon, bool sel) {
   static std::map<std::pair<Fl_Color, int>, Fl_Image *> cache;
-  std::pair<Fl_Color, int> key{Fl::get_color(CONTENT), (int)icon * 2 + sel};
+  std::pair<Fl_Color, int> key{Fl::get_color(CONTENT), ((int)icon * 2 + sel) * 2 + icon_style()};
   auto it = cache.find(key);
   if (it != cache.end()) return it->second;
   Fl_Image_Surface surf(32, 32);

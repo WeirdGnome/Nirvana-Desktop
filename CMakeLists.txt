@@ -33,6 +33,7 @@ add_library(lisaos-platinum STATIC
   platinum/anim.cxx
   platinum/theme.cxx
   platinum/wallpaper.cxx
+  platinum/icons_wb.cxx
   platinum/framewin.cxx)
 find_package(X11 REQUIRED)
 target_include_directories(lisaos-platinum PUBLIC platinum)

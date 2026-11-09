@@ -295,6 +295,19 @@ przestawia cały system: Rambler i Insight przeładowują paletę bez restartu.
   - Pod przezroczystymi fragmentami PNG widać wzór biurka.
   - W Ramblerze: zaznacz obraz i wybierz **Ikony → Ustaw jako tapetę**.
   - Własne tapety można dodać do `~/.local/share/lisaos/tapety`.
+- **Styl ikon**: *Workbench (Amiga)*, domyślny, albo *Platinum (Mac OS)*. Zmiana działa
+  od razu, także w otwartych oknach i na doku.
+  - Workbench: własne rysunki w duchu Workbencha 2/3 i MagicWB, w palecie szarości,
+    granatu i beżu z czarnymi obrysami.
+  - Foldery to szuflady, a dokumenty to „projekty” z zagiętym rogiem. Programy wyglądają
+    jak okienko z gadżetami zamykania i głębi.
+  - Dyski to kostki twardych dysków z diodą (LisaOS HD z granatową tabliczką), a nośniki
+    wymienne to dyskietki 3,5". Kosz ma pokrywę z uchwytem.
+  - Zaznaczona ikona ma odwrócone kolory, jak tryb *complement* w Workbenchu.
+  - Plansza wszystkich ikon: `tools/plansza-ikon.cxx`.
+
+  ![Ikony Workbench (normalne i zaznaczone) i Platinum](docs/img/ikony.png)
+  ![Schemat Workbench 2 z ikonami Workbench](docs/img/ikony-workbench.png)
 - **Animacje okien**: włączone lub wyłączone.
 
   - *Lisa Desktop* (2560×1440, w duchu AmigaOS 4) powstaje ze skryptu

@@ -498,7 +498,10 @@ void draw_lock(int x, int y, Fl_Color c) {
   fl_yxline(x + 5, y + 1, y + 3);
 }
 
+int icon_style() { return current_appearance().icons == "platinum" ? 1 : 0; }
+
 void draw_icon(Icon icon, int x, int y, bool sel) {
+  if (icon_style() == 0 && draw_icon_workbench(icon, x, y, sel)) return;
   switch (icon) {
   case Icon::Folder:      folder(x, y, sel, false); break;
   case Icon::OpenFolder:  folder(x, y, sel, true); break;

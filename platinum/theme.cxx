@@ -256,6 +256,7 @@ Appearance read_appearance() {
       for (int i = 0; PATTERNS[i]; i++) if (v == PATTERNS[i]) a.pattern = v;
     } else if (k == "animacje") a.animations = !(v == "0" || v == "nie");
     else if (k == "tapeta") a.wallpaper = v;
+    else if (k == "ikony") a.icons = v == "platinum" ? "platinum" : "workbench";
     else if (k == "tlo") {
       for (int i = 0; BACKGROUNDS[i]; i++) if (v == BACKGROUNDS[i]) a.background = v;
     } else if (k == "biurko2") a.desk2 = parse_color(v, c) ? (int)c : -1;
@@ -289,6 +290,7 @@ bool write_appearance(const Appearance &a) {
         << "biurko2=" << (a.desk2 < 0 ? "" : color_str((unsigned)a.desk2)) << "\n"
         << "gradient=" << a.gradient << "\n"
         << "animacje=" << (a.animations ? 1 : 0) << "\n"
+        << "ikony=" << a.icons << "\n"
         << "tapeta=" << a.wallpaper << "\n"
         << "tapeta_uklad=" << a.wallpaper_mode << "\n";
     if (!out) return false;
