@@ -1410,6 +1410,14 @@ int Desktop::handle(int e) {
       vdrag_icon_ = -1;
       if (icons_[i].vol >= 0) open_volume(icons_[i].vol);
       else open_folder(icons_[i].path);
+    } else if (i < 0 && Fl::event_clicks() && Fl::event_button() == FL_LEFT_MOUSE) {
+      // dwuklik na pustym biurku (poza dokiem): menedżer plików - okno LisaOS HD
+      int dx, dy, dw, dh;
+      dock_rect(dx, dy, dw, dh);
+      if (!Fl::event_inside(dx, dy, dw, dh)) {
+        Fl::event_clicks(0);
+        open_folder(home_);
+      }
     }
     if (tip_icon_ >= 0) Fl_Tooltip::enter_area(this, 0, 0, 0, 0, nullptr);
     redraw();

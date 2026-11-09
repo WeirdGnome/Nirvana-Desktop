@@ -223,6 +223,8 @@ okno biurka nie przyjmuje fokusu, żeby klik w pasek menu nie zmieniał aktywnej
 ## Rambler: praca z plikami
 
 - **Otwieranie**: podwójne kliknięcie lub Enter. AppImage z innego folderu proponuje instalację.
+- **Dwuklik na pustym biurku** otwiera menedżer plików (okno LisaOS HD); gdy jest już
+  otwarte, wysuwa je na wierzch.
 - **Zaznaczanie**: klik, Shift/Ctrl+klik dodaje lub odejmuje, ramka zaznaczania myszą, `Ctrl+A`.
 - **Zmiana nazwy**: `F2` albo klik w nazwę już zaznaczonego elementu (jak w Finderze).
   Zmiana nazwy folderu aktualizuje jego otwarte okna i zapamiętane pozycje.
