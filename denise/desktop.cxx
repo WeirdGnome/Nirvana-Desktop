@@ -647,6 +647,14 @@ plat::Rect Desktop::folder_area() const {
 // _LISAOS_OBSZAR_OKIEN na oknie głównym = x, y, szer., wys. ramki na ekranie.
 void Desktop::publish_folder_area() {
   if (!shown() || !fl_display) return;
+  // _LISAOS_DOK: wysokość doku - Insight trzyma nad nim okna wszystkich programów
+  static long last_dock = -1;
+  long dock = dock_.empty() ? 0 : DOCK_TILE;
+  if (dock != last_dock) {
+    last_dock = dock;
+    XChangeProperty(fl_display, DefaultRootWindow(fl_display), atom("_LISAOS_DOK"), XA_CARDINAL, 32,
+                    PropModeReplace, (unsigned char *)&dock, 1);
+  }
   Rect a = folder_area();
   long v[4] = {x_root() + a.x - FRAME, y_root() + a.y - TITLE_H, a.w + 2 * FRAME, a.h + TITLE_H + FRAME};
   static long last[4] = {-1, -1, -1, -1};

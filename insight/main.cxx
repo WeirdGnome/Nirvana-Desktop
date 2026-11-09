@@ -44,9 +44,51 @@ static Atom A_WYGLAD;
 static Atom A_WM_PROTOCOLS, A_WM_DELETE, A_WM_STATE, A_NET_WM_NAME, A_UTF8,
     A_NET_WM_TYPE, A_NET_WM_TYPE_DESKTOP, A_NET_WM_TYPE_DOCK, A_NET_SUPPORTED,
     A_NET_CHECK, A_NET_ACTIVE, A_NET_WM_STATE, A_NET_WM_STATE_SHADED, A_NET_WM_TYPE_DIALOG,
-    A_NET_CLIENT_LIST, A_NET_CLOSE, A_NET_WM_STATE_HIDDEN, A_WM_CHANGE_STATE;
+    A_NET_CLIENT_LIST, A_NET_CLOSE, A_NET_WM_STATE_HIDDEN, A_WM_CHANGE_STATE,
+    A_NET_WM_STATE_MAX_V, A_NET_WM_STATE_MAX_H, A_NET_WORKAREA, A_NET_FRAME_EXTENTS,
+    A_NET_REQUEST_FRAME_EXTENTS, A_LISAOS_DOK;
 
 class Frame;
+
+// Obszar roboczy (jednostki FLTK): ekran bez paska menu u góry i doku Ramblera
+// na dole (_LISAOS_DOK = wysokość doku, 0 gdy pusty). Okna programów go nie
+// zasłaniają: przy otwarciu, przy maksymalizacji i przy zoomie.
+static int g_dock_h = 0;
+static Rect work_area() { return {0, MENUBAR_H, screen_w, screen_h - MENUBAR_H - g_dock_h}; }
+
+static void read_dock_height() {
+  Atom type;
+  int fmt;
+  unsigned long n, after;
+  unsigned char *data = nullptr;
+  g_dock_h = 0;
+  if (XGetWindowProperty(dpy, DefaultRootWindow(dpy), A_LISAOS_DOK, 0, 1, False, XA_CARDINAL, &type, &fmt, &n,
+                         &after, &data) == Success && data && n == 1 && fmt == 32)
+    g_dock_h = std::clamp((int)*(long *)data, 0, screen_h / 3);
+  if (data) XFree(data);
+}
+
+// _NET_WORKAREA (w pikselach) - z niego programy (Chromium, GTK, Qt) biorą
+// rozmiar okna "zmaksymalizowanego" i pierwszego otwarcia.
+static void publish_workarea() {
+  Rect a = px(work_area());
+  long wa[4] = {a.x, a.y, a.w, a.h};
+  XChangeProperty(dpy, DefaultRootWindow(dpy), A_NET_WORKAREA, XA_CARDINAL, 32, PropModeReplace,
+                  (unsigned char *)wa, 4);
+  long one = 1, zero = 0, geo[2] = {px(screen_w), px(screen_h)};
+  XChangeProperty(dpy, DefaultRootWindow(dpy), XInternAtom(dpy, "_NET_NUMBER_OF_DESKTOPS", False), XA_CARDINAL,
+                  32, PropModeReplace, (unsigned char *)&one, 1);
+  XChangeProperty(dpy, DefaultRootWindow(dpy), XInternAtom(dpy, "_NET_CURRENT_DESKTOP", False), XA_CARDINAL, 32,
+                  PropModeReplace, (unsigned char *)&zero, 1);
+  XChangeProperty(dpy, DefaultRootWindow(dpy), XInternAtom(dpy, "_NET_DESKTOP_GEOMETRY", False), XA_CARDINAL, 32,
+                  PropModeReplace, (unsigned char *)geo, 2);
+}
+
+// _NET_FRAME_EXTENTS: grubość ramki (lewo, prawo, góra, dół) w pikselach
+static void set_frame_extents(Window w) {
+  long ext[4] = {px(FRAME), px(FRAME), px(TITLE_H), px(FRAME)};
+  XChangeProperty(dpy, w, A_NET_FRAME_EXTENTS, XA_CARDINAL, 32, PropModeReplace, (unsigned char *)ext, 4);
+}
 
 // _LISAOS_OBSZAR_OKIEN (x, y, szer., wys.) na oknie głównym - ustawia Rambler.
 static bool rambler_area(plat::Rect &r) {
@@ -149,8 +191,9 @@ static std::string get_class(Window w) {
 
 // _NET_WM_STATE: informujemy aplikację (np. Ramblera), czy okno jest zwinięte.
 static void publish_state(Client *c) {
-  Atom st[2];
+  Atom st[4];
   int n = 0;
+  if (c->zoomed) { st[n++] = A_NET_WM_STATE_MAX_V; st[n++] = A_NET_WM_STATE_MAX_H; }
   if (c->shaded) st[n++] = A_NET_WM_STATE_SHADED;
   if (c->hidden) st[n++] = A_NET_WM_STATE_HIDDEN;
   XChangeProperty(dpy, c->win, A_NET_WM_STATE, XA_ATOM, 32, PropModeReplace, (unsigned char *)st, n);
@@ -257,7 +300,9 @@ public:
     if (c->shaded) toggle_shade();
     if (!c->zoomed) {
       c->unzoom[0] = x(); c->unzoom[1] = y(); c->unzoom[2] = w(); c->unzoom[3] = h();
-      Rect to = {4, MENUBAR_H + 4, screen_w - 100, screen_h - MENUBAR_H - 10};
+      // zoom zostawia z prawej kolumnę ikon biurka (LisaOS HD, dyski, kosz), a na dole dok
+      Rect wa = work_area();
+      Rect to = {4, wa.y + 4, screen_w - 100, wa.h - 8};
       // okna Ramblera: obszar, który podaje biurko (bez kolumny dysków i doku)
       if (c->cls == "LisaOS-Rambler") rambler_area(to);
       zoom_rects(geom(), to);
@@ -268,6 +313,7 @@ public:
       resize(c->unzoom[0], c->unzoom[1], c->unzoom[2], c->unzoom[3]);
       c->zoomed = false;
     }
+    publish_state(c);
     redraw();
   }
 
@@ -447,8 +493,17 @@ static void manage(Window w, bool existing) {
     y = MENUBAR_H + 30 + 26 * (cascade % 8);
     cascade++;
   }
-  y = std::max(y, MENUBAR_H);
   int fw = un(wa.width) + 2 * FRAME, fh = un(wa.height) + TITLE_H + FRAME;
+  // okno mieści się w obszarze roboczym: pod paskiem menu i nad dokiem
+  // (Chromium/Brave przy pierwszym starcie biorą rozmiar całego ekranu)
+  Rect area = work_area();
+  if (!c->dialog || fh > area.h) {
+    fw = std::min(fw, area.w);
+    fh = std::min(fh, area.h);
+    x = std::clamp(x, area.x, std::max(area.x, area.x + area.w - fw));
+    y = std::clamp(y, area.y, std::max(area.y, area.y + area.h - fh));
+  }
+  y = std::max(y, MENUBAR_H);
 
   // nowe okno "wylatuje" ze środka miejsca, w którym się pojawi
   if (!existing && !c->own_anim) zoom_rects(center_of({x, y, fw, fh}), {x, y, fw, fh});
@@ -465,8 +520,13 @@ static void manage(Window w, bool existing) {
   XSelectInput(dpy, w, PropertyChangeMask | StructureNotifyMask);
   if (wa.map_state == IsViewable) c->ignore_unmap++;   // reparent wygeneruje UnmapNotify
   XReparentWindow(dpy, w, fx, px(FRAME), px(TITLE_H));
+  set_frame_extents(w);
   XMapWindow(dpy, w);
   set_wm_state(w, NormalState);
+  // program chce startować zmaksymalizowany (np. Brave zapamiętał taki stan)
+  if (!c->dialog && (has_atom(w, A_NET_WM_STATE, A_NET_WM_STATE_MAX_V) ||
+                     has_atom(w, A_NET_WM_STATE, A_NET_WM_STATE_MAX_H)))
+    c->frame->toggle_zoom();
   // klik w okno aplikacji ma je aktywować - przechwytujemy go synchronicznie
   XGrabButton(dpy, AnyButton, AnyModifier, w, False, ButtonPressMask, GrabModeSync,
               GrabModeAsync, None, None);
@@ -610,6 +670,9 @@ static int x_handler(void *event, void *) {
       if (r.value_mask & CWY) ny = std::max(MENUBAR_H, un(r.y) - TITLE_H);
       if (r.value_mask & CWWidth) nw = un(r.width) + 2 * FRAME;
       if (r.value_mask & CWHeight) nh = un(r.height) + TITLE_H + FRAME;
+      Rect area = work_area();   // nie większe niż obszar roboczy, nie nad paskiem menu
+      nw = std::min(nw, area.w);
+      if (!c->shaded) nh = std::min(nh, area.h);
       if (c->shaded) { c->full_h = nh; nh = f->h(); }
       f->resize(nx, ny, nw, nh);
       f->sync_client();
@@ -637,6 +700,11 @@ static int x_handler(void *event, void *) {
     return 0;
 
   case PropertyNotify:
+    if (e->xproperty.window == root && e->xproperty.atom == A_LISAOS_DOK) {
+      read_dock_height();
+      publish_workarea();
+      return 0;
+    }
     if (e->xproperty.window == root && e->xproperty.atom == A_WYGLAD) {
       appearance_changed();
       return 0;   // niech zobaczą to też inne obsługi
@@ -696,6 +764,18 @@ static int x_handler(void *event, void *) {
         bool want = act == 2 ? !c->shaded : act == 1;
         if (want != c->shaded && !c->dialog) c->frame->toggle_shade();
       }
+      // maksymalizacja (przycisk w pasku tytułu Chromium, Firefox...) = zoom
+      Atom a1 = (Atom)e->xclient.data.l[1], a2 = (Atom)e->xclient.data.l[2];
+      if (a1 == A_NET_WM_STATE_MAX_V || a1 == A_NET_WM_STATE_MAX_H || a2 == A_NET_WM_STATE_MAX_V ||
+          a2 == A_NET_WM_STATE_MAX_H) {
+        bool want = act == 2 ? !c->zoomed : act == 1;
+        if (want != c->zoomed && !c->dialog) c->frame->toggle_zoom();
+      }
+      return 1;
+    }
+    if (e->xclient.message_type == A_NET_REQUEST_FRAME_EXTENTS) {
+      // program pyta o ramkę jeszcze przed pokazaniem okna (GTK, Chromium)
+      set_frame_extents(e->xclient.window);
       return 1;
     }
     if (e->xclient.message_type == A_NET_ACTIVE) {
@@ -765,6 +845,12 @@ int main(int argc, char **argv) {
   A_NET_CLIENT_LIST = XInternAtom(dpy, "_NET_CLIENT_LIST", False);
   A_NET_CLOSE = XInternAtom(dpy, "_NET_CLOSE_WINDOW", False);
   A_NET_WM_STATE_HIDDEN = XInternAtom(dpy, "_NET_WM_STATE_HIDDEN", False);
+  A_NET_WM_STATE_MAX_V = XInternAtom(dpy, "_NET_WM_STATE_MAXIMIZED_VERT", False);
+  A_NET_WM_STATE_MAX_H = XInternAtom(dpy, "_NET_WM_STATE_MAXIMIZED_HORZ", False);
+  A_NET_WORKAREA = XInternAtom(dpy, "_NET_WORKAREA", False);
+  A_NET_FRAME_EXTENTS = XInternAtom(dpy, "_NET_FRAME_EXTENTS", False);
+  A_NET_REQUEST_FRAME_EXTENTS = XInternAtom(dpy, "_NET_REQUEST_FRAME_EXTENTS", False);
+  A_LISAOS_DOK = XInternAtom(dpy, "_LISAOS_DOK", False);
   A_WM_CHANGE_STATE = XInternAtom(dpy, "WM_CHANGE_STATE", False);
 
   // Minimalne EWMH: kto jest menedżerem okien i co obsługuje.
@@ -775,9 +861,13 @@ int main(int argc, char **argv) {
   Atom supported[] = {A_NET_WM_NAME, A_NET_WM_TYPE, A_NET_WM_TYPE_DESKTOP, A_NET_WM_TYPE_DOCK,
                       A_NET_ACTIVE, A_NET_CHECK, A_NET_WM_STATE, A_NET_WM_STATE_SHADED,
                       A_NET_WM_TYPE_DIALOG, A_NET_CLIENT_LIST, A_NET_CLOSE,
-                      A_NET_WM_STATE_HIDDEN};
+                      A_NET_WM_STATE_HIDDEN, A_NET_WM_STATE_MAX_V, A_NET_WM_STATE_MAX_H,
+                      A_NET_WORKAREA, A_NET_FRAME_EXTENTS, A_NET_REQUEST_FRAME_EXTENTS};
   XChangeProperty(dpy, root, A_NET_SUPPORTED, XA_ATOM, 32, PropModeReplace,
                   (unsigned char *)supported, sizeof supported / sizeof supported[0]);
+
+  read_dock_height();
+  publish_workarea();
 
   XDefineCursor(dpy, root, XCreateFontCursor(dpy, XC_left_ptr));
   set_root_background();   // kolor biurka ze schematu, zanim wstanie Rambler

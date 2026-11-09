@@ -18,7 +18,15 @@ fi
 
 export XDG_CURRENT_DESKTOP=LisaOS
 export XDG_SESSION_DESKTOP=LisaOS
+export XDG_SESSION_TYPE=x11
 export DESKTOP_SESSION=lisaos
+# Usługi uruchamiane przez D-Bus (xdg-desktop-portal dla Flatpaków, agent
+# sekretów...) dostają środowisko magistrali, a nie sesji - przekaż im ekran
+# i nazwę pulpitu, inaczej portal nie wstaje i programy czekają na niego.
+if command -v dbus-update-activation-environment >/dev/null 2>&1; then
+  dbus-update-activation-environment DISPLAY XAUTHORITY XDG_CURRENT_DESKTOP XDG_SESSION_DESKTOP \
+    XDG_SESSION_TYPE DESKTOP_SESSION XDG_RUNTIME_DIR 2>/dev/null
+fi
 [ -f "$HOME/.Xresources" ] && command -v xrdb >/dev/null 2>&1 && xrdb -merge "$HOME/.Xresources"
 
 "$BIN/lisaos-insight" &

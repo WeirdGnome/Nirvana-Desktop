@@ -122,6 +122,7 @@ install(DIRECTORY schematy/ DESTINATION share/lisaos/schematy COMPONENT lisaos)
 install(DIRECTORY tapety/ DESTINATION share/lisaos/tapety COMPONENT lisaos)
 install(PROGRAMS session/lisaos-session session/lisaos-autostart DESTINATION bin COMPONENT lisaos)
 install(FILES session/lisaos.desktop DESTINATION share/xsessions COMPONENT lisaos)
+install(FILES session/lisaos-portals.conf DESTINATION share/xdg-desktop-portal COMPONENT lisaos)
 install(FILES README.md DESTINATION share/doc/lisaos COMPONENT lisaos)
 
 # --- paczka .deb (Devuan 6 "Excalibur" / Debian 13): cpack -G DEB ----------------
@@ -145,7 +146,8 @@ set(CPACK_DEBIAN_PACKAGE_SHLIBDEPS ON)
 set(CPACK_DEBIAN_PACKAGE_DEPENDS "dbus-bin | dbus")
 set(CPACK_DEBIAN_PACKAGE_RECOMMENDS
   "xserver-xorg, xinit, fonts-dejavu-core, libpam-elogind | elogind, polkitd, pkexec, lxpolkit, \
-udisks2, network-manager, pulseaudio-utils, alsa-utils, squashfs-tools, bubblewrap, xsecurelock, xdg-utils")
+udisks2, network-manager, pulseaudio-utils, alsa-utils, squashfs-tools, bubblewrap, xsecurelock, xdg-utils, \
+xdg-desktop-portal, xdg-desktop-portal-gtk")
 set(CPACK_DEBIAN_PACKAGE_SUGGESTS
   "lightdm, network-manager-openvpn, network-manager-vpnc, wireguard-tools, power-profiles-daemon, pipewire-pulse")
 include(CPack)

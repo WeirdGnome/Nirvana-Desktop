@@ -112,7 +112,12 @@ Czcionkę systemową w stylu Chicago można podać przez `LISAOS_SYSTEM_FONT`
 - klik w okno aplikacji aktywuje je i wyciąga na wierzch; klik w biurko dezaktywuje okna,
   a klik w pasek menu nie zmienia aktywnego okna (menu działa na nie)
 - foldery i dialogi Ramblera to zwykłe okna X, więc zachowują się jak każda aplikacja
-- okna nie wchodzą pod pasek menu; biurko Ramblera zawsze leży na dole
+- okna nie wchodzą pod pasek menu ani na dok: Insight publikuje `_NET_WORKAREA`, więc
+  programy (Brave, Firefox, GTK, Qt) otwierają się w tym obszarze, a za duże okna są
+  przycinane; maksymalizacja z paska tytułu programu (`_NET_WM_STATE_MAXIMIZED_*`)
+  działa jak zoom; biurko Ramblera zawsze leży na dole
+- Flatpaki: sesja przekazuje usługom D-Bus ekran i nazwę pulpitu, a
+  `lisaos-portals.conf` kieruje xdg-desktop-portal do backendu GTK
 - bez kompozytora: aplikacje rysują prosto na ekran (mniej pamięci)
 
 ## Aplikacje (AppImage)
