@@ -29,6 +29,7 @@
 #include <fcntl.h>
 #include <cstring>
 #include <ctime>
+#include <algorithm>
 #include <filesystem>
 #include <fstream>
 #include <grp.h>

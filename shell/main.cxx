@@ -27,6 +27,7 @@ extern "C" {
 
 #include <algorithm>
 #include <cerrno>
+#include <cstdint>
 #include <clocale>
 #include <langinfo.h>
 #include <csignal>

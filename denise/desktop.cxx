@@ -20,6 +20,7 @@
 #include <algorithm>
 #include <chrono>
 #include <csignal>
+#include <cstring>
 #include <ctime>
 #include <filesystem>
 #include <fstream>
