@@ -17,7 +17,8 @@ Lekkie środowisko graficzne dla Linuksa (baza: minimalny Devuan) w duchu
 | `lisaos-denise`     | Rambler: menedżer plików + biurko        | prototyp    |
 | `lisaos-insight`      | menedżer okien X11 (Xorg/XLibre), ramki Platinum | działa (0.1) |
 | `lisaos-gary`       | przełącznik aplikacji (na razie w procesie Ramblera) | działa (0.1) |
-| `lisaos-alice`      | panele sterowania: Wygląd, Sieć          | działa (0.1) |
+| `lisaos-alice`      | panele sterowania: Wygląd, Sieć, Zasilanie | działa (0.1) |
+| `lisaos-shell`      | Lisa Shell - emulator terminala          | działa (0.1) |
 | `lisaos-paula`      | dźwięk                                  | planowany   |
 | `lisaos-kickstart`  | logowanie i start sesji                 | planowany   |
 | `lisaos-guru`       | okno błędów, tryb root                  | planowany   |
@@ -29,7 +30,11 @@ Zależności (Devuan/Debian):
     sudo apt install build-essential cmake git libx11-dev libxft-dev \
         libxinerama-dev libxcursor-dev libxfixes-dev libxrender-dev \
         squashfs-tools bubblewrap libdbus-1-dev udisks2 policykit-1 \
-        network-manager network-manager-openvpn   # sieć i VPN
+        network-manager network-manager-openvpn \  # sieć i VPN
+        libxss-dev pulseaudio-utils alsa-utils    # aplety dźwięku i zasilania
+
+Opcjonalnie: `power-profiles-daemon` (profile zasilania), `xsecurelock`, `i3lock`
+albo `slock` (blokada ekranu). Na Rocky: `libXScrnSaver-devel pulseaudio-utils`.
 
 Jeśli FLTK 1.4 nie jest zainstalowany, CMake sam pobierze i zbuduje wersję 1.4.4:
 
@@ -264,8 +269,84 @@ LisaOS zarządza siecią przez NetworkManagera (`nmcli` i D-Bus). Na Devuanie: p
 Testy bez karty Wi-Fi: `LISAOS_NMCLI=tools/atrapa-nmcli.sh` udaje kartę `wlan0` i kilka
 sieci (resztę przekazuje do prawdziwego `nmcli`).
 
+## Lisa Shell (terminal)
+
+`lisaos-shell` to emulator terminala zgodny z xterm (`TERM=xterm-256color`),
+zbudowany na bibliotece libvterm (dołączona w `third_party/`, MIT; systemowa
+jest używana, jeśli jest). Uruchamianie: logo → Lisa Shell, w Ramblerze
+Plik → Otwórz w Lisa Shell (Ctrl+T, w folderze aktywnego okna) albo
+`lisaos-shell [--katalog DIR] [-e polecenie]`.
+
+- **Wyświetlanie:** 256 kolorów i truecolor, pogrubienie, kursywa, podkreślenie, ekran
+  alternatywny. Działają w nim vim, htop, mc, less.
+- **Mysz w programach:** obsługiwana. Shift + klik zawsze zaznacza tekst.
+- **Przewijanie wstecz:** 5000 wierszy, pasek przewijania, kółko myszy,
+  Shift+PgUp/PgDn.
+- **Zaznaczanie i schowek:**
+  - zaznaczenie trafia od razu do schowka X; środkowy klawisz wkleja,
+  - podwójny klik zaznacza słowo, potrójny wiersz,
+  - Ctrl+Shift+C kopiuje, Ctrl+Shift+V wkleja (w nawiasach, jeśli program o to prosi).
+- **Okna:** Ctrl+Shift+N otwiera nowe w tym samym katalogu, Ctrl+Shift+W zamyka.
+  Przed zamknięciem okna, w którym coś działa, terminal pyta.
+- **Wygląd:**
+  - prawy klik otwiera menu, a w nim profile kolorów: Klasyczny (jasny), Ciemny,
+    Zielony fosfor, Bursztynowy, Workbench (Amiga), Jak schemat kolorów,
+  - Ctrl+Shift+= / - / 0 zmienia rozmiar czcionki.
+- **Ustawienia:** `~/.config/lisaos/terminal.conf` (profil, czcionka, rozmiar, kolumny,
+  wiersze, przewijanie).
+
+![Lisa Shell z htop](docs/img/shell-htop.png)
+
+## Dźwięk
+
+Ikona głośnika na pasku menu. Kliknięcie otwiera okienko z:
+
+- głośnością i wyciszeniem wyjścia oraz wyborem wyjścia (także portu: głośniki
+  albo słuchawki). Przy zmianie wyjścia grające programy przechodzą na nowe,
+- głośnością i wyciszeniem mikrofonu oraz wyborem wejścia,
+- głośnością każdej grającej aplikacji.
+
+Kółko myszy nad ikoną zmienia głośność. Klawisze multimedialne (głośność, wyciszenie,
+mikrofon, jasność) pokazują pasek OSD na dole ekranu. Pod GNOME/KDE obsługuje je
+tamto środowisko.
+
+Działa z PulseAudio i PipeWire (`pactl`). Bez serwera dźwięku używa czystej ALSA
+(`amixer`: Master i Capture).
+
+![Głośność](docs/img/glosnosc.png)
+
+## Zasilanie i tryb projekcji
+
+Ikona baterii (albo wtyczki w komputerze stacjonarnym) na pasku menu. W okienku:
+
+- stan baterii z czasem do rozładowania lub naładowania,
+- suwak jasności ekranu (przez logind, bez roota),
+- profil zasilania, jeśli działa `power-profiles-daemon`,
+- akcje: Zablokuj ekran, Uśpij, Hibernuj, Wyloguj, Uruchom ponownie, Wyłącz.
+  Działają przez logind; na Devuanie przez elogind.
+
+**Tryb projekcji** (pole w tym okienku) wstrzymuje naraz:
+
+- wygaszanie ekranu i DPMS (`XScreenSaverSuspend`), więc nie uruchamia się też
+  blokada ekranu,
+- usypianie: blokada logind/elogind `idle:sleep`,
+- wygaszanie i usypianie w GNOME, KDE i Xfce (`org.gnome.SessionManager`,
+  `org.freedesktop.ScreenSaver`).
+
+Gdy tryb jest włączony, przy ikonie baterii widać mały monitor.
+
+Panel **Zasilanie** (logo → Panele sterowania) ustawia dla sesji LisaOS:
+
+- wygaszanie ekranu po bezczynności,
+- blokadę przy wygaszeniu,
+- usypianie po bezczynności, osobno na baterii i z zasilacza,
+- reakcję na 3% baterii; przy 10% pojawia się ostrzeżenie.
+
+![Zasilanie i tryb projekcji](docs/img/zasilanie-projekcja.png)
+
 ## Licencja
 
 Do ustalenia (proponowana: GPL-3.0-or-later; FLTK jest na LGPL z wyjątkiem
 pozwalającym na linkowanie statyczne).
+libvterm w `third_party/libvterm` (Paul Evans) jest na licencji MIT.
 Schematy w `schematy/redmond97-se/` pochodzą z Redmond97 SE (Sliver X, matthewmx86) i są na GPL-3.0.

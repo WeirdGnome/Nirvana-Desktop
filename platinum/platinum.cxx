@@ -4,6 +4,8 @@
 #include <FL/Fl.H>
 #include <FL/fl_draw.H>
 #include <FL/fl_utf8.h>
+#include <algorithm>
+#include <cmath>
 #include <cstdlib>
 #include <utility>
 
@@ -376,6 +378,84 @@ void draw_signal(int x, int y, int level, Fl_Color on, Fl_Color off) {
     fl_color(level > i ? on : off);
     fl_rectf(x + i * 3, y + 10 - h, 2, h);
   }
+}
+
+void draw_speaker(int x, int y, int level, bool muted, Fl_Color c, double sc) {
+  fl_push_matrix();
+  fl_translate(x, y);
+  fl_scale(sc);
+  fl_color(c);
+  // korpus i lejek
+  fl_begin_polygon();
+  fl_vertex(0, 4); fl_vertex(3, 4); fl_vertex(7, 0.5); fl_vertex(7, 12.5); fl_vertex(3, 9); fl_vertex(0, 9);
+  fl_end_polygon();
+  fl_line_style(FL_SOLID, std::max(1, (int)(1.5 * sc + 0.5)));
+  if (muted) {
+    fl_begin_line(); fl_vertex(9.5, 4); fl_vertex(14.5, 9); fl_end_line();
+    fl_begin_line(); fl_vertex(14.5, 4); fl_vertex(9.5, 9); fl_end_line();
+  } else {
+    for (int i = 1; i <= level && i <= 3; i++) {
+      double r = 2.5 * i;
+      fl_begin_line();
+      fl_arc(7.5, 6.5, r, -50, 50);
+      fl_end_line();
+    }
+  }
+  fl_line_style(0);
+  fl_pop_matrix();
+}
+
+void draw_battery(int x, int y, int pct, bool charging, Fl_Color c, double sc) {
+  fl_push_matrix();
+  fl_translate(x, y);
+  fl_scale(sc);
+  fl_color(c);
+  fl_begin_loop(); fl_vertex(0.5, 0.5); fl_vertex(19.5, 0.5); fl_vertex(19.5, 10.5); fl_vertex(0.5, 10.5); fl_end_loop();
+  fl_begin_polygon(); fl_vertex(20, 3); fl_vertex(22, 3); fl_vertex(22, 8); fl_vertex(20, 8); fl_end_polygon();
+  double fw = 17.0 * std::clamp(pct, 0, 100) / 100.0;
+  if (fw > 0) {
+    fl_color(pct <= 10 && !charging ? fl_rgb_color(0xC0, 0x20, 0x20) : c);
+    fl_begin_polygon(); fl_vertex(2, 2); fl_vertex(2 + fw, 2); fl_vertex(2 + fw, 9); fl_vertex(2, 9); fl_end_polygon();
+  }
+  if (charging) {   // błyskawica w kolorze tła paska na wypełnieniu
+    fl_color(GRAY);
+    fl_begin_polygon(); fl_vertex(11, 1); fl_vertex(6.5, 6); fl_vertex(9.5, 6); fl_vertex(8, 10); fl_vertex(13, 4.5); fl_vertex(10, 4.5); fl_end_polygon();
+    fl_color(c);
+    fl_begin_loop(); fl_vertex(11, 1); fl_vertex(6.5, 6); fl_vertex(9.5, 6); fl_vertex(8, 10); fl_vertex(13, 4.5); fl_vertex(10, 4.5); fl_end_loop();
+  }
+  fl_pop_matrix();
+}
+
+void draw_plug(int x, int y, Fl_Color c) {
+  fl_color(c);
+  fl_rectf(x + 3, y, 2, 4);
+  fl_rectf(x + 9, y, 2, 4);
+  fl_rectf(x + 1, y + 4, 12, 4);
+  fl_rectf(x + 3, y + 8, 8, 2);
+  fl_rectf(x + 6, y + 10, 2, 3);
+}
+
+void draw_sun(int x, int y, Fl_Color c, double sc) {
+  fl_push_matrix();
+  fl_translate(x, y);
+  fl_scale(sc);
+  fl_color(c);
+  fl_begin_polygon(); fl_circle(6.5, 6.5, 3); fl_end_polygon();
+  fl_line_style(FL_SOLID, std::max(1, (int)(sc + 0.5)));
+  for (int i = 0; i < 8; i++) {
+    double a = i * M_PI / 4;
+    fl_begin_line(); fl_vertex(6.5 + 4.5 * cos(a), 6.5 + 4.5 * sin(a)); fl_vertex(6.5 + 6.3 * cos(a), 6.5 + 6.3 * sin(a)); fl_end_line();
+  }
+  fl_line_style(0);
+  fl_pop_matrix();
+}
+
+void draw_display(int x, int y, Fl_Color c) {
+  fl_color(c);
+  fl_rect(x, y, 11, 8);
+  fl_rectf(x + 2, y + 2, 7, 4);
+  fl_xyline(x + 3, y + 9, x + 7);
+  fl_yxline(x + 5, y + 8, y + 9);
 }
 
 void draw_lock(int x, int y, Fl_Color c) {

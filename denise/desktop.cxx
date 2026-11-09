@@ -1,5 +1,6 @@
 // LisaOS - denise: biurko, pasek menu i zarządzanie oknami menedżera plików
 #include "desktop.h"
+#include "applets.h"
 #include "appimage.h"
 #include "gary.h"
 
@@ -200,6 +201,7 @@ static void net_label_measure(const Fl_Label *o, int &W, int &H) {
   H = fl_height();
 }
 
+static std::string alice_exe();
 static std::vector<net::Network> g_menu_nets;
 static std::vector<net::Vpn> g_menu_vpns;
 static std::vector<std::string> g_menu_ifaces;
@@ -261,6 +263,7 @@ Desktop::Desktop(int W, int H, const std::string &home, bool root)
     {"logo/O LisaOS…", 0, &Desktop::about, FL_MENU_DIVIDER},
     {"logo/Lisa Shell", 0, &Desktop::open_terminal_home, 0},
     {"logo/Panele sterowania/Sieć…", 0, &Desktop::open_network, 0},
+    {"logo/Panele sterowania/Zasilanie…", 0, &Desktop::open_power, 0},
     {"logo/Panele sterowania/Wygląd…", 0, &Desktop::open_appearance, 0},
     {"logo/Ostatnie aplikacje", 0, nullptr, FL_MENU_INACTIVE},
     {"Plik/Nowy folder", FL_COMMAND + 'n', &Desktop::new_folder, 0},
@@ -305,6 +308,9 @@ Desktop::Desktop(int W, int H, const std::string &home, bool root)
   }
 
   extras_ = new MenuExtras(W - 170 - 120, 0, 120, MENUBAR_H);
+  // aplety: zasilanie, głośność, sieć - od lewej do prawej przed zegarem
+  applets::make_power(W - 170 - 120 - 30 - 30 - 44, 0, 44, MENUBAR_H);
+  applets::make_volume(W - 170 - 120 - 30 - 30, 0, 30, MENUBAR_H);
   if (net::installed()) {
     auto *nm = new NetMenu(W - 170 - 120 - 30, 0, 30, MENUBAR_H);
     net_menu_ = nm;
@@ -328,6 +334,23 @@ Desktop::Desktop(int W, int H, const std::string &home, bool root)
   layout_icons();
   watch_trash();
   watch_volumes();
+  {
+    applets::Host h;
+    h.dialog = [this](const std::string &t, const std::string &x, applets::Buttons b) {
+      std::vector<std::pair<std::string, std::function<void()>>> bb(b.begin(), b.end());
+      dialog(t, x, bb);
+    };
+    h.logout = [this] {
+      if (!csd_mode) { quit(); return; }   // sesja LisaOS: koniec Ramblera kończy sesję
+      // obca sesja (GNOME itd.): poprośmy ją o wylogowanie
+      spawn({"sh", "-c", "gnome-session-quit --logout --no-prompt 2>/dev/null || "
+                         "loginctl terminate-session \"$XDG_SESSION_ID\""});
+    };
+    h.before_shutdown = [this] { for (auto *w : wins_) if (w->pane) remember(w, true); };
+    h.open_power_panel = [this] { spawn({alice_exe(), "zasilanie"}); };
+    h.lisaos_session = !csd_mode;
+    applets::init(h);
+  }
   if (net_menu_) {
     Fl::set_labeltype(NET_LABEL, net_label_draw, net_label_measure);
     net_ = net::query();
@@ -1295,6 +1318,7 @@ void Desktop::open_terminal() {
 }
 void Desktop::open_terminal_home() { spawn({shell_exe(), "--katalog", home_}); }
 void Desktop::open_network() { spawn({alice_exe(), "siec"}); }
+void Desktop::open_power() { spawn({alice_exe(), "zasilanie"}); }
 
 // --- sieć ----------------------------------------------------------------------
 // Menu sieci budujemy przy każdym otwarciu z ostatniego znanego stanu, a przy

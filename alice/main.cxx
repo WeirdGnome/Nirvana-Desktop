@@ -2,6 +2,7 @@
 //
 //   lisaos-alice [wyglad]          panel Wygląd (domyślny)
 //   lisaos-alice siec [--ukryta]   panel Sieć (--ukryta: od razu okno "Inna sieć")
+//   lisaos-alice zasilanie          panel Zasilanie
 //   lisaos-alice schemat NAZWA     ustaw schemat kolorów bez okna (np. redmond97-se/ouroboros)
 #include "platinum.h"
 
@@ -11,6 +12,7 @@
 
 int panel_wyglad();
 int panel_siec(bool hidden_dialog);
+int panel_zasilanie();
 
 int main(int argc, char **argv) {
   plat::init(false);
@@ -29,5 +31,6 @@ int main(int argc, char **argv) {
     bool hidden = argc > 2 && !strcmp(argv[2], "--ukryta");
     return panel_siec(hidden);
   }
+  if (!strcmp(which, "zasilanie")) return panel_zasilanie();
   return panel_wyglad();
 }

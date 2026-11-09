@@ -109,6 +109,7 @@ static std::string pretty(const std::string &cls) {
   if (!strcasecmp(cls.c_str(), "lisaos-alice")) return "Wygląd";   // panele LisaOS (FLTK zmienia "l" na "L")
   if (!strcasecmp(cls.c_str(), "lisaos-siec")) return "Sieć";
   if (!strcasecmp(cls.c_str(), "lisaos-shell")) return "Lisa Shell";
+  if (!strcasecmp(cls.c_str(), "lisaos-zasilanie")) return "Zasilanie";
   std::string s = cls;
   if (auto dot = s.rfind('.'); dot != std::string::npos && dot + 1 < s.size()) s = s.substr(dot + 1);
   if (!s.empty() && islower((unsigned char)s[0])) s[0] = (char)toupper((unsigned char)s[0]);

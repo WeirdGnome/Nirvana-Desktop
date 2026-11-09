@@ -106,6 +106,7 @@ public:
   void appearance_changed();      // panel Wygląd zmienił schemat (_LISAOS_WYGLAD)
   void open_appearance();         // uruchom panel Wygląd (lisaos-alice)
   void open_network();            // panel Sieć
+  void open_power();              // panel Zasilanie
   void open_terminal();           // Lisa Shell w folderze aktywnego okna
   void open_terminal_home();
   // sieć (pasek menu)

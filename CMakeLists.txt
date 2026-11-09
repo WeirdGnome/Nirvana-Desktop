@@ -44,6 +44,15 @@ add_library(lisaos-net STATIC net/net.cxx)
 target_include_directories(lisaos-net PUBLIC net)
 target_link_libraries(lisaos-net PUBLIC fltk::fltk PkgConfig::DBUS)
 
+# --- lisaos-audio i lisaos-power: aplety głośności i zasilania -------------------
+pkg_check_modules(XSS REQUIRED IMPORTED_TARGET xscrnsaver)
+add_library(lisaos-audio STATIC audio/audio.cxx)
+target_include_directories(lisaos-audio PUBLIC audio)
+target_link_libraries(lisaos-audio PUBLIC fltk::fltk)
+add_library(lisaos-power STATIC power/power.cxx)
+target_include_directories(lisaos-power PUBLIC power)
+target_link_libraries(lisaos-power PUBLIC fltk::fltk PkgConfig::DBUS PkgConfig::XSS X11::Xext X11::X11)
+
 # --- denise: menedżer plików ---------------------------------------------------------
 add_executable(lisaos-denise
   denise/main.cxx
@@ -52,16 +61,17 @@ add_executable(lisaos-denise
   denise/spatial.cxx
   denise/appimage.cxx
   denise/gary.cxx
-  denise/volumes.cxx)
-target_link_libraries(lisaos-denise PRIVATE lisaos-platinum lisaos-net fltk::images PkgConfig::DBUS)
+  denise/volumes.cxx
+  denise/applets.cxx)
+target_link_libraries(lisaos-denise PRIVATE lisaos-platinum lisaos-net lisaos-audio lisaos-power fltk::images PkgConfig::DBUS)
 
 # --- insight: menedżer okien X11 ----------------------------------------------
 add_executable(lisaos-insight insight/main.cxx)
 target_link_libraries(lisaos-insight PRIVATE lisaos-platinum X11::X11)
 
 # --- alice: panele sterowania (Wygląd) -------------------------------------------
-add_executable(lisaos-alice alice/main.cxx alice/wyglad.cxx alice/siec.cxx)
-target_link_libraries(lisaos-alice PRIVATE lisaos-platinum lisaos-net)
+add_executable(lisaos-alice alice/main.cxx alice/wyglad.cxx alice/siec.cxx alice/zasilanie.cxx)
+target_link_libraries(lisaos-alice PRIVATE lisaos-platinum lisaos-net lisaos-power)
 
 # --- Lisa Shell: emulator terminala (libvterm systemowy albo dołączony) --------
 pkg_check_modules(VTERM IMPORTED_TARGET vterm>=0.3)

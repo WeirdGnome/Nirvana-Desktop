@@ -117,7 +117,13 @@ void draw_logo(int x, int y, int size);
 void draw_wifi(int x, int y, int level /*0-4, -1: wyłączone*/, Fl_Color on, Fl_Color off);   // 16x13
 void draw_wired(int x, int y, Fl_Color c);                       // 16x13
 void draw_signal(int x, int y, int level /*0-4*/, Fl_Color on, Fl_Color off);   // 13x10
-void draw_lock(int x, int y, Fl_Color c);                        // 7x9   // logo LisaOS: mały chip w stylu Amigi
+void draw_lock(int x, int y, Fl_Color c);                        // 7x9
+// Dźwięk i zasilanie (scale > 1 dla dużych wersji, np. w OSD).
+void draw_speaker(int x, int y, int level /*0-3*/, bool muted, Fl_Color c, double scale = 1);   // 16x13
+void draw_battery(int x, int y, int percent, bool charging, Fl_Color c, double scale = 1);       // 22x11
+void draw_plug(int x, int y, Fl_Color c);                        // 14x13
+void draw_sun(int x, int y, Fl_Color c, double scale = 1);       // 13x13
+void draw_display(int x, int y, Fl_Color c);                     // 11x10 - monitor (tryb projekcji)   // logo LisaOS: mały chip w stylu Amigi
 
 // ---- Chrome okna -------------------------------------------------------------
 constexpr int TITLE_H = 20;   // wysokość paska tytułu
