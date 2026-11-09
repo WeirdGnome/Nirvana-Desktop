@@ -458,6 +458,22 @@ void draw_display(int x, int y, Fl_Color c) {
   fl_yxline(x + 5, y + 8, y + 9);
 }
 
+void draw_depth_gadget(int x, int y, bool pressed) {
+  Fl_Color line = pressed ? SEL_TEXT : TEXT;
+  Fl_Color back = pressed ? SEL : GRAY;
+  Fl_Color front = pressed ? fl_color_average(SEL_TEXT, SEL, 0.35f) : LIGHT;
+  // tylny: lewy górny, sam obrys
+  fl_color(back);
+  fl_rectf(x, y, 12, 9);
+  fl_color(line);
+  fl_rect(x, y, 12, 9);
+  // przedni: prawy dolny, wypełniony, przykrywa róg tylnego
+  fl_color(front);
+  fl_rectf(x + 6, y + 5, 12, 9);
+  fl_color(line);
+  fl_rect(x + 6, y + 5, 12, 9);
+}
+
 void draw_lock(int x, int y, Fl_Color c) {
   fl_color(c);
   fl_rectf(x, y + 4, 7, 5);

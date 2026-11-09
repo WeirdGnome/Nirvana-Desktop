@@ -123,7 +123,9 @@ void draw_speaker(int x, int y, int level /*0-3*/, bool muted, Fl_Color c, doubl
 void draw_battery(int x, int y, int percent, bool charging, Fl_Color c, double scale = 1);       // 22x11
 void draw_plug(int x, int y, Fl_Color c);                        // 14x13
 void draw_sun(int x, int y, Fl_Color c, double scale = 1);       // 13x13
-void draw_display(int x, int y, Fl_Color c);                     // 11x10 - monitor (tryb projekcji)   // logo LisaOS: mały chip w stylu Amigi
+void draw_display(int x, int y, Fl_Color c);
+// Gadżet głębi z Amigi (Workbench): tylny prostokąt i nachodzący na niego przedni.
+void draw_depth_gadget(int x, int y, bool pressed);              // 18x14                     // 11x10 - monitor (tryb projekcji)   // logo LisaOS: mały chip w stylu Amigi
 
 // ---- Chrome okna -------------------------------------------------------------
 constexpr int TITLE_H = 20;   // wysokość paska tytułu

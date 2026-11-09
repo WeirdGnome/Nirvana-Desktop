@@ -85,6 +85,8 @@ public:
 // Menu aplikacji "Rambler": lista otwartych folderów i operacje na oknach.
 // Docelowo (lisaos-gary) stanie się przełącznikiem aplikacji.
 // ---------------------------------------------------------------------------
+static const int APP_W = 34;   // szerokość przycisku aplikacji (gary) w prawym rogu
+
 class WindowsMenu : public Fl_Menu_Button {
 public:
   std::function<void(WindowsMenu *)> on_open;
@@ -104,6 +106,12 @@ public:
       open_ = false; redraw();
       return r;
     }
+    if (e == FL_ENTER) {   // podpowiedź: aktywna aplikacja
+      std::string name = "Rambler";
+      Fl_Image *icon = nullptr;
+      if (current) current(name, icon);
+      copy_tooltip(("Aplikacje - teraz: " + name).c_str());
+    }
     return Fl_Menu_Button::handle(e);
   }
   void draw() override {
@@ -114,17 +122,9 @@ public:
       fl_color(selection_color());
       fl_rectf(x(), y(), w(), h() - 1);
     }
-    // Jak w Mac OS 9: ikona i nazwa aplikacji na pierwszym planie, wyrównane do prawej.
-    std::string name = "Rambler";
-    Fl_Image *icon = nullptr;
-    if (current) current(name, icon);
-    fl_font(FONT_SYSTEM, SIZE_SYSTEM);
-    name = ellipsize(name, w() - 40);
-    int tw = (int)fl_width(name.c_str());
-    int tx = x() + w() - 8 - tw;
-    if (icon) icon->draw(tx - 20, y() + 2);
-    fl_color(open_ ? SEL_TEXT : TEXT);
-    fl_draw(name.c_str(), tx, y() + 14);
+    // Ukłon w stronę Amigi: zamiast nazwy aplikacji gadżet głębi z paska ekranu
+    // Workbencha (dwa nachodzące prostokąty). Nazwa jest w podpowiedzi i w menu.
+    draw_depth_gadget(x() + (w() - 18) / 2 + 1, y() + 3, open_);
     // separator po lewej
     fl_color(SHADOW); fl_yxline(x(), y() + 3, y() + h() - 5);
     fl_color(LIGHT);  fl_yxline(x() + 1, y() + 3, y() + h() - 5);
@@ -307,18 +307,18 @@ Desktop::Desktop(int W, int H, const std::string &home, bool root)
     logo->image(logo_img_);
   }
 
-  extras_ = new MenuExtras(W - 170 - 120, 0, 120, MENUBAR_H);
+  extras_ = new MenuExtras(W - APP_W - 120, 0, 120, MENUBAR_H);
   // aplety: zasilanie, głośność, sieć - od lewej do prawej przed zegarem
-  applets::make_power(W - 170 - 120 - 30 - 30 - 44, 0, 44, MENUBAR_H);
-  applets::make_volume(W - 170 - 120 - 30 - 30, 0, 30, MENUBAR_H);
+  applets::make_power(W - APP_W - 120 - 30 - 30 - 44, 0, 44, MENUBAR_H);
+  applets::make_volume(W - APP_W - 120 - 30 - 30, 0, 30, MENUBAR_H);
   if (net::installed()) {
-    auto *nm = new NetMenu(W - 170 - 120 - 30, 0, 30, MENUBAR_H);
+    auto *nm = new NetMenu(W - APP_W - 120 - 30, 0, 30, MENUBAR_H);
     net_menu_ = nm;
     nm->selection_color(SEL);
     nm->on_open = [this](NetMenu *m) { build_net_menu(m); };
     nm->summary = [this] { return net::summary(net_); };
   }
-  auto *wm = new WindowsMenu(W - 170, 0, 170, MENUBAR_H);
+  auto *wm = new WindowsMenu(W - APP_W, 0, APP_W, MENUBAR_H);
   app_menu_ = wm;
   wm->selection_color(menu_->selection_color());
   wm->on_open = [this](WindowsMenu *m) { build_windows_menu(m); };
