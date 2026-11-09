@@ -180,6 +180,10 @@ void Desktop::update_menu() {
   act("Ikony/Zmień nazwę…", file_sel);
   act("Ikony/Usuń", file_sel);
   act("Ikony/Informacje…", win_sel || desk_sel);
+  {
+    std::vector<std::string> t = targets();
+    act("Ikony/Ustaw jako tapetę", t.size() == 1 && is_image_file(t[0]));
+  }
   act("Ikony/Zamroź", icons_mode);
   act("Ikony/Odmroź", icons_mode);
   bool in_dock = di && di->dock;
@@ -190,6 +194,25 @@ void Desktop::update_menu() {
   act("Ikony/Zdejmij z doku", in_dock);
   act("Ikony/Wysuń", vol_sel && (vols_[di->vol].removable || !vols_[di->vol].mountpoint.empty()));
   act("Narzędzia/Formatuj dysk…", vol_sel && !vols_[di->vol].optical);
+}
+
+// Ikony > Ustaw jako tapetę: zapis w ustawieniach wyglądu, biurko odświeża się
+// przez _LISAOS_WYGLAD (tak samo jak po "Zastosuj" w panelu Wygląd).
+void Desktop::set_as_wallpaper() {
+  std::vector<std::string> t = targets();
+  if (t.size() != 1 || !is_image_file(t[0])) return;
+  if (!image_loadable(t[0])) {
+    dialog("Tapeta", "Nie udało się otworzyć obrazu „" + fs::path(t[0]).filename().string() +
+                     "”.\nPlik może być uszkodzony albo w nieobsługiwanym formacie.", {{"OK", nullptr}});
+    return;
+  }
+  Appearance a = read_appearance();
+  a.wallpaper = t[0];
+  if (!write_appearance(a)) {
+    dialog("Tapeta", "Nie udało się zapisać ustawień wyglądu.", {{"OK", nullptr}});
+    return;
+  }
+  notify_appearance_changed();
 }
 
 // ---------------------------------------------------------------------------

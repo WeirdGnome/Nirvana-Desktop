@@ -337,6 +337,22 @@ static Fl_Tiled_Image *make_pattern() {
   return new Fl_Tiled_Image(img, 0, 0);
 }
 
+static Fl_RGB_Image *make_logo_image();
+// Pierwsze menu: logo LisaOS i napis "Lisa" (po zmianie schematu logo dostaje nowe tło).
+void Desktop::set_logo() {
+  if (!logo_item_) return;
+  Fl_RGB_Image *prev = logo_img_;
+  logo_img_ = make_logo_image();
+  logo_item_->image(logo_img_);       // rejestruje typ etykiety z obrazkiem w FLTK
+  static Fl_Multi_Label *ml = new Fl_Multi_Label;   // żyje tyle co pasek menu
+  ml->labela = (const char *)logo_img_;
+  ml->typea = _FL_IMAGE_LABEL;
+  ml->labelb = " Lisa";
+  ml->typeb = FL_NORMAL_LABEL;
+  ml->label(logo_item_);
+  delete prev;
+}
+
 static Fl_RGB_Image *make_logo_image() {
   Fl_Image_Surface surf(18, 18);
   Fl_Surface_Device::push_current(&surf);
@@ -361,6 +377,11 @@ Desktop::Desktop(int W, int H, const std::string &home, bool root)
   box(FL_NO_BOX);
   warm_small_icons();   // poza draw() - patrz appearance_changed()
   pattern_.reset(make_pattern());
+  if (!current_appearance().wallpaper.empty()) {
+    bool ok = false;
+    wallpaper_.reset(render_desktop(current_appearance(), W, H, &ok));
+    if (!ok) wallpaper_.reset();
+  }
   detect_wm();
 
   menu_ = new LisaMenuBar(0, 0, W, MENUBAR_H);
@@ -411,7 +432,8 @@ Desktop::Desktop(int W, int H, const std::string &home, bool root)
     {"Ikony/Duplikuj", FL_COMMAND + 'd', &Desktop::duplicate, 0},
     {"Ikony/Zmień nazwę…", FL_F + 2, &Desktop::rename_selected, 0},
     {"Ikony/Usuń", FL_COMMAND + FL_BackSpace, &Desktop::move_to_trash, FL_MENU_DIVIDER},
-    {"Ikony/Informacje…", FL_COMMAND + 'i', &Desktop::get_info, FL_MENU_DIVIDER},
+    {"Ikony/Informacje…", FL_COMMAND + 'i', &Desktop::get_info, 0},
+    {"Ikony/Ustaw jako tapetę", 0, &Desktop::set_as_wallpaper, FL_MENU_DIVIDER},
     {"Ikony/Zamroź", FL_COMMAND + 's', &Desktop::snapshot, 0},
     {"Ikony/Odmroź", 0, &Desktop::unsnapshot, FL_MENU_DIVIDER},
     {"Ikony/Połóż na doku", FL_COMMAND + 'l', &Desktop::dock_add, 0},
@@ -436,17 +458,8 @@ Desktop::Desktop(int W, int H, const std::string &home, bool root)
                },
                (void *)idx, it.flags);
   }
-  // pierwsze menu: logo LisaOS i napis "Lisa"
-  if (Fl_Menu_Item *logo = (Fl_Menu_Item *)menu_->find_item("logo")) {
-    logo_img_ = make_logo_image();
-    logo->image(logo_img_);          // rejestruje typ etykiety z obrazkiem w FLTK
-    auto *ml = new Fl_Multi_Label;   // żyje tyle co pasek menu
-    ml->labela = (const char *)logo_img_;
-    ml->typea = _FL_IMAGE_LABEL;
-    ml->labelb = " Lisa";
-    ml->typeb = FL_NORMAL_LABEL;
-    ml->label(logo);
-  }
+  logo_item_ = (Fl_Menu_Item *)menu_->find_item("logo");
+  set_logo();
 
   // Prawa strona, od krawędzi: gary, zegar, sieć, głośność, zasilanie - ciasno,
   // bez dziur. Pasek menu kończy się za ostatnim tytułem; między nim a apletami
@@ -1288,7 +1301,8 @@ void Desktop::restore() {
 // Rysowanie i zdarzenia biurka
 // ---------------------------------------------------------------------------
 void Desktop::draw() {
-  pattern_->draw(0, 0, w(), h());
+  if (wallpaper_) wallpaper_->draw(0, 0);
+  else pattern_->draw(0, 0, w(), h());
   fl_font(FONT_SMALL, SIZE_SMALL);
   for (int i = 0; i < (int)icons_.size(); i++) {
     auto &ic = icons_[i];
@@ -1596,11 +1610,12 @@ void Desktop::appearance_changed() {
   Fl_Image *old = pattern_ ? pattern_->image() : nullptr;
   pattern_.reset(make_pattern());
   delete old;
-  if (Fl_Menu_Item *logo = (Fl_Menu_Item *)menu_->find_item("logo")) {
-    Fl_RGB_Image *prev = logo_img_;
-    logo_img_ = make_logo_image();
-    logo->image(logo_img_);
-    delete prev;
+  set_logo();
+  wallpaper_.reset();
+  if (!current_appearance().wallpaper.empty()) {
+    bool ok = false;
+    wallpaper_.reset(render_desktop(current_appearance(), w(), h(), &ok));
+    if (!ok) wallpaper_.reset();   // pliku nie ma albo nie jest obrazem - zostaje wzór
   }
   // Małe ikony 16x16 (rysowane na tle treści) przygotowujemy od razu. Gdyby
   // powstały dopiero w draw() paska menu, Fl_Image_Surface w środku Fl::flush()

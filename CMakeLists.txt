@@ -32,10 +32,11 @@ add_library(lisaos-platinum STATIC
   platinum/pwindow.cxx
   platinum/anim.cxx
   platinum/theme.cxx
+  platinum/wallpaper.cxx
   platinum/framewin.cxx)
 find_package(X11 REQUIRED)
 target_include_directories(lisaos-platinum PUBLIC platinum)
-target_link_libraries(lisaos-platinum PUBLIC fltk::fltk X11::X11 X11::Xext)
+target_link_libraries(lisaos-platinum PUBLIC fltk::fltk fltk::images X11::X11 X11::Xext)
 
 # --- lisaos-net: sieć przez NetworkManager (nmcli + D-Bus) --------------------
 find_package(PkgConfig REQUIRED)
@@ -90,5 +91,6 @@ target_link_libraries(lisaos-shell PRIVATE lisaos-platinum ${LISAOS_VTERM} util)
 
 install(TARGETS lisaos-denise lisaos-insight lisaos-alice lisaos-shell RUNTIME DESTINATION bin)
 install(DIRECTORY schematy/ DESTINATION share/lisaos/schematy)
+install(DIRECTORY tapety/ DESTINATION share/lisaos/tapety)
 install(PROGRAMS session/lisaos-session DESTINATION bin)
 install(FILES session/lisaos.desktop DESTINATION share/xsessions)

@@ -459,16 +459,7 @@ void show_vpn() {
 }
 
 void vpn_import_dialog() {
-  fl_cancel = "Anuluj";
-  fl_ok = "Wybierz";
-  Fl_File_Chooser::all_files_label = "Wszystkie pliki (*)";
-  Fl_File_Chooser::filename_label = "Plik:";
-  Fl_File_Chooser::favorites_label = "Ulubione";
-  Fl_File_Chooser::filesystems_label = "Dyski";
-  Fl_File_Chooser::show_label = "Pokaż:";
-  Fl_File_Chooser::hidden_label = "Ukryte pliki";
-  Fl_File_Chooser::preview_label = "Podgląd";
-  Fl_File_Chooser::new_directory_tooltip = "Nowy folder";
+  polish_file_chooser();
   const char *f = fl_file_chooser("Importuj konfigurację VPN", "Konfiguracje VPN (*.{conf,ovpn,pcf})\tWszystkie pliki (*)",
                                   getenv("HOME"), 0);
   if (!f) return;

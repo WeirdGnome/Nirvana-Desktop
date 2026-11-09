@@ -156,6 +156,7 @@ public:
   void icons_normal();
   void icons_large();
   void get_info();
+  void set_as_wallpaper();   // zaznaczony obraz na biurko
   void snapshot();
   void unsnapshot();
   void dock_add();
@@ -268,6 +269,9 @@ private:
   int active_app_index(const std::vector<gary::App> &apps);
   Fl_Widget *extras_;
   std::unique_ptr<Fl_Tiled_Image> pattern_;
+  std::unique_ptr<Fl_RGB_Image> wallpaper_;   // biurko z tapetą (wzór + obraz), gdy jest tapeta
+  Fl_Menu_Item *logo_item_ = nullptr;
+  void set_logo();
   Fl_RGB_Image *logo_img_ = nullptr;
   net::State net_;
   Fl_Widget *net_menu_ = nullptr;

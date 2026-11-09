@@ -246,6 +246,10 @@ Appearance read_appearance() {
     else if (k == "wzor") {
       for (int i = 0; PATTERNS[i]; i++) if (v == PATTERNS[i]) a.pattern = v;
     } else if (k == "animacje") a.animations = !(v == "0" || v == "nie");
+    else if (k == "tapeta") a.wallpaper = v;
+    else if (k == "tapeta_uklad") {
+      for (int i = 0; WALLPAPER_MODES[i]; i++) if (v == WALLPAPER_MODES[i]) a.wallpaper_mode = v;
+    }
   }
   return a;
 }
@@ -266,7 +270,9 @@ bool write_appearance(const Appearance &a) {
         << "styl_paska=" << (a.style < 0 ? "" : st[a.style]) << "\n"
         << "biurko=" << (a.desk < 0 ? "" : color_str((unsigned)a.desk)) << "\n"
         << "wzor=" << a.pattern << "\n"
-        << "animacje=" << (a.animations ? 1 : 0) << "\n";
+        << "animacje=" << (a.animations ? 1 : 0) << "\n"
+        << "tapeta=" << a.wallpaper << "\n"
+        << "tapeta_uklad=" << a.wallpaper_mode << "\n";
     if (!out) return false;
   }
   return rename(tmp.c_str(), f.c_str()) == 0;

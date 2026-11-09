@@ -272,7 +272,19 @@ przestawia cały system: Rambler i Insight przeładowują paletę bez restartu.
   [Redmond97 SE](https://codeberg.org/Sliver_X/Redmond97-SE) (GPL-3.0).
 - **Pasek tytułu**: jak w schemacie, prążki Platinum, jednolity kolor albo gradient.
 - **Kolor i wzór biurka**: gładki, kropki, krata, ukośne prążki, cegiełki, raster.
+- **Tapeta**: wybierana z listy albo przez *Inny plik…* (PNG, JPEG, GIF, BMP, SVG, XPM).
+  - Lista zawiera tapety LisaOS (*Góry o świcie*, *Miedź*, *Platyna*), tapety systemowe
+    z `/usr/share/backgrounds` i `/usr/share/wallpapers` oraz obrazy z `~/Obrazy`.
+  - Układy: *Wypełnij ekran* (przycina), *Dopasuj* (cały obraz, wzór w pasach),
+    *Rozciągnij*, *Na środku* i *Sąsiadująco*.
+  - Duże zdjęcia są zmniejszane stopniowo, więc nie powstają schodki ani mora.
+  - Pod przezroczystymi fragmentami PNG widać wzór biurka.
+  - W Ramblerze: zaznacz obraz i wybierz **Ikony → Ustaw jako tapetę**.
+  - Własne tapety można dodać do `~/.local/share/lisaos/tapety`.
 - **Animacje okien**: włączone lub wyłączone.
+
+![Wygląd z tapetą](docs/img/tapeta.png)
+![Układy tapety: na środku, sąsiadująco, dopasuj, rozciągnij](docs/img/tapety-uklady.png)
 
 ![Wygląd: Platinum](docs/img/wyglad-platinum.png)
 ![Wygląd: In Tenebris z gradientem i cegiełkami](docs/img/wyglad-in-tenebris.png)

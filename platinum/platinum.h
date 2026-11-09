@@ -8,6 +8,8 @@
 #include <string>
 #include <vector>
 
+class Fl_RGB_Image;
+
 namespace plat {
 
 // ---- Paleta ---------------------------------------------------------------
@@ -56,6 +58,8 @@ struct Appearance {                 // ~/.config/lisaos/wyglad.conf
   int desk = -1;                    // -1: kolor biurka ze schematu
   std::string pattern = "kropki";   // gladki, kropki, krata, ukosne, cegly, raster
   bool animations = true;
+  std::string wallpaper;            // plik tapety; pusty = sam wzór
+  std::string wallpaper_mode = "wypelnij";   // patrz WALLPAPER_MODES
 };
 
 std::vector<std::string> scheme_dirs();                      // kolejność wyszukiwania
@@ -72,6 +76,20 @@ void reload_appearance();          // odczytaj ustawienia i schemat, zastosuj
 const Scheme &current_scheme();
 const Appearance &current_appearance();
 TitleStyle title_style();
+
+void polish_file_chooser();   // etykiety okna wyboru pliku FLTK po polsku
+
+// Tapeta: układy, lista gotowych obrazów i tło biurka gotowe do narysowania.
+extern const char *const WALLPAPER_MODES[];        // wypelnij, dopasuj, rozciagnij, srodek, kafelki
+extern const char *const WALLPAPER_MODE_NAMES[];   // nazwy do wyświetlenia
+bool is_image_file(const std::string &path);
+bool image_loadable(const std::string &path);       // czy FLTK potrafi otworzyć ten obraz
+std::vector<std::string> wallpaper_dirs();          // tapety LisaOS (share/lisaos/tapety)
+std::vector<std::string> wallpaper_candidates();    // LisaOS, systemowe, ~/Obrazy
+std::string wallpaper_title(const std::string &path);   // "Góry" z ".../Góry.jpg"
+// Biurko W x H: wzór w kolorach schematu, na nim tapeta (jeśli jest i da się wczytać).
+// *loaded = false, gdy tapety nie udało się otworzyć.
+::Fl_RGB_Image *render_desktop(const Appearance &a, int W, int H, bool *loaded = nullptr);
 
 extern const char *const PATTERNS[];        // identyfikatory wzorów (nullptr na końcu)
 extern const char *const PATTERN_NAMES[];   // nazwy do wyświetlenia

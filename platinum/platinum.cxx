@@ -4,6 +4,8 @@
 #include <FL/Fl.H>
 #include <FL/fl_draw.H>
 #include <FL/Fl_Tooltip.H>
+#include <FL/Fl_File_Chooser.H>
+#include <FL/fl_ask.H>
 #include <FL/fl_utf8.h>
 #include <algorithm>
 #include <cmath>
@@ -688,6 +690,26 @@ std::string polish_items(int n) {
   else if (d >= 2 && d <= 4 && !(dd >= 12 && dd <= 14)) word = "elementy";
   else word = "elementów";
   return std::to_string(n) + " " + word;
+}
+
+// Okno wyboru pliku FLTK po polsku (Sieć: import VPN, Wygląd: tapeta).
+void polish_file_chooser() {
+  fl_cancel = "Anuluj";
+  fl_ok = "Wybierz";
+  Fl_File_Chooser::add_favorites_label = "Dodaj do ulubionych";
+  Fl_File_Chooser::all_files_label = "Wszystkie pliki (*)";
+  Fl_File_Chooser::custom_filter_label = "Własny filtr";
+  Fl_File_Chooser::existing_file_label = "Plik już istnieje. Zastąpić go?";
+  Fl_File_Chooser::favorites_label = "Ulubione";
+  Fl_File_Chooser::filename_label = "Plik:";
+  Fl_File_Chooser::filesystems_label = "Dyski";
+  Fl_File_Chooser::hidden_label = "Ukryte pliki";
+  Fl_File_Chooser::manage_favorites_label = "Zarządzaj ulubionymi";
+  Fl_File_Chooser::new_directory_label = "Nazwa nowego folderu:";
+  Fl_File_Chooser::new_directory_tooltip = "Nowy folder";
+  Fl_File_Chooser::preview_label = "Podgląd";
+  Fl_File_Chooser::save_label = "Zapisz";
+  Fl_File_Chooser::show_label = "Pokaż:";
 }
 
 } // namespace plat
