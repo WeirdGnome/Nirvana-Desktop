@@ -24,6 +24,7 @@
 #include <filesystem>
 #include <fstream>
 #include <sys/stat.h>
+#include <sys/statvfs.h>
 #include <unistd.h>
 #include <sys/inotify.h>
 #include <fcntl.h>
@@ -62,6 +63,13 @@ public:
   MenuExtras(int X, int Y, int W, int H) : Fl_Widget(X, Y, W, H) {
     Fl::add_timeout(1.0, tick, this);
   }
+  // szerokość dopasowana do treści - aplety stoją ciasno przy prawej krawędzi
+  static int needed_width() {
+    fl_font(FONT_SYSTEM, SIZE_SYSTEM);
+    int w = (int)fl_width("00:00") + 18;
+    if (root_mode()) w += (int)fl_width("ROOT") + 18;
+    return w;
+  }
   static void tick(void *d) {
     ((Fl_Widget *)d)->redraw();
     Fl::repeat_timeout(15.0, tick, d);
@@ -74,19 +82,99 @@ public:
     char buf[16];
     time_t t = time(nullptr);
     strftime(buf, sizeof buf, "%H:%M", localtime(&t));
-    int cx = x() + w() - 10 - (int)fl_width(buf);
+    int cx = x() + w() - 9 - (int)fl_width(buf);
     fl_color(TEXT);
     fl_draw(buf, cx, y() + 14);
     if (root_mode()) {
       const char *r = "ROOT";
       int rw = (int)fl_width(r) + 10;
-      cx -= rw + 10;
+      cx -= rw + 8;
       fl_color(ROOT_TINT);
       fl_rounded_rectf(cx, y() + 3, rw, h() - 7, 3);
       fl_color(FL_WHITE);
       fl_draw(r, cx + 5, y() + 14);
     }
   }
+};
+
+// ---------------------------------------------------------------------------
+// Środek paska: wolna pamięć i miejsce na dysku, jak na pasku ekranu
+// Workbencha 3.1 ("Workbench Screen  1,234,567 graphics mem  ...").
+// ---------------------------------------------------------------------------
+class MemInfo : public Fl_Widget {
+public:
+  MemInfo(int X, int Y, int W, int H, int screen_w, std::string disk)
+      : Fl_Widget(X, Y, W, H), screen_w_(screen_w), disk_(std::move(disk)) {
+    sample();
+    Fl::add_timeout(3.0, tick, this);
+  }
+  ~MemInfo() override { Fl::remove_timeout(tick, this); }
+
+  static std::string group(unsigned long long v) {   // 1234567 -> "1 234 567"
+    std::string d = std::to_string(v), r;
+    for (size_t i = 0; i < d.size(); i++) {
+      if (i && (d.size() - i) % 3 == 0) r += ' ';
+      r += d[i];
+    }
+    return r;
+  }
+  static std::string gb(unsigned long long mb) {      // 47123 -> "46,0 GB"
+    char b[32];
+    snprintf(b, sizeof b, "%.1f GB", mb / 1024.0);
+    for (char *c = b; *c; c++) if (*c == '.') *c = ',';
+    return b;
+  }
+
+  void sample() {
+    unsigned long long mem_kb = 0, mem_total = 0;
+    if (FILE *f = fopen("/proc/meminfo", "r")) {
+      char line[128];
+      unsigned long long v;
+      while (fgets(line, sizeof line, f)) {
+        if (sscanf(line, "MemAvailable: %llu", &v) == 1) mem_kb = v;
+        else if (sscanf(line, "MemTotal: %llu", &v) == 1) mem_total = v;
+      }
+      fclose(f);
+    }
+    unsigned long long disk_mb = 0, disk_total = 0;
+    struct statvfs sv;
+    bool disk_ok = statvfs(disk_.c_str(), &sv) == 0;
+    if (disk_ok) {
+      disk_mb = (unsigned long long)sv.f_bavail * sv.f_frsize / (1024 * 1024);
+      disk_total = (unsigned long long)sv.f_blocks * sv.f_frsize / (1024 * 1024);
+    }
+    std::string mem = group(mem_kb / 1024) + " MB";
+    std::string dsk = group(disk_mb) + " MB";
+    std::string full = mem + " wolnej pamięci     " + dsk + " wolnego dysku";
+    std::string brief = mem + " pamięci   " + dsk + " dysku";
+    std::string tip = "Pamięć: wolne " + mem + " z " + group(mem_total / 1024) + " MB";
+    if (disk_ok) tip += "\nDysk (" + disk_ + "): wolne " + gb(disk_mb) + " z " + gb(disk_total);
+    if (full != full_ || brief != brief_) { full_ = full; brief_ = brief; redraw(); }
+    if (tip != tip_) { tip_ = tip; tooltip(tip_.c_str()); }
+  }
+  static void tick(void *d) {
+    ((MemInfo *)d)->sample();
+    Fl::repeat_timeout(3.0, tick, d);
+  }
+  void draw() override {
+    fl_push_clip(x(), y(), w(), h());
+    draw_box(MENUBAR_BOX, GRAY);
+    fl_font(FONT_SMALL, SIZE_SYSTEM);
+    const std::string *t = &full_;
+    int tw = (int)fl_width(t->c_str());
+    if (tw > w() - 24) { t = &brief_; tw = (int)fl_width(t->c_str()); }
+    if (tw <= w() - 24) {
+      // na środku ekranu, a gdy tam się nie mieści - na środku wolnego miejsca
+      int tx = (screen_w_ - tw) / 2;
+      if (tx < x() + 12 || tx + tw > x() + w() - 12) tx = x() + (w() - tw) / 2;
+      fl_color(TEXT);
+      fl_draw(t->c_str(), tx, y() + 14);
+    }
+    fl_pop_clip();
+  }
+private:
+  int screen_w_;
+  std::string disk_, full_, brief_, tip_;
 };
 
 // ---------------------------------------------------------------------------
@@ -347,16 +435,33 @@ Desktop::Desktop(int W, int H, const std::string &home, bool root)
     logo->image(logo_img_);
   }
 
-  extras_ = new MenuExtras(W - APP_W - 120, 0, 120, MENUBAR_H);
-  // aplety: zasilanie, głośność, sieć - od lewej do prawej przed zegarem
-  applets::make_power(W - APP_W - 120 - 30 - 30 - 44, 0, 44, MENUBAR_H);
-  applets::make_volume(W - APP_W - 120 - 30 - 30, 0, 30, MENUBAR_H);
+  // Prawa strona, od krawędzi: gary, zegar, sieć, głośność, zasilanie - ciasno,
+  // bez dziur. Pasek menu kończy się za ostatnim tytułem; między nim a apletami
+  // jest informacja o wolnej pamięci i dysku.
+  int rx = W - APP_W;
+  int cw = MenuExtras::needed_width();
+  rx -= cw;
+  extras_ = new MenuExtras(rx, 0, cw, MENUBAR_H);
   if (net::installed()) {
-    auto *nm = new NetMenu(W - APP_W - 120 - 30, 0, 30, MENUBAR_H);
+    rx -= 26;
+    auto *nm = new NetMenu(rx, 0, 26, MENUBAR_H);
     net_menu_ = nm;
     nm->selection_color(SEL);
     nm->on_open = [this](NetMenu *m) { build_net_menu(m); };
     nm->summary = [this] { return net::summary(net_); };
+  }
+  rx -= 26;
+  applets::make_volume(rx, 0, 26, MENUBAR_H);
+  rx -= 42;
+  applets::make_power(rx, 0, 42, MENUBAR_H);
+  {
+    // szerokość tytułów menu - tak samo liczy ją Fl_Menu_Bar::draw()
+    int mx = 6;
+    for (const Fl_Menu_Item *m = menu_->menu(); m && m->label(); m = m->next())
+      if (m->visible()) mx += m->measure(nullptr, menu_) + 16;
+    mx += 8;
+    menu_->size(mx, MENUBAR_H);
+    if (rx > mx) new MemInfo(mx, 0, rx - mx, MENUBAR_H, W, home_);
   }
   auto *wm = new WindowsMenu(W - APP_W, 0, APP_W, MENUBAR_H);
   app_menu_ = wm;

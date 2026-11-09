@@ -186,6 +186,15 @@ okno biurka nie przyjmuje fokusu, żeby klik w pasek menu nie zmieniał aktywnej
 - **Automatyczne odświeżanie** (inotify): zmiany z zewnątrz pojawiają się same, ikona kosza
   zmienia się na pełny/pusty.
 
+### Pasek menu
+
+Po prawej, ciasno przy krawędzi: zasilanie, głośność, sieć, zegar i przełącznik aplikacji
+(gadżet głębi). Na środku, jak na pasku ekranu Workbencha 3.1, widać wolną pamięć
+(`MemAvailable`) i wolne miejsce na dysku z katalogiem domowym. Wartości odświeżają się co
+3 sekundy, a podpowiedź pokazuje też całkowite rozmiary. Na wąskim ekranie napis się skraca.
+
+![Pasek menu](docs/img/pasek.png)
+
 ### Menu (w duchu Workbencha)
 
 | Menu | Pozycje |

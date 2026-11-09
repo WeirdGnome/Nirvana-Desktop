@@ -477,13 +477,12 @@ public:
     bool open = pop && pop->shown();
     if (open) { fl_color(SEL); fl_rectf(x(), y(), w(), h() - 1); }
     Fl_Color c = open ? SEL_TEXT : TEXT;
-    int ix = x() + 4;
-    if (power::projection()) {   // tryb projekcji: monitor przed ikoną
-      draw_display(ix, y() + 5, c);
-      ix += 14;
-    }
+    // do prawej - aplety stoją ciasno, bez dziury przed ikoną głośności
+    int iw = g_power.percent >= 0 ? 23 : 14;
+    int ix = x() + w() - 4 - iw;
+    if (power::projection()) draw_display(ix - 14, y() + 5, c);   // tryb projekcji: monitor przed ikoną
     if (g_power.percent >= 0) draw_battery(ix, y() + 4, g_power.percent, g_power.charging, c);
-    else draw_plug(ix + 4, y() + 3, c);
+    else draw_plug(ix, y() + 3, c);
   }
   int handle(int e) override {
     if (e == FL_PUSH) {
