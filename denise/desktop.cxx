@@ -311,6 +311,7 @@ static void net_label_measure(const Fl_Label *o, int &W, int &H) {
 
 static std::string alice_exe();
 static Entry entry_for(const std::string &path);
+static const int DOCK_TILE = 44;   // kafelek ikony na doku
 static std::vector<net::Network> g_menu_nets;
 static std::vector<net::Vpn> g_menu_vpns;
 static std::vector<std::string> g_menu_ifaces;
@@ -576,16 +577,21 @@ void Desktop::layout_icons() {
     d.name = d.entry.label;
     d.icon = d.entry.icon;
     d.x = dx;
-    d.y = h() - 74;
+    d.y = h() - 80;   // podpis na wysokości podpisu kosza
     icons_.push_back(d);
-    dx += 80;
-    if (dx > ix - 80) break;
+    dx += 70;
+    if (dx > ix - 70) break;
   }
 }
 
 int Desktop::icon_at(int ex, int ey) const {
   for (int i = 0; i < (int)icons_.size(); i++) {
     const auto &ic = icons_[i];
+    if (ic.dock) {   // cały kafelek i podpis
+      int bx = ic.x + 40 - DOCK_TILE / 2, by = ic.y + 16 - DOCK_TILE / 2;
+      if (ex >= bx && ex < bx + DOCK_TILE && ey >= by && ey < by + DOCK_TILE + 18) return i;
+      continue;
+    }
     if (ex >= ic.x + 24 && ex < ic.x + 56 && ey >= ic.y && ey < ic.y + 52) return i;
   }
   return -1;
@@ -1203,11 +1209,20 @@ void Desktop::draw() {
     bool sel = i == icon_sel_ || i == icon_drop_;
     Icon shown = ic.icon;
     if (vdragging_ && ic.path == trash_dir()) shown = Icon::Eject;   // jak w Mac OS
-    if (ic.dock) draw_entry_icon(ic.entry, ic.x + 24, ic.y, sel, 32);
-    else draw_icon(shown, ic.x + 24, ic.y, sel);
+    if (ic.dock) {
+      // kafelek doku: kwadrat w kolorach schematu, ikona w środku
+      int bx = ic.x + 40 - DOCK_TILE / 2, by = ic.y + 16 - DOCK_TILE / 2;
+      fl_draw_box(sel ? DOWN_BOX : UP_BOX, bx, by, DOCK_TILE, DOCK_TILE,
+                  sel ? fl_color_average(GRAY, SHADOW, 0.6f) : GRAY);
+      fl_color(DARK);
+      fl_rect(bx - 1, by - 1, DOCK_TILE + 2, DOCK_TILE + 2);
+      draw_entry_icon(ic.entry, ic.x + 24, ic.y, false, 32);
+    } else {
+      draw_icon(shown, ic.x + 24, ic.y, sel);
+    }
     std::string nm = ellipsize(ic.name, 76);
     int tw = (int)fl_width(nm.c_str());
-    int tx = ic.x + 40 - tw / 2, ty = ic.y + 36;
+    int tx = ic.x + 40 - tw / 2, ty = ic.y + (ic.dock ? 16 + DOCK_TILE / 2 + 4 : 36);
     fl_color(sel ? ICON_SEL : CONTENT);
     fl_rectf(tx - 2, ty, tw + 4, fl_height());
     fl_color(sel ? ICON_SEL_TEXT : CONTENT_TEXT);
@@ -2213,6 +2228,11 @@ static Entry entry_for(const std::string &path) {
   e.dir = fs::is_directory(path, ec);
   e.label = e.name;
   e.icon = icon_for(e.name, e.dir);
+  if (!e.dir && is_appimage(e.name)) {   // nazwa i ikona z wnętrza AppImage, jak w oknach
+    e.label = appimage::display_name(e.name);
+    const char *h = getenv("HOME");
+    e.icon_file = appimage::icon(path, h ? h : "/");
+  }
   return e;
 }
 
