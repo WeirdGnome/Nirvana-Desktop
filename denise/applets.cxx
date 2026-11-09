@@ -56,10 +56,16 @@ public:
     hide();
     if (on_close) on_close();
   }
+  std::function<void()> track_hover;   // ustawiane niżej - podświetlanie wierszy menu
   int handle(int e) override {
     if (e == FL_PUSH) {
       int ex = Fl::event_x(), ey = Fl::event_y();
       if (ex < 0 || ey < 0 || ex >= w() || ey >= h()) { close(); return 1; }
+    }
+    if ((e == FL_MOVE || e == FL_DRAG || e == FL_ENTER || e == FL_LEAVE) && track_hover) {
+      int r = Fl_Double_Window::handle(e);
+      track_hover();
+      return r ? r : 1;
     }
     if (e == FL_KEYBOARD && Fl::event_key() == FL_Escape) { close(); return 1; }
     return Fl_Double_Window::handle(e);
@@ -138,8 +144,11 @@ public:
     labelsize(SIZE_SYSTEM);
     align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
   }
+  // Podświetlenie ustawia okienko (Popup) według położenia myszy: przy chwycie
+  // myszy (Fl::grab) FL_LEAVE nie zawsze dochodzi i wiersze zostawały podświetlone.
+  void hover(bool h) { if (h != hover_) { hover_ = h; redraw(); } }
   int handle(int e) override {
-    if (e == FL_ENTER || e == FL_LEAVE) { hover_ = e == FL_ENTER; redraw(); return 1; }
+    if (e == FL_ENTER || e == FL_LEAVE) return 1;
     return Fl_Button::handle(e);
   }
   void draw() override {
@@ -147,12 +156,22 @@ public:
     fl_color(hl ? SEL : GRAY);
     fl_rectf(x(), y(), w(), h());
     fl_font(labelfont(), labelsize());
-    fl_color(!active_r() ? MID : hl ? SEL_TEXT : TEXT);
+    // nieaktywne: pół drogi między tekstem a tłem - czytelne też w ciemnych schematach
+    fl_color(!active_r() ? fl_color_average(TEXT, GRAY, 0.45f) : hl ? SEL_TEXT : TEXT);
     fl_draw(label(), x() + 14, y(), w() - 18, h(), FL_ALIGN_LEFT);
   }
 private:
   bool hover_ = false;
 };
+
+// Wiersz pod myszą podświetlony, pozostałe nie.
+static void update_hover(Fl_Window *w) {
+  int ex = Fl::event_x(), ey = Fl::event_y();
+  bool inside = ex >= 0 && ey >= 0 && ex < w->w() && ey < w->h();
+  for (int i = 0; i < w->children(); i++)
+    if (auto *r = dynamic_cast<MenuRow *>(w->child(i)))
+      r->hover(inside && ex >= r->x() && ex < r->x() + r->w() && ey >= r->y() && ey < r->y() + r->h());
+}
 
 class Sep : public Fl_Widget {
 public:
@@ -571,7 +590,12 @@ public:
     g_power = power::query();
     if (!pop) {
       pop = new Popup(290, 100);
-      pop->on_close = [this] { redraw(); };
+      pop->on_close = [this] {
+        for (int i = 0; i < pop->children(); i++)   // po zamknięciu bez podświetleń
+          if (auto *r = dynamic_cast<MenuRow *>(pop->child(i))) r->hover(false);
+        redraw();
+      };
+      pop->track_hover = [this] { update_hover(pop); };
     }
     build();
     pop->open_at(window()->x_root() + x() + w() - pop->w(), window()->y_root() + MENUBAR_H);
