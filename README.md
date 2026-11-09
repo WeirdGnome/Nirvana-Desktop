@@ -273,7 +273,7 @@ przestawia cały system: Rambler i Insight przeładowują paletę bez restartu.
 - **Pasek tytułu**: jak w schemacie, prążki Platinum, jednolity kolor albo gradient.
 - **Kolor i wzór biurka**: gładki, kropki, krata, ukośne prążki, cegiełki, raster.
 - **Tapeta**: wybierana z listy albo przez *Inny plik…* (PNG, JPEG, GIF, BMP, SVG, XPM).
-  - Lista zawiera tapety LisaOS (*Góry o świcie*, *Miedź*, *Platyna*), tapety systemowe
+  - Lista zawiera tapety LisaOS (*Lisa Desktop*, *Góry o świcie*, *Miedź*, *Platyna*), tapety systemowe
     z `/usr/share/backgrounds` i `/usr/share/wallpapers` oraz obrazy z `~/Obrazy`.
   - Układy: *Wypełnij ekran* (przycina), *Dopasuj* (cały obraz, wzór w pasach),
     *Rozciągnij*, *Na środku* i *Sąsiadująco*.
@@ -283,6 +283,11 @@ przestawia cały system: Rambler i Insight przeładowują paletę bez restartu.
   - Własne tapety można dodać do `~/.local/share/lisaos/tapety`.
 - **Animacje okien**: włączone lub wyłączone.
 
+  - *Lisa Desktop* (2560×1440, w duchu AmigaOS 4) powstaje ze skryptu
+    `tools/tapeta-lisa-desktop.py [plik] [szerokość wysokość]`. Można ją wygenerować
+    w rozdzielczości własnego ekranu.
+
+![Tapeta Lisa Desktop](docs/img/tapeta-lisa-desktop.png)
 ![Wygląd z tapetą](docs/img/tapeta.png)
 ![Układy tapety: na środku, sąsiadująco, dopasuj, rozciągnij](docs/img/tapety-uklady.png)
 
