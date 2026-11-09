@@ -205,8 +205,8 @@ void FrameWindow::start_moveresize(int direction) {
   ev.xclient.window = fl_xid(this);
   ev.xclient.message_type = atom("_NET_WM_MOVERESIZE");
   ev.xclient.format = 32;
-  ev.xclient.data.l[0] = press_x_;
-  ev.xclient.data.l[1] = press_y_;
+  ev.xclient.data.l[0] = px(press_x_);   // EWMH: piksele, nie jednostki FLTK
+  ev.xclient.data.l[1] = px(press_y_);
   ev.xclient.data.l[2] = direction;   // 8 przesuń, 4 rozmiar od prawego dolnego rogu
   ev.xclient.data.l[3] = Button1;
   ev.xclient.data.l[4] = 1;

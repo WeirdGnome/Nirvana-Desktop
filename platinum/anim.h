@@ -13,6 +13,15 @@ namespace plat {
 
 struct Rect { int x, y, w, h; };
 
+// Skala interfejsu (HiDPI). Programy LisaOS liczą w jednostkach FLTK, a X11
+// w pikselach: px() zamienia jednostki na piksele, un() piksele na jednostki.
+// Potrzebne tylko przy bezpośrednich wywołaniach Xlib (menedżer okien, XEmbed,
+// komunikaty EWMH) - zwykłe rysowanie FLTK skaluje samo.
+float ui_scale();
+inline int px(int u) { float s = ui_scale(); return (int)(u * s + (u < 0 ? -0.5f : 0.5f)); }
+inline int un(int p) { float s = ui_scale(); return (int)(p / s + (p < 0 ? -0.5f : 0.5f)); }
+inline Rect px(Rect r) { return {px(r.x), px(r.y), px(r.x + r.w) - px(r.x), px(r.y + r.h) - px(r.y)}; }
+
 bool animations_enabled();
 void animations_suspend(bool s);   // np. przy odtwarzaniu okien po starcie
 

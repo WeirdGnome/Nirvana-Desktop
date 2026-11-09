@@ -348,6 +348,11 @@ przestawia cały system: Rambler i Insight przeładowują paletę bez restartu.
   ![Ikony Workbench (normalne i zaznaczone) i Platinum](docs/img/ikony.png)
   ![Schemat Workbench 2 z ikonami Workbench](docs/img/ikony-workbench.png)
 - **Animacje okien**: włączone lub wyłączone.
+- **Skala interfejsu**: *Automatycznie* (z ustawienia `Xft.dpi`, np. 192 dpi = 200%)
+  albo 100–300%. Skaluje wszystko naraz: pasek menu, okna, czcionki, ikony, ramki
+  i dok; tapeta jest liczona w pełnej rozdzielczości ekranu. Po zmianie biurko
+  i menedżer okien uruchamiają się od nowa (jak **Narzędzia → Resetuj LISA**),
+  otwarte programy zostają. Na próbę: `LISAOS_SKALA=150 lisaos-session`.
 
   - *Lisa Desktop* (2560×1440, w duchu AmigaOS 4) powstaje ze skryptu
     `tools/tapeta-lisa-desktop.py [plik] [szerokość wysokość]`. Można ją wygenerować

@@ -223,6 +223,7 @@ public:
   plat::Rect folder_area() const;
 private:
   void publish_folder_area();
+  Fl_RGB_Image *render_wallpaper(int W, int H, bool *ok);
   void watch_trash();
   int icon_at(int ex, int ey) const;
   bool allowed(const std::string &path) const;

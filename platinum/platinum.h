@@ -66,7 +66,13 @@ struct Appearance {                 // ~/.config/lisaos/wyglad.conf
   std::string icons = "workbench";  // styl ikon: workbench (Amiga) albo platinum (Mac OS)
   std::string wallpaper;            // plik tapety; pusty = sam wzór
   std::string wallpaper_mode = "wypelnij";   // patrz WALLPAPER_MODES
+  int scale = 0;                    // skala interfejsu w procentach; 0 = automatycznie (Xft.dpi)
 };
+
+// Skale do wyboru w panelu Wygląd (procenty); 0 = automatycznie
+extern const int SCALES[];
+// Skala z ustawień / LISAOS_SKALA / Xft.dpi - ustawiana w init() dla wszystkich ekranów.
+float configured_scale(const Appearance &a);
 
 std::vector<std::string> scheme_dirs();                      // kolejność wyszukiwania
 std::vector<Scheme> list_schemes();                          // posortowane, bez duplikatów

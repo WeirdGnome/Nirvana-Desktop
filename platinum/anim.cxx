@@ -180,6 +180,8 @@ void zoom_rects(Rect from, Rect to) {
   static Mode mode = detect_mode(d);
   if (mode == Mode::Brak) return;
 
+  from = px(from);   // rysujemy Xlib-em, w pikselach
+  to = px(to);
   Rect r[STEPS + 1];
   for (int i = 0; i <= STEPS; i++) r[i] = lerp(from, to, ease((double)i / STEPS));
   if (mode == Mode::Xor) animate_xor(d, r);

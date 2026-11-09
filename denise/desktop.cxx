@@ -381,7 +381,7 @@ Desktop::Desktop(int W, int H, const std::string &home, bool root)
   pattern_.reset(make_pattern());
   if (!current_appearance().wallpaper.empty() || current_appearance().background != "wzor") {
     bool ok = false;
-    wallpaper_.reset(render_desktop(current_appearance(), W, H, &ok));
+    wallpaper_.reset(render_wallpaper(W, H, &ok));
     if (!ok && current_appearance().background == "wzor") wallpaper_.reset();
   }
   detect_wm();
@@ -936,8 +936,8 @@ void NWin::start_moveresize(int direction) {
   ev.xclient.message_type = atom("_NET_WM_MOVERESIZE");
   ev.xclient.format = 32;
   // punkt odniesienia: miejsce wciśnięcia przycisku (okno "dogoni" wskaźnik)
-  ev.xclient.data.l[0] = direction == 8 ? press_x_ : Fl::event_x_root();
-  ev.xclient.data.l[1] = direction == 8 ? press_y_ : Fl::event_y_root();
+  ev.xclient.data.l[0] = px(direction == 8 ? press_x_ : Fl::event_x_root());   // EWMH: piksele
+  ev.xclient.data.l[1] = px(direction == 8 ? press_y_ : Fl::event_y_root());
   ev.xclient.data.l[2] = direction;           // 8 = przesuń, 4 = prawy dolny róg
   ev.xclient.data.l[3] = Button1;
   ev.xclient.data.l[4] = 1;
@@ -1667,7 +1667,21 @@ void Desktop::ask_root() {
 
 // Panel Wygląd zapisał nowe ustawienia: nowa paleta, wzór biurka i logo.
 // Widgety trzymają indeksy palety, więc wystarczy je przerysować.
+// Tapeta w pełnej rozdzielczości ekranu: przy skali 150% obraz ma 1,5 raza
+// więcej pikseli niż jednostek FLTK, a scale() rysuje go bez rozmywania.
+Fl_RGB_Image *Desktop::render_wallpaper(int W, int H, bool *ok) {
+  Fl_RGB_Image *img = render_desktop(current_appearance(), px(W), px(H), ok);
+  if (img && ui_scale() != 1.0f) img->scale(W, H, 0, 1);
+  return img;
+}
+
 void Desktop::appearance_changed() {
+  // Nowa skala interfejsu: menedżer okien i biurko muszą ruszyć od nowa
+  // (wszystkie programy LisaOS liczą współrzędne w tej samej skali).
+  if (std::abs(configured_scale(read_appearance()) - ui_scale()) > 0.01f) {
+    reset_lisa();
+    return;
+  }
   reload_appearance();
   Fl_Image *old = pattern_ ? pattern_->image() : nullptr;
   pattern_.reset(make_pattern());
@@ -1677,7 +1691,7 @@ void Desktop::appearance_changed() {
   wallpaper_.reset();
   if (!current_appearance().wallpaper.empty() || current_appearance().background != "wzor") {
     bool ok = false;
-    wallpaper_.reset(render_desktop(current_appearance(), w(), h(), &ok));
+    wallpaper_.reset(render_wallpaper(w(), h(), &ok));
     // pliku tapety nie ma albo nie jest obrazem - przy tle "wzór" wystarczy szybki kafelek
     if (!ok && current_appearance().background == "wzor") wallpaper_.reset();
   }

@@ -191,12 +191,14 @@ public:
   // Po każdej zmianie geometrii ramki dopasowujemy okno aplikacji
   // i wysyłamy mu syntetyczny ConfigureNotify (wymóg ICCCM).
   void sync_client() {
-    XMoveResizeWindow(dpy, c->win, FRAME, TITLE_H, std::max(1, cw()), std::max(1, ch()));
+    // ramka jest w jednostkach FLTK, okno aplikacji w pikselach (skala interfejsu)
+    int pw = px(w() - FRAME) - px(FRAME), ph = px(TITLE_H + ch()) - px(TITLE_H);
+    XMoveResizeWindow(dpy, c->win, px(FRAME), px(TITLE_H), std::max(1, pw), std::max(1, ph));
     XConfigureEvent ce{};
     ce.type = ConfigureNotify;
     ce.event = ce.window = c->win;
-    ce.x = x() + FRAME; ce.y = y() + TITLE_H;
-    ce.width = cw(); ce.height = ch();
+    ce.x = px(x()) + px(FRAME); ce.y = px(y()) + px(TITLE_H);
+    ce.width = pw; ce.height = ph;
     ce.border_width = 0;
     ce.above = None;
     XSendEvent(dpy, c->win, False, StructureNotifyMask, (XEvent *)&ce);
@@ -429,7 +431,7 @@ static void manage(Window w, bool existing) {
   c->dialog = (XGetTransientForHint(dpy, w, &tf) && tf) ||
               has_atom(w, A_NET_WM_TYPE, A_NET_WM_TYPE_DIALOG) || cls == "LisaOS-Dialog";
 
-  int x = wa.x, y = wa.y;
+  int x = un(wa.x), y = un(wa.y);
   // StaticGravity (FLTK, wiele innych programów): podana pozycja dotyczy samego
   // okna aplikacji, więc ramkę stawiamy tak, żeby treść wylądowała dokładnie tam.
   XSizeHints sh;
@@ -446,7 +448,7 @@ static void manage(Window w, bool existing) {
     cascade++;
   }
   y = std::max(y, MENUBAR_H);
-  int fw = wa.width + 2 * FRAME, fh = wa.height + TITLE_H + FRAME;
+  int fw = un(wa.width) + 2 * FRAME, fh = un(wa.height) + TITLE_H + FRAME;
 
   // nowe okno "wylatuje" ze środka miejsca, w którym się pojawi
   if (!existing && !c->own_anim) zoom_rects(center_of({x, y, fw, fh}), {x, y, fw, fh});
@@ -462,7 +464,7 @@ static void manage(Window w, bool existing) {
   XSetWindowBorderWidth(dpy, w, 0);
   XSelectInput(dpy, w, PropertyChangeMask | StructureNotifyMask);
   if (wa.map_state == IsViewable) c->ignore_unmap++;   // reparent wygeneruje UnmapNotify
-  XReparentWindow(dpy, w, fx, FRAME, TITLE_H);
+  XReparentWindow(dpy, w, fx, px(FRAME), px(TITLE_H));
   XMapWindow(dpy, w);
   set_wm_state(w, NormalState);
   // klik w okno aplikacji ma je aktywować - przechwytujemy go synchronicznie
@@ -478,7 +480,7 @@ static void manage(Window w, bool existing) {
 static void unmanage(Client *c, bool destroyed) {
   if (!destroyed) {
     XUngrabButton(dpy, AnyButton, AnyModifier, c->win);
-    XReparentWindow(dpy, c->win, root, c->frame->x() + FRAME, c->frame->y() + TITLE_H);
+    XReparentWindow(dpy, c->win, root, px(c->frame->x() + FRAME), px(c->frame->y() + TITLE_H));
     XRemoveFromSaveSet(dpy, c->win);
     set_wm_state(c->win, WithdrawnState);
   }
@@ -603,10 +605,11 @@ static int x_handler(void *event, void *) {
     if (Client *c = client_of(r.window)) {
       Frame *f = c->frame;
       int nx = f->x(), ny = f->y(), nw = f->w(), nh = f->h();
-      if (r.value_mask & CWX) nx = r.x - FRAME;
-      if (r.value_mask & CWY) ny = std::max(MENUBAR_H, r.y - TITLE_H);
-      if (r.value_mask & CWWidth) nw = r.width + 2 * FRAME;
-      if (r.value_mask & CWHeight) nh = r.height + TITLE_H + FRAME;
+      // prośba programu jest w pikselach, ramka w jednostkach FLTK
+      if (r.value_mask & CWX) nx = un(r.x) - FRAME;
+      if (r.value_mask & CWY) ny = std::max(MENUBAR_H, un(r.y) - TITLE_H);
+      if (r.value_mask & CWWidth) nw = un(r.width) + 2 * FRAME;
+      if (r.value_mask & CWHeight) nh = un(r.height) + TITLE_H + FRAME;
       if (c->shaded) { c->full_h = nh; nh = f->h(); }
       f->resize(nx, ny, nw, nh);
       f->sync_client();
@@ -729,9 +732,9 @@ int main(int argc, char **argv) {
   fl_open_display();
   dpy = fl_display;
   root = DefaultRootWindow(dpy);
-  screen_w = DisplayWidth(dpy, DefaultScreen(dpy));
-  screen_h = DisplayHeight(dpy, DefaultScreen(dpy));
-  plat::init(false);
+  plat::init(false);   // ustawia też skalę interfejsu
+  screen_w = un(DisplayWidth(dpy, DefaultScreen(dpy)));
+  screen_h = un(DisplayHeight(dpy, DefaultScreen(dpy)));
 
   // Zostań menedżerem okien: tylko jeden klient może przechwytywać
   // SubstructureRedirect na korzeniu.

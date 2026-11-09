@@ -1,6 +1,7 @@
 // LisaOS - zasobnik systemowy: XEmbed + StatusNotifierItem (patrz tray.h)
 #include "tray.h"
 #include "platinum.h"
+#include "anim.h"
 
 #include <FL/Fl.H>
 #include <FL/Fl_Menu_Button.H>
@@ -112,12 +113,13 @@ static void dock(Window icon) {
   auto s = std::make_unique<Slot>();
   s->xembed = true;
   s->icon = icon;
-  int h = MENUBAR_H - 3;
-  s->box = XCreateSimpleWindow(dpy, fl_xid(g_desk), -SLOT, 1, SLOT, h, 0, 0, bg_pixel());
+  // okienka X są w pikselach - skala interfejsu (px)
+  int h = px(MENUBAR_H - 3);
+  s->box = XCreateSimpleWindow(dpy, fl_xid(g_desk), -px(SLOT), px(1), px(SLOT), h, 0, 0, bg_pixel());
   XSelectInput(dpy, icon, StructureNotifyMask | PropertyChangeMask);
   XAddToSaveSet(dpy, icon);   // gdy Rambler zniknie, ikona wraca na okno główne zamiast zginąć
   XReparentWindow(dpy, icon, s->box, 0, 0);
-  XResizeWindow(dpy, icon, SLOT, h);
+  XResizeWindow(dpy, icon, px(SLOT), h);
   // XEMBED_EMBEDDED_NOTIFY: program wie, że został osadzony
   XEvent ev{};
   ev.xclient.type = ClientMessage;
@@ -173,9 +175,9 @@ static int x_events(void *event, void *) {
   case ConfigureNotify:
     // programy lubią same zmieniać rozmiar ikony - trzymamy ją w ramce
     if (Slot *s = slot_for_icon(e->xconfigure.window)) {
-      int h = MENUBAR_H - 3;
-      if (e->xconfigure.width != SLOT || e->xconfigure.height != h || e->xconfigure.x || e->xconfigure.y)
-        XMoveResizeWindow(dpy, s->icon, 0, 0, SLOT, h);
+      int w = px(SLOT), h = px(MENUBAR_H - 3);
+      if (e->xconfigure.width != w || e->xconfigure.height != h || e->xconfigure.x || e->xconfigure.y)
+        XMoveResizeWindow(dpy, s->icon, 0, 0, w, h);
       return 1;
     }
     break;
@@ -1197,10 +1199,10 @@ static void place_boxes() {
   int i = 0;
   for (auto &s : g_slots) {
     if (!s->shown()) {
-      if (s->xembed) XMoveWindow(dpy, s->box, -SLOT, 1);
+      if (s->xembed) XMoveWindow(dpy, s->box, -px(SLOT), px(1));
       continue;
     }
-    if (s->xembed) XMoveWindow(dpy, s->box, a->slot_x(i), 1);
+    if (s->xembed) XMoveWindow(dpy, s->box, px(a->slot_x(i)), px(1));
     i++;
   }
   XFlush(dpy);

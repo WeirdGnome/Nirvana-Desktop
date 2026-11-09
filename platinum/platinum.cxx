@@ -7,6 +7,7 @@
 #include <FL/Fl_File_Chooser.H>
 #include <FL/fl_ask.H>
 #include <FL/fl_utf8.h>
+#include <FL/platform.H>
 #include <algorithm>
 #include <cmath>
 #include <cstdlib>
@@ -129,11 +130,57 @@ static void track_box(int x, int y, int w, int h, Fl_Color) {
   fl_yxline(x + 1, y + 1, y + h - 2);
 }
 
+// ---------------------------------------------------------------------------
+// Skala interfejsu
+// ---------------------------------------------------------------------------
+const int SCALES[] = {0, 100, 125, 150, 175, 200, 250, 300, -1};
+static float g_scale = 1.0f;
+
+float ui_scale() { return g_scale; }
+
+// Xft.dpi z zasobów X (to samo czyta GNOME/KDE/Xfce): 96 dpi = 100%, 192 = 200%
+static float xft_scale() {
+#if defined(FLTK_USE_X11)
+  if (!fl_x11_display()) return 1.0f;
+  const char *res = XResourceManagerString(fl_x11_display());
+  if (!res) return 1.0f;
+  const char *p = strstr(res, "Xft.dpi:");
+  if (!p) return 1.0f;
+  double dpi = atof(p + 8);
+  if (dpi < 48 || dpi > 480) return 1.0f;
+  return (float)(std::round(dpi / 96.0 * 4) / 4);   // co 25%
+#else
+  return 1.0f;
+#endif
+}
+
+float configured_scale(const Appearance &a) {
+  if (const char *e = getenv("LISAOS_SKALA")) {   // np. LISAOS_SKALA=150 albo 1.5
+    double v = atof(e);
+    if (v > 4) v /= 100;
+    if (v >= 0.5 && v <= 4) return (float)v;
+  }
+  if (a.scale > 0) return a.scale / 100.0f;
+  return xft_scale();
+}
+
+static void apply_scale() {
+  fl_open_display();
+  // Wszystkie programy LisaOS (menedżer okien, biurko, panele) muszą mieć tę
+  // samą skalę - wymieniają między sobą współrzędne. Własna skala zamiast
+  // automatyki FLTK; bez zmiany skali skrótem Ctrl +/-.
+  g_scale = std::clamp(configured_scale(read_appearance()), 0.5f, 4.0f);
+  Fl::keyboard_screen_scaling(0);
+  Fl::option(Fl::OPTION_SHOW_SCALING, false);
+  for (int i = 0; i < Fl::screen_count(); i++) Fl::screen_scale(i, g_scale);
+}
+
 void init(bool root) {
   init_i18n();   // przed pierwszym tekstem interfejsu
   g_root = root;
   Fl::scheme("none");
   reload_appearance();   // schemat kolorów z ~/.config/lisaos/wyglad.conf
+  apply_scale();
 
   int f = FL_FREE_BOXTYPE;
   UP_BOX      = Fl_Boxtype(f++); Fl::set_boxtype(UP_BOX, up_box, 1, 1, 2, 2);

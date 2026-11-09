@@ -39,6 +39,7 @@ static Fl_Button *g_desk2;
 static Fl_Choice *g_icons;
 static std::vector<std::string> g_walls;   // pozycje listy tapet (0 = brak, ostatnia = "Inny plik…")
 static Fl_Check_Button *g_anim;
+static Fl_Choice *g_scale;
 static Fl_Button *g_desk_default;
 
 // ---------------------------------------------------------------------------
@@ -228,7 +229,7 @@ int panel_wyglad() {
   g_cur = current_appearance();
   g_schemes = list_schemes();
 
-  const int W = 600, H = 530;
+  const int W = 600, H = 558;
   g_win = new FrameWindow(W, H, _("Wygląd"));
   g_win->xclass("lisaos-alice");
 
@@ -381,7 +382,24 @@ int panel_wyglad() {
     preview();
   });
 
-  g_anim = new Fl_Check_Button(396, 456, 190, 22, _("Animacje okien"));
+  // Skala interfejsu: wszystkie programy LisaOS naraz; biurko i menedżer okien
+  // uruchamiają się przy zmianie od nowa (jak Narzędzia > Resetuj LISA).
+  g_scale = new Fl_Choice(400, 456, 185, 22, _("Skala interfejsu:"));
+  for (int i = 0; SCALES[i] >= 0; i++) {
+    if (SCALES[i] == 0) {
+      int a = (int)(configured_scale(Appearance{}) * 100 + 0.5);
+      g_scale->add(fmt(_("Automatycznie (%1%)"), std::to_string(a)).c_str());
+    } else {
+      g_scale->add((std::to_string(SCALES[i]) + "%").c_str());
+    }
+    if (SCALES[i] == g_cur.scale) g_scale->value(i);
+  }
+  if (g_scale->value() < 0) g_scale->value(0);
+  g_scale->tooltip(_("Większe litery, ikony i okna na ekranach o dużej rozdzielczości.\n"
+                     "Po zastosowaniu biurko uruchomi się od nowa (okna programów zostają)."));
+  g_scale->callback([](Fl_Widget *, void *) { g_cur.scale = SCALES[std::max(0, g_scale->value())]; });
+
+  g_anim = new Fl_Check_Button(396, 484, 190, 22, _("Animacje okien"));
   g_anim->value(g_cur.animations);
   g_anim->callback([](Fl_Widget *, void *) { g_cur.animations = g_anim->value(); });
 
@@ -396,7 +414,7 @@ int panel_wyglad() {
   ok->shortcut(FL_Enter);
   ok->callback([](Fl_Widget *, void *) { save(); g_win->hide(); });
 
-  for (Fl_Choice *c : {g_style, g_pattern, g_wall, g_wall_mode, g_bg, g_grad, g_icons}) {
+  for (Fl_Choice *c : {g_style, g_pattern, g_wall, g_wall_mode, g_bg, g_grad, g_icons, g_scale}) {
     c->labelsize(SIZE_SMALL + 1);
     c->textsize(SIZE_SMALL + 1);
   }

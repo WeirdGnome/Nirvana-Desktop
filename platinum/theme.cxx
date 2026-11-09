@@ -266,6 +266,7 @@ Appearance read_appearance() {
     else if (k == "gradient") {
       for (int i = 0; GRADIENTS[i]; i++) if (v == GRADIENTS[i]) a.gradient = v;
     }
+    else if (k == "skala") a.scale = std::clamp(atoi(v.c_str()), 0, 400);
     else if (k == "tapeta_uklad") {
       for (int i = 0; WALLPAPER_MODES[i]; i++) if (v == WALLPAPER_MODES[i]) a.wallpaper_mode = v;
     }
@@ -295,7 +296,8 @@ bool write_appearance(const Appearance &a) {
         << "animacje=" << (a.animations ? 1 : 0) << "\n"
         << "ikony=" << a.icons << "\n"
         << "tapeta=" << a.wallpaper << "\n"
-        << "tapeta_uklad=" << a.wallpaper_mode << "\n";
+        << "tapeta_uklad=" << a.wallpaper_mode << "\n"
+        << "skala=" << a.scale << "\n";
     if (!out) return false;
   }
   return rename(tmp.c_str(), f.c_str()) == 0;
