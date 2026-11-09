@@ -11,6 +11,7 @@ struct WinState {
   bool shaded = false;
   bool open = false;
   bool list = false;   // widok listy zamiast ikon
+  int icons = 32;      // wielkość ikon: 16, 32, 64
 };
 
 class Spatial {

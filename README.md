@@ -177,7 +177,7 @@ okno biurka nie przyjmuje fokusu, żeby klik w pasek menu nie zmieniał aktywnej
   upuszczenie „odlatuje” z powrotem na miejsce.
 - **Z innych programów** (XDND, np. przeglądarka, inny menedżer plików): pliki są kopiowane
   do folderu, na którym je upuszczono; upuszczone na Kosz trafiają do kosza.
-- **Edycja > Kopiuj / Wklej** (`Ctrl+C` / `Ctrl+V`), **Plik > Duplikuj** (`Ctrl+D`) tworzy
+- **Ikony > Kopiuj / Wklej** (`Ctrl+C` / `Ctrl+V`), **Ikony > Duplikuj** (`Ctrl+D`) tworzy
   „nazwa kopia”. Kopiuj zapisuje też adresy `file://` w schowku systemowym.
 - **Konflikty nazw** pytają o zastąpienie; folderu nie da się wrzucić w niego samego.
 - **Widok**: `Ctrl+1` ikony, `Ctrl+2` lista (zapamiętywane dla każdego okna). W liście klik
@@ -185,8 +185,41 @@ okno biurka nie przyjmuje fokusu, żeby klik w pasek menu nie zmieniał aktywnej
   Kolumny, które się nie mieszczą, są chowane.
 - **Automatyczne odświeżanie** (inotify): zmiany z zewnątrz pojawiają się same, ikona kosza
   zmienia się na pełny/pusty.
-- `Ctrl+W` zamyka okno, `Ctrl+Backspace` przenosi zaznaczone do kosza, `Ctrl+N` nowy folder,
-  `Ctrl+R` odświeża, `Ctrl+Q` wyłącza.
+
+### Menu (w duchu Workbencha)
+
+| Menu | Pozycje |
+|------|---------|
+| **Lisa** (logo) | O systemie, Preferencje (okno z panelami), Wykonaj polecenie `Ctrl+E`, Lisa Shell `Ctrl+T`, Otwórz dziennik, Przerysuj wszystko, Uaktualnij wszystko `Ctrl+Shift+R`, Uśpij, Uruchom ponownie, Zakończ `Ctrl+Q` |
+| **Okno** | Nowy folder `Ctrl+N`, Otwórz katalog nadrzędny `Ctrl+↑`, Zamknij `Ctrl+W`, Uaktualnij `Ctrl+R`, Zaznacz zawartość `Ctrl+A`, Uporządkuj `Ctrl+.`, Pokaż ukryte pliki `Ctrl+H`, Pokaż jako (ikony/listę), Sortuj, Wielkość ikon (małe/normalne/duże) |
+| **Ikony** | Otwórz `Ctrl+O`, Kopiuj, Wklej, Duplikuj, Zmień nazwę `F2`, Usuń `Ctrl+Backspace`, Informacje `Ctrl+I`, Zamroź `Ctrl+S`, Odmroź, Połóż na doku `Ctrl+L`, Zdejmij z doku `Ctrl+K`, Wysuń `Ctrl+Y` |
+| **Narzędzia** | Formatuj dysk, Opróżnij kosz, Tryb root, Resetuj LISA |
+
+Pozycje, które w danej chwili nic by nie zrobiły, są wyszarzone, np. Wysuń bez zaznaczonego dysku.
+
+- **Ikony w oknach** można przestawiać myszą w obrębie okna. Pozostałe zostają na swoich
+  miejscach.
+- **Zamroź** zapisuje pozycje na stałe (zaznaczonych ikon albo całego okna), **Odmroź** je
+  zwalnia, **Uporządkuj** ustawia wszystko z powrotem w siatce. Pozycje są w
+  `~/.config/lisaos/ikony.pozycje`.
+- **Wielkość ikon**: małe 16 px, normalne 32 px, duże 64 px (piksele powiększone 2×, ostre jak
+  na Amidze). Wielkość jest zapamiętywana dla każdego okna.
+- **Informacje**: rozmiar (foldery liczone), położenie, daty utworzenia, zmiany i otwarcia,
+  właściciel, uprawnienia. W oknie można też ustawić:
+  - flagi *Tylko do odczytu* i *Program* (prawo uruchamiania),
+  - komentarz (`user.xdg.comment`),
+  - dla programów i AppImage parametry uruchamiania („ToolTypes”), dodawane przy każdym
+    uruchomieniu.
+
+  Plik z flagą *Program* otwiera się w Lisa Shell.
+- **Dok**: *Połóż na doku* wystawia ikonę pliku, folderu albo aplikacji w lewym dolnym rogu
+  biurka, *Zdejmij z doku* ją chowa (plik zostaje na miejscu). Lista jest w `~/.config/lisaos/dok`.
+- **Formatuj dysk**: zaznacz ikonę dysku na biurku i wybierz FAT32, exFAT, ext4 albo NTFS
+  (UDisks2). Niesformatowane pendrive'y też pojawiają się na biurku.
+- **Resetuj LISA** uruchamia Insighta i Ramblera od nowa. Okna programów zostają.
+
+![Menu Lisa](docs/img/menu-lisa.png)
+![Informacje o pliku](docs/img/informacje.png)
 
 Pozycje i tryb widoku okien: `~/.config/lisaos/denise.okna`.
 

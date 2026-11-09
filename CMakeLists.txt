@@ -62,7 +62,8 @@ add_executable(lisaos-denise
   denise/appimage.cxx
   denise/gary.cxx
   denise/volumes.cxx
-  denise/applets.cxx)
+  denise/applets.cxx
+  denise/menus.cxx)
 target_link_libraries(lisaos-denise PRIVATE lisaos-platinum lisaos-net lisaos-audio lisaos-power fltk::images PkgConfig::DBUS)
 
 # --- insight: menedżer okien X11 ----------------------------------------------
@@ -70,7 +71,7 @@ add_executable(lisaos-insight insight/main.cxx)
 target_link_libraries(lisaos-insight PRIVATE lisaos-platinum X11::X11)
 
 # --- alice: panele sterowania (Wygląd) -------------------------------------------
-add_executable(lisaos-alice alice/main.cxx alice/wyglad.cxx alice/siec.cxx alice/zasilanie.cxx)
+add_executable(lisaos-alice alice/main.cxx alice/wyglad.cxx alice/siec.cxx alice/zasilanie.cxx alice/ustawienia.cxx)
 target_link_libraries(lisaos-alice PRIVATE lisaos-platinum lisaos-net lisaos-power)
 
 # --- Lisa Shell: emulator terminala (libvterm systemowy albo dołączony) --------

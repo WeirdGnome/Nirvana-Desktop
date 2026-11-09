@@ -25,6 +25,7 @@
 #include <algorithm>
 #include <cstdio>
 #include <cstring>
+#include <unistd.h>
 #include <map>
 #include <vector>
 #include <string>
@@ -36,6 +37,7 @@ using namespace plat;
 
 static Display *dpy;
 static Window root;
+static char **g_argv;
 static int screen_w, screen_h;
 
 static Atom A_WYGLAD;
@@ -651,6 +653,17 @@ static int x_handler(void *event, void *) {
     return 0;
 
   case ClientMessage:
+    if (e->xclient.window == root && e->xclient.message_type == XInternAtom(dpy, "_LISAOS_RESTART", False)) {
+      // Narzędzia > Resetuj LISA: uruchom się od nowa. Okna klientów są w "save set",
+      // więc po zamknięciu połączenia wracają do okna głównego, a nowy Insight
+      // przejmuje je przy starcie (XQueryTree).
+      char exe[4096];
+      ssize_t n = readlink("/proc/self/exe", exe, sizeof exe - 1);
+      exe[n > 0 ? n : 0] = 0;   // prawdziwa ścieżka - inaczej proces nazywałby się "exe"
+      XCloseDisplay(dpy);
+      execv(n > 0 ? exe : g_argv[0], g_argv);
+      _exit(1);
+    }
     if (e->xclient.message_type == A_NET_WM_STATE) {
       // data.l[0]: 0 usuń, 1 dodaj, 2 przełącz; l[1], l[2]: właściwości
       Client *c = client_of(e->xclient.window);
@@ -687,6 +700,7 @@ static int x_handler(void *event, void *) {
 
 // ---------------------------------------------------------------------------
 int main(int argc, char **argv) {
+  g_argv = argv;
   for (int i = 1; i < argc; i++)
     if (!strcmp(argv[i], "--help")) {
       printf("lisaos-insight: menedżer okien LisaOS (X11)\n");

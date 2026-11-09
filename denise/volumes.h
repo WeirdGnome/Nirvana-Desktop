@@ -31,6 +31,7 @@ struct Volume {
   bool optical = false;
   bool encrypted = false;   // kontener LUKS
   bool unlocked = false;    // ... odblokowany (istnieje urządzenie odszyfrowane)
+  bool unformatted = false; // nośnik wymienny bez systemu plików (do sformatowania)
   std::string clear_kname;  // urządzenie odszyfrowane (dm-0)
   plat::Icon icon = plat::Icon::HardDisk;
 };
@@ -44,6 +45,8 @@ std::string unlock(const Volume &v, const std::string &passphrase);
 std::string lock(const Volume &v);
 // Bezpieczne odłączenie: odmontuj, zamknij LUKS, potem wysuń płytę albo wyłącz dysk USB.
 std::string eject(const Volume &v);
+// Formatowanie (UDisks2 Block.Format): type = vfat, exfat, ext4, ntfs.
+std::string format(const Volume &v, const std::string &type, const std::string &label);
 
 bool udisks_available();
 std::string human_size(uint64_t bytes);   // "16 GB"

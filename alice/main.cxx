@@ -3,6 +3,7 @@
 //   lisaos-alice [wyglad]          panel Wygląd (domyślny)
 //   lisaos-alice siec [--ukryta]   panel Sieć (--ukryta: od razu okno "Inna sieć")
 //   lisaos-alice zasilanie          panel Zasilanie
+//   lisaos-alice ustawienia         Preferencje: okno z ikonami wszystkich paneli
 //   lisaos-alice schemat NAZWA     ustaw schemat kolorów bez okna (np. redmond97-se/ouroboros)
 #include "platinum.h"
 
@@ -13,6 +14,7 @@
 int panel_wyglad();
 int panel_siec(bool hidden_dialog);
 int panel_zasilanie();
+int panel_ustawienia();
 
 int main(int argc, char **argv) {
   plat::init(false);
@@ -32,5 +34,6 @@ int main(int argc, char **argv) {
     return panel_siec(hidden);
   }
   if (!strcmp(which, "zasilanie")) return panel_zasilanie();
+  if (!strcmp(which, "ustawienia") || !strcmp(which, "preferencje")) return panel_ustawienia();
   return panel_wyglad();
 }

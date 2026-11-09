@@ -109,8 +109,15 @@ std::vector<Volume> scan() {
   for (auto &r : rows) {
     const std::string &type = r["TYPE"], &fs = r["FSTYPE"];
     if (type != "part" && type != "disk" && type != "rom" && type != "loop") continue;
-    if (fs.empty() || fs == "swap" || fs == "LVM2_member" || fs == "linux_raid_member") continue;
+    if (fs == "swap" || fs == "LVM2_member" || fs == "linux_raid_member") continue;
     if (type == "disk" && !children(r["KNAME"]).empty() && fs != "crypto_LUKS") continue;
+    if (fs.empty()) {
+      // bez systemu plików: pokazujemy tylko nośniki wymienne (do sformatowania)
+      Row *d = top_disk(r["KNAME"]);
+      bool rem = d && ((*d)["RM"] == "1" || (*d)["HOTPLUG"] == "1" || (*d)["TRAN"] == "usb" ||
+                       (*d)["TRAN"] == "mmc" || (*d)["TRAN"] == "sdio");
+      if (!rem || (*d)["TYPE"] == "rom" || strtoull(r["SIZE"].c_str(), nullptr, 10) == 0) continue;
+    }
     if (system_part(r["KNAME"], 0)) continue;
 
     Volume v;
@@ -144,6 +151,7 @@ std::vector<Volume> scan() {
     if (!label.empty()) v.name = label;
     else if (v.optical) v.name = "Płyta";
     else if (v.encrypted && !v.unlocked) v.name = "Zaszyfrowany dysk " + human_size(v.size);
+    else if (fs.empty()) { v.unformatted = true; v.name = "Niesformatowany " + human_size(v.size); }
     else if (v.removable) v.name = "Dysk USB " + human_size(v.size);
     else v.name = "Dysk " + human_size(v.size);
     if (v.encrypted && !v.unlocked) v.icon = plat::Icon::Encrypted;
@@ -315,6 +323,43 @@ std::string lock(const Volume &v) {
   std::string e = call(block_path(v.kname), "org.freedesktop.UDisks2.Encrypted", "Lock",
                        append_empty_options, nullptr);
   return e.empty() ? "" : "Nie udało się zamknąć zaszyfrowanego dysku:\n" + e;
+}
+
+std::string format(const Volume &v, const std::string &type, const std::string &label) {
+  if (v.optical) return "Płyt nie da się tu formatować.";
+  std::string e;
+  if (!v.mountpoint.empty() && !(e = unmount(v)).empty()) return e;
+  if (v.encrypted && v.unlocked && !(e = lock(v)).empty()) return e;
+  e = call(block_path(v.kname), "org.freedesktop.UDisks2.Block", "Format", [&](DBusMessageIter *it) {
+    const char *t = type.c_str();
+    dbus_message_iter_append_basic(it, DBUS_TYPE_STRING, &t);
+    DBusMessageIter dict;
+    dbus_message_iter_open_container(it, DBUS_TYPE_ARRAY, "{sv}", &dict);
+    auto put_s = [&](const char *k, const std::string &val) {
+      DBusMessageIter en, var;
+      dbus_message_iter_open_container(&dict, DBUS_TYPE_DICT_ENTRY, nullptr, &en);
+      dbus_message_iter_append_basic(&en, DBUS_TYPE_STRING, &k);
+      dbus_message_iter_open_container(&en, DBUS_TYPE_VARIANT, "s", &var);
+      const char *c = val.c_str();
+      dbus_message_iter_append_basic(&var, DBUS_TYPE_STRING, &c);
+      dbus_message_iter_close_container(&en, &var);
+      dbus_message_iter_close_container(&dict, &en);
+    };
+    auto put_b = [&](const char *k, bool val) {
+      DBusMessageIter en, var;
+      dbus_bool_t b = val;
+      dbus_message_iter_open_container(&dict, DBUS_TYPE_DICT_ENTRY, nullptr, &en);
+      dbus_message_iter_append_basic(&en, DBUS_TYPE_STRING, &k);
+      dbus_message_iter_open_container(&en, DBUS_TYPE_VARIANT, "b", &var);
+      dbus_message_iter_append_basic(&var, DBUS_TYPE_BOOLEAN, &b);
+      dbus_message_iter_close_container(&en, &var);
+      dbus_message_iter_close_container(&dict, &en);
+    };
+    if (!label.empty()) put_s("label", label);
+    if (type == "ext4") put_b("take-ownership", true);   // właścicielem nowego systemu plików jest użytkownik
+    dbus_message_iter_close_container(it, &dict);
+  }, nullptr, 600000);
+  return e.empty() ? "" : "Nie udało się sformatować „" + v.name + "”:\n" + e;
 }
 
 std::string eject(const Volume &v) {

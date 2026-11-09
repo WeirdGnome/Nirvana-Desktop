@@ -34,7 +34,9 @@ using namespace plat;
 // ---------------------------------------------------------------------------
 // Uruchamianie programów (AppImage, xdg-open, pkexec)
 // ---------------------------------------------------------------------------
-static void spawn(const std::vector<std::string> &args) {
+void rambler_spawn(const std::vector<std::string> &args);
+static void spawn(const std::vector<std::string> &args) { rambler_spawn(args); }
+void rambler_spawn(const std::vector<std::string> &args) {
   std::vector<const char *> argv;
   for (auto &a : args) argv.push_back(a.c_str());
   argv.push_back(nullptr);
@@ -44,6 +46,12 @@ static void spawn(const std::vector<std::string> &args) {
 static std::string self_exe() {
   std::error_code ec;
   return fs::read_symlink("/proc/self/exe", ec).string();
+}
+// program LisaOS obok lisaos-denise (build/ albo prefiks), inaczej z PATH
+std::string rambler_exe(const char *name) {
+  std::string exe = self_exe();
+  std::string p = exe.substr(0, exe.rfind('/') + 1) + name;
+  return access(p.c_str(), X_OK) == 0 ? p : name;
 }
 
 // ---------------------------------------------------------------------------
@@ -85,6 +93,17 @@ public:
 // Menu aplikacji "Rambler": lista otwartych folderów i operacje na oknach.
 // Docelowo (lisaos-gary) stanie się przełącznikiem aplikacji.
 // ---------------------------------------------------------------------------
+// Pasek menu, który przed otwarciem odświeża stan pozycji (aktywne/nieaktywne).
+class LisaMenuBar : public Fl_Menu_Bar {
+public:
+  std::function<void()> before_open;
+  LisaMenuBar(int X, int Y, int W, int H) : Fl_Menu_Bar(X, Y, W, H) {}
+  int handle(int e) override {
+    if ((e == FL_PUSH || e == FL_SHORTCUT || e == FL_KEYBOARD) && before_open) before_open();
+    return Fl_Menu_Bar::handle(e);
+  }
+};
+
 static const int APP_W = 34;   // szerokość przycisku aplikacji (gary) w prawym rogu
 
 class WindowsMenu : public Fl_Menu_Button {
@@ -202,6 +221,7 @@ static void net_label_measure(const Fl_Label *o, int &W, int &H) {
 }
 
 static std::string alice_exe();
+static Entry entry_for(const std::string &path);
 static std::vector<net::Network> g_menu_nets;
 static std::vector<net::Vpn> g_menu_vpns;
 static std::vector<std::string> g_menu_ifaces;
@@ -248,7 +268,8 @@ Desktop::Desktop(int W, int H, const std::string &home, bool root)
   pattern_.reset(make_pattern());
   detect_wm();
 
-  menu_ = new Fl_Menu_Bar(0, 0, W, MENUBAR_H);
+  menu_ = new LisaMenuBar(0, 0, W, MENUBAR_H);
+  ((LisaMenuBar *)menu_)->before_open = [this] { update_menu(); };
   menu_->box(MENUBAR_BOX);
   menu_->color(GRAY);
   menu_->textfont(FONT_SYSTEM);
@@ -260,34 +281,53 @@ Desktop::Desktop(int W, int H, const std::string &home, bool root)
   // metod trzymamy w statycznej tablicy, a w user_data podajemy indeks.
   struct Item { const char *path; int shortcut; void (Desktop::*m)(); int flags; };
   std::vector<Item> items = {
-    {"logo/O LisaOS…", 0, &Desktop::about, FL_MENU_DIVIDER},
-    {"logo/Lisa Shell", 0, &Desktop::open_terminal_home, 0},
-    {"logo/Panele sterowania/Sieć…", 0, &Desktop::open_network, 0},
-    {"logo/Panele sterowania/Zasilanie…", 0, &Desktop::open_power, 0},
-    {"logo/Panele sterowania/Wygląd…", 0, &Desktop::open_appearance, 0},
-    {"logo/Ostatnie aplikacje", 0, nullptr, FL_MENU_INACTIVE},
-    {"Plik/Nowy folder", FL_COMMAND + 'n', &Desktop::new_folder, 0},
-    {"Plik/Otwórz", FL_COMMAND + 'o', &Desktop::open_selected, 0},
-    {"Plik/Otwórz w Lisa Shell", FL_COMMAND + 't', &Desktop::open_terminal, 0},
-    {"Plik/Zamknij okno", FL_COMMAND + 'w', &Desktop::close_active, FL_MENU_DIVIDER},
-    {"Plik/Zmień nazwę", FL_F + 2, &Desktop::rename_selected, 0},
-    {"Plik/Duplikuj", FL_COMMAND + 'd', &Desktop::duplicate, 0},
-    {"Plik/Przenieś do kosza", FL_COMMAND + FL_BackSpace, &Desktop::move_to_trash, 0},
-    {"Edycja/Cofnij", FL_COMMAND + 'z', nullptr, FL_MENU_INACTIVE | FL_MENU_DIVIDER},
-    {"Edycja/Wytnij", FL_COMMAND + 'x', nullptr, FL_MENU_INACTIVE},
-    {"Edycja/Kopiuj", FL_COMMAND + 'c', &Desktop::copy_selected, 0},
-    {"Edycja/Wklej", FL_COMMAND + 'v', &Desktop::paste, FL_MENU_DIVIDER},
-    {"Edycja/Zaznacz wszystko", FL_COMMAND + 'a', &Desktop::select_all, 0},
-    {"Widok/jako ikony", FL_COMMAND + '1', &Desktop::view_icons, FL_MENU_RADIO | FL_MENU_VALUE},
-    {"Widok/jako lista", FL_COMMAND + '2', &Desktop::view_list, FL_MENU_RADIO | FL_MENU_DIVIDER},
-    {"Widok/Odśwież", FL_COMMAND + 'r', &Desktop::refresh_all, 0},
-    {"Specjalne/Opróżnij kosz…", 0, &Desktop::empty_trash, 0},
-    {"Specjalne/Wysuń", FL_COMMAND + 'e', &Desktop::eject_selected, FL_MENU_DIVIDER},
-    {root ? "Specjalne/Zakończ tryb root" : "Specjalne/Tryb root…", 0,
+    // --- Lisa: cały system ---
+    {"logo/O systemie…", 0, &Desktop::about, FL_MENU_DIVIDER},
+    {"logo/Preferencje…", 0, &Desktop::open_preferences, 0},
+    {"logo/Wykonaj polecenie…", FL_COMMAND + 'e', &Desktop::execute_command, 0},
+    {"logo/Lisa Shell", FL_COMMAND + 't', &Desktop::open_terminal, 0},
+    {"logo/Otwórz dziennik", 0, &Desktop::open_log, FL_MENU_DIVIDER},
+    {"logo/Przerysuj wszystko", 0, &Desktop::redraw_all, 0},
+    {"logo/Uaktualnij wszystko", FL_COMMAND + FL_SHIFT + 'r', &Desktop::refresh_all, FL_MENU_DIVIDER},
+    {"logo/Uśpij", 0, &Desktop::sleep_now, 0},
+    {"logo/Uruchom ponownie…", 0, &Desktop::reboot_ask, 0},
+    {"logo/Zakończ…", FL_COMMAND + 'q', &Desktop::quit_ask, 0},
+    // --- Okno: aktywne okno folderu ---
+    {"Okno/Nowy folder", FL_COMMAND + 'n', &Desktop::new_folder, 0},
+    {"Okno/Otwórz katalog nadrzędny", FL_COMMAND + FL_Up, &Desktop::open_parent, 0},
+    {"Okno/Zamknij", FL_COMMAND + 'w', &Desktop::close_active, 0},
+    {"Okno/Uaktualnij", FL_COMMAND + 'r', &Desktop::update_window, FL_MENU_DIVIDER},
+    {"Okno/Zaznacz zawartość", FL_COMMAND + 'a', &Desktop::select_all, 0},
+    {"Okno/Uporządkuj", FL_COMMAND + '.', &Desktop::clean_up, FL_MENU_DIVIDER},
+    {"Okno/Pokaż ukryte pliki", FL_COMMAND + 'h', &Desktop::toggle_hidden, FL_MENU_TOGGLE},
+    {"Okno/Pokaż jako/Ikony", FL_COMMAND + '1', &Desktop::view_icons, FL_MENU_RADIO},
+    {"Okno/Pokaż jako/Listę", FL_COMMAND + '2', &Desktop::view_list, FL_MENU_RADIO},
+    {"Okno/Sortuj/według nazwy", 0, &Desktop::sort_name, FL_MENU_RADIO},
+    {"Okno/Sortuj/według daty", 0, &Desktop::sort_date, FL_MENU_RADIO},
+    {"Okno/Sortuj/według rozmiaru", 0, &Desktop::sort_size, FL_MENU_RADIO},
+    {"Okno/Sortuj/według rodzaju", 0, &Desktop::sort_kind, FL_MENU_RADIO},
+    {"Okno/Wielkość ikon/Małe", 0, &Desktop::icons_small, FL_MENU_RADIO},
+    {"Okno/Wielkość ikon/Normalne", 0, &Desktop::icons_normal, FL_MENU_RADIO},
+    {"Okno/Wielkość ikon/Duże", 0, &Desktop::icons_large, FL_MENU_RADIO},
+    // --- Ikony: zaznaczone pliki, foldery i dyski ---
+    {"Ikony/Otwórz", FL_COMMAND + 'o', &Desktop::open_selected, 0},
+    {"Ikony/Kopiuj", FL_COMMAND + 'c', &Desktop::copy_selected, 0},
+    {"Ikony/Wklej", FL_COMMAND + 'v', &Desktop::paste, 0},
+    {"Ikony/Duplikuj", FL_COMMAND + 'd', &Desktop::duplicate, 0},
+    {"Ikony/Zmień nazwę…", FL_F + 2, &Desktop::rename_selected, 0},
+    {"Ikony/Usuń", FL_COMMAND + FL_BackSpace, &Desktop::move_to_trash, FL_MENU_DIVIDER},
+    {"Ikony/Informacje…", FL_COMMAND + 'i', &Desktop::get_info, FL_MENU_DIVIDER},
+    {"Ikony/Zamroź", FL_COMMAND + 's', &Desktop::snapshot, 0},
+    {"Ikony/Odmroź", 0, &Desktop::unsnapshot, FL_MENU_DIVIDER},
+    {"Ikony/Połóż na doku", FL_COMMAND + 'l', &Desktop::dock_add, 0},
+    {"Ikony/Zdejmij z doku", FL_COMMAND + 'k', &Desktop::dock_remove, FL_MENU_DIVIDER},
+    {"Ikony/Wysuń", FL_COMMAND + 'y', &Desktop::eject_selected, 0},
+    // --- Narzędzia ---
+    {"Narzędzia/Formatuj dysk…", 0, &Desktop::format_disk, 0},
+    {"Narzędzia/Opróżnij kosz…", 0, &Desktop::empty_trash, FL_MENU_DIVIDER},
+    {root ? "Narzędzia/Zakończ tryb root" : "Narzędzia/Tryb root…", 0,
      root ? &Desktop::quit : &Desktop::ask_root, FL_MENU_DIVIDER},
-    {"Specjalne/Uśpij", 0, nullptr, FL_MENU_INACTIVE},
-    {"Specjalne/Uruchom ponownie", 0, nullptr, FL_MENU_INACTIVE},
-    {"Specjalne/Wyłącz", FL_COMMAND + 'q', &Desktop::quit, 0},
+    {"Narzędzia/Resetuj LISA", 0, &Desktop::reset_lisa, 0},
   };
   static std::vector<void (Desktop::*)()> methods;
   for (auto &it : items) {
@@ -331,6 +371,15 @@ Desktop::Desktop(int W, int H, const std::string &home, bool root)
     ((Desktop *)w)->quit();
   });
 
+  // ukryte pliki: zapamiętany wybór (Okno > Pokaż ukryte pliki), w trybie root zawsze
+  show_hidden_ = root_;
+  {
+    const char *x = getenv("XDG_CONFIG_HOME");
+    std::ifstream in((x && *x ? std::string(x) : home_ + "/.config") + "/lisaos/rambler.conf");
+    std::string line;
+    while (std::getline(in, line)) if (line == "ukryte=1") show_hidden_ = true;
+  }
+  load_dock();
   layout_icons();
   watch_trash();
   watch_volumes();
@@ -403,6 +452,23 @@ void Desktop::layout_icons() {
     iy += 70;
   }
   icons_.push_back({"Kosz", trash_dir(), trash_full() ? Icon::TrashFull : Icon::Trash, ix, h() - 74});
+  // dok: ikony wyciągnięte na biurko, w lewym dolnym rogu (Leave Out z Workbencha)
+  int dx = 10;
+  for (auto &p : dock_) {
+    std::error_code ec;
+    if (!fs::exists(p, ec)) continue;
+    DeskIcon d;
+    d.path = p;
+    d.dock = true;
+    d.entry = entry_for(p);
+    d.name = d.entry.label;
+    d.icon = d.entry.icon;
+    d.x = dx;
+    d.y = h() - 74;
+    icons_.push_back(d);
+    dx += 80;
+    if (dx > ix - 80) break;
+  }
 }
 
 int Desktop::icon_at(int ex, int ey) const {
@@ -785,6 +851,7 @@ NWin *Desktop::active_folder() {
 
 int Desktop::shortcut() {
   // Uwaga: Fl_Menu_::test_shortcut() sam wywołuje akcję znalezionej pozycji.
+  update_menu();
   return menu_->test_shortcut() ? 1 : 0;
 }
 
@@ -815,6 +882,7 @@ void Desktop::remember(NWin *w, bool open) {
   s.shaded = w->shaded();
   s.open = open;
   s.list = w->pane->view()->mode() == FolderView::List;
+  s.icons = w->pane->view()->icon_size();
   spatial_.set(w->path, s);
 }
 
@@ -899,7 +967,8 @@ void Desktop::open_folder(const std::string &path, bool animate) {
   int ew = csd_mode ? 2 * FRAME : 0, eh = csd_mode ? TITLE_H + FRAME : 0;
   auto *win = new NWin(this, ax - ox, ay - oy, s.w + ew, s.h + eh, title_for(path).c_str(), false);
   win->path = path;
-  win->pane = new FolderPane(ox, oy, s.w, s.h, path, root_);
+  win->pane = new FolderPane(ox, oy, s.w, s.h, path, show_hidden_);
+  win->pane->view()->set_icon_size(s.icons);
   win->resizable(win->pane);
   // przy własnej ramce zwinięte okno ma wysokość samego paska tytułu
   win->size_range(MIN_W + ew, csd_mode ? TITLE_H : MIN_H);
@@ -926,6 +995,16 @@ void Desktop::open_folder(const std::string &path, bool animate) {
 void Desktop::open_entry(const Entry &e) {
   if (e.dir) { open_folder(e.path); return; }
   if (is_appimage(e.name)) { open_appimage(e.path); return; }
+  // plik z flagą "Program" (Informacje): uruchom w Lisa Shell z parametrami
+  struct stat st;
+  if (stat(e.path.c_str(), &st) == 0 && S_ISREG(st.st_mode) && (st.st_mode & S_IXUSR) && allowed(e.path)) {
+    std::vector<std::string> a = {rambler_exe("lisaos-shell"), "--katalog", fs::path(e.path).parent_path().string(),
+                                  "-e", "sh", "-c", "\"$@\"; s=$?; echo; printf '[kod wyjścia %s] Enter zamyka okno…' \"$s\"; read x",
+                                  "sh", e.path};
+    for (auto &x : split_args(tooltypes(e.path))) a.push_back(x);
+    spawn(a);
+    return;
+  }
   spawn({"xdg-open", e.path});
 }
 
@@ -981,7 +1060,7 @@ void Desktop::run_app(const std::string &path) {
   // gary: pierwsze nowe okno to ta aplikacja - dostanie nazwę i ikonę z AppImage
   gary::note_launch(appimage::display_name(fs::path(path).filename().string()),
                     appimage::icon(path, home_));
-  appimage::launch(path, home_);
+  appimage::launch(path, home_, split_args(tooltypes(path)));   // parametry z okna Informacje
 }
 
 void Desktop::restore() {
@@ -1012,13 +1091,15 @@ void Desktop::draw() {
     bool sel = i == icon_sel_ || i == icon_drop_;
     Icon shown = ic.icon;
     if (vdragging_ && ic.path == trash_dir()) shown = Icon::Eject;   // jak w Mac OS
-    draw_icon(shown, ic.x + 24, ic.y, sel);
-    int tw = (int)fl_width(ic.name.c_str());
+    if (ic.dock) draw_entry_icon(ic.entry, ic.x + 24, ic.y, sel, 32);
+    else draw_icon(shown, ic.x + 24, ic.y, sel);
+    std::string nm = ellipsize(ic.name, 76);
+    int tw = (int)fl_width(nm.c_str());
     int tx = ic.x + 40 - tw / 2, ty = ic.y + 36;
     fl_color(sel ? ICON_SEL : CONTENT);
     fl_rectf(tx - 2, ty, tw + 4, fl_height());
     fl_color(sel ? ICON_SEL_TEXT : CONTENT_TEXT);
-    fl_draw(ic.name.c_str(), tx, ty + fl_height() - fl_descent());
+    fl_draw(nm.c_str(), tx, ty + fl_height() - fl_descent());
   }
   for (int i = 0; i < children(); i++) draw_child(*child(i));
 }
@@ -1056,6 +1137,7 @@ int Desktop::handle(int e) {
       Fl::event_clicks(0);
       vdrag_icon_ = -1;
       if (icons_[i].vol >= 0) open_volume(icons_[i].vol);
+      else if (icons_[i].dock) open_entry(icons_[i].entry);
       else open_folder(icons_[i].path);
     }
     redraw();
@@ -1190,6 +1272,7 @@ void Desktop::open_selected() {
     if (const Entry *e = a->pane->view()->selected()) open_entry(*e);
   } else if (icon_sel_ >= 0) {
     if (icons_[icon_sel_].vol >= 0) open_volume(icons_[icon_sel_].vol);
+    else if (icons_[icon_sel_].dock) open_entry(icons_[icon_sel_].entry);
     else open_folder(icons_[icon_sel_].path);
   }
 }
@@ -1721,8 +1804,8 @@ void Desktop::view_list() {
 void Desktop::sync_view_menu() {
   NWin *a = active_folder();
   bool list = a && a->pane->view()->mode() == FolderView::List;
-  auto *icons = (Fl_Menu_Item *)menu_->find_item("Widok/jako ikony");
-  auto *lst = (Fl_Menu_Item *)menu_->find_item("Widok/jako lista");
+  auto *icons = (Fl_Menu_Item *)menu_->find_item("Okno/Pokaż jako/Ikony");
+  auto *lst = (Fl_Menu_Item *)menu_->find_item("Okno/Pokaż jako/Listę");
   if (icons && lst) {
     if (list) { icons->clear(); lst->set(); } else { icons->set(); lst->clear(); }
   }
@@ -1918,6 +2001,8 @@ void Desktop::drag_start(NWin *src, const std::vector<Entry> &items) {
   drag_.src = src;
   drag_.items = items;
   drag_.ghost = new DragGhost(items[0], (int)items.size());
+  drag_.px = src->x_root() + src->pane->view()->press_x();
+  drag_.py = src->y_root() + src->pane->view()->press_y();
   drag_.ghost->position(Fl::event_x_root() + 8, Fl::event_y_root() + 8);
   drag_.ghost->show();
 }
@@ -1971,6 +2056,17 @@ void Desktop::drag_end(int xr, int yr, bool copy) {
     }
   }
 
+  // Upuszczenie na tło tego samego okna w widoku ikon: przestawienie ikon (Workbench)
+  if (t.win == src && t.item < 0 && !copy && known(src) &&
+      src->pane->view()->mode() == FolderView::Icons) {
+    FolderView *v = src->pane->view();
+    std::vector<std::string> paths;
+    for (auto &e : items) paths.push_back(e.path);
+    v->move_items(paths, xr - drag_.px, yr - drag_.py);   // o tyle, o ile przesunęła się mysz
+    src->pane->resize(src->pane->x(), src->pane->y(), src->pane->w(), src->pane->h());
+    src->pane->redraw();
+    return;
+  }
   if (dest.empty() || (t.win == src && t.item < 0 && !copy)) {
     // nietrafione upuszczenie: ikona "wraca" na miejsce, jak w Mac OS
     Rect back;

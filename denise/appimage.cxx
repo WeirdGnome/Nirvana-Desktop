@@ -308,10 +308,12 @@ bool sandbox_available() {
   return ok;
 }
 
-void launch(const std::string &path, const std::string &home) {
+void launch(const std::string &path, const std::string &home, const std::vector<std::string> &args) {
   std::string dir = install_dir(path, home), apprun = dir + "/AppRun";
   if (!sandbox_available()) {
-    spawn({"env", "APPDIR=" + dir, "APPIMAGE=" + path, "ARGV0=" + path, "HOME=" + home, apprun});
+    std::vector<std::string> a = {"env", "APPDIR=" + dir, "APPIMAGE=" + path, "ARGV0=" + path, "HOME=" + home, apprun};
+    a.insert(a.end(), args.begin(), args.end());   // parametry z okna Informacje
+    spawn(a);
     return;
   }
   std::vector<std::string> a = {
@@ -354,6 +356,7 @@ void launch(const std::string &path, const std::string &home) {
                      "--setenv", "ARGV0", path, "--setenv", "LISAOS_SANDBOX", "1",
                      "--setenv", "HOME", home,
                      "--chdir", home, apprun});
+  a.insert(a.end(), args.begin(), args.end());
   spawn(a);
 }
 

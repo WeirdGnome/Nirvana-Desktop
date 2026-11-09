@@ -13,6 +13,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <filesystem>
+#include <fstream>
 #include <map>
 #include <strings.h>
 #include <sys/stat.h>
@@ -134,9 +135,35 @@ static Fl_Image *small_icon(Icon icon, bool sel) {
   return img;
 }
 
+// Duże ikony 64x64: rysunek 32x32 powiększony 2x bez wygładzania - wyraźne
+// piksele jak na ekranie Amigi czy starego Maca.
+static Fl_Image *big_icon(Icon icon, bool sel) {
+  static std::map<std::pair<Fl_Color, int>, Fl_Image *> cache;
+  std::pair<Fl_Color, int> key{Fl::get_color(CONTENT), (int)icon * 2 + sel};
+  auto it = cache.find(key);
+  if (it != cache.end()) return it->second;
+  Fl_Image_Surface surf(32, 32);
+  Fl_Surface_Device::push_current(&surf);
+  fl_color(CONTENT);
+  fl_rectf(0, 0, 32, 32);
+  draw_icon(icon, 0, 0, sel);
+  Fl_Surface_Device::pop_current();
+  Fl_RGB_Image *src = surf.image();
+  int d = src->d(), ld = src->ld() ? src->ld() : src->w() * d;
+  auto *pix = new uchar[64 * 64 * 3];
+  const uchar *sp = (const uchar *)src->data()[0];
+  for (int y = 0; y < 64; y++)
+    for (int x = 0; x < 64; x++) memcpy(pix + (y * 64 + x) * 3, sp + (y / 2) * ld + (x / 2) * d, 3);
+  delete src;
+  auto *img = new Fl_RGB_Image(pix, 64, 64, 3);
+  img->alloc_array = 1;
+  cache[key] = img;
+  return img;
+}
+
 void warm_small_icons() {
   for (int i = 0; i <= (int)Icon::Wifi; i++)
-    for (bool sel : {false, true}) small_icon((Icon)i, sel);
+    for (bool sel : {false, true}) { small_icon((Icon)i, sel); big_icon((Icon)i, sel); }
 }
 
 Fl_Image *entry_icon_image(const Entry &e, int size, bool sel) {
@@ -144,7 +171,7 @@ Fl_Image *entry_icon_image(const Entry &e, int size, bool sel) {
     IconPair fi = file_icon(e.icon_file, size);
     if (fi.normal) return sel ? fi.selected : fi.normal;
   }
-  return small_icon(e.icon, sel);   // wektorowa ikona 16x16
+  return size == 64 ? big_icon(e.icon, sel) : small_icon(e.icon, sel);   // wektorowe
 }
 
 void draw_entry_icon(const Entry &e, int x, int y, bool sel, int size, bool open) {
@@ -153,10 +180,41 @@ void draw_entry_icon(const Entry &e, int x, int y, bool sel, int size, bool open
   if (!e.icon_file.empty()) fi = file_icon(e.icon_file, size);
   if (fi.normal) { (sel ? fi.selected : fi.normal)->draw(x, y); return; }
   if (size == 32) draw_icon(ic, x, y, sel);
+  else if (size == 64) big_icon(ic, sel)->draw(x, y);
   else small_icon(ic, sel)->draw(x, y);
 }
 
 // ---------------------------------------------------------------------------
+// Zamrożone pozycje ikon (Snapshot z Workbencha): "x y<TAB>ścieżka".
+// ---------------------------------------------------------------------------
+static std::map<std::string, std::pair<int, int>> g_snap;
+static bool g_snap_loaded = false;
+static std::string snap_file() {
+  const char *x = getenv("XDG_CONFIG_HOME");
+  const char *h = getenv("HOME");
+  return (x && *x ? std::string(x) : std::string(h ? h : "/") + "/.config") + "/lisaos/ikony.pozycje";
+}
+static void snap_load() {
+  if (g_snap_loaded) return;
+  g_snap_loaded = true;
+  std::ifstream in(snap_file());
+  std::string line;
+  while (std::getline(in, line)) {
+    auto tab = line.find('\t');
+    if (tab == std::string::npos) continue;
+    int x = 0, y = 0;
+    if (sscanf(line.c_str(), "%d %d", &x, &y) == 2) g_snap[line.substr(tab + 1)] = {x, y};
+  }
+}
+static void snap_save() {
+  std::string f = snap_file();
+  std::ofstream out(f + ".tmp");
+  for (auto &[p, xy] : g_snap)
+    if (::access(p.c_str(), F_OK) == 0) out << xy.first << ' ' << xy.second << '\t' << p << '\n';
+  out.close();
+  rename((f + ".tmp").c_str(), f.c_str());
+}
+
 FolderView::FolderView(int X, int Y, int W, int H) : Fl_Widget(X, Y, W, H) {}
 
 void FolderView::load(const std::string &path, bool show_hidden) {
@@ -184,6 +242,15 @@ void FolderView::load(const std::string &path, bool show_hidden) {
     entries_.push_back(std::move(e));
   }
   sort_entries();
+  // pozycje: zamrożone z pliku, ręczne sprzed odświeżenia zostają
+  snap_load();
+  std::map<std::string, Pt> keep;
+  for (auto &e : entries_) {
+    auto f = free_.find(e.path);
+    if (f != free_.end()) keep[e.path] = f->second;
+    else if (auto sn = g_snap.find(e.path); sn != g_snap.end()) keep[e.path] = {sn->second.first, sn->second.second};
+  }
+  free_ = std::move(keep);
   sel_.assign(entries_.size(), 0);
   anchor_ = -1;
   drop_ = -2;
@@ -217,14 +284,120 @@ void FolderView::set_sort(SortKey k) {
 }
 
 void FolderView::relayout(int avail_w, int min_h) {
+  last_w_ = avail_w;
+  last_min_h_ = min_h;
   if (mode_ == Icons) {
-    cols_ = std::max(1, (avail_w - 8) / CELL_W);
-    int rows = ((int)entries_.size() + cols_ - 1) / cols_;
-    size(avail_w, std::max(min_h, rows * CELL_H + 12));
+    int cw = cell_w(), ch = cell_h();
+    cols_ = std::max(1, (avail_w - 8) / cw);
+    // Ikony postawione ręcznie zajmują swoje komórki siatki; reszta wypełnia
+    // wolne miejsca po kolei (jak Workbench dla ikon bez zapisanej pozycji).
+    cells_.assign(entries_.size(), Pt{0, 0});
+    std::vector<std::vector<char>> used;
+    auto mark = [&](int col, int row) {
+      if (col < 0 || row < 0 || col >= cols_) return;
+      if ((int)used.size() <= row) used.resize(row + 1, std::vector<char>(cols_, 0));
+      used[row][col] = 1;
+    };
+    int max_x = 0, max_y = 0;
+    for (size_t i = 0; i < entries_.size(); i++) {
+      auto f = free_.find(entries_[i].path);
+      if (f == free_.end()) continue;
+      cells_[i] = f->second;
+      // komórki siatki, na które ta ikona zachodzi
+      int c0 = std::max(0, f->second.x - 4) / cw, c1 = std::max(0, f->second.x - 4 + cw - 1) / cw;
+      int r0 = std::max(0, f->second.y - 6) / ch, r1 = std::max(0, f->second.y - 6 + ch - 1) / ch;
+      for (int c = c0; c <= c1; c++)
+        for (int r = r0; r <= r1; r++) mark(c, r);
+      max_x = std::max(max_x, f->second.x + cw);
+      max_y = std::max(max_y, f->second.y + ch);
+    }
+    int slot = 0;
+    for (size_t i = 0; i < entries_.size(); i++) {
+      if (free_.count(entries_[i].path)) continue;
+      while (true) {
+        int col = slot % cols_, row = slot / cols_;
+        bool taken = row < (int)used.size() && used[row][col];
+        slot++;
+        if (taken) continue;
+        cells_[i] = {4 + col * cw, 6 + row * ch};
+        max_y = std::max(max_y, 6 + (row + 1) * ch);
+        break;
+      }
+    }
+    size(std::max(avail_w, max_x + 4), std::max(min_h, max_y + 6));
   } else {
     cols_ = 1;
     size(avail_w, std::max(min_h, (int)entries_.size() * ROW_H + 4));
   }
+}
+
+// --- wielkość ikon, przesuwanie, zamrażanie ------------------------------------
+void FolderView::set_icon_size(int s) {
+  s = s <= 16 ? 16 : s >= 64 ? 64 : 32;
+  if (s == isize_) return;
+  // ręczne pozycje przeliczamy na nową siatkę proporcjonalnie
+  double fx = (double)(s == 16 ? 76 : s == 64 ? 104 : 80) / cell_w();
+  double fy = (double)(s == 16 ? 40 : s == 64 ? 98 : 66) / cell_h();
+  snap_load();
+  for (auto &[p, pt] : free_)
+    if (!g_snap.count(p)) pt = {(int)(pt.x * fx), (int)(pt.y * fy)};   // zamrożone stoją w miejscu
+  isize_ = s;
+  if (last_w_) relayout(last_w_, last_min_h_);
+  redraw();
+}
+
+void FolderView::move_items(const std::vector<std::string> &paths, int dx, int dy) {
+  // Pozostałe ikony zostają tam, gdzie są (jak w Workbenchu) - zapamiętujemy ich
+  // obecne miejsca, żeby nie przeskakiwały w zwolnione pole siatki.
+  for (size_t i = 0; i < entries_.size() && i < cells_.size(); i++)
+    if (!free_.count(entries_[i].path)) free_[entries_[i].path] = cells_[i];
+  for (auto &p : paths) {
+    int i = index_of(p);
+    if (i < 0) continue;
+    Pt c = i < (int)cells_.size() ? cells_[i] : Pt{4, 6};
+    free_[p] = {std::max(0, c.x + dx), std::max(0, c.y + dy)};
+  }
+  if (last_w_) relayout(last_w_, last_min_h_);
+  redraw();
+}
+
+void FolderView::snapshot(const std::vector<std::string> &paths) {
+  snap_load();
+  for (auto &p : paths) {
+    int i = index_of(p);
+    if (i < 0 || i >= (int)cells_.size()) continue;
+    free_[p] = cells_[i];
+    g_snap[p] = {cells_[i].x, cells_[i].y};
+  }
+  snap_save();
+}
+
+void FolderView::unsnapshot(const std::vector<std::string> &paths) {
+  snap_load();
+  for (auto &p : paths) { g_snap.erase(p); free_.erase(p); }
+  snap_save();
+  if (last_w_) relayout(last_w_, last_min_h_);
+  redraw();
+}
+
+void FolderView::clean_up() {
+  snap_load();
+  for (auto &e : entries_) g_snap.erase(e.path);
+  snap_save();
+  free_.clear();
+  if (last_w_) relayout(last_w_, last_min_h_);
+  redraw();
+}
+
+bool FolderView::is_snapshot(const std::string &path) const {
+  snap_load();
+  return g_snap.count(path) > 0;
+}
+
+std::vector<std::string> FolderView::all_paths() const {
+  std::vector<std::string> v;
+  for (auto &e : entries_) v.push_back(e.path);
+  return v;
 }
 
 // --- geometria -------------------------------------------------------------
@@ -245,10 +418,15 @@ ListCols list_cols(int x0, int w) {
 
 static int name_col_w(int w) { return list_cols(0, w).name_w; }
 
+FolderView::Pt FolderView::origin(int i) const {
+  if (i >= 0 && i < (int)cells_.size()) return {x() + cells_[i].x, y() + cells_[i].y};
+  return {x() + 4 + (i % cols_) * cell_w(), y() + 6 + (i / cols_) * cell_h()};
+}
+
 Rect FolderView::item_rect(int i) const {
   if (mode_ == Icons) {
-    int cx = x() + 4 + (i % cols_) * CELL_W, cy = y() + 6 + (i / cols_) * CELL_H;
-    return {cx + 4, cy, CELL_W - 8, 54};
+    Pt o = origin(i);
+    return {o.x + 4, o.y, cell_w() - 8, cell_h() - 12};
   }
   return {x() + 4, y() + 2 + i * ROW_H, name_col_w(w()), ROW_H};
 }
@@ -262,16 +440,20 @@ int FolderView::index_at(int ex, int ey, bool *on_label) const {
     if (on_label) *on_label = ex >= x() + 26;
     return i;
   }
-  int cx = (ex - x() - 4) / CELL_W, cy = (ey - y() - 6) / CELL_H;
-  if (ex < x() + 4 || ey < y() + 6 || cx >= cols_) return -1;
-  int i = cy * cols_ + cx;
-  if (i < 0 || i >= (int)entries_.size()) return -1;
-  // trafienie liczymy tylko w ikonę i etykietę, nie w całą komórkę
-  int lx = ex - (x() + 4 + cx * CELL_W), ly = ey - (y() + 6 + cy * CELL_H);
-  bool on_icon = lx >= (CELL_W - 32) / 2 && lx < (CELL_W + 32) / 2 && ly < 36;
-  bool lbl = ly >= 36 && ly < 54;
-  if (on_label) *on_label = lbl;
-  return (on_icon || lbl) ? i : -1;
+  // od końca: ikona narysowana później leży na wierzchu
+  int cw = cell_w(), is = isize_;
+  for (int i = (int)entries_.size() - 1; i >= 0; i--) {
+    Pt o = origin(i);
+    int lx = ex - o.x, ly = ey - o.y;
+    if (lx < 0 || ly < 0 || lx >= cw || ly >= cell_h()) continue;
+    // trafienie liczymy tylko w ikonę i etykietę, nie w całą komórkę
+    bool on_icon = lx >= (cw - is) / 2 && lx < (cw + is) / 2 && ly < is + 4;
+    bool lbl = ly >= is + 4 && ly < is + 22;
+    if (!on_icon && !lbl) continue;
+    if (on_label) *on_label = lbl;
+    return i;
+  }
+  return -1;
 }
 
 int FolderView::index_of(const std::string &path) const {
@@ -290,9 +472,8 @@ bool FolderView::icon_rect(const std::string &path, Rect &out) const {
   int i = index_of(path);
   if (i < 0) return false;
   if (mode_ == Icons) {
-    int cx = x() + 4 + (i % cols_) * CELL_W + (CELL_W - 32) / 2;
-    int cy = y() + 6 + (i / cols_) * CELL_H + 2;
-    out = {cx, cy, 32, 32};
+    Pt o = origin(i);
+    out = {o.x + (cell_w() - isize_) / 2, o.y + 2, isize_, isize_};
   } else {
     out = {x() + 6, y() + 3 + i * ROW_H, 16, 16};
   }
@@ -302,8 +483,8 @@ bool FolderView::icon_rect(const std::string &path, Rect &out) const {
 bool FolderView::label_rect(int i, Rect &out) const {
   if (i < 0 || i >= count()) return false;
   if (mode_ == Icons) {
-    int cx = x() + 4 + (i % cols_) * CELL_W, cy = y() + 6 + (i / cols_) * CELL_H;
-    out = {cx - 6, cy + 35, CELL_W + 12, 18};
+    Pt o = origin(i);
+    out = {o.x - 6, o.y + isize_ + 3, cell_w() + 12, 18};
   } else {
     out = {x() + 24, y() + 2 + i * ROW_H, name_col_w(w()) - 24, ROW_H};
   }
@@ -376,14 +557,15 @@ void FolderView::draw_icons() {
   fl_font(FONT_SMALL, SIZE_SMALL);
   for (int i = 0; i < count(); i++) {
     const Entry &e = entries_[i];
-    int cx = x() + 4 + (i % cols_) * CELL_W, cy = y() + 6 + (i / cols_) * CELL_H;
+    Pt o = origin(i);
+    int cx = o.x, cy = o.y, cw = cell_w();
     bool sel = sel_[i] || drop_ == i;
     bool open = e.dir && is_open && is_open(e.path);
-    draw_entry_icon(e, cx + (CELL_W - 32) / 2, cy + 2, sel, 32, open);
+    draw_entry_icon(e, cx + (cw - isize_) / 2, cy + 2, sel, isize_, open);
 
-    std::string lbl = ellipsize(e.label, CELL_W - 6);
+    std::string lbl = ellipsize(e.label, cw - 6);
     int tw = (int)fl_width(lbl.c_str());
-    int tx = cx + (CELL_W - tw) / 2, ty = cy + 38;
+    int tx = cx + (cw - tw) / 2, ty = cy + isize_ + 6;
     if (sel_[i]) {
       fl_color(ICON_SEL);
       fl_rectf(tx - 2, ty, tw + 4, fl_height());
@@ -636,6 +818,12 @@ void FolderPane::refresh() {
   view_->select_paths(keep);
   update_info();
   resize(x(), y(), w(), h());
+  redraw();
+}
+
+void FolderPane::set_icon_size(int s) {
+  view_->set_icon_size(s);
+  resize(x(), y(), w(), h());   // przelicz przewijanie
   redraw();
 }
 

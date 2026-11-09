@@ -12,6 +12,7 @@
 
 #include <cstdint>
 #include <string>
+#include <vector>
 
 namespace appimage {
 
@@ -35,7 +36,7 @@ std::string install(const std::string &path, const std::string &home);
 bool sandbox_available();
 
 // Uruchamia zainstalowaną aplikację (w piaskownicy, jeśli to możliwe).
-void launch(const std::string &path, const std::string &home);
+void launch(const std::string &path, const std::string &home, const std::vector<std::string> &args = {});
 
 // Proces potomny w tle, bez czekania (argv[0] szukane w PATH).
 void spawn(const char *const argv[]);

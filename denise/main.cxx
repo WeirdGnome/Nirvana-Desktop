@@ -67,6 +67,7 @@ int main(int argc, char **argv) {
     Fl::screen_xywh(sx, sy, W, H);
   }
 
+  Desktop::set_argv(argc, argv);   // Narzędzia > Resetuj LISA uruchamia Ramblera od nowa
   Desktop desk(W, H, home, root);
   gary::init(home);
   desk.position(X, Y);

@@ -23,6 +23,10 @@
 #include "spatial.h"
 
 class Desktop;
+void rambler_spawn(const std::vector<std::string> &args);   // podwójny fork
+std::string rambler_exe(const char *name);                  // np. "lisaos-shell"
+std::string tooltypes(const std::string &path);             // parametry uruchamiania (Informacje)
+std::vector<std::string> split_args(const std::string &s);
 
 // Okno najwyższego poziomu Ramblera: folder albo dialog.
 class NWin : public Fl_Double_Window {
@@ -131,6 +135,38 @@ public:
   void view_list();
   void shade_all(bool shade);
   void close_all();
+  // --- menu Lisa / Okno / Ikony / Narzędzia (menus.cxx) ---
+  void update_menu();            // aktywne/nieaktywne pozycje przed otwarciem menu
+  void open_preferences();
+  void execute_command();
+  void open_log();
+  void redraw_all();
+  void sleep_now();
+  void reboot_ask();
+  void quit_ask();
+  void open_parent();
+  void update_window();
+  void clean_up();
+  void toggle_hidden();
+  void sort_name();
+  void sort_date();
+  void sort_size();
+  void sort_kind();
+  void icons_small();
+  void icons_normal();
+  void icons_large();
+  void get_info();
+  void snapshot();
+  void unsnapshot();
+  void dock_add();
+  void dock_remove();
+  void format_disk();
+  void reset_lisa();
+  static void set_argv(int argc, char **argv);
+  NWin *begin_form(const std::string &title, int W, int H, const Entry *icon, const std::string &text,
+                   int &ox, int &oy);
+  void end_form(NWin *win, int W, int H, int ox, int oy,
+                std::vector<std::pair<std::string, std::function<void()>>> buttons);
 
 private:
   struct DeskIcon {
@@ -138,7 +174,18 @@ private:
     plat::Icon icon;
     int x, y;
     int vol = -1;   // indeks w vols_ dla ikon dysków
+    bool dock = false;   // ikona wyciągnięta na biurko (dok w lewym dolnym rogu)
+    Entry entry;         // dla doku: plik/folder/aplikacja
   };
+  // dok: ścieżki w ~/.config/lisaos/dok
+  std::vector<std::string> dock_;
+  void load_dock();
+  void save_dock();
+  void format_dialog(int vi);
+  std::vector<std::string> targets();   // zaznaczone ikony (okno albo biurko)
+  void set_icon_size(int s);
+  void set_sort(FolderView::SortKey k);
+  bool show_hidden_ = false;
   // --- dyski i płyty ---
   std::vector<vol::Volume> vols_;
   void watch_volumes();
@@ -192,6 +239,7 @@ private:
     std::vector<Entry> items;
     Fl_Window *ghost = nullptr;
     NWin *hl_win = nullptr;
+    int px = 0, py = 0;   // gdzie zaczęło się przeciąganie (ekran)
   } drag_;
   int icon_drop_ = -1;            // ikona biurka podświetlona jako cel upuszczania
   std::vector<std::string> clipboard_;   // ścieżki skopiowane przez Edycja > Kopiuj

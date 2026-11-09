@@ -9,6 +9,7 @@
 #include <cstdint>
 #include <ctime>
 #include <functional>
+#include <map>
 #include <string>
 #include <vector>
 
@@ -90,7 +91,23 @@ public:
   void draw() override;
   int handle(int e) override;
 
-  static constexpr int CELL_W = 80, CELL_H = 66;   // widok ikon
+  // --- wielkość ikon i ich położenie (jak w Workbenchu) ---
+  void set_icon_size(int s);            // 16, 32 albo 64
+  int icon_size() const { return isize_; }
+  int cell_w() const { return isize_ == 16 ? 76 : isize_ == 64 ? 104 : 80; }
+  int cell_h() const { return isize_ == 16 ? 40 : isize_ == 64 ? 98 : 66; }
+  // Przesunięcie ikon w obrębie okna (przeciąganie na tło tego samego okna).
+  void move_items(const std::vector<std::string> &paths, int dx, int dy);
+  // Zamrożenie: pozycje zapisane na stałe (~/.config/lisaos/ikony.pozycje).
+  void snapshot(const std::vector<std::string> &paths);
+  void unsnapshot(const std::vector<std::string> &paths);
+  void clean_up();                      // wszystko z powrotem do siatki
+  bool is_snapshot(const std::string &path) const;
+  std::vector<std::string> all_paths() const;
+  int press_x() const { return press_x_; }   // gdzie wciśnięto mysz (współrzędne okna)
+  int press_y() const { return press_y_; }
+
+  static constexpr int CELL_W = 80, CELL_H = 66;   // widok ikon (32 px)
   static constexpr int ROW_H = 18;                  // widok listy
   static constexpr int COL_DATE = 140, COL_SIZE = 70, COL_KIND = 90;
   static void set_home(const std::string &home);   // potrzebne do cache ikon AppImage
@@ -104,6 +121,12 @@ private:
   static void rename_timeout(void *d);
 
   void sort_entries();
+  struct Pt { int x, y; };
+  Pt origin(int i) const;               // lewy górny róg komórki (współrzędne okna)
+  std::vector<Pt> cells_;               // ułożenie z relayout() (względem widoku)
+  std::map<std::string, Pt> free_;      // ikony postawione ręcznie (względem widoku)
+  int isize_ = 32;
+  int last_w_ = 0, last_min_h_ = 0;
   SortKey sort_ = ByName;
   bool desc_ = false;
   std::vector<Entry> entries_;
@@ -127,6 +150,8 @@ public:
   void set_path(const std::string &p) { path_ = p; watch(); }   // folder przeniesiony / przemianowany
   ~FolderPane() override;
   void set_mode(FolderView::Mode m);
+  void set_hidden(bool h) { if (h != hidden_) { hidden_ = h; refresh(); } }
+  void set_icon_size(int s);
   void start_rename(int index);
   void cancel_rename();
   void resize(int X, int Y, int W, int H) override;
