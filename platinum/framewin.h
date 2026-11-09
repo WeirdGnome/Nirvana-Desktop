@@ -20,6 +20,9 @@ public:
   FrameWindow(int W, int H, const char *title, bool dialog = false);
   ~FrameWindow() override;
   void finish();                       // po end(): ramka i przesunięcie treści
+  // Okno o zmiennym rozmiarze: przycisk "zoom" na pasku i róg do ciągnięcia
+  // (prawy dolny, ostatnie 15 px treści - tam program rysuje draw_grow_box).
+  void sizable(Fl_Widget *content) { sizable_ = true; resizable(content); }
   bool csd() const { return csd_; }
   int ox() const { return csd_ ? FRAME_W : 0; }
   int oy() const { return csd_ ? TITLE_W : 0; }
@@ -39,9 +42,12 @@ private:
   int hit(int ex, int ey) const;
   void toggle_shade();
   void start_move();
-  bool csd_, dialog_, shaded_ = false;
-  int full_h_ = 0;
-  enum { NONE, PENDING, MOVE, BTN } drag_ = NONE;
+  void start_moveresize(int direction);
+  void toggle_zoom();
+  bool in_grow(int ex, int ey) const;
+  bool csd_, dialog_, shaded_ = false, sizable_ = false, zoomed_ = false;
+  int full_h_ = 0, unzoom_[4] = {0, 0, 0, 0};
+  enum { NONE, PENDING, MOVE, BTN, GROW } drag_ = NONE;
   int press_x_ = 0, press_y_ = 0, dx_ = 0, dy_ = 0, armed_ = 0, pressed_ = 0;
 };
 

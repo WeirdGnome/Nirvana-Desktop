@@ -259,11 +259,13 @@ Desktop::Desktop(int W, int H, const std::string &home, bool root)
   struct Item { const char *path; int shortcut; void (Desktop::*m)(); int flags; };
   std::vector<Item> items = {
     {"logo/O LisaOS…", 0, &Desktop::about, FL_MENU_DIVIDER},
+    {"logo/Lisa Shell", 0, &Desktop::open_terminal_home, 0},
     {"logo/Panele sterowania/Sieć…", 0, &Desktop::open_network, 0},
     {"logo/Panele sterowania/Wygląd…", 0, &Desktop::open_appearance, 0},
     {"logo/Ostatnie aplikacje", 0, nullptr, FL_MENU_INACTIVE},
     {"Plik/Nowy folder", FL_COMMAND + 'n', &Desktop::new_folder, 0},
     {"Plik/Otwórz", FL_COMMAND + 'o', &Desktop::open_selected, 0},
+    {"Plik/Otwórz w Lisa Shell", FL_COMMAND + 't', &Desktop::open_terminal, 0},
     {"Plik/Zamknij okno", FL_COMMAND + 'w', &Desktop::close_active, FL_MENU_DIVIDER},
     {"Plik/Zmień nazwę", FL_F + 2, &Desktop::rename_selected, 0},
     {"Plik/Duplikuj", FL_COMMAND + 'd', &Desktop::duplicate, 0},
@@ -1272,6 +1274,26 @@ static std::string alice_exe() {
   return alice;
 }
 void Desktop::open_appearance() { spawn({alice_exe(), "wyglad"}); }
+
+static std::string shell_exe() {
+  std::string exe = self_exe();
+  std::string sh = exe.substr(0, exe.rfind('/') + 1) + "lisaos-shell";
+  return access(sh.c_str(), X_OK) == 0 ? sh : "lisaos-shell";
+}
+// Terminal w folderze aktywnego okna (albo zaznaczonego folderu), inaczej w domowym.
+void Desktop::open_terminal() {
+  std::string dir = home_;
+  if (NWin *w = active_folder()) {
+    dir = w->path;
+    if (w->pane) {
+      auto sel = w->pane->view()->selection();
+      if (sel.size() == 1 && sel[0].dir) dir = sel[0].path;
+    }
+  }
+  if (!allowed(dir)) dir = home_;
+  spawn({shell_exe(), "--katalog", dir});
+}
+void Desktop::open_terminal_home() { spawn({shell_exe(), "--katalog", home_}); }
 void Desktop::open_network() { spawn({alice_exe(), "siec"}); }
 
 // --- sieć ----------------------------------------------------------------------

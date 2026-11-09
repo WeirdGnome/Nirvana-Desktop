@@ -106,6 +106,8 @@ public:
   void appearance_changed();      // panel Wygląd zmienił schemat (_LISAOS_WYGLAD)
   void open_appearance();         // uruchom panel Wygląd (lisaos-alice)
   void open_network();            // panel Sieć
+  void open_terminal();           // Lisa Shell w folderze aktywnego okna
+  void open_terminal_home();
   // sieć (pasek menu)
   void build_net_menu(Fl_Menu_Button *m);
   void net_action(bool connect, const std::string &iface);

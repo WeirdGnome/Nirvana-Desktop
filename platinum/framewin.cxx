@@ -134,7 +134,7 @@ void FrameWindow::draw() {
   }
   bool act = active();
   draw_frame(0, 0, w(), h(), act, shaded_);
-  draw_titlebar(0, 0, w(), label(), act, pressed_, dialog_ ? 0 : 2);
+  draw_titlebar(0, 0, w(), label(), act, pressed_, dialog_ ? 0 : sizable_ ? 1 : 2);
   if (shaded_) return;
   fl_color(color());
   fl_rectf(FRAME_W, TITLE_W, w() - 2 * FRAME_W, h() - TITLE_W - FRAME_W);
@@ -149,9 +149,11 @@ int FrameWindow::hit(int ex, int ey) const {
   if (dialog_ || ey < 0 || ey >= TITLE_W) return 0;
   int by = (TITLE_W - BOX) / 2;
   if (ey < by || ey >= by + BOX) return 0;
-  int close_x = 8, shade_x = w() - 8 - BOX;   // jak draw_titlebar(..., boxes = 2)
+  // jak draw_titlebar(): boxes = 1 (z "zoom") albo 2 (bez)
+  int close_x = 8, zoom_x = w() - 8 - BOX, shade_x = sizable_ ? zoom_x - BOX - 5 : zoom_x;
   if (ex >= close_x && ex < close_x + BOX) return 1;
   if (ex >= shade_x && ex < shade_x + BOX) return 3;
+  if (sizable_ && ex >= zoom_x && ex < zoom_x + BOX) return 2;
   return 0;
 }
 
@@ -168,7 +170,34 @@ void FrameWindow::toggle_shade() {
   redraw();
 }
 
-void FrameWindow::start_move() {
+bool FrameWindow::in_grow(int ex, int ey) const {
+  return sizable_ && !shaded_ && ex >= w() - FRAME_W - 15 && ey >= h() - FRAME_W - 15;
+}
+
+// Zoom: przełączanie między własnym rozmiarem a całym obszarem roboczym.
+void FrameWindow::toggle_zoom() {
+  if (!sizable_ || shaded_) return;
+  Rect from = {x(), y(), w(), h()}, to;
+  if (!zoomed_) {
+    unzoom_[0] = x(); unzoom_[1] = y(); unzoom_[2] = w(); unzoom_[3] = h();
+    int sx, sy, sw, sh;
+    Fl::screen_work_area(sx, sy, sw, sh, x() + w() / 2, y() + h() / 2);
+    // pasek menu LisaOS zajmuje górę ekranu, gdy nie ma go w obszarze roboczym
+    if (sy < MENUBAR_H) { sh -= MENUBAR_H - sy; sy = MENUBAR_H; }
+    to = {sx + 2, sy + 2, sw - 4, sh - 4};
+  } else {
+    to = {unzoom_[0], unzoom_[1], unzoom_[2], unzoom_[3]};
+  }
+  zoom_rects(from, to);
+  zoomed_ = !zoomed_;
+  resize(to.x, to.y, to.w, to.h);
+  full_h_ = to.h;
+  redraw();
+}
+
+void FrameWindow::start_move() { start_moveresize(8); }
+
+void FrameWindow::start_moveresize(int direction) {
 #if defined(FLTK_USE_X11)
   XUngrabPointer(fl_display, CurrentTime);
   XEvent ev{};
@@ -178,7 +207,7 @@ void FrameWindow::start_move() {
   ev.xclient.format = 32;
   ev.xclient.data.l[0] = press_x_;
   ev.xclient.data.l[1] = press_y_;
-  ev.xclient.data.l[2] = 8;   // przesuń
+  ev.xclient.data.l[2] = direction;   // 8 przesuń, 4 rozmiar od prawego dolnego rogu
   ev.xclient.data.l[3] = Button1;
   ev.xclient.data.l[4] = 1;
   XSendEvent(fl_display, DefaultRootWindow(fl_display), False,
@@ -192,6 +221,16 @@ int FrameWindow::handle(int e) {
   int ex = Fl::event_x(), ey = Fl::event_y();
   switch (e) {
   case FL_PUSH:
+    if (in_grow(ex, ey) && Fl::event_button() == FL_LEFT_MOUSE) {
+      press_x_ = Fl::event_x_root(); press_y_ = Fl::event_y_root();
+      dx_ = w() - press_x_; dy_ = h() - press_y_;
+#if defined(FLTK_USE_X11)
+      if (wm_supports("_NET_WM_MOVERESIZE")) { start_moveresize(4); zoomed_ = false; return 1; }
+#endif
+      drag_ = GROW;
+      zoomed_ = false;
+      return 1;
+    }
     if (ey < TITLE_W && Fl::event_button() == FL_LEFT_MOUSE) {
       if (int b = hit(ex, ey)) {
         drag_ = BTN; armed_ = pressed_ = b; redraw();
@@ -213,6 +252,11 @@ int FrameWindow::handle(int e) {
       drag_ = MOVE;
     }
     if (drag_ == MOVE) { position(Fl::event_x_root() - dx_, std::max(0, Fl::event_y_root() - dy_)); return 1; }
+    if (drag_ == GROW) {
+      size(std::max(160, Fl::event_x_root() + dx_), std::max(80, Fl::event_y_root() + dy_));
+      full_h_ = h();
+      return 1;
+    }
     if (drag_ == BTN) {
       int p = hit(ex, ey) == armed_ ? armed_ : 0;
       if (p != pressed_) { pressed_ = p; redraw(); }
@@ -226,6 +270,7 @@ int FrameWindow::handle(int e) {
       redraw();
       if (b == 1) do_callback();   // jak zamknięcie przez menedżer okien
       if (b == 3) toggle_shade();
+      if (b == 2) toggle_zoom();
       return 1;
     }
     if (drag_ != NONE) { drag_ = NONE; return 1; }
