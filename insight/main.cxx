@@ -48,6 +48,22 @@ static Atom A_WM_PROTOCOLS, A_WM_DELETE, A_WM_STATE, A_NET_WM_NAME, A_UTF8,
 
 class Frame;
 
+// _LISAOS_OBSZAR_OKIEN (x, y, szer., wys.) na oknie głównym - ustawia Rambler.
+static bool rambler_area(plat::Rect &r) {
+  Atom a = XInternAtom(dpy, "_LISAOS_OBSZAR_OKIEN", False), type;
+  int fmt;
+  unsigned long n, after;
+  unsigned char *data = nullptr;
+  bool ok = false;
+  if (XGetWindowProperty(dpy, DefaultRootWindow(dpy), a, 0, 4, False, XA_CARDINAL, &type, &fmt, &n, &after,
+                         &data) == Success && data && n == 4 && fmt == 32) {
+    long *v = (long *)data;
+    if (v[2] > 100 && v[3] > 60) { r = {(int)v[0], (int)v[1], (int)v[2], (int)v[3]}; ok = true; }
+  }
+  if (data) XFree(data);
+  return ok;
+}
+
 struct Client {
   Window win = 0;
   Frame *frame = nullptr;
@@ -239,8 +255,11 @@ public:
     if (c->shaded) toggle_shade();
     if (!c->zoomed) {
       c->unzoom[0] = x(); c->unzoom[1] = y(); c->unzoom[2] = w(); c->unzoom[3] = h();
-      zoom_rects(geom(), {4, MENUBAR_H + 4, screen_w - 100, screen_h - MENUBAR_H - 10});
-      resize(4, MENUBAR_H + 4, screen_w - 100, screen_h - MENUBAR_H - 10);
+      Rect to = {4, MENUBAR_H + 4, screen_w - 100, screen_h - MENUBAR_H - 10};
+      // okna Ramblera: obszar, który podaje biurko (bez kolumny dysków i doku)
+      if (c->cls == "LisaOS-Rambler") rambler_area(to);
+      zoom_rects(geom(), to);
+      resize(to.x, to.y, to.w, to.h);
       c->zoomed = true;
     } else {
       zoom_rects(geom(), {c->unzoom[0], c->unzoom[1], c->unzoom[2], c->unzoom[3]});

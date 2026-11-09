@@ -629,6 +629,31 @@ void Desktop::layout_icons() {
       dock_shown_++;
     }
   }
+  publish_folder_area();
+}
+
+static constexpr int MIN_W = 200, MIN_H = 120;   // najmniejsze okno folderu
+static Atom atom(const char *name) { return XInternAtom(fl_display, name, False); }
+
+plat::Rect Desktop::folder_area() const {
+  const int GAP = 6;
+  int L = FRAME + GAP, T = MENUBAR_H + TITLE_H + GAP;
+  int R = w() - 96 - FRAME;                                   // kolumna LisaOS HD / dysków / kosza
+  int B = h() - FRAME - GAP - (dock_.empty() ? 0 : DOCK_TILE);   // dok (także zwinięty)
+  return {L, T, std::max(MIN_W, R - L), std::max(MIN_H, B - T)};
+}
+
+// Insight (menedżer okien) bierze stąd prostokąt zoomu dla okien Ramblera:
+// _LISAOS_OBSZAR_OKIEN na oknie głównym = x, y, szer., wys. ramki na ekranie.
+void Desktop::publish_folder_area() {
+  if (!shown() || !fl_display) return;
+  Rect a = folder_area();
+  long v[4] = {x_root() + a.x - FRAME, y_root() + a.y - TITLE_H, a.w + 2 * FRAME, a.h + TITLE_H + FRAME};
+  static long last[4] = {-1, -1, -1, -1};
+  if (!memcmp(v, last, sizeof v)) return;
+  memcpy(last, v, sizeof v);
+  XChangeProperty(fl_display, DefaultRootWindow(fl_display), atom("_LISAOS_OBSZAR_OKIEN"), XA_CARDINAL, 32,
+                  PropModeReplace, (unsigned char *)v, 4);
 }
 
 // Prostokąt całego paska doku (z zakładką i końcem); pusty, gdy dok jest pusty.
@@ -725,9 +750,7 @@ Fl_Window *make_drag_ghost(const Entry &e, int n);   // niżej, przy przeciągan
 // EWMH: rozmowa z menedżerem okien (Insight lub dowolny zgodny)
 // ---------------------------------------------------------------------------
 static Desktop *g_desk = nullptr;
-static constexpr int MIN_W = 200, MIN_H = 120;
 
-static Atom atom(const char *name) { return XInternAtom(fl_display, name, False); }
 
 static Window net_active() {
   Atom type; int fmt; unsigned long n, after; unsigned char *data = nullptr;
@@ -947,8 +970,8 @@ void NWin::csd_toggle_zoom() {
   Rect before = {x(), y(), w(), h()};
   if (!csd_zoomed_) {
     unzoom_[0] = x(); unzoom_[1] = y(); unzoom_[2] = w(); unzoom_[3] = h();
-    Rect d = desk->desk_rect();
-    Rect to = {d.x + 8, d.y + MENUBAR_H + 6, d.w - 110, d.h - MENUBAR_H - 16};
+    Rect d = desk->desk_rect(), a = desk->folder_area();
+    Rect to = {d.x + a.x - FRAME, d.y + a.y - TITLE_H, a.w + 2 * FRAME, a.h + TITLE_H + FRAME};
     zoom_rects(before, to);
     resize(to.x, to.y, to.w, to.h);
     csd_zoomed_ = true;
@@ -1161,10 +1184,12 @@ void Desktop::open_folder(const std::string &path, bool animate) {
     s.y = MENUBAR_H + TITLE_H + 24 + 26 * (n % 8);
     s.w = 440; s.h = 270;
   }
-  s.w = std::max(s.w, MIN_W);
-  s.h = std::max(s.h, MIN_H);
-  s.x = std::clamp(s.x, FRAME, std::max(FRAME, w() - 120));
-  s.y = std::clamp(s.y, MENUBAR_H + TITLE_H, std::max(MENUBAR_H + TITLE_H, h() - 60));
+  // okno mieści się w obszarze folderów: widać LisaOS HD, dyski, kosz i dok
+  Rect area = folder_area();
+  s.w = std::clamp(s.w, MIN_W, area.w);
+  s.h = std::clamp(s.h, MIN_H, area.h);
+  s.x = std::clamp(s.x, area.x, area.x + area.w - s.w);
+  s.y = std::clamp(s.y, area.y, area.y + area.h - s.h);
 
   // zapisane pozycje są względem biurka - zamiana na współrzędne ekranu
   int ax = s.x + x_root(), ay = s.y + y_root();
@@ -1310,6 +1335,7 @@ void Desktop::start_tray() {
 
 void Desktop::restore() {
   start_tray();
+  publish_folder_area();
   g_desk = this;
   // śledź zmiany aktywnego okna (bez nadpisywania masek, które ustawił FLTK)
   XWindowAttributes wa;

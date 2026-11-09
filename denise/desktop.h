@@ -217,6 +217,12 @@ private:
   bool known(NWin *w) const;
   NWin *active_folder();          // aktywne okno folderu (lub nullptr)
   void layout_icons();
+public:
+  // Obszar na okna folderów (treść okna, współrzędne biurka): bez kolumny ikon
+  // dysków i kosza z prawej i bez doku na dole - zawsze je widać, też po zoomie.
+  plat::Rect folder_area() const;
+private:
+  void publish_folder_area();
   void watch_trash();
   int icon_at(int ex, int ey) const;
   bool allowed(const std::string &path) const;

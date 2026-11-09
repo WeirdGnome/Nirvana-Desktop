@@ -225,6 +225,9 @@ okno biurka nie przyjmuje fokusu, żeby klik w pasek menu nie zmieniał aktywnej
 - **Otwieranie**: podwójne kliknięcie lub Enter. AppImage z innego folderu proponuje instalację.
 - **Dwuklik na pustym biurku** otwiera menedżer plików (okno LisaOS HD); gdy jest już
   otwarte, wysuwa je na wierzch.
+- **Okna folderów nie zasłaniają biurka**: otwierane i powiększane przyciskiem zoom
+  zostawiają wolną kolumnę z LisaOS HD, dyskami i Koszem oraz pasek doku na dole.
+  Za duże zapamiętane okna są przy otwarciu zmniejszane do tego obszaru.
 - **Zaznaczanie**: klik, Shift/Ctrl+klik dodaje lub odejmuje, ramka zaznaczania myszą, `Ctrl+A`.
 - **Zmiana nazwy**: `F2` albo klik w nazwę już zaznaczonego elementu (jak w Finderze).
   Zmiana nazwy folderu aktualizuje jego otwarte okna i zapamiętane pozycje.
