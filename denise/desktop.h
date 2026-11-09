@@ -268,6 +268,12 @@ private:
   Fl_Widget *app_menu_ = nullptr;   // gary: menu aplikacji w prawym górnym rogu
   int active_app_index(const std::vector<gary::App> &apps);
   Fl_Widget *extras_;
+  Fl_Widget *vol_w_ = nullptr, *pow_w_ = nullptr, *tray_w_ = nullptr, *mem_w_ = nullptr;
+  bool tray_pending_ = false;
+public:
+  void layout_bar();        // rozmieszczenie apletów i zasobnika na pasku menu
+  void start_tray();        // po show(): zasobnik systemowy (XEmbed + StatusNotifierItem)
+private:
   std::unique_ptr<Fl_Tiled_Image> pattern_;
   std::unique_ptr<Fl_RGB_Image> wallpaper_;   // biurko z tapetą (wzór + obraz), gdy jest tapeta
   Fl_Menu_Item *logo_item_ = nullptr;

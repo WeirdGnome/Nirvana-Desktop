@@ -385,6 +385,33 @@ Plik → Otwórz w Lisa Shell (Ctrl+T, w folderze aktywnego okna) albo
 
 ![Lisa Shell z htop](docs/img/shell-htop.png)
 
+## Zasobnik systemowy
+
+Ikony programów działających w tle (komunikatory, chmura, Steam, Discord, nm-applet...)
+stoją na pasku menu, na lewo od apletu zasilania. Rambler obsługuje oba protokoły:
+
+- **StatusNotifierItem** (D-Bus): Qt 5/6, KDE, Electron, libappindicator / Ayatana.
+  - Gdy w sesji nie ma innego, Rambler sam jest `org.kde.StatusNotifierWatcher`. Pod KDE
+    zgłasza się jako dodatkowy host istniejącego.
+  - Ikony bierze z motywu ikon. Jeśli jakiejś nie ma, próbuje wersji `-symbolic` i coraz
+    krótszej nazwy, a w ostateczności pikseli przysłanych przez program. Ikony symboliczne
+    mają kolor tekstu paska.
+  - Lewy klik to *Activate*, a gdy program go nie obsługuje, otwiera menu. Prawy klik
+    otwiera menu programu (dbusmenu: zaznaczenia, podmenu, separatory, nieaktywne pozycje)
+    jako menu Platinum. Środkowy klik to *SecondaryActivate*, a kółko myszy to *Scroll*.
+  - Podpowiedź pokazuje tytuł i opis (bez HTML-a). Ikona znika, gdy program ustawi status
+    *Passive*.
+- **XEmbed** (`_NET_SYSTEM_TRAY_S0`): GTK 2/3 `StatusIcon`, Wine, starsze programy.
+  - Okienko ikony jest osadzane w pasku na tle w kolorze schematu, a kliknięcia trafiają
+    prosto do programu.
+- Pasek przestawia się sam, gdy ikon przybywa albo ubywa. Po zakończeniu programu jego
+  ikona znika.
+- Po **Resetuj LISA** ikony wracają: programy XEmbed dokują się ponownie po ogłoszeniu
+  `MANAGER`, a Rambler sam odnajduje ikony D-Bus, które już są na szynie.
+- `LISAOS_BEZ_ZASOBNIKA=1` wyłącza zasobnik (np. gdy sesja ma własny).
+
+![Zasobnik z menu programu](docs/img/zasobnik.png)
+
 ## Dźwięk
 
 Ikona głośnika na pasku menu. Kliknięcie otwiera okienko z:

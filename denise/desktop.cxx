@@ -3,6 +3,7 @@
 #include "applets.h"
 #include "appimage.h"
 #include "gary.h"
+#include "tray.h"
 
 #include <FL/Fl.H>
 #include <FL/Fl_Box.H>
@@ -461,25 +462,20 @@ Desktop::Desktop(int W, int H, const std::string &home, bool root)
   logo_item_ = (Fl_Menu_Item *)menu_->find_item("logo");
   set_logo();
 
-  // Prawa strona, od krawędzi: gary, zegar, sieć, głośność, zasilanie - ciasno,
-  // bez dziur. Pasek menu kończy się za ostatnim tytułem; między nim a apletami
-  // jest informacja o wolnej pamięci i dysku.
-  int rx = W - APP_W;
-  int cw = MenuExtras::needed_width();
-  rx -= cw;
-  extras_ = new MenuExtras(rx, 0, cw, MENUBAR_H);
+  // Prawa strona, od krawędzi: gary, zegar, sieć, głośność, zasilanie, zasobnik -
+  // ciasno, bez dziur. Pasek menu kończy się za ostatnim tytułem; między nim a
+  // apletami jest informacja o wolnej pamięci i dysku. Pozycje liczy layout_bar().
+  extras_ = new MenuExtras(0, 0, MenuExtras::needed_width(), MENUBAR_H);
   if (net::installed()) {
-    rx -= 26;
-    auto *nm = new NetMenu(rx, 0, 26, MENUBAR_H);
+    auto *nm = new NetMenu(0, 0, 26, MENUBAR_H);
     net_menu_ = nm;
     nm->selection_color(SEL);
     nm->on_open = [this](NetMenu *m) { build_net_menu(m); };
     nm->summary = [this] { return net::summary(net_); };
   }
-  rx -= 26;
-  applets::make_volume(rx, 0, 26, MENUBAR_H);
-  rx -= 42;
-  applets::make_power(rx, 0, 42, MENUBAR_H);
+  vol_w_ = applets::make_volume(0, 0, 26, MENUBAR_H);
+  pow_w_ = applets::make_power(0, 0, 42, MENUBAR_H);
+  tray_w_ = tray::make(0, 0, MENUBAR_H);
   {
     // szerokość tytułów menu - tak samo liczy ją Fl_Menu_Bar::draw()
     int mx = 6;
@@ -487,8 +483,9 @@ Desktop::Desktop(int W, int H, const std::string &home, bool root)
       if (m->visible()) mx += m->measure(nullptr, menu_) + 16;
     mx += 8;
     menu_->size(mx, MENUBAR_H);
-    if (rx > mx) new MemInfo(mx, 0, rx - mx, MENUBAR_H, W, home_);
+    mem_w_ = new MemInfo(mx, 0, 1, MENUBAR_H, W, home_);
   }
+  layout_bar();
   auto *wm = new WindowsMenu(W - APP_W, 0, APP_W, MENUBAR_H);
   app_menu_ = wm;
   wm->selection_color(menu_->selection_color());
@@ -534,11 +531,34 @@ Desktop::Desktop(int W, int H, const std::string &home, bool root)
     h.lisaos_session = !csd_mode;
     applets::init(h);
   }
+  tray_pending_ = true;   // zasobnik startuje po pokazaniu okna (potrzebne okno X do osadzania)
   if (net_menu_) {
     Fl::set_labeltype(NET_LABEL, net_label_draw, net_label_measure);
     net_ = net::query();
     net::watch([this] { net_refresh(); });
   }
+}
+
+// Prawa strona paska menu, od krawędzi ekranu do środka.
+void Desktop::layout_bar() {
+  int rx = w() - APP_W;
+  auto put = [&](Fl_Widget *wd, int ww) {
+    if (!wd) return;
+    rx -= ww;
+    wd->resize(rx, 0, ww, MENUBAR_H);
+  };
+  put(extras_, extras_->w());
+  put(net_menu_, 26);
+  put(vol_w_, 26);
+  put(pow_w_, 42);
+  int tw = tray::width();
+  if (tray_w_) { put(tray_w_, tw); if (tw) tray_w_->show(); else tray_w_->hide(); }
+  int mx = menu_->w();
+  if (mem_w_) {
+    if (rx > mx) { mem_w_->resize(mx, 0, rx - mx, MENUBAR_H); mem_w_->show(); }
+    else mem_w_->hide();
+  }
+  damage(FL_DAMAGE_ALL, 0, 0, w(), MENUBAR_H);
 }
 
 // Kosz może się zmienić z zewnątrz (inny program, inne okno) - ikona pełny/pusty.
@@ -1280,7 +1300,14 @@ void Desktop::run_app(const std::string &path) {
   appimage::launch(path, home_, split_args(tooltypes(path)));   // parametry z okna Informacje
 }
 
+void Desktop::start_tray() {
+  if (!tray_pending_) return;
+  tray_pending_ = false;
+  tray::init(this, [this] { layout_bar(); });
+}
+
 void Desktop::restore() {
+  start_tray();
   g_desk = this;
   // śledź zmiany aktywnego okna (bez nadpisywania masek, które ustawił FLTK)
   XWindowAttributes wa;
@@ -1611,6 +1638,7 @@ void Desktop::appearance_changed() {
   pattern_.reset(make_pattern());
   delete old;
   set_logo();
+  tray::recolor();
   wallpaper_.reset();
   if (!current_appearance().wallpaper.empty()) {
     bool ok = false;
@@ -1815,6 +1843,7 @@ void Desktop::refresh_all() {
 }
 
 void Desktop::quit() {
+  tray::shutdown();   // ikony XEmbed wracają do programów, selekcja zasobnika wolna
   for (auto *w : wins_) if (w->pane) remember(w, true);
   std::vector<NWin *> all = wins_;
   for (auto *w : all) w->hide();

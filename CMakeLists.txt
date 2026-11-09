@@ -64,7 +64,8 @@ add_executable(lisaos-denise
   denise/gary.cxx
   denise/volumes.cxx
   denise/applets.cxx
-  denise/menus.cxx)
+  denise/menus.cxx
+  denise/tray.cxx)
 target_link_libraries(lisaos-denise PRIVATE lisaos-platinum lisaos-net lisaos-audio lisaos-power fltk::images PkgConfig::DBUS)
 
 # --- insight: menedżer okien X11 ----------------------------------------------

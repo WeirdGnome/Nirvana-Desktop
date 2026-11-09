@@ -11,6 +11,7 @@
 #include "appimage.h"
 #include "power.h"
 #include "volumes.h"
+#include "tray.h"
 
 #include <FL/Fl.H>
 #include <FL/Fl_Box.H>
@@ -728,6 +729,7 @@ void Desktop::reset_lisa() {
     av.push_back((char *)exe.c_str());
     for (int i = 1; i < g_argc; i++) av.push_back(g_argv[i]);
     av.push_back(nullptr);
+    tray::shutdown();
     XCloseDisplay(fl_display);
     execv(exe.c_str(), av.data());
     _exit(1);
