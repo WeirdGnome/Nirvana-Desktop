@@ -430,10 +430,16 @@ Desktop::Desktop(int W, int H, const std::string &home, bool root)
                },
                (void *)idx, it.flags);
   }
-  // pierwsze menu ma zamiast tekstu logo LisaOS
+  // pierwsze menu: logo LisaOS i napis "Lisa"
   if (Fl_Menu_Item *logo = (Fl_Menu_Item *)menu_->find_item("logo")) {
     logo_img_ = make_logo_image();
-    logo->image(logo_img_);
+    logo->image(logo_img_);          // rejestruje typ etykiety z obrazkiem w FLTK
+    auto *ml = new Fl_Multi_Label;   // żyje tyle co pasek menu
+    ml->labela = (const char *)logo_img_;
+    ml->typea = _FL_IMAGE_LABEL;
+    ml->labelb = " Lisa";
+    ml->typeb = FL_NORMAL_LABEL;
+    ml->label(logo);
   }
 
   // Prawa strona, od krawędzi: gary, zegar, sieć, głośność, zasilanie - ciasno,

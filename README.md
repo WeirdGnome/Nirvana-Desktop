@@ -199,7 +199,7 @@ Po prawej, ciasno przy krawędzi: zasilanie, głośność, sieć, zegar i przeł
 
 | Menu | Pozycje |
 |------|---------|
-| **Lisa** (logo) | O systemie, Preferencje (okno z panelami), Wykonaj polecenie `Ctrl+E`, Lisa Shell `Ctrl+T`, Otwórz dziennik, Przerysuj wszystko, Uaktualnij wszystko `Ctrl+Shift+R`, Uśpij, Uruchom ponownie, Zakończ `Ctrl+Q` |
+| **Lisa** (logo i napis) | O systemie, Preferencje (okno z panelami), Wykonaj polecenie `Ctrl+E`, Lisa Shell `Ctrl+T`, Otwórz dziennik, Przerysuj wszystko, Uaktualnij wszystko `Ctrl+Shift+R`, Uśpij, Uruchom ponownie, Zakończ `Ctrl+Q` |
 | **Okno** | Nowy folder `Ctrl+N`, Otwórz katalog nadrzędny `Ctrl+↑`, Zamknij `Ctrl+W`, Uaktualnij `Ctrl+R`, Zaznacz zawartość `Ctrl+A`, Uporządkuj `Ctrl+.`, Pokaż ukryte pliki `Ctrl+H`, Pokaż jako (ikony/listę), Sortuj, Wielkość ikon (małe/normalne/duże) |
 | **Ikony** | Otwórz `Ctrl+O`, Kopiuj, Wklej, Duplikuj, Zmień nazwę `F2`, Usuń `Ctrl+Backspace`, Informacje `Ctrl+I`, Zamroź `Ctrl+S`, Odmroź, Połóż na doku `Ctrl+L`, Zdejmij z doku `Ctrl+K`, Wysuń `Ctrl+Y` |
 | **Narzędzia** | Formatuj dysk, Opróżnij kosz, Tryb root, Resetuj LISA |
