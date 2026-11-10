@@ -149,11 +149,11 @@ std::vector<Volume> scan() {
     }
     // nazwa: etykieta albo opis z rozmiarem
     if (!label.empty()) v.name = label;
-    else if (v.optical) v.name = _("Płyta");
-    else if (v.encrypted && !v.unlocked) v.name = plat::fmt(_("Zaszyfrowany dysk %1"), human_size(v.size));
-    else if (fs.empty()) { v.unformatted = true; v.name = plat::fmt(_("Niesformatowany %1"), human_size(v.size)); }
-    else if (v.removable) v.name = plat::fmt(_("Dysk USB %1"), human_size(v.size));
-    else v.name = plat::fmt(_("Dysk %1"), human_size(v.size));
+    else if (v.optical) v.name = _("Disc");
+    else if (v.encrypted && !v.unlocked) v.name = plat::fmt(_("Encrypted disk %1"), human_size(v.size));
+    else if (fs.empty()) { v.unformatted = true; v.name = plat::fmt(_("Unformatted %1"), human_size(v.size)); }
+    else if (v.removable) v.name = plat::fmt(_("USB disk %1"), human_size(v.size));
+    else v.name = plat::fmt(_("Disk %1"), human_size(v.size));
     if (v.encrypted && !v.unlocked) v.icon = plat::Icon::Encrypted;
     else if (v.optical) v.icon = plat::Icon::Optical;
     else if (v.removable) v.icon = plat::Icon::Removable;
@@ -214,9 +214,9 @@ static void append_empty_options(DBusMessageIter *it) {
 
 static std::string polish_error(const std::string &name, const std::string &msg) {
   if (name.find("NotAuthorized") != std::string::npos)
-    return _("Brak uprawnień do tej operacji.\n(Potrzebny jest agent polkit albo uprawnienia administratora.)");
+    return _("You are not allowed to do this.\n(A polkit agent or administrator rights are needed.)");
   if (name.find("DeviceBusy") != std::string::npos || msg.find("busy") != std::string::npos)
-    return _("Dysk jest w użyciu - zamknij pliki i programy, które z niego korzystają.");
+    return _("The disk is in use - close the files and programs that use it.");
   if (name.find("NotMounted") != std::string::npos) return "";   // już odmontowany - to nie błąd
   return msg;
 }
@@ -226,7 +226,7 @@ static std::string call(const std::string &path, const char *iface, const char *
                         const std::function<void(DBusMessageIter *)> &args, DBusMessage **reply,
                         int timeout_ms = 120000) {
   DBusConnection *c = bus();
-  if (!c) return _("Brak połączenia z systemową szyną D-Bus.");
+  if (!c) return _("No connection to the system D-Bus.");
   DBusMessage *m = dbus_message_new_method_call(UD, path.c_str(), iface, method);
   DBusMessageIter it;
   dbus_message_iter_init_append(m, &it);
@@ -236,7 +236,7 @@ static std::string call(const std::string &path, const char *iface, const char *
   DBusMessage *r = dbus_connection_send_with_reply_and_block(c, m, timeout_ms, &err);
   dbus_message_unref(m);
   if (!r) {
-    std::string e = polish_error(err.name ? err.name : "", err.message ? err.message : _("nieznany błąd"));
+    std::string e = polish_error(err.name ? err.name : "", err.message ? err.message : _("unknown error"));
     dbus_error_free(&err);
     return e.empty() ? "" : e;
   }
@@ -284,12 +284,12 @@ static bool drive_bool(const std::string &drive, const char *prop) {
 }
 
 std::string mount(const Volume &v, std::string &mountpoint) {
-  if (v.encrypted && !v.unlocked) return _("Dysk jest zaszyfrowany - najpierw podaj hasło.");
+  if (v.encrypted && !v.unlocked) return _("The disk is encrypted - enter its password first.");
   if (!v.mountpoint.empty()) { mountpoint = v.mountpoint; return ""; }
   DBusMessage *r = nullptr;
   std::string e = call(block_path(v.encrypted ? v.clear_kname : v.kname), "org.freedesktop.UDisks2.Filesystem",
                        "Mount", append_empty_options, &r);
-  if (!e.empty()) return plat::fmt(_("Nie udało się zamontować „%1”:"), v.name) + "\n" + e;
+  if (!e.empty()) return plat::fmt(_("Could not mount “%1”:"), v.name) + "\n" + e;
   const char *mp = nullptr;
   if (r && dbus_message_get_args(r, nullptr, DBUS_TYPE_STRING, &mp, DBUS_TYPE_INVALID) && mp) mountpoint = mp;
   if (r) dbus_message_unref(r);
@@ -300,7 +300,7 @@ std::string unmount(const Volume &v) {
   if (v.mountpoint.empty()) return "";
   std::string e = call(block_path(v.encrypted ? v.clear_kname : v.kname), "org.freedesktop.UDisks2.Filesystem",
                        "Unmount", append_empty_options, nullptr);
-  return e.empty() ? "" : plat::fmt(_("Nie udało się odmontować „%1”:"), v.name) + "\n" + e;
+  return e.empty() ? "" : plat::fmt(_("Could not unmount “%1”:"), v.name) + "\n" + e;
 }
 
 std::string unlock(const Volume &v, const std::string &pass) {
@@ -314,19 +314,19 @@ std::string unlock(const Volume &v, const std::string &pass) {
   if (e.empty()) return "";
   if (e.find("passphrase") != std::string::npos || e.find("Operation not permitted") != std::string::npos ||
       e.find("No key available") != std::string::npos)
-    return _("Nieprawidłowe hasło.");
-  return _("Nie udało się odblokować dysku:") + std::string("\n") + e;
+    return _("Wrong password.");
+  return _("Could not unlock the disk:") + std::string("\n") + e;
 }
 
 std::string lock(const Volume &v) {
   if (!v.encrypted || !v.unlocked) return "";
   std::string e = call(block_path(v.kname), "org.freedesktop.UDisks2.Encrypted", "Lock",
                        append_empty_options, nullptr);
-  return e.empty() ? "" : _("Nie udało się zamknąć zaszyfrowanego dysku:") + std::string("\n") + e;
+  return e.empty() ? "" : _("Could not lock the encrypted disk:") + std::string("\n") + e;
 }
 
 std::string format(const Volume &v, const std::string &type, const std::string &label) {
-  if (v.optical) return _("Płyt nie da się tu formatować.");
+  if (v.optical) return _("Discs cannot be formatted here.");
   std::string e;
   if (!v.mountpoint.empty() && !(e = unmount(v)).empty()) return e;
   if (v.encrypted && v.unlocked && !(e = lock(v)).empty()) return e;
@@ -359,7 +359,7 @@ std::string format(const Volume &v, const std::string &type, const std::string &
     if (type == "ext4") put_b("take-ownership", true);   // właścicielem nowego systemu plików jest użytkownik
     dbus_message_iter_close_container(it, &dict);
   }, nullptr, 600000);
-  return e.empty() ? "" : plat::fmt(_("Nie udało się sformatować „%1”:"), v.name) + "\n" + e;
+  return e.empty() ? "" : plat::fmt(_("Could not format “%1”:"), v.name) + "\n" + e;
 }
 
 std::string eject(const Volume &v) {

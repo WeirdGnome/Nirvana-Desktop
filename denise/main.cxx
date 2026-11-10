@@ -40,9 +40,9 @@ int main(int argc, char **argv) {
     else if (!strcmp(argv[i], "--size") && i + 1 < argc) sscanf(argv[++i], "%dx%d", &W, &H);
     else if (!strcmp(argv[i], "--center") || !strcmp(argv[i], "--srodek")) center = true;
     else if (!strcmp(argv[i], "--help")) {
-      printf("nirvana-denise [--root] [--home KATALOG] [--size SZERxWYS] [--center]\n"
-             "  --center  biurko na środku obszaru roboczego (np. pod paskiem GNOME);\n"
-             "            bez --size wypełnia cały obszar roboczy (też: NIRVANA_CENTER=1)\n");
+      printf("nirvana-denise [--root] [--home DIR] [--size WxH] [--center]\n"
+             "  --center  desktop centred in the work area (e.g. under the GNOME panel);\n"
+             "            without --size it fills the whole work area (also: NIRVANA_CENTER=1)\n");
       return 0;
     }
   }

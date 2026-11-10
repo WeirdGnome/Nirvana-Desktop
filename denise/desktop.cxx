@@ -149,10 +149,10 @@ public:
     }
     std::string mem = group(mem_kb / 1024) + " MB";
     std::string dsk = group(disk_mb) + " MB";
-    std::string full = plat::fmt(_("%1 wolnej pamięci     %2 wolnego dysku"), mem, dsk);
-    std::string brief = plat::fmt(_("%1 pamięci   %2 dysku"), mem, dsk);
-    std::string tip = plat::fmt(_("Pamięć: wolne %1 z %2"), mem, group(mem_total / 1024) + " MB");
-    if (disk_ok) tip += "\n" + plat::fmt(_("Dysk (%1): wolne %2 z %3"), disk_, gb(disk_mb), gb(disk_total));
+    std::string full = plat::fmt(_("%1 free memory     %2 free disk"), mem, dsk);
+    std::string brief = plat::fmt(_("%1 memory   %2 disk"), mem, dsk);
+    std::string tip = plat::fmt(_("Memory: %1 free of %2"), mem, group(mem_total / 1024) + " MB");
+    if (disk_ok) tip += "\n" + plat::fmt(_("Disk (%1): %2 free of %3"), disk_, gb(disk_mb), gb(disk_total));
     if (full != full_ || brief != brief_) { full_ = full; brief_ = brief; redraw(); }
     if (tip != tip_) { tip_ = tip; tooltip(tip_.c_str()); }
   }
@@ -221,7 +221,7 @@ public:
       std::string name = "Rambler";
       Fl_Image *icon = nullptr;
       if (current) current(name, icon);
-      copy_tooltip(plat::fmt(_("Aplikacje - teraz: %1"), name).c_str());
+      copy_tooltip(plat::fmt(_("Applications - current: %1"), name).c_str());
     }
     return Fl_Menu_Button::handle(e);
   }
@@ -400,53 +400,53 @@ Desktop::Desktop(int W, int H, const std::string &home, bool root)
   struct Item { const char *path; int shortcut; void (Desktop::*m)(); int flags; };
   std::vector<Item> items = {
     // --- Nirvana: cały system ---
-    {P_("logo/O systemie…"), 0, &Desktop::about, FL_MENU_DIVIDER},
-    {P_("logo/Preferencje…"), 0, &Desktop::open_preferences, 0},
-    {P_("logo/Wykonaj polecenie…"), FL_COMMAND + 'e', &Desktop::execute_command, 0},
+    {P_("logo/About This Computer…"), 0, &Desktop::about, FL_MENU_DIVIDER},
+    {P_("logo/Preferences…"), 0, &Desktop::open_preferences, 0},
+    {P_("logo/Execute Command…"), FL_COMMAND + 'e', &Desktop::execute_command, 0},
     {P_("logo/Nirvana Shell"), FL_COMMAND + 't', &Desktop::open_terminal, 0},
-    {P_("logo/Otwórz dziennik"), 0, &Desktop::open_log, FL_MENU_DIVIDER},
-    {P_("logo/Przerysuj wszystko"), 0, &Desktop::redraw_all, 0},
-    {P_("logo/Uaktualnij wszystko"), FL_COMMAND + FL_SHIFT + 'r', &Desktop::refresh_all, FL_MENU_DIVIDER},
-    {P_("logo/Uśpij"), 0, &Desktop::sleep_now, 0},
-    {P_("logo/Uruchom ponownie…"), 0, &Desktop::reboot_ask, 0},
-    {P_("logo/Zakończ…"), FL_COMMAND + 'q', &Desktop::quit_ask, 0},
+    {P_("logo/Open System Log"), 0, &Desktop::open_log, FL_MENU_DIVIDER},
+    {P_("logo/Redraw All"), 0, &Desktop::redraw_all, 0},
+    {P_("logo/Update All"), FL_COMMAND + FL_SHIFT + 'r', &Desktop::refresh_all, FL_MENU_DIVIDER},
+    {P_("logo/Sleep"), 0, &Desktop::sleep_now, 0},
+    {P_("logo/Restart…"), 0, &Desktop::reboot_ask, 0},
+    {P_("logo/Quit…"), FL_COMMAND + 'q', &Desktop::quit_ask, 0},
     // --- Okno: aktywne okno folderu ---
-    {P_("Okno/Nowy folder"), FL_COMMAND + 'n', &Desktop::new_folder, 0},
-    {P_("Okno/Otwórz katalog nadrzędny"), FL_COMMAND + FL_Up, &Desktop::open_parent, 0},
-    {P_("Okno/Zamknij"), FL_COMMAND + 'w', &Desktop::close_active, 0},
-    {P_("Okno/Uaktualnij"), FL_COMMAND + 'r', &Desktop::update_window, FL_MENU_DIVIDER},
-    {P_("Okno/Zaznacz zawartość"), FL_COMMAND + 'a', &Desktop::select_all, 0},
-    {P_("Okno/Uporządkuj"), FL_COMMAND + '.', &Desktop::clean_up, FL_MENU_DIVIDER},
-    {P_("Okno/Pokaż ukryte pliki"), FL_COMMAND + 'h', &Desktop::toggle_hidden, FL_MENU_TOGGLE},
-    {P_("Okno/Pokaż jako/Ikony"), FL_COMMAND + '1', &Desktop::view_icons, FL_MENU_RADIO},
-    {P_("Okno/Pokaż jako/Listę"), FL_COMMAND + '2', &Desktop::view_list, FL_MENU_RADIO},
-    {P_("Okno/Sortuj/według nazwy"), 0, &Desktop::sort_name, FL_MENU_RADIO},
-    {P_("Okno/Sortuj/według daty"), 0, &Desktop::sort_date, FL_MENU_RADIO},
-    {P_("Okno/Sortuj/według rozmiaru"), 0, &Desktop::sort_size, FL_MENU_RADIO},
-    {P_("Okno/Sortuj/według rodzaju"), 0, &Desktop::sort_kind, FL_MENU_RADIO},
-    {P_("Okno/Wielkość ikon/Małe"), 0, &Desktop::icons_small, FL_MENU_RADIO},
-    {P_("Okno/Wielkość ikon/Normalne"), 0, &Desktop::icons_normal, FL_MENU_RADIO},
-    {P_("Okno/Wielkość ikon/Duże"), 0, &Desktop::icons_large, FL_MENU_RADIO},
+    {P_("Window/New Folder"), FL_COMMAND + 'n', &Desktop::new_folder, 0},
+    {P_("Window/Open Parent"), FL_COMMAND + FL_Up, &Desktop::open_parent, 0},
+    {P_("Window/Close"), FL_COMMAND + 'w', &Desktop::close_active, 0},
+    {P_("Window/Update"), FL_COMMAND + 'r', &Desktop::update_window, FL_MENU_DIVIDER},
+    {P_("Window/Select Contents"), FL_COMMAND + 'a', &Desktop::select_all, 0},
+    {P_("Window/Clean Up"), FL_COMMAND + '.', &Desktop::clean_up, FL_MENU_DIVIDER},
+    {P_("Window/Show Hidden Files"), FL_COMMAND + 'h', &Desktop::toggle_hidden, FL_MENU_TOGGLE},
+    {P_("Window/View as/Icons"), FL_COMMAND + '1', &Desktop::view_icons, FL_MENU_RADIO},
+    {P_("Window/View as/List"), FL_COMMAND + '2', &Desktop::view_list, FL_MENU_RADIO},
+    {P_("Window/Sort/by Name"), 0, &Desktop::sort_name, FL_MENU_RADIO},
+    {P_("Window/Sort/by Date"), 0, &Desktop::sort_date, FL_MENU_RADIO},
+    {P_("Window/Sort/by Size"), 0, &Desktop::sort_size, FL_MENU_RADIO},
+    {P_("Window/Sort/by Kind"), 0, &Desktop::sort_kind, FL_MENU_RADIO},
+    {P_("Window/Icon Size/Small"), 0, &Desktop::icons_small, FL_MENU_RADIO},
+    {P_("Window/Icon Size/Normal"), 0, &Desktop::icons_normal, FL_MENU_RADIO},
+    {P_("Window/Icon Size/Large"), 0, &Desktop::icons_large, FL_MENU_RADIO},
     // --- Ikony: zaznaczone pliki, foldery i dyski ---
-    {P_("Ikony/Otwórz"), FL_COMMAND + 'o', &Desktop::open_selected, 0},
-    {P_("Ikony/Kopiuj"), FL_COMMAND + 'c', &Desktop::copy_selected, 0},
-    {P_("Ikony/Wklej"), FL_COMMAND + 'v', &Desktop::paste, 0},
-    {P_("Ikony/Duplikuj"), FL_COMMAND + 'd', &Desktop::duplicate, 0},
-    {P_("Ikony/Zmień nazwę…"), FL_F + 2, &Desktop::rename_selected, 0},
-    {P_("Ikony/Usuń"), FL_COMMAND + FL_BackSpace, &Desktop::move_to_trash, FL_MENU_DIVIDER},
-    {P_("Ikony/Informacje…"), FL_COMMAND + 'i', &Desktop::get_info, 0},
-    {P_("Ikony/Ustaw jako tapetę"), 0, &Desktop::set_as_wallpaper, FL_MENU_DIVIDER},
-    {P_("Ikony/Zamroź"), FL_COMMAND + 's', &Desktop::snapshot, 0},
-    {P_("Ikony/Odmroź"), 0, &Desktop::unsnapshot, FL_MENU_DIVIDER},
-    {P_("Ikony/Połóż na doku"), FL_COMMAND + 'l', &Desktop::dock_add, 0},
-    {P_("Ikony/Zdejmij z doku"), FL_COMMAND + 'k', &Desktop::dock_remove, FL_MENU_DIVIDER},
-    {P_("Ikony/Wysuń"), FL_COMMAND + 'y', &Desktop::eject_selected, 0},
+    {P_("Icons/Open"), FL_COMMAND + 'o', &Desktop::open_selected, 0},
+    {P_("Icons/Copy"), FL_COMMAND + 'c', &Desktop::copy_selected, 0},
+    {P_("Icons/Paste"), FL_COMMAND + 'v', &Desktop::paste, 0},
+    {P_("Icons/Duplicate"), FL_COMMAND + 'd', &Desktop::duplicate, 0},
+    {P_("Icons/Rename…"), FL_F + 2, &Desktop::rename_selected, 0},
+    {P_("Icons/Delete"), FL_COMMAND + FL_BackSpace, &Desktop::move_to_trash, FL_MENU_DIVIDER},
+    {P_("Icons/Information…"), FL_COMMAND + 'i', &Desktop::get_info, 0},
+    {P_("Icons/Set as Wallpaper"), 0, &Desktop::set_as_wallpaper, FL_MENU_DIVIDER},
+    {P_("Icons/Snapshot"), FL_COMMAND + 's', &Desktop::snapshot, 0},
+    {P_("Icons/Unsnapshot"), 0, &Desktop::unsnapshot, FL_MENU_DIVIDER},
+    {P_("Icons/Put on Dock"), FL_COMMAND + 'l', &Desktop::dock_add, 0},
+    {P_("Icons/Remove from Dock"), FL_COMMAND + 'k', &Desktop::dock_remove, FL_MENU_DIVIDER},
+    {P_("Icons/Eject"), FL_COMMAND + 'y', &Desktop::eject_selected, 0},
     // --- Narzędzia ---
-    {P_("Narzędzia/Formatuj dysk…"), 0, &Desktop::format_disk, 0},
-    {P_("Narzędzia/Opróżnij kosz…"), 0, &Desktop::empty_trash, FL_MENU_DIVIDER},
-    {root ? P_("Narzędzia/Zakończ tryb root") : P_("Narzędzia/Tryb root…"), 0,
+    {P_("Special/Format Disk…"), 0, &Desktop::format_disk, 0},
+    {P_("Special/Empty Trash…"), 0, &Desktop::empty_trash, FL_MENU_DIVIDER},
+    {root ? P_("Special/Leave Root Mode") : P_("Special/Root Mode…"), 0,
      root ? &Desktop::quit : &Desktop::ask_root, FL_MENU_DIVIDER},
-    {P_("Narzędzia/Resetuj Nirvanę"), 0, &Desktop::reset_nirvana, 0},
+    {P_("Special/Reset Nirvana"), 0, &Desktop::reset_nirvana, 0},
   };
   static std::vector<void (Desktop::*)()> methods;
   for (auto &it : items) {
@@ -652,7 +652,7 @@ void Desktop::layout_icons() {
     if (d.name.empty()) d.name = "?";
     place(d);
   }
-  icons_.push_back({_("Kosz"), trash_dir(), trash_full() ? Icon::TrashFull : Icon::Trash, 0, trash_y});
+  icons_.push_back({_("Trash"), trash_dir(), trash_full() ? Icon::TrashFull : Icon::Trash, 0, trash_y});
   icon_cols_ = cols;
   // dok: ikony wyciągnięte na biurko (Leave Out z Workbencha), jako pasek w lewym
   // dolnym rogu. Pozycja ikony jak u innych: rysunek w (x + 24, y).
@@ -794,7 +794,7 @@ int Desktop::volume_at_path(const std::string &path) const {
 std::string Desktop::title_for(const std::string &path) const {
   if (path == home_) return "Nirvana HD";
   if (path == "/") return "System";
-  if (path == trash_dir()) return _("Kosz");
+  if (path == trash_dir()) return _("Trash");
   for (auto &v : vols_) if (!v.mountpoint.empty() && v.mountpoint == path) return v.name;
   return fs::path(path).filename().string();
 }
@@ -1215,8 +1215,8 @@ void Desktop::close(NWin *w) {
 
 void Desktop::open_folder(const std::string &path, bool animate) {
   if (!allowed(path)) {
-    dialog(_("Brak dostępu"),
-           _("Ten folder znajduje się poza Nirvana HD.\nAby go otworzyć, przełącz się w tryb root."),
+    dialog(_("Access Denied"),
+           _("This folder is outside Nirvana HD.\nSwitch to root mode to open it."),
            {{"OK", nullptr}});
     return;
   }
@@ -1278,7 +1278,7 @@ void Desktop::open_folder(const std::string &path, bool animate) {
     drop_uris(uris, dest.empty() ? win->path : dest);
   };
   win->pane->on_rename_commit = [this](const std::string &o, const std::string &n) { return rename_path(o, n); };
-  win->pane->on_error = [this](const std::string &m) { dialog(_("Zmiana nazwy"), m, {{"OK", nullptr}}); };
+  win->pane->on_error = [this](const std::string &m) { dialog(_("Rename"), m, {{"OK", nullptr}}); };
   if (known_pos && s.list) win->pane->set_mode(FolderView::List);
   wins_.push_back(win);
   win->show();
@@ -1297,7 +1297,7 @@ void Desktop::open_entry(const Entry &e) {
     std::vector<std::string> a = {rambler_exe("nirvana-shell"), "--katalog", fs::path(e.path).parent_path().string(),
                                   "-e", "sh", "-c", "m=$1; shift; \"$@\"; s=$?; echo; printf \"$m\" \"$s\"; read x",
                                   // TRANSLATORS: %s = kod wyjścia programu (zostaw %s)
-                                  "sh", _("[kod wyjścia %s] Enter zamyka okno…"), e.path};
+                                  "sh", _("[exit code %s] Press Enter to close…"), e.path};
     for (auto &x : split_args(tooltypes(e.path))) a.push_back(x);
     spawn(a);
     return;
@@ -1337,7 +1337,7 @@ void Desktop::open_appimage(const std::string &path) {
       if (!ec) fs::remove(path, ec);
     }
     if (ec) {
-      dialog(_("Instalacja"), _("Nie udało się przenieść pliku:") + std::string("\n") + ec.message(), {{_("OK"), nullptr}});
+      dialog(_("Installation"), _("Could not move the file:") + std::string("\n") + ec.message(), {{_("OK"), nullptr}});
       return;
     }
     chmod(dest.c_str(), 0755);
@@ -1346,21 +1346,21 @@ void Desktop::open_appimage(const std::string &path) {
     run_app(dest.string());
   };
   if (fs::exists(dest, ec)) {   // ta sama wersja już jest - inne wersje mogą stać obok
-    dialog(_("Instalacja"),
-           plat::fmt(_("„%1” jest już zainstalowany w folderze %2.\n"
-                       "Inne wersje tego programu mogą być zainstalowane obok."), name, folder),
-           {{_("Anuluj"), nullptr},
-            {_("Zastąp"), install},
-            {_("Uruchom"), [this, dest] { run_app(dest.string()); }}});
+    dialog(_("Installation"),
+           plat::fmt(_("“%1” is already installed in %2.\n"
+                       "Other versions of this program can be installed alongside it."), name, folder),
+           {{_("Cancel"), nullptr},
+            {_("Replace"), install},
+            {_("Run"), [this, dest] { run_app(dest.string()); }}});
     return;
   }
-  dialog(_("Instalacja"),
-         plat::fmt(_("Zainstalować aplikację „%1”?\nPlik zostanie przeniesiony do folderu %2."), name, folder) +
+  dialog(_("Installation"),
+         plat::fmt(_("Install the application “%1”?\nThe file will be moved to %2."), name, folder) +
          "\n" +
          (appimage::sandbox_available()
-              ? _("Aplikacja będzie działać w piaskownicy: zobaczy tylko Nirvana HD.")
-              : _("Uwaga: brak bubblewrap - aplikacja będzie działać bez piaskownicy.")),
-         {{_("Anuluj"), nullptr}, {_("Zainstaluj"), install}});
+              ? _("The application will run in a sandbox: it will only see Nirvana HD.")
+              : _("Note: bubblewrap is missing - the application will run without a sandbox.")),
+         {{_("Cancel"), nullptr}, {_("Install"), install}});
 }
 
 void Desktop::run_app(const std::string &path) {
@@ -1372,7 +1372,7 @@ void Desktop::run_app(const std::string &path) {
     for (auto *w : wins_) w->cursor(FL_CURSOR_DEFAULT);
     cursor(FL_CURSOR_DEFAULT);
     if (!err.empty()) {
-      dialog(_("Nie można uruchomić"), err, {{"OK", nullptr}});
+      dialog(_("Cannot Open"), err, {{"OK", nullptr}});
       return;
     }
     refresh_all();   // ikona części AppImage (np. DwarFS) jest dostępna dopiero po rozpakowaniu
@@ -1625,16 +1625,16 @@ void Desktop::about() {
   if (plat::language() == "pl") for (char *p = mem; *p; p++) if (*p == '.') *p = ',';
   std::string fltk = std::to_string(Fl::api_version() / 10000) + "." +
                      std::to_string(Fl::api_version() / 100 % 100) + "." + std::to_string(Fl::api_version() % 100);
-  std::string text = std::string("Nirvana Desktop 0.1 „Tempo”\n") + _("Środowisko w duchu Mac OS 9 i Amigi") + "\n\n" +
-                     plat::fmt(_("Pamięć wbudowana: %1 GB"), mem) + "\n" +
-                     plat::fmt(_("Menedżer plików: Rambler 0.1 · FLTK %1"), fltk);
-  dialog(_("O Nirvana Desktop"), text, {{_("OK"), nullptr}});
+  std::string text = std::string("Nirvana Desktop 0.1 “Tempo”\n") + _("A desktop in the spirit of Mac OS 9 and the Amiga") + "\n\n" +
+                     plat::fmt(_("Built-in memory: %1 GB"), mem) + "\n" +
+                     plat::fmt(_("File manager: Rambler 0.1 · FLTK %1"), fltk);
+  dialog(_("About Nirvana Desktop"), text, {{_("OK"), nullptr}});
 }
 
 void Desktop::new_folder() {
   NWin *a = active_folder();
   std::string dir = a ? a->path : home_;
-  std::string base = dir + "/" + _("bez nazwy");
+  std::string base = dir + "/" + _("untitled folder");
   std::string p = base;
   std::error_code ec;
   for (int i = 2; fs::exists(p, ec); i++) p = base + " " + std::to_string(i);
@@ -1673,7 +1673,7 @@ bool Desktop::trash_path(const std::string &src, std::string &err) {
     fs::copy(src, dest, fs::copy_options::recursive | fs::copy_options::copy_symlinks, ec);
     if (!ec) fs::remove_all(src, ec);
   }
-  if (ec) { err = "„" + base + "”: " + ec.message(); return false; }
+  if (ec) { err = "“" + base + "”: " + ec.message(); return false; }
   char date[32];
   time_t now = time(nullptr);
   strftime(date, sizeof date, "%Y-%m-%dT%H:%M:%S", localtime(&now));
@@ -1692,7 +1692,7 @@ void Desktop::move_to_trash() {
     if (!trash_path(e.path, err)) errors += err + "\n";
   }
   refresh_all();
-  if (!errors.empty()) dialog(_("Kosz"), _("Nie udało się przenieść do kosza:") + std::string("\n") + errors, {{"OK", nullptr}});
+  if (!errors.empty()) dialog(_("Trash"), _("Could not move to the Trash:") + std::string("\n") + errors, {{"OK", nullptr}});
 }
 
 void Desktop::empty_trash() {
@@ -1700,11 +1700,11 @@ void Desktop::empty_trash() {
   int n = 0;
   if (fs::exists(trash_dir(), ec))
     for (auto &x : fs::directory_iterator(trash_dir(), ec)) { (void)x; n++; }
-  if (!n) { dialog(_("Kosz"), _("Kosz jest pusty."), {{"OK", nullptr}}); return; }
-  dialog(_("Opróżnij kosz"),
-         plat::fmt(_("Kosz zawiera %1.\nCzy na pewno usunąć je na zawsze?"), polish_items(n)),
-         {{_("Anuluj"), nullptr},
-          {_("Opróżnij"), [this] {
+  if (!n) { dialog(_("Trash"), _("The Trash is empty."), {{"OK", nullptr}}); return; }
+  dialog(_("Empty Trash"),
+         plat::fmt(_("The Trash contains %1.\nDelete them permanently?"), polish_items(n)),
+         {{_("Cancel"), nullptr},
+          {_("Empty"), [this] {
              std::error_code ec2;
              for (auto dir : {trash_dir(), home_ + "/.local/share/Trash/info"}) {
                if (!fs::exists(dir, ec2)) continue;
@@ -1715,16 +1715,16 @@ void Desktop::empty_trash() {
 }
 
 void Desktop::ask_root() {
-  dialog(_("Tryb root"),
-         _("Tryb root daje pełny dostęp do systemu plików\n"
-           "i ustawień zaawansowanych. Wymaga hasła administratora."),
-         {{_("Anuluj"), nullptr},
-          {_("Przełącz"), [this] {
+  dialog(_("Root Mode"),
+         _("Root mode gives full access to the file system\n"
+           "and advanced settings. It requires the administrator password."),
+         {{_("Cancel"), nullptr},
+          {_("Switch"), [this] {
              if (access("/usr/bin/pkexec", X_OK) == 0) {
                spawn({"pkexec", "env", std::string("DISPLAY=") + (getenv("DISPLAY") ? getenv("DISPLAY") : ":0"),
                       self_exe(), "--root", "--home", home_});
              } else {
-               dialog(_("Tryb root"), _("Nie znaleziono pkexec (pakiet polkit)."), {{"OK", nullptr}});
+               dialog(_("Root Mode"), _("pkexec was not found (polkit package)."), {{"OK", nullptr}});
              }
            }}});
 }
@@ -1811,8 +1811,8 @@ void Desktop::build_net_menu(Fl_Menu_Button *m) {
   auto self = [](Fl_Widget *w) { return (Desktop *)w->window(); };
   (void)self;
   if (!net_.available) {
-    item(net_.problem.empty() ? _("Sieć niedostępna") : net_.problem, nullptr, 0, FL_MENU_INACTIVE | FL_MENU_DIVIDER);
-    item(_("Ustawienia sieci…"), [](Fl_Widget *w, void *) { ((Desktop *)w->window())->open_network(); }, 0, 0);
+    item(net_.problem.empty() ? _("Network unavailable") : net_.problem, nullptr, 0, FL_MENU_INACTIVE | FL_MENU_DIVIDER);
+    item(_("Network Settings…"), [](Fl_Widget *w, void *) { ((Desktop *)w->window())->open_network(); }, 0, 0);
     return;
   }
   net::rescan();
@@ -1825,23 +1825,23 @@ void Desktop::build_net_menu(Fl_Menu_Button *m) {
     g_menu_ifaces.push_back(d.iface);
     long idx = (long)g_menu_ifaces.size() - 1;
     if (d.state == net::DevState::Connected || d.state == net::DevState::Connecting)
-      item(std::string("   ") + _("Rozłącz"), [](Fl_Widget *w, void *v) {
+      item(std::string("   ") + _("Disconnect"), [](Fl_Widget *w, void *v) {
         ((Desktop *)w->window())->net_action(false, g_menu_ifaces[(long)v]); }, idx, FL_MENU_DIVIDER);
     else if (d.state == net::DevState::Disconnected)
-      item(std::string("   ") + _("Połącz"), [](Fl_Widget *w, void *v) {
+      item(std::string("   ") + _("Connect"), [](Fl_Widget *w, void *v) {
         ((Desktop *)w->window())->net_action(true, g_menu_ifaces[(long)v]); }, idx, FL_MENU_DIVIDER);
     else
-      item(std::string("   ") + _("Kabel odłączony"), nullptr, 0, FL_MENU_INACTIVE | FL_MENU_DIVIDER);
+      item(std::string("   ") + _("Cable unplugged"), nullptr, 0, FL_MENU_INACTIVE | FL_MENU_DIVIDER);
   }
 
   if (net_.wifi_hw) {
-    item(!net_.hotspot_ssid.empty() ? plat::fmt(_("Wi-Fi: hotspot „%1”"), net_.hotspot_ssid)
-         : net_.wifi_on ? _("Wi-Fi: włączone") : _("Wi-Fi: wyłączone"), nullptr, 0, FL_MENU_INACTIVE);
-    item(net_.wifi_on ? std::string("   ") + _("Wyłącz Wi-Fi") : std::string("   ") + _("Włącz Wi-Fi"), [](Fl_Widget *w, void *) {
+    item(!net_.hotspot_ssid.empty() ? plat::fmt(_("Wi-Fi: hotspot “%1”"), net_.hotspot_ssid)
+         : net_.wifi_on ? _("Wi-Fi: On") : _("Wi-Fi: Off"), nullptr, 0, FL_MENU_INACTIVE);
+    item(net_.wifi_on ? std::string("   ") + _("Turn Wi-Fi Off") : std::string("   ") + _("Turn Wi-Fi On"), [](Fl_Widget *w, void *) {
       Desktop *d = (Desktop *)w->window();
       net::set_wifi(!d->net_state().wifi_on, [d](bool ok, const std::string &msg) {
         d->net_refresh();
-        if (!ok) d->dialog_message(_("Sieć"), msg);
+        if (!ok) d->dialog_message(_("Network"), msg);
       });
     }, 0, FL_MENU_DIVIDER);
     if (net_.wifi_on) {
@@ -1855,15 +1855,15 @@ void Desktop::build_net_menu(Fl_Menu_Button *m) {
         }, (long)g_menu_nets.size() - 1, FL_MENU_RADIO | (n.in_use ? FL_MENU_VALUE : 0));
         ((Fl_Menu_Item *)&m->menu()[at])->labeltype(NET_LABEL);
       }
-      if (net_.networks.empty()) item(_("Szukam sieci…"), nullptr, 0, FL_MENU_INACTIVE);
+      if (net_.networks.empty()) item(_("Looking for networks…"), nullptr, 0, FL_MENU_INACTIVE);
       for (auto &d : net_.devices)
         if (d.type == "wifi" && d.state == net::DevState::Connected) {
           g_menu_ifaces.push_back(d.iface);
-          item(!net_.hotspot_ssid.empty() ? std::string(_("Wyłącz hotspot")) : plat::fmt(_("Rozłącz z „%1”"), d.connection), [](Fl_Widget *w, void *v) {
+          item(!net_.hotspot_ssid.empty() ? std::string(_("Turn Hotspot Off")) : plat::fmt(_("Disconnect from “%1”"), d.connection), [](Fl_Widget *w, void *v) {
             ((Desktop *)w->window())->net_action(false, g_menu_ifaces[(long)v]); },
             (long)g_menu_ifaces.size() - 1, 0);
         }
-      item(_("Inna sieć…"), [](Fl_Widget *w, void *) {
+      item(_("Other Network…"), [](Fl_Widget *w, void *) {
         spawn({alice_exe(), "siec", "--ukryta"}); }, 0, FL_MENU_DIVIDER);
     }
   }
@@ -1873,19 +1873,19 @@ void Desktop::build_net_menu(Fl_Menu_Button *m) {
     item("VPN", nullptr, 0, FL_MENU_INACTIVE);
     for (size_t i = 0; i < g_menu_vpns.size(); i++) {
       auto &v = g_menu_vpns[i];
-      std::string t = "   " + v.name + (v.activating ? std::string(" ") + _("(łączenie…)") : "");
+      std::string t = "   " + v.name + (v.activating ? std::string(" ") + _("(connecting…)") : "");
       item(t, [](Fl_Widget *w, void *d) { ((Desktop *)w->window())->vpn_toggle(g_menu_vpns[(long)d], ""); },
            (long)i, FL_MENU_RADIO | (v.active ? FL_MENU_VALUE : 0) | (i + 1 == g_menu_vpns.size() ? FL_MENU_DIVIDER : 0));
     }
   }
-  item(_("Tryb samolotowy"), [](Fl_Widget *w, void *) {
+  item(_("Airplane Mode"), [](Fl_Widget *w, void *) {
     Desktop *d = (Desktop *)w->window();
     net::set_airplane(!d->net_state().airplane(), [d](bool ok, const std::string &m) {
       d->net_refresh();
-      if (!ok) d->dialog_message(_("Sieć"), m);
+      if (!ok) d->dialog_message(_("Network"), m);
     });
   }, 0, FL_MENU_TOGGLE | (net_.airplane() ? FL_MENU_VALUE : 0) | FL_MENU_DIVIDER);
-  item(_("Ustawienia sieci…"), [](Fl_Widget *w, void *) { ((Desktop *)w->window())->open_network(); }, 0, 0);
+  item(_("Network Settings…"), [](Fl_Widget *w, void *) { ((Desktop *)w->window())->open_network(); }, 0, 0);
 }
 
 // VPN z menu sieci: połącz albo rozłącz. Hasło pytamy dopiero, gdy jest potrzebne;
@@ -1894,15 +1894,15 @@ void Desktop::vpn_toggle(const net::Vpn &v, const std::string &msg) {
   auto done = [this, v](bool ok, const std::string &m) {
     net_refresh();
     if (ok) return;
-    if (m == net::NEED_PASSWORD || m == _("Nieprawidłowe hasło.")) vpn_toggle(v, m == net::NEED_PASSWORD ? " " : m);
+    if (m == net::NEED_PASSWORD || m == _("Wrong password.")) vpn_toggle(v, m == net::NEED_PASSWORD ? " " : m);
     else dialog_message("VPN", m);
   };
   if (v.active || v.activating) { net::vpn_down(v.uuid, done); return; }
   if (msg.empty()) { net::vpn_up(v.uuid, "", "", done); return; }
   std::string user = net::vpn_username(v.uuid);
   if (user.empty()) { open_network(); return; }   // potrzebna też nazwa użytkownika
-  ask_secret("VPN", Icon::Encrypted, plat::fmt(_("Połączenie VPN „%1” (%2).\nPodaj hasło."), v.name, user),
-             msg == " " ? "" : msg, _("Połącz"), [v, done](std::string &p) {
+  ask_secret("VPN", Icon::Encrypted, plat::fmt(_("VPN connection “%1” (%2).\nEnter the password."), v.name, user),
+             msg == " " ? "" : msg, _("Connect"), [v, done](std::string &p) {
     if (!p.empty()) net::vpn_up(v.uuid, "", p, done);
   });
 }
@@ -1913,7 +1913,7 @@ void Desktop::net_refresh() {
 }
 
 void Desktop::net_action(bool connect, const std::string &iface) {
-  auto done = [this](bool ok, const std::string &msg) { net_refresh(); if (!ok) dialog_message(_("Sieć"), msg); };
+  auto done = [this](bool ok, const std::string &msg) { net_refresh(); if (!ok) dialog_message(_("Network"), msg); };
   if (connect) net::connect_device(iface, done);
   else net::disconnect_device(iface, done);
 }
@@ -1924,26 +1924,26 @@ void Desktop::dialog_message(const std::string &title, const std::string &text) 
 
 void Desktop::wifi_connect(const net::Network &n, const std::string &msg) {
   if (n.enterprise()) {
-    dialog_message(_("Sieć Wi-Fi"), _("Sieci firmowe (WPA Enterprise, 802.1X) nie są jeszcze obsługiwane.\n"
-                                   "Skonfiguruj je narzędziem nmtui albo nm-connection-editor."));
+    dialog_message(_("Wi-Fi Network"), _("Enterprise networks (WPA Enterprise, 802.1X) are not supported yet.\n"
+                                   "Set them up with nmtui or nm-connection-editor."));
     return;
   }
   auto done = [this, n](bool ok, const std::string &m) {
     net_refresh();
     if (ok) return;
-    if (m == net::NEED_PASSWORD || m == _("Nieprawidłowe hasło.") ||
-        m == _("Nie udało się połączyć. Sprawdź hasło."))
+    if (m == net::NEED_PASSWORD || m == _("Wrong password.") ||
+        m == _("Could not connect. Check the password."))
       wifi_connect(n, m == net::NEED_PASSWORD ? "" : m);   // zapytaj (jeszcze raz) o hasło
     else
-      dialog_message(_("Sieć Wi-Fi"), m);
+      dialog_message(_("Wi-Fi Network"), m);
   };
   // znana albo otwarta sieć: bez pytania; przy błędzie hasła pytamy
   if (msg.empty() && (!n.secured() || n.known)) {
     net::connect_wifi(n.ssid, n.security, "", false, done);
     return;
   }
-  ask_secret(_("Sieć Wi-Fi"), Icon::Wifi,
-             plat::fmt(_("Sieć „%1” jest zabezpieczona.\nPodaj hasło, aby się połączyć."), n.ssid), msg, _("Połącz"),
+  ask_secret(_("Wi-Fi Network"), Icon::Wifi,
+             plat::fmt(_("The network “%1” is secured.\nEnter the password to connect."), n.ssid), msg, _("Connect"),
              [n, done](std::string &p) {
     if (p.empty()) return;
     net::connect_wifi(n.ssid, n.security, p, false, done);
@@ -2109,16 +2109,16 @@ void Desktop::build_windows_menu(Fl_Menu_Button *m) {
             i == g_menu_active, i + 1 == (int)g_menu_apps.size());
 
   std::string cur = g_menu_active < 0 ? "Rambler" : g_menu_apps[g_menu_active].name;
-  texts.push_back(plat::fmt(_("Ukryj %1"), menu_escape(cur)));
+  texts.push_back(plat::fmt(_("Hide %1"), menu_escape(cur)));
   m->add(texts.back().c_str(), 0, [](Fl_Widget *w, void *) {
     hide_app((Desktop *)w->window(), g_menu_active);
   }, nullptr, 0);
-  m->add(_("Ukryj inne"), 0, [](Fl_Widget *w, void *) {
+  m->add(_("Hide Others"), 0, [](Fl_Widget *w, void *) {
     auto *self = (Desktop *)w->window();
     if (g_menu_active >= 0) hide_app(self, -1);
     for (int i = 0; i < (int)g_menu_apps.size(); i++) if (i != g_menu_active) hide_app(self, i);
   }, nullptr, 0);
-  m->add(_("Pokaż wszystkie"), 0, [](Fl_Widget *w, void *) {
+  m->add(_("Show All"), 0, [](Fl_Widget *w, void *) {
     auto *self = (Desktop *)w->window();
     Window keep = gary::active_window();
     for (NWin *f : self->folder_windows())
@@ -2127,7 +2127,7 @@ void Desktop::build_windows_menu(Fl_Menu_Button *m) {
       for (Window x : a.wins) if (gary::is_hidden(x)) gary::activate(x);
     if (keep) gary::activate(keep);   // fokus wraca tam, gdzie był
   }, nullptr, FL_MENU_DIVIDER);
-  texts.push_back(plat::fmt(_("Zakończ %1"), menu_escape(cur)));
+  texts.push_back(plat::fmt(_("Quit %1"), menu_escape(cur)));
   m->add(texts.back().c_str(), 0, [](Fl_Widget *, void *) {
     if (g_menu_active >= 0) for (Window x : g_menu_apps[g_menu_active].wins) gary::close(x);
   }, nullptr, (g_menu_active < 0 ? FL_MENU_INACTIVE : 0) | FL_MENU_DIVIDER);
@@ -2136,13 +2136,13 @@ void Desktop::build_windows_menu(Fl_Menu_Button *m) {
   std::vector<NWin *> order;
   for (auto it = wins_.rbegin(); it != wins_.rend(); ++it) if ((*it)->pane) order.push_back(*it);
   if (order.empty())
-    m->add(plat::tr_path(P_("Okna Ramblera/Brak otwartych okien")).c_str(), 0, nullptr, nullptr, FL_MENU_INACTIVE | FL_MENU_DIVIDER);
+    m->add(plat::tr_path(P_("Rambler Windows/No open windows")).c_str(), 0, nullptr, nullptr, FL_MENU_INACTIVE | FL_MENU_DIVIDER);
   Window a = net_active();
   for (size_t i = 0; i < order.size(); i++) {
     NWin *w = order[i];
     int flags = FL_MENU_RADIO | (w->shown() && fl_xid(w) == a ? FL_MENU_VALUE : 0);
     if (i + 1 == order.size()) flags |= FL_MENU_DIVIDER;
-    texts.push_back(plat::tr_path(P_("Okna Ramblera")) + "/" + menu_escape(w->label()));
+    texts.push_back(plat::tr_path(P_("Rambler Windows")) + "/" + menu_escape(w->label()));
     m->add(texts.back().c_str(), 0,
            [](Fl_Widget *mw, void *d) {
              auto *self = (Desktop *)mw->window();
@@ -2154,9 +2154,9 @@ void Desktop::build_windows_menu(Fl_Menu_Button *m) {
            w, flags);
   }
   int on = order.empty() ? FL_MENU_INACTIVE : 0;
-  m->add(plat::tr_path(P_("Okna Ramblera/Zwiń wszystkie")).c_str(), 0, [](Fl_Widget *w, void *) { ((Desktop *)w->window())->shade_all(true); }, nullptr, on);
-  m->add(plat::tr_path(P_("Okna Ramblera/Rozwiń wszystkie")).c_str(), 0, [](Fl_Widget *w, void *) { ((Desktop *)w->window())->shade_all(false); }, nullptr, on | FL_MENU_DIVIDER);
-  m->add(plat::tr_path(P_("Okna Ramblera/Zamknij wszystkie")).c_str(), 0, [](Fl_Widget *w, void *) { ((Desktop *)w->window())->close_all(); }, nullptr, on);
+  m->add(plat::tr_path(P_("Rambler Windows/Collapse All")).c_str(), 0, [](Fl_Widget *w, void *) { ((Desktop *)w->window())->shade_all(true); }, nullptr, on);
+  m->add(plat::tr_path(P_("Rambler Windows/Expand All")).c_str(), 0, [](Fl_Widget *w, void *) { ((Desktop *)w->window())->shade_all(false); }, nullptr, on | FL_MENU_DIVIDER);
+  m->add(plat::tr_path(P_("Rambler Windows/Close All")).c_str(), 0, [](Fl_Widget *w, void *) { ((Desktop *)w->window())->close_all(); }, nullptr, on);
 }
 
 void Desktop::shade_all(bool shade) {
@@ -2198,21 +2198,21 @@ void Desktop::view_list() {
 void Desktop::sync_view_menu() {
   NWin *a = active_folder();
   bool list = a && a->pane->view()->mode() == FolderView::List;
-  auto *icons = (Fl_Menu_Item *)menu_->find_item(plat::tr_path(P_("Okno/Pokaż jako/Ikony")).c_str());
-  auto *lst = (Fl_Menu_Item *)menu_->find_item(plat::tr_path(P_("Okno/Pokaż jako/Listę")).c_str());
+  auto *icons = (Fl_Menu_Item *)menu_->find_item(plat::tr_path(P_("Window/View as/Icons")).c_str());
+  auto *lst = (Fl_Menu_Item *)menu_->find_item(plat::tr_path(P_("Window/View as/List")).c_str());
   if (icons && lst) {
     if (list) { icons->clear(); lst->set(); } else { icons->set(); lst->clear(); }
   }
 }
 
 std::string Desktop::rename_path(const std::string &old, const std::string &name) {
-  if (name.find('/') != std::string::npos) return _("Nazwa nie może zawierać znaku „/”.");
-  if (name == "." || name == "..") return _("Taka nazwa jest zarezerwowana.");
+  if (name.find('/') != std::string::npos) return _("A name cannot contain “/”.");
+  if (name == "." || name == "..") return _("That name is reserved.");
   fs::path to = fs::path(old).parent_path() / name;
   std::error_code ec;
-  if (fs::exists(to, ec)) return plat::fmt(_("Element o nazwie „%1” już istnieje."), name);
+  if (fs::exists(to, ec)) return plat::fmt(_("An item named “%1” already exists."), name);
   fs::rename(old, to, ec);
-  if (ec) return _("Nie udało się zmienić nazwy:") + std::string("\n") + ec.message();
+  if (ec) return _("Could not rename:") + std::string("\n") + ec.message();
   path_moved(old, to.string());
   refresh_all();
   if (NWin *w = find(fs::path(old).parent_path().string())) w->pane->view()->select_path(to.string());
@@ -2260,14 +2260,14 @@ static std::string copy_name(const fs::path &dir, const std::string &name) {
 
 void Desktop::transfer(const std::vector<Entry> &items, const std::string &dest, bool copy, bool replace) {
   if (!allowed(dest)) {
-    dialog(_("Brak dostępu"), _("Folder docelowy jest poza Nirvana HD."), {{"OK", nullptr}});
+    dialog(_("Access Denied"), _("The destination folder is outside Nirvana HD."), {{"OK", nullptr}});
     return;
   }
   std::error_code ec;
   // folder do samego siebie lub do własnego podfolderu
   for (auto &e : items) {
     if (e.dir && (dest == e.path || dest.rfind(e.path + "/", 0) == 0)) {
-      dialog(_("Nie można przenieść"), plat::fmt(_("Folderu „%1” nie można umieścić w nim samym."), e.label),
+      dialog(_("Cannot Move"), plat::fmt(_("The folder “%1” cannot be moved into itself."), e.label),
              {{"OK", nullptr}});
       return;
     }
@@ -2281,12 +2281,12 @@ void Desktop::transfer(const std::vector<Entry> &items, const std::string &dest,
       if (fs::exists(fs::path(dest) / e.name, ec)) clash.push_back(e.name);
     }
     if (!clash.empty()) {
-      std::string what = clash.size() == 1 ? plat::fmt(_("element „%1”"), clash[0])
+      std::string what = clash.size() == 1 ? plat::fmt(_("an item “%1”"), clash[0])
                                            : polish_items((int)clash.size());
-      dialog(copy ? _("Kopiowanie") : _("Przenoszenie"),
-             plat::fmt(_("W folderze „%1” jest już %2.\nZastąpić?"), title_for(dest), what),
-             {{_("Anuluj"), nullptr},
-              {_("Zastąp"), [this, items, dest, copy] { transfer(items, dest, copy, true); }}});
+      dialog(copy ? _("Copying") : _("Move"),
+             plat::fmt(_("The folder “%1” already contains %2.\nReplace?"), title_for(dest), what),
+             {{_("Cancel"), nullptr},
+              {_("Replace"), [this, items, dest, copy] { transfer(items, dest, copy, true); }}});
       return;
     }
   }
@@ -2310,7 +2310,7 @@ void Desktop::transfer(const std::vector<Entry> &items, const std::string &dest,
       }
       if (!ec) path_moved(src.string(), dst.string());
     }
-    if (ec) { errors += "„" + e.name + "”: " + ec.message() + "\n"; continue; }
+    if (ec) { errors += "“" + e.name + "”: " + ec.message() + "\n"; continue; }
     // AppImage wrzucony do Aplikacji jest gotowy do uruchomienia (instalacja przeciągnięciem)
     // i od razu trafia do folderu swojej kategorii (Gry, Grafika...)
     if (is_appimage(e.name) && fs::path(dest) == fs::path(apps_dir())) {
@@ -2326,7 +2326,7 @@ void Desktop::transfer(const std::vector<Entry> &items, const std::string &dest,
   }
   refresh_all();
   if (!errors.empty())
-    dialog(copy ? _("Kopiowanie") : _("Przenoszenie"), _("Wystąpiły błędy:") + std::string("\n") + errors, {{"OK", nullptr}});
+    dialog(copy ? _("Copying") : _("Move"), _("There were errors:") + std::string("\n") + errors, {{"OK", nullptr}});
 }
 
 // ---------------------------------------------------------------------------
@@ -2455,12 +2455,12 @@ void Desktop::drag_end(int xr, int yr, bool copy) {
       copy = true;   // na inny dysk kopiujemy, jak w Mac OS
       if (dest.empty()) {
         if (vols_[vi].encrypted && !vols_[vi].unlocked) {
-          dialog(_("Dysk zaszyfrowany"), plat::fmt(_("Najpierw otwórz dysk „%1” i podaj hasło."), vols_[vi].name),
+          dialog(_("Encrypted Disk"), plat::fmt(_("Open the disk “%1” and enter its password first."), vols_[vi].name),
                  {{"OK", nullptr}});
           return;
         }
         std::string mp, err = vol::mount(vols_[vi], mp);
-        if (!err.empty()) { dialog(_("Dysk"), err, {{"OK", nullptr}}); return; }
+        if (!err.empty()) { dialog(_("Disk"), err, {{"OK", nullptr}}); return; }
         rescan_volumes();
         dest = mp;
       }
@@ -2496,7 +2496,7 @@ void Desktop::drag_end(int xr, int yr, bool copy) {
       if (!trash_path(e.path, err)) errors += err + "\n";
     }
     refresh_all();
-    if (!errors.empty()) dialog(_("Kosz"), _("Nie udało się przenieść do kosza:") + std::string("\n") + errors, {{"OK", nullptr}});
+    if (!errors.empty()) dialog(_("Trash"), _("Could not move to the Trash:") + std::string("\n") + errors, {{"OK", nullptr}});
     return;
   }
   transfer(items, dest, copy, false);
@@ -2600,7 +2600,7 @@ void Desktop::drop_uris(const std::string &list, const std::string &dest) {
     std::string errors;
     for (auto &e : items) { std::string err; if (!trash_path(e.path, err)) errors += err + "\n"; }
     refresh_all();
-    if (!errors.empty()) dialog(_("Kosz"), _("Nie udało się przenieść do kosza:") + std::string("\n") + errors, {{"OK", nullptr}});
+    if (!errors.empty()) dialog(_("Trash"), _("Could not move to the Trash:") + std::string("\n") + errors, {{"OK", nullptr}});
     return;
   }
   // z innego programu: kopiujemy (jak przeciąganie między dyskami w Mac OS)
@@ -2674,7 +2674,7 @@ void Desktop::open_volume(int vi) {
     Fl::flush();
     std::string err = vol::mount(v, mp);
     cursor(FL_CURSOR_DEFAULT);
-    if (!err.empty()) { dialog(_("Dysk"), err, {{"OK", nullptr}}); return; }
+    if (!err.empty()) { dialog(_("Disk"), err, {{"OK", nullptr}}); return; }
     rescan_volumes();
   }
   if (!mp.empty()) open_folder(mp);
@@ -2728,7 +2728,7 @@ void Desktop::ask_secret(const std::string &title, Icon icon, const std::string 
     b->callback(dialog_cb, (void *)(long)idx);
     if (def) b->shortcut(FL_Enter);
   };
-  make_button(bx - 90, _("Anuluj"), false, 0);
+  make_button(bx - 90, _("Cancel"), false, 0);
   make_button(bx, ok_label, true, 1);
   win->actions.push_back(nullptr);
   win->actions.push_back([pass, on_ok] {
@@ -2747,8 +2747,8 @@ void Desktop::ask_secret(const std::string &title, Icon icon, const std::string 
 
 void Desktop::ask_password(const vol::Volume &v, const std::string &msg) {
   std::string uuid = v.uuid;
-  ask_secret(_("Dysk zaszyfrowany"), Icon::Encrypted,
-             plat::fmt(_("Dysk „%1” jest zaszyfrowany.\nPodaj hasło, aby go otworzyć."), v.name), msg, _("Otwórz"),
+  ask_secret(_("Encrypted Disk"), Icon::Encrypted,
+             plat::fmt(_("The disk “%1” is encrypted.\nEnter the password to open it."), v.name), msg, _("Open"),
              [this, uuid](std::string &p) {
     int vi = -1;
     for (int i = 0; i < (int)vols_.size(); i++) if (vols_[i].uuid == uuid) vi = i;
@@ -2759,8 +2759,8 @@ void Desktop::ask_password(const vol::Volume &v, const std::string &msg) {
     std::string err = vol::unlock(v, p);
     cursor(FL_CURSOR_DEFAULT);
     if (!err.empty()) {
-      if (err == _("Nieprawidłowe hasło.")) ask_password(v, err);   // jeszcze raz
-      else dialog(_("Dysk zaszyfrowany"), err, {{"OK", nullptr}});
+      if (err == _("Wrong password.")) ask_password(v, err);   // jeszcze raz
+      else dialog(_("Encrypted Disk"), err, {{"OK", nullptr}});
       return;
     }
     rescan_volumes();
@@ -2779,7 +2779,7 @@ void Desktop::eject_volume(int vi) {
   std::string err = vol::eject(v);
   cursor(FL_CURSOR_DEFAULT);
   rescan_volumes();
-  if (!err.empty()) dialog(_("Wysuwanie"), err, {{"OK", nullptr}});
+  if (!err.empty()) dialog(_("Ejecting"), err, {{"OK", nullptr}});
 }
 
 void Desktop::eject_selected() {

@@ -365,23 +365,34 @@ std::string label(const std::string &path, const std::string &home) {
 }
 
 // Nazwa folderu: polska, gdy taki folder już jest, inaczej przetłumaczona.
-static std::string folder_name(const std::string &parent, const char *pl) {
+// Nazwa folderu: ten, który już jest (angielski, przetłumaczony albo polski
+// z wcześniejszych wersji, gdy polski był domyślny), inaczej przetłumaczony.
+static std::string folder_name(const std::string &parent, const char *en) {
+  static const std::pair<const char *, const char *> legacy[] = {
+    {"Applications", "Aplikacje"}, {"Games", "Gry"}, {"Graphics", "Grafika"}, {"Office", "Biuro"},
+    {"Development", "Programowanie"}, {"Education", "Edukacja"}, {"Science", "Nauka"},
+    {"Accessories", "Akcesoria"}, {"Other", "Inne"},
+  };
   std::error_code ec;
-  if (fs::is_directory(fs::path(parent) / pl, ec)) return pl;
-  return _(pl);
+  auto exists = [&](const std::string &n) { return fs::is_directory(fs::path(parent) / n, ec); };
+  if (exists(en)) return en;
+  if (exists(_(en))) return _(en);
+  for (auto &[e, pl] : legacy)
+    if (!strcmp(e, en) && exists(pl)) return pl;
+  return _(en);
 }
 
-std::string apps_dir(const std::string &home) { return home + "/" + folder_name(home, N_("Aplikacje")); }
+std::string apps_dir(const std::string &home) { return home + "/" + folder_name(home, N_("Applications")); }
 
 std::string category_folder(const std::string &path, const std::string &home) {
   std::string parent = apps_dir(home);
   // główne kategorie freedesktop.org -> foldery w ~/Aplikacje
   static const std::pair<const char *, const char *> map[] = {
-    {"Game", N_("Gry")},          {"Graphics", N_("Grafika")},   {"AudioVideo", N_("Multimedia")},
+    {"Game", N_("Games")},          {"Graphics", N_("Graphics")},   {"AudioVideo", N_("Multimedia")},
     {"Audio", N_("Multimedia")},  {"Video", N_("Multimedia")},   {"Network", N_("Internet")},
-    {"Office", N_("Biuro")},      {"Development", N_("Programowanie")}, {"Education", N_("Edukacja")},
-    {"Science", N_("Nauka")},     {"System", N_("System")},      {"Settings", N_("System")},
-    {"Utility", N_("Akcesoria")},
+    {"Office", N_("Office")},      {"Development", N_("Development")}, {"Education", N_("Education")},
+    {"Science", N_("Science")},     {"System", N_("System")},      {"Settings", N_("System")},
+    {"Utility", N_("Accessories")},
   };
   std::string cats = meta(path, home).categories;
   size_t pos = 0;
@@ -391,7 +402,7 @@ std::string category_folder(const std::string &path, const std::string &home) {
     pos = sc == std::string::npos ? cats.size() : sc + 1;
     for (auto &[k, v] : map) if (c == k) return folder_name(parent, v);
   }
-  return folder_name(parent, N_("Inne"));
+  return folder_name(parent, N_("Other"));
 }
 
 std::string install_dir(const std::string &path, const std::string &home) {
@@ -451,14 +462,14 @@ std::string install(const std::string &path, const std::string &home) {
   if (appdir.empty()) {
     fs::remove_all(tmp, ec);
     uint64_t e;
-    if (!elf_end(path, e)) return _("To nie jest plik AppImage (brak nagłówka ELF).");
+    if (!elf_end(path, e)) return _("This is not an AppImage file (no ELF header).");
     if (self_extract(path, tmp)) appdir = find_appdir(tmp);
   }
   if (appdir.empty()) {
     fs::remove_all(tmp, ec);
     if (kind == "dwarfs")
-      return _("Ten AppImage używa formatu DwarFS, a jego runtime\nnie potrafił się rozpakować.");
-    return _("Nie udało się rozpakować aplikacji.\nTo może nie być AppImage albo plik jest uszkodzony.");
+      return _("This AppImage uses the DwarFS format and its runtime\ncould not extract it.");
+    return _("Could not extract the application.\nIt may not be an AppImage, or the file is damaged.");
   }
   if (appdir != tmp) {          // przenieś katalog aplikacji na miejsce tymczasowego
     fs::path moved = tmp.string() + "-appdir";
@@ -476,7 +487,7 @@ std::string install(const std::string &path, const std::string &home) {
   }
   fs::remove_all(dir, ec);
   fs::rename(tmp, dir, ec);
-  return ec ? plat::fmt(_("Nie udało się zapisać aplikacji: %1"), ec.message()) : "";
+  return ec ? plat::fmt(_("Could not save the application: %1"), ec.message()) : "";
 }
 
 bool sandbox_available() {

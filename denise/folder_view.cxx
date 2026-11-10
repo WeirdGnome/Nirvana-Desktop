@@ -46,10 +46,10 @@ Icon icon_for(const std::string &name, bool dir) {
 std::string kind_name(const Entry &e) {
   if (e.dir) return _("folder");
   switch (e.icon) {
-  case Icon::Application: return _("aplikacja");
-  case Icon::Image: return _("obraz");
-  case Icon::Music: return _("dźwięk");
-  default: return _("dokument");
+  case Icon::Application: return _("application");
+  case Icon::Image: return _("image");
+  case Icon::Music: return _("sound");
+  default: return _("document");
   }
 }
 
@@ -766,7 +766,7 @@ void FolderPane::update_info() {
     double gb = (double)st.f_bavail * st.f_frsize / 1e9;
     snprintf(buf, sizeof buf, "%.1f GB", gb);
   }
-  info_ = polish_items(view_->count()) + (buf[0] ? ", " + plat::fmt(_("%1 wolne"), plat::decimal(buf)) : "");
+  info_ = polish_items(view_->count()) + (buf[0] ? ", " + plat::fmt(_("%1 free"), plat::decimal(buf)) : "");
 }
 
 // --- obserwacja zmian w folderze -------------------------------------------
@@ -882,10 +882,10 @@ void FolderPane::draw() {
         else fl_polygon(ax, ay + 2, ax + 6, ay + 2, ax + 3, ay - 2);
       }
     };
-    header(FolderView::ByName, x(), lc.date_x - x(), _("Nazwa"), false);
-    if (lc.date) header(FolderView::ByDate, lc.date_x, FolderView::COL_DATE, _("Data modyfikacji"), false);
-    if (lc.size) header(FolderView::BySize, lc.size_x, FolderView::COL_SIZE, _("Rozmiar"), true);
-    if (lc.kind) header(FolderView::ByKind, lc.kind_x, FolderView::COL_KIND, _("Rodzaj"), false);
+    header(FolderView::ByName, x(), lc.date_x - x(), _("Name"), false);
+    if (lc.date) header(FolderView::ByDate, lc.date_x, FolderView::COL_DATE, _("Date Modified"), false);
+    if (lc.size) header(FolderView::BySize, lc.size_x, FolderView::COL_SIZE, _("Size"), true);
+    if (lc.kind) header(FolderView::ByKind, lc.kind_x, FolderView::COL_KIND, _("Kind"), false);
     for (int cx : {lc.date_x, lc.size_x, lc.kind_x}) {
       if (cx >= x() + w() - SCROLL_W) continue;
       fl_color(SHADOW); fl_yxline(cx, hy + 2, hy + HEADER_H - 3);

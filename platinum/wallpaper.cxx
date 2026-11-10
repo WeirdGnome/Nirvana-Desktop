@@ -24,8 +24,8 @@ namespace fs = std::filesystem;
 namespace plat {
 
 const char *const WALLPAPER_MODES[] = {"wypelnij", "dopasuj", "rozciagnij", "srodek", "kafelki", nullptr};
-const char *const WALLPAPER_MODE_NAMES[] = {N_("Wypełnij ekran"), N_("Dopasuj"), N_("Rozciągnij"), N_("Na środku"),
-                                            N_("Sąsiadująco"), nullptr};
+const char *const WALLPAPER_MODE_NAMES[] = {N_("Fill screen"), N_("Fit"), N_("Stretch"), N_("Center"),
+                                            N_("Tile"), nullptr};
 
 bool is_image_file(const std::string &path) {
   static const char *ext[] = {".png", ".jpg", ".jpeg", ".gif", ".bmp", ".svg", ".svgz", ".xpm", ".xbm"};

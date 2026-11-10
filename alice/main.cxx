@@ -22,7 +22,7 @@ int main(int argc, char **argv) {
   const char *which = argc > 1 ? argv[1] : "wyglad";
   if (!strcmp(which, "schemat") && argc > 2) {
     plat::Scheme sc;
-    if (!plat::load_scheme(argv[2], sc)) { fprintf(stderr, "%s\n", plat::fmt(_("Nie ma schematu: %1"), argv[2]).c_str()); return 1; }
+    if (!plat::load_scheme(argv[2], sc)) { fprintf(stderr, "%s\n", plat::fmt(_("No such scheme: %1"), argv[2]).c_str()); return 1; }
     plat::Appearance a = plat::read_appearance();
     a.scheme = argv[2];
     if (!plat::write_appearance(a)) return 1;

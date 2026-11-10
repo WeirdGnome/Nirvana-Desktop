@@ -40,14 +40,14 @@ const char *const PATTERNS[] = {"gladki", "kropki", "groszki", "krata", "kratka"
                                 "ukosne", "paski_poziome", "paski_pionowe", "cegly", "raster", "romby",
                                 "krzyzyki", "zygzak", "jodelka", "tkanina", "fale", "luski", "gwiazdki",
                                 "piasek", nullptr};
-const char *const PATTERN_NAMES[] = {N_("Gładki"), N_("Kropki"), N_("Groszki"), N_("Krata"), N_("Drobna kratka"), N_("Szachownica"),
-                                     N_("Ukośne prążki"), N_("Paski poziome"), N_("Paski pionowe"), N_("Cegiełki"),
-                                     N_("Raster (Amiga)"), N_("Romby"), N_("Krzyżyki"), N_("Zygzak"), N_("Jodełka"), N_("Tkanina"),
-                                     N_("Fale"), N_("Łuski"), N_("Gwiazdki"), N_("Piasek"), nullptr};
+const char *const PATTERN_NAMES[] = {N_("Plain"), N_("Dots"), N_("Polka dots"), N_("Grid"), N_("Fine grid"), N_("Checkerboard"),
+                                     N_("Diagonal stripes"), N_("Horizontal stripes"), N_("Vertical stripes"), N_("Bricks"),
+                                     N_("Raster (Amiga)"), N_("Diamonds"), N_("Crosses"), N_("Zigzag"), N_("Herringbone"), N_("Weave"),
+                                     N_("Waves"), N_("Scales"), N_("Stars"), N_("Sand"), nullptr};
 const char *const BACKGROUNDS[] = {"wzor", "kolor", "gradient", nullptr};
-const char *const BACKGROUND_NAMES[] = {N_("Wzór"), N_("Jednolity kolor"), N_("Gradient"), nullptr};
+const char *const BACKGROUND_NAMES[] = {N_("Pattern"), N_("Solid color"), N_("Gradient"), nullptr};
 const char *const GRADIENTS[] = {"pionowy", "poziomy", "ukosny", "promienisty", nullptr};
-const char *const GRADIENT_NAMES[] = {N_("Pionowy"), N_("Poziomy"), N_("Ukośny"), N_("Promienisty"), nullptr};
+const char *const GRADIENT_NAMES[] = {N_("Vertical"), N_("Horizontal"), N_("Diagonal"), N_("Radial"), nullptr};
 
 static Scheme g_scheme;
 static Appearance g_app;
@@ -123,7 +123,7 @@ std::vector<std::string> scheme_dirs() {
 }
 
 // nazwy schematów z plików w schematy/ - do tłumaczenia (panel Wygląd woła _(nazwa))
-[[maybe_unused]] static const char *const SCHEME_NAMES[] = {N_("Grafit")};
+[[maybe_unused]] static const char *const SCHEME_NAMES[] = {N_("Graphite")};
 
 Scheme builtin_platinum() {
   Scheme s;
@@ -285,7 +285,7 @@ bool write_appearance(const Appearance &a) {
     std::ofstream out(tmp);
     if (!out) return false;
     static const char *st[] = {"prazki", "kolor", "gradient"};
-    out << "# Nirvana Desktop - ustawienia wyglądu (panel Wygląd)\n"
+    out << "# Nirvana Desktop - appearance settings (Appearance panel)\n"
         << "schemat=" << a.scheme << "\n"
         << "styl_paska=" << (a.style < 0 ? "" : st[a.style]) << "\n"
         << "biurko=" << (a.desk < 0 ? "" : color_str((unsigned)a.desk)) << "\n"

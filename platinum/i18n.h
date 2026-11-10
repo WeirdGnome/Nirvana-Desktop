@@ -1,17 +1,16 @@
 // Nirvana Desktop - tłumaczenia (gettext, domena "nirvana")
 //
-// Teksty w kodzie są po polsku i to one są kluczami tłumaczeń (msgid);
-// inne języki przychodzą z plików po/<język>.po (np. po/en.po).
+// Texts in the code are in English and are the translation keys (msgid);
+// other languages come from po/<lang>.po (e.g. po/pl.po).
 //
-//   _("Zamknij")                  tekst do przetłumaczenia
-//   N_("Gładki")                  tylko oznaczenie (tablice statyczne) - tłumaczy _() przy użyciu
-//   trp(n, "element", "elementy", "elementów")
-//                                 liczba mnoga: po polsku 3 formy, w tłumaczeniu wg reguł języka
-//   P_("Okno/Nowy folder")        ścieżka menu - tr_path() tłumaczy człony
-//   fmt(_("Usunąć „%1”?"), nazwa) szablon z %1..%9 - tłumacz może zmienić szyk zdania
+//   _("Close")                    text to translate
+//   N_("Plain")                   mark only (static tables) - _() translates it where used
+//   trn(n, "%1 item", "%1 items") plural: English forms in code, translation follows its language
+//   P_("Window/New Folder")       menu path - tr_path() translates each part
+//   fmt(_("Delete “%1”?"), name)  template with %1..%9 - translators may reorder the sentence
 //
-// Język: ~/.config/nirvana/jezyk ("pl", "en" albo pusty = jak w systemie).
-// Przy systemie w innym języku niż polski i bez tłumaczenia - angielski.
+// Language: ~/.config/nirvana/jezyk ("en", "pl" or empty = system language).
+// English by default; Polish when the system locale is Polish.
 #pragma once
 
 #include <string>
@@ -25,7 +24,7 @@ namespace plat {
 void migrate_old_config();
 void init_i18n();                       // woła plat::init(); można też samodzielnie (Insight)
 const char *tr(const char *msgid);
-std::string trp(long n, const char *one, const char *few, const char *many);
+std::string trn(long n, const char *one, const char *other);
 std::string fmt(const std::string &pattern, const std::vector<std::string> &args);
 template <typename... A> std::string fmt(const std::string &pattern, const A &...args) {
   return fmt(pattern, std::vector<std::string>{std::string(args)...});
@@ -34,9 +33,9 @@ template <typename... A> std::string fmt(const std::string &pattern, const A &..
 // więc ta sama nazwa podmenu w różnych pozycjach ma jedno tłumaczenie.
 std::string tr_path(const char *path);
 std::string date_time(long t);         // "8 lis 2026, 21:40" / "Nov 8, 2026, 21:40"
-std::string decimal(std::string s);     // "3.4" -> "3,4" po polsku
-std::string language();                 // "pl", "en"... (język, w którym działa interfejs)
-std::string language_setting();         // zapisany wybór: "", "pl", "en"
+std::string decimal(std::string s);     // "3.4" -> "3,4" in Polish
+std::string language();                 // "en", "pl"... (language the interface runs in)
+std::string language_setting();         // saved choice: "", "en", "pl"
 bool set_language_setting(const std::string &lang);
 std::vector<std::pair<std::string, std::string>> available_languages();   // kod, nazwa własna
 

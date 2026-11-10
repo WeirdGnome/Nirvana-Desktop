@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""Tworzy po/nirvana.pot z kodu i uzupełnia po/*.po (msgmerge).
+"""Builds po/nirvana.pot from the code and updates po/*.po (msgmerge).
 
-  _("…")  N_("…")  trp(n, "jeden", "kilka", "wiele")  - xgettext
-  P_("Okno/Sortuj/według nazwy")                       - ścieżki menu: każdy człon osobno
-Uruchom z katalogu głównego: tools/i18n/pot.py"""
+  _("…")  N_("…")  trn(n, "one", "other")             - xgettext
+  P_("Window/Sort/by Name")                            - menu paths: each part separately
+Run from the top directory: tools/i18n/pot.py"""
 import glob, os, re, subprocess, sys
 sys.path.insert(0, os.path.dirname(__file__))
 from literaly import literals
@@ -13,7 +13,7 @@ os.chdir(root)
 src = sorted(f for d in ("alice", "audio", "denise", "insight", "net", "platinum", "power", "shell")
              for f in glob.glob(d + "/*.cxx"))
 pot = "po/nirvana.pot"
-subprocess.run(["xgettext", "--from-code=UTF-8", "--language=C++", "-k_", "-kN_", "-ktr", "-ktrp:2,3",
+subprocess.run(["xgettext", "--from-code=UTF-8", "--language=C++", "-k_", "-kN_", "-ktr", "-ktrn:2,3",
                 "--add-comments=TRANSLATORS:", "--package-name=Nirvana Desktop", "--package-version=0.1",
                 "-o", pot] + src, check=True)
 

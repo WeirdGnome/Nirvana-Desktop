@@ -207,10 +207,10 @@ void init(bool root) {
   }
   // przyciski okien dialogowych FLTK (fl_alert, wybór koloru...) po polsku
   fl_ok = _("OK");
-  fl_cancel = _("Anuluj");
-  fl_yes = _("Tak");
-  fl_no = _("Nie");
-  fl_close = _("Zamknij");
+  fl_cancel = _("Cancel");
+  fl_yes = _("Yes");
+  fl_no = _("No");
+  fl_close = _("Close");
   // podpowiedzi (dok, aplety, gary): dymek pomocy jak w Mac OS
   Fl_Tooltip::font(FONT_SMALL);
   Fl_Tooltip::size(SIZE_SMALL + 1);
@@ -742,27 +742,27 @@ std::string ellipsize(const std::string &s, int max_w) {
 }
 
 std::string polish_items(int n) {
-  return fmt(trp(n, "%1 element", "%1 elementy", "%1 elementów"), std::to_string(n));
+  return fmt(trn(n, "%1 item", "%1 items"), std::to_string(n));
 }
 
 // Okno wyboru pliku FLTK po polsku (Sieć: import VPN, Wygląd: tapeta).
 void polish_file_chooser() {
-  fl_cancel = _("Anuluj");
-  fl_ok = _("Wybierz");
-  Fl_File_Chooser::add_favorites_label = _("Dodaj do ulubionych");
-  Fl_File_Chooser::all_files_label = _("Wszystkie pliki (*)");
-  Fl_File_Chooser::custom_filter_label = _("Własny filtr");
-  Fl_File_Chooser::existing_file_label = _("Plik już istnieje. Zastąpić go?");
-  Fl_File_Chooser::favorites_label = _("Ulubione");
-  Fl_File_Chooser::filename_label = _("Plik:");
-  Fl_File_Chooser::filesystems_label = _("Dyski");
-  Fl_File_Chooser::hidden_label = _("Ukryte pliki");
-  Fl_File_Chooser::manage_favorites_label = _("Zarządzaj ulubionymi");
-  Fl_File_Chooser::new_directory_label = _("Nazwa nowego folderu:");
-  Fl_File_Chooser::new_directory_tooltip = _("Nowy folder");
-  Fl_File_Chooser::preview_label = _("Podgląd");
-  Fl_File_Chooser::save_label = _("Zapisz");
-  Fl_File_Chooser::show_label = _("Pokaż:");
+  fl_cancel = _("Cancel");
+  fl_ok = _("Choose");
+  Fl_File_Chooser::add_favorites_label = _("Add to Favorites");
+  Fl_File_Chooser::all_files_label = _("All Files (*)");
+  Fl_File_Chooser::custom_filter_label = _("Custom Filter");
+  Fl_File_Chooser::existing_file_label = _("The file already exists. Replace it?");
+  Fl_File_Chooser::favorites_label = _("Favorites");
+  Fl_File_Chooser::filename_label = _("File:");
+  Fl_File_Chooser::filesystems_label = _("Disks");
+  Fl_File_Chooser::hidden_label = _("Hidden files");
+  Fl_File_Chooser::manage_favorites_label = _("Manage Favorites");
+  Fl_File_Chooser::new_directory_label = _("New folder name:");
+  Fl_File_Chooser::new_directory_tooltip = _("New Folder");
+  Fl_File_Chooser::preview_label = _("Preview");
+  Fl_File_Chooser::save_label = _("Save");
+  Fl_File_Chooser::show_label = _("Show:");
 }
 
 } // namespace plat

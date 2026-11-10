@@ -21,7 +21,7 @@
 
 namespace net {
 using plat::fmt;
-using plat::trp;
+using plat::trn;
 
 static const char *nmcli() {
   const char *e = getenv("NIRVANA_NMCLI");   // do testów: atrapa nmcli
@@ -90,28 +90,28 @@ static std::string pl_error(const std::string &raw, bool had_password = false) {
   auto has = [&](const char *s) { return strcasestr(raw.c_str(), s) != nullptr; };
   if (has("Secrets were required") || has("no secrets") || has("802-1x") || has("password is required") ||
       has("secrets are required") || has("No agents were available"))
-    return had_password ? _("Nieprawidłowe hasło.") : NEED_PASSWORD;   // znacznik, nie tłumaczymy
-  if (has("No network with SSID")) return _("Nie znaleziono tej sieci w zasięgu.");
+    return had_password ? _("Wrong password.") : NEED_PASSWORD;   // znacznik, nie tłumaczymy
+  if (has("No network with SSID")) return _("This network is not in range.");
   if (has("not authorized") || has("Insufficient privileges") || has("PermissionDenied"))
-    return _("Brak uprawnień do zmiany ustawień sieci.");
+    return _("You are not allowed to change network settings.");
   if (has("NetworkManager is not running") || has("ServiceUnknown"))
-    return _("NetworkManager nie działa.");
-  if (has("timed out") || has("Timeout")) return _("Przekroczono czas oczekiwania na połączenie.");
+    return _("NetworkManager is not running.");
+  if (has("timed out") || has("Timeout")) return _("The connection timed out.");
   if (has("IP configuration could not be reserved") || has("dhcp"))
-    return _("Nie udało się uzyskać adresu IP.");
+    return _("Could not get an IP address.");
   if (has("invalid IP") || has("invalid address") || has("ipv4.addresses") || has("ipv4.gateway"))
-    return _("Nieprawidłowy adres IP.");
-  if (has("unknown connection")) return _("Nie ma takiego połączenia.");
+    return _("Invalid IP address.");
+  if (has("unknown connection")) return _("No such connection.");
   if (has("WireGuard interface") && has("not supported"))
-    return _("Jądro systemu nie obsługuje WireGuard (brak modułu wireguard).");
+    return _("The kernel does not support WireGuard (no wireguard module).");
   if (has("plugin") && has("not installed"))
-    return _("Brak wtyczki VPN NetworkManagera dla tego połączenia.");
-  if (has("No such file") && has("nmcli")) return _("Brak programu nmcli (NetworkManager).");
+    return _("The NetworkManager VPN plugin for this connection is missing.");
+  if (has("No such file") && has("nmcli")) return _("nmcli is not installed (NetworkManager).");
   std::string m = raw.substr(0, raw.find('\n'));
   if (m.rfind("Error: ", 0) == 0) m = m.substr(7);
-  return m.empty() ? std::string(_("Operacja się nie udała.")) : fmt(_("Nie udało się: %1"), m);
+  return m.empty() ? std::string(_("The operation failed.")) : fmt(_("Failed: %1"), m);
 }
-const char *const NEED_PASSWORD = "Ta sieć wymaga hasła.";
+const char *const NEED_PASSWORD = "This network requires a password.";
 
 // Pola w trybie -t: dwukropek rozdziela, "\:" i "\\" to znaki dosłowne.
 static std::vector<std::string> fields(const std::string &line) {
@@ -188,9 +188,9 @@ State query() {
   State st;
   std::string out;
   int code = run({"-t", "-f", "RUNNING", "general"}, out);
-  if (code == 127 || code < 0) { st.problem = _("Brak programu nmcli (pakiet network-manager)."); return st; }
+  if (code == 127 || code < 0) { st.problem = _("nmcli is not installed (network-manager package)."); return st; }
   if (code != 0 || out.find("running") == std::string::npos) {
-    st.problem = _("NetworkManager nie działa.");
+    st.problem = _("NetworkManager is not running.");
     return st;
   }
   st.available = true;
@@ -319,20 +319,20 @@ Details details(const std::string &iface) {
 const char *type_name(const std::string &t) {
   if (t == "ethernet") return "Ethernet";
   if (t == "wifi") return "Wi-Fi";
-  if (t == "gsm") return _("Modem komórkowy");
+  if (t == "gsm") return _("Mobile modem");
   if (t == "bt") return "Bluetooth";
   if (t == "wireguard") return "WireGuard";
   if (t == "vpn") return "VPN";
-  return _("Sieć");
+  return _("Network");
 }
 
 const char *state_name(DevState s) {
   switch (s) {
-    case DevState::Connected: return _("połączono");
-    case DevState::Connecting: return _("łączenie…");
-    case DevState::Unavailable: return _("niedostępne");
-    case DevState::Unmanaged: return _("poza NetworkManagerem");
-    default: return _("rozłączono");
+    case DevState::Connected: return _("connected");
+    case DevState::Connecting: return _("connecting…");
+    case DevState::Unavailable: return _("unavailable");
+    case DevState::Unmanaged: return _("not managed by NetworkManager");
+    default: return _("disconnected");
   }
 }
 
@@ -365,10 +365,10 @@ void rescan() { run_async({"device", "wifi", "rescan"}, nullptr); }
 
 void set_wifi(bool on, Done done) { simple({"radio", "wifi", on ? "on" : "off"}, done); }
 void set_airplane(bool on, Done done) {
-  simple({"radio", "all", on ? "off" : "on"}, done, on ? _("Tryb samolotowy włączony.") : _("Tryb samolotowy wyłączony."));
+  simple({"radio", "all", on ? "off" : "on"}, done, on ? _("Airplane mode is on.") : _("Airplane mode is off."));
 }
 void remove_connection(const std::string &uuid, Done done) {
-  simple({"connection", "delete", "uuid", uuid}, done, _("Usunięto połączenie."));
+  simple({"connection", "delete", "uuid", uuid}, done, _("Connection deleted."));
 }
 
 // ---------------------------------------------------------------------------
@@ -427,17 +427,17 @@ void vpn_import(const std::string &file, Done done) {
     head.assign(buf, n);
     fclose(f);
   } else {
-    done(false, _("Nie można odczytać pliku."));
+    done(false, _("Cannot read the file."));
     return;
   }
   if (head.find("[Interface]") != std::string::npos) type = "wireguard";
   else if (ends(".ovpn") || head.find("\nremote ") != std::string::npos || head.rfind("client", 0) == 0) type = "openvpn";
   else if (ends(".pcf")) type = "vpnc";
-  else { done(false, _("Nieznany format. Obsługiwane: WireGuard (.conf), OpenVPN (.ovpn), Cisco VPNC (.pcf).")); return; }
+  else { done(false, _("Unknown format. Supported: WireGuard (.conf), OpenVPN (.ovpn), Cisco VPNC (.pcf).")); return; }
   if (type != "wireguard") {
     auto pl = vpn_plugins();
     if (std::find(pl.begin(), pl.end(), type) == pl.end()) {
-      done(false, fmt(_("Brak wtyczki NetworkManagera dla %1: zainstaluj pakiet network-manager-%2."),
+      done(false, fmt(_("The NetworkManager plugin for %1 is missing: install the network-manager-%2 package."),
                       vpn_kind_name(type), type));
       return;
     }
@@ -446,7 +446,7 @@ void vpn_import(const std::string &file, Done done) {
   run_async({"connection", "import", "type", type, "file", file}, [done, type](int code, const std::string &out) {
     if (code != 0) {
       if (type == "wireguard" && strcasestr(out.c_str(), "interface name"))
-        done(false, _("Nazwa pliku WireGuard musi być krótką nazwą interfejsu (np. wg0.conf, firma.conf)."));
+        done(false, _("A WireGuard file name must be a short interface name (e.g. wg0.conf, office.conf)."));
       else done(false, pl_error(out));
       return;
     }
@@ -480,7 +480,7 @@ void vpn_up(const std::string &uuid, const std::string &user, const std::string 
       char tmpl[512];
       snprintf(tmpl, sizeof tmpl, "%s/nirvana-vpn-XXXXXX", dir.c_str());
       int fd = mkstemp(tmpl);
-      if (fd < 0) { done(false, _("Nie można utworzyć pliku tymczasowego.")); return; }
+      if (fd < 0) { done(false, _("Cannot create a temporary file.")); return; }
       fchmod(fd, 0600);
       std::string body = "vpn.secrets.password:" + password + "\n";
       if (write(fd, body.data(), body.size()) != (ssize_t)body.size()) {}
@@ -495,12 +495,12 @@ void vpn_up(const std::string &uuid, const std::string &user, const std::string 
         // Limit czasu: np. OpenVPN po złym haśle ponawia logowanie bez końca.
         // Przerywamy próbę, żeby połączenie nie wisiało w stanie "łączenie".
         run_async({"connection", "down", "uuid", uuid}, [done, had](int, const std::string &) {
-          if (done) done(false, had ? _("Serwer VPN nie odpowiada albo odrzucił logowanie. Sprawdź nazwę użytkownika i hasło.")
-                                    : _("Przekroczono czas oczekiwania na połączenie VPN."));
+          if (done) done(false, had ? _("The VPN server does not respond or rejected the login. Check the user name and password.")
+                                    : _("The VPN connection timed out."));
         });
         return;
       }
-      if (done) done(code == 0, code == 0 ? _("Połączono z VPN.") : pl_error(out, had));
+      if (done) done(code == 0, code == 0 ? _("Connected to VPN.") : pl_error(out, had));
     });
   };
   if (!user.empty() && user != vpn_username(uuid)) {
@@ -516,16 +516,16 @@ void vpn_up(const std::string &uuid, const std::string &user, const std::string 
 }
 
 void vpn_down(const std::string &uuid, Done done) {
-  simple({"connection", "down", "uuid", uuid}, done, _("Rozłączono VPN."));
+  simple({"connection", "down", "uuid", uuid}, done, _("VPN disconnected."));
 }
 void connect_device(const std::string &iface, Done done) {
-  simple({"--wait", "45", "device", "connect", iface}, done, _("Połączono."));
+  simple({"--wait", "45", "device", "connect", iface}, done, _("Connected."));
 }
 void disconnect_device(const std::string &iface, Done done) {
-  simple({"device", "disconnect", iface}, done, _("Rozłączono."));
+  simple({"device", "disconnect", iface}, done, _("Disconnected."));
 }
 void forget(const std::string &connection, Done done) {
-  simple({"connection", "delete", "id", connection}, done, _("Zapomniano sieć."));
+  simple({"connection", "delete", "id", connection}, done, _("Network forgotten."));
 }
 
 void set_ipv4(const std::string &conn, bool manual, const std::string &address,
@@ -541,7 +541,7 @@ void set_ipv4(const std::string &conn, bool manual, const std::string &address,
   }
   run_async(a, [conn, done](int code, const std::string &out) {
     if (code != 0) { if (done) done(false, pl_error(out)); return; }
-    simple({"--wait", "45", "connection", "up", "id", conn}, done, _("Zapisano ustawienia IPv4."));
+    simple({"--wait", "45", "connection", "up", "id", conn}, done, _("IPv4 settings saved."));
   });
 }
 
@@ -673,14 +673,14 @@ static void watch_activation(void *d) {
   std::string err;
   DBusConnection *c = bus(err);
   int st = c ? active_state(c, p->active) : -1;
-  if (st == 2) { auto done = p->done; delete p; if (done) done(true, _("Połączono.")); return; }
+  if (st == 2) { auto done = p->done; delete p; if (done) done(true, _("Connected.")); return; }
   if (st == 1 && ++p->ticks < 60) { Fl::repeat_timeout(0.75, watch_activation, d); return; }
   // Nie wyszło (zwykle złe hasło): usuń świeżo dodany profil, żeby nie zapamiętać błędnego hasła.
   if (c && !p->settings.empty()) delete_settings(c, p->settings);
   auto done = p->done;
   delete p;
-  if (done) done(false, st == 1 ? _("Przekroczono czas oczekiwania na połączenie.")
-                                 : _("Nie udało się połączyć. Sprawdź hasło."));
+  if (done) done(false, st == 1 ? _("The connection timed out.")
+                                 : _("Could not connect. Check the password."));
 }
 
 // AddAndActivateConnection: profil Wi-Fi z hasłem przekazanym przez D-Bus.
@@ -741,14 +741,14 @@ static void connect_with_password(const std::string &ssid, const std::string &se
   std::string iface;
   for (auto &n : st.networks) if (n.ssid == ssid) iface = n.device;
   if (iface.empty()) for (auto &d : st.devices) if (d.type == "wifi") { iface = d.iface; break; }
-  if (iface.empty()) { done(false, _("Brak karty Wi-Fi.")); return; }
+  if (iface.empty()) { done(false, _("No Wi-Fi adapter.")); return; }
   // stary profil (np. z nieaktualnym hasłem) zastępujemy nowym
   for (auto &s : st.saved_wifi)
     if (s == ssid) { std::string o; run({"connection", "delete", "id", ssid}, o); }
 
   std::string err;
   DBusConnection *c = bus(err);
-  if (!c) { done(false, _("Brak połączenia z magistralą systemową D-Bus.")); return; }
+  if (!c) { done(false, _("No connection to the system D-Bus.")); return; }
   std::string dev = device_path(c, iface, err);
   if (dev.empty()) { done(false, pl_error(err)); return; }
 
@@ -765,7 +765,7 @@ void connect_wifi(const std::string &ssid, const std::string &security,
     // Tryb testowy z atrapą nmcli (bez prawdziwej karty Wi-Fi nie ma czego wołać przez
     // D-Bus). Tylko tu hasło idzie w argumentach - atrapa i tak jest lokalnym skryptem.
     run_async({"--wait", "45", "device", "wifi", "connect", ssid, "password", password},
-              [done](int code, const std::string &out) { if (done) done(code == 0, code == 0 ? _("Połączono.") : pl_error(out, true)); });
+              [done](int code, const std::string &out) { if (done) done(code == 0, code == 0 ? _("Connected.") : pl_error(out, true)); });
     return;
   }
   if (!password.empty() || (hidden && !security.empty() && security != "--")) {
@@ -775,7 +775,7 @@ void connect_wifi(const std::string &ssid, const std::string &security,
   std::vector<std::string> a = {"--wait", "45", "device", "wifi", "connect", ssid};
   if (hidden) a.insert(a.end(), {"hidden", "yes"});
   run_async(a, [done, ssid](int code, const std::string &out) {
-    if (code == 0) { if (done) done(true, _("Połączono.")); return; }
+    if (code == 0) { if (done) done(true, _("Connected.")); return; }
     // nmcli zostawia profil po nieudanej próbie - sprzątamy, żeby kolejna zapytała o hasło
     if (strcasestr(out.c_str(), "Secrets were required")) {
       std::string o;
@@ -786,28 +786,28 @@ void connect_wifi(const std::string &ssid, const std::string &security,
 }
 
 void hotspot(const std::string &ssid, const std::string &password, Done done) {
-  if (password.size() < 8) { done(false, _("Hasło hotspotu musi mieć co najmniej 8 znaków.")); return; }
+  if (password.size() < 8) { done(false, _("The hotspot password must be at least 8 characters long.")); return; }
   if (getenv("NIRVANA_NMCLI")) {   // atrapa (testy bez karty Wi-Fi)
-    simple({"device", "wifi", "hotspot", "ssid", ssid, "password", password}, done, _("Hotspot włączony."));
+    simple({"device", "wifi", "hotspot", "ssid", ssid, "password", password}, done, _("Hotspot is on."));
     return;
   }
   State st = query();
   std::string iface;
   for (auto &d : st.devices) if (d.type == "wifi") { iface = d.iface; break; }
-  if (iface.empty()) { done(false, _("Brak karty Wi-Fi.")); return; }
+  if (iface.empty()) { done(false, _("No Wi-Fi adapter.")); return; }
   std::string o;
   run({"connection", "delete", "id", "Hotspot"}, o);   // poprzedni hotspot (inne hasło/nazwa)
   std::string err;
   DBusConnection *c = bus(err);
-  if (!c) { done(false, _("Brak połączenia z magistralą systemową D-Bus.")); return; }
+  if (!c) { done(false, _("No connection to the system D-Bus.")); return; }
   std::string dev = device_path(c, iface, err);
   if (dev.empty()) { done(false, pl_error(err)); return; }
   std::string conn, act;
   err = add_and_activate(c, dev, ssid, "WPA2", password, false, conn, act, true);
   if (!err.empty()) { done(false, pl_error(err)); return; }
   auto *p = new Pending{act, "", [done](bool ok, const std::string &m) {
-    done(ok, ok ? _("Hotspot włączony.") : (m == _("Nie udało się połączyć. Sprawdź hasło.")
-                                          ? _("Nie udało się włączyć hotspotu (karta może nie obsługiwać trybu AP).") : m));
+    done(ok, ok ? _("Hotspot is on.") : (m == _("Could not connect. Check the password.")
+                                          ? _("Could not turn the hotspot on (the adapter may not support AP mode).") : m));
   }};
   Fl::add_timeout(0.75, watch_activation, p);
 }

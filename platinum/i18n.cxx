@@ -20,7 +20,7 @@ namespace plat {
 
 static const char *DOMAIN = "nirvana";
 static bool g_active = false;          // czy tłumaczymy (false = teksty polskie z kodu)
-static std::string g_lang = "pl";
+static std::string g_lang = "en";
 
 // Katalog .mo czytamy sami zamiast przez gettext(): glibc nie tłumaczy przy
 // LC_MESSAGES=C/C.UTF-8, a minimalny system często nie ma wygenerowanych
@@ -160,8 +160,8 @@ static std::string find_catalog(const std::string &lang) {
 }
 
 std::vector<std::pair<std::string, std::string>> available_languages() {
-  std::vector<std::pair<std::string, std::string>> v = {{"pl", "Polski"}};
-  if (!find_catalog("en").empty()) v.push_back({"en", "English"});
+  std::vector<std::pair<std::string, std::string>> v = {{"en", "English"}};
+  if (!find_catalog("pl").empty()) v.push_back({"pl", "Polski"});
   return v;
 }
 
@@ -184,17 +184,15 @@ void init_i18n() {
   done = true;
   migrate_old_config();
   std::string want = language_setting();
-  if (want.empty() || want == "auto") {
-    want = system_language();
-    if (want.empty()) want = "en";                       // LANG=C: angielski
-    else if (want != "pl" && find_catalog(want).empty()) want = "en";
-  }
-  g_lang = want;
-  if (want == "pl") { g_active = false; return; }       // polski jest w kodzie
+  if (want.empty() || want == "auto") want = system_language();   // pl_PL.UTF-8 -> pl
+  // angielski jest w kodzie; inny język tylko wtedy, gdy jest jego katalog .mo
+  g_lang = "en";
+  if (want.empty() || want == "en") return;
   std::string dir = find_catalog(want);
-  if (dir.empty()) { g_lang = "pl"; return; }            // brak tłumaczenia - zostaje polski
+  if (dir.empty()) return;
+  g_lang = want;
 
-  if (!load_mo(dir + "/" + want + "/LC_MESSAGES/" + DOMAIN + ".mo")) { g_lang = "pl"; return; }
+  if (!load_mo(dir + "/" + want + "/LC_MESSAGES/" + DOMAIN + ".mo")) { g_lang = "en"; return; }
   g_active = true;
 }
 
@@ -204,20 +202,15 @@ const char *tr(const char *msgid) {
   return it == g_tr.end() ? msgid : it->second;
 }
 
-std::string trp(long n, const char *one, const char *few, const char *many) {
+std::string trn(long n, const char *one, const char *other) {
+  unsigned long a = (unsigned long)(n < 0 ? -n : n);
   if (g_active) {
-    // w pliku .po: msgid = forma pojedyncza, msgid_plural = forma "kilka"
+    // w pliku .po: msgid = forma pojedyncza, msgstr[0..] = formy wg Plural-Forms
     auto it = g_trp.find(one);
-    if (it != g_trp.end() && !it->second.empty()) {
-      size_t i = plural_index((unsigned long)(n < 0 ? -n : n));
-      return it->second[std::min(i, it->second.size() - 1)];
-    }
+    if (it != g_trp.end() && !it->second.empty())
+      return it->second[std::min(plural_index(a), it->second.size() - 1)];
   }
-  long a = n < 0 ? -n : n;
-  if (a == 1) return one;
-  long d = a % 10, h = a % 100;
-  if (d >= 2 && d <= 4 && (h < 12 || h > 14)) return few;
-  return many;
+  return a == 1 ? one : other;
 }
 
 std::string fmt(const std::string &p, const std::vector<std::string> &args) {
@@ -252,15 +245,15 @@ std::string tr_path(const char *path) {
 }
 
 std::string date_time(long t) {
-  static const char *mon[] = {N_("sty"), N_("lut"), N_("mar"), N_("kwi"), N_("maj"), N_("cze"),
-                              N_("lip"), N_("sie"), N_("wrz"), N_("paź"), N_("lis"), N_("gru")};
+  static const char *mon[] = {N_("Jan"), N_("Feb"), N_("Mar"), N_("Apr"), N_("May"), N_("Jun"),
+                              N_("Jul"), N_("Aug"), N_("Sep"), N_("Oct"), N_("Nov"), N_("Dec")};
   time_t tt = (time_t)t;
   struct tm tm;
   localtime_r(&tt, &tm);
   char hm[16];
   snprintf(hm, sizeof hm, "%02d:%02d", tm.tm_hour, tm.tm_min);
   // TRANSLATORS: data: %1 dzień, %2 miesiąc (skrót), %3 rok, %4 godzina - można zmienić szyk
-  return fmt(tr("%1 %2 %3, %4"), std::to_string(tm.tm_mday), tr(mon[tm.tm_mon]),
+  return fmt(tr("%2 %1, %3, %4"), std::to_string(tm.tm_mday), tr(mon[tm.tm_mon]),
              std::to_string(tm.tm_year + 1900), hm);
 }
 

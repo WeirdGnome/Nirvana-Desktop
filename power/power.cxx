@@ -149,7 +149,7 @@ static std::string login_can(DBusConnection *c, const char *what) {
 
 static std::string login_action(const char *method) {
   DBusConnection *c = bus(DBUS_BUS_SYSTEM);
-  if (!c) return _("Brak magistrali systemowej D-Bus.");
+  if (!c) return _("No system D-Bus.");
   DBusMessage *m = dbus_message_new_method_call(LOGIN, LOGIN_PATH, LOGIN_MGR, method);
   dbus_bool_t interactive = TRUE;   // polkit może zapytać o hasło
   dbus_message_append_args(m, DBUS_TYPE_BOOLEAN, &interactive, DBUS_TYPE_INVALID);
@@ -157,10 +157,10 @@ static std::string login_action(const char *method) {
   DBusMessage *r = call(c, m, &err, 30000);
   if (!r) {
     if (err.find("inhibit") != std::string::npos || err.find("Inhibit") != std::string::npos)
-      return _("Wstrzymane przez inny program albo tryb projekcji.");
+      return _("Blocked by another program or by presentation mode.");
     if (err.find("ServiceUnknown") != std::string::npos || err.find("was not provided") != std::string::npos)
-      return _("Brak usługi logind/elogind.");
-    return plat::fmt(_("Nie udało się: %1"), err);
+      return _("The logind/elogind service is missing.");
+    return plat::fmt(_("Failed: %1"), err);
   }
   dbus_message_unref(r);
   return "";
@@ -263,22 +263,22 @@ State query() {
 
 std::string battery_text(const State &s) {
   using plat::fmt;
-  if (s.percent < 0) return _("Zasilanie sieciowe");
+  if (s.percent < 0) return _("AC power");
   std::string pct = std::to_string(s.percent) + "%";
   std::string tm;
   if (s.minutes > 0 && s.minutes < 60 * 48) {
     int h = s.minutes / 60, m = s.minutes % 60;
     tm = h ? fmt(_("%1 h %2 min"), std::to_string(h), std::to_string(m)) : fmt(_("%1 min"), std::to_string(m));
   }
-  if (s.charging) return tm.empty() ? fmt(_("%1, ładowanie"), pct) : fmt(_("%1, ładowanie (pełna za ok. %2)"), pct, tm);
-  if (s.on_ac) return fmt(_("%1, zasilacz"), pct);
-  return tm.empty() ? pct : fmt(_("%1, zostało ok. %2"), pct, tm);
+  if (s.charging) return tm.empty() ? fmt(_("%1, charging"), pct) : fmt(_("%1, charging (full in about %2)"), pct, tm);
+  if (s.on_ac) return fmt(_("%1, on power adapter"), pct);
+  return tm.empty() ? pct : fmt(_("%1, about %2 left"), pct, tm);
 }
 
 const char *profile_name(const std::string &p) {
-  if (p == "power-saver") return _("Oszczędzanie energii");
-  if (p == "balanced") return _("Zrównoważony");
-  if (p == "performance") return _("Wydajność");
+  if (p == "power-saver") return _("Power saver");
+  if (p == "balanced") return _("Balanced");
+  if (p == "performance") return _("Performance");
   return p.c_str();
 }
 
@@ -372,7 +372,7 @@ std::vector<std::string> set_projection(bool on) {
   int ev, er;
   if (on) {
     // 1. ekran X: wygaszacz i DPMS
-    if (XScreenSaverQueryExtension(dpy, &ev, &er)) { XScreenSaverSuspend(dpy, True); done.push_back(_("wygaszanie ekranu")); }
+    if (XScreenSaverQueryExtension(dpy, &ev, &er)) { XScreenSaverSuspend(dpy, True); done.push_back(_("screen blanking")); }
     if (DPMSQueryExtension(dpy, &ev, &er) && DPMSCapable(dpy)) {
       CARD16 level; BOOL st;
       DPMSInfo(dpy, &level, &st);
@@ -391,7 +391,7 @@ std::vector<std::string> set_projection(bool on) {
         int fd = -1;
         if (dbus_message_get_args(r, nullptr, DBUS_TYPE_UNIX_FD, &fd, DBUS_TYPE_INVALID) && fd >= 0) {
           g_inhibit_fd = fd;
-          done.push_back(_("usypianie (logind)"));
+          done.push_back(_("sleep (logind)"));
         }
         dbus_message_unref(r);
       }
@@ -415,7 +415,7 @@ std::vector<std::string> set_projection(bool on) {
       if (DBusMessage *r = call(c, m, nullptr, 2000)) {
         dbus_message_get_args(r, nullptr, DBUS_TYPE_UINT32, &g_fdo_cookie, DBUS_TYPE_INVALID);
         dbus_message_unref(r);
-        done.push_back(_("wygaszacz pulpitu"));
+        done.push_back(_("desktop screen saver"));
       }
     }
     g_proj = true;
@@ -477,7 +477,7 @@ bool write_idle(const IdleSettings &s) {
   mkdir(dir.substr(0, dir.rfind('/')).c_str(), 0755);
   mkdir(dir.c_str(), 0755);
   std::ofstream out(f);
-  out << "# Nirvana Desktop - zasilanie (minuty, 0 = nigdy)\n"
+  out << "# Nirvana Desktop - power settings (minutes, 0 = never)\n"
       << "wygaszanie=" << s.blank_min << "\nblokada=" << (s.lock_on_blank ? 1 : 0)
       << "\nusypianie_bateria=" << s.sleep_battery_min << "\nusypianie_zasilacz=" << s.sleep_ac_min
       << "\nkrytyczna=" << s.critical_action << "\n";

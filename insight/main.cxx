@@ -155,7 +155,7 @@ static std::string get_title(Window w) {
     XFree(name);
     return s;
   }
-  return _("bez tytułu");
+  return _("untitled");
 }
 
 static bool has_atom(Window w, Atom prop, Atom value) {
@@ -849,7 +849,7 @@ int main(int argc, char **argv) {
   g_argv = argv;
   for (int i = 1; i < argc; i++)
     if (!strcmp(argv[i], "--help")) {
-      printf("nirvana-insight: menedżer okien Nirvana Desktop (X11)\n");
+      printf("nirvana-insight: Nirvana Desktop window manager (X11)\n");
       return 0;
     }
 
@@ -866,7 +866,7 @@ int main(int argc, char **argv) {
   XSelectInput(dpy, root, SubstructureRedirectMask | SubstructureNotifyMask | PropertyChangeMask);
   XSync(dpy, False);
   if (wm_running) {
-    fprintf(stderr, "insight: inny menedżer okien już działa\n");
+    fprintf(stderr, "insight: another window manager is already running\n");
     return 1;
   }
   XSetErrorHandler(ignore_errors);   // okna znikają w dowolnym momencie - to normalne

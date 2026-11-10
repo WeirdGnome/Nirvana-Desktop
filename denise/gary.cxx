@@ -107,11 +107,11 @@ static bool has_atom(Window w, const char *prop, const char *value) {
 
 // "org.gnome.Nautilus" -> "Nautilus", "firefox" -> "Firefox"
 static std::string pretty(const std::string &cls) {
-  if (!strcasecmp(cls.c_str(), "nirvana-alice")) return _("Wygląd");   // panele Nirvana Desktop (FLTK zmienia "l" na "L")
-  if (!strcasecmp(cls.c_str(), "nirvana-siec")) return _("Sieć");
+  if (!strcasecmp(cls.c_str(), "nirvana-alice")) return _("Appearance");   // panele Nirvana Desktop (FLTK zmienia "l" na "L")
+  if (!strcasecmp(cls.c_str(), "nirvana-siec")) return _("Network");
   if (!strcasecmp(cls.c_str(), "nirvana-shell")) return _("Nirvana Shell");
-  if (!strcasecmp(cls.c_str(), "nirvana-zasilanie")) return _("Zasilanie");
-  if (!strcasecmp(cls.c_str(), "nirvana-preferencje")) return _("Preferencje");
+  if (!strcasecmp(cls.c_str(), "nirvana-zasilanie")) return _("Power");
+  if (!strcasecmp(cls.c_str(), "nirvana-preferencje")) return _("Preferences");
   std::string s = cls;
   if (auto dot = s.rfind('.'); dot != std::string::npos && dot + 1 < s.size()) s = s.substr(dot + 1);
   if (!s.empty() && islower((unsigned char)s[0])) s[0] = (char)toupper((unsigned char)s[0]);

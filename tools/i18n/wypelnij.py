@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
-"""wypelnij.py JĘZYK - wpisuje tłumaczenia z tools/i18n/JĘZYK.py do po/JĘZYK.po
-(po tools/i18n/pot.py). Wypisuje teksty bez tłumaczenia."""
+"""wypelnij.py LANG - writes the translations from tools/i18n/LANG.py into po/LANG.po
+(after tools/i18n/pot.py). Prints texts that have no translation."""
 import os, sys, importlib.util
 import polib
 lang = sys.argv[1]
@@ -15,7 +15,7 @@ for e in po:
     if t is None: missing.append(e.msgid); continue
     if e.msgid_plural:
         if isinstance(t, str): t = (t, t)
-        e.msgstr_plural = {0: t[0], 1: t[1]}
+        e.msgstr_plural = {i: f for i, f in enumerate(t)}
     else:
         e.msgstr = t
     if 'fuzzy' in e.flags: e.flags.remove('fuzzy')

@@ -156,46 +156,46 @@ void Desktop::update_menu() {
     std::string par = fs::path(a->path).parent_path().string();
     parent_ok = par != a->path && allowed(par) && a->path != home_;
   }
-  act(P_("Okno/Otwórz katalog nadrzędny"), parent_ok);
-  for (const char *p : {P_("Okno/Zamknij"), P_("Okno/Uaktualnij"), P_("Okno/Zaznacz zawartość"), P_("Okno/Pokaż jako"),
-                        P_("Okno/Sortuj"), P_("Okno/Wielkość ikon"), P_("Okno/Nirvana Shell tutaj")})
+  act(P_("Window/Open Parent"), parent_ok);
+  for (const char *p : {P_("Window/Close"), P_("Window/Update"), P_("Window/Select Contents"), P_("Window/View as"),
+                        P_("Window/Sort"), P_("Window/Icon Size"), P_("Window/Nirvana Shell Here")})
     act(p, a != nullptr);
-  act(P_("Okno/Uporządkuj"), icons_mode);
-  mark(P_("Okno/Pokaż ukryte pliki"), show_hidden_);
+  act(P_("Window/Clean Up"), icons_mode);
+  mark(P_("Window/Show Hidden Files"), show_hidden_);
   if (a) {
     FolderView *v = a->pane->view();
-    mark(P_("Okno/Pokaż jako/Ikony"), v->mode() == FolderView::Icons);
-    mark(P_("Okno/Pokaż jako/Listę"), v->mode() == FolderView::List);
-    mark(P_("Okno/Sortuj/według nazwy"), v->sort_key() == FolderView::ByName);
-    mark(P_("Okno/Sortuj/według daty"), v->sort_key() == FolderView::ByDate);
-    mark(P_("Okno/Sortuj/według rozmiaru"), v->sort_key() == FolderView::BySize);
-    mark(P_("Okno/Sortuj/według rodzaju"), v->sort_key() == FolderView::ByKind);
-    mark(P_("Okno/Wielkość ikon/Małe"), v->icon_size() == 16);
-    mark(P_("Okno/Wielkość ikon/Normalne"), v->icon_size() == 32);
-    mark(P_("Okno/Wielkość ikon/Duże"), v->icon_size() == 64);
+    mark(P_("Window/View as/Icons"), v->mode() == FolderView::Icons);
+    mark(P_("Window/View as/List"), v->mode() == FolderView::List);
+    mark(P_("Window/Sort/by Name"), v->sort_key() == FolderView::ByName);
+    mark(P_("Window/Sort/by Date"), v->sort_key() == FolderView::ByDate);
+    mark(P_("Window/Sort/by Size"), v->sort_key() == FolderView::BySize);
+    mark(P_("Window/Sort/by Kind"), v->sort_key() == FolderView::ByKind);
+    mark(P_("Window/Icon Size/Small"), v->icon_size() == 16);
+    mark(P_("Window/Icon Size/Normal"), v->icon_size() == 32);
+    mark(P_("Window/Icon Size/Large"), v->icon_size() == 64);
   }
   bool file_sel = win_sel;
-  act(P_("Ikony/Otwórz"), win_sel || desk_sel);
-  act(P_("Ikony/Kopiuj"), file_sel);
-  act(P_("Ikony/Wklej"), !clipboard_.empty());
-  act(P_("Ikony/Duplikuj"), file_sel);
-  act(P_("Ikony/Zmień nazwę…"), file_sel);
-  act(P_("Ikony/Usuń"), file_sel);
-  act(P_("Ikony/Informacje…"), win_sel || desk_sel);
+  act(P_("Icons/Open"), win_sel || desk_sel);
+  act(P_("Icons/Copy"), file_sel);
+  act(P_("Icons/Paste"), !clipboard_.empty());
+  act(P_("Icons/Duplicate"), file_sel);
+  act(P_("Icons/Rename…"), file_sel);
+  act(P_("Icons/Delete"), file_sel);
+  act(P_("Icons/Information…"), win_sel || desk_sel);
   {
     std::vector<std::string> t = targets();
-    act(P_("Ikony/Ustaw jako tapetę"), t.size() == 1 && is_image_file(t[0]));
+    act(P_("Icons/Set as Wallpaper"), t.size() == 1 && is_image_file(t[0]));
   }
-  act(P_("Ikony/Zamroź"), icons_mode);
-  act(P_("Ikony/Odmroź"), icons_mode);
+  act(P_("Icons/Snapshot"), icons_mode);
+  act(P_("Icons/Unsnapshot"), icons_mode);
   bool in_dock = di && di->dock;
   if (a)
     for (auto &e : a->pane->view()->selection())
       if (std::find(dock_.begin(), dock_.end(), e.path) != dock_.end()) in_dock = true;
-  act(P_("Ikony/Połóż na doku"), file_sel);
-  act(P_("Ikony/Zdejmij z doku"), in_dock);
-  act(P_("Ikony/Wysuń"), vol_sel && (vols_[di->vol].removable || !vols_[di->vol].mountpoint.empty()));
-  act(P_("Narzędzia/Formatuj dysk…"), vol_sel && !vols_[di->vol].optical);
+  act(P_("Icons/Put on Dock"), file_sel);
+  act(P_("Icons/Remove from Dock"), in_dock);
+  act(P_("Icons/Eject"), vol_sel && (vols_[di->vol].removable || !vols_[di->vol].mountpoint.empty()));
+  act(P_("Special/Format Disk…"), vol_sel && !vols_[di->vol].optical);
 }
 
 // Ikony > Ustaw jako tapetę: zapis w ustawieniach wyglądu, biurko odświeża się
@@ -204,14 +204,14 @@ void Desktop::set_as_wallpaper() {
   std::vector<std::string> t = targets();
   if (t.size() != 1 || !is_image_file(t[0])) return;
   if (!image_loadable(t[0])) {
-    dialog(_("Tapeta"), plat::fmt(_("Nie udało się otworzyć obrazu „%1”.\nPlik może być uszkodzony albo w nieobsługiwanym formacie."),
+    dialog(_("Wallpaper"), plat::fmt(_("Could not open the image “%1”.\nThe file may be damaged or in an unsupported format."),
                                fs::path(t[0]).filename().string()), {{"OK", nullptr}});
     return;
   }
   Appearance a = read_appearance();
   a.wallpaper = t[0];
   if (!write_appearance(a)) {
-    dialog(_("Tapeta"), _("Nie udało się zapisać ustawień wyglądu."), {{"OK", nullptr}});
+    dialog(_("Wallpaper"), _("Could not save the appearance settings."), {{"OK", nullptr}});
     return;
   }
   notify_appearance_changed();
@@ -227,19 +227,19 @@ void Desktop::execute_command() {
   NWin *a = active_folder();
   std::string dir = a ? a->path : home_;
   int W = 440, H = 160, ox, oy;
-  NWin *win = begin_form(_("Wykonaj polecenie"), W, H, nullptr,
-                         plat::fmt(_("Polecenie do wykonania (w folderze „%1”):"), title_for(dir)), ox, oy);
+  NWin *win = begin_form(_("Execute Command"), W, H, nullptr,
+                         plat::fmt(_("Command to execute (in folder “%1”):"), title_for(dir)), ox, oy);
   auto *in = new Fl_Input(ox + 64, oy + 50, W - 80, 24);
   in->box(WELL_BOX);
   in->textfont(FL_COURIER);
   in->textsize(SIZE_SYSTEM);
   in->value(last.c_str());
   in->insert_position(0, in->size());
-  auto *show = new Fl_Check_Button(ox + 60, oy + 80, W - 80, 20, _("Pokaż wynik w Nirvana Shell"));
+  auto *show = new Fl_Check_Button(ox + 60, oy + 80, W - 80, 20, _("Show output in Nirvana Shell"));
   show->labelsize(SIZE_SMALL + 1);
   static bool show_last = true;
   show->value(show_last);
-  end_form(win, W, H, ox, oy, {{_("Anuluj"), nullptr}, {_("Wykonaj"), [in, show, dir] {
+  end_form(win, W, H, ox, oy, {{_("Cancel"), nullptr}, {_("Execute"), [in, show, dir] {
     std::string cmd = in->value();
     if (cmd.empty()) return;
     last = cmd;
@@ -250,7 +250,7 @@ void Desktop::execute_command() {
         : "cd -- \"$1\" || exit 1; eval \"$2\"";
     if (show_last)
       rambler_spawn({rambler_exe("nirvana-shell"), "--katalog", dir, "-e", "sh", "-c", script, "sh", dir, cmd,
-                     _("[kod wyjścia %s] Enter zamyka okno…")});
+                     _("[exit code %s] Press Enter to close…")});
     else
       rambler_spawn({"sh", "-c", script, "sh", dir, cmd});
   }}});
@@ -288,34 +288,34 @@ void Desktop::redraw_all() {
 
 void Desktop::sleep_now() {
   if (power::projection()) {
-    dialog(_("Uśpij"), _("Tryb projekcji jest włączony - wyłącz go w menu baterii, żeby uśpić komputer."), {{"OK", nullptr}});
+    dialog(_("Sleep"), _("Presentation mode is on - turn it off in the battery menu to put the computer to sleep."), {{"OK", nullptr}});
     return;
   }
   std::string err = power::suspend();
-  if (!err.empty()) dialog(_("Uśpij"), err, {{"OK", nullptr}});
+  if (!err.empty()) dialog(_("Sleep"), err, {{"OK", nullptr}});
 }
 
 void Desktop::reboot_ask() {
-  dialog(_("Uruchom ponownie"), _("Uruchomić komputer ponownie?"),
-         {{_("Anuluj"), nullptr}, {_("Uruchom ponownie"), [this] {
+  dialog(_("Restart"), _("Restart the computer?"),
+         {{_("Cancel"), nullptr}, {_("Restart"), [this] {
             for (auto *w : wins_) if (w->pane) remember(w, true);
             std::string err = power::reboot();
-            if (!err.empty()) dialog(_("Uruchom ponownie"), err, {{"OK", nullptr}});
+            if (!err.empty()) dialog(_("Restart"), err, {{"OK", nullptr}});
           }}});
 }
 
 void Desktop::quit_ask() {
-  dialog(_("Zakończ"), _("Zakończyć pracę z Nirvana Desktop?"),
-         {{_("Anuluj"), nullptr},
-          {_("Wyloguj"), [this] {
+  dialog(_("Quit"), _("Quit Nirvana Desktop?"),
+         {{_("Cancel"), nullptr},
+          {_("Log Out"), [this] {
              if (!csd_mode) { quit(); return; }
              rambler_spawn({"sh", "-c", "gnome-session-quit --logout --no-prompt 2>/dev/null || "
                                         "loginctl terminate-session \"$XDG_SESSION_ID\""});
            }},
-          {_("Wyłącz"), [this] {
+          {_("Shut Down"), [this] {
              for (auto *w : wins_) if (w->pane) remember(w, true);
              std::string err = power::poweroff();
-             if (!err.empty()) dialog(_("Wyłącz"), err, {{"OK", nullptr}});
+             if (!err.empty()) dialog(_("Shut Down"), err, {{"OK", nullptr}});
            }}});
 }
 
@@ -406,9 +406,9 @@ static std::string folder_size(const std::string &p) {
     std::error_code e2;
     if (it->is_regular_file(e2)) { total += it->file_size(e2); files++; }
     if ((files & 255) == 0 && std::chrono::steady_clock::now() - start > std::chrono::seconds(2))
-      return plat::fmt(_("ponad %1 (liczenie przerwane)"), fmt_size(total));
+      return plat::fmt(_("over %1 (counting stopped)"), fmt_size(total));
   }
-  return plat::fmt(_("%1, plików: %2"), fmt_size(total), std::to_string(files));
+  return plat::fmt(_("%1, files: %2"), fmt_size(total), std::to_string(files));
 }
 
 // Komentarz (xattr user.xdg.comment - standard freedesktop) i parametry
@@ -495,7 +495,7 @@ void Desktop::get_info() {
   int rows = 8;
   bool tool = is_exec && (is_appimage(e.name) || (st.st_mode & S_IXUSR));
   int H = 64 + rows * 20 + 90 + (tool ? 30 : 0) + 44;
-  NWin *win = begin_form(plat::fmt(_("Informacje: %1"), e.label), W, H, &e, "", ox, oy);
+  NWin *win = begin_form(plat::fmt(_("Info: %1"), e.label), W, H, &e, "", ox, oy);
   auto *name = new Fl_Box(ox + 64, oy + 20, W - 80, 24);
   name->copy_label(e.label.c_str());
   name->labelfont(FONT_SYSTEM);
@@ -509,26 +509,26 @@ void Desktop::get_info() {
   };
   if (vi >= 0) {
     const vol::Volume &v = vols_[vi];
-    row(_("Rodzaj:"), v.optical ? _("płyta") : v.removable ? _("dysk wymienny") : _("dysk"));
-    row(_("System plików:"), v.unformatted ? _("brak (niesformatowany)") : v.fstype);
-    row(_("Pojemność:"), fmt_size(v.size));
+    row(_("Kind:"), v.optical ? _("disc") : v.removable ? _("removable disk") : _("disk"));
+    row(_("File system:"), v.unformatted ? _("none (unformatted)") : v.fstype);
+    row(_("Capacity:"), fmt_size(v.size));
     struct statvfs sv{};
     if (!v.mountpoint.empty() && statvfs(v.mountpoint.c_str(), &sv) == 0)
-      row(_("Wolne:"), fmt_size((uintmax_t)sv.f_bavail * sv.f_frsize));
-    row(_("Urządzenie:"), v.dev);
-    row(_("Zamontowany:"), v.mountpoint.empty() ? std::string(_("nie")) : v.mountpoint);
-    row(_("Szyfrowanie:"), v.encrypted ? (v.unlocked ? _("LUKS (otwarty)") : _("LUKS (zamknięty)")) : _("brak"));
+      row(_("Free:"), fmt_size((uintmax_t)sv.f_bavail * sv.f_frsize));
+    row(_("Device:"), v.dev);
+    row(_("Mounted at:"), v.mountpoint.empty() ? std::string(_("no")) : v.mountpoint);
+    row(_("Encryption:"), v.encrypted ? (v.unlocked ? _("LUKS (unlocked)") : _("LUKS (locked)")) : _("none"));
     y += 20;
   } else {
-    row(_("Rodzaj:"), e.dir ? std::string(_("folder")) : kind_name(e));
-    row(_("Rozmiar:"), e.dir ? folder_size(path) : have_st ? fmt_size((uintmax_t)st.st_size) : "—");
-    row(_("Położenie:"), fs::path(path).parent_path().string());
+    row(_("Kind:"), e.dir ? std::string(_("folder")) : kind_name(e));
+    row(_("Size:"), e.dir ? folder_size(path) : have_st ? fmt_size((uintmax_t)st.st_size) : "—");
+    row(_("Where:"), fs::path(path).parent_path().string());
     struct statx sx{};
     time_t born = 0;
     if (statx(AT_FDCWD, path.c_str(), 0, STATX_BTIME, &sx) == 0 && (sx.stx_mask & STATX_BTIME)) born = sx.stx_btime.tv_sec;
-    row(_("Utworzono:"), born ? fmt_time(born) : "—");
-    row(_("Zmieniono:"), have_st ? fmt_time(st.st_mtime) : "—");
-    row(_("Otwarto:"), have_st ? fmt_time(st.st_atime) : "—");
+    row(_("Created:"), born ? fmt_time(born) : "—");
+    row(_("Modified:"), have_st ? fmt_time(st.st_mtime) : "—");
+    row(_("Opened:"), have_st ? fmt_time(st.st_atime) : "—");
     std::string owner = "—";
     if (have_st) {
       passwd *pw = getpwuid(st.st_uid);
@@ -536,61 +536,61 @@ void Desktop::get_info() {
       owner = std::string(pw ? pw->pw_name : std::to_string(st.st_uid)) + " / " +
               (gr ? gr->gr_name : std::to_string(st.st_gid));
     }
-    row(_("Właściciel:"), owner);
+    row(_("Owner:"), owner);
     char perm[16];
     snprintf(perm, sizeof perm, "%04o", have_st ? st.st_mode & 07777 : 0);
-    row(_("Uprawnienia:"), perm);
+    row(_("Permissions:"), perm);
   }
   // flagi i komentarz
   Fl_Check_Button *ro = nullptr, *ex = nullptr;
   Fl_Input *comment = nullptr, *args = nullptr;
   if (vi < 0 && have_st) {
-    row_label(lx, y, lw, _("Flagi:"));
-    ro = new Fl_Check_Button(vx - 4, y - 1, 140, 20, _("Tylko do odczytu"));
+    row_label(lx, y, lw, _("Flags:"));
+    ro = new Fl_Check_Button(vx - 4, y - 1, 140, 20, _("Read only"));
     ro->labelsize(SIZE_SMALL + 1);
     ro->value(!(st.st_mode & S_IWUSR));
     if (S_ISREG(st.st_mode)) {
       ex = new Fl_Check_Button(vx + 136, y - 1, 140, 20, _("Program"));
       ex->labelsize(SIZE_SMALL + 1);
       ex->value((st.st_mode & S_IXUSR) != 0);
-      ex->tooltip(_("Prawo uruchamiania (jak flaga e w Workbenchu)"));
+      ex->tooltip(_("Execute permission (like the e flag in Workbench)"));
     }
     y += 26;
     bool xa = false;
     std::string c = xattr_get(path, "user.xdg.comment", &xa);
-    row_label(lx, y + 2, lw, _("Komentarz:"));
+    row_label(lx, y + 2, lw, _("Comment:"));
     comment = new Fl_Input(vx, y, vw, 22);
     comment->box(WELL_BOX);
     comment->textsize(SIZE_SMALL + 1);
     comment->value(c.c_str());
-    if (!xa) { comment->deactivate(); comment->tooltip(_("Ten system plików nie obsługuje komentarzy.")); }
+    if (!xa) { comment->deactivate(); comment->tooltip(_("This file system does not support comments.")); }
     y += 28;
     if (tool) {
-      row_label(lx, y + 2, lw, _("Parametry:"));
+      row_label(lx, y + 2, lw, _("Arguments:"));
       args = new Fl_Input(vx, y, vw, 22);
       args->box(WELL_BOX);
       args->textfont(FL_COURIER);
       args->textsize(SIZE_SMALL + 1);
       args->value(tooltypes(path).c_str());
-      args->tooltip(_("Parametry uruchamiania programu (ToolTypes), np. --fullscreen"));
+      args->tooltip(_("Program start arguments (ToolTypes), e.g. --fullscreen"));
       y += 28;
     }
   }
   bool owner_ok = have_st && (st.st_uid == getuid() || root_);
   if (!owner_ok) { if (ro) ro->deactivate(); if (ex) ex->deactivate(); }
-  end_form(win, W, H, ox, oy, {{_("Anuluj"), nullptr}, {"OK", [this, path, ro, ex, comment, args, have_st, st] {
+  end_form(win, W, H, ox, oy, {{_("Cancel"), nullptr}, {"OK", [this, path, ro, ex, comment, args, have_st, st] {
     std::string err;
     if (have_st && (ro || ex)) {
       mode_t m = st.st_mode & 07777;
       if (ro) m = ro->value() ? (m & ~(mode_t)(S_IWUSR | S_IWGRP | S_IWOTH)) : (m | S_IWUSR);
       if (ex) m = ex->value() ? (m | S_IXUSR | ((m & S_IRGRP) ? S_IXGRP : 0) | ((m & S_IROTH) ? S_IXOTH : 0))
                               : (m & ~(mode_t)(S_IXUSR | S_IXGRP | S_IXOTH));
-      if (m != (st.st_mode & 07777) && chmod(path.c_str(), m) != 0) err += _("Nie udało się zmienić flag.") + std::string("\n");
+      if (m != (st.st_mode & 07777) && chmod(path.c_str(), m) != 0) err += _("Could not change the flags.") + std::string("\n");
     }
     if (comment && comment->active()) xattr_set(path, "user.xdg.comment", comment->value());
     if (args) set_tooltypes(path, args->value());
     refresh_all();
-    if (!err.empty()) dialog(_("Informacje"), err, {{"OK", nullptr}});
+    if (!err.empty()) dialog(_("Info"), err, {{"OK", nullptr}});
   }}});
 }
 
@@ -659,7 +659,7 @@ void Desktop::dock_remove() {
 // ---------------------------------------------------------------------------
 void Desktop::format_disk() {
   if (active_folder() || icon_sel_ < 0 || icon_sel_ >= (int)icons_.size() || icons_[icon_sel_].vol < 0) {
-    dialog(_("Formatuj dysk"), _("Zaznacz na biurku ikonę dysku, który chcesz sformatować."), {{"OK", nullptr}});
+    dialog(_("Format Disk"), _("Select the icon of the disk you want to format on the desktop."), {{"OK", nullptr}});
     return;
   }
   format_dialog(icons_[icon_sel_].vol);
@@ -670,32 +670,32 @@ void Desktop::format_dialog(int vi) {
   Entry e;
   e.icon = v.icon;
   int W = 440, H = 220, ox, oy;
-  NWin *win = begin_form(_("Formatuj dysk"), W, H, &e,
-                         plat::fmt(_("Formatowanie „%1” (%2)."), v.name, vol::human_size(v.size)), ox, oy);
-  auto *warn = new Fl_Box(ox + 64, oy + 40, W - 80, 18, _("Wszystkie dane na tym dysku zostaną usunięte!"));
+  NWin *win = begin_form(_("Format Disk"), W, H, &e,
+                         plat::fmt(_("Formatting “%1” (%2)."), v.name, vol::human_size(v.size)), ox, oy);
+  auto *warn = new Fl_Box(ox + 64, oy + 40, W - 80, 18, _("All data on this disk will be erased!"));
   warn->labelcolor(ROOT_TINT);
   warn->labelfont(FONT_SYSTEM);
   warn->labelsize(SIZE_SMALL + 1);
   warn->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
-  auto *name = new Fl_Input(ox + 180, oy + 70, W - 196, 22, _("Nazwa:"));
+  auto *name = new Fl_Input(ox + 180, oy + 70, W - 196, 22, _("Name:"));
   name->box(WELL_BOX);
   name->labelsize(SIZE_SMALL + 1);
   name->value(v.unformatted ? "DYSK" : v.name.substr(0, 11).c_str());
-  auto *fsch = new Fl_Choice(ox + 180, oy + 100, W - 196, 22, _("System plików:"));
+  auto *fsch = new Fl_Choice(ox + 180, oy + 100, W - 196, 22, _("File system:"));
   fsch->labelsize(SIZE_SMALL + 1);
   fsch->textsize(SIZE_SMALL + 1);
-  fsch->add(_("FAT32 (pendrive - działa wszędzie)|exFAT (duże pliki, Windows i Mac)|ext4 (Linux)|NTFS (Windows)"));
+  fsch->add(_("FAT32 (USB stick - works everywhere)|exFAT (large files, Windows and Mac)|ext4 (Linux)|NTFS (Windows)"));
   fsch->value(v.size > 32ull * 1024 * 1024 * 1024 ? 1 : 0);
   std::string uuid = v.uuid, vname = v.name;
-  end_form(win, W, H, ox, oy, {{_("Anuluj"), nullptr}, {_("Formatuj"), [this, name, fsch, uuid, vname] {
+  end_form(win, W, H, ox, oy, {{_("Cancel"), nullptr}, {_("Format"), [this, name, fsch, uuid, vname] {
     static const char *types[] = {"vfat", "exfat", "ext4", "ntfs"};
     std::string type = types[std::max(0, fsch->value())], label = name->value();
     if (type == "vfat") { label = label.substr(0, 11); for (auto &c : label) c = (char)toupper((unsigned char)c); }
-    dialog(_("Formatuj dysk"), plat::fmt(_("Na pewno sformatować „%1”? Tej operacji nie da się cofnąć."), vname),
-           {{_("Anuluj"), nullptr}, {_("Formatuj"), [this, uuid, type, label] {
+    dialog(_("Format Disk"), plat::fmt(_("Really format “%1”? This cannot be undone."), vname),
+           {{_("Cancel"), nullptr}, {_("Format"), [this, uuid, type, label] {
               int idx = -1;
               for (int i = 0; i < (int)vols_.size(); i++) if (vols_[i].uuid == uuid) idx = i;
-              if (idx < 0) { dialog(_("Formatuj dysk"), _("Dysk zniknął."), {{"OK", nullptr}}); return; }
+              if (idx < 0) { dialog(_("Format Disk"), _("The disk is gone."), {{"OK", nullptr}}); return; }
               for (auto *w : wins_) w->cursor(FL_CURSOR_WAIT);
               cursor(FL_CURSOR_WAIT);
               Fl::flush();
@@ -703,7 +703,7 @@ void Desktop::format_dialog(int vi) {
               for (auto *w : wins_) w->cursor(FL_CURSOR_DEFAULT);
               cursor(FL_CURSOR_DEFAULT);
               rescan_volumes();
-              dialog(_("Formatuj dysk"), err.empty() ? plat::fmt(_("Dysk „%1” jest gotowy."), label) : err, {{"OK", nullptr}});
+              dialog(_("Format Disk"), err.empty() ? plat::fmt(_("The disk “%1” is ready."), label) : err, {{"OK", nullptr}});
             }}});
   }}});
 }

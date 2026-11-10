@@ -1,4 +1,4 @@
 #!/bin/sh
-# Zgodność wstecz: LisaOS nazywa się teraz Nirvana Desktop.
-# Stare ~/.xinitrc z "exec lisaos-session" dalej uruchamiają sesję.
+# Backward compatibility: LisaOS is now called Nirvana Desktop.
+# Old ~/.xinitrc files with "exec lisaos-session" still start the session.
 exec nirvana-session "$@"

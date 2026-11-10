@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Nirvana Desktop 0.1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-10 12:06+0000\n"
+"POT-Creation-Date: 2026-11-10 12:14+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -19,582 +19,578 @@ msgstr ""
 "Plural-Forms: nplurals=INTEGER; plural=EXPRESSION;\n"
 
 #: alice/main.cxx:25
-msgid "Nie ma schematu: %1"
+msgid "No such scheme: %1"
 msgstr ""
 
-#: alice/siec.cxx:159 alice/siec.cxx:615 net/net.cxx:331
-msgid "połączono"
+#: alice/siec.cxx:159 alice/siec.cxx:613 net/net.cxx:331
+msgid "connected"
 msgstr ""
 
 #: alice/siec.cxx:159 net/net.cxx:332
-msgid "łączenie…"
+msgid "connecting…"
 msgstr ""
 
 #: alice/siec.cxx:194
-msgid "Inna sieć Wi-Fi"
+msgid "Other Wi-Fi Network"
 msgstr ""
 
 #: alice/siec.cxx:194 denise/desktop.cxx:1927 denise/desktop.cxx:1938
 #: denise/desktop.cxx:1945
-msgid "Sieć Wi-Fi"
+msgid "Wi-Fi Network"
 msgstr ""
 
 #: alice/siec.cxx:200
-msgid "Połącz z siecią, która nie rozgłasza nazwy."
+msgid "Connect to a network that does not broadcast its name."
 msgstr ""
 
 #: alice/siec.cxx:201 denise/desktop.cxx:1946
 msgid ""
-"Sieć „%1” jest zabezpieczona.\n"
-"Podaj hasło, aby się połączyć."
+"The network “%1” is secured.\n"
+"Enter the password to connect."
 msgstr ""
 
-#: alice/siec.cxx:220 alice/siec.cxx:486
-msgid "Nazwa sieci:"
+#: alice/siec.cxx:220 alice/siec.cxx:485
+msgid "Network name:"
 msgstr ""
 
 #: alice/siec.cxx:224
-msgid "Zabezpieczenia:"
+msgid "Security:"
 msgstr ""
 
 #: alice/siec.cxx:225
-msgid "WPA\\/WPA2 Personal|WPA3 Personal|Brak"
+msgid "WPA\\/WPA2 Personal|WPA3 Personal|None"
 msgstr ""
 
 #: alice/siec.cxx:229 alice/siec.cxx:387
-msgid "Hasło:"
+msgid "Password:"
 msgstr ""
 
 #: alice/siec.cxx:232
-msgid "Pokaż hasło"
+msgid "Show password"
 msgstr ""
 
-#: alice/siec.cxx:244 alice/siec.cxx:341 alice/siec.cxx:389 alice/siec.cxx:494
-#: alice/siec.cxx:747 alice/wyglad.cxx:411 alice/zasilanie.cxx:127
+#: alice/siec.cxx:244 alice/siec.cxx:341 alice/siec.cxx:389 alice/siec.cxx:493
+#: alice/siec.cxx:744 alice/wyglad.cxx:411 alice/zasilanie.cxx:127
 #: denise/applets.cxx:617 denise/desktop.cxx:1352 denise/desktop.cxx:1363
 #: denise/desktop.cxx:1706 denise/desktop.cxx:1721 denise/desktop.cxx:2288
 #: denise/desktop.cxx:2731 denise/menus.cxx:242 denise/menus.cxx:300
 #: denise/menus.cxx:309 denise/menus.cxx:581 denise/menus.cxx:690
-#: denise/menus.cxx:695 platinum/platinum.cxx:210 platinum/platinum.cxx:749
+#: denise/menus.cxx:695 platinum/platinum.cxx:210 platinum/platinum.cxx:750
 #: shell/main.cxx:614
-msgid "Anuluj"
+msgid "Cancel"
 msgstr ""
 
-#: alice/siec.cxx:245 alice/siec.cxx:390 alice/siec.cxx:427 alice/siec.cxx:563
-#: alice/siec.cxx:653 alice/siec.cxx:705 alice/siec.cxx:731
+#: alice/siec.cxx:245 alice/siec.cxx:390 alice/siec.cxx:427 alice/siec.cxx:561
+#: alice/siec.cxx:651 alice/siec.cxx:702 alice/siec.cxx:728
 #: denise/desktop.cxx:1831 denise/desktop.cxx:1905 denise/desktop.cxx:1946
-msgid "Połącz"
+msgid "Connect"
 msgstr ""
 
 #: alice/siec.cxx:274
-msgid "Sieci firmowe (802.1X) nie są jeszcze obsługiwane - użyj nmtui."
+msgid "Enterprise networks (802.1X) are not supported yet - use nmtui."
 msgstr ""
 
 #: alice/siec.cxx:278 alice/siec.cxx:410 denise/desktop.cxx:1897
 #: denise/desktop.cxx:1934 denise/desktop.cxx:2762 denise/volumes.cxx:317
 #: net/net.cxx:93
-msgid "Nieprawidłowe hasło."
+msgid "Wrong password."
 msgstr ""
 
 #: alice/siec.cxx:279 denise/desktop.cxx:1935 net/net.cxx:683 net/net.cxx:809
-msgid "Nie udało się połączyć. Sprawdź hasło."
+msgid "Could not connect. Check the password."
 msgstr ""
 
-#: alice/siec.cxx:283 alice/siec.cxx:304 alice/siec.cxx:549
-msgid "Połączono z siecią „%1”."
+#: alice/siec.cxx:283 alice/siec.cxx:304 alice/siec.cxx:547
+msgid "Connected to “%1”."
 msgstr ""
 
 #: alice/siec.cxx:287 alice/siec.cxx:293 alice/siec.cxx:301
-msgid "Łączenie z „%1”…"
+msgid "Connecting to “%1”…"
 msgstr ""
 
 #: alice/siec.cxx:314
-msgid "Ustawienia IPv4"
+msgid "IPv4 Settings"
 msgstr ""
 
 #: alice/siec.cxx:315
-msgid "Połączenie „%1”"
+msgid "Connection “%1”"
 msgstr ""
 
 #: alice/siec.cxx:320
-msgid "Konfiguracja:"
+msgid "Configure:"
 msgstr ""
 
 #: alice/siec.cxx:321
-msgid "Automatycznie (DHCP)|Ręcznie"
+msgid "Automatically (DHCP)|Manually"
 msgstr ""
 
 #: alice/siec.cxx:323
-msgid "Adres/prefiks:"
+msgid "Address/prefix:"
 msgstr ""
 
-#: alice/siec.cxx:324 alice/siec.cxx:668
-msgid "Brama:"
+#: alice/siec.cxx:324 alice/siec.cxx:666
+msgid "Gateway:"
 msgstr ""
 
-#: alice/siec.cxx:325 alice/siec.cxx:668
-msgid "Serwery DNS:"
+#: alice/siec.cxx:325 alice/siec.cxx:666
+msgid "DNS servers:"
 msgstr ""
 
-#: alice/siec.cxx:342 platinum/platinum.cxx:763
-msgid "Zapisz"
+#: alice/siec.cxx:342 platinum/platinum.cxx:764
+msgid "Save"
 msgstr ""
 
 #: alice/siec.cxx:350
-msgid "Podaj adres IPv4, np. 192.168.1.20/24."
+msgid "Enter an IPv4 address, e.g. 192.168.1.20/24."
 msgstr ""
 
 #: alice/siec.cxx:352
-msgid "Zapisywanie ustawień IPv4…"
+msgid "Saving IPv4 settings…"
 msgstr ""
 
 #: alice/siec.cxx:353 net/net.cxx:544
-msgid "Zapisano ustawienia IPv4."
+msgid "IPv4 settings saved."
 msgstr ""
 
 #: alice/siec.cxx:369
-msgid "Połączenie VPN „%1” wymaga logowania."
+msgid "The VPN connection “%1” requires a login."
 msgstr ""
 
 #: alice/siec.cxx:384
-msgid "Użytkownik:"
+msgid "User name:"
 msgstr ""
 
 #: alice/siec.cxx:408
-msgid "Łączenie z VPN „%1”…"
+msgid "Connecting to VPN “%1”…"
 msgstr ""
 
 #: alice/siec.cxx:414
-msgid "Połączono z VPN „%1”."
+msgid "Connected to VPN “%1”."
 msgstr ""
 
-#: alice/siec.cxx:427 alice/siec.cxx:563 denise/desktop.cxx:1828
-msgid "Rozłącz"
+#: alice/siec.cxx:427 alice/siec.cxx:561 denise/desktop.cxx:1828
+msgid "Disconnect"
 msgstr ""
 
 #: alice/siec.cxx:436
-msgid "Połączono z „%1” (%2)."
+msgid "Connected to “%1” (%2)."
 msgstr ""
 
 #: alice/siec.cxx:437
 msgid ""
-"Nie masz jeszcze żadnego połączenia VPN. Zaimportuj plik od administratora "
-"albo dostawcy VPN."
+"You have no VPN connections yet. Import a file from your administrator or "
+"VPN provider."
 msgstr ""
 
-#: alice/siec.cxx:439
-msgid "Brak aktywnego połączenia VPN."
+#: alice/siec.cxx:438
+msgid "No active VPN connection."
 msgstr ""
 
-#: alice/siec.cxx:454
+#: alice/siec.cxx:453
 msgid ""
-"Obsługiwane: %1. Inne rodzaje wymagają wtyczki NetworkManagera (pakiety "
-"network-manager-…)."
+"Supported: %1. Other types need a NetworkManager plugin (network-manager-… "
+"packages)."
 msgstr ""
 
-#: alice/siec.cxx:463
-msgid "Importuj konfigurację VPN"
+#: alice/siec.cxx:462
+msgid "Import VPN Configuration"
 msgstr ""
 
-#: alice/siec.cxx:467
-msgid "Importowanie…"
+#: alice/siec.cxx:466
+msgid "Importing…"
 msgstr ""
 
-#: alice/siec.cxx:469
-msgid "Dodano połączenie VPN „%1”."
+#: alice/siec.cxx:468
+msgid "Added VPN connection “%1”."
 msgstr ""
 
-#: alice/siec.cxx:477
+#: alice/siec.cxx:476
 msgid "Hotspot"
 msgstr ""
 
-#: alice/siec.cxx:483
-msgid "Udostępnij połączenie z internetem innym urządzeniom przez Wi-Fi."
+#: alice/siec.cxx:482
+msgid "Share your internet connection with other devices over Wi-Fi."
 msgstr ""
 
-#: alice/siec.cxx:492
-msgid "Hasło (min. 8):"
+#: alice/siec.cxx:491
+msgid "Password (min. 8):"
 msgstr ""
 
-#: alice/siec.cxx:495
-msgid "Włącz"
+#: alice/siec.cxx:494
+msgid "Turn On"
 msgstr ""
 
-#: alice/siec.cxx:501
-msgid "Włączanie hotspotu…"
+#: alice/siec.cxx:500
+msgid "Turning on hotspot…"
 msgstr ""
 
-#: alice/siec.cxx:503 net/net.cxx:791 net/net.cxx:809
-msgid "Hotspot włączony."
+#: alice/siec.cxx:502 net/net.cxx:791 net/net.cxx:809
+msgid "Hotspot is on."
 msgstr ""
 
-#: alice/siec.cxx:526 denise/desktop.cxx:1814
-msgid "Sieć niedostępna"
+#: alice/siec.cxx:525 denise/desktop.cxx:1814
+msgid "Network unavailable"
 msgstr ""
 
-#: alice/siec.cxx:528
+#: alice/siec.cxx:527
 msgid ""
-"Nirvana Desktop zarządza siecią przez NetworkManagera: zainstaluj pakiet "
-"network-manager i uruchom usługę NetworkManager."
+"Nirvana Desktop manages networking through NetworkManager: install the "
+"network-manager package and start the NetworkManager service."
 msgstr ""
 
-#: alice/siec.cxx:536
-msgid "Brak połączeń"
+#: alice/siec.cxx:534
+msgid "No connections"
 msgstr ""
 
-#: alice/siec.cxx:537
-msgid "Nie znaleziono kart sieciowych zarządzanych przez NetworkManagera."
+#: alice/siec.cxx:535
+msgid "No network adapters managed by NetworkManager were found."
+msgstr ""
+
+#: alice/siec.cxx:546
+msgid "Hotspot: sharing your connection as “%1”."
 msgstr ""
 
 #: alice/siec.cxx:548
-msgid "Hotspot: udostępniasz połączenie jako sieć „%1”."
+msgid "Connected (“%1”)."
 msgstr ""
 
-#: alice/siec.cxx:550
-msgid "Połączono („%1”)."
+#: alice/siec.cxx:550 alice/siec.cxx:661
+msgid "Connecting…"
 msgstr ""
 
-#: alice/siec.cxx:552 alice/siec.cxx:663
-msgid "Łączenie…"
+#: alice/siec.cxx:552
+msgid "Wi-Fi adapter unavailable."
 msgstr ""
 
-#: alice/siec.cxx:554
-msgid "Karta Wi-Fi niedostępna."
+#: alice/siec.cxx:552 alice/siec.cxx:687
+msgid "Wi-Fi is off."
 msgstr ""
 
-#: alice/siec.cxx:554
-msgid "Wi-Fi jest wyłączone."
+#: alice/siec.cxx:553
+msgid "The network cable is unplugged."
 msgstr ""
 
-#: alice/siec.cxx:555
-msgid "Kabel sieciowy jest odłączony."
+#: alice/siec.cxx:555 alice/siec.cxx:658 net/net.cxx:525
+msgid "Disconnected."
 msgstr ""
 
-#: alice/siec.cxx:557 alice/siec.cxx:660 net/net.cxx:525
-msgid "Rozłączono."
+#: alice/siec.cxx:593 denise/desktop.cxx:1858
+msgid "Looking for networks…"
 msgstr ""
 
-#: alice/siec.cxx:595 denise/desktop.cxx:1858
-msgid "Szukam sieci…"
+#: alice/siec.cxx:593
+msgid "(Wi-Fi off)"
 msgstr ""
 
-#: alice/siec.cxx:595
-msgid "(Wi-Fi wyłączone)"
+#: alice/siec.cxx:613
+msgid "no connections"
 msgstr ""
 
-#: alice/siec.cxx:615
-msgid "brak połączeń"
+#: alice/siec.cxx:613 net/net.cxx:335
+msgid "disconnected"
 msgstr ""
 
-#: alice/siec.cxx:615 net/net.cxx:335
-msgid "rozłączono"
-msgstr ""
-
-#: alice/siec.cxx:628 alice/ustawienia.cxx:83 denise/desktop.cxx:1844
+#: alice/siec.cxx:626 alice/ustawienia.cxx:83 denise/desktop.cxx:1844
 #: denise/desktop.cxx:1885 denise/desktop.cxx:1916 denise/gary.cxx:111
 #: net/net.cxx:326
-msgid "Sieć"
+msgid "Network"
 msgstr ""
 
-#: alice/siec.cxx:631
-msgid "Połączenia"
+#: alice/siec.cxx:629
+msgid "Connections"
 msgstr ""
 
-#: alice/siec.cxx:651
+#: alice/siec.cxx:649
 msgid "IPv4…"
 msgstr ""
 
-#: alice/siec.cxx:660
-msgid "Rozłączanie…"
+#: alice/siec.cxx:658
+msgid "Disconnecting…"
 msgstr ""
 
-#: alice/siec.cxx:663 net/net.cxx:522 net/net.cxx:676 net/net.cxx:768
+#: alice/siec.cxx:661 net/net.cxx:522 net/net.cxx:676 net/net.cxx:768
 #: net/net.cxx:778
-msgid "Połączono."
+msgid "Connected."
 msgstr ""
 
-#: alice/siec.cxx:668
-msgid "Adres IPv4:"
+#: alice/siec.cxx:666
+msgid "IPv4 address:"
 msgstr ""
 
-#: alice/siec.cxx:668
-msgid "Adres IPv6:"
+#: alice/siec.cxx:666
+msgid "IPv6 address:"
 msgstr ""
 
-#: alice/siec.cxx:668
-msgid "Adres MAC:"
+#: alice/siec.cxx:666
+msgid "MAC address:"
 msgstr ""
 
-#: alice/siec.cxx:668
-msgid "Szybkość:"
+#: alice/siec.cxx:666
+msgid "Speed:"
 msgstr ""
 
-#: alice/siec.cxx:678
+#: alice/siec.cxx:676
 msgid ""
-"Podłącz kabel albo kliknij „Połącz”. Adres zostanie pobrany automatycznie "
-"(DHCP), chyba że w „IPv4…” ustawisz go ręcznie."
+"Plug in the cable or click “Connect”. The address is obtained automatically "
+"(DHCP) unless you set it manually under “IPv4…”."
 msgstr ""
 
-#: alice/siec.cxx:685
-msgid "Wi-Fi włączone"
+#: alice/siec.cxx:682
+msgid "Wi-Fi on"
+msgstr ""
+
+#: alice/siec.cxx:686
+msgid "Turning Wi-Fi on…"
+msgstr ""
+
+#: alice/siec.cxx:686
+msgid "Turning Wi-Fi off…"
+msgstr ""
+
+#: alice/siec.cxx:687
+msgid "Wi-Fi is on."
 msgstr ""
 
 #: alice/siec.cxx:689
-msgid "Włączanie Wi-Fi…"
+msgid "Networks in range:"
 msgstr ""
 
-#: alice/siec.cxx:689
-msgid "Wyłączanie Wi-Fi…"
+#: alice/siec.cxx:705
+msgid "Choose a network from the list."
 msgstr ""
 
-#: alice/siec.cxx:690
-msgid "Wi-Fi włączone."
-msgstr ""
-
-#: alice/siec.cxx:690
-msgid "Wi-Fi wyłączone."
-msgstr ""
-
-#: alice/siec.cxx:692
-msgid "Sieci w zasięgu:"
+#: alice/siec.cxx:707 denise/desktop.cxx:1866
+msgid "Other Network…"
 msgstr ""
 
 #: alice/siec.cxx:708
-msgid "Wybierz sieć z listy."
-msgstr ""
-
-#: alice/siec.cxx:710 denise/desktop.cxx:1866
-msgid "Inna sieć…"
+msgid "Forget"
 msgstr ""
 
 #: alice/siec.cxx:711
-msgid "Zapomnij"
+msgid "Choose a saved network."
 msgstr ""
 
-#: alice/siec.cxx:714
-msgid "Wybierz zapisaną sieć."
+#: alice/siec.cxx:714 net/net.cxx:528
+msgid "Network forgotten."
 msgstr ""
 
-#: alice/siec.cxx:717 net/net.cxx:528
-msgid "Zapomniano sieć."
-msgstr ""
-
-#: alice/siec.cxx:719
+#: alice/siec.cxx:716
 msgid "Hotspot…"
 msgstr ""
 
-#: alice/siec.cxx:735 alice/siec.cxx:746
-msgid "Wybierz połączenie VPN."
+#: alice/siec.cxx:732 alice/siec.cxx:743
+msgid "Choose a VPN connection."
 msgstr ""
 
-#: alice/siec.cxx:737
-msgid "Rozłączanie VPN…"
+#: alice/siec.cxx:734
+msgid "Disconnecting VPN…"
 msgstr ""
 
-#: alice/siec.cxx:738 net/net.cxx:519
-msgid "Rozłączono VPN."
+#: alice/siec.cxx:735 net/net.cxx:519
+msgid "VPN disconnected."
 msgstr ""
 
-#: alice/siec.cxx:743
-msgid "Importuj…"
+#: alice/siec.cxx:740
+msgid "Import…"
 msgstr ""
 
-#: alice/siec.cxx:744 alice/siec.cxx:747
-msgid "Usuń"
+#: alice/siec.cxx:741 alice/siec.cxx:744
+msgid "Delete"
 msgstr ""
 
-#: alice/siec.cxx:747
+#: alice/siec.cxx:744
 #, c-format
-msgid "Usunąć połączenie VPN „%s”?"
+msgid "Delete the VPN connection “%s”?"
 msgstr ""
 
-#: alice/siec.cxx:748
-msgid "Usunięto połączenie VPN."
+#: alice/siec.cxx:745
+msgid "VPN connection deleted."
 msgstr ""
 
-#: alice/siec.cxx:756 denise/desktop.cxx:1881
-msgid "Tryb samolotowy"
+#: alice/siec.cxx:753 denise/desktop.cxx:1881
+msgid "Airplane Mode"
 msgstr ""
 
-#: alice/siec.cxx:760
-msgid "Wyłączanie wszystkich radiów…"
+#: alice/siec.cxx:757
+msgid "Turning off all radios…"
 msgstr ""
 
-#: alice/siec.cxx:760
-msgid "Włączanie radiów…"
+#: alice/siec.cxx:757
+msgid "Turning radios on…"
 msgstr ""
 
-#: alice/siec.cxx:761 net/net.cxx:368
-msgid "Tryb samolotowy włączony."
+#: alice/siec.cxx:758 net/net.cxx:368
+msgid "Airplane mode is on."
 msgstr ""
 
-#: alice/siec.cxx:761 net/net.cxx:368
-msgid "Tryb samolotowy wyłączony."
+#: alice/siec.cxx:758 net/net.cxx:368
+msgid "Airplane mode is off."
 msgstr ""
 
-#: alice/siec.cxx:766 platinum/platinum.cxx:213 shell/main.cxx:615
-msgid "Zamknij"
+#: alice/siec.cxx:763 platinum/platinum.cxx:213 shell/main.cxx:615
+msgid "Close"
 msgstr ""
 
 #: alice/ustawienia.cxx:79 denise/gary.cxx:114
-msgid "Preferencje"
+msgid "Preferences"
 msgstr ""
 
 #: alice/ustawienia.cxx:82 alice/wyglad.cxx:233 denise/gary.cxx:110
-msgid "Wygląd"
+msgid "Appearance"
 msgstr ""
 
 #: alice/ustawienia.cxx:84 alice/zasilanie.cxx:79 denise/applets.cxx:621
 #: denise/gary.cxx:113
-msgid "Zasilanie"
+msgid "Power"
 msgstr ""
 
 #: alice/ustawienia.cxx:96
-msgid "Język:"
+msgid "Language:"
 msgstr ""
 
 #: alice/ustawienia.cxx:100
-msgid "Automatycznie (jak w systemie)"
+msgid "Automatic (system language)"
 msgstr ""
 
 #: alice/ustawienia.cxx:111
 msgid ""
-"Nowy język zobaczysz po ponownym uruchomieniu Nirvana Desktop albo po "
-"Narzędzia > Resetuj Nirvanę."
+"The new language takes effect after restarting Nirvana Desktop or after "
+"Special > Reset Nirvana."
 msgstr ""
 
 #: alice/wyglad.cxx:91
-msgid "Okno"
+msgid "Window"
 msgstr ""
 
 #: alice/wyglad.cxx:91
-msgid "Ikony"
+msgid "Icons"
 msgstr ""
 
 #: alice/wyglad.cxx:91
-msgid "Narzędzia"
+msgid "Special"
 msgstr ""
 
 #: alice/wyglad.cxx:102
-msgid "Dokumenty"
+msgid "Documents"
 msgstr ""
 
 #: alice/wyglad.cxx:136
-msgid "3 elementy, 12,4 GB wolne"
+msgid "3 items, 12.4 GB free"
 msgstr ""
 
 #: alice/wyglad.cxx:136
-msgid "2 elementy"
+msgid "2 items"
 msgstr ""
 
 #: alice/wyglad.cxx:145
-msgid "Muzyka"
+msgid "Music"
 msgstr ""
 
 #: alice/wyglad.cxx:146
-msgid "List.txt"
+msgid "Letter.txt"
 msgstr ""
 
 #: alice/wyglad.cxx:147
-msgid "Gra"
+msgid "Game"
 msgstr ""
 
 #: alice/wyglad.cxx:152
-msgid "Zdjęcia"
+msgid "Photos"
 msgstr ""
 
 #: alice/wyglad.cxx:179
-msgid "Źródło: %1"
+msgid "Source: %1"
 msgstr ""
 
 #: alice/wyglad.cxx:179
-msgid "własny"
+msgid "custom"
 msgstr ""
 
 #: alice/wyglad.cxx:236
-msgid "Schemat kolorów"
+msgid "Color Scheme"
 msgstr ""
 
-#: alice/wyglad.cxx:249 platinum/platinum.cxx:762
-msgid "Podgląd"
+#: alice/wyglad.cxx:249 platinum/platinum.cxx:763
+msgid "Preview"
 msgstr ""
 
 #: alice/wyglad.cxx:256
-msgid "Pasek tytułu:"
+msgid "Title bar:"
 msgstr ""
 
 #: alice/wyglad.cxx:257
-msgid "Jak w schemacie|Prążki (Platinum)|Jednolity kolor|Gradient"
+msgid "As in scheme|Stripes (Platinum)|Solid color|Gradient"
 msgstr ""
 
 #: alice/wyglad.cxx:261
-msgid "Tło biurka:"
+msgid "Desktop background:"
 msgstr ""
 
 #: alice/wyglad.cxx:269
-msgid "Kolory:"
+msgid "Colors:"
 msgstr ""
 
 #: alice/wyglad.cxx:271
-msgid "Kolor biurka (początek gradientu)"
+msgid "Desktop color (gradient start)"
 msgstr ""
 
 #: alice/wyglad.cxx:275
-msgid "Kolor biurka"
+msgid "Desktop color"
 msgstr ""
 
 #: alice/wyglad.cxx:282 alice/wyglad.cxx:287
-msgid "Drugi kolor gradientu"
+msgid "Second gradient color"
 msgstr ""
 
 #: alice/wyglad.cxx:292
-msgid "Ze schematu"
+msgid "From scheme"
 msgstr ""
 
 #: alice/wyglad.cxx:297
-msgid "Wzór biurka:"
+msgid "Desktop pattern:"
 msgstr ""
 
 #: alice/wyglad.cxx:303
-msgid "Kierunek:"
+msgid "Direction:"
 msgstr ""
 
 #: alice/wyglad.cxx:311
-msgid "Tapeta:"
+msgid "Wallpaper:"
 msgstr ""
 
 #: alice/wyglad.cxx:324
-msgid "Brak (sam wzór)"
+msgid "None (pattern only)"
 msgstr ""
 
 #: alice/wyglad.cxx:325
-msgid "Inny plik…"
+msgid "Other File…"
 msgstr ""
 
 #: alice/wyglad.cxx:338
-msgid "Wybierz tapetę"
+msgid "Choose Wallpaper"
 msgstr ""
 
 #: alice/wyglad.cxx:338
-msgid "Obrazy (*.{png,jpg,jpeg,gif,bmp,svg,svgz,xpm})"
+msgid "Images (*.{png,jpg,jpeg,gif,bmp,svg,svgz,xpm})"
 msgstr ""
 
 #: alice/wyglad.cxx:346 denise/menus.cxx:207 denise/menus.cxx:214
-msgid "Tapeta"
+msgid "Wallpaper"
 msgstr ""
 
 #: alice/wyglad.cxx:347
 msgid ""
-"Nie udało się otworzyć tego obrazu.\n"
-"Plik może być uszkodzony albo w nieobsługiwanym formacie."
+"Could not open this image.\n"
+"The file may be damaged or in an unsupported format."
 msgstr ""
 
 #: alice/wyglad.cxx:367
-msgid "Układ tapety:"
+msgid "Wallpaper layout:"
 msgstr ""
 
 #: alice/wyglad.cxx:377
-msgid "Styl ikon:"
+msgid "Icon style:"
 msgstr ""
 
 #: alice/wyglad.cxx:378
@@ -602,25 +598,25 @@ msgid "Workbench (Amiga)|Platinum (Mac OS)"
 msgstr ""
 
 #: alice/wyglad.cxx:387
-msgid "Skala interfejsu:"
+msgid "Interface scale:"
 msgstr ""
 
 #: alice/wyglad.cxx:391
-msgid "Automatycznie (%1%)"
+msgid "Automatic (%1%)"
 msgstr ""
 
 #: alice/wyglad.cxx:398
 msgid ""
-"Większe litery, ikony i okna na ekranach o dużej rozdzielczości.\n"
-"Po zastosowaniu biurko uruchomi się od nowa (okna programów zostają)."
+"Larger text, icons and windows on high-resolution screens.\n"
+"After applying, the desktop restarts (application windows stay open)."
 msgstr ""
 
 #: alice/wyglad.cxx:402
-msgid "Animacje okien"
+msgid "Window animations"
 msgstr ""
 
 #: alice/wyglad.cxx:412 alice/zasilanie.cxx:128
-msgid "Zastosuj"
+msgid "Apply"
 msgstr ""
 
 #: alice/wyglad.cxx:413 alice/zasilanie.cxx:129 denise/desktop.cxx:1340
@@ -633,442 +629,442 @@ msgid "%1 min"
 msgstr ""
 
 #: alice/zasilanie.cxx:36
-msgid "Nigdy"
+msgid "Never"
 msgstr ""
 
 #: alice/zasilanie.cxx:37
-msgid "1 godzina"
+msgid "1 hour"
 msgstr ""
 
 #: alice/zasilanie.cxx:38
-msgid "2 godziny"
+msgid "2 hours"
 msgstr ""
 
 #: alice/zasilanie.cxx:82
-msgid "Ekran"
+msgid "Screen"
 msgstr ""
 
 #: alice/zasilanie.cxx:84
-msgid "Wygaś ekran po bezczynności:"
+msgid "Turn off screen when idle for:"
 msgstr ""
 
 #: alice/zasilanie.cxx:86
-msgid "Blokuj ekran przy wygaszeniu"
+msgid "Lock screen when it turns off"
 msgstr ""
 
 #: alice/zasilanie.cxx:91
-msgid ""
-"Brak programu blokady ekranu - zainstaluj xsecurelock, i3lock albo slock."
+msgid "No screen locker - install xsecurelock, i3lock or slock."
 msgstr ""
 
 #: alice/zasilanie.cxx:92
-msgid "Program blokady: %1."
+msgid "Screen locker: %1."
 msgstr ""
 
 #: alice/zasilanie.cxx:96
-msgid "Usypianie komputera"
+msgid "Computer Sleep"
 msgstr ""
 
 #: alice/zasilanie.cxx:98
-msgid "Na baterii po bezczynności:"
+msgid "On battery, when idle for:"
 msgstr ""
 
 #: alice/zasilanie.cxx:100
-msgid "Z zasilacza po bezczynności:"
+msgid "On power adapter, when idle for:"
 msgstr ""
 
 #: alice/zasilanie.cxx:103 denise/applets.cxx:753
-msgid "Bateria"
+msgid "Battery"
 msgstr ""
 
 #: alice/zasilanie.cxx:105
-msgid "Przy 3% baterii:"
+msgid "At 3% battery:"
 msgstr ""
 
 #: alice/zasilanie.cxx:106
-msgid "Nic nie rób|Hibernuj|Uśpij"
+msgid "Do nothing|Hibernate|Sleep"
 msgstr ""
 
 #: alice/zasilanie.cxx:111
-msgid "Teraz: %1. Przy 10% pojawi się ostrzeżenie."
+msgid "Now: %1. A warning appears at 10%."
 msgstr ""
 
 #: alice/zasilanie.cxx:112
-msgid "Ten komputer nie ma baterii."
+msgid "This computer has no battery."
 msgstr ""
 
 #: alice/zasilanie.cxx:116
 msgid ""
-"Tryb projekcji (menu baterii na pasku menu) wstrzymuje wygaszanie, blokadę i "
-"usypianie."
+"Presentation mode (battery menu in the menu bar) suspends screen blanking, "
+"locking and sleep."
 msgstr ""
 
 #: alice/zasilanie.cxx:118
 msgid ""
-"W sesji GNOME/KDE ekranem i usypianiem zarządza tamto środowisko - te "
-"ustawienia działają w sesji Nirvana Desktop."
+"In a GNOME/KDE session the screen and sleep are managed by that desktop - "
+"these settings apply to the Nirvana Desktop session."
 msgstr ""
 
 #: audio/audio.cxx:199
-msgid "Karta dźwiękowa (ALSA)"
+msgid "Sound card (ALSA)"
 msgstr ""
 
 #: audio/audio.cxx:199
-msgid "Mikrofon (ALSA)"
+msgid "Microphone (ALSA)"
 msgstr ""
 
 #: audio/audio.cxx:254
-msgid "Serwer dźwięku (PulseAudio/PipeWire) nie działa."
+msgid "The sound server (PulseAudio/PipeWire) is not running."
 msgstr ""
 
 #: audio/audio.cxx:255
-msgid "Brak pactl (pulseaudio-utils) i amixer (alsa-utils)."
+msgid "Neither pactl (pulseaudio-utils) nor amixer (alsa-utils) is installed."
 msgstr ""
 
-#: denise/appimage.cxx:374 denise/applets.cxx:386
-msgid "Aplikacje"
+#: denise/appimage.cxx:385 denise/applets.cxx:386
+msgid "Applications"
 msgstr ""
 
-#: denise/appimage.cxx:380
-msgid "Gry"
+#: denise/appimage.cxx:391
+msgid "Games"
 msgstr ""
 
-#: denise/appimage.cxx:380
-msgid "Grafika"
+#: denise/appimage.cxx:391
+msgid "Graphics"
 msgstr ""
 
-#: denise/appimage.cxx:380 denise/appimage.cxx:381
+#: denise/appimage.cxx:391 denise/appimage.cxx:392
 msgid "Multimedia"
 msgstr ""
 
-#: denise/appimage.cxx:381
+#: denise/appimage.cxx:392
 msgid "Internet"
 msgstr ""
 
-#: denise/appimage.cxx:382
-msgid "Biuro"
+#: denise/appimage.cxx:393
+msgid "Office"
 msgstr ""
 
-#: denise/appimage.cxx:382
-msgid "Programowanie"
+#: denise/appimage.cxx:393
+msgid "Development"
 msgstr ""
 
-#: denise/appimage.cxx:382
-msgid "Edukacja"
-msgstr ""
-
-#: denise/appimage.cxx:383
-msgid "Nauka"
-msgstr ""
-
-#: denise/appimage.cxx:383
-msgid "System"
-msgstr ""
-
-#: denise/appimage.cxx:384
-msgid "Akcesoria"
+#: denise/appimage.cxx:393
+msgid "Education"
 msgstr ""
 
 #: denise/appimage.cxx:394
-msgid "Inne"
+msgid "Science"
 msgstr ""
 
-#: denise/appimage.cxx:454
-msgid "To nie jest plik AppImage (brak nagłówka ELF)."
+#: denise/appimage.cxx:394
+msgid "System"
 msgstr ""
 
-#: denise/appimage.cxx:460
+#: denise/appimage.cxx:395
+msgid "Accessories"
+msgstr ""
+
+#: denise/appimage.cxx:405
+msgid "Other"
+msgstr ""
+
+#: denise/appimage.cxx:465
+msgid "This is not an AppImage file (no ELF header)."
+msgstr ""
+
+#: denise/appimage.cxx:471
 msgid ""
-"Ten AppImage używa formatu DwarFS, a jego runtime\n"
-"nie potrafił się rozpakować."
+"This AppImage uses the DwarFS format and its runtime\n"
+"could not extract it."
 msgstr ""
 
-#: denise/appimage.cxx:461
+#: denise/appimage.cxx:472
 msgid ""
-"Nie udało się rozpakować aplikacji.\n"
-"To może nie być AppImage albo plik jest uszkodzony."
+"Could not extract the application.\n"
+"It may not be an AppImage, or the file is damaged."
 msgstr ""
 
-#: denise/appimage.cxx:479
-msgid "Nie udało się zapisać aplikacji: %1"
+#: denise/appimage.cxx:490
+msgid "Could not save the application: %1"
 msgstr ""
 
 #: denise/applets.cxx:304
-msgid "Dźwięk"
+msgid "Sound"
 msgstr ""
 
 #: denise/applets.cxx:313
-msgid "Głośność"
+msgid "Volume"
 msgstr ""
 
 #: denise/applets.cxx:313
-msgid "Mikrofon"
+msgid "Microphone"
 msgstr ""
 
 #: denise/applets.cxx:316
-msgid "Brak wyjścia dźwięku."
+msgid "No sound output."
 msgstr ""
 
 #: denise/applets.cxx:316
-msgid "Brak mikrofonu."
+msgid "No microphone."
 msgstr ""
 
 #: denise/applets.cxx:321
-msgid "Wycisz"
+msgid "Mute"
 msgstr ""
 
 #: denise/applets.cxx:342
-msgid "Wyjście:"
+msgid "Output:"
 msgstr ""
 
 #: denise/applets.cxx:342
-msgid "Wejście:"
+msgid "Input:"
 msgstr ""
 
 #: denise/applets.cxx:395
-msgid "Słychać tę aplikację"
+msgid "This application is audible"
 msgstr ""
 
 #: denise/applets.cxx:505 denise/applets.cxx:608
-msgid "Bateria: %1"
+msgid "Battery: %1"
 msgstr ""
 
 #: denise/applets.cxx:505 denise/applets.cxx:608 power/power.cxx:266
-msgid "Zasilanie sieciowe"
+msgid "AC power"
 msgstr ""
 
 #: denise/applets.cxx:523
-msgid "Profil:"
+msgid "Profile:"
 msgstr ""
 
 #: denise/applets.cxx:538
-msgid "Tryb projekcji"
+msgid "Presentation Mode"
 msgstr ""
 
 #: denise/applets.cxx:545
-msgid "Ekran nie wygaśnie ani się nie zablokuje, a komputer nie uśnie."
+msgid "The screen will not turn off or lock, and the computer will not sleep."
 msgstr ""
 
 #: denise/applets.cxx:554
-msgid "Zablokuj ekran"
+msgid "Lock Screen"
 msgstr ""
 
 #: denise/applets.cxx:555 denise/menus.cxx:291 denise/menus.cxx:295
-msgid "Uśpij"
+msgid "Sleep"
 msgstr ""
 
 #: denise/applets.cxx:556
-msgid "Hibernuj"
+msgid "Hibernate"
 msgstr ""
 
 #: denise/applets.cxx:563
-msgid "Zainstaluj program blokady: xsecurelock, i3lock albo slock."
+msgid "Install a screen locker: xsecurelock, i3lock or slock."
 msgstr ""
 
 #: denise/applets.cxx:569
-msgid "Wyloguj…"
+msgid "Log Out…"
 msgstr ""
 
 #: denise/applets.cxx:570
-msgid "Uruchom ponownie…"
+msgid "Restart…"
 msgstr ""
 
 #: denise/applets.cxx:571
-msgid "Wyłącz…"
+msgid "Shut Down…"
 msgstr ""
 
 #: denise/applets.cxx:581
-msgid "Ustawienia zasilania…"
+msgid "Power Settings…"
 msgstr ""
 
 #: denise/applets.cxx:630
-msgid "Tryb projekcji jest włączony - wyłącz go, żeby uśpić komputer."
+msgid "Presentation mode is on - turn it off to put the computer to sleep."
 msgstr ""
 
 #: denise/applets.cxx:635
-msgid "Tryb projekcji jest włączony - wyłącz go, żeby hibernować komputer."
+msgid "Presentation mode is on - turn it off to hibernate the computer."
 msgstr ""
 
 #: denise/applets.cxx:639 denise/menus.cxx:310
-msgid "Wyloguj"
+msgid "Log Out"
 msgstr ""
 
 #: denise/applets.cxx:639
-msgid "Zakończyć sesję? Otwarte programy zostaną zamknięte."
+msgid "End the session? Open programs will be closed."
 msgstr ""
 
 #: denise/applets.cxx:644 denise/menus.cxx:299 denise/menus.cxx:300
 #: denise/menus.cxx:303
-msgid "Uruchom ponownie"
+msgid "Restart"
 msgstr ""
 
 #: denise/applets.cxx:644 denise/menus.cxx:299
-msgid "Uruchomić komputer ponownie?"
+msgid "Restart the computer?"
 msgstr ""
 
 #: denise/applets.cxx:650 denise/menus.cxx:315 denise/menus.cxx:318
-msgid "Wyłącz"
+msgid "Shut Down"
 msgstr ""
 
 #: denise/applets.cxx:650
-msgid "Wyłączyć komputer?"
+msgid "Shut down the computer?"
 msgstr ""
 
 #: denise/applets.cxx:753
-msgid "Bateria jest prawie wyczerpana (%1%). Podłącz zasilacz."
+msgid "The battery is almost empty (%1%). Plug in the power adapter."
 msgstr ""
 
 #: denise/desktop.cxx:152
-msgid "%1 wolnej pamięci     %2 wolnego dysku"
+msgid "%1 free memory     %2 free disk"
 msgstr ""
 
 #: denise/desktop.cxx:153
-msgid "%1 pamięci   %2 dysku"
+msgid "%1 memory   %2 disk"
 msgstr ""
 
 #: denise/desktop.cxx:154
-msgid "Pamięć: wolne %1 z %2"
+msgid "Memory: %1 free of %2"
 msgstr ""
 
 #: denise/desktop.cxx:155
-msgid "Dysk (%1): wolne %2 z %3"
+msgid "Disk (%1): %2 free of %3"
 msgstr ""
 
 #: denise/desktop.cxx:224
-msgid "Aplikacje - teraz: %1"
+msgid "Applications - current: %1"
 msgstr ""
 
 #: denise/desktop.cxx:655 denise/desktop.cxx:797 denise/desktop.cxx:1695
 #: denise/desktop.cxx:1703 denise/desktop.cxx:2499 denise/desktop.cxx:2603
-msgid "Kosz"
+msgid "Trash"
 msgstr ""
 
 #: denise/desktop.cxx:1218 denise/desktop.cxx:2263
-msgid "Brak dostępu"
+msgid "Access Denied"
 msgstr ""
 
 #: denise/desktop.cxx:1219
 msgid ""
-"Ten folder znajduje się poza Nirvana HD.\n"
-"Aby go otworzyć, przełącz się w tryb root."
+"This folder is outside Nirvana HD.\n"
+"Switch to root mode to open it."
 msgstr ""
 
 #: denise/desktop.cxx:1281
-msgid "Zmiana nazwy"
+msgid "Rename"
 msgstr ""
 
 #. TRANSLATORS: %s = kod wyjścia programu (zostaw %s)
 #: denise/desktop.cxx:1300 denise/menus.cxx:253
 #, c-format
-msgid "[kod wyjścia %s] Enter zamyka okno…"
+msgid "[exit code %s] Press Enter to close…"
 msgstr ""
 
 #: denise/desktop.cxx:1340 denise/desktop.cxx:1349 denise/desktop.cxx:1357
-msgid "Instalacja"
+msgid "Installation"
 msgstr ""
 
 #: denise/desktop.cxx:1340
-msgid "Nie udało się przenieść pliku:"
+msgid "Could not move the file:"
 msgstr ""
 
 #: denise/desktop.cxx:1350
 msgid ""
-"„%1” jest już zainstalowany w folderze %2.\n"
-"Inne wersje tego programu mogą być zainstalowane obok."
+"“%1” is already installed in %2.\n"
+"Other versions of this program can be installed alongside it."
 msgstr ""
 
 #: denise/desktop.cxx:1353 denise/desktop.cxx:2289
-msgid "Zastąp"
+msgid "Replace"
 msgstr ""
 
 #: denise/desktop.cxx:1354
-msgid "Uruchom"
+msgid "Run"
 msgstr ""
 
 #: denise/desktop.cxx:1358
 msgid ""
-"Zainstalować aplikację „%1”?\n"
-"Plik zostanie przeniesiony do folderu %2."
+"Install the application “%1”?\n"
+"The file will be moved to %2."
 msgstr ""
 
 #: denise/desktop.cxx:1361
-msgid "Aplikacja będzie działać w piaskownicy: zobaczy tylko Nirvana HD."
+msgid "The application will run in a sandbox: it will only see Nirvana HD."
 msgstr ""
 
 #: denise/desktop.cxx:1362
-msgid "Uwaga: brak bubblewrap - aplikacja będzie działać bez piaskownicy."
+msgid ""
+"Note: bubblewrap is missing - the application will run without a sandbox."
 msgstr ""
 
 #: denise/desktop.cxx:1363
-msgid "Zainstaluj"
+msgid "Install"
 msgstr ""
 
 #: denise/desktop.cxx:1375
-msgid "Nie można uruchomić"
+msgid "Cannot Open"
 msgstr ""
 
 #: denise/desktop.cxx:1628
-msgid "Środowisko w duchu Mac OS 9 i Amigi"
+msgid "A desktop in the spirit of Mac OS 9 and the Amiga"
 msgstr ""
 
 #: denise/desktop.cxx:1629
-msgid "Pamięć wbudowana: %1 GB"
+msgid "Built-in memory: %1 GB"
 msgstr ""
 
 #: denise/desktop.cxx:1630
-msgid "Menedżer plików: Rambler 0.1 · FLTK %1"
+msgid "File manager: Rambler 0.1 · FLTK %1"
 msgstr ""
 
 #: denise/desktop.cxx:1631
-msgid "O Nirvana Desktop"
+msgid "About Nirvana Desktop"
 msgstr ""
 
 #: denise/desktop.cxx:1637
-msgid "bez nazwy"
+msgid "untitled folder"
 msgstr ""
 
 #: denise/desktop.cxx:1695 denise/desktop.cxx:2499 denise/desktop.cxx:2603
-msgid "Nie udało się przenieść do kosza:"
+msgid "Could not move to the Trash:"
 msgstr ""
 
 #: denise/desktop.cxx:1703
-msgid "Kosz jest pusty."
+msgid "The Trash is empty."
 msgstr ""
 
 #: denise/desktop.cxx:1704
-msgid "Opróżnij kosz"
+msgid "Empty Trash"
 msgstr ""
 
 #: denise/desktop.cxx:1705
 msgid ""
-"Kosz zawiera %1.\n"
-"Czy na pewno usunąć je na zawsze?"
+"The Trash contains %1.\n"
+"Delete them permanently?"
 msgstr ""
 
 #: denise/desktop.cxx:1707
-msgid "Opróżnij"
+msgid "Empty"
 msgstr ""
 
 #: denise/desktop.cxx:1718 denise/desktop.cxx:1727
-msgid "Tryb root"
+msgid "Root Mode"
 msgstr ""
 
 #: denise/desktop.cxx:1719
 msgid ""
-"Tryb root daje pełny dostęp do systemu plików\n"
-"i ustawień zaawansowanych. Wymaga hasła administratora."
+"Root mode gives full access to the file system\n"
+"and advanced settings. It requires the administrator password."
 msgstr ""
 
 #: denise/desktop.cxx:1722
-msgid "Przełącz"
+msgid "Switch"
 msgstr ""
 
 #: denise/desktop.cxx:1727
-msgid "Nie znaleziono pkexec (pakiet polkit)."
+msgid "pkexec was not found (polkit package)."
 msgstr ""
 
 #: denise/desktop.cxx:1815 denise/desktop.cxx:1888
-msgid "Ustawienia sieci…"
+msgid "Network Settings…"
 msgstr ""
 
 #: denise/desktop.cxx:1823
@@ -1076,143 +1072,143 @@ msgid "%1 (%2): %3"
 msgstr ""
 
 #: denise/desktop.cxx:1834
-msgid "Kabel odłączony"
+msgid "Cable unplugged"
 msgstr ""
 
 #: denise/desktop.cxx:1838
-msgid "Wi-Fi: hotspot „%1”"
+msgid "Wi-Fi: hotspot “%1”"
 msgstr ""
 
 #: denise/desktop.cxx:1839
-msgid "Wi-Fi: włączone"
+msgid "Wi-Fi: On"
 msgstr ""
 
 #: denise/desktop.cxx:1839
-msgid "Wi-Fi: wyłączone"
+msgid "Wi-Fi: Off"
 msgstr ""
 
 #: denise/desktop.cxx:1840
-msgid "Wyłącz Wi-Fi"
+msgid "Turn Wi-Fi Off"
 msgstr ""
 
 #: denise/desktop.cxx:1840
-msgid "Włącz Wi-Fi"
+msgid "Turn Wi-Fi On"
 msgstr ""
 
 #: denise/desktop.cxx:1862
-msgid "Wyłącz hotspot"
+msgid "Turn Hotspot Off"
 msgstr ""
 
 #: denise/desktop.cxx:1862
-msgid "Rozłącz z „%1”"
+msgid "Disconnect from “%1”"
 msgstr ""
 
 #: denise/desktop.cxx:1876
-msgid "(łączenie…)"
+msgid "(connecting…)"
 msgstr ""
 
 #: denise/desktop.cxx:1904
 msgid ""
-"Połączenie VPN „%1” (%2).\n"
-"Podaj hasło."
+"VPN connection “%1” (%2).\n"
+"Enter the password."
 msgstr ""
 
 #: denise/desktop.cxx:1927
 msgid ""
-"Sieci firmowe (WPA Enterprise, 802.1X) nie są jeszcze obsługiwane.\n"
-"Skonfiguruj je narzędziem nmtui albo nm-connection-editor."
+"Enterprise networks (WPA Enterprise, 802.1X) are not supported yet.\n"
+"Set them up with nmtui or nm-connection-editor."
 msgstr ""
 
 #: denise/desktop.cxx:2112
-msgid "Ukryj %1"
+msgid "Hide %1"
 msgstr ""
 
 #: denise/desktop.cxx:2116
-msgid "Ukryj inne"
+msgid "Hide Others"
 msgstr ""
 
 #: denise/desktop.cxx:2121
-msgid "Pokaż wszystkie"
+msgid "Show All"
 msgstr ""
 
 #: denise/desktop.cxx:2130
-msgid "Zakończ %1"
+msgid "Quit %1"
 msgstr ""
 
 #: denise/desktop.cxx:2209
-msgid "Nazwa nie może zawierać znaku „/”."
+msgid "A name cannot contain “/”."
 msgstr ""
 
 #: denise/desktop.cxx:2210
-msgid "Taka nazwa jest zarezerwowana."
+msgid "That name is reserved."
 msgstr ""
 
 #: denise/desktop.cxx:2213
-msgid "Element o nazwie „%1” już istnieje."
+msgid "An item named “%1” already exists."
 msgstr ""
 
 #: denise/desktop.cxx:2215
-msgid "Nie udało się zmienić nazwy:"
+msgid "Could not rename:"
 msgstr ""
 
 #: denise/desktop.cxx:2263
-msgid "Folder docelowy jest poza Nirvana HD."
+msgid "The destination folder is outside Nirvana HD."
 msgstr ""
 
 #: denise/desktop.cxx:2270
-msgid "Nie można przenieść"
+msgid "Cannot Move"
 msgstr ""
 
 #: denise/desktop.cxx:2270
-msgid "Folderu „%1” nie można umieścić w nim samym."
+msgid "The folder “%1” cannot be moved into itself."
 msgstr ""
 
 #: denise/desktop.cxx:2284
-msgid "element „%1”"
+msgid "an item “%1”"
 msgstr ""
 
 #: denise/desktop.cxx:2286 denise/desktop.cxx:2329
-msgid "Kopiowanie"
+msgid "Copying"
 msgstr ""
 
 #: denise/desktop.cxx:2286 denise/desktop.cxx:2329
-msgid "Przenoszenie"
+msgid "Move"
 msgstr ""
 
 #: denise/desktop.cxx:2287
 msgid ""
-"W folderze „%1” jest już %2.\n"
-"Zastąpić?"
+"The folder “%1” already contains %2.\n"
+"Replace?"
 msgstr ""
 
 #: denise/desktop.cxx:2329
-msgid "Wystąpiły błędy:"
+msgid "There were errors:"
 msgstr ""
 
 #: denise/desktop.cxx:2458 denise/desktop.cxx:2750 denise/desktop.cxx:2763
-msgid "Dysk zaszyfrowany"
+msgid "Encrypted Disk"
 msgstr ""
 
 #: denise/desktop.cxx:2458
-msgid "Najpierw otwórz dysk „%1” i podaj hasło."
+msgid "Open the disk “%1” and enter its password first."
 msgstr ""
 
 #: denise/desktop.cxx:2463 denise/desktop.cxx:2677
-msgid "Dysk"
+msgid "Disk"
 msgstr ""
 
 #: denise/desktop.cxx:2751
 msgid ""
-"Dysk „%1” jest zaszyfrowany.\n"
-"Podaj hasło, aby go otworzyć."
+"The disk “%1” is encrypted.\n"
+"Enter the password to open it."
 msgstr ""
 
 #: denise/desktop.cxx:2751
-msgid "Otwórz"
+msgid "Open"
 msgstr ""
 
 #: denise/desktop.cxx:2782
-msgid "Wysuwanie"
+msgid "Ejecting"
 msgstr ""
 
 #: denise/folder_view.cxx:47 denise/menus.cxx:523
@@ -1220,39 +1216,39 @@ msgid "folder"
 msgstr ""
 
 #: denise/folder_view.cxx:49
-msgid "aplikacja"
+msgid "application"
 msgstr ""
 
 #: denise/folder_view.cxx:50
-msgid "obraz"
+msgid "image"
 msgstr ""
 
 #: denise/folder_view.cxx:51
-msgid "dźwięk"
+msgid "sound"
 msgstr ""
 
 #: denise/folder_view.cxx:52
-msgid "dokument"
+msgid "document"
 msgstr ""
 
 #: denise/folder_view.cxx:769
-msgid "%1 wolne"
+msgid "%1 free"
 msgstr ""
 
 #: denise/folder_view.cxx:885
-msgid "Nazwa"
+msgid "Name"
 msgstr ""
 
 #: denise/folder_view.cxx:886
-msgid "Data modyfikacji"
+msgid "Date Modified"
 msgstr ""
 
 #: denise/folder_view.cxx:887
-msgid "Rozmiar"
+msgid "Size"
 msgstr ""
 
 #: denise/folder_view.cxx:888
-msgid "Rodzaj"
+msgid "Kind"
 msgstr ""
 
 #: denise/gary.cxx:112
@@ -1261,149 +1257,150 @@ msgstr ""
 
 #: denise/menus.cxx:207
 msgid ""
-"Nie udało się otworzyć obrazu „%1”.\n"
-"Plik może być uszkodzony albo w nieobsługiwanym formacie."
+"Could not open the image “%1”.\n"
+"The file may be damaged or in an unsupported format."
 msgstr ""
 
 #: denise/menus.cxx:214
-msgid "Nie udało się zapisać ustawień wyglądu."
+msgid "Could not save the appearance settings."
 msgstr ""
 
 #: denise/menus.cxx:230
-msgid "Wykonaj polecenie"
+msgid "Execute Command"
 msgstr ""
 
 #: denise/menus.cxx:231
-msgid "Polecenie do wykonania (w folderze „%1”):"
+msgid "Command to execute (in folder “%1”):"
 msgstr ""
 
 #: denise/menus.cxx:238
-msgid "Pokaż wynik w Nirvana Shell"
+msgid "Show output in Nirvana Shell"
 msgstr ""
 
 #: denise/menus.cxx:242
-msgid "Wykonaj"
+msgid "Execute"
 msgstr ""
 
 #: denise/menus.cxx:291
 msgid ""
-"Tryb projekcji jest włączony - wyłącz go w menu baterii, żeby uśpić komputer."
+"Presentation mode is on - turn it off in the battery menu to put the "
+"computer to sleep."
 msgstr ""
 
 #: denise/menus.cxx:308
-msgid "Zakończ"
+msgid "Quit"
 msgstr ""
 
 #: denise/menus.cxx:308
-msgid "Zakończyć pracę z Nirvana Desktop?"
+msgid "Quit Nirvana Desktop?"
 msgstr ""
 
 #: denise/menus.cxx:409
-msgid "ponad %1 (liczenie przerwane)"
+msgid "over %1 (counting stopped)"
 msgstr ""
 
 #: denise/menus.cxx:411
-msgid "%1, plików: %2"
+msgid "%1, files: %2"
 msgstr ""
 
 #: denise/menus.cxx:498
-msgid "Informacje: %1"
+msgid "Info: %1"
 msgstr ""
 
 #: denise/menus.cxx:512 denise/menus.cxx:523
-msgid "Rodzaj:"
+msgid "Kind:"
 msgstr ""
 
 #: denise/menus.cxx:512
-msgid "płyta"
+msgid "disc"
 msgstr ""
 
 #: denise/menus.cxx:512
-msgid "dysk wymienny"
+msgid "removable disk"
 msgstr ""
 
 #: denise/menus.cxx:512
-msgid "dysk"
+msgid "disk"
 msgstr ""
 
 #: denise/menus.cxx:513 denise/menus.cxx:684
-msgid "System plików:"
+msgid "File system:"
 msgstr ""
 
 #: denise/menus.cxx:513
-msgid "brak (niesformatowany)"
+msgid "none (unformatted)"
 msgstr ""
 
 #: denise/menus.cxx:514
-msgid "Pojemność:"
+msgid "Capacity:"
 msgstr ""
 
 #: denise/menus.cxx:517
-msgid "Wolne:"
+msgid "Free:"
 msgstr ""
 
 #: denise/menus.cxx:518
-msgid "Urządzenie:"
+msgid "Device:"
 msgstr ""
 
 #: denise/menus.cxx:519
-msgid "Zamontowany:"
+msgid "Mounted at:"
 msgstr ""
 
 #: denise/menus.cxx:519
-msgid "nie"
+msgid "no"
 msgstr ""
 
 #: denise/menus.cxx:520
-msgid "Szyfrowanie:"
+msgid "Encryption:"
 msgstr ""
 
 #: denise/menus.cxx:520
-msgid "LUKS (otwarty)"
+msgid "LUKS (unlocked)"
 msgstr ""
 
 #: denise/menus.cxx:520
-msgid "LUKS (zamknięty)"
+msgid "LUKS (locked)"
 msgstr ""
 
 #: denise/menus.cxx:520
-msgid "brak"
+msgid "none"
 msgstr ""
 
 #: denise/menus.cxx:524
-msgid "Rozmiar:"
+msgid "Size:"
 msgstr ""
 
 #: denise/menus.cxx:525
-msgid "Położenie:"
+msgid "Where:"
 msgstr ""
 
 #: denise/menus.cxx:529
-msgid "Utworzono:"
+msgid "Created:"
 msgstr ""
 
 #: denise/menus.cxx:530
-msgid "Zmieniono:"
+msgid "Modified:"
 msgstr ""
 
 #: denise/menus.cxx:531
-msgid "Otwarto:"
+msgid "Opened:"
 msgstr ""
 
 #: denise/menus.cxx:539
-msgid "Właściciel:"
+msgid "Owner:"
 msgstr ""
 
 #: denise/menus.cxx:542
-msgid "Uprawnienia:"
+msgid "Permissions:"
 msgstr ""
 
 #: denise/menus.cxx:548
-msgid "Flagi:"
+msgid "Flags:"
 msgstr ""
 
 #: denise/menus.cxx:549
-msgid "Tylko do odczytu"
+msgid "Read only"
 msgstr ""
 
 #: denise/menus.cxx:553
@@ -1411,427 +1408,423 @@ msgid "Program"
 msgstr ""
 
 #: denise/menus.cxx:556
-msgid "Prawo uruchamiania (jak flaga e w Workbenchu)"
+msgid "Execute permission (like the e flag in Workbench)"
 msgstr ""
 
 #: denise/menus.cxx:561
-msgid "Komentarz:"
+msgid "Comment:"
 msgstr ""
 
 #: denise/menus.cxx:566
-msgid "Ten system plików nie obsługuje komentarzy."
+msgid "This file system does not support comments."
 msgstr ""
 
 #: denise/menus.cxx:569
-msgid "Parametry:"
+msgid "Arguments:"
 msgstr ""
 
 #: denise/menus.cxx:575
-msgid "Parametry uruchamiania programu (ToolTypes), np. --fullscreen"
+msgid "Program start arguments (ToolTypes), e.g. --fullscreen"
 msgstr ""
 
 #: denise/menus.cxx:588
-msgid "Nie udało się zmienić flag."
+msgid "Could not change the flags."
 msgstr ""
 
 #: denise/menus.cxx:593
-msgid "Informacje"
+msgid "Info"
 msgstr ""
 
 #: denise/menus.cxx:662 denise/menus.cxx:673 denise/menus.cxx:694
 #: denise/menus.cxx:698 denise/menus.cxx:706
-msgid "Formatuj dysk"
+msgid "Format Disk"
 msgstr ""
 
 #: denise/menus.cxx:662
-msgid "Zaznacz na biurku ikonę dysku, który chcesz sformatować."
+msgid "Select the icon of the disk you want to format on the desktop."
 msgstr ""
 
 #: denise/menus.cxx:674
-msgid "Formatowanie „%1” (%2)."
+msgid "Formatting “%1” (%2)."
 msgstr ""
 
 #: denise/menus.cxx:675
-msgid "Wszystkie dane na tym dysku zostaną usunięte!"
+msgid "All data on this disk will be erased!"
 msgstr ""
 
 #: denise/menus.cxx:680
-msgid "Nazwa:"
+msgid "Name:"
 msgstr ""
 
 #: denise/menus.cxx:687
 msgid ""
-"FAT32 (pendrive - działa wszędzie)|exFAT (duże pliki, Windows i Mac)|ext4 "
-"(Linux)|NTFS (Windows)"
+"FAT32 (USB stick - works everywhere)|exFAT (large files, Windows and Mac)|"
+"ext4 (Linux)|NTFS (Windows)"
 msgstr ""
 
 #: denise/menus.cxx:690 denise/menus.cxx:695
-msgid "Formatuj"
+msgid "Format"
 msgstr ""
 
 #: denise/menus.cxx:694
-msgid "Na pewno sformatować „%1”? Tej operacji nie da się cofnąć."
+msgid "Really format “%1”? This cannot be undone."
 msgstr ""
 
 #: denise/menus.cxx:698
-msgid "Dysk zniknął."
+msgid "The disk is gone."
 msgstr ""
 
 #: denise/menus.cxx:706
-msgid "Dysk „%1” jest gotowy."
+msgid "The disk “%1” is ready."
 msgstr ""
 
 #: denise/volumes.cxx:152
-msgid "Płyta"
+msgid "Disc"
 msgstr ""
 
 #: denise/volumes.cxx:153
-msgid "Zaszyfrowany dysk %1"
+msgid "Encrypted disk %1"
 msgstr ""
 
 #: denise/volumes.cxx:154
-msgid "Niesformatowany %1"
+msgid "Unformatted %1"
 msgstr ""
 
 #: denise/volumes.cxx:155
-msgid "Dysk USB %1"
+msgid "USB disk %1"
 msgstr ""
 
 #: denise/volumes.cxx:156
-msgid "Dysk %1"
+msgid "Disk %1"
 msgstr ""
 
 #: denise/volumes.cxx:217
 msgid ""
-"Brak uprawnień do tej operacji.\n"
-"(Potrzebny jest agent polkit albo uprawnienia administratora.)"
+"You are not allowed to do this.\n"
+"(A polkit agent or administrator rights are needed.)"
 msgstr ""
 
 #: denise/volumes.cxx:219
-msgid ""
-"Dysk jest w użyciu - zamknij pliki i programy, które z niego korzystają."
+msgid "The disk is in use - close the files and programs that use it."
 msgstr ""
 
-#: denise/volumes.cxx:229
-msgid "Brak połączenia z systemową szyną D-Bus."
+#: denise/volumes.cxx:229 net/net.cxx:751 net/net.cxx:802
+msgid "No connection to the system D-Bus."
 msgstr ""
 
 #: denise/volumes.cxx:239
-msgid "nieznany błąd"
+msgid "unknown error"
 msgstr ""
 
 #: denise/volumes.cxx:287
-msgid "Dysk jest zaszyfrowany - najpierw podaj hasło."
+msgid "The disk is encrypted - enter its password first."
 msgstr ""
 
 #: denise/volumes.cxx:292
-msgid "Nie udało się zamontować „%1”:"
+msgid "Could not mount “%1”:"
 msgstr ""
 
 #: denise/volumes.cxx:303
-msgid "Nie udało się odmontować „%1”:"
+msgid "Could not unmount “%1”:"
 msgstr ""
 
 #: denise/volumes.cxx:318
-msgid "Nie udało się odblokować dysku:"
+msgid "Could not unlock the disk:"
 msgstr ""
 
 #: denise/volumes.cxx:325
-msgid "Nie udało się zamknąć zaszyfrowanego dysku:"
+msgid "Could not lock the encrypted disk:"
 msgstr ""
 
 #: denise/volumes.cxx:329
-msgid "Płyt nie da się tu formatować."
+msgid "Discs cannot be formatted here."
 msgstr ""
 
 #: denise/volumes.cxx:362
-msgid "Nie udało się sformatować „%1”:"
+msgid "Could not format “%1”:"
 msgstr ""
 
 #: insight/main.cxx:158
-msgid "bez tytułu"
+msgid "untitled"
 msgstr ""
 
 #: net/net.cxx:94
-msgid "Nie znaleziono tej sieci w zasięgu."
+msgid "This network is not in range."
 msgstr ""
 
 #: net/net.cxx:96
-msgid "Brak uprawnień do zmiany ustawień sieci."
+msgid "You are not allowed to change network settings."
 msgstr ""
 
 #: net/net.cxx:98 net/net.cxx:193
-msgid "NetworkManager nie działa."
+msgid "NetworkManager is not running."
 msgstr ""
 
 #: net/net.cxx:99 net/net.cxx:682
-msgid "Przekroczono czas oczekiwania na połączenie."
+msgid "The connection timed out."
 msgstr ""
 
 #: net/net.cxx:101
-msgid "Nie udało się uzyskać adresu IP."
+msgid "Could not get an IP address."
 msgstr ""
 
 #: net/net.cxx:103
-msgid "Nieprawidłowy adres IP."
+msgid "Invalid IP address."
 msgstr ""
 
 #: net/net.cxx:104
-msgid "Nie ma takiego połączenia."
+msgid "No such connection."
 msgstr ""
 
 #: net/net.cxx:106
-msgid "Jądro systemu nie obsługuje WireGuard (brak modułu wireguard)."
+msgid "The kernel does not support WireGuard (no wireguard module)."
 msgstr ""
 
 #: net/net.cxx:108
-msgid "Brak wtyczki VPN NetworkManagera dla tego połączenia."
+msgid "The NetworkManager VPN plugin for this connection is missing."
 msgstr ""
 
 #: net/net.cxx:109
-msgid "Brak programu nmcli (NetworkManager)."
+msgid "nmcli is not installed (NetworkManager)."
 msgstr ""
 
 #: net/net.cxx:112
-msgid "Operacja się nie udała."
+msgid "The operation failed."
 msgstr ""
 
 #: net/net.cxx:112 power/power.cxx:163
-msgid "Nie udało się: %1"
+msgid "Failed: %1"
 msgstr ""
 
 #: net/net.cxx:191
-msgid "Brak programu nmcli (pakiet network-manager)."
+msgid "nmcli is not installed (network-manager package)."
 msgstr ""
 
 #: net/net.cxx:322
-msgid "Modem komórkowy"
+msgid "Mobile modem"
 msgstr ""
 
 #: net/net.cxx:333
-msgid "niedostępne"
+msgid "unavailable"
 msgstr ""
 
 #: net/net.cxx:334
-msgid "poza NetworkManagerem"
+msgid "not managed by NetworkManager"
 msgstr ""
 
 #: net/net.cxx:371
-msgid "Usunięto połączenie."
+msgid "Connection deleted."
 msgstr ""
 
 #: net/net.cxx:430
-msgid "Nie można odczytać pliku."
+msgid "Cannot read the file."
 msgstr ""
 
 #: net/net.cxx:436
 msgid ""
-"Nieznany format. Obsługiwane: WireGuard (.conf), OpenVPN (.ovpn), Cisco VPNC "
-"(.pcf)."
+"Unknown format. Supported: WireGuard (.conf), OpenVPN (.ovpn), Cisco VPNC (."
+"pcf)."
 msgstr ""
 
 #: net/net.cxx:440
 msgid ""
-"Brak wtyczki NetworkManagera dla %1: zainstaluj pakiet network-manager-%2."
+"The NetworkManager plugin for %1 is missing: install the network-manager-%2 "
+"package."
 msgstr ""
 
 #: net/net.cxx:449
 msgid ""
-"Nazwa pliku WireGuard musi być krótką nazwą interfejsu (np. wg0.conf, firma."
+"A WireGuard file name must be a short interface name (e.g. wg0.conf, office."
 "conf)."
 msgstr ""
 
 #: net/net.cxx:483
-msgid "Nie można utworzyć pliku tymczasowego."
+msgid "Cannot create a temporary file."
 msgstr ""
 
 #: net/net.cxx:498
 msgid ""
-"Serwer VPN nie odpowiada albo odrzucił logowanie. Sprawdź nazwę użytkownika "
-"i hasło."
+"The VPN server does not respond or rejected the login. Check the user name "
+"and password."
 msgstr ""
 
 #: net/net.cxx:499
-msgid "Przekroczono czas oczekiwania na połączenie VPN."
+msgid "The VPN connection timed out."
 msgstr ""
 
 #: net/net.cxx:503
-msgid "Połączono z VPN."
+msgid "Connected to VPN."
 msgstr ""
 
 #: net/net.cxx:744 net/net.cxx:797
-msgid "Brak karty Wi-Fi."
-msgstr ""
-
-#: net/net.cxx:751 net/net.cxx:802
-msgid "Brak połączenia z magistralą systemową D-Bus."
+msgid "No Wi-Fi adapter."
 msgstr ""
 
 #: net/net.cxx:789
-msgid "Hasło hotspotu musi mieć co najmniej 8 znaków."
+msgid "The hotspot password must be at least 8 characters long."
 msgstr ""
 
 #: net/net.cxx:810
-msgid "Nie udało się włączyć hotspotu (karta może nie obsługiwać trybu AP)."
+msgid "Could not turn the hotspot on (the adapter may not support AP mode)."
 msgstr ""
 
-#: platinum/i18n.cxx:255
-msgid "sty"
+#: platinum/i18n.cxx:248
+msgid "Jan"
 msgstr ""
 
-#: platinum/i18n.cxx:255
-msgid "lut"
+#: platinum/i18n.cxx:248
+msgid "Feb"
 msgstr ""
 
-#: platinum/i18n.cxx:255
-msgid "mar"
+#: platinum/i18n.cxx:248
+msgid "Mar"
 msgstr ""
 
-#: platinum/i18n.cxx:255
-msgid "kwi"
+#: platinum/i18n.cxx:248
+msgid "Apr"
 msgstr ""
 
-#: platinum/i18n.cxx:255
-msgid "maj"
+#: platinum/i18n.cxx:248
+msgid "May"
 msgstr ""
 
-#: platinum/i18n.cxx:255
-msgid "cze"
+#: platinum/i18n.cxx:248
+msgid "Jun"
 msgstr ""
 
-#: platinum/i18n.cxx:256
-msgid "lip"
+#: platinum/i18n.cxx:249
+msgid "Jul"
 msgstr ""
 
-#: platinum/i18n.cxx:256
-msgid "sie"
+#: platinum/i18n.cxx:249
+msgid "Aug"
 msgstr ""
 
-#: platinum/i18n.cxx:256
-msgid "wrz"
+#: platinum/i18n.cxx:249
+msgid "Sep"
 msgstr ""
 
-#: platinum/i18n.cxx:256
-msgid "paź"
+#: platinum/i18n.cxx:249
+msgid "Oct"
 msgstr ""
 
-#: platinum/i18n.cxx:256
-msgid "lis"
+#: platinum/i18n.cxx:249
+msgid "Nov"
 msgstr ""
 
-#: platinum/i18n.cxx:256
-msgid "gru"
+#: platinum/i18n.cxx:249
+msgid "Dec"
 msgstr ""
 
 #. TRANSLATORS: data: %1 dzień, %2 miesiąc (skrót), %3 rok, %4 godzina - można zmienić szyk
-#: platinum/i18n.cxx:263
-msgid "%1 %2 %3, %4"
+#: platinum/i18n.cxx:256
+msgid "%2 %1, %3, %4"
 msgstr ""
 
 #: platinum/platinum.cxx:211
-msgid "Tak"
+msgid "Yes"
 msgstr ""
 
 #: platinum/platinum.cxx:212
-msgid "Nie"
+msgid "No"
 msgstr ""
 
-#: platinum/platinum.cxx:744
-msgid "%1 element"
-msgid_plural "%1 elementy"
+#: platinum/platinum.cxx:745
+msgid "%1 item"
+msgid_plural "%1 items"
 msgstr[0] ""
 msgstr[1] ""
 
-#: platinum/platinum.cxx:750
-msgid "Wybierz"
-msgstr ""
-
 #: platinum/platinum.cxx:751
-msgid "Dodaj do ulubionych"
+msgid "Choose"
 msgstr ""
 
 #: platinum/platinum.cxx:752
-msgid "Wszystkie pliki (*)"
+msgid "Add to Favorites"
 msgstr ""
 
 #: platinum/platinum.cxx:753
-msgid "Własny filtr"
+msgid "All Files (*)"
 msgstr ""
 
 #: platinum/platinum.cxx:754
-msgid "Plik już istnieje. Zastąpić go?"
+msgid "Custom Filter"
 msgstr ""
 
 #: platinum/platinum.cxx:755
-msgid "Ulubione"
+msgid "The file already exists. Replace it?"
 msgstr ""
 
 #: platinum/platinum.cxx:756
-msgid "Plik:"
+msgid "Favorites"
 msgstr ""
 
 #: platinum/platinum.cxx:757
-msgid "Dyski"
+msgid "File:"
 msgstr ""
 
 #: platinum/platinum.cxx:758
-msgid "Ukryte pliki"
+msgid "Disks"
 msgstr ""
 
 #: platinum/platinum.cxx:759
-msgid "Zarządzaj ulubionymi"
+msgid "Hidden files"
 msgstr ""
 
 #: platinum/platinum.cxx:760
-msgid "Nazwa nowego folderu:"
+msgid "Manage Favorites"
 msgstr ""
 
 #: platinum/platinum.cxx:761
-msgid "Nowy folder"
+msgid "New folder name:"
 msgstr ""
 
-#: platinum/platinum.cxx:764
-msgid "Pokaż:"
+#: platinum/platinum.cxx:762
+msgid "New Folder"
 msgstr ""
 
-#: platinum/theme.cxx:43
-msgid "Gładki"
-msgstr ""
-
-#: platinum/theme.cxx:43
-msgid "Kropki"
+#: platinum/platinum.cxx:765
+msgid "Show:"
 msgstr ""
 
 #: platinum/theme.cxx:43
-msgid "Groszki"
+msgid "Plain"
 msgstr ""
 
 #: platinum/theme.cxx:43
-msgid "Krata"
+msgid "Dots"
 msgstr ""
 
 #: platinum/theme.cxx:43
-msgid "Drobna kratka"
+msgid "Polka dots"
 msgstr ""
 
 #: platinum/theme.cxx:43
-msgid "Szachownica"
+msgid "Grid"
+msgstr ""
+
+#: platinum/theme.cxx:43
+msgid "Fine grid"
+msgstr ""
+
+#: platinum/theme.cxx:43
+msgid "Checkerboard"
 msgstr ""
 
 #: platinum/theme.cxx:44
-msgid "Ukośne prążki"
+msgid "Diagonal stripes"
 msgstr ""
 
 #: platinum/theme.cxx:44
-msgid "Paski poziome"
+msgid "Horizontal stripes"
 msgstr ""
 
 #: platinum/theme.cxx:44
-msgid "Paski pionowe"
+msgid "Vertical stripes"
 msgstr ""
 
 #: platinum/theme.cxx:44
-msgid "Cegiełki"
+msgid "Bricks"
 msgstr ""
 
 #: platinum/theme.cxx:45
@@ -1839,47 +1832,47 @@ msgid "Raster (Amiga)"
 msgstr ""
 
 #: platinum/theme.cxx:45
-msgid "Romby"
+msgid "Diamonds"
 msgstr ""
 
 #: platinum/theme.cxx:45
-msgid "Krzyżyki"
+msgid "Crosses"
 msgstr ""
 
 #: platinum/theme.cxx:45
-msgid "Zygzak"
+msgid "Zigzag"
 msgstr ""
 
 #: platinum/theme.cxx:45
-msgid "Jodełka"
+msgid "Herringbone"
 msgstr ""
 
 #: platinum/theme.cxx:45
-msgid "Tkanina"
+msgid "Weave"
 msgstr ""
 
 #: platinum/theme.cxx:46
-msgid "Fale"
+msgid "Waves"
 msgstr ""
 
 #: platinum/theme.cxx:46
-msgid "Łuski"
+msgid "Scales"
 msgstr ""
 
 #: platinum/theme.cxx:46
-msgid "Gwiazdki"
+msgid "Stars"
 msgstr ""
 
 #: platinum/theme.cxx:46
-msgid "Piasek"
+msgid "Sand"
 msgstr ""
 
 #: platinum/theme.cxx:48
-msgid "Wzór"
+msgid "Pattern"
 msgstr ""
 
 #: platinum/theme.cxx:48
-msgid "Jednolity kolor"
+msgid "Solid color"
 msgstr ""
 
 #: platinum/theme.cxx:48
@@ -1887,55 +1880,55 @@ msgid "Gradient"
 msgstr ""
 
 #: platinum/theme.cxx:50
-msgid "Pionowy"
+msgid "Vertical"
 msgstr ""
 
 #: platinum/theme.cxx:50
-msgid "Poziomy"
+msgid "Horizontal"
 msgstr ""
 
 #: platinum/theme.cxx:50
-msgid "Ukośny"
+msgid "Diagonal"
 msgstr ""
 
 #: platinum/theme.cxx:50
-msgid "Promienisty"
+msgid "Radial"
 msgstr ""
 
 #: platinum/theme.cxx:126
-msgid "Grafit"
+msgid "Graphite"
 msgstr ""
 
 #: platinum/wallpaper.cxx:27
-msgid "Wypełnij ekran"
+msgid "Fill screen"
 msgstr ""
 
 #: platinum/wallpaper.cxx:27
-msgid "Dopasuj"
+msgid "Fit"
 msgstr ""
 
 #: platinum/wallpaper.cxx:27
-msgid "Rozciągnij"
+msgid "Stretch"
 msgstr ""
 
 #: platinum/wallpaper.cxx:27
-msgid "Na środku"
+msgid "Center"
 msgstr ""
 
 #: platinum/wallpaper.cxx:28
-msgid "Sąsiadująco"
+msgid "Tile"
 msgstr ""
 
 #: power/power.cxx:152
-msgid "Brak magistrali systemowej D-Bus."
+msgid "No system D-Bus."
 msgstr ""
 
 #: power/power.cxx:160
-msgid "Wstrzymane przez inny program albo tryb projekcji."
+msgid "Blocked by another program or by presentation mode."
 msgstr ""
 
 #: power/power.cxx:162
-msgid "Brak usługi logind/elogind."
+msgid "The logind/elogind service is missing."
 msgstr ""
 
 #: power/power.cxx:271
@@ -1943,59 +1936,59 @@ msgid "%1 h %2 min"
 msgstr ""
 
 #: power/power.cxx:273
-msgid "%1, ładowanie"
+msgid "%1, charging"
 msgstr ""
 
 #: power/power.cxx:273
-msgid "%1, ładowanie (pełna za ok. %2)"
+msgid "%1, charging (full in about %2)"
 msgstr ""
 
 #: power/power.cxx:274
-msgid "%1, zasilacz"
+msgid "%1, on power adapter"
 msgstr ""
 
 #: power/power.cxx:275
-msgid "%1, zostało ok. %2"
+msgid "%1, about %2 left"
 msgstr ""
 
 #: power/power.cxx:279
-msgid "Oszczędzanie energii"
+msgid "Power saver"
 msgstr ""
 
 #: power/power.cxx:280
-msgid "Zrównoważony"
+msgid "Balanced"
 msgstr ""
 
 #: power/power.cxx:281
-msgid "Wydajność"
+msgid "Performance"
 msgstr ""
 
 #: power/power.cxx:375
-msgid "wygaszanie ekranu"
+msgid "screen blanking"
 msgstr ""
 
 #: power/power.cxx:394
-msgid "usypianie (logind)"
+msgid "sleep (logind)"
 msgstr ""
 
 #: power/power.cxx:418
-msgid "wygaszacz pulpitu"
+msgid "desktop screen saver"
 msgstr ""
 
 #: shell/main.cxx:70
-msgid "Klasyczny (jasny)"
+msgid "Classic (light)"
 msgstr ""
 
 #: shell/main.cxx:71
-msgid "Ciemny"
+msgid "Dark"
 msgstr ""
 
 #: shell/main.cxx:72
-msgid "Zielony fosfor"
+msgid "Green phosphor"
 msgstr ""
 
 #: shell/main.cxx:73
-msgid "Bursztynowy"
+msgid "Amber"
 msgstr ""
 
 #: shell/main.cxx:74
@@ -2003,238 +1996,238 @@ msgid "Workbench (Amiga)"
 msgstr ""
 
 #: shell/main.cxx:75
-msgid "Jak schemat kolorów"
+msgid "Like the color scheme"
 msgstr ""
 
 #: shell/main.cxx:598
 msgid ""
-"W tym oknie działa „%1”.\n"
-"Zamknąć je mimo to?"
+"“%1” is running in this window.\n"
+"Close it anyway?"
 msgstr ""
 
 #: shell/main.cxx:654
-msgid "Nowe okno"
+msgid "New Window"
 msgstr ""
 
 #: shell/main.cxx:655
-msgid "Kopiuj"
+msgid "Copy"
 msgstr ""
 
 #: shell/main.cxx:656
-msgid "Wklej"
+msgid "Paste"
 msgstr ""
 
 #: shell/main.cxx:657
-msgid "Zaznacz wszystko"
+msgid "Select All"
 msgstr ""
 
 #: shell/main.cxx:666
-msgid "Wyczyść przewijanie"
+msgid "Clear Scrollback"
 msgstr ""
 
 #: shell/main.cxx:667
-msgid "Resetuj terminal"
+msgid "Reset Terminal"
 msgstr ""
 
 #: shell/main.cxx:668
-msgid "Zamknij okno"
+msgid "Close Window"
 msgstr ""
 
 #: denise/desktop.cxx:403
-msgid "O systemie…"
+msgid "About This Computer…"
 msgstr ""
 
 #: denise/desktop.cxx:404
-msgid "Preferencje…"
+msgid "Preferences…"
 msgstr ""
 
 #: denise/desktop.cxx:405
-msgid "Wykonaj polecenie…"
+msgid "Execute Command…"
 msgstr ""
 
 #: denise/desktop.cxx:407
-msgid "Otwórz dziennik"
+msgid "Open System Log"
 msgstr ""
 
 #: denise/desktop.cxx:408
-msgid "Przerysuj wszystko"
+msgid "Redraw All"
 msgstr ""
 
 #: denise/desktop.cxx:409
-msgid "Uaktualnij wszystko"
+msgid "Update All"
 msgstr ""
 
 #: denise/desktop.cxx:412
-msgid "Zakończ…"
+msgid "Quit…"
 msgstr ""
 
 #: denise/desktop.cxx:415 denise/menus.cxx:159
-msgid "Otwórz katalog nadrzędny"
+msgid "Open Parent"
 msgstr ""
 
 #: denise/desktop.cxx:417 denise/menus.cxx:160
-msgid "Uaktualnij"
+msgid "Update"
 msgstr ""
 
 #: denise/desktop.cxx:418 denise/menus.cxx:160
-msgid "Zaznacz zawartość"
+msgid "Select Contents"
 msgstr ""
 
 #: denise/desktop.cxx:419 denise/menus.cxx:163
-msgid "Uporządkuj"
+msgid "Clean Up"
 msgstr ""
 
 #: denise/desktop.cxx:420 denise/menus.cxx:164
-msgid "Pokaż ukryte pliki"
+msgid "Show Hidden Files"
 msgstr ""
 
 #: denise/desktop.cxx:421 denise/desktop.cxx:422 denise/desktop.cxx:2201
 #: denise/desktop.cxx:2202 denise/menus.cxx:160 denise/menus.cxx:167
 #: denise/menus.cxx:168
-msgid "Pokaż jako"
+msgid "View as"
 msgstr ""
 
 #: denise/desktop.cxx:422 denise/desktop.cxx:2202 denise/menus.cxx:168
-msgid "Listę"
+msgid "List"
 msgstr ""
 
 #: denise/desktop.cxx:423 denise/desktop.cxx:424 denise/desktop.cxx:425
 #: denise/desktop.cxx:426 denise/menus.cxx:161 denise/menus.cxx:169
 #: denise/menus.cxx:170 denise/menus.cxx:171 denise/menus.cxx:172
-msgid "Sortuj"
+msgid "Sort"
 msgstr ""
 
 #: denise/desktop.cxx:423 denise/menus.cxx:169
-msgid "według nazwy"
+msgid "by Name"
 msgstr ""
 
 #: denise/desktop.cxx:424 denise/menus.cxx:170
-msgid "według daty"
+msgid "by Date"
 msgstr ""
 
 #: denise/desktop.cxx:425 denise/menus.cxx:171
-msgid "według rozmiaru"
+msgid "by Size"
 msgstr ""
 
 #: denise/desktop.cxx:426 denise/menus.cxx:172
-msgid "według rodzaju"
+msgid "by Kind"
 msgstr ""
 
 #: denise/desktop.cxx:427 denise/desktop.cxx:428 denise/desktop.cxx:429
 #: denise/menus.cxx:161 denise/menus.cxx:173 denise/menus.cxx:174
 #: denise/menus.cxx:175
-msgid "Wielkość ikon"
+msgid "Icon Size"
 msgstr ""
 
 #: denise/desktop.cxx:427 denise/menus.cxx:173
-msgid "Małe"
+msgid "Small"
 msgstr ""
 
 #: denise/desktop.cxx:428 denise/menus.cxx:174
-msgid "Normalne"
+msgid "Normal"
 msgstr ""
 
 #: denise/desktop.cxx:429 denise/menus.cxx:175
-msgid "Duże"
+msgid "Large"
 msgstr ""
 
 #: denise/desktop.cxx:434 denise/menus.cxx:181
-msgid "Duplikuj"
+msgid "Duplicate"
 msgstr ""
 
 #: denise/desktop.cxx:435 denise/menus.cxx:182
-msgid "Zmień nazwę…"
+msgid "Rename…"
 msgstr ""
 
 #: denise/desktop.cxx:437 denise/menus.cxx:184
-msgid "Informacje…"
+msgid "Information…"
 msgstr ""
 
 #: denise/desktop.cxx:438 denise/menus.cxx:187
-msgid "Ustaw jako tapetę"
+msgid "Set as Wallpaper"
 msgstr ""
 
 #: denise/desktop.cxx:439 denise/menus.cxx:189
-msgid "Zamroź"
+msgid "Snapshot"
 msgstr ""
 
 #: denise/desktop.cxx:440 denise/menus.cxx:190
-msgid "Odmroź"
+msgid "Unsnapshot"
 msgstr ""
 
 #: denise/desktop.cxx:441 denise/menus.cxx:195
-msgid "Połóż na doku"
+msgid "Put on Dock"
 msgstr ""
 
 #: denise/desktop.cxx:442 denise/menus.cxx:196
-msgid "Zdejmij z doku"
+msgid "Remove from Dock"
 msgstr ""
 
 #: denise/desktop.cxx:443 denise/menus.cxx:197
-msgid "Wysuń"
+msgid "Eject"
 msgstr ""
 
 #: denise/desktop.cxx:445 denise/menus.cxx:198
-msgid "Formatuj dysk…"
+msgid "Format Disk…"
 msgstr ""
 
 #: denise/desktop.cxx:446
-msgid "Opróżnij kosz…"
+msgid "Empty Trash…"
 msgstr ""
 
 #: denise/desktop.cxx:447
-msgid "Zakończ tryb root"
+msgid "Leave Root Mode"
 msgstr ""
 
 #: denise/desktop.cxx:447
-msgid "Tryb root…"
+msgid "Root Mode…"
 msgstr ""
 
 #: denise/desktop.cxx:449
-msgid "Resetuj Nirvanę"
+msgid "Reset Nirvana"
 msgstr ""
 
 #: denise/desktop.cxx:2139 denise/desktop.cxx:2145 denise/desktop.cxx:2157
 #: denise/desktop.cxx:2158 denise/desktop.cxx:2159
-msgid "Okna Ramblera"
+msgid "Rambler Windows"
 msgstr ""
 
 #: denise/desktop.cxx:2139
-msgid "Brak otwartych okien"
+msgid "No open windows"
 msgstr ""
 
 #: denise/desktop.cxx:2157
-msgid "Zwiń wszystkie"
+msgid "Collapse All"
 msgstr ""
 
 #: denise/desktop.cxx:2158
-msgid "Rozwiń wszystkie"
+msgid "Expand All"
 msgstr ""
 
 #: denise/desktop.cxx:2159
-msgid "Zamknij wszystkie"
+msgid "Close All"
 msgstr ""
 
 #: denise/menus.cxx:161
-msgid "Nirvana Shell tutaj"
+msgid "Nirvana Shell Here"
 msgstr ""
 
 #: shell/main.cxx:659
-msgid "Profil"
+msgid "Profile"
 msgstr ""
 
 #: shell/main.cxx:663 shell/main.cxx:664 shell/main.cxx:665
-msgid "Czcionka"
+msgid "Font"
 msgstr ""
 
 #: shell/main.cxx:663
-msgid "Większa"
+msgid "Bigger"
 msgstr ""
 
 #: shell/main.cxx:664
-msgid "Mniejsza"
+msgid "Smaller"
 msgstr ""
 
 #: shell/main.cxx:665
-msgid "Normalna"
+msgid "Normal Size"
 msgstr ""
