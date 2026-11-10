@@ -278,10 +278,11 @@ Po prawej, ciasno przy krawędzi: zasilanie, głośność, sieć, zegar i przeł
 
 | Menu | Pozycje |
 |------|---------|
-| **Nirvana** (logo i napis) | O systemie, Preferencje (okno z panelami), Wykonaj polecenie `Ctrl+E`, Nirvana Shell `Ctrl+T`, Otwórz dziennik, Przerysuj wszystko, Uaktualnij wszystko `Ctrl+Shift+R`, Uśpij, Uruchom ponownie, Zakończ `Ctrl+Q` |
+| **Nirvana** (logo i napis) | O systemie, Preferencje (okno z panelami), Wykonaj polecenie `Ctrl+E`, Nirvana Shell `Ctrl+T`, Otwórz dziennik, Resetuj Nirvanę |
+| **System** | Zablokuj ekran, Uśpij, Hibernuj, Wyloguj `Ctrl+Q`, Uruchom ponownie, Wyłącz |
 | **Okno** | Nowy folder `Ctrl+N`, Otwórz katalog nadrzędny `Ctrl+↑`, Zamknij `Ctrl+W`, Uaktualnij `Ctrl+R`, Zaznacz zawartość `Ctrl+A`, Uporządkuj `Ctrl+.`, Pokaż ukryte pliki `Ctrl+H`, Pokaż jako (ikony/listę), Sortuj, Wielkość ikon (małe/normalne/duże) |
 | **Ikony** | Otwórz `Ctrl+O`, Kopiuj, Wklej, Duplikuj, Zmień nazwę `F2`, Usuń `Ctrl+Backspace`, Informacje `Ctrl+I`, Zamroź `Ctrl+S`, Odmroź, Połóż na doku `Ctrl+L`, Zdejmij z doku `Ctrl+K`, Wysuń `Ctrl+Y` |
-| **Narzędzia** | Formatuj dysk, Opróżnij kosz, Tryb root, Resetuj Nirvanę |
+| **Narzędzia** | Formatuj dysk, Opróżnij kosz, Tryb root |
 
 Pozycje, które w danej chwili nic by nie zrobiły, są wyszarzone, np. Wysuń bez zaznaczonego dysku.
 
@@ -528,8 +529,10 @@ Ikona baterii (albo wtyczki w komputerze stacjonarnym) na pasku menu. W okienku:
 - stan baterii z czasem do rozładowania lub naładowania,
 - suwak jasności ekranu (przez logind, bez roota),
 - profil zasilania, jeśli działa `power-profiles-daemon`,
-- akcje: Zablokuj ekran, Uśpij, Hibernuj, Wyloguj, Uruchom ponownie, Wyłącz.
-  Działają przez logind; na Devuanie przez elogind.
+- odnośnik do panelu Zasilanie.
+
+Zablokuj ekran, Uśpij, Hibernuj, Wyloguj, Uruchom ponownie i Wyłącz są w menu **System**.
+Działają przez logind; na Devuanie przez elogind.
 
 **Tryb projekcji** (pole w tym okienku) wstrzymuje naraz:
 

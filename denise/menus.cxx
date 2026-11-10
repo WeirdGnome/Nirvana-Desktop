@@ -13,6 +13,7 @@
 #include "volumes.h"
 #include "tray.h"
 #include "i18n.h"
+#include "applets.h"
 
 #include <FL/Fl.H>
 #include <FL/Fl_Box.H>
@@ -151,6 +152,12 @@ void Desktop::update_menu() {
   auto mark = [this](const char *path, bool on) {
     if (auto *it = (Fl_Menu_Item *)menu_->find_item(plat::tr_path(path).c_str())) { if (on) it->set(); else it->clear(); }
   };
+  using applets::PowerAction;
+  act(P_("System/Lock Screen"), applets::power_action_available(PowerAction::Lock));
+  act(P_("System/Sleep"), applets::power_action_available(PowerAction::Sleep));
+  act(P_("System/Hibernate"), applets::power_action_available(PowerAction::Hibernate));
+  act(P_("System/Restart…"), applets::power_action_available(PowerAction::Restart));
+  act(P_("System/Shut Down…"), applets::power_action_available(PowerAction::ShutDown));
   bool parent_ok = false;
   if (a) {
     std::string par = fs::path(a->path).parent_path().string();
@@ -267,57 +274,13 @@ void Desktop::open_log() {
   rambler_spawn({rambler_exe("nirvana-shell"), "--katalog", home_, "-e", "sh", "-c", script});
 }
 
-// Przerysuj wszystko: na chwilę przykrywamy ekran przezroczystym oknem - po jego
-// zniknięciu każdy program dostaje Expose i rysuje się od nowa (jak xrefresh).
-void Desktop::redraw_all() {
-  Display *d = fl_display;
-  Window root = DefaultRootWindow(d);
-  XSetWindowAttributes a{};
-  a.override_redirect = True;
-  a.background_pixmap = None;
-  a.backing_store = NotUseful;
-  int scr = DefaultScreen(d);
-  Window w = XCreateWindow(d, root, 0, 0, DisplayWidth(d, scr), DisplayHeight(d, scr), 0, CopyFromParent,
-                           InputOutput, CopyFromParent, CWOverrideRedirect | CWBackPixmap | CWBackingStore, &a);
-  XMapWindow(d, w);
-  XSync(d, False);
-  XDestroyWindow(d, w);
-  XSync(d, False);
-  Fl::redraw();
-}
-
-void Desktop::sleep_now() {
-  if (power::projection()) {
-    dialog(_("Sleep"), _("Presentation mode is on - turn it off in the battery menu to put the computer to sleep."), {{"OK", nullptr}});
-    return;
-  }
-  std::string err = power::suspend();
-  if (!err.empty()) dialog(_("Sleep"), err, {{"OK", nullptr}});
-}
-
-void Desktop::reboot_ask() {
-  dialog(_("Restart"), _("Restart the computer?"),
-         {{_("Cancel"), nullptr}, {_("Restart"), [this] {
-            for (auto *w : wins_) if (w->pane) remember(w, true);
-            std::string err = power::reboot();
-            if (!err.empty()) dialog(_("Restart"), err, {{"OK", nullptr}});
-          }}});
-}
-
-void Desktop::quit_ask() {
-  dialog(_("Quit"), _("Quit Nirvana Desktop?"),
-         {{_("Cancel"), nullptr},
-          {_("Log Out"), [this] {
-             if (!csd_mode) { quit(); return; }
-             rambler_spawn({"sh", "-c", "gnome-session-quit --logout --no-prompt 2>/dev/null || "
-                                        "loginctl terminate-session \"$XDG_SESSION_ID\""});
-           }},
-          {_("Shut Down"), [this] {
-             for (auto *w : wins_) if (w->pane) remember(w, true);
-             std::string err = power::poweroff();
-             if (!err.empty()) dialog(_("Shut Down"), err, {{"OK", nullptr}});
-           }}});
-}
+// Menu System - te same polecenia, co wcześniej w aplecie zasilania
+void Desktop::system_lock() { applets::power_action(applets::PowerAction::Lock); }
+void Desktop::system_sleep() { applets::power_action(applets::PowerAction::Sleep); }
+void Desktop::system_hibernate() { applets::power_action(applets::PowerAction::Hibernate); }
+void Desktop::system_logout() { applets::power_action(applets::PowerAction::LogOut); }
+void Desktop::system_restart() { applets::power_action(applets::PowerAction::Restart); }
+void Desktop::system_shutdown() { applets::power_action(applets::PowerAction::ShutDown); }
 
 // ---------------------------------------------------------------------------
 // Menu Okno

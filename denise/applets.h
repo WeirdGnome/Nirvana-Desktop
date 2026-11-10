@@ -31,4 +31,10 @@ Fl_Widget *make_volume(int X, int Y, int W, int H);
 Fl_Widget *make_power(int X, int Y, int W, int H);
 void init(const Host &host);   // klawisze multimedialne, bezczynność, odświeżanie
 
+// Polecenia menu System (pasek menu): blokada, uśpienie, hibernacja, wylogowanie,
+// ponowne uruchomienie, wyłączenie - z potwierdzeniem i kontrolą trybu projekcji.
+enum class PowerAction { Lock = 1, Sleep, Hibernate, LogOut, Restart, ShutDown };
+void power_action(PowerAction a);
+bool power_action_available(PowerAction a);   // np. brak programu blokady, brak hibernacji
+
 }  // namespace applets

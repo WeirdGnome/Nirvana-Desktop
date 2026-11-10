@@ -279,12 +279,15 @@ text gets shorter.
 
 | Menu | Items |
 |------|---------|
-| **Nirvana** (logo and name) | About This Computer, Preferences (window with panels), Execute Command `Ctrl+E`, Nirvana Shell `Ctrl+T`, Open System Log, Redraw All, Update All `Ctrl+Shift+R`, Sleep, Restart, Quit `Ctrl+Q` |
+| **Nirvana** (logo and name) | About This Computer, Preferences (window with panels), Execute Command `Ctrl+E`, Nirvana Shell `Ctrl+T`, Open System Log, Reset Nirvana |
+| **System** | Lock Screen, Sleep, Hibernate, Log Out `Ctrl+Q`, Restart, Shut Down |
 | **Window** | New Folder `Ctrl+N`, Open Parent `Ctrl+↑`, Close `Ctrl+W`, Update `Ctrl+R`, Select Contents `Ctrl+A`, Clean Up `Ctrl+.`, Show Hidden Files `Ctrl+H`, View as (icons/list), Sort, Icon Size (small/normal/large) |
 | **Icons** | Open `Ctrl+O`, Copy, Paste, Duplicate, Rename `F2`, Delete `Ctrl+Backspace`, Information `Ctrl+I`, Snapshot `Ctrl+S`, Unsnapshot, Put on Dock `Ctrl+L`, Remove from Dock `Ctrl+K`, Eject `Ctrl+Y` |
-| **Special** | Format Disk, Empty Trash, Root Mode, Reset Nirvana |
+| **Special** | Format Disk, Empty Trash, Root Mode |
 
-Items that would do nothing at the moment are greyed out, e.g. Eject without a selected disk.
+Items that would do nothing at the moment are greyed out, e.g. Eject without a selected disk,
+or Hibernate when the computer cannot hibernate. The System menu asks before logging out,
+restarting and shutting down, and refuses to sleep in presentation mode.
 
 - **Icons in windows** can be moved with the mouse within the window. The others stay where
   they are.
@@ -527,8 +530,10 @@ A battery icon (or a plug on a desktop computer) in the menu bar. The small wind
 - the battery state with the time until empty or full,
 - a screen brightness slider (through logind, without root),
 - the power profile, if `power-profiles-daemon` is running,
-- actions: Lock Screen, Sleep, Hibernate, Log Out, Restart, Shut Down.
-  They work through logind; on Devuan through elogind.
+- a link to the Power panel.
+
+Lock Screen, Sleep, Hibernate, Log Out, Restart and Shut Down are in the **System** menu.
+They work through logind; on Devuan through elogind.
 
 **Presentation mode** (a check box in that window) suspends at once:
 

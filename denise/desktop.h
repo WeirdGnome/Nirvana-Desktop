@@ -140,10 +140,13 @@ public:
   void open_preferences();
   void execute_command();
   void open_log();
-  void redraw_all();
-  void sleep_now();
-  void reboot_ask();
-  void quit_ask();
+  // menu System (applets::power_action)
+  void system_lock();
+  void system_sleep();
+  void system_hibernate();
+  void system_logout();
+  void system_restart();
+  void system_shutdown();
   void open_parent();
   void update_window();
   void clean_up();

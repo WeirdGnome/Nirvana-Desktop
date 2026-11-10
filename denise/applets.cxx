@@ -546,36 +546,7 @@ public:
     hint->labelsize(SIZE_SMALL);
     hint->align(FL_ALIGN_LEFT | FL_ALIGN_TOP | FL_ALIGN_INSIDE | FL_ALIGN_WRAP);
     y += 32;
-    new Sep(8, y, W - 16);
-    y += 8;
-    struct Item { const char *label; long id; bool ok; };
-    std::string lock = power::locker();
-    Item items[] = {
-        {_("Lock Screen"), 1, !lock.empty()},
-        {_("Sleep"), 2, g_power.can_suspend},
-        {_("Hibernate"), 3, g_power.can_hibernate},
-    };
-    for (auto &it : items) {
-      if (it.id == 3 && !g_power.can_hibernate) continue;
-      auto *r = new MenuRow(2, y, W - 4, it.label);
-      r->callback(act, (void *)it.id);
-      if (!it.ok) r->deactivate();
-      if (it.id == 1 && lock.empty()) r->tooltip(_("Install a screen locker: xsecurelock, i3lock or slock."));
-      y += 20;
-    }
-    new Sep(8, y, W - 16);
-    y += 8;
-    Item items2[] = {
-        {_("Log Out…"), 4, true},
-        {_("Restart…"), 5, g_power.can_reboot},
-        {_("Shut Down…"), 6, g_power.can_poweroff},
-    };
-    for (auto &it : items2) {
-      auto *r = new MenuRow(2, y, W - 4, it.label);
-      r->callback(act, (void *)it.id);
-      if (!it.ok) r->deactivate();
-      y += 20;
-    }
+    // blokada, uśpienie, wylogowanie, wyłączenie... są w menu System na pasku menu
     new Sep(8, y, W - 16);
     y += 8;
     auto *r = new MenuRow(2, y, W - 4, _("Power Settings…"));
@@ -659,6 +630,20 @@ void PowerApplet::act(Fl_Widget *, void *d) {
 }
 
 Fl_Widget *make_power(int X, int Y, int W, int H) { return new PowerApplet(X, Y, W, H); }
+
+void power_action(PowerAction a) { PowerApplet::act(nullptr, (void *)(long)a); }
+
+bool power_action_available(PowerAction a) {
+  switch (a) {
+    case PowerAction::Lock: return !power::locker().empty();
+    case PowerAction::Sleep: return g_power.can_suspend;
+    case PowerAction::Hibernate: return g_power.can_hibernate;
+    case PowerAction::LogOut: return true;
+    case PowerAction::Restart: return g_power.can_reboot;
+    case PowerAction::ShutDown: return g_power.can_poweroff;
+  }
+  return false;
+}
 
 // ---------------------------------------------------------------------------
 // Klawisze multimedialne, bezczynność, odświeżanie

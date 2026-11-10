@@ -405,11 +405,14 @@ Desktop::Desktop(int W, int H, const std::string &home, bool root)
     {P_("logo/Execute Command…"), FL_COMMAND + 'e', &Desktop::execute_command, 0},
     {P_("logo/Nirvana Shell"), FL_COMMAND + 't', &Desktop::open_terminal, 0},
     {P_("logo/Open System Log"), 0, &Desktop::open_log, FL_MENU_DIVIDER},
-    {P_("logo/Redraw All"), 0, &Desktop::redraw_all, 0},
-    {P_("logo/Update All"), FL_COMMAND + FL_SHIFT + 'r', &Desktop::refresh_all, FL_MENU_DIVIDER},
-    {P_("logo/Sleep"), 0, &Desktop::sleep_now, 0},
-    {P_("logo/Restart…"), 0, &Desktop::reboot_ask, 0},
-    {P_("logo/Quit…"), FL_COMMAND + 'q', &Desktop::quit_ask, 0},
+    {P_("logo/Reset Nirvana"), 0, &Desktop::reset_nirvana, 0},
+    // --- System: sesja i komputer (dawniej w aplecie zasilania) ---
+    {P_("System/Lock Screen"), 0, &Desktop::system_lock, 0},
+    {P_("System/Sleep"), 0, &Desktop::system_sleep, 0},
+    {P_("System/Hibernate"), 0, &Desktop::system_hibernate, FL_MENU_DIVIDER},
+    {P_("System/Log Out…"), FL_COMMAND + 'q', &Desktop::system_logout, 0},
+    {P_("System/Restart…"), 0, &Desktop::system_restart, 0},
+    {P_("System/Shut Down…"), 0, &Desktop::system_shutdown, 0},
     // --- Okno: aktywne okno folderu ---
     {P_("Window/New Folder"), FL_COMMAND + 'n', &Desktop::new_folder, 0},
     {P_("Window/Open Parent"), FL_COMMAND + FL_Up, &Desktop::open_parent, 0},
@@ -445,8 +448,7 @@ Desktop::Desktop(int W, int H, const std::string &home, bool root)
     {P_("Special/Format Disk…"), 0, &Desktop::format_disk, 0},
     {P_("Special/Empty Trash…"), 0, &Desktop::empty_trash, FL_MENU_DIVIDER},
     {root ? P_("Special/Leave Root Mode") : P_("Special/Root Mode…"), 0,
-     root ? &Desktop::quit : &Desktop::ask_root, FL_MENU_DIVIDER},
-    {P_("Special/Reset Nirvana"), 0, &Desktop::reset_nirvana, 0},
+     root ? &Desktop::quit : &Desktop::ask_root, 0},
   };
   static std::vector<void (Desktop::*)()> methods;
   for (auto &it : items) {
