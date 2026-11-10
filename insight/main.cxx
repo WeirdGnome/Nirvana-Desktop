@@ -70,8 +70,15 @@ static void read_dock_height() {
 
 // _NET_WORKAREA (w pikselach) - z niego programy (Chromium, GTK, Qt) biorą
 // rozmiar okna "zmaksymalizowanego" i pierwszego otwarcia.
+// Góra obszaru to 0, nie dół paska menu: FLTK (1.4.x, Menu_Window::autoscroll)
+// przesuwa pasek menu leżący nad obszarem roboczym w dół przy przejściu między
+// tytułami menu - menu Ramblera rozjeżdżało się po przesunięciu myszy. Pasek
+// menu i tak chroni sam Insight (okna nie wchodzą pod niego, zoom też).
 static void publish_workarea() {
-  Rect a = px(work_area());
+  Rect area = work_area();
+  area.h += area.y;
+  area.y = 0;
+  Rect a = px(area);
   long wa[4] = {a.x, a.y, a.w, a.h};
   XChangeProperty(dpy, DefaultRootWindow(dpy), A_NET_WORKAREA, XA_CARDINAL, 32, PropModeReplace,
                   (unsigned char *)wa, 4);
@@ -699,12 +706,17 @@ static int x_handler(void *event, void *) {
     XConfigureRequestEvent &r = e->xconfigurerequest;
     if (Client *c = client_of(r.window)) {
       Frame *f = c->frame;
-      int nx = f->x(), ny = f->y(), nw = f->w(), nh = f->h();
+      int nx = f->x(), ny = f->y(), nw = f->w(), nh = f->h(), nh_shrink = 0;
       // prośba programu jest w pikselach, ramka w jednostkach FLTK
       if (r.value_mask & CWX) nx = un(r.x) - FRAME;
-      if (r.value_mask & CWY) ny = std::max(MENUBAR_H, un(r.y) - TITLE_H);
+      if (r.value_mask & CWY) {
+        ny = un(r.y) - TITLE_H;
+        // okno chce stanąć pod paskiem menu: przesuń je niżej i skróć o tyle samo
+        if (ny < MENUBAR_H && (r.value_mask & CWHeight)) nh_shrink = MENUBAR_H - ny;
+        ny = std::max(MENUBAR_H, ny);
+      }
       if (r.value_mask & CWWidth) nw = un(r.width) + 2 * FRAME;
-      if (r.value_mask & CWHeight) nh = un(r.height) + TITLE_H + FRAME;
+      if (r.value_mask & CWHeight) nh = un(r.height) + TITLE_H + FRAME - nh_shrink;
       Rect area = work_area();   // nie większe niż obszar roboczy, nie nad paskiem menu
       nw = std::min(nw, area.w);
       if (!c->shaded) nh = std::min(nh, area.h);
