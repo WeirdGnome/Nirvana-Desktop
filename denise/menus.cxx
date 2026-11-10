@@ -133,7 +133,7 @@ std::vector<std::string> Desktop::targets() {
   std::vector<std::string> v;
   if (NWin *a = active_folder())
     for (auto &e : a->pane->view()->selection()) v.push_back(e.path);
-  if (v.empty() && !active_folder() && icon_sel_ >= 0 && icon_sel_ < (int)icons_.size())
+  if (v.empty() && !active_folder() && icon_sel_ >= 0 && icon_sel_ < (int)icons_.size() && !icons_[icon_sel_].win)
     v.push_back(icons_[icon_sel_].path);
   return v;
 }
@@ -141,7 +141,7 @@ std::vector<std::string> Desktop::targets() {
 void Desktop::update_menu() {
   NWin *a = active_folder();
   bool win_sel = a && !a->pane->view()->selection().empty();
-  bool desk_sel = !a && icon_sel_ >= 0 && icon_sel_ < (int)icons_.size();
+  bool desk_sel = !a && icon_sel_ >= 0 && icon_sel_ < (int)icons_.size() && !icons_[icon_sel_].win;
   const DeskIcon *di = desk_sel ? &icons_[icon_sel_] : nullptr;
   bool vol_sel = di && di->vol >= 0;
   bool icons_mode = a && a->pane->view()->mode() == FolderView::Icons;

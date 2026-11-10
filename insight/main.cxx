@@ -117,6 +117,7 @@ struct Client {
   bool dialog = false;            // okno dialogowe: bez przycisków i zmiany rozmiaru
   bool own_anim = false;          // programy LisaOS same animują otwieranie/zamykanie
   bool hidden = false;            // ukryte (Ukryj / Ukryj inne w menu aplikacji)
+  bool iconic = false;            // zikonizowane: ukryte, a na biurku jest jego ikona
   unsigned long mru = 0;          // kiedy ostatnio aktywne (do Alt+Tab)
   std::string cls;                // WM_CLASS - okna jednej aplikacji mają tę samą klasę
 };
@@ -127,6 +128,7 @@ static Client *g_active = nullptr;
 
 static void focus(Client *c);
 static void unmanage(Client *c, bool destroyed);
+static void iconify_client(Client *c);
 
 // ---------------------------------------------------------------------------
 // Pomocnicze funkcje Xlib
@@ -300,11 +302,11 @@ public:
     if (c->shaded) toggle_shade();
     if (!c->zoomed) {
       c->unzoom[0] = x(); c->unzoom[1] = y(); c->unzoom[2] = w(); c->unzoom[3] = h();
-      // zoom zostawia z prawej kolumnę ikon biurka (LisaOS HD, dyski, kosz), a na dole dok
+      // zoom zostawia widoczne ikony biurka (LisaOS HD, dyski, kosz, ikony okien)
+      // i dok - obszar podaje Rambler; bez Ramblera: obszar roboczy
       Rect wa = work_area();
-      Rect to = {4, wa.y + 4, screen_w - 100, wa.h - 8};
-      // okna Ramblera: obszar, który podaje biurko (bez kolumny dysków i doku)
-      if (c->cls == "LisaOS-Rambler") rambler_area(to);
+      Rect to = {wa.x + 4, wa.y + 4, wa.w - 8, wa.h - 8};
+      rambler_area(to);
       zoom_rects(geom(), to);
       resize(to.x, to.y, to.w, to.h);
       c->zoomed = true;
@@ -339,7 +341,7 @@ public:
       ::focus(c);
       if (ey < TITLE_H) {
         if (int b = hit_button(ex, ey)) { drag_ = BTN; armed_ = pressed_ = b; redraw(); return 1; }
-        if (Fl::event_clicks() && !c->dialog) { Fl::event_clicks(0); toggle_shade(); drag_ = NONE; return 1; }
+        if (Fl::event_clicks() && !c->dialog) { Fl::event_clicks(0); iconify_client(c); drag_ = NONE; return 1; }
         drag_ = MOVE;
       } else if (!c->shaded && !c->dialog && (ex >= w() - 16 || ey >= h() - FRAME)) {
         drag_ = GROW;          // prawa lub dolna krawędź / prawy dolny róg
@@ -371,7 +373,7 @@ public:
         redraw();
         if (b == 1) close_client();
         else if (b == 2) toggle_zoom();
-        else if (b == 3) toggle_shade();
+        else if (b == 3) iconify_client(c);   // ikona okna na biurku (jak w Workbenchu)
       }
       drag_ = NONE;
       return 1;
@@ -411,7 +413,29 @@ static Client *most_recent_visible(Client *except) {
   return best;
 }
 
+// _LISAOS_IKONY na oknie głównym: zikonizowane okna (kolejność ikonizowania).
+// Rambler rysuje z niej ikony okien na biurku; dwuklik = _NET_ACTIVE_WINDOW.
+static std::vector<Window> g_iconic;
+static void publish_iconic() {
+  XChangeProperty(dpy, DefaultRootWindow(dpy), XInternAtom(dpy, "_LISAOS_IKONY", False), XA_WINDOW, 32,
+                  PropModeReplace, (unsigned char *)g_iconic.data(), (int)g_iconic.size());
+}
+static void set_iconic(Client *c, bool on) {
+  if (c->iconic == on) return;
+  c->iconic = on;
+  // znacznik na samym oknie: po Resetuj LISA nowy Insight wie, które ukryte
+  // okna były ikonami, a które tylko "Ukryj"
+  Atom mark = XInternAtom(dpy, "_LISAOS_IKONA", False);
+  long one = 1;
+  if (on) XChangeProperty(dpy, c->win, mark, XA_CARDINAL, 32, PropModeReplace, (unsigned char *)&one, 1);
+  else XDeleteProperty(dpy, c->win, mark);
+  if (on) g_iconic.push_back(c->win);
+  else g_iconic.erase(std::remove(g_iconic.begin(), g_iconic.end(), c->win), g_iconic.end());
+  publish_iconic();
+}
+
 static void show_client(Client *c) {
+  set_iconic(c, false);
   if (!c->hidden) return;
   c->hidden = false;
   XMapWindow(dpy, fl_xid(c->frame));
@@ -432,6 +456,16 @@ static void hide_client(Client *c) {
     if (Client *n = most_recent_visible(c)) focus(n);
     else set_active_none();
   }
+}
+
+// Przycisk w pasku tytułu, dwuklik w pasek albo "minimalizuj" w programie:
+// okno znika, a na biurku pojawia się jego ikona.
+static void iconify_client(Client *c) {
+  if (c->dialog || c->hidden) return;
+  Rect r = c->frame->geom();
+  set_iconic(c, true);
+  hide_client(c);
+  if (!c->own_anim) zoom_rects(r, center_of(r));
 }
 
 static void focus(Client *c) {
@@ -538,6 +572,7 @@ static void manage(Window w, bool existing) {
 }
 
 static void unmanage(Client *c, bool destroyed) {
+  set_iconic(c, false);
   if (!destroyed) {
     XUngrabButton(dpy, AnyButton, AnyModifier, c->win);
     XReparentWindow(dpy, c->win, root, px(c->frame->x() + FRAME), px(c->frame->y() + TITLE_H));
@@ -788,7 +823,16 @@ static int x_handler(void *event, void *) {
     if (e->xclient.message_type == A_WM_CHANGE_STATE) {
       // ICCCM: aplikacja (lub przełącznik) prosi o ukrycie okna
       if (Client *c = client_of(e->xclient.window))
-        if (e->xclient.data.l[0] == IconicState) hide_client(c);
+        if (e->xclient.data.l[0] == IconicState) {
+          // "Ukryj" z menu aplikacji (gary) oznacza okno _LISAOS_UKRYJ - bez ikony
+          // na biurku; minimalizacja z samego programu tworzy ikonę.
+          Atom mark = XInternAtom(dpy, "_LISAOS_UKRYJ", False);
+          Atom type; int fmt; unsigned long n, after; unsigned char *data = nullptr;
+          bool plain = XGetWindowProperty(dpy, c->win, mark, 0, 1, True, AnyPropertyType, &type, &fmt, &n, &after,
+                                          &data) == Success && type != None;
+          if (data) XFree(data);
+          if (plain) hide_client(c); else iconify_client(c);
+        }
       return 1;
     }
     if (e->xclient.message_type == A_NET_CLOSE) {
@@ -881,15 +925,35 @@ int main(int argc, char **argv) {
       XGrabKey(dpy, tab, Mod1Mask | shift | extra, root, True, GrabModeAsync, GrabModeAsync);
 
   // Przejmij okna, które już istnieją.
+  // Okna zikonizowane (WM_STATE = Iconic, np. po Resetuj LISA) wracają jako ikony.
+  publish_iconic();   // pusta lista - stara mogła zostać po poprzednim Insighcie
   Window r, p, *kids = nullptr;
   unsigned n = 0;
   if (XQueryTree(dpy, root, &r, &p, &kids, &n)) {
+    animations_suspend(true);
     for (unsigned i = 0; i < n; i++) {
       XWindowAttributes wa;
-      if (XGetWindowAttributes(dpy, kids[i], &wa) && wa.map_state == IsViewable &&
-          !wa.override_redirect && kids[i] != check)
-        manage(kids[i], true);
+      if (!XGetWindowAttributes(dpy, kids[i], &wa) || wa.override_redirect || kids[i] == check) continue;
+      // serwer X mapuje okna z "save set" po wyjściu starego Insighta, więc stan
+      // ukrycia bierzemy z WM_STATE, a ikonę z naszego znacznika _LISAOS_IKONA
+      bool iconic = false, icon = false;
+      Atom type; int fmt; unsigned long cnt, after; unsigned char *data = nullptr;
+      if (XGetWindowProperty(dpy, kids[i], A_WM_STATE, 0, 2, False, A_WM_STATE, &type, &fmt, &cnt, &after,
+                             &data) == Success && data && cnt >= 1)
+        iconic = ((long *)data)[0] == IconicState;
+      if (data) { XFree(data); data = nullptr; }
+      if (iconic && XGetWindowProperty(dpy, kids[i], XInternAtom(dpy, "_LISAOS_IKONA", False), 0, 1, False,
+                                       AnyPropertyType, &type, &fmt, &cnt, &after, &data) == Success)
+        icon = type != None;
+      if (data) XFree(data);
+      if (wa.map_state != IsViewable && !iconic) continue;
+      manage(kids[i], true);
+      if (Client *c = client_of(kids[i])) {
+        if (icon) iconify_client(c);
+        else if (iconic) hide_client(c);
+      }
     }
+    animations_suspend(false);
     if (kids) XFree(kids);
   }
 

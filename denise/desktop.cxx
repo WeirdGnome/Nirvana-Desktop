@@ -592,21 +592,68 @@ bool Desktop::trash_full() const {
   return fs::exists(trash_dir(), ec) && !fs::is_empty(trash_dir(), ec);
 }
 
+// Zikonizowane okna (_LISAOS_IKONY od Insighta), w kolejności ikonizowania.
+static std::vector<Window> iconic_windows() {
+  std::vector<Window> v;
+  Atom type; int fmt; unsigned long n, after; unsigned char *data = nullptr;
+  if (XGetWindowProperty(fl_display, DefaultRootWindow(fl_display), XInternAtom(fl_display, "_LISAOS_IKONY", False),
+                         0, 1024, False, XA_WINDOW, &type, &fmt, &n, &after, &data) == Success && data)
+    for (unsigned long i = 0; i < n; i++) v.push_back((Window)((unsigned long *)data)[i]);
+  if (data) XFree(data);
+  return v;
+}
+
+static bool is_ours(Window w);
+
+// Obrazek ikony okna 32x32: ikona AppImage uruchomionej z Ramblera, _NET_WM_ICON,
+// a w ostateczności ogólna ikona aplikacji (nullptr - draw_icon).
+static Fl_Image *iconic_image(Window w, const std::string &home) {
+  for (auto &a : gary::list_apps([](Window) { return false; }))
+    for (Window x : a.wins)
+      if (x == w && !a.icon_file.empty()) {
+        Entry e;
+        e.icon_file = a.icon_file;
+        e.icon = Icon::Application;
+        if (Fl_Image *img = entry_icon_image(e, 32, false)) return img;
+      }
+  (void)home;
+  return gary::window_icon(w, 32);
+}
+
 void Desktop::layout_icons() {
   icons_.clear();
-  int ix = w() - 90, iy = MENUBAR_H + 14;
-  icons_.push_back({"LisaOS HD", home_, Icon::Home, ix, iy});
-  iy += 70;
-  if (root_) { icons_.push_back({"System", "/", Icon::Home, ix, iy}); iy += 70; }
+  // Ikony biurka przy LEWEJ krawędzi, od góry: LisaOS HD, (System), dyski,
+  // zikonizowane okna; Kosz na dole, nad dokiem. Gdy kolumna się zapełni,
+  // następna stoi obok - okna folderów i zoom zostawiają wszystkie kolumny wolne.
+  const int COL = 90, ROW = 70, top = MENUBAR_H + 14;
+  int trash_y = h() - 74 - (dock_.empty() ? 0 : DOCK_TILE + 4);
+  int ix = 0, iy = top, cols = 1;
+  auto place = [&](DeskIcon d) {
+    if (iy + ROW > trash_y && iy > top) { ix += COL; iy = top; cols++; }
+    d.x = ix; d.y = iy;
+    icons_.push_back(d);
+    iy += ROW;
+  };
+  place({"LisaOS HD", home_, Icon::Home, 0, 0});
+  if (root_) place({"System", "/", Icon::Home, 0, 0});
   // dyski i płyty pod dyskiem LisaOS HD, jak w Mac OS
   for (int i = 0; i < (int)vols_.size(); i++) {
-    if (iy > h() - 150) break;
-    DeskIcon d{vols_[i].name, vols_[i].mountpoint, vols_[i].icon, ix, iy};
+    DeskIcon d{vols_[i].name, vols_[i].mountpoint, vols_[i].icon, 0, 0};
     d.vol = i;
-    icons_.push_back(d);
-    iy += 70;
+    place(d);
   }
-  icons_.push_back({_("Kosz"), trash_dir(), trash_full() ? Icon::TrashFull : Icon::Trash, ix, h() - 74});
+  for (Window w : iconic_windows()) {
+    DeskIcon d;
+    d.win = w;
+    d.name = gary::window_title(w);
+    bool ours = is_ours(w);
+    d.icon = ours ? Icon::Folder : Icon::Application;
+    if (!ours) d.img = iconic_image(w, home_);
+    if (d.name.empty()) d.name = "?";
+    place(d);
+  }
+  icons_.push_back({_("Kosz"), trash_dir(), trash_full() ? Icon::TrashFull : Icon::Trash, 0, trash_y});
+  icon_cols_ = cols;
   // dok: ikony wyciągnięte na biurko (Leave Out z Workbencha), jako pasek w lewym
   // dolnym rogu. Pozycja ikony jak u innych: rysunek w (x + 24, y).
   dock_shown_ = 0;
@@ -615,7 +662,7 @@ void Desktop::layout_icons() {
     for (auto &p : dock_) {
       std::error_code ec;
       if (!fs::exists(p, ec)) continue;
-      if (tx + DOCK_TILE + DOCK_END > ix - 10) break;   // nie wchodzimy pod kosz i dyski
+      if (tx + DOCK_TILE + DOCK_END > w() - 10) break;   // dok kończy się przy prawej krawędzi
       DeskIcon d;
       d.path = p;
       d.dock = true;
@@ -637,8 +684,8 @@ static Atom atom(const char *name) { return XInternAtom(fl_display, name, False)
 
 plat::Rect Desktop::folder_area() const {
   const int GAP = 6;
-  int L = FRAME + GAP, T = MENUBAR_H + TITLE_H + GAP;
-  int R = w() - 96 - FRAME;                                   // kolumna LisaOS HD / dysków / kosza
+  int L = icon_cols_ * 90 + 6 + FRAME, T = MENUBAR_H + TITLE_H + GAP;   // kolumny ikon z lewej
+  int R = w() - FRAME - GAP;
   int B = h() - FRAME - GAP - (dock_.empty() ? 0 : DOCK_TILE);   // dok (także zwinięty)
   return {L, T, std::max(MIN_W, R - L), std::max(MIN_H, B - T)};
 }
@@ -791,6 +838,7 @@ static int x_watch(void *event, void *) {
   XEvent *e = (XEvent *)event;
   if (e->type == PropertyNotify && e->xproperty.window == DefaultRootWindow(fl_display) && g_desk) {
     if (e->xproperty.atom == atom("_NET_ACTIVE_WINDOW")) g_desk->active_changed();
+    else if (e->xproperty.atom == atom("_LISAOS_IKONY")) g_desk->iconic_changed();
     else if (e->xproperty.atom == atom("_NET_CLIENT_LIST")) g_desk->clients_changed();
     else if (e->xproperty.atom == atom(APPEARANCE_ATOM)) g_desk->appearance_changed();
   }
@@ -1373,7 +1421,12 @@ void Desktop::draw() {
     Icon shown = ic.icon;
     if (vdragging_ && ic.path == trash_dir()) shown = Icon::Eject;   // jak w Mac OS
     if (ic.dock) continue;   // dok rysuje draw_dock(): kafelki bez podpisów
-    draw_icon(shown, ic.x + 24, ic.y, sel);
+    if (ic.img) {   // ikona okna: obrazek programu; zaznaczona - przyciemniona
+      ic.img->draw(ic.x + 24, ic.y);
+      if (sel) { fl_color(ICON_SEL); for (int k = 0; k < 32; k += 2) fl_xyline(ic.x + 24, ic.y + k, ic.x + 55); }
+    } else {
+      draw_icon(shown, ic.x + 24, ic.y, sel);
+    }
     std::string nm = ellipsize(ic.name, 76);
     int tw = (int)fl_width(nm.c_str());
     int tx = ic.x + 40 - tw / 2, ty = ic.y + 36;
@@ -1415,6 +1468,7 @@ int Desktop::handle(int e) {
     return 1;
   case FL_DND_DRAG: {
     int i = icon_at(Fl::event_x(), Fl::event_y());
+    if (i >= 0 && icons_[i].win) i = -1;
     if (i != icon_drop_) { icon_drop_ = i; redraw(); }
     return 1;
   }
@@ -1442,7 +1496,8 @@ int Desktop::handle(int e) {
     if (dock_press_ < 0 && i >= 0 && Fl::event_clicks()) {
       Fl::event_clicks(0);
       vdrag_icon_ = -1;
-      if (icons_[i].vol >= 0) open_volume(icons_[i].vol);
+      if (icons_[i].win) gary::activate(icons_[i].win);   // ikona okna: przywróć je
+      else if (icons_[i].vol >= 0) open_volume(icons_[i].vol);
       else open_folder(icons_[i].path);
     } else if (i < 0 && Fl::event_clicks() && Fl::event_button() == FL_LEFT_MOUSE) {
       // dwuklik na pustym biurku (poza dokiem): menedżer plików - okno LisaOS HD
@@ -1591,7 +1646,8 @@ void Desktop::open_selected() {
   if (NWin *a = active_folder()) {
     if (const Entry *e = a->pane->view()->selected()) open_entry(*e);
   } else if (icon_sel_ >= 0) {
-    if (icons_[icon_sel_].vol >= 0) open_volume(icons_[icon_sel_].vol);
+    if (icons_[icon_sel_].win) gary::activate(icons_[icon_sel_].win);
+    else if (icons_[icon_sel_].vol >= 0) open_volume(icons_[icon_sel_].vol);
     else if (icons_[icon_sel_].dock) open_entry(icons_[icon_sel_].entry);
     else open_folder(icons_[icon_sel_].path);
   }
@@ -2341,6 +2397,7 @@ Desktop::DropTarget Desktop::target_at(int xr, int yr) {
     return t;
   }
   if (is_under(child, fl_xid(this))) t.icon = icon_at(xr - x_root(), yr - y_root());
+  if (t.icon >= 0 && icons_[t.icon].win) t.icon = -1;   // na ikonę okna nie da się upuścić plików
   return t;
 }
 

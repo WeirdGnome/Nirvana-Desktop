@@ -207,15 +207,35 @@ static void message(Window w, const char *type, long l0, long l1, long l2) {
 }
 
 void activate(Window w) { message(w, "_NET_ACTIVE_WINDOW", 2, CurrentTime, 0); }   // 2 = przełącznik
-void hide(Window w) { XIconifyWindow(fl_display, w, DefaultScreen(fl_display)); XFlush(fl_display); }
+void hide(Window w) {
+  // znacznik dla Insighta: to "Ukryj" z menu aplikacji, nie ikonizacja - bez ikony na biurku
+  long one = 1;
+  XChangeProperty(fl_display, w, atom("_LISAOS_UKRYJ"), XA_CARDINAL, 32, PropModeReplace, (unsigned char *)&one, 1);
+  XIconifyWindow(fl_display, w, DefaultScreen(fl_display));
+  XFlush(fl_display);
+}
+
+std::string window_title(Window w) {
+  Atom type; int fmt; unsigned long n, after; unsigned char *data = nullptr;
+  std::string t;
+  if (XGetWindowProperty(fl_display, w, atom("_NET_WM_NAME"), 0, 1024, False, atom("UTF8_STRING"), &type, &fmt,
+                         &n, &after, &data) == Success && data && n)
+    t.assign((char *)data, n);
+  if (data) { XFree(data); data = nullptr; }
+  if (t.empty() && XGetWindowProperty(fl_display, w, XA_WM_NAME, 0, 1024, False, AnyPropertyType, &type, &fmt,
+                                      &n, &after, &data) == Success && data && n)
+    t.assign((char *)data, n);
+  if (data) XFree(data);
+  return t;
+}
 void close(Window w) { message(w, "_NET_CLOSE_WINDOW", CurrentTime, 2, 0); }
 
 // ---------------------------------------------------------------------------
 // Ikona okna z _NET_WM_ICON (tablica: szer, wys, piksele ARGB, ... kolejne rozmiary)
 // ---------------------------------------------------------------------------
-Fl_Image *window_icon(Window w) {
-  static std::map<Window, Fl_Image *> cache;
-  if (auto it = cache.find(w); it != cache.end()) return it->second;
+Fl_Image *window_icon(Window w, int size) {
+  static std::map<std::pair<Window, int>, Fl_Image *> cache;
+  if (auto it = cache.find({w, size}); it != cache.end()) return it->second;
   Fl_Image *result = nullptr;
   Atom type; int fmt; unsigned long n, after; unsigned char *data = nullptr;
   if (XGetWindowProperty(fl_display, w, atom("_NET_WM_ICON"), 0, 1 << 20, False, XA_CARDINAL, &type,
@@ -225,8 +245,9 @@ Fl_Image *window_icon(Window w) {
     while (i + 2 < n) {
       unsigned long iw = p[i], ih = p[i + 1];
       if (!iw || !ih || i + 2 + iw * ih > n) break;
-      // najmniejsza ikona nie mniejsza niż 16, a jeśli takiej nie ma - największa
-      bool better = !best_w || (iw >= 16 && (best_w < 16 || iw < best_w)) || (best_w < 16 && iw > best_w);
+      // najmniejsza ikona nie mniejsza niż size, a jeśli takiej nie ma - największa
+      unsigned long sz = (unsigned long)size;
+      bool better = !best_w || (iw >= sz && (best_w < sz || iw < best_w)) || (best_w < sz && iw > best_w);
       if (better) { best = i; best_w = iw; }
       i += 2 + iw * ih;
     }
@@ -243,12 +264,12 @@ Fl_Image *window_icon(Window w) {
       auto *img = new Fl_RGB_Image(rgba, (int)iw, (int)ih, 4);
       img->alloc_array = 1;   // obraz zwolni dane sam
       Fl_RGB_Image::RGB_scaling(FL_RGB_SCALING_BILINEAR);
-      result = img->copy(16, 16);
+      result = img->copy(size, size);
       delete img;
     }
   }
   if (data) XFree(data);
-  cache[w] = result;
+  cache[{w, size}] = result;
   return result;
 }
 

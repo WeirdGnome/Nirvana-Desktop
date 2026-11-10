@@ -177,7 +177,10 @@ private:
     int vol = -1;   // indeks w vols_ dla ikon dysków
     bool dock = false;   // ikona wyciągnięta na biurko (dok w lewym dolnym rogu)
     Entry entry;         // dla doku: plik/folder/aplikacja
+    unsigned long win = 0;      // ikona zikonizowanego okna (Window); dwuklik je przywraca
+    Fl_Image *img = nullptr;    // jej obrazek (z _NET_WM_ICON albo AppImage)
   };
+  int icon_cols_ = 1;   // kolumny ikon przy lewej krawędzi (dyski, okna, kosz)
   // dok: ścieżki w ~/.config/lisaos/dok
   std::vector<std::string> dock_;
   bool dock_collapsed_ = false;   // dok zwinięty do samej zakładki
@@ -218,6 +221,7 @@ private:
   NWin *active_folder();          // aktywne okno folderu (lub nullptr)
   void layout_icons();
 public:
+  void iconic_changed() { icon_sel_ = -1; layout_icons(); redraw(); }
   // Obszar na okna folderów (treść okna, współrzędne biurka): bez kolumny ikon
   // dysków i kosza z prawej i bez doku na dole - zawsze je widać, też po zoomie.
   plat::Rect folder_area() const;

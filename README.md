@@ -106,8 +106,13 @@ Czcionkę systemową w stylu Chicago można podać przez `LISAOS_SYSTEM_FONT`
 
 ## Insight: obsługa okien
 
-- pasek tytułu: przeciąganie przesuwa okno, podwójne kliknięcie je zwija
-- przyciski: zamknij (z lewej, uprzejmie przez `WM_DELETE_WINDOW`), zwiń i zoom (z prawej)
+- pasek tytułu: przeciąganie przesuwa okno, podwójne kliknięcie je ikonizuje
+- przyciski: zamknij (z lewej, uprzejmie przez `WM_DELETE_WINDOW`), ikonizuj i zoom (z prawej)
+- **ikonizacja jak w Workbenchu:** okno znika, a na biurku (w lewej kolumnie, pod
+  dyskami) pojawia się jego ikona – obrazek programu z `_NET_WM_ICON` i tytuł okna.
+  Dwuklik w ikonę przywraca okno. Tak samo działa „minimalizuj” w samym programie
+  (Brave, Firefox…); „Ukryj” z menu aplikacji chowa okna bez ikon. Ikony przetrwają
+  Resetuj LISA.
 - prawa i dolna krawędź ramki oraz prawy dolny róg: zmiana rozmiaru
 - klik w okno aplikacji aktywuje je i wyciąga na wierzch; klik w biurko dezaktywuje okna,
   a klik w pasek menu nie zmienia aktywnego okna (menu działa na nie)
@@ -231,7 +236,8 @@ okno biurka nie przyjmuje fokusu, żeby klik w pasek menu nie zmieniał aktywnej
 - **Dwuklik na pustym biurku** otwiera menedżer plików (okno LisaOS HD); gdy jest już
   otwarte, wysuwa je na wierzch.
 - **Okna folderów nie zasłaniają biurka**: otwierane i powiększane przyciskiem zoom
-  zostawiają wolną kolumnę z LisaOS HD, dyskami i Koszem oraz pasek doku na dole.
+  zostawiają wolną kolumnę ikon przy lewej krawędzi (LisaOS HD, dyski, ikony okien,
+  Kosz nad dokiem) oraz pasek doku na dole. Zoom innych programów też.
   Za duże zapamiętane okna są przy otwarciu zmniejszane do tego obszaru.
 - **Zaznaczanie**: klik, Shift/Ctrl+klik dodaje lub odejmuje, ramka zaznaczania myszą, `Ctrl+A`.
 - **Zmiana nazwy**: `F2` albo klik w nazwę już zaznaczonego elementu (jak w Finderze).

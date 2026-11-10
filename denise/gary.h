@@ -44,7 +44,8 @@ void activate(Window w);       // pokaż (jeśli ukryte), wyciągnij na wierzch,
 void hide(Window w);           // ukryj (zminimalizuj)
 void close(Window w);          // poproś menedżer okien o zamknięcie
 
-// Ikona 16x16 okna z _NET_WM_ICON (nullptr, jeśli program jej nie podaje).
-Fl_Image *window_icon(Window w);
+// Ikona okna z _NET_WM_ICON w rozmiarze size x size (nullptr, jeśli program jej nie podaje).
+Fl_Image *window_icon(Window w, int size = 16);
+std::string window_title(Window w);   // _NET_WM_NAME albo WM_NAME
 
 } // namespace gary
