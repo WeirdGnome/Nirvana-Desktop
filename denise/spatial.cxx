@@ -1,4 +1,4 @@
-// LisaOS - denise: pamięć przestrzenna menedżera plików
+// Nirvana Desktop - denise: pamięć przestrzenna menedżera plików
 #include "spatial.h"
 
 #include <cstdlib>
@@ -11,7 +11,7 @@ namespace fs = std::filesystem;
 Spatial::Spatial(const std::string &home) {
   const char *xdg = getenv("XDG_CONFIG_HOME");
   fs::path dir = xdg && *xdg ? fs::path(xdg) : fs::path(home) / ".config";
-  dir /= "lisaos";
+  dir /= "nirvana";
   std::error_code ec;
   fs::create_directories(dir, ec);
   file_ = (dir / "denise.okna").string();

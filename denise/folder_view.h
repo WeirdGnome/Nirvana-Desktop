@@ -1,4 +1,4 @@
-// LisaOS - denise: widok folderu (ikony lub lista) z paskiem informacji
+// Nirvana Desktop - denise: widok folderu (ikony lub lista) z paskiem informacji
 #pragma once
 
 #include <FL/Fl_Group.H>
@@ -98,7 +98,7 @@ public:
   int cell_h() const { return isize_ == 16 ? 40 : isize_ == 64 ? 98 : 66; }
   // Przesunięcie ikon w obrębie okna (przeciąganie na tło tego samego okna).
   void move_items(const std::vector<std::string> &paths, int dx, int dy);
-  // Zamrożenie: pozycje zapisane na stałe (~/.config/lisaos/ikony.pozycje).
+  // Zamrożenie: pozycje zapisane na stałe (~/.config/nirvana/ikony.pozycje).
   void snapshot(const std::vector<std::string> &paths);
   void unsnapshot(const std::vector<std::string> &paths);
   void clean_up();                      // wszystko z powrotem do siatki

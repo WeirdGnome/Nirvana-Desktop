@@ -1,7 +1,7 @@
 #!/bin/bash
 # Atrapa nmcli do testów panelu Sieć bez karty Wi-Fi (np. w Xvfb/kontenerze).
 # Udaje kartę wlan0 i kilka sieci w zasięgu; resztę przekazuje do prawdziwego nmcli.
-#   LISAOS_NMCLI=tools/atrapa-nmcli.sh lisaos-alice siec
+#   NIRVANA_NMCLI=tools/atrapa-nmcli.sh nirvana-alice siec
 # Stan: $ATRAPA_DIR (domyślnie /tmp/atrapa-nmcli): wifi (on/off), polaczona, zapisane
 D=${ATRAPA_DIR:-/tmp/atrapa-nmcli}
 mkdir -p "$D"; [ -f "$D/wifi" ] || echo on > "$D/wifi"; [ -f "$D/wwan" ] || echo on > "$D/wwan"

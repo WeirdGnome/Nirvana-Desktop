@@ -1,4 +1,4 @@
-// LisaOS - sieć: implementacja (nmcli + D-Bus NetworkManagera)
+// Nirvana Desktop - sieć: implementacja (nmcli + D-Bus NetworkManagera)
 #include "net.h"
 #include "i18n.h"
 
@@ -24,7 +24,7 @@ using plat::fmt;
 using plat::trp;
 
 static const char *nmcli() {
-  const char *e = getenv("LISAOS_NMCLI");   // do testów: atrapa nmcli
+  const char *e = getenv("NIRVANA_NMCLI");   // do testów: atrapa nmcli
   return e && *e ? e : "nmcli";
 }
 
@@ -478,7 +478,7 @@ void vpn_up(const std::string &uuid, const std::string &user, const std::string 
       const char *rt = getenv("XDG_RUNTIME_DIR");
       std::string dir = rt && *rt ? rt : "/tmp";
       char tmpl[512];
-      snprintf(tmpl, sizeof tmpl, "%s/lisaos-vpn-XXXXXX", dir.c_str());
+      snprintf(tmpl, sizeof tmpl, "%s/nirvana-vpn-XXXXXX", dir.c_str());
       int fd = mkstemp(tmpl);
       if (fd < 0) { done(false, _("Nie można utworzyć pliku tymczasowego.")); return; }
       fchmod(fd, 0600);
@@ -761,7 +761,7 @@ static void connect_with_password(const std::string &ssid, const std::string &se
 
 void connect_wifi(const std::string &ssid, const std::string &security,
                   const std::string &password, bool hidden, Done done) {
-  if (getenv("LISAOS_NMCLI") && !password.empty()) {
+  if (getenv("NIRVANA_NMCLI") && !password.empty()) {
     // Tryb testowy z atrapą nmcli (bez prawdziwej karty Wi-Fi nie ma czego wołać przez
     // D-Bus). Tylko tu hasło idzie w argumentach - atrapa i tak jest lokalnym skryptem.
     run_async({"--wait", "45", "device", "wifi", "connect", ssid, "password", password},
@@ -787,7 +787,7 @@ void connect_wifi(const std::string &ssid, const std::string &security,
 
 void hotspot(const std::string &ssid, const std::string &password, Done done) {
   if (password.size() < 8) { done(false, _("Hasło hotspotu musi mieć co najmniej 8 znaków.")); return; }
-  if (getenv("LISAOS_NMCLI")) {   // atrapa (testy bez karty Wi-Fi)
+  if (getenv("NIRVANA_NMCLI")) {   // atrapa (testy bez karty Wi-Fi)
     simple({"device", "wifi", "hotspot", "ssid", ssid, "password", password}, done, _("Hotspot włączony."));
     return;
   }

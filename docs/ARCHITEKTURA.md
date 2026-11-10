@@ -1,13 +1,13 @@
-# LisaOS: architektura (szkic)
+# Nirvana Desktop: architektura (szkic)
 
 ## Warstwy
 
-    Devuan (runit, elogind, polkit)  ->  X11 (Xorg/XLibre)  ->  lisaos-insight (WM)
-                                                              ->  lisaos-gary (pasek menu)
-                                                              ->  lisaos-denise (pliki/biurko)
+    Devuan (runit, elogind, polkit)  ->  X11 (Xorg/XLibre)  ->  nirvana-insight (WM)
+                                                              ->  nirvana-gary (pasek menu)
+                                                              ->  nirvana-denise (pliki/biurko)
                                                               ->  aplikacje AppImage
 
-Wszystkie komponenty linkują `lisaos-platinum`, więc wygląd jest jeden.
+Wszystkie komponenty linkują `nirvana-platinum`, więc wygląd jest jeden.
 FLTK 1.4 ma backend Wayland, dlatego przy ewentualnym przejściu na Waylanda
 wymieniamy tylko `insight` (kompozytor na wlroots), a resztę zostawiamy.
 
@@ -22,15 +22,15 @@ wymieniamy tylko `insight` (kompozytor na wlroots), a resztę zostawiamy.
   okna, a skróty klawiszowe z okien folderów trafiają do paska menu.
 - Pozycje okien zapisuje się jako położenie treści (bez ramki). FLTK ustawia
   `StaticGravity`, a Insight stawia ramkę tak, by treść wróciła w to samo miejsce.
-- Okna o klasie `LisaOS-*` same animują otwieranie i zamykanie (z ikony do okna),
-  więc Insight pomija dla nich własną animację. `LisaOS-Dialog` dostaje ramkę
+- Okna o klasie `Nirvana-*` same animują otwieranie i zamykanie (z ikony do okna),
+  więc Insight pomija dla nich własną animację. `Nirvana-Dialog` dostaje ramkę
   dialogu: bez przycisków i zmiany rozmiaru.
 - **Pod innym menedżerem okien** (GNOME, KDE, Openbox) albo bez menedżera Rambler
   rysuje ramki Platinum sam (CSD, jak aplikacje GTK): okna są bez obcych dekoracji,
   przesuwanie za pasek tytułu i zmianę rozmiaru zleca menedżerowi przez
   `_NET_WM_MOVERESIZE` (dopiero po ruchu myszy, żeby podwójne kliknięcie zwijało okno),
   a zwijanie i zoom robi sam. Wykrycie: `_NET_SUPPORTING_WM_CHECK` → nazwa „insight”.
-  Wymuszenie do testów: `LISAOS_CSD=1` lub `0`.
+  Wymuszenie do testów: `NIRVANA_CSD=1` lub `0`.
 - Okno biurka FLTK mapuje od razu w `show()`, zanim da się nadać mu typ DESKTOP.
   Rambler wycofuje je więc zgodnie z ICCCM, czeka na potwierdzenie menedżera okien
   i pokazuje ponownie już jako biurko, żeby leżało pod oknami folderów.
@@ -38,7 +38,7 @@ wymieniamy tylko `insight` (kompozytor na wlroots), a resztę zostawiamy.
 ## Globalny pasek menu (`gary`)
 
 - Własne aplikacje publikują menu przez prosty protokół (propozycja: socket
-  unix `$XDG_RUNTIME_DIR/lisaos/gary`, komunikaty tekstowe z drzewem menu).
+  unix `$XDG_RUNTIME_DIR/nirvana/gary`, komunikaty tekstowe z drzewem menu).
 - Obce aplikacje (GTK/Qt w AppImage) zachowują menu w oknie; `gary` pokazuje
   dla nich tylko menu logo i przełącznik aplikacji.
 
@@ -52,8 +52,8 @@ Widget, który raz dostał `color(plat::GRAY)`, po zmianie schematu sam ma nowy 
 wystarczy `Fl::set_color()` i przerysowanie.
 
 Przebieg zmiany:
-1. `lisaos-alice` zapisuje `~/.config/lisaos/wyglad.conf`.
-2. Ustawia właściwość `_LISAOS_WYGLAD` na oknie głównym X.
+1. `nirvana-alice` zapisuje `~/.config/nirvana/wyglad.conf`.
+2. Ustawia właściwość `_NIRVANA_WYGLAD` na oknie głównym X.
 3. Rambler i Insight dostają `PropertyNotify`, wołają `plat::reload_appearance()`
    i przerysowują okna (Rambler odbudowuje też wzór biurka, Insight tło okna głównego).
 
@@ -63,7 +63,7 @@ chyba że schemat poda je wprost (`jasny`, `cien_sredni`, `cien`).
 ## Model uprawnień
 
 - Tryb prosty: Rambler nie otworzy niczego poza `$HOME` (sprawdzanie po
-  `weakly_canonical`, więc dowiązania symboliczne nie wyprowadzą poza LisaOS HD).
+  `weakly_canonical`, więc dowiązania symboliczne nie wyprowadzą poza Nirvana HD).
 - AppImage są rozpakowywane przy instalacji (`unsquashfs` z offsetem z nagłówka
   ELF; runtime AppImage nigdy nie jest wykonywany) i uruchamiane przez
   `bubblewrap`: zapis tylko w `$HOME`, system tylko do odczytu, ukryte `/home`
@@ -71,7 +71,7 @@ chyba że schemat poda je wprost (`jasny`, `cien_sredni`, `cien`).
   Udostępniane: gniazdo X11, `XAUTHORITY`, PulseAudio/PipeWire i szyna sesji D-Bus.
   Uwaga: dostęp do serwera X oznacza, że aplikacja może podglądać inne okna -
   to ograniczenie X11 (do rozważenia: osobny serwer Xephyr lub rozszerzenie XACE).
-- Tryb root: `pkexec lisaos-denise --root`, osobny proces, wyraźne oznaczenie.
+- Tryb root: `pkexec nirvana-denise --root`, osobny proces, wyraźne oznaczenie.
 
 ## Nazewnictwo
 

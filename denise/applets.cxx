@@ -1,4 +1,4 @@
-// LisaOS - aplety paska menu: głośność i zasilanie
+// Nirvana Desktop - aplety paska menu: głośność i zasilanie
 #include "applets.h"
 
 #include "audio.h"
@@ -628,7 +628,7 @@ void PowerApplet::act(Fl_Widget *, void *d) {
     case 1: power::lock_screen(); break;
     case 2:
       if (power::projection()) { report(_("Tryb projekcji jest włączony - wyłącz go, żeby uśpić komputer.")); break; }
-      if (g_host.lisaos_session) power::lock_screen();   // po wybudzeniu ekran jest zablokowany
+      if (g_host.nirvana_session) power::lock_screen();   // po wybudzeniu ekran jest zablokowany
       report(power::suspend());
       break;
     case 3:
@@ -692,7 +692,7 @@ static void grab_keys() {
 
 static void apply_settings() {
   g_idle = power::read_idle();
-  if (g_host.lisaos_session) power::apply_idle(g_idle);
+  if (g_host.nirvana_session) power::apply_idle(g_idle);
 }
 
 static int x_events(void *event, void *) {
@@ -721,7 +721,7 @@ static int x_events(void *event, void *) {
   if (g_ss_event >= 0 && e->type == g_ss_event) {
     // wygaszacz X się włączył: blokada (jak xss-lock), chyba że trwa projekcja
     auto *se = (XScreenSaverNotifyEvent *)e;
-    if (se->state == ScreenSaverOn && g_host.lisaos_session && g_idle.lock_on_blank && !power::projection())
+    if (se->state == ScreenSaverOn && g_host.nirvana_session && g_idle.lock_on_blank && !power::projection())
       power::lock_screen();
     return 0;
   }
@@ -736,7 +736,7 @@ static int x_events(void *event, void *) {
 static void power_tick(void *) {
   g_power = power::query();
   if (g_pow) g_pow->sync();
-  if (g_host.lisaos_session && !power::projection()) {
+  if (g_host.nirvana_session && !power::projection()) {
     int limit = g_power.on_ac ? g_idle.sleep_ac_min : g_idle.sleep_battery_min;
     int idle = power::idle_seconds();
     if (idle < g_last_sleep_idle) g_last_sleep_idle = 0;   // był ruch od ostatniego uśpienia
@@ -752,7 +752,7 @@ static void power_tick(void *) {
       g_warned_low = true;
       g_host.dialog(_("Bateria"), plat::fmt(_("Bateria jest prawie wyczerpana (%1%). Podłącz zasilacz."), std::to_string(g_power.percent)), {{"OK", nullptr}});
     }
-    if (g_power.percent <= 3 && !g_critical_done && g_idle.critical_action && g_host.lisaos_session) {
+    if (g_power.percent <= 3 && !g_critical_done && g_idle.critical_action && g_host.nirvana_session) {
       g_critical_done = true;
       if (g_idle.critical_action == 1 && g_power.can_hibernate) power::hibernate();
       else if (g_power.can_suspend) power::suspend();

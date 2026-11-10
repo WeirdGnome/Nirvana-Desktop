@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-# LisaOS - generator tapety "Lisa Desktop" w duchu AmigaOS 4:
+# Nirvana Desktop - generator tapety "Nirvana Desktop" w duchu AmigaOS 4:
 # granatowa głębia, mgławica, świetlne wstęgi, lustrzana podłoga i szklane logo.
 # Wszystko rysowane od zera (bez cudzych grafik). Czcionka: Inter (SIL OFL).
 #
-#   python3 tools/tapeta-lisa-desktop.py tapety/"Lisa Desktop.jpg" [szerokość wysokość]
+#   python3 tools/tapeta-nirvana-desktop.py tapety/"Nirvana Desktop.jpg" [szerokość wysokość]
 import math
 import random
 import sys
@@ -11,7 +11,7 @@ import sys
 import numpy as np
 from PIL import Image, ImageDraw, ImageFilter, ImageFont
 
-OUT = sys.argv[1] if len(sys.argv) > 1 else "Lisa Desktop.jpg"
+OUT = sys.argv[1] if len(sys.argv) > 1 else "Nirvana Desktop.jpg"
 W = int(sys.argv[2]) if len(sys.argv) > 2 else 2560
 H = int(sys.argv[3]) if len(sys.argv) > 3 else 1440
 S = W / 2560.0                      # skala względem projektu 2560x1440
@@ -109,19 +109,19 @@ rib *= (1 - 0.8 * np.clip(behind * 1.8, 0, 1))[..., None]
 ribbons = rib * 0.9 + blur(rib, 6 * S) * 2.2 + blur(rib, 26 * S) * 2.5 + blur(rib, 80 * S) * 1.6
 img += ribbons * (yy < HORIZON)[..., None]
 
-# 5. Logo i napis "Lisa Desktop" (osobna warstwa RGBA - potrzebna do odbicia)
+# 5. Logo i napis "Nirvana Desktop" (osobna warstwa RGBA - potrzebna do odbicia)
 brand = Image.new("RGBA", (W, H), (0, 0, 0, 0))
 bd = ImageDraw.Draw(brand)
 L = int(230 * S)                                   # wielkość układu scalonego (logo)
-f_lisa, f_desk = font("InterDisplay-Bold.otf", 190), font("InterDisplay-ExtraLight.otf", 190)
+f_nirvana, f_desk = font("InterDisplay-Bold.otf", 190), font("InterDisplay-ExtraLight.otf", 190)
 gap = int(56 * S)
-w_lisa = bd.textlength("Lisa", font=f_lisa)
+w_nirvana = bd.textlength("Nirvana", font=f_nirvana)
 w_desk = bd.textlength(" Desktop", font=f_desk)
-total = L + gap + w_lisa + w_desk
+total = L + gap + w_nirvana + w_desk
 x0 = int((W - total) / 2)
 y0 = HORIZON - L - int(40 * S)                     # stoi tuż nad "podłogą"
 
-# 5a. Układ scalony: nóżki, korpus z połyskiem, białe L, złoty znacznik pinu 1
+# 5a. Układ scalony: nóżki, korpus z połyskiem, białe N, złoty znacznik pinu 1
 chip = Image.new("RGBA", (L, L), (0, 0, 0, 0))
 cd = ImageDraw.Draw(chip)
 pin_w, pin_h = int(L * 0.075), int(L * 0.11)
@@ -144,13 +144,15 @@ m = Image.new("L", (L, L), 0)
 ImageDraw.Draw(m).rounded_rectangle(body, radius=r, fill=255)
 chip.paste(grad, (0, 0), m)
 cd.rounded_rectangle(body, radius=r, outline=(20, 12, 50, 255), width=max(2, int(L * 0.018)))
-# litera L
-lw = int(L * 0.11)
-lx, ly = int(L * 0.40), int(L * 0.25)
-cd.rectangle([lx + 4, ly + 4, lx + lw + 4, int(L * 0.72) + 4], fill=(30, 18, 70, 160))
-cd.rectangle([lx + 4, int(L * 0.72) - lw + 4, int(L * 0.66) + 4, int(L * 0.72) + 4], fill=(30, 18, 70, 160))
-cd.rectangle([lx, ly, lx + lw, int(L * 0.72)], fill=(255, 255, 255, 255))
-cd.rectangle([lx, int(L * 0.72) - lw, int(L * 0.66), int(L * 0.72)], fill=(255, 255, 255, 255))
+# litera N: dwie pionowe kreski i skos (z cieniem)
+lw = int(L * 0.10)
+lx, rx, ty_, by_ = int(L * 0.34), int(L * 0.66) - int(L * 0.10), int(L * 0.25), int(L * 0.72)
+def letter_n(d, o, fill):
+    d.rectangle([lx + o, ty_ + o, lx + lw + o, by_ + o], fill=fill)
+    d.rectangle([rx + o, ty_ + o, rx + lw + o, by_ + o], fill=fill)
+    d.polygon([(lx + o, ty_ + o), (lx + lw + o, ty_ + o), (rx + lw + o, by_ + o), (rx + o, by_ + o)], fill=fill)
+letter_n(cd, 4, (30, 18, 70, 160))
+letter_n(cd, 0, (255, 255, 255, 255))
 # złoty znacznik
 pr = int(L * 0.055)
 cd.ellipse([int(L * 0.12), int(L * 0.16), int(L * 0.12) + 2 * pr, int(L * 0.16) + 2 * pr], fill=(246, 196, 70, 255))
@@ -165,14 +167,14 @@ white.putalpha(Image.fromarray(np.clip(gloss_np, 0, 255).astype(np.uint8)))
 chip = Image.alpha_composite(chip, white)
 brand.alpha_composite(chip, (x0, y0))
 
-# 5b. Napis: "Lisa" grubo i biało, "Desktop" cienko i błękitnie
+# 5b. Napis: "Nirvana" grubo i biało, "Desktop" cienko i błękitnie
 tx = x0 + L + gap
 ty = y0 + L // 2
-bd.text((tx, ty), "Lisa", font=f_lisa, fill=(255, 255, 255, 255), anchor="lm")
-bd.text((tx + w_lisa, ty), " Desktop", font=f_desk, fill=(150, 200, 255, 255), anchor="lm")
+bd.text((tx, ty), "Nirvana", font=f_nirvana, fill=(255, 255, 255, 255), anchor="lm")
+bd.text((tx + w_nirvana, ty), " Desktop", font=f_desk, fill=(150, 200, 255, 255), anchor="lm")
 # podtytuł pod napisem, rozstrzelony
 f_sub = font("Inter-Medium.otf", 30)
-sub = "  ".join("LISAOS 0.1")
+sub = "  ".join("NIRVANA 0.1")
 bd.text((tx + 6 * S, ty + int(120 * S)), sub, font=f_sub, fill=(150, 175, 230, 210), anchor="lm")
 
 # poświata pod logo i napisem

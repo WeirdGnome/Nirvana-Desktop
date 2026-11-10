@@ -10,7 +10,7 @@ OUT="${1:-.}"
 B="$(mktemp -d)"
 trap 'rm -rf "$B"' EXIT
 
-printf '#include <stdio.h>\nint main(void){puts("runtime testowy LisaOS");return 0;}\n' > "$B/runtime.c"
+printf '#include <stdio.h>\nint main(void){puts("runtime testowy Nirvana Desktop");return 0;}\n' > "$B/runtime.c"
 gcc -O2 -o "$B/runtime" "$B/runtime.c"
 
 mk() { # plik program typ_ikony kolor litera dodatkowe_polecenia
@@ -33,6 +33,6 @@ mk() { # plik program typ_ikony kolor litera dodatkowe_polecenia
 }
 
 mk "Zegar-2.1-x86_64.AppImage" xclock png "#2E7D32" Z \
-  '{ echo "LISAOS_SANDBOX=$LISAOS_SANDBOX"; echo "/home widzi: $(ls /home | tr "\\n" " ")"; touch /usr/proba 2>/dev/null && echo "zapis do /usr: TAK" || echo "zapis do /usr: zablokowany"; touch "$HOME/proba-zapisu" && echo "zapis do LisaOS HD: TAK"; echo "PID w piaskownicy: $$"; } > "$HOME/piaskownica.txt"'
+  '{ echo "NIRVANA_SANDBOX=$NIRVANA_SANDBOX"; echo "/home widzi: $(ls /home | tr "\\n" " ")"; touch /usr/proba 2>/dev/null && echo "zapis do /usr: TAK" || echo "zapis do /usr: zablokowany"; touch "$HOME/proba-zapisu" && echo "zapis do Nirvana HD: TAK"; echo "PID w piaskownicy: $$"; } > "$HOME/piaskownica.txt"'
 mk "Kalkulator_v1.0.AppImage" xcalc png "#C62828" "÷" ''
 mk "Oczy-0.9.AppImage" xeyes svg "#F9A825" "" ''

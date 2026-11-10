@@ -1,4 +1,4 @@
-// LisaOS - zasobnik systemowy: XEmbed + StatusNotifierItem (patrz tray.h)
+// Nirvana Desktop - zasobnik systemowy: XEmbed + StatusNotifierItem (patrz tray.h)
 #include "tray.h"
 #include "platinum.h"
 #include "anim.h"
@@ -838,7 +838,7 @@ static void init_sni() {
   dbus_error_free(&e);
   if (g_own_watcher) {
     emit("StatusNotifierHostRegistered", "");
-    // Po restarcie Ramblera (Resetuj LISA) ikony już są na szynie - nie każdy
+    // Po restarcie Ramblera (Resetuj Nirvanę) ikony już są na szynie - nie każdy
     // program rejestruje się ponownie, więc zbieramy je sami po nazwie usługi.
     DBusMessage *m = dbus_message_new_method_call("org.freedesktop.DBus", "/org/freedesktop/DBus",
                                                   "org.freedesktop.DBus", "ListNames");
@@ -1222,7 +1222,7 @@ Fl_Widget *make(int X, int Y, int H) {
 void init(Fl_Window *desk, std::function<void()> on_changed) {
   g_desk = desk;
   g_changed = std::move(on_changed);
-  if (getenv("LISAOS_BEZ_ZASOBNIKA")) return;
+  if (getenv("NIRVANA_BEZ_ZASOBNIKA")) return;
   init_xembed();
   if (g_manager) Fl::add_system_handler(x_events, nullptr);
   init_sni();

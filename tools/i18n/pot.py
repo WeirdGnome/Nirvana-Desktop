@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Tworzy po/lisaos.pot z kodu i uzupełnia po/*.po (msgmerge).
+"""Tworzy po/nirvana.pot z kodu i uzupełnia po/*.po (msgmerge).
 
   _("…")  N_("…")  trp(n, "jeden", "kilka", "wiele")  - xgettext
   P_("Okno/Sortuj/według nazwy")                       - ścieżki menu: każdy człon osobno
@@ -12,9 +12,9 @@ root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)
 os.chdir(root)
 src = sorted(f for d in ("alice", "audio", "denise", "insight", "net", "platinum", "power", "shell")
              for f in glob.glob(d + "/*.cxx"))
-pot = "po/lisaos.pot"
+pot = "po/nirvana.pot"
 subprocess.run(["xgettext", "--from-code=UTF-8", "--language=C++", "-k_", "-kN_", "-ktr", "-ktrp:2,3",
-                "--add-comments=TRANSLATORS:", "--package-name=LisaOS", "--package-version=0.1",
+                "--add-comments=TRANSLATORS:", "--package-name=Nirvana Desktop", "--package-version=0.1",
                 "-o", pot] + src, check=True)
 
 def unescape(lit):
@@ -36,5 +36,6 @@ with open(pot, "a", encoding="utf-8") as out:
 subprocess.run(["msguniq", "-o", pot, pot], check=True)
 for po in glob.glob("po/*.po"):
     subprocess.run(["msgmerge", "-q", "--update", "--backup=none", "--no-fuzzy-matching", po, pot], check=True)
+    subprocess.run(["msgattrib", "--no-obsolete", "-o", po, po], check=True)
 n = len(re.findall(r'^msgid ', open(pot, encoding="utf-8").read(), re.M)) - 1
 print(f"{pot}: {n} tekstów")

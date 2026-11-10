@@ -1,4 +1,4 @@
-// LisaOS - zasilanie: bateria, jasność, profile, usypianie, tryb projekcji
+// Nirvana Desktop - zasilanie: bateria, jasność, profile, usypianie, tryb projekcji
 //
 // Bateria i jasność czytane z /sys (działa bez UPowera, także na Devuanie),
 // jasność ustawiana przez logind/elogind (Session.SetBrightness - bez roota),
@@ -63,7 +63,7 @@ bool projection();
 // Zwraca listę tego, co udało się wstrzymać (do pokazania), pustą przy wyłączaniu.
 std::vector<std::string> set_projection(bool on);
 
-// --- bezczynność (tylko w sesji LisaOS, pod Insightem) ----------------------------------
+// --- bezczynność (tylko w sesji Nirvana Desktop, pod Insightem) ----------------------------------
 struct IdleSettings {
   int blank_min = 10;          // wygaszenie ekranu po N min (0 = nigdy)
   bool lock_on_blank = true;   // blokada przy wygaszeniu
@@ -75,7 +75,7 @@ IdleSettings read_idle();
 bool write_idle(const IdleSettings &s);
 void apply_idle(const IdleSettings &s);      // czasy wygaszacza i DPMS w X
 int idle_seconds();                          // czas bez ruchu myszy/klawiatury
-constexpr const char *SETTINGS_ATOM = "_LISAOS_ZASILANIE";
+constexpr const char *SETTINGS_ATOM = "_NIRVANA_ZASILANIE";
 void notify_settings_changed();
 
 }  // namespace power

@@ -1,4 +1,4 @@
-// LisaOS - libplatinum: tapeta biurka
+// Nirvana Desktop - libplatinum: tapeta biurka
 //
 // Tło biurka to zawsze wzór w kolorach schematu, a na nim (opcjonalnie) obraz.
 // Wzór widać w pasach przy układzie "Dopasuj", wokół małego obrazu "Na środku"
@@ -51,15 +51,15 @@ static std::string home() { const char *h = getenv("HOME"); return h ? h : "/"; 
 std::vector<std::string> wallpaper_dirs() {
   std::vector<std::string> d;
   const char *xdg = getenv("XDG_DATA_HOME");
-  d.push_back((xdg && *xdg ? std::string(xdg) : home() + "/.local/share") + "/lisaos/tapety");
+  d.push_back((xdg && *xdg ? std::string(xdg) : home() + "/.local/share") + "/nirvana/tapety");
   std::error_code ec;
   fs::path exe = fs::read_symlink("/proc/self/exe", ec);
   if (!ec) {
-    d.push_back((exe.parent_path() / "../share/lisaos/tapety").string());   // prefiks instalacji
+    d.push_back((exe.parent_path() / "../share/nirvana/tapety").string());   // prefiks instalacji
     d.push_back((exe.parent_path() / "../tapety").string());                // katalog build/
   }
-  d.push_back("/usr/local/share/lisaos/tapety");
-  d.push_back("/usr/share/lisaos/tapety");
+  d.push_back("/usr/local/share/nirvana/tapety");
+  d.push_back("/usr/share/nirvana/tapety");
   std::vector<std::string> out;
   for (auto &x : d) if (fs::is_directory(x, ec)) out.push_back(fs::weakly_canonical(x, ec).string());
   return out;

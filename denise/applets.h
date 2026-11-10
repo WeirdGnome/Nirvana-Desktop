@@ -1,11 +1,11 @@
-// LisaOS - aplety paska menu: głośność i zasilanie (z trybem projekcji)
+// Nirvana Desktop - aplety paska menu: głośność i zasilanie (z trybem projekcji)
 //
 // Ikony siedzą po prawej stronie paska menu Ramblera. Kliknięcie otwiera
 // okienko w stylu Platinum z suwakami i przyciskami; kółko myszy nad ikoną
 // głośności zmienia głośność. Klawisze multimedialne (głośność, wyciszenie,
 // jasność) łapiemy na oknie głównym X i pokazujemy OSD.
 //
-// W sesji LisaOS (pod Insightem) aplet zasilania prowadzi też bezczynność:
+// W sesji Nirvana Desktop (pod Insightem) aplet zasilania prowadzi też bezczynność:
 // wygaszanie i blokadę ekranu, usypianie oraz ostrzeżenia o baterii.
 #pragma once
 
@@ -23,8 +23,8 @@ struct Host {
   std::function<void(const std::string &title, const std::string &text, Buttons)> dialog;
   std::function<void()> logout;              // koniec sesji
   std::function<void()> before_shutdown;     // zapis stanu okien przed wyłączeniem
-  std::function<void()> open_power_panel;    // panel Zasilanie (lisaos-alice)
-  bool lisaos_session = true;                // pod Insightem: bezczynność prowadzi LisaOS
+  std::function<void()> open_power_panel;    // panel Zasilanie (nirvana-alice)
+  bool nirvana_session = true;                // pod Insightem: bezczynność prowadzi Nirvana Desktop
 };
 
 Fl_Widget *make_volume(int X, int Y, int W, int H);

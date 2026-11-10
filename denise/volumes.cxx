@@ -1,4 +1,4 @@
-// LisaOS - denise: dyski, płyty i zaszyfrowane wolumeny (LUKS)
+// Nirvana Desktop - denise: dyski, płyty i zaszyfrowane wolumeny (LUKS)
 #include "volumes.h"
 #include "i18n.h"
 

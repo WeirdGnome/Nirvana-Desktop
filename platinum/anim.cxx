@@ -1,17 +1,17 @@
-// LisaOS - libplatinum: animacje okien w stylu klasycznego Mac OS
+// Nirvana Desktop - libplatinum: animacje okien w stylu klasycznego Mac OS
 //
 // Dwa sposoby rysowania konturów:
 //
 //  XOR    - kontury rysowane prosto na oknie głównym X, z blokadą serwera.
 //           Najszybsze i najlżejsze, ale widoczne tylko na "gołym" Xorg/XLibre
-//           (bez kompozytora) - czyli w sesji LisaOS z Insightem.
+//           (bez kompozytora) - czyli w sesji Nirvana Desktop z Insightem.
 //
 //  KSZTAŁT - tymczasowe okno override-redirect wycięte rozszerzeniem SHAPE
 //           tak, że zostają z niego tylko linie konturów. Kompozytor pokazuje je
 //           jak każde okno, więc działa pod XWaylandem (GNOME na Waylandzie,
 //           np. Rocky/RHEL 10) i na pulpitach z kompozytorem (GNOME/KDE na X11).
 //
-// Wybór jest automatyczny; można go wymusić zmienną LISAOS_ANIM_MODE=xor|ksztalt.
+// Wybór jest automatyczny; można go wymusić zmienną NIRVANA_ANIM_MODE=xor|ksztalt.
 #include "anim.h"
 #include "platinum.h"
 
@@ -40,7 +40,7 @@ void animations_suspend(bool s) { g_suspend = s; }
 bool animations_enabled() {
   if (g_suspend) return false;
   // Zmienna środowiskowa ma pierwszeństwo przed ustawieniem z panelu Wygląd.
-  if (const char *e = getenv("LISAOS_ANIMATIONS"))
+  if (const char *e = getenv("NIRVANA_ANIMATIONS"))
     return !(!strcmp(e, "0") || !strcmp(e, "no") || !strcmp(e, "off"));
   return current_appearance().animations;
 }
@@ -50,8 +50,8 @@ bool animations_enabled() {
 static constexpr int STEPS = 12;   // liczba klatek
 static constexpr int TRAIL = 4;    // ile konturów widać naraz ("ogon")
 static int frame_ms() {
-  // LISAOS_ANIM_MS - czas jednej klatki (do testów: np. 300 zamiast 12)
-  const char *e = getenv("LISAOS_ANIM_MS");
+  // NIRVANA_ANIM_MS - czas jednej klatki (do testów: np. 300 zamiast 12)
+  const char *e = getenv("NIRVANA_ANIM_MS");
   return e ? atoi(e) : 12;
 }
 
@@ -73,7 +73,7 @@ static void wait_frame() {
 enum class Mode { Xor, Ksztalt, Brak };   // (None to makro X11)
 
 static Mode detect_mode(Display *d) {
-  if (const char *m = getenv("LISAOS_ANIM_MODE")) {
+  if (const char *m = getenv("NIRVANA_ANIM_MODE")) {
     if (!strcmp(m, "xor")) return Mode::Xor;
     if (!strcmp(m, "ksztalt") || !strcmp(m, "shape")) return Mode::Ksztalt;
   }
@@ -106,8 +106,8 @@ static void animate_xor(Display *d, const Rect *r) {
   };
 
   // Na czas animacji nikt inny nie rysuje - inaczej XOR mógłby zostawić ślady.
-  // LISAOS_ANIM_NOGRAB=1 - bez blokady serwera (żeby zrobić zrzut w trakcie animacji)
-  bool grab = !getenv("LISAOS_ANIM_NOGRAB");
+  // NIRVANA_ANIM_NOGRAB=1 - bez blokady serwera (żeby zrobić zrzut w trakcie animacji)
+  bool grab = !getenv("NIRVANA_ANIM_NOGRAB");
   if (grab) XGrabServer(d);
   for (int i = 0; i <= STEPS + TRAIL; i++) {
     if (i <= STEPS) outline(r[i]);              // nowy kontur
@@ -139,7 +139,7 @@ static void animate_shape(Display *d, const Rect *r) {
   Window w = XCreateWindow(d, DefaultRootWindow(d), x0, y0, x1 - x0, y1 - y0, 0, CopyFromParent,
                            InputOutput, CopyFromParent,
                            CWOverrideRedirect | CWBackPixel | CWSaveUnder, &a);
-  XStoreName(d, w, "lisaos-animacja");
+  XStoreName(d, w, "nirvana-animacja");
   // kliknięcia przechodzą przez okno animacji
   XShapeCombineRectangles(d, w, ShapeInput, 0, 0, nullptr, 0, ShapeSet, Unsorted);
 

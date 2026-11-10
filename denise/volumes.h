@@ -1,4 +1,4 @@
-// LisaOS - denise: dyski, płyty i zaszyfrowane wolumeny (LUKS)
+// Nirvana Desktop - denise: dyski, płyty i zaszyfrowane wolumeny (LUKS)
 //
 // Wykrywanie: lsblk (dane z udev). Akcje: UDisks2 przez D-Bus (libdbus) - ta sama
 // usługa, której używają GNOME i KDE; działa na Devuanie (z elogind) i na Rocky.

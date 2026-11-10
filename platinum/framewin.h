@@ -1,4 +1,4 @@
-// LisaOS - libplatinum: okno z ramką Platinum rysowaną przez program (CSD)
+// Nirvana Desktop - libplatinum: okno z ramką Platinum rysowaną przez program (CSD)
 //
 // Pod Insightem okna dostają ramkę od menedżera okien. Pod każdym innym
 // (GNOME, KDE, Openbox...) FrameWindow wyłącza obce dekoracje i rysuje ramkę

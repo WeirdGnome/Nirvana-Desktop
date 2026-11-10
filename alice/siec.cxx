@@ -1,9 +1,9 @@
-// LisaOS - alice: panel "Sieć"
+// Nirvana Desktop - alice: panel "Sieć"
 //
 // Lista połączeń (Ethernet, Wi-Fi, modem...) po lewej, szczegóły wybranego po
 // prawej: adresy, Połącz/Rozłącz, ustawienia IPv4, a dla Wi-Fi lista sieci
 // w zasięgu z łączeniem, ukrytymi sieciami i zapominaniem. Wszystko przez
-// NetworkManagera (lisaos-net); zmiany z zewnątrz widać na bieżąco.
+// NetworkManagera (nirvana-net); zmiany z zewnątrz widać na bieżąco.
 #include "net.h"
 #include "framewin.h"
 #include "platinum.h"
@@ -485,9 +485,9 @@ void hotspot_dialog() {
   t->align(FL_ALIGN_LEFT | FL_ALIGN_TOP | FL_ALIGN_INSIDE | FL_ALIGN_WRAP);
   auto *n = new Fl_Input(170, 60, W - 186, 24, _("Nazwa sieci:"));
   n->box(WELL_BOX);
-  char host[64] = "lisaos";
+  char host[64] = "nirvana";
   gethostname(host, sizeof host - 1);
-  std::string def = std::string("LisaOS-") + host;
+  std::string def = std::string("Nirvana-") + host;
   n->value(def.c_str());
   auto *p = new Fl_Input(170, 92, W - 186, 24, _("Hasło (min. 8):"));
   p->box(WELL_BOX);
@@ -525,7 +525,7 @@ void show_device() {
   if (!g_st.available) {
     g_title->label(_("Sieć niedostępna"));
     static std::string p;
-    p = g_st.problem + "\n" + _("LisaOS zarządza siecią przez NetworkManagera: zainstaluj pakiet "
+    p = g_st.problem + "\n" + _("Nirvana Desktop zarządza siecią przez NetworkManagera: zainstaluj pakiet "
                                  "network-manager i uruchom usługę NetworkManager.");
     g_status->label(p.c_str());
     g_win->redraw();
@@ -626,7 +626,7 @@ void refresh() {
 int panel_siec(bool hidden_dialog) {
   const int W = 640, H = 470;
   g_win = new FrameWindow(W, H, _("Sieć"));
-  g_win->xclass("lisaos-siec");
+  g_win->xclass("nirvana-siec");
 
   auto *t1 = new Fl_Box(15, 8, 200, 20, _("Połączenia"));
   t1->labelfont(FONT_SYSTEM);

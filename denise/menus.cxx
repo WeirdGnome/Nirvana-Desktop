@@ -1,8 +1,8 @@
-// LisaOS - Rambler: akcje menu Lisa, Okno, Ikony i Narzędzia
+// Nirvana Desktop - Rambler: akcje menu Nirvana, Okno, Ikony i Narzędzia
 //
 // Układ menu według specyfikacji (w duchu Workbencha):
-//   Lisa       - polecenia całego systemu (preferencje, wykonaj polecenie, dziennik,
-//                Lisa Shell, przerysuj/uaktualnij wszystko, uśpij, restart, zakończ)
+//   Nirvana    - polecenia całego systemu (preferencje, wykonaj polecenie, dziennik,
+//                Nirvana Shell, przerysuj/uaktualnij wszystko, uśpij, restart, zakończ)
 //   Okno       - aktywne okno folderu (nowy folder, rodzic, widok, sortowanie, ukryte)
 //   Ikony      - zaznaczone ikony (otwórz, kopiuj, informacje, zamroź, dok)
 //   Narzędzia  - formatowanie dysku, kosz, tryb root, reset środowiska
@@ -52,7 +52,7 @@ void Desktop::set_argv(int argc, char **argv) { g_argc = argc; g_argv = argv; }
 static std::string config_dir() {
   const char *x = getenv("XDG_CONFIG_HOME");
   const char *h = getenv("HOME");
-  return (x && *x ? std::string(x) : std::string(h ? h : "/") + "/.config") + "/lisaos";
+  return (x && *x ? std::string(x) : std::string(h ? h : "/") + "/.config") + "/nirvana";
 }
 
 // ---------------------------------------------------------------------------
@@ -158,7 +158,7 @@ void Desktop::update_menu() {
   }
   act(P_("Okno/Otwórz katalog nadrzędny"), parent_ok);
   for (const char *p : {P_("Okno/Zamknij"), P_("Okno/Uaktualnij"), P_("Okno/Zaznacz zawartość"), P_("Okno/Pokaż jako"),
-                        P_("Okno/Sortuj"), P_("Okno/Wielkość ikon"), P_("Okno/Lisa Shell tutaj")})
+                        P_("Okno/Sortuj"), P_("Okno/Wielkość ikon"), P_("Okno/Nirvana Shell tutaj")})
     act(p, a != nullptr);
   act(P_("Okno/Uporządkuj"), icons_mode);
   mark(P_("Okno/Pokaż ukryte pliki"), show_hidden_);
@@ -199,7 +199,7 @@ void Desktop::update_menu() {
 }
 
 // Ikony > Ustaw jako tapetę: zapis w ustawieniach wyglądu, biurko odświeża się
-// przez _LISAOS_WYGLAD (tak samo jak po "Zastosuj" w panelu Wygląd).
+// przez _NIRVANA_WYGLAD (tak samo jak po "Zastosuj" w panelu Wygląd).
 void Desktop::set_as_wallpaper() {
   std::vector<std::string> t = targets();
   if (t.size() != 1 || !is_image_file(t[0])) return;
@@ -218,9 +218,9 @@ void Desktop::set_as_wallpaper() {
 }
 
 // ---------------------------------------------------------------------------
-// Menu Lisa
+// Menu Nirvana
 // ---------------------------------------------------------------------------
-void Desktop::open_preferences() { rambler_spawn({rambler_exe("lisaos-alice"), "ustawienia"}); }
+void Desktop::open_preferences() { rambler_spawn({rambler_exe("nirvana-alice"), "ustawienia"}); }
 
 void Desktop::execute_command() {
   static std::string last;
@@ -235,7 +235,7 @@ void Desktop::execute_command() {
   in->textsize(SIZE_SYSTEM);
   in->value(last.c_str());
   in->insert_position(0, in->size());
-  auto *show = new Fl_Check_Button(ox + 60, oy + 80, W - 80, 20, _("Pokaż wynik w Lisa Shell"));
+  auto *show = new Fl_Check_Button(ox + 60, oy + 80, W - 80, 20, _("Pokaż wynik w Nirvana Shell"));
   show->labelsize(SIZE_SMALL + 1);
   static bool show_last = true;
   show->value(show_last);
@@ -249,7 +249,7 @@ void Desktop::execute_command() {
         ? "cd -- \"$1\" || exit 1; eval \"$2\"; s=$?; echo; printf \"$3\" \"$s\"; read x"
         : "cd -- \"$1\" || exit 1; eval \"$2\"";
     if (show_last)
-      rambler_spawn({rambler_exe("lisaos-shell"), "--katalog", dir, "-e", "sh", "-c", script, "sh", dir, cmd,
+      rambler_spawn({rambler_exe("nirvana-shell"), "--katalog", dir, "-e", "sh", "-c", script, "sh", dir, cmd,
                      _("[kod wyjścia %s] Enter zamyka okno…")});
     else
       rambler_spawn({"sh", "-c", script, "sh", dir, cmd});
@@ -264,7 +264,7 @@ void Desktop::open_log() {
       "elif [ -r /var/log/syslog ]; then less +G /var/log/syslog; "
       "elif [ -r /var/log/messages ]; then less +G /var/log/messages; "
       "else dmesg 2>&1 | less +G; fi";
-  rambler_spawn({rambler_exe("lisaos-shell"), "--katalog", home_, "-e", "sh", "-c", script});
+  rambler_spawn({rambler_exe("nirvana-shell"), "--katalog", home_, "-e", "sh", "-c", script});
 }
 
 // Przerysuj wszystko: na chwilę przykrywamy ekran przezroczystym oknem - po jego
@@ -305,7 +305,7 @@ void Desktop::reboot_ask() {
 }
 
 void Desktop::quit_ask() {
-  dialog(_("Zakończ"), _("Zakończyć pracę z LisaOS?"),
+  dialog(_("Zakończ"), _("Zakończyć pracę z Nirvana Desktop?"),
          {{_("Anuluj"), nullptr},
           {_("Wyloguj"), [this] {
              if (!csd_mode) { quit(); return; }
@@ -412,7 +412,7 @@ static std::string folder_size(const std::string &p) {
 }
 
 // Komentarz (xattr user.xdg.comment - standard freedesktop) i parametry
-// uruchamiania (ToolTypes: user.lisaos.parametry, zapasowo plik w ~/.config).
+// uruchamiania (ToolTypes: user.nirvana.parametry, zapasowo plik w ~/.config).
 static std::string xattr_get(const std::string &p, const char *name, bool *supported = nullptr) {
   char buf[4096];
   ssize_t n = getxattr(p.c_str(), name, buf, sizeof buf - 1);
@@ -426,7 +426,7 @@ static bool xattr_set(const std::string &p, const char *name, const std::string 
 static std::string tooltypes_file() { return config_dir() + "/parametry"; }
 std::string tooltypes(const std::string &path) {
   bool ok = false;
-  std::string v = xattr_get(path, "user.lisaos.parametry", &ok);
+  std::string v = xattr_get(path, "user.nirvana.parametry", &ok);
   if (!v.empty()) return v;
   std::ifstream in(tooltypes_file());
   std::string line;
@@ -437,7 +437,7 @@ std::string tooltypes(const std::string &path) {
   return "";
 }
 static void set_tooltypes(const std::string &path, const std::string &v) {
-  if (xattr_set(path, "user.lisaos.parametry", v)) return;
+  if (xattr_set(path, "user.nirvana.parametry", v)) return;
   // system plików bez atrybutów rozszerzonych: zapis w pliku
   std::vector<std::string> keep;
   std::ifstream in(tooltypes_file());
@@ -486,7 +486,7 @@ void Desktop::get_info() {
   if (NWin *a = active_folder())
     for (auto &x : a->pane->view()->selection()) if (x.path == path) e = x;
   if (vi >= 0) { e.icon = vols_[vi].icon; e.label = vols_[vi].name; }
-  if (path == home_) { e.icon = Icon::Home; e.label = "LisaOS HD"; }
+  if (path == home_) { e.icon = Icon::Home; e.label = "Nirvana HD"; }
 
   struct stat st{};
   bool have_st = !path.empty() && lstat(path.c_str(), &st) == 0;
@@ -708,20 +708,20 @@ void Desktop::format_dialog(int vi) {
   }}});
 }
 
-// Reset LISA: Insight i Rambler uruchamiają się od nowa (okna programów zostają).
-void Desktop::reset_lisa() {
+// Reset Nirvana: Insight i Rambler uruchamiają się od nowa (okna programów zostają).
+void Desktop::reset_nirvana() {
   for (auto *w : wins_) if (w->pane) remember(w, true);
   spatial_.save();
   Display *d = fl_display;
   XEvent ev{};
   ev.xclient.type = ClientMessage;
   ev.xclient.window = DefaultRootWindow(d);
-  ev.xclient.message_type = XInternAtom(d, "_LISAOS_RESTART", False);
+  ev.xclient.message_type = XInternAtom(d, "_NIRVANA_RESTART", False);
   ev.xclient.format = 32;
   XSendEvent(d, DefaultRootWindow(d), False, SubstructureRedirectMask | SubstructureNotifyMask, &ev);
   XFlush(d);
   Fl::add_timeout(0.6, [](void *) {
-    std::string exe = rambler_exe("lisaos-denise");
+    std::string exe = rambler_exe("nirvana-denise");
     std::vector<char *> av;
     av.push_back((char *)exe.c_str());
     for (int i = 1; i < g_argc; i++) av.push_back(g_argv[i]);

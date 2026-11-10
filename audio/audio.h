@@ -1,4 +1,4 @@
-// LisaOS - dźwięk: głośność wyjść, wejść i aplikacji
+// Nirvana Desktop - dźwięk: głośność wyjść, wejść i aplikacji
 //
 // Główna ścieżka: PulseAudio albo PipeWire (pipewire-pulse) przez `pactl`
 // (tekstowe wyjście w LC_ALL=C - JSON w pactl 16 psuje polskie znaki).

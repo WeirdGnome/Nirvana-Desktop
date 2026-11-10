@@ -1,4 +1,4 @@
-// LisaOS - libplatinum: implementacja wyglądu Platinum
+// Nirvana Desktop - libplatinum: implementacja wyglądu Platinum
 #include "platinum.h"
 
 #include <FL/Fl.H>
@@ -155,7 +155,7 @@ static float xft_scale() {
 }
 
 float configured_scale(const Appearance &a) {
-  if (const char *e = getenv("LISAOS_SKALA")) {   // np. LISAOS_SKALA=150 albo 1.5
+  if (const char *e = getenv("NIRVANA_SKALA")) {   // np. NIRVANA_SKALA=150 albo 1.5
     double v = atof(e);
     if (v > 4) v /= 100;
     if (v >= 0.5 && v <= 4) return (float)v;
@@ -166,7 +166,7 @@ float configured_scale(const Appearance &a) {
 
 static void apply_scale() {
   fl_open_display();
-  // Wszystkie programy LisaOS (menedżer okien, biurko, panele) muszą mieć tę
+  // Wszystkie programy Nirvana Desktop (menedżer okien, biurko, panele) muszą mieć tę
   // samą skalę - wymieniają między sobą współrzędne. Własna skala zamiast
   // automatyki FLTK; bez zmiany skali skrótem Ctrl +/-.
   g_scale = std::clamp(configured_scale(read_appearance()), 0.5f, 4.0f);
@@ -179,7 +179,7 @@ void init(bool root) {
   init_i18n();   // przed pierwszym tekstem interfejsu
   g_root = root;
   Fl::scheme("none");
-  reload_appearance();   // schemat kolorów z ~/.config/lisaos/wyglad.conf
+  reload_appearance();   // schemat kolorów z ~/.config/nirvana/wyglad.conf
   apply_scale();
 
   int f = FL_FREE_BOXTYPE;
@@ -201,7 +201,7 @@ void init(bool root) {
   Fl::set_boxtype(FL_DOWN_FRAME, down_frame, 1, 1, 2, 2);
 
   // Jeśli w systemie jest wolna czcionka w stylu Chicago, użyj jej.
-  if (const char *ff = getenv("LISAOS_SYSTEM_FONT")) {
+  if (const char *ff = getenv("NIRVANA_SYSTEM_FONT")) {
     Fl::set_font(FL_FREE_FONT, ff);
     FONT_SYSTEM = FL_FREE_FONT;
   }
@@ -321,7 +321,7 @@ static void trash(int x, int y, bool sel, bool full) {
   }
 }
 
-// Dysk wewnętrzny: szara obudowa z diodą (jak LisaOS HD, bez domku)
+// Dysk wewnętrzny: szara obudowa z diodą (jak Nirvana HD, bez domku)
 static void hard_disk(int x, int y, bool sel) {
   col(0xD8D8D8, sel); fl_rectf(x + 2, y + 10, 28, 15);
   col(0xFFFFFF, sel); fl_xyline(x + 3, y + 11, x + 28);
@@ -593,7 +593,7 @@ void draw_icon(Icon icon, int x, int y, bool sel) {
   }
 }
 
-// Logo LisaOS: chip DIP (ukłon w stronę układów Amigi) z literą "L".
+// Logo Nirvana Desktop: chip DIP (ukłon w stronę układów Amigi) z literą "N".
 void draw_logo(int x, int y, int s) {
   Fl_Color body = g_root ? ROOT_TINT : rgb(0x4B3590);
   fl_color(rgb(0x777777));   // logo ma stałe kolory, niezależne od schematu
@@ -607,9 +607,10 @@ void draw_logo(int x, int y, int s) {
   fl_color(FL_BLACK);
   fl_rect(x + 1, y + 2, s - 2, s - 4);
   fl_color(FL_WHITE);
-  int lx = x + s / 2 - 3, ly = y + 4;
-  fl_rectf(lx, ly, 2, s - 8);
-  fl_rectf(lx, ly + s - 10, 6, 2);
+  int nx = x + s / 2 - 3, ny = y + 4, nh = s - 8, nw = 7;
+  fl_rectf(nx, ny, 2, nh);                 // N: dwie kreski i skos
+  fl_rectf(nx + nw - 2, ny, 2, nh);
+  for (int k = 0; k < nh; k++) fl_rectf(nx + 1 + k * (nw - 3) / std::max(1, nh - 1), ny + k, 2, 1);
   fl_color(rgb(0xF0C040));
   fl_pie(x + 2, y + 3, 3, 3, 0, 360);   // znacznik pinu 1
 }

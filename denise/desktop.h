@@ -1,4 +1,4 @@
-// LisaOS - denise: biurko, pasek menu i okna menedżera plików (Rambler)
+// Nirvana Desktop - denise: biurko, pasek menu i okna menedżera plików (Rambler)
 //
 // Biurko (wzór, ikony dysku i kosza, globalny pasek menu) to jedno okno X
 // typu DESKTOP. Każdy folder i każdy dialog to osobne okno X - ramki,
@@ -24,7 +24,7 @@
 
 class Desktop;
 void rambler_spawn(const std::vector<std::string> &args);   // podwójny fork
-std::string rambler_exe(const char *name);                  // np. "lisaos-shell"
+std::string rambler_exe(const char *name);                  // np. "nirvana-shell"
 std::string tooltypes(const std::string &path);             // parametry uruchamiania (Informacje)
 std::vector<std::string> split_args(const std::string &s);
 
@@ -107,11 +107,11 @@ public:
   void empty_trash();
   void ask_root();
   void refresh_all();
-  void appearance_changed();      // panel Wygląd zmienił schemat (_LISAOS_WYGLAD)
-  void open_appearance();         // uruchom panel Wygląd (lisaos-alice)
+  void appearance_changed();      // panel Wygląd zmienił schemat (_NIRVANA_WYGLAD)
+  void open_appearance();         // uruchom panel Wygląd (nirvana-alice)
   void open_network();            // panel Sieć
   void open_power();              // panel Zasilanie
-  void open_terminal();           // Lisa Shell w folderze aktywnego okna
+  void open_terminal();           // Nirvana Shell w folderze aktywnego okna
   void open_terminal_home();
   // sieć (pasek menu)
   void build_net_menu(Fl_Menu_Button *m);
@@ -135,7 +135,7 @@ public:
   void view_list();
   void shade_all(bool shade);
   void close_all();
-  // --- menu Lisa / Okno / Ikony / Narzędzia (menus.cxx) ---
+  // --- menu Nirvana / Okno / Ikony / Narzędzia (menus.cxx) ---
   void update_menu();            // aktywne/nieaktywne pozycje przed otwarciem menu
   void open_preferences();
   void execute_command();
@@ -162,7 +162,7 @@ public:
   void dock_add();
   void dock_remove();
   void format_disk();
-  void reset_lisa();
+  void reset_nirvana();
   static void set_argv(int argc, char **argv);
   NWin *begin_form(const std::string &title, int W, int H, const Entry *icon, const std::string &text,
                    int &ox, int &oy);
@@ -181,7 +181,7 @@ private:
     Fl_Image *img = nullptr;    // jej obrazek (z _NET_WM_ICON albo AppImage)
   };
   int icon_cols_ = 1;   // kolumny ikon przy lewej krawędzi (dyski, okna, kosz)
-  // dok: ścieżki w ~/.config/lisaos/dok
+  // dok: ścieżki w ~/.config/nirvana/dok
   std::vector<std::string> dock_;
   bool dock_collapsed_ = false;   // dok zwinięty do samej zakładki
   int dock_shown_ = 0;            // ile ikon doku się zmieściło

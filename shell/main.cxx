@@ -1,10 +1,10 @@
-// LisaOS - Lisa Shell: emulator terminala
+// Nirvana Desktop - Nirvana Shell: emulator terminala
 //
 // Zgodny z xterm (TERM=xterm-256color): stan ekranu, sekwencje sterujące,
 // klawiatura i mysz to libvterm; tutaj jest pty, rysowanie w FLTK,
 // przewijanie wstecz, zaznaczanie, schowek, profile kolorów i okna.
 //
-//   lisaos-shell [--katalog DIR] [-e POLECENIE ARG...]
+//   nirvana-shell [--katalog DIR] [-e POLECENIE ARG...]
 //
 // Skróty: Ctrl+Shift+C/V kopiuj/wklej, Ctrl+Shift+N nowe okno, Ctrl+Shift+W
 // zamknij, Ctrl+Shift+= / - / 0 czcionka, Shift+PgUp/PgDn przewijanie.
@@ -72,7 +72,7 @@ Profile PROFILES[] = {
     {"zielony", N_("Zielony fosfor"), 0x33FF66, 0x081208, 0x33FF66, 0x1E5A2A, {}},
     {"bursztyn", N_("Bursztynowy"), 0xFFB000, 0x160E00, 0xFFB000, 0x5A3E00, {}},
     {"workbench", N_("Workbench (Amiga)"), 0xFFFFFF, 0x0055AA, 0xFF8800, 0x000022, {}},
-    {"schemat", N_("Jak schemat kolorów"), 0, 0, 0, 0, {}},   // kolory LisaOS
+    {"schemat", N_("Jak schemat kolorów"), 0, 0, 0, 0, {}},   // kolory Nirvana Desktop
 };
 const int NPROFILES = sizeof PROFILES / sizeof PROFILES[0];
 
@@ -86,7 +86,7 @@ Settings g_set;
 std::string config_file() {
   const char *x = getenv("XDG_CONFIG_HOME");
   const char *h = getenv("HOME");
-  return (x && *x ? std::string(x) : std::string(h ? h : "/") + "/.config") + "/lisaos/terminal.conf";
+  return (x && *x ? std::string(x) : std::string(h ? h : "/") + "/.config") + "/nirvana/terminal.conf";
 }
 void load_settings() {
   std::ifstream in(config_file());
@@ -109,7 +109,7 @@ void save_settings() {
   mkdir(dir.substr(0, dir.rfind('/')).c_str(), 0755);
   mkdir(dir.c_str(), 0755);
   std::ofstream out(f);
-  out << "# Lisa Shell\nprofil=" << g_set.profile << "\nczcionka=" << g_set.font << "\nrozmiar=" << g_set.size
+  out << "# Nirvana Shell\nprofil=" << g_set.profile << "\nczcionka=" << g_set.font << "\nrozmiar=" << g_set.size
       << "\nkolumny=" << g_set.cols << "\nwiersze=" << g_set.rows << "\nprzewijanie=" << g_set.scrollback << "\n";
 }
 
@@ -124,7 +124,7 @@ unsigned rgb_of(Fl_Color c) {
   return (r << 16) | (g << 8) | b;
 }
 
-// Profil z uzupełnionymi kolorami (dla "schemat" - z palety LisaOS).
+// Profil z uzupełnionymi kolorami (dla "schemat" - z palety Nirvana Desktop).
 Profile resolved(const Profile &p) {
   Profile r = p;
   if (!strcmp(p.id, "schemat")) {
@@ -193,7 +193,7 @@ public:
   VTermPos cursor{0, 0};
   bool cursor_visible = true, altscreen = false, reverse = false, focus_report = false;
   int cursor_shape = VTERM_PROP_CURSORSHAPE_BLOCK, mouse_mode = 0;
-  std::string title = "Lisa Shell";
+  std::string title = "Nirvana Shell";
   // zaznaczenie we współrzędnych bufora: wiersz < 0 to przewijanie wstecz
   bool sel_active = false, selecting = false;
   int sel_r0 = 0, sel_c0 = 0, sel_r1 = 0, sel_c1 = 0;
@@ -244,7 +244,7 @@ int Term::cb_settermprop(VTermProp prop, VTermValue *v, void *u) {
       if (v->string.initial) t->title.clear();
       t->title += s;
       if (v->string.final) {
-        t->win->copy_label(t->title.empty() ? "Lisa Shell" : t->title.c_str());
+        t->win->copy_label(t->title.empty() ? "Nirvana Shell" : t->title.c_str());
         t->win->redraw();
       }
       break;
@@ -589,7 +589,7 @@ std::string Term::running_program() const {
 // Pytanie przed zamknięciem, gdy w terminalu coś działa (np. vim, kopiowanie).
 bool ask_close(Term *t, const std::string &prog) {
   int W = 400, H = 130;
-  auto *w = new FrameWindow(W, H, "Lisa Shell", true);
+  auto *w = new FrameWindow(W, H, "Nirvana Shell", true);
   struct Pic : Fl_Widget {
     Pic(int X, int Y) : Fl_Widget(X, Y, 34, 34) {}
     void draw() override { draw_icon(Icon::Application, x(), y(), false); }
@@ -864,8 +864,8 @@ Term::Term(const std::string &dir, const std::vector<std::string> &cmd) {
   cols = g_set.cols;
   int aw = cols * cw + 2 * PAD, ah = rows * chh + 2 * PAD;
   int W = aw + SCROLL_W, H = ah;
-  win = new FrameWindow(W, H, "Lisa Shell");
-  win->xclass("lisaos-shell");
+  win = new FrameWindow(W, H, "Nirvana Shell");
+  win->xclass("nirvana-shell");
   area = new TermArea(this, 0, 0, aw, ah);
   sbar = new Fl_Scrollbar(aw, 0, SCROLL_W, ah - SCROLL_W);
   sbar->box(TRACK_BOX);
@@ -914,7 +914,7 @@ Term::Term(const std::string &dir, const std::vector<std::string> &cmd) {
   if (child == 0) {
     setenv("TERM", "xterm-256color", 1);
     setenv("COLORTERM", "truecolor", 1);
-    setenv("TERM_PROGRAM", "LisaShell", 1);
+    setenv("TERM_PROGRAM", "NirvanaShell", 1);
     // Terminal mówi tylko UTF-8: bez tego vim i inne programy w locale "C"
     // pokazywałyby polskie litery jako krzaki.
     if (strcmp(nl_langinfo(CODESET), "UTF-8") != 0) setenv("LC_CTYPE", "C.UTF-8", 1);

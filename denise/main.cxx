@@ -1,14 +1,14 @@
-// LisaOS - lisaos-denise (menedżer plików i biurko)
+// Nirvana Desktop - nirvana-denise (menedżer plików i biurko)
 //
 // Użycie:
-//   lisaos-denise                 tryb prosty: widać tylko $HOME
-//   lisaos-denise --root          tryb root: cały system plików (uruchamiany przez pkexec)
-//   lisaos-denise --home DIR      inny katalog domowy (np. do testów)
-//   lisaos-denise --size 1024x768 rozmiar biurka (domyślnie cały ekran)
-//   lisaos-denise --center        biurko na środku obszaru roboczego, czyli z ominięciem
+//   nirvana-denise                 tryb prosty: widać tylko $HOME
+//   nirvana-denise --root          tryb root: cały system plików (uruchamiany przez pkexec)
+//   nirvana-denise --home DIR      inny katalog domowy (np. do testów)
+//   nirvana-denise --size 1024x768 rozmiar biurka (domyślnie cały ekran)
+//   nirvana-denise --center        biurko na środku obszaru roboczego, czyli z ominięciem
 //                                 pasków innego pulpitu (np. górnego paska GNOME);
 //                                 bez --size wypełnia cały obszar roboczy.
-//                                 To samo: zmienna LISAOS_CENTER=1
+//                                 To samo: zmienna NIRVANA_CENTER=1
 #include <FL/Fl.H>
 #include <FL/platform.H>
 #include <X11/Xatom.h>
@@ -32,7 +32,7 @@ int main(int argc, char **argv) {
   bool root = false;
   std::string home = getenv("HOME") ? getenv("HOME") : "/";
   int W = 0, H = 0;
-  bool center = getenv("LISAOS_CENTER") && !strcmp(getenv("LISAOS_CENTER"), "1");
+  bool center = getenv("NIRVANA_CENTER") && !strcmp(getenv("NIRVANA_CENTER"), "1");
 
   for (int i = 1; i < argc; i++) {
     if (!strcmp(argv[i], "--root")) root = true;
@@ -40,9 +40,9 @@ int main(int argc, char **argv) {
     else if (!strcmp(argv[i], "--size") && i + 1 < argc) sscanf(argv[++i], "%dx%d", &W, &H);
     else if (!strcmp(argv[i], "--center") || !strcmp(argv[i], "--srodek")) center = true;
     else if (!strcmp(argv[i], "--help")) {
-      printf("lisaos-denise [--root] [--home KATALOG] [--size SZERxWYS] [--center]\n"
+      printf("nirvana-denise [--root] [--home KATALOG] [--size SZERxWYS] [--center]\n"
              "  --center  biurko na środku obszaru roboczego (np. pod paskiem GNOME);\n"
-             "            bez --size wypełnia cały obszar roboczy (też: LISAOS_CENTER=1)\n");
+             "            bez --size wypełnia cały obszar roboczy (też: NIRVANA_CENTER=1)\n");
       return 0;
     }
   }
@@ -68,12 +68,12 @@ int main(int argc, char **argv) {
     Fl::screen_xywh(sx, sy, W, H);
   }
 
-  Desktop::set_argv(argc, argv);   // Narzędzia > Resetuj LISA uruchamia Ramblera od nowa
+  Desktop::set_argv(argc, argv);   // Narzędzia > Resetuj Nirvanę uruchamia Ramblera od nowa
   Desktop desk(W, H, home, root);
   gary::init(home);
   desk.position(X, Y);
   desk.border(0);
-  desk.xclass("LisaOS-Desktop");   // insight rozpozna biurko i nie da mu ramki
+  desk.xclass("Nirvana-Desktop");   // insight rozpozna biurko i nie da mu ramki
   desk.show();
   // Dla innych menedżerów okien: standardowe oznaczenie okna biurka (EWMH).
   {
@@ -120,7 +120,7 @@ int main(int argc, char **argv) {
                      XInternAtom(fl_display, "_NET_WM_STATE_SKIP_PAGER", False)};
     XChangeProperty(fl_display, xid, XInternAtom(fl_display, "_NET_WM_STATE", False), XA_ATOM, 32,
                     PropModeReplace, (unsigned char *)states, 3);
-    // Pod obcym menedżerem okien (GNOME, Openbox...) klik w pasek menu LisaOS nie może
+    // Pod obcym menedżerem okien (GNOME, Openbox...) klik w pasek menu Nirvana Desktop nie może
     // zabierać aktywności oknu, w którym pracujesz - menu aplikacji i Plik/Edycja działają
     // na nie. Dlatego biurko nie przyjmuje fokusu (ICCCM: WM_HINTS input = False).
     // Insight obsługuje biurko sam i ten wyjątek nie jest mu potrzebny.

@@ -1,4 +1,4 @@
-// LisaOS - gary: przełącznik aplikacji
+// Nirvana Desktop - gary: przełącznik aplikacji
 #include "gary.h"
 #include "i18n.h"
 
@@ -49,7 +49,7 @@ static void save_known() {
 void init(const std::string &home) {
   const char *xdg = getenv("XDG_CONFIG_HOME");
   fs::path dir = xdg && *xdg ? fs::path(xdg) : fs::path(home) / ".config";
-  dir /= "lisaos";
+  dir /= "nirvana";
   std::error_code ec;
   fs::create_directories(dir, ec);
   g_file = (dir / "aplikacje.klasy").string();
@@ -107,11 +107,11 @@ static bool has_atom(Window w, const char *prop, const char *value) {
 
 // "org.gnome.Nautilus" -> "Nautilus", "firefox" -> "Firefox"
 static std::string pretty(const std::string &cls) {
-  if (!strcasecmp(cls.c_str(), "lisaos-alice")) return _("Wygląd");   // panele LisaOS (FLTK zmienia "l" na "L")
-  if (!strcasecmp(cls.c_str(), "lisaos-siec")) return _("Sieć");
-  if (!strcasecmp(cls.c_str(), "lisaos-shell")) return _("Lisa Shell");
-  if (!strcasecmp(cls.c_str(), "lisaos-zasilanie")) return _("Zasilanie");
-  if (!strcasecmp(cls.c_str(), "lisaos-preferencje")) return _("Preferencje");
+  if (!strcasecmp(cls.c_str(), "nirvana-alice")) return _("Wygląd");   // panele Nirvana Desktop (FLTK zmienia "l" na "L")
+  if (!strcasecmp(cls.c_str(), "nirvana-siec")) return _("Sieć");
+  if (!strcasecmp(cls.c_str(), "nirvana-shell")) return _("Nirvana Shell");
+  if (!strcasecmp(cls.c_str(), "nirvana-zasilanie")) return _("Zasilanie");
+  if (!strcasecmp(cls.c_str(), "nirvana-preferencje")) return _("Preferencje");
   std::string s = cls;
   if (auto dot = s.rfind('.'); dot != std::string::npos && dot + 1 < s.size()) s = s.substr(dot + 1);
   if (!s.empty() && islower((unsigned char)s[0])) s[0] = (char)toupper((unsigned char)s[0]);
@@ -127,7 +127,7 @@ void clients_changed() {
   bool changed = false;
   for (Window w : client_list()) {
     std::string cls = wm_class(w);
-    if (cls.empty() || cls.rfind("LisaOS-", 0) == 0 || g_seen.count(cls)) continue;
+    if (cls.empty() || cls.rfind("Nirvana-", 0) == 0 || g_seen.count(cls)) continue;
     g_seen.insert(cls);
     if (!g_pending.empty() && !g_known.count(cls)) {
       g_known[cls] = {g_pending.front().name, g_pending.front().icon};
@@ -210,7 +210,7 @@ void activate(Window w) { message(w, "_NET_ACTIVE_WINDOW", 2, CurrentTime, 0); }
 void hide(Window w) {
   // znacznik dla Insighta: to "Ukryj" z menu aplikacji, nie ikonizacja - bez ikony na biurku
   long one = 1;
-  XChangeProperty(fl_display, w, atom("_LISAOS_UKRYJ"), XA_CARDINAL, 32, PropModeReplace, (unsigned char *)&one, 1);
+  XChangeProperty(fl_display, w, atom("_NIRVANA_UKRYJ"), XA_CARDINAL, 32, PropModeReplace, (unsigned char *)&one, 1);
   XIconifyWindow(fl_display, w, DefaultScreen(fl_display));
   XFlush(fl_display);
 }

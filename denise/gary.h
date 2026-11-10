@@ -1,4 +1,4 @@
-// LisaOS - gary: przełącznik aplikacji (menu aplikacji w prawym górnym rogu)
+// Nirvana Desktop - gary: przełącznik aplikacji (menu aplikacji w prawym górnym rogu)
 //
 // Na razie mieszka w procesie Ramblera, bo to on rysuje globalny pasek menu.
 // Działa na standardzie EWMH, więc pokazuje aplikacje pod Insightem i pod

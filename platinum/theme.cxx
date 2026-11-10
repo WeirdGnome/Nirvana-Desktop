@@ -1,4 +1,4 @@
-// LisaOS - libplatinum: schematy kolorów, ustawienia wyglądu, wzory biurka
+// Nirvana Desktop - libplatinum: schematy kolorów, ustawienia wyglądu, wzory biurka
 #include "platinum.h"
 
 #include <FL/Fl.H>
@@ -109,14 +109,14 @@ static bool is_dir(const std::string &p) { struct stat st; return !stat(p.c_str(
 std::vector<std::string> scheme_dirs() {
   std::vector<std::string> d;
   const char *xdg = getenv("XDG_DATA_HOME");
-  d.push_back((xdg && *xdg ? std::string(xdg) : home_dir() + "/.local/share") + "/lisaos/schematy");
+  d.push_back((xdg && *xdg ? std::string(xdg) : home_dir() + "/.local/share") + "/nirvana/schematy");
   std::string e = exe_dir();
   if (!e.empty()) {
-    d.push_back(e + "/../share/lisaos/schematy");   // instalacja w prefiksie
+    d.push_back(e + "/../share/nirvana/schematy");   // instalacja w prefiksie
     d.push_back(e + "/../schematy");                // uruchomienie z katalogu build/
   }
-  d.push_back("/usr/local/share/lisaos/schematy");
-  d.push_back("/usr/share/lisaos/schematy");
+  d.push_back("/usr/local/share/nirvana/schematy");
+  d.push_back("/usr/share/nirvana/schematy");
   std::vector<std::string> out;
   for (auto &x : d) if (is_dir(x)) out.push_back(x);
   return out;
@@ -127,7 +127,7 @@ std::vector<std::string> scheme_dirs() {
 
 Scheme builtin_platinum() {
   Scheme s;
-  s.id = "platinum"; s.name = "Platinum"; s.source = "LisaOS";
+  s.id = "platinum"; s.name = "Platinum"; s.source = "Nirvana Desktop";
   s.style = TitleStyle::Stripes;
   s.icon_sel = 0x000000; s.accent = 0xAAAAE6; s.desk = 0x5E6FA8;
   s.light = 0xFFFFFF; s.mid = 0xAAAAAA; s.shadow = 0x777777;
@@ -217,7 +217,7 @@ std::vector<Scheme> list_schemes() {
   std::set<std::string> seen;
   for (auto &dir : scheme_dirs()) scan(dir, "", out, seen, 0);
   if (!seen.count("platinum")) out.push_back(builtin_platinum());
-  // Najpierw własne schematy LisaOS, potem zaimportowane - alfabetycznie.
+  // Najpierw własne schematy Nirvana Desktop, potem zaimportowane - alfabetycznie.
   std::sort(out.begin(), out.end(), [](const Scheme &a, const Scheme &b) {
     bool la = a.id.find('/') == std::string::npos, lb = b.id.find('/') == std::string::npos;
     if (la != lb) return la;
@@ -237,7 +237,7 @@ bool load_scheme(const std::string &id, Scheme &out) {
 
 std::string appearance_file() {
   const char *xdg = getenv("XDG_CONFIG_HOME");
-  return (xdg && *xdg ? std::string(xdg) : home_dir() + "/.config") + "/lisaos/wyglad.conf";
+  return (xdg && *xdg ? std::string(xdg) : home_dir() + "/.config") + "/nirvana/wyglad.conf";
 }
 
 Appearance read_appearance() {
@@ -285,7 +285,7 @@ bool write_appearance(const Appearance &a) {
     std::ofstream out(tmp);
     if (!out) return false;
     static const char *st[] = {"prazki", "kolor", "gradient"};
-    out << "# LisaOS - ustawienia wyglądu (panel Wygląd)\n"
+    out << "# Nirvana Desktop - ustawienia wyglądu (panel Wygląd)\n"
         << "schemat=" << a.scheme << "\n"
         << "styl_paska=" << (a.style < 0 ? "" : st[a.style]) << "\n"
         << "biurko=" << (a.desk < 0 ? "" : color_str((unsigned)a.desk)) << "\n"

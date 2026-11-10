@@ -1,6 +1,6 @@
 [Desktop Entry]
-Name=LisaOS
+Name=Nirvana Desktop
 Comment=Lekkie środowisko w duchu Mac OS 9 i Amigi
-Exec=lisaos-session
+Exec=nirvana-session
 Type=Application
-DesktopNames=LisaOS
+DesktopNames=Nirvana

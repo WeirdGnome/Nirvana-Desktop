@@ -1,4 +1,4 @@
-// LisaOS - zasobnik systemowy (system tray) na pasku menu Ramblera
+// Nirvana Desktop - zasobnik systemowy (system tray) na pasku menu Ramblera
 //
 // Obsługuje oba protokoły, których używają programy:
 //   * XEmbed (freedesktop System Tray): Rambler przejmuje selekcję

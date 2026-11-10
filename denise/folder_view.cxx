@@ -1,4 +1,4 @@
-// LisaOS - denise: widok folderu (ikony lub lista) z paskiem informacji
+// Nirvana Desktop - denise: widok folderu (ikony lub lista) z paskiem informacji
 #include "folder_view.h"
 
 #include <FL/Fl.H>
@@ -182,7 +182,7 @@ static bool g_snap_loaded = false;
 static std::string snap_file() {
   const char *x = getenv("XDG_CONFIG_HOME");
   const char *h = getenv("HOME");
-  return (x && *x ? std::string(x) : std::string(h ? h : "/") + "/.config") + "/lisaos/ikony.pozycje";
+  return (x && *x ? std::string(x) : std::string(h ? h : "/") + "/.config") + "/nirvana/ikony.pozycje";
 }
 static void snap_load() {
   if (g_snap_loaded) return;

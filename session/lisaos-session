@@ -1,44 +1,4 @@
 #!/bin/sh
-# LisaOS - start sesji graficznej
-# Uruchamia menedżer okien (insight), programy z autostartu XDG, a potem biurko
-# i menedżer plików (Rambler). Zamknięcie Ramblera (Lisa > Zakończ…) kończy sesję.
-#
-# Użycie:  startx /usr/bin/lisaos-session      (albo "exec lisaos-session" w ~/.xinitrc)
-#     albo z ekranu logowania (plik /usr/share/xsessions/lisaos.desktop)
-
-BIN="$(dirname "$(readlink -f "$0")")"
-# przy uruchamianiu z katalogu źródeł binarki leżą w build/
-[ -x "$BIN/lisaos-insight" ] || BIN="$BIN/../build"
-
-# Bez systemd nikt nie uruchomi magistrali sesji (startx, slim) - zrób to sami.
-# Zasobnik, aplety i panele potrzebują D-Bus sesji.
-if [ -z "$DBUS_SESSION_BUS_ADDRESS" ] && [ -z "$LISAOS_DBUS" ] && command -v dbus-run-session >/dev/null 2>&1; then
-  LISAOS_DBUS=1 exec dbus-run-session -- "$0" "$@"
-fi
-
-export XDG_CURRENT_DESKTOP=LisaOS
-export XDG_SESSION_DESKTOP=LisaOS
-export XDG_SESSION_TYPE=x11
-export DESKTOP_SESSION=lisaos
-# Usługi uruchamiane przez D-Bus (xdg-desktop-portal dla Flatpaków, agent
-# sekretów...) dostają środowisko magistrali, a nie sesji - przekaż im ekran
-# i nazwę pulpitu, inaczej portal nie wstaje i programy czekają na niego.
-if command -v dbus-update-activation-environment >/dev/null 2>&1; then
-  dbus-update-activation-environment DISPLAY XAUTHORITY XDG_CURRENT_DESKTOP XDG_SESSION_DESKTOP \
-    XDG_SESSION_TYPE DESKTOP_SESSION XDG_RUNTIME_DIR 2>/dev/null
-fi
-[ -f "$HOME/.Xresources" ] && command -v xrdb >/dev/null 2>&1 && xrdb -merge "$HOME/.Xresources"
-
-"$BIN/lisaos-insight" &
-INSIGHT=$!
-
-# daj insightowi chwilę na przejęcie ekranu
-sleep 0.5
-
-# autostart XDG: PipeWire/PulseAudio, nm-applet, agent polkit... (na Devuanie
-# bez systemd to jedyne miejsce, skąd te usługi sesji się uruchamiają)
-[ -x "$BIN/lisaos-autostart" ] && "$BIN/lisaos-autostart"
-
-"$BIN/lisaos-denise" "$@"
-kill $INSIGHT 2>/dev/null
-# programy z autostartu kończą się razem z magistralą sesji / serwerem X
+# Zgodność wstecz: LisaOS nazywa się teraz Nirvana Desktop.
+# Stare ~/.xinitrc z "exec lisaos-session" dalej uruchamiają sesję.
+exec nirvana-session "$@"

@@ -1,11 +1,11 @@
-// LisaOS - libplatinum: animacje okien w stylu klasycznego Mac OS
+// Nirvana Desktop - libplatinum: animacje okien w stylu klasycznego Mac OS
 //
 // "Zoom rects": przy otwieraniu, zamykaniu, zwijaniu i powiększaniu okna
 // po ekranie przelatuje seria konturów prostokątów. Kontury rysujemy metodą
 // XOR prosto na oknie głównym X (IncludeInferiors), więc nie potrzeba
 // kompozytora, a drugie narysowanie tego samego konturu dokładnie go ściera.
 //
-// Wyłączanie: zmienna środowiskowa LISAOS_ANIMATIONS=0
+// Wyłączanie: zmienna środowiskowa NIRVANA_ANIMATIONS=0
 // (docelowo przełącznik w panelu sterowania "Wygląd").
 #pragma once
 
@@ -13,7 +13,7 @@ namespace plat {
 
 struct Rect { int x, y, w, h; };
 
-// Skala interfejsu (HiDPI). Programy LisaOS liczą w jednostkach FLTK, a X11
+// Skala interfejsu (HiDPI). Programy Nirvana Desktop liczą w jednostkach FLTK, a X11
 // w pikselach: px() zamienia jednostki na piksele, un() piksele na jednostki.
 // Potrzebne tylko przy bezpośrednich wywołaniach Xlib (menedżer okien, XEmbed,
 // komunikaty EWMH) - zwykłe rysowanie FLTK skaluje samo.

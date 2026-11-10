@@ -1,4 +1,4 @@
-// LisaOS - lisaos-insight: menedżer okien X11 w stylu Platinum
+// Nirvana Desktop - nirvana-insight: menedżer okien X11 w stylu Platinum
 //
 // Insight to klasyczny "reparenting" window manager:
 //   * każde okno aplikacji dostaje ramkę (okno FLTK rysowane przez libplatinum),
@@ -6,7 +6,7 @@
 //   * pasek tytułu obsługuje przesuwanie, zamykanie, zoom i windowshade,
 //   * brak kompozytora - aplikacje rysują prosto na ekranie, co oszczędza pamięć.
 //
-// Okno biurka Ramblera (WM_CLASS "LisaOS-Desktop" lub _NET_WM_WINDOW_TYPE_DESKTOP)
+// Okno biurka Ramblera (WM_CLASS "Nirvana-Desktop" lub _NET_WM_WINDOW_TYPE_DESKTOP)
 // nie dostaje ramki i zawsze leży na samym dole.
 //
 // Działa na Xorg i XLibre (czysty Xlib, bez rozszerzeń).
@@ -46,12 +46,12 @@ static Atom A_WM_PROTOCOLS, A_WM_DELETE, A_WM_STATE, A_NET_WM_NAME, A_UTF8,
     A_NET_CHECK, A_NET_ACTIVE, A_NET_WM_STATE, A_NET_WM_STATE_SHADED, A_NET_WM_TYPE_DIALOG,
     A_NET_CLIENT_LIST, A_NET_CLOSE, A_NET_WM_STATE_HIDDEN, A_WM_CHANGE_STATE,
     A_NET_WM_STATE_MAX_V, A_NET_WM_STATE_MAX_H, A_NET_WORKAREA, A_NET_FRAME_EXTENTS,
-    A_NET_REQUEST_FRAME_EXTENTS, A_LISAOS_DOK;
+    A_NET_REQUEST_FRAME_EXTENTS, A_NIRVANA_DOK;
 
 class Frame;
 
 // Obszar roboczy (jednostki FLTK): ekran bez paska menu u góry i doku Ramblera
-// na dole (_LISAOS_DOK = wysokość doku, 0 gdy pusty). Okna programów go nie
+// na dole (_NIRVANA_DOK = wysokość doku, 0 gdy pusty). Okna programów go nie
 // zasłaniają: przy otwarciu, przy maksymalizacji i przy zoomie.
 static int g_dock_h = 0;
 static Rect work_area() { return {0, MENUBAR_H, screen_w, screen_h - MENUBAR_H - g_dock_h}; }
@@ -62,7 +62,7 @@ static void read_dock_height() {
   unsigned long n, after;
   unsigned char *data = nullptr;
   g_dock_h = 0;
-  if (XGetWindowProperty(dpy, DefaultRootWindow(dpy), A_LISAOS_DOK, 0, 1, False, XA_CARDINAL, &type, &fmt, &n,
+  if (XGetWindowProperty(dpy, DefaultRootWindow(dpy), A_NIRVANA_DOK, 0, 1, False, XA_CARDINAL, &type, &fmt, &n,
                          &after, &data) == Success && data && n == 1 && fmt == 32)
     g_dock_h = std::clamp((int)*(long *)data, 0, screen_h / 3);
   if (data) XFree(data);
@@ -90,9 +90,9 @@ static void set_frame_extents(Window w) {
   XChangeProperty(dpy, w, A_NET_FRAME_EXTENTS, XA_CARDINAL, 32, PropModeReplace, (unsigned char *)ext, 4);
 }
 
-// _LISAOS_OBSZAR_OKIEN (x, y, szer., wys.) na oknie głównym - ustawia Rambler.
+// _NIRVANA_OBSZAR_OKIEN (x, y, szer., wys.) na oknie głównym - ustawia Rambler.
 static bool rambler_area(plat::Rect &r) {
-  Atom a = XInternAtom(dpy, "_LISAOS_OBSZAR_OKIEN", False), type;
+  Atom a = XInternAtom(dpy, "_NIRVANA_OBSZAR_OKIEN", False), type;
   int fmt;
   unsigned long n, after;
   unsigned char *data = nullptr;
@@ -115,7 +115,7 @@ struct Client {
   int unzoom[4] = {0, 0, 0, 0};
   int ignore_unmap = 0;           // UnmapNotify wywołane przez nas (reparent)
   bool dialog = false;            // okno dialogowe: bez przycisków i zmiany rozmiaru
-  bool own_anim = false;          // programy LisaOS same animują otwieranie/zamykanie
+  bool own_anim = false;          // programy Nirvana Desktop same animują otwieranie/zamykanie
   bool hidden = false;            // ukryte (Ukryj / Ukryj inne w menu aplikacji)
   bool iconic = false;            // zikonizowane: ukryte, a na biurku jest jego ikona
   unsigned long mru = 0;          // kiedy ostatnio aktywne (do Alt+Tab)
@@ -174,7 +174,7 @@ static bool is_desktop(Window w) {
   XClassHint ch;
   bool d = false;
   if (XGetClassHint(dpy, w, &ch)) {
-    if (ch.res_class && !strcmp(ch.res_class, "LisaOS-Desktop")) d = true;
+    if (ch.res_class && !strcmp(ch.res_class, "Nirvana-Desktop")) d = true;
     if (ch.res_name) XFree(ch.res_name);
     if (ch.res_class) XFree(ch.res_class);
   }
@@ -302,7 +302,7 @@ public:
     if (c->shaded) toggle_shade();
     if (!c->zoomed) {
       c->unzoom[0] = x(); c->unzoom[1] = y(); c->unzoom[2] = w(); c->unzoom[3] = h();
-      // zoom zostawia widoczne ikony biurka (LisaOS HD, dyski, kosz, ikony okien)
+      // zoom zostawia widoczne ikony biurka (Nirvana HD, dyski, kosz, ikony okien)
       // i dok - obszar podaje Rambler; bez Ramblera: obszar roboczy
       Rect wa = work_area();
       Rect to = {wa.x + 4, wa.y + 4, wa.w - 8, wa.h - 8};
@@ -413,19 +413,19 @@ static Client *most_recent_visible(Client *except) {
   return best;
 }
 
-// _LISAOS_IKONY na oknie głównym: zikonizowane okna (kolejność ikonizowania).
+// _NIRVANA_IKONY na oknie głównym: zikonizowane okna (kolejność ikonizowania).
 // Rambler rysuje z niej ikony okien na biurku; dwuklik = _NET_ACTIVE_WINDOW.
 static std::vector<Window> g_iconic;
 static void publish_iconic() {
-  XChangeProperty(dpy, DefaultRootWindow(dpy), XInternAtom(dpy, "_LISAOS_IKONY", False), XA_WINDOW, 32,
+  XChangeProperty(dpy, DefaultRootWindow(dpy), XInternAtom(dpy, "_NIRVANA_IKONY", False), XA_WINDOW, 32,
                   PropModeReplace, (unsigned char *)g_iconic.data(), (int)g_iconic.size());
 }
 static void set_iconic(Client *c, bool on) {
   if (c->iconic == on) return;
   c->iconic = on;
-  // znacznik na samym oknie: po Resetuj LISA nowy Insight wie, które ukryte
+  // znacznik na samym oknie: po Resetuj Nirvanę nowy Insight wie, które ukryte
   // okna były ikonami, a które tylko "Ukryj"
-  Atom mark = XInternAtom(dpy, "_LISAOS_IKONA", False);
+  Atom mark = XInternAtom(dpy, "_NIRVANA_IKONA", False);
   long one = 1;
   if (on) XChangeProperty(dpy, c->win, mark, XA_CARDINAL, 32, PropModeReplace, (unsigned char *)&one, 1);
   else XDeleteProperty(dpy, c->win, mark);
@@ -506,10 +506,10 @@ static void manage(Window w, bool existing) {
   c->title = get_title(w);
   std::string cls = get_class(w);
   c->cls = cls;
-  c->own_anim = cls.rfind("LisaOS-", 0) == 0;
+  c->own_anim = cls.rfind("Nirvana-", 0) == 0;
   Window tf = 0;
   c->dialog = (XGetTransientForHint(dpy, w, &tf) && tf) ||
-              has_atom(w, A_NET_WM_TYPE, A_NET_WM_TYPE_DIALOG) || cls == "LisaOS-Dialog";
+              has_atom(w, A_NET_WM_TYPE, A_NET_WM_TYPE_DIALOG) || cls == "Nirvana-Dialog";
 
   int x = un(wa.x), y = un(wa.y);
   // StaticGravity (FLTK, wiele innych programów): podana pozycja dotyczy samego
@@ -542,7 +542,7 @@ static void manage(Window w, bool existing) {
   // nowe okno "wylatuje" ze środka miejsca, w którym się pojawi
   if (!existing && !c->own_anim) zoom_rects(center_of({x, y, fw, fh}), {x, y, fw, fh});
   c->frame = new Frame(c, x, y, fw, fh);
-  c->frame->xclass("LisaOS-Frame");
+  c->frame->xclass("Nirvana-Frame");
   c->frame->show();
   Window fx = fl_xid(c->frame);
   // FLTK oznacza swoje okna jako cele XDND. Ramka nim nie jest - inaczej pliki
@@ -735,7 +735,7 @@ static int x_handler(void *event, void *) {
     return 0;
 
   case PropertyNotify:
-    if (e->xproperty.window == root && e->xproperty.atom == A_LISAOS_DOK) {
+    if (e->xproperty.window == root && e->xproperty.atom == A_NIRVANA_DOK) {
       read_dock_height();
       publish_workarea();
       return 0;
@@ -778,8 +778,8 @@ static int x_handler(void *event, void *) {
     return 0;
 
   case ClientMessage:
-    if (e->xclient.window == root && e->xclient.message_type == XInternAtom(dpy, "_LISAOS_RESTART", False)) {
-      // Narzędzia > Resetuj LISA: uruchom się od nowa. Okna klientów są w "save set",
+    if (e->xclient.window == root && e->xclient.message_type == XInternAtom(dpy, "_NIRVANA_RESTART", False)) {
+      // Narzędzia > Resetuj Nirvanę: uruchom się od nowa. Okna klientów są w "save set",
       // więc po zamknięciu połączenia wracają do okna głównego, a nowy Insight
       // przejmuje je przy starcie (XQueryTree).
       char exe[4096];
@@ -824,9 +824,9 @@ static int x_handler(void *event, void *) {
       // ICCCM: aplikacja (lub przełącznik) prosi o ukrycie okna
       if (Client *c = client_of(e->xclient.window))
         if (e->xclient.data.l[0] == IconicState) {
-          // "Ukryj" z menu aplikacji (gary) oznacza okno _LISAOS_UKRYJ - bez ikony
+          // "Ukryj" z menu aplikacji (gary) oznacza okno _NIRVANA_UKRYJ - bez ikony
           // na biurku; minimalizacja z samego programu tworzy ikonę.
-          Atom mark = XInternAtom(dpy, "_LISAOS_UKRYJ", False);
+          Atom mark = XInternAtom(dpy, "_NIRVANA_UKRYJ", False);
           Atom type; int fmt; unsigned long n, after; unsigned char *data = nullptr;
           bool plain = XGetWindowProperty(dpy, c->win, mark, 0, 1, True, AnyPropertyType, &type, &fmt, &n, &after,
                                           &data) == Success && type != None;
@@ -849,7 +849,7 @@ int main(int argc, char **argv) {
   g_argv = argv;
   for (int i = 1; i < argc; i++)
     if (!strcmp(argv[i], "--help")) {
-      printf("lisaos-insight: menedżer okien LisaOS (X11)\n");
+      printf("nirvana-insight: menedżer okien Nirvana Desktop (X11)\n");
       return 0;
     }
 
@@ -894,7 +894,7 @@ int main(int argc, char **argv) {
   A_NET_WORKAREA = XInternAtom(dpy, "_NET_WORKAREA", False);
   A_NET_FRAME_EXTENTS = XInternAtom(dpy, "_NET_FRAME_EXTENTS", False);
   A_NET_REQUEST_FRAME_EXTENTS = XInternAtom(dpy, "_NET_REQUEST_FRAME_EXTENTS", False);
-  A_LISAOS_DOK = XInternAtom(dpy, "_LISAOS_DOK", False);
+  A_NIRVANA_DOK = XInternAtom(dpy, "_NIRVANA_DOK", False);
   A_WM_CHANGE_STATE = XInternAtom(dpy, "WM_CHANGE_STATE", False);
 
   // Minimalne EWMH: kto jest menedżerem okien i co obsługuje.
@@ -925,7 +925,7 @@ int main(int argc, char **argv) {
       XGrabKey(dpy, tab, Mod1Mask | shift | extra, root, True, GrabModeAsync, GrabModeAsync);
 
   // Przejmij okna, które już istnieją.
-  // Okna zikonizowane (WM_STATE = Iconic, np. po Resetuj LISA) wracają jako ikony.
+  // Okna zikonizowane (WM_STATE = Iconic, np. po Resetuj Nirvanę) wracają jako ikony.
   publish_iconic();   // pusta lista - stara mogła zostać po poprzednim Insighcie
   Window r, p, *kids = nullptr;
   unsigned n = 0;
@@ -935,14 +935,14 @@ int main(int argc, char **argv) {
       XWindowAttributes wa;
       if (!XGetWindowAttributes(dpy, kids[i], &wa) || wa.override_redirect || kids[i] == check) continue;
       // serwer X mapuje okna z "save set" po wyjściu starego Insighta, więc stan
-      // ukrycia bierzemy z WM_STATE, a ikonę z naszego znacznika _LISAOS_IKONA
+      // ukrycia bierzemy z WM_STATE, a ikonę z naszego znacznika _NIRVANA_IKONA
       bool iconic = false, icon = false;
       Atom type; int fmt; unsigned long cnt, after; unsigned char *data = nullptr;
       if (XGetWindowProperty(dpy, kids[i], A_WM_STATE, 0, 2, False, A_WM_STATE, &type, &fmt, &cnt, &after,
                              &data) == Success && data && cnt >= 1)
         iconic = ((long *)data)[0] == IconicState;
       if (data) { XFree(data); data = nullptr; }
-      if (iconic && XGetWindowProperty(dpy, kids[i], XInternAtom(dpy, "_LISAOS_IKONA", False), 0, 1, False,
+      if (iconic && XGetWindowProperty(dpy, kids[i], XInternAtom(dpy, "_NIRVANA_IKONA", False), 0, 1, False,
                                        AnyPropertyType, &type, &fmt, &cnt, &after, &data) == Success)
         icon = type != None;
       if (data) XFree(data);

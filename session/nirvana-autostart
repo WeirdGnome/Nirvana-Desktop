@@ -1,19 +1,19 @@
 #!/bin/sh
-# LisaOS - autostart sesji wg XDG Autostart Specification
+# Nirvana Desktop - autostart sesji wg XDG Autostart Specification
 #
 # Uruchamia pliki .desktop z ~/.config/autostart i katalogów $XDG_CONFIG_DIRS
 # (domyślnie /etc/xdg/autostart). Plik użytkownika o tej samej nazwie zastępuje
 # systemowy (Hidden=true wyłącza wpis). Respektuje OnlyShowIn/NotShowIn
-# (nazwa pulpitu: LisaOS) i TryExec. Kody %f %u %U... są pomijane.
-# nm-applet jest pomijany (LisaOS ma menu sieci; LISAOS_NM_APPLET=1 go włącza).
+# (nazwa pulpitu: Nirvana) i TryExec. Kody %f %u %U... są pomijane.
+# nm-applet jest pomijany (Nirvana Desktop ma menu sieci; NIRVANA_NM_APPLET=1 go włącza).
 # Na końcu, gdy żaden autostart nie dał agenta polkit, uruchamia pierwszego
 # znalezionego - bez niego montowanie dysków i tryb root nie zapytają o hasło.
 #
-#   lisaos-autostart [-n]      -n: tylko wypisz, co zostałoby uruchomione
+#   nirvana-autostart [-n]      -n: tylko wypisz, co zostałoby uruchomione
 
 DRY=
 [ "$1" = "-n" ] && DRY=1
-DESK="${XDG_CURRENT_DESKTOP:-LisaOS}"
+DESK="${XDG_CURRENT_DESKTOP:-Nirvana}"
 SEEN=" "
 
 dirs="${XDG_CONFIG_HOME:-$HOME/.config}/autostart"
@@ -49,8 +49,8 @@ for d in $dirs; do
     name=$(basename "$f")
     case "$SEEN" in *" $name "*) continue ;; esac   # pierwszy wygrywa (użytkownik)
     SEEN="$SEEN$name "
-    # LisaOS ma własne menu sieci na pasku - aplet NetworkManagera byłby drugim
-    [ "$name" = "nm-applet.desktop" ] && [ -z "$LISAOS_NM_APPLET" ] && continue
+    # Nirvana Desktop ma własne menu sieci na pasku - aplet NetworkManagera byłby drugim
+    [ "$name" = "nm-applet.desktop" ] && [ -z "$NIRVANA_NM_APPLET" ] && continue
     [ "$(key "$f" Hidden)" = "true" ] && continue
     [ "$(key "$f" Type)" = "Application" ] || [ -z "$(key "$f" Type)" ] || continue
     only=$(key "$f" OnlyShowIn); not=$(key "$f" NotShowIn)

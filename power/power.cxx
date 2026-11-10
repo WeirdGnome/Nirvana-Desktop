@@ -1,4 +1,4 @@
-// LisaOS - zasilanie: implementacja
+// Nirvana Desktop - zasilanie: implementacja
 #include "power.h"
 #include "i18n.h"
 
@@ -50,11 +50,11 @@ static std::vector<std::string> list_dir(const std::string &d) {
   return v;
 }
 static std::string supply_dir() {
-  const char *e = getenv("LISAOS_POWER_SUPPLY");   // do testów: atrapa /sys/class/power_supply
+  const char *e = getenv("NIRVANA_POWER_SUPPLY");   // do testów: atrapa /sys/class/power_supply
   return e && *e ? e : "/sys/class/power_supply";
 }
 static std::string backlight_dir() {
-  const char *e = getenv("LISAOS_BACKLIGHT");
+  const char *e = getenv("NIRVANA_BACKLIGHT");
   return e && *e ? e : "/sys/class/backlight";
 }
 static int run(const std::vector<std::string> &args, std::string *out = nullptr) {
@@ -303,7 +303,7 @@ bool set_brightness(const State &s, int pct) {
   if (max <= 0) return false;
   pct = std::clamp(pct, 1, 100);   // 0 wyłączałby podświetlenie zupełnie
   unsigned v = (unsigned)std::max(1L, std::lround(max * pct / 100.0));
-  if (getenv("LISAOS_BACKLIGHT")) {   // atrapa: zapis prosto do pliku
+  if (getenv("NIRVANA_BACKLIGHT")) {   // atrapa: zapis prosto do pliku
     std::ofstream(d + "/brightness") << v << "\n";
     return true;
   }
@@ -331,7 +331,7 @@ std::string poweroff() { return login_action("PowerOff"); }
 std::string reboot() { return login_action("Reboot"); }
 
 std::string locker() {
-  if (const char *e = getenv("LISAOS_LOCKER")) return e;
+  if (const char *e = getenv("NIRVANA_LOCKER")) return e;
   if (have("xsecurelock")) return "xsecurelock";
   if (have("i3lock")) return "i3lock -c 5E6FA8";
   if (have("slock")) return "slock";
@@ -384,7 +384,7 @@ std::vector<std::string> set_projection(bool on) {
     // 2. logind/elogind: bezczynność i usypianie
     if (DBusConnection *c = bus(DBUS_BUS_SYSTEM)) {
       DBusMessage *m = dbus_message_new_method_call(LOGIN, LOGIN_PATH, LOGIN_MGR, "Inhibit");
-      const char *what = "idle:sleep", *who = "LisaOS", *why = "Tryb projekcji", *mode = "block";
+      const char *what = "idle:sleep", *who = "Nirvana Desktop", *why = "Tryb projekcji", *mode = "block";
       dbus_message_append_args(m, DBUS_TYPE_STRING, &what, DBUS_TYPE_STRING, &who, DBUS_TYPE_STRING, &why,
                                DBUS_TYPE_STRING, &mode, DBUS_TYPE_INVALID);
       if (DBusMessage *r = call(c, m)) {
@@ -400,7 +400,7 @@ std::vector<std::string> set_projection(bool on) {
     if (DBusConnection *c = bus(DBUS_BUS_SESSION)) {
       DBusMessage *m = dbus_message_new_method_call("org.gnome.SessionManager", "/org/gnome/SessionManager",
                                                     "org.gnome.SessionManager", "Inhibit");
-      const char *app = "lisaos", *why = "Tryb projekcji";
+      const char *app = "nirvana", *why = "Tryb projekcji";
       dbus_uint32_t xid = 0, flags = 4 | 8;   // usypianie | bezczynność
       dbus_message_append_args(m, DBUS_TYPE_STRING, &app, DBUS_TYPE_UINT32, &xid, DBUS_TYPE_STRING, &why,
                                DBUS_TYPE_UINT32, &flags, DBUS_TYPE_INVALID);
@@ -450,7 +450,7 @@ std::vector<std::string> set_projection(bool on) {
 static std::string idle_file() {
   const char *x = getenv("XDG_CONFIG_HOME");
   const char *h = getenv("HOME");
-  return (x && *x ? std::string(x) : std::string(h ? h : "/") + "/.config") + "/lisaos/zasilanie.conf";
+  return (x && *x ? std::string(x) : std::string(h ? h : "/") + "/.config") + "/nirvana/zasilanie.conf";
 }
 
 IdleSettings read_idle() {
@@ -477,7 +477,7 @@ bool write_idle(const IdleSettings &s) {
   mkdir(dir.substr(0, dir.rfind('/')).c_str(), 0755);
   mkdir(dir.c_str(), 0755);
   std::ofstream out(f);
-  out << "# LisaOS - zasilanie (minuty, 0 = nigdy)\n"
+  out << "# Nirvana Desktop - zasilanie (minuty, 0 = nigdy)\n"
       << "wygaszanie=" << s.blank_min << "\nblokada=" << (s.lock_on_blank ? 1 : 0)
       << "\nusypianie_bateria=" << s.sleep_battery_min << "\nusypianie_zasilacz=" << s.sleep_ac_min
       << "\nkrytyczna=" << s.critical_action << "\n";

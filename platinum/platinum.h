@@ -1,6 +1,6 @@
-// LisaOS - libplatinum
+// Nirvana Desktop - libplatinum
 // Wygląd "Platinum" (w duchu wytycznych Mac OS 8/9) dla FLTK 1.4.
-// Wszystkie komponenty LisaOS (insight, denise, gary, alice...) rysują
+// Wszystkie komponenty Nirvana Desktop (insight, denise, gary, alice...) rysują
 // przez tę bibliotekę, żeby całość wyglądała spójnie.
 #pragma once
 
@@ -54,7 +54,7 @@ struct Scheme {
   int light = -1, mid = -1, shadow = -1;       // -1: wylicz z koloru okna
 };
 
-struct Appearance {                 // ~/.config/lisaos/wyglad.conf
+struct Appearance {                 // ~/.config/nirvana/wyglad.conf
   std::string scheme = "platinum";
   int style = -1;                   // -1: jak w schemacie, inaczej (int)TitleStyle
   int desk = -1;                    // -1: kolor biurka ze schematu
@@ -71,7 +71,7 @@ struct Appearance {                 // ~/.config/lisaos/wyglad.conf
 
 // Skale do wyboru w panelu Wygląd (procenty); 0 = automatycznie
 extern const int SCALES[];
-// Skala z ustawień / LISAOS_SKALA / Xft.dpi - ustawiana w init() dla wszystkich ekranów.
+// Skala z ustawień / NIRVANA_SKALA / Xft.dpi - ustawiana w init() dla wszystkich ekranów.
 float configured_scale(const Appearance &a);
 
 std::vector<std::string> scheme_dirs();                      // kolejność wyszukiwania
@@ -96,8 +96,8 @@ extern const char *const WALLPAPER_MODES[];        // wypelnij, dopasuj, rozciag
 extern const char *const WALLPAPER_MODE_NAMES[];   // nazwy do wyświetlenia
 bool is_image_file(const std::string &path);
 bool image_loadable(const std::string &path);       // czy FLTK potrafi otworzyć ten obraz
-std::vector<std::string> wallpaper_dirs();          // tapety LisaOS (share/lisaos/tapety)
-std::vector<std::string> wallpaper_candidates();    // LisaOS, systemowe, ~/Obrazy
+std::vector<std::string> wallpaper_dirs();          // tapety Nirvana Desktop (share/nirvana/tapety)
+std::vector<std::string> wallpaper_candidates();    // Nirvana Desktop, systemowe, ~/Obrazy
 std::string wallpaper_title(const std::string &path);   // "Góry" z ".../Góry.jpg"
 // Biurko W x H: wzór w kolorach schematu, na nim tapeta (jeśli jest i da się wczytać).
 // *loaded = false, gdy tapety nie udało się otworzyć.
@@ -115,10 +115,10 @@ extern const char *const PATTERN_NAMES[];   // nazwy do wyświetlenia
 // Wywołujący zwalnia obraz (delete).
 unsigned char *pattern_tile(const std::string &pattern, int &w, int &h);   // RGB w*h*3, zwolnij delete[]
 
-// Powiadomienia o zmianie wyglądu: panel ustawia właściwość _LISAOS_WYGLAD
+// Powiadomienia o zmianie wyglądu: panel ustawia właściwość _NIRVANA_WYGLAD
 // na oknie głównym X, a Rambler i Insight po jej zmianie wołają
 // reload_appearance() i odświeżają okna.
-constexpr const char *APPEARANCE_ATOM = "_LISAOS_WYGLAD";
+constexpr const char *APPEARANCE_ATOM = "_NIRVANA_WYGLAD";
 void notify_appearance_changed();
 
 // ---- Typy ramek (Fl_Boxtype) ----------------------------------------------
@@ -137,7 +137,7 @@ extern Fl_Font FONT_SMALL;      // etykiety ikon (odpowiednik Geneva 9/10)
 constexpr int SIZE_SYSTEM = 12;
 constexpr int SIZE_SMALL  = 11;
 
-// Inicjalizacja: box types, czcionki, wygląd z ~/.config/lisaos/wyglad.conf.
+// Inicjalizacja: box types, czcionki, wygląd z ~/.config/nirvana/wyglad.conf.
 // root=true włącza akcent trybu administratora.
 void init(bool root = false);
 bool root_mode();
@@ -163,7 +163,7 @@ void draw_plug(int x, int y, Fl_Color c);                        // 14x13
 void draw_sun(int x, int y, Fl_Color c, double scale = 1);       // 13x13
 void draw_display(int x, int y, Fl_Color c);
 // Gadżet głębi z Amigi (Workbench): tylny prostokąt i nachodzący na niego przedni.
-void draw_depth_gadget(int x, int y, bool pressed);              // 18x14                     // 11x10 - monitor (tryb projekcji)   // logo LisaOS: mały chip w stylu Amigi
+void draw_depth_gadget(int x, int y, bool pressed);              // 18x14
 
 // ---- Chrome okna -------------------------------------------------------------
 constexpr int TITLE_H = 20;   // wysokość paska tytułu

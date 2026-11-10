@@ -1,4 +1,4 @@
-// LisaOS - sieć: Wi-Fi, Ethernet i inne połączenia przez NetworkManager
+// Nirvana Desktop - sieć: Wi-Fi, Ethernet i inne połączenia przez NetworkManager
 //
 // Odczyty idą przez nmcli w trybie "terse" (LC_ALL=C, żeby stany nie były
 // tłumaczone), długie operacje (łączenie, skanowanie) w tle przez Fl::add_fd,

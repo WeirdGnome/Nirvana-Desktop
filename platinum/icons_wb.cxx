@@ -1,4 +1,4 @@
-// LisaOS - libplatinum: ikony w stylu Workbencha (Amiga)
+// Nirvana Desktop - libplatinum: ikony w stylu Workbencha (Amiga)
 //
 // Własne rysunki 32x32 w duchu ikon Workbencha 2/3 i MagicWB: paleta szarości,
 // granatu i beżu, czarne obrysy, jasne krawędzie od lewej i u góry. Foldery to
@@ -153,7 +153,7 @@ static void hard_disk(int x, int y, bool home) {
   fl_end_loop();
   // przód
   raised(x + 2, y + 14, 26, 13, G);
-  r(x + 5, y + 18, home ? 9 : 7, 5, home ? B : D);   // tabliczka (LisaOS HD - granatowa)
+  r(x + 5, y + 18, home ? 9 : 7, 5, home ? B : D);   // tabliczka (Nirvana HD - granatowa)
   if (home) { c(W); fl_xyline(x + 6, y + 20, x + 12); }
   c(K); for (int i = 0; i < 4; i++) fl_yxline(x + 16 + i * 2, y + 18, y + 22);   // kratka wentylacji
   r(x + 24, y + 22, 2, 2, R);                       // dioda

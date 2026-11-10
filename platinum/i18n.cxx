@@ -1,4 +1,4 @@
-// LisaOS - tłumaczenia (patrz i18n.h)
+// Nirvana Desktop - tłumaczenia (patrz i18n.h)
 #include "i18n.h"
 
 #include <algorithm>
@@ -18,7 +18,7 @@ namespace fs = std::filesystem;
 
 namespace plat {
 
-static const char *DOMAIN = "lisaos";
+static const char *DOMAIN = "nirvana";
 static bool g_active = false;          // czy tłumaczymy (false = teksty polskie z kodu)
 static std::string g_lang = "pl";
 
@@ -79,11 +79,43 @@ static size_t plural_index(unsigned long n) {
   return n != 1;
 }
 
+void migrate_old_config() {
+  static bool done = false;
+  if (done) return;
+  done = true;
+  const char *h = getenv("HOME");
+  std::string home = h ? h : "/";
+  auto base = [&](const char *var, const char *def) {
+    const char *x = getenv(var);
+    return x && *x ? std::string(x) : home + def;
+  };
+  std::error_code ec;
+  for (const std::string &b : {base("XDG_CONFIG_HOME", "/.config"), base("XDG_DATA_HOME", "/.local/share"),
+                               base("XDG_CACHE_HOME", "/.cache")}) {
+    fs::path oldp = fs::path(b) / "lisaos", newp = fs::path(b) / "nirvana";
+    if (fs::is_directory(oldp, ec) && !fs::exists(newp, ec)) fs::rename(oldp, newp, ec);
+  }
+  // tapeta z pakietu: /usr/share/lisaos/tapety/Lisa Desktop.jpg -> nirvana/.../Nirvana Desktop.jpg
+  fs::path conf = fs::path(base("XDG_CONFIG_HOME", "/.config")) / "nirvana" / "wyglad.conf";
+  std::ifstream in(conf);
+  if (!in) return;
+  std::string text((std::istreambuf_iterator<char>(in)), std::istreambuf_iterator<char>()), out;
+  in.close();
+  out = text;
+  auto repl = [&](const std::string &a, const std::string &b) {
+    for (size_t p = 0; (p = out.find(a, p)) != std::string::npos; p += b.size()) out.replace(p, a.size(), b);
+  };
+  repl("/share/lisaos/", "/share/nirvana/");
+  repl("/lisaos/tapety/", "/nirvana/tapety/");
+  repl("Lisa Desktop.jpg", "Nirvana Desktop.jpg");
+  if (out != text) std::ofstream(conf) << out;
+}
+
 static std::string config_file() {
   const char *x = getenv("XDG_CONFIG_HOME");
   const char *h = getenv("HOME");
   std::string dir = x && *x ? x : std::string(h ? h : "/") + "/.config";
-  return dir + "/lisaos/jezyk";
+  return dir + "/nirvana/jezyk";
 }
 
 std::string language_setting() {
@@ -105,15 +137,15 @@ bool set_language_setting(const std::string &lang) {
 // Katalogi z plikami .mo: obok programu w build/ albo w prefiksie instalacji.
 static std::vector<std::string> locale_dirs() {
   std::vector<std::string> d;
-  if (const char *e = getenv("LISAOS_LOCALEDIR")) d.push_back(e);
+  if (const char *e = getenv("NIRVANA_LOCALEDIR")) d.push_back(e);
   std::error_code ec;
   fs::path exe = fs::read_symlink("/proc/self/exe", ec);
   if (!ec) {
     d.push_back((exe.parent_path() / "locale").string());                   // build/locale
-    d.push_back((exe.parent_path() / "../share/lisaos/locale").string());   // prefiks/share/lisaos/locale
+    d.push_back((exe.parent_path() / "../share/nirvana/locale").string());   // prefiks/share/nirvana/locale
     d.push_back((exe.parent_path() / "../share/locale").string());          // starsze instalacje
   }
-  d.push_back("/usr/share/lisaos/locale");
+  d.push_back("/usr/share/nirvana/locale");
   d.push_back("/usr/local/share/locale");
   d.push_back("/usr/share/locale");
   return d;
@@ -150,6 +182,7 @@ void init_i18n() {
   static bool done = false;
   if (done) return;
   done = true;
+  migrate_old_config();
   std::string want = language_setting();
   if (want.empty() || want == "auto") {
     want = system_language();

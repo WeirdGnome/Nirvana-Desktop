@@ -1,4 +1,4 @@
-// LisaOS - tłumaczenia (gettext, domena "lisaos")
+// Nirvana Desktop - tłumaczenia (gettext, domena "nirvana")
 //
 // Teksty w kodzie są po polsku i to one są kluczami tłumaczeń (msgid);
 // inne języki przychodzą z plików po/<język>.po (np. po/en.po).
@@ -10,7 +10,7 @@
 //   P_("Okno/Nowy folder")        ścieżka menu - tr_path() tłumaczy człony
 //   fmt(_("Usunąć „%1”?"), nazwa) szablon z %1..%9 - tłumacz może zmienić szyk zdania
 //
-// Język: ~/.config/lisaos/jezyk ("pl", "en" albo pusty = jak w systemie).
+// Język: ~/.config/nirvana/jezyk ("pl", "en" albo pusty = jak w systemie).
 // Przy systemie w innym języku niż polski i bez tłumaczenia - angielski.
 #pragma once
 
@@ -19,6 +19,10 @@
 
 namespace plat {
 
+// Przeniesienie ustawień i danych po zmianie nazwy LisaOS -> Nirvana Desktop:
+// ~/.config/lisaos, ~/.local/share/lisaos (aplikacje, tapety), ~/.cache/lisaos
+// -> .../nirvana. Raz, przy pierwszym starcie; woła ją init_i18n().
+void migrate_old_config();
 void init_i18n();                       // woła plat::init(); można też samodzielnie (Insight)
 const char *tr(const char *msgid);
 std::string trp(long n, const char *one, const char *few, const char *many);

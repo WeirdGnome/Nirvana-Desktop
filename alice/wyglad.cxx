@@ -1,8 +1,8 @@
-// LisaOS - alice: panel "Wygląd".
+// Nirvana Desktop - alice: panel "Wygląd".
 // Schemat kolorów, styl paska tytułu, tło biurka (wzór, kolor albo
 // gradient), tapeta, styl ikon, animacje okien. Zmiany widać od razu w samym panelu
-// (podgląd na żywo); "Zastosuj" zapisuje ~/.config/lisaos/wyglad.conf i
-// ustawia właściwość _LISAOS_WYGLAD na oknie głównym X - Rambler i Insight
+// (podgląd na żywo); "Zastosuj" zapisuje ~/.config/nirvana/wyglad.conf i
+// ustawia właściwość _NIRVANA_WYGLAD na oknie głównym X - Rambler i Insight
 // przeładowują wtedy paletę bez restartu.
 #include "platinum.h"
 
@@ -86,8 +86,8 @@ public:
     draw_logo(x() + 8, y() + 2, 16);
     fl_font(FONT_SYSTEM, SIZE_SYSTEM);
     fl_color(TEXT);
-    fl_draw("Lisa", x() + 27, y() + 14);
-    int mx = x() + 34 + (int)fl_width("Lisa");
+    fl_draw("Nirvana", x() + 27, y() + 14);
+    int mx = x() + 34 + (int)fl_width("Nirvana");
     const char *menus[] = {_("Okno"), _("Ikony"), _("Narzędzia")};
     for (int i = 0; i < 3; i++) {
       int mw = (int)fl_width(menus[i]) + 14;
@@ -102,11 +102,11 @@ public:
     draw_window(bx, by, bw, bh, _("Dokumenty"), false);
     // okno na wierzchu (aktywne)
     int fx = x() + 104, fy = y() + 70, fw = w() - 118, fh = h() - 82;
-    draw_window(fx, fy, fw, fh, "LisaOS HD", true);
+    draw_window(fx, fy, fw, fh, "Nirvana HD", true);
 
     // ikony dysku i kosza na biurku
     fl_font(FONT_SMALL, SIZE_SMALL);
-    label_icon(Icon::Home, x() + 30, y() + h() - 58, "LisaOS HD", false);
+    label_icon(Icon::Home, x() + 30, y() + h() - 58, "Nirvana HD", false);
     fl_pop_clip();
   }
 
@@ -197,7 +197,7 @@ static void fill_list() {
   std::string group;
   for (int i = 0; i < (int)g_schemes.size(); i++) {
     const Scheme &s = g_schemes[i];
-    std::string gname = s.id.find('/') == std::string::npos ? "LisaOS" : s.source.empty() ? s.id.substr(0, s.id.find('/')) : s.source;
+    std::string gname = s.id.find('/') == std::string::npos ? "Nirvana Desktop" : s.source.empty() ? s.id.substr(0, s.id.find('/')) : s.source;
     if (gname != group) {
       group = gname;
       g_list->add(("@b@." + gname).c_str(), (void *)(long)-1);
@@ -231,7 +231,7 @@ int panel_wyglad() {
 
   const int W = 600, H = 558;
   g_win = new FrameWindow(W, H, _("Wygląd"));
-  g_win->xclass("lisaos-alice");
+  g_win->xclass("nirvana-alice");
 
   auto *t1 = new Fl_Box(15, 8, 220, 20, _("Schemat kolorów"));
   t1->labelfont(FONT_SYSTEM); t1->labelsize(SIZE_SYSTEM);
@@ -307,7 +307,7 @@ int panel_wyglad() {
   }
   g_grad->callback([](Fl_Widget *, void *) { g_cur.gradient = GRADIENTS[g_grad->value()]; preview(); });
 
-  // tapeta: gotowe obrazy (LisaOS, systemowe, ~/Obrazy) albo dowolny plik
+  // tapeta: gotowe obrazy (Nirvana Desktop, systemowe, ~/Obrazy) albo dowolny plik
   g_wall = new Fl_Choice(400, 370, 185, 22, _("Tapeta:"));
   g_walls.clear();
   g_walls.push_back("");
@@ -382,8 +382,8 @@ int panel_wyglad() {
     preview();
   });
 
-  // Skala interfejsu: wszystkie programy LisaOS naraz; biurko i menedżer okien
-  // uruchamiają się przy zmianie od nowa (jak Narzędzia > Resetuj LISA).
+  // Skala interfejsu: wszystkie programy Nirvana Desktop naraz; biurko i menedżer okien
+  // uruchamiają się przy zmianie od nowa (jak Narzędzia > Resetuj Nirvanę).
   g_scale = new Fl_Choice(400, 456, 185, 22, _("Skala interfejsu:"));
   for (int i = 0; SCALES[i] >= 0; i++) {
     if (SCALES[i] == 0) {
@@ -425,7 +425,7 @@ int panel_wyglad() {
 
   fill_list();
   preview();
-  // Na środku obszaru roboczego (pod paskiem menu LisaOS albo GNOME).
+  // Na środku obszaru roboczego (pod paskiem menu Nirvana Desktop albo GNOME).
   int sx, sy, sw, sh;
   Fl::screen_work_area(sx, sy, sw, sh);
   g_win->place(sx + (sw - W) / 2, sy + std::max(MENUBAR_H + 10 + g_win->oy(), (sh - H) / 3));

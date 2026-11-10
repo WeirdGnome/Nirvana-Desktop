@@ -1,4 +1,4 @@
-// LisaOS - libplatinum: okno z własną ramką Platinum
+// Nirvana Desktop - libplatinum: okno z własną ramką Platinum
 #include "framewin.h"
 #include "anim.h"
 #include "platinum.h"
@@ -77,7 +77,7 @@ bool FrameWindow::wm_is_insight() {
 
 FrameWindow::FrameWindow(int W, int H, const char *title, bool dialog)
     : Fl_Double_Window(W, H, title), dialog_(dialog) {
-  const char *e = getenv("LISAOS_CSD");
+  const char *e = getenv("NIRVANA_CSD");
   csd_ = e ? !strcmp(e, "1") : !wm_is_insight();
   if (csd_) border(0);   // bez obcych dekoracji - ramkę rysujemy sami
   full_h_ = H;
@@ -182,7 +182,7 @@ void FrameWindow::toggle_zoom() {
     unzoom_[0] = x(); unzoom_[1] = y(); unzoom_[2] = w(); unzoom_[3] = h();
     int sx, sy, sw, sh;
     Fl::screen_work_area(sx, sy, sw, sh, x() + w() / 2, y() + h() / 2);
-    // pasek menu LisaOS zajmuje górę ekranu, gdy nie ma go w obszarze roboczym
+    // pasek menu Nirvana Desktop zajmuje górę ekranu, gdy nie ma go w obszarze roboczym
     if (sy < MENUBAR_H) { sh -= MENUBAR_H - sy; sy = MENUBAR_H; }
     to = {sx + 2, sy + 2, sw - 4, sh - 4};
   } else {

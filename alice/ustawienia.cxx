@@ -1,4 +1,4 @@
-// LisaOS - alice: Preferencje (zbiór paneli sterowania)
+// Nirvana Desktop - alice: Preferencje (zbiór paneli sterowania)
 //
 // Okno z ikonami paneli, jak folder Control Panels w Mac OS albo szuflada
 // Prefs w Workbenchu. Dwuklik (albo klik) otwiera panel w osobnym oknie.
@@ -28,7 +28,7 @@ void open_panel(const char *name) {
       char exe[4096];
       ssize_t n = readlink("/proc/self/exe", exe, sizeof exe - 1);
       exe[n > 0 ? n : 0] = 0;
-      execl(exe, "lisaos-alice", name, (char *)nullptr);
+      execl(exe, "nirvana-alice", name, (char *)nullptr);
       _exit(127);
     }
     _exit(0);
@@ -77,7 +77,7 @@ public:
 int panel_ustawienia() {
   const int W = 340, H = 196;
   auto *win = new FrameWindow(W, H, _("Preferencje"));
-  win->xclass("lisaos-preferencje");
+  win->xclass("nirvana-preferencje");
   struct P { PanelIcon::Kind k; const char *label, *arg; } panels[] = {
       {PanelIcon::Appearance, _("Wygląd"), "wyglad"},
       {PanelIcon::Network, _("Sieć"), "siec"},
@@ -90,7 +90,7 @@ int panel_ustawienia() {
     x += 106;
   }
 
-  // Język interfejsu - zapisywany w ~/.config/lisaos/jezyk, działa po ponownym uruchomieniu
+  // Język interfejsu - zapisywany w ~/.config/nirvana/jezyk, działa po ponownym uruchomieniu
   static std::vector<std::string> codes;
   codes = {""};
   auto *lang = new Fl_Choice(110, 112, W - 124, 22, _("Język:"));
@@ -108,7 +108,7 @@ int panel_ustawienia() {
   auto *note = new Fl_Box(14, 140, W - 28, 44);
   note->labelsize(SIZE_SMALL);
   note->align(FL_ALIGN_INSIDE | FL_ALIGN_TOP_LEFT | FL_ALIGN_WRAP);
-  note->label(_("Nowy język zobaczysz po ponownym uruchomieniu LisaOS albo po Narzędzia > Resetuj LISA."));
+  note->label(_("Nowy język zobaczysz po ponownym uruchomieniu Nirvana Desktop albo po Narzędzia > Resetuj Nirvanę."));
   lang->callback([](Fl_Widget *w, void *) {
     int v = ((Fl_Choice *)w)->value();
     if (v >= 0 && v < (int)codes.size()) set_language_setting(codes[v]);

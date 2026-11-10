@@ -1,4 +1,4 @@
-// LisaOS - denise: obsługa AppImage
+// Nirvana Desktop - denise: obsługa AppImage
 #include "appimage.h"
 #include "i18n.h"
 
@@ -190,7 +190,7 @@ static bool extract(const std::string &path, uint64_t off, const std::string &de
 std::string icon(const std::string &path, const std::string &home) {
   std::string k = key(path);
   if (k.empty()) return "";
-  fs::path cache = fs::path(home) / ".cache/lisaos/ikony";
+  fs::path cache = fs::path(home) / ".cache/nirvana/ikony";
   std::error_code ec;
   for (auto ext : {".png", ".svg"})
     if (fs::exists(cache / (k + ext), ec)) return (cache / (k + ext)).string();
@@ -305,7 +305,7 @@ static Meta read_meta_file(const fs::path &f) {
 Meta meta(const std::string &path, const std::string &home) {
   std::string k = key(path);
   if (k.empty()) return {};
-  fs::path cache = fs::path(home) / ".cache/lisaos/ikony";
+  fs::path cache = fs::path(home) / ".cache/nirvana/ikony";
   fs::path mf = cache / (k + ".meta");
   std::error_code ec;
   if (fs::exists(mf, ec)) return read_meta_file(mf);
@@ -397,7 +397,7 @@ std::string category_folder(const std::string &path, const std::string &home) {
 std::string install_dir(const std::string &path, const std::string &home) {
   std::string name = display_name(fs::path(path).filename().string());
   for (char &c : name) if (c == '/' || c == ' ') c = '-';
-  return (fs::path(home) / ".local/share/lisaos/aplikacje" / (name + "-" + key(path).substr(0, 8))).string();
+  return (fs::path(home) / ".local/share/nirvana/aplikacje" / (name + "-" + key(path).substr(0, 8))).string();
 }
 
 bool is_installed(const std::string &path, const std::string &home) {
@@ -504,7 +504,7 @@ void launch(const std::string &path, const std::string &home, const std::vector<
       "--bind-try", "/tmp/.X11-unix", "/tmp/.X11-unix",
       // inni użytkownicy i nośniki są niewidoczne
       "--tmpfs", "/home", "--tmpfs", "/root", "--tmpfs", "/mnt", "--tmpfs", "/media",
-      // LisaOS HD - jedyne miejsce z prawem zapisu (plus nośniki użytkownika niżej)
+      // Nirvana HD - jedyne miejsce z prawem zapisu (plus nośniki użytkownika niżej)
       "--bind", home, home,
       // sama aplikacja nie może się modyfikować
       "--ro-bind", dir, dir,
@@ -530,7 +530,7 @@ void launch(const std::string &path, const std::string &home, const std::vector<
   a.insert(a.end(), {"--unshare-pid", "--unshare-ipc", "--unshare-uts", "--unshare-cgroup-try",
                      "--new-session",
                      "--setenv", "APPDIR", dir, "--setenv", "APPIMAGE", path,
-                     "--setenv", "ARGV0", path, "--setenv", "LISAOS_SANDBOX", "1",
+                     "--setenv", "ARGV0", path, "--setenv", "NIRVANA_SANDBOX", "1",
                      "--setenv", "HOME", home,
                      "--chdir", home, apprun});
   a.insert(a.end(), args.begin(), args.end());

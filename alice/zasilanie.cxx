@@ -1,9 +1,9 @@
-// LisaOS - alice: panel "Zasilanie"
+// Nirvana Desktop - alice: panel "Zasilanie"
 //
 // Wygaszanie i blokada ekranu, usypianie po bezczynności (osobno na baterii
 // i z zasilacza), reakcja na krytyczny poziom baterii. Ustawienia zapisuje
-// w ~/.config/lisaos/zasilanie.conf, a Rambler stosuje je od razu
-// (właściwość _LISAOS_ZASILANIE na oknie głównym X).
+// w ~/.config/nirvana/zasilanie.conf, a Rambler stosuje je od razu
+// (właściwość _NIRVANA_ZASILANIE na oknie głównym X).
 #include "framewin.h"
 #include "platinum.h"
 #include "power.h"
@@ -77,7 +77,7 @@ int panel_zasilanie() {
   power::State st = power::query();
   const int W = 500, H = 380;
   g_win = new FrameWindow(W, H, _("Zasilanie"));
-  g_win->xclass("lisaos-zasilanie");
+  g_win->xclass("nirvana-zasilanie");
   int y = 10;
   heading(15, y, _("Ekran"));
   y += 26;
@@ -115,7 +115,7 @@ int panel_zasilanie() {
 
   std::string info = _("Tryb projekcji (menu baterii na pasku menu) wstrzymuje wygaszanie, blokadę i usypianie.");
   if (!FrameWindow::wm_is_insight())
-    info += std::string(" ") + _("W sesji GNOME/KDE ekranem i usypianiem zarządza tamto środowisko - te ustawienia działają w sesji LisaOS.");
+    info += std::string(" ") + _("W sesji GNOME/KDE ekranem i usypianiem zarządza tamto środowisko - te ustawienia działają w sesji Nirvana Desktop.");
   note(15, y, W - 30, 44, info.c_str());
 
   auto button = [&](int X, const char *t) {

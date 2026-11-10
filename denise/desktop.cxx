@@ -1,4 +1,4 @@
-// LisaOS - denise: biurko, pasek menu i zarządzanie oknami menedżera plików
+// Nirvana Desktop - denise: biurko, pasek menu i zarządzanie oknami menedżera plików
 #include "desktop.h"
 #include "applets.h"
 #include "appimage.h"
@@ -52,7 +52,7 @@ static std::string self_exe() {
   std::error_code ec;
   return fs::read_symlink("/proc/self/exe", ec).string();
 }
-// program LisaOS obok lisaos-denise (build/ albo prefiks), inaczej z PATH
+// program Nirvana Desktop obok nirvana-denise (build/ albo prefiks), inaczej z PATH
 std::string rambler_exe(const char *name) {
   std::string exe = self_exe();
   std::string p = exe.substr(0, exe.rfind('/') + 1) + name;
@@ -183,13 +183,13 @@ private:
 
 // ---------------------------------------------------------------------------
 // Menu aplikacji "Rambler": lista otwartych folderów i operacje na oknach.
-// Docelowo (lisaos-gary) stanie się przełącznikiem aplikacji.
+// Docelowo (nirvana-gary) stanie się przełącznikiem aplikacji.
 // ---------------------------------------------------------------------------
 // Pasek menu, który przed otwarciem odświeża stan pozycji (aktywne/nieaktywne).
-class LisaMenuBar : public Fl_Menu_Bar {
+class NirvanaMenuBar : public Fl_Menu_Bar {
 public:
   std::function<void()> before_open;
-  LisaMenuBar(int X, int Y, int W, int H) : Fl_Menu_Bar(X, Y, W, H) {}
+  NirvanaMenuBar(int X, int Y, int W, int H) : Fl_Menu_Bar(X, Y, W, H) {}
   int handle(int e) override {
     if ((e == FL_PUSH || e == FL_SHORTCUT || e == FL_KEYBOARD) && before_open) before_open();
     return Fl_Menu_Bar::handle(e);
@@ -340,7 +340,7 @@ static Fl_Tiled_Image *make_pattern() {
 }
 
 static Fl_RGB_Image *make_logo_image();
-// Pierwsze menu: logo LisaOS i napis "Lisa" (po zmianie schematu logo dostaje nowe tło).
+// Pierwsze menu: logo Nirvana Desktop i napis "Nirvana" (po zmianie schematu logo dostaje nowe tło).
 void Desktop::set_logo() {
   if (!logo_item_) return;
   Fl_RGB_Image *prev = logo_img_;
@@ -349,7 +349,7 @@ void Desktop::set_logo() {
   static Fl_Multi_Label *ml = new Fl_Multi_Label;   // żyje tyle co pasek menu
   ml->labela = (const char *)logo_img_;
   ml->typea = _FL_IMAGE_LABEL;
-  ml->labelb = " Lisa";
+  ml->labelb = " Nirvana";
   ml->typeb = FL_NORMAL_LABEL;
   ml->label(logo_item_);
   delete prev;
@@ -367,7 +367,7 @@ static Fl_RGB_Image *make_logo_image() {
 
 // ---------------------------------------------------------------------------
 Desktop::Desktop(int W, int H, const std::string &home, bool root)
-    : Fl_Double_Window(0, 0, W, H, "LisaOS"),
+    : Fl_Double_Window(0, 0, W, H, "Nirvana Desktop"),
       home_(home), root_path_(root ? "/" : home), root_(root), spatial_(home) {
   fl_open_display();
   // Okna innych programów potrafią zniknąć, zanim odczytamy ich właściwości
@@ -386,8 +386,8 @@ Desktop::Desktop(int W, int H, const std::string &home, bool root)
   }
   detect_wm();
 
-  menu_ = new LisaMenuBar(0, 0, W, MENUBAR_H);
-  ((LisaMenuBar *)menu_)->before_open = [this] { update_menu(); };
+  menu_ = new NirvanaMenuBar(0, 0, W, MENUBAR_H);
+  ((NirvanaMenuBar *)menu_)->before_open = [this] { update_menu(); };
   menu_->box(MENUBAR_BOX);
   menu_->color(GRAY);
   menu_->textfont(FONT_SYSTEM);
@@ -399,11 +399,11 @@ Desktop::Desktop(int W, int H, const std::string &home, bool root)
   // metod trzymamy w statycznej tablicy, a w user_data podajemy indeks.
   struct Item { const char *path; int shortcut; void (Desktop::*m)(); int flags; };
   std::vector<Item> items = {
-    // --- Lisa: cały system ---
+    // --- Nirvana: cały system ---
     {P_("logo/O systemie…"), 0, &Desktop::about, FL_MENU_DIVIDER},
     {P_("logo/Preferencje…"), 0, &Desktop::open_preferences, 0},
     {P_("logo/Wykonaj polecenie…"), FL_COMMAND + 'e', &Desktop::execute_command, 0},
-    {P_("logo/Lisa Shell"), FL_COMMAND + 't', &Desktop::open_terminal, 0},
+    {P_("logo/Nirvana Shell"), FL_COMMAND + 't', &Desktop::open_terminal, 0},
     {P_("logo/Otwórz dziennik"), 0, &Desktop::open_log, FL_MENU_DIVIDER},
     {P_("logo/Przerysuj wszystko"), 0, &Desktop::redraw_all, 0},
     {P_("logo/Uaktualnij wszystko"), FL_COMMAND + FL_SHIFT + 'r', &Desktop::refresh_all, FL_MENU_DIVIDER},
@@ -446,7 +446,7 @@ Desktop::Desktop(int W, int H, const std::string &home, bool root)
     {P_("Narzędzia/Opróżnij kosz…"), 0, &Desktop::empty_trash, FL_MENU_DIVIDER},
     {root ? P_("Narzędzia/Zakończ tryb root") : P_("Narzędzia/Tryb root…"), 0,
      root ? &Desktop::quit : &Desktop::ask_root, FL_MENU_DIVIDER},
-    {P_("Narzędzia/Resetuj LISA"), 0, &Desktop::reset_lisa, 0},
+    {P_("Narzędzia/Resetuj Nirvanę"), 0, &Desktop::reset_nirvana, 0},
   };
   static std::vector<void (Desktop::*)()> methods;
   for (auto &it : items) {
@@ -504,7 +504,7 @@ Desktop::Desktop(int W, int H, const std::string &home, bool root)
   show_hidden_ = root_;
   {
     const char *x = getenv("XDG_CONFIG_HOME");
-    std::ifstream in((x && *x ? std::string(x) : home_ + "/.config") + "/lisaos/rambler.conf");
+    std::ifstream in((x && *x ? std::string(x) : home_ + "/.config") + "/nirvana/rambler.conf");
     std::string line;
     while (std::getline(in, line)) {
       if (line == "ukryte=1") show_hidden_ = true;
@@ -522,14 +522,14 @@ Desktop::Desktop(int W, int H, const std::string &home, bool root)
       dialog(t, x, bb);
     };
     h.logout = [this] {
-      if (!csd_mode) { quit(); return; }   // sesja LisaOS: koniec Ramblera kończy sesję
+      if (!csd_mode) { quit(); return; }   // sesja Nirvana Desktop: koniec Ramblera kończy sesję
       // obca sesja (GNOME itd.): poprośmy ją o wylogowanie
       spawn({"sh", "-c", "gnome-session-quit --logout --no-prompt 2>/dev/null || "
                          "loginctl terminate-session \"$XDG_SESSION_ID\""});
     };
     h.before_shutdown = [this] { for (auto *w : wins_) if (w->pane) remember(w, true); };
     h.open_power_panel = [this] { spawn({alice_exe(), "zasilanie"}); };
-    h.lisaos_session = !csd_mode;
+    h.nirvana_session = !csd_mode;
     applets::init(h);
   }
   tray_pending_ = true;   // zasobnik startuje po pokazaniu okna (potrzebne okno X do osadzania)
@@ -592,11 +592,11 @@ bool Desktop::trash_full() const {
   return fs::exists(trash_dir(), ec) && !fs::is_empty(trash_dir(), ec);
 }
 
-// Zikonizowane okna (_LISAOS_IKONY od Insighta), w kolejności ikonizowania.
+// Zikonizowane okna (_NIRVANA_IKONY od Insighta), w kolejności ikonizowania.
 static std::vector<Window> iconic_windows() {
   std::vector<Window> v;
   Atom type; int fmt; unsigned long n, after; unsigned char *data = nullptr;
-  if (XGetWindowProperty(fl_display, DefaultRootWindow(fl_display), XInternAtom(fl_display, "_LISAOS_IKONY", False),
+  if (XGetWindowProperty(fl_display, DefaultRootWindow(fl_display), XInternAtom(fl_display, "_NIRVANA_IKONY", False),
                          0, 1024, False, XA_WINDOW, &type, &fmt, &n, &after, &data) == Success && data)
     for (unsigned long i = 0; i < n; i++) v.push_back((Window)((unsigned long *)data)[i]);
   if (data) XFree(data);
@@ -622,7 +622,7 @@ static Fl_Image *iconic_image(Window w, const std::string &home) {
 
 void Desktop::layout_icons() {
   icons_.clear();
-  // Ikony biurka przy LEWEJ krawędzi, od góry: LisaOS HD, (System), dyski,
+  // Ikony biurka przy LEWEJ krawędzi, od góry: Nirvana HD, (System), dyski,
   // zikonizowane okna; Kosz na dole, nad dokiem. Gdy kolumna się zapełni,
   // następna stoi obok - okna folderów i zoom zostawiają wszystkie kolumny wolne.
   const int COL = 90, ROW = 70, top = MENUBAR_H + 14;
@@ -634,9 +634,9 @@ void Desktop::layout_icons() {
     icons_.push_back(d);
     iy += ROW;
   };
-  place({"LisaOS HD", home_, Icon::Home, 0, 0});
+  place({"Nirvana HD", home_, Icon::Home, 0, 0});
   if (root_) place({"System", "/", Icon::Home, 0, 0});
-  // dyski i płyty pod dyskiem LisaOS HD, jak w Mac OS
+  // dyski i płyty pod dyskiem Nirvana HD, jak w Mac OS
   for (int i = 0; i < (int)vols_.size(); i++) {
     DeskIcon d{vols_[i].name, vols_[i].mountpoint, vols_[i].icon, 0, 0};
     d.vol = i;
@@ -691,15 +691,15 @@ plat::Rect Desktop::folder_area() const {
 }
 
 // Insight (menedżer okien) bierze stąd prostokąt zoomu dla okien Ramblera:
-// _LISAOS_OBSZAR_OKIEN na oknie głównym = x, y, szer., wys. ramki na ekranie.
+// _NIRVANA_OBSZAR_OKIEN na oknie głównym = x, y, szer., wys. ramki na ekranie.
 void Desktop::publish_folder_area() {
   if (!shown() || !fl_display) return;
-  // _LISAOS_DOK: wysokość doku - Insight trzyma nad nim okna wszystkich programów
+  // _NIRVANA_DOK: wysokość doku - Insight trzyma nad nim okna wszystkich programów
   static long last_dock = -1;
   long dock = dock_.empty() ? 0 : DOCK_TILE;
   if (dock != last_dock) {
     last_dock = dock;
-    XChangeProperty(fl_display, DefaultRootWindow(fl_display), atom("_LISAOS_DOK"), XA_CARDINAL, 32,
+    XChangeProperty(fl_display, DefaultRootWindow(fl_display), atom("_NIRVANA_DOK"), XA_CARDINAL, 32,
                     PropModeReplace, (unsigned char *)&dock, 1);
   }
   Rect a = folder_area();
@@ -707,7 +707,7 @@ void Desktop::publish_folder_area() {
   static long last[4] = {-1, -1, -1, -1};
   if (!memcmp(v, last, sizeof v)) return;
   memcpy(last, v, sizeof v);
-  XChangeProperty(fl_display, DefaultRootWindow(fl_display), atom("_LISAOS_OBSZAR_OKIEN"), XA_CARDINAL, 32,
+  XChangeProperty(fl_display, DefaultRootWindow(fl_display), atom("_NIRVANA_OBSZAR_OKIEN"), XA_CARDINAL, 32,
                   PropModeReplace, (unsigned char *)v, 4);
 }
 
@@ -792,7 +792,7 @@ int Desktop::volume_at_path(const std::string &path) const {
 }
 
 std::string Desktop::title_for(const std::string &path) const {
-  if (path == home_) return "LisaOS HD";
+  if (path == home_) return "Nirvana HD";
   if (path == "/") return "System";
   if (path == trash_dir()) return _("Kosz");
   for (auto &v : vols_) if (!v.mountpoint.empty() && v.mountpoint == path) return v.name;
@@ -838,7 +838,7 @@ static int x_watch(void *event, void *) {
   XEvent *e = (XEvent *)event;
   if (e->type == PropertyNotify && e->xproperty.window == DefaultRootWindow(fl_display) && g_desk) {
     if (e->xproperty.atom == atom("_NET_ACTIVE_WINDOW")) g_desk->active_changed();
-    else if (e->xproperty.atom == atom("_LISAOS_IKONY")) g_desk->iconic_changed();
+    else if (e->xproperty.atom == atom("_NIRVANA_IKONY")) g_desk->iconic_changed();
     else if (e->xproperty.atom == atom("_NET_CLIENT_LIST")) g_desk->clients_changed();
     else if (e->xproperty.atom == atom(APPEARANCE_ATOM)) g_desk->appearance_changed();
   }
@@ -878,7 +878,7 @@ void Desktop::detect_wm() {
     }
   }
   csd_mode = name != "insight";
-  if (const char *e = getenv("LISAOS_CSD")) csd_mode = !strcmp(e, "1");   // do testów
+  if (const char *e = getenv("NIRVANA_CSD")) csd_mode = !strcmp(e, "1");   // do testów
 }
 
 void Desktop::redraw_frames() {
@@ -892,8 +892,8 @@ NWin::NWin(Desktop *d, int X, int Y, int W, int H, const char *title, bool dlg)
     : Fl_Double_Window(X, Y, W, H), desk(d), dialog(dlg), csd(d->csd_mode) {
   copy_label(title);
   if (csd) border(0);   // menedżer okien bez dekoracji - ramkę rysujemy sami
-  // Klasa "LisaOS-*" mówi Insightowi, że animacje otwierania robimy sami.
-  xclass(dlg ? "LisaOS-Dialog" : "LisaOS-Rambler");
+  // Klasa "Nirvana-*" mówi Insightowi, że animacje otwierania robimy sami.
+  xclass(dlg ? "Nirvana-Dialog" : "Nirvana-Rambler");
   callback([](Fl_Widget *w, void *) {
     auto *n = (NWin *)w;
     // Escape zamyka dialog, ale nie okno folderu (jak w Mac OS)
@@ -1216,7 +1216,7 @@ void Desktop::close(NWin *w) {
 void Desktop::open_folder(const std::string &path, bool animate) {
   if (!allowed(path)) {
     dialog(_("Brak dostępu"),
-           _("Ten folder znajduje się poza LisaOS HD.\nAby go otworzyć, przełącz się w tryb root."),
+           _("Ten folder znajduje się poza Nirvana HD.\nAby go otworzyć, przełącz się w tryb root."),
            {{"OK", nullptr}});
     return;
   }
@@ -1240,7 +1240,7 @@ void Desktop::open_folder(const std::string &path, bool animate) {
     s.y = MENUBAR_H + TITLE_H + 24 + 26 * (n % 8);
     s.w = 440; s.h = 270;
   }
-  // okno mieści się w obszarze folderów: widać LisaOS HD, dyski, kosz i dok
+  // okno mieści się w obszarze folderów: widać Nirvana HD, dyski, kosz i dok
   Rect area = folder_area();
   s.w = std::clamp(s.w, MIN_W, area.w);
   s.h = std::clamp(s.h, MIN_H, area.h);
@@ -1291,10 +1291,10 @@ void Desktop::open_folder(const std::string &path, bool animate) {
 void Desktop::open_entry(const Entry &e) {
   if (e.dir) { open_folder(e.path); return; }
   if (is_appimage(e.name)) { open_appimage(e.path); return; }
-  // plik z flagą "Program" (Informacje): uruchom w Lisa Shell z parametrami
+  // plik z flagą "Program" (Informacje): uruchom w Nirvana Shell z parametrami
   struct stat st;
   if (stat(e.path.c_str(), &st) == 0 && S_ISREG(st.st_mode) && (st.st_mode & S_IXUSR) && allowed(e.path)) {
-    std::vector<std::string> a = {rambler_exe("lisaos-shell"), "--katalog", fs::path(e.path).parent_path().string(),
+    std::vector<std::string> a = {rambler_exe("nirvana-shell"), "--katalog", fs::path(e.path).parent_path().string(),
                                   "-e", "sh", "-c", "m=$1; shift; \"$@\"; s=$?; echo; printf \"$m\" \"$s\"; read x",
                                   // TRANSLATORS: %s = kod wyjścia programu (zostaw %s)
                                   "sh", _("[kod wyjścia %s] Enter zamyka okno…"), e.path};
@@ -1358,7 +1358,7 @@ void Desktop::open_appimage(const std::string &path) {
          plat::fmt(_("Zainstalować aplikację „%1”?\nPlik zostanie przeniesiony do folderu %2."), name, folder) +
          "\n" +
          (appimage::sandbox_available()
-              ? _("Aplikacja będzie działać w piaskownicy: zobaczy tylko LisaOS HD.")
+              ? _("Aplikacja będzie działać w piaskownicy: zobaczy tylko Nirvana HD.")
               : _("Uwaga: brak bubblewrap - aplikacja będzie działać bez piaskownicy.")),
          {{_("Anuluj"), nullptr}, {_("Zainstaluj"), install}});
 }
@@ -1500,7 +1500,7 @@ int Desktop::handle(int e) {
       else if (icons_[i].vol >= 0) open_volume(icons_[i].vol);
       else open_folder(icons_[i].path);
     } else if (i < 0 && Fl::event_clicks() && Fl::event_button() == FL_LEFT_MOUSE) {
-      // dwuklik na pustym biurku (poza dokiem): menedżer plików - okno LisaOS HD
+      // dwuklik na pustym biurku (poza dokiem): menedżer plików - okno Nirvana HD
       int dx, dy, dw, dh;
       dock_rect(dx, dy, dw, dh);
       if (!Fl::event_inside(dx, dy, dw, dh)) {
@@ -1625,10 +1625,10 @@ void Desktop::about() {
   if (plat::language() == "pl") for (char *p = mem; *p; p++) if (*p == '.') *p = ',';
   std::string fltk = std::to_string(Fl::api_version() / 10000) + "." +
                      std::to_string(Fl::api_version() / 100 % 100) + "." + std::to_string(Fl::api_version() % 100);
-  std::string text = std::string("LisaOS 0.1 „Tempo”\n") + _("Środowisko w duchu Mac OS 9 i Amigi") + "\n\n" +
+  std::string text = std::string("Nirvana Desktop 0.1 „Tempo”\n") + _("Środowisko w duchu Mac OS 9 i Amigi") + "\n\n" +
                      plat::fmt(_("Pamięć wbudowana: %1 GB"), mem) + "\n" +
                      plat::fmt(_("Menedżer plików: Rambler 0.1 · FLTK %1"), fltk);
-  dialog(_("O LisaOS"), text, {{_("OK"), nullptr}});
+  dialog(_("O Nirvana Desktop"), text, {{_("OK"), nullptr}});
 }
 
 void Desktop::new_folder() {
@@ -1741,9 +1741,9 @@ Fl_RGB_Image *Desktop::render_wallpaper(int W, int H, bool *ok) {
 
 void Desktop::appearance_changed() {
   // Nowa skala interfejsu: menedżer okien i biurko muszą ruszyć od nowa
-  // (wszystkie programy LisaOS liczą współrzędne w tej samej skali).
+  // (wszystkie programy Nirvana Desktop liczą współrzędne w tej samej skali).
   if (std::abs(configured_scale(read_appearance()) - ui_scale()) > 0.01f) {
-    reset_lisa();
+    reset_nirvana();
     return;
   }
   reload_appearance();
@@ -1768,16 +1768,16 @@ void Desktop::appearance_changed() {
 
 static std::string alice_exe() {
   std::string exe = self_exe();
-  std::string alice = exe.substr(0, exe.rfind('/') + 1) + "lisaos-alice";
-  if (access(alice.c_str(), X_OK) != 0) alice = "lisaos-alice";   // z PATH
+  std::string alice = exe.substr(0, exe.rfind('/') + 1) + "nirvana-alice";
+  if (access(alice.c_str(), X_OK) != 0) alice = "nirvana-alice";   // z PATH
   return alice;
 }
 void Desktop::open_appearance() { spawn({alice_exe(), "wyglad"}); }
 
 static std::string shell_exe() {
   std::string exe = self_exe();
-  std::string sh = exe.substr(0, exe.rfind('/') + 1) + "lisaos-shell";
-  return access(sh.c_str(), X_OK) == 0 ? sh : "lisaos-shell";
+  std::string sh = exe.substr(0, exe.rfind('/') + 1) + "nirvana-shell";
+  return access(sh.c_str(), X_OK) == 0 ? sh : "nirvana-shell";
 }
 // Terminal w folderze aktywnego okna (albo zaznaczonego folderu), inaczej w domowym.
 void Desktop::open_terminal() {
@@ -2260,7 +2260,7 @@ static std::string copy_name(const fs::path &dir, const std::string &name) {
 
 void Desktop::transfer(const std::vector<Entry> &items, const std::string &dest, bool copy, bool replace) {
   if (!allowed(dest)) {
-    dialog(_("Brak dostępu"), _("Folder docelowy jest poza LisaOS HD."), {{"OK", nullptr}});
+    dialog(_("Brak dostępu"), _("Folder docelowy jest poza Nirvana HD."), {{"OK", nullptr}});
     return;
   }
   std::error_code ec;

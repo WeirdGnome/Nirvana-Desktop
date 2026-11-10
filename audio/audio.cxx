@@ -1,4 +1,4 @@
-// LisaOS - dźwięk: implementacja (pactl / amixer)
+// Nirvana Desktop - dźwięk: implementacja (pactl / amixer)
 #include "audio.h"
 #include "i18n.h"
 

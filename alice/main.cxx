@@ -1,10 +1,10 @@
-// LisaOS - alice: panele sterowania
+// Nirvana Desktop - alice: panele sterowania
 //
-//   lisaos-alice [wyglad]          panel Wygląd (domyślny)
-//   lisaos-alice siec [--ukryta]   panel Sieć (--ukryta: od razu okno "Inna sieć")
-//   lisaos-alice zasilanie          panel Zasilanie
-//   lisaos-alice ustawienia         Preferencje: okno z ikonami wszystkich paneli
-//   lisaos-alice schemat NAZWA     ustaw schemat kolorów bez okna (np. redmond97-se/ouroboros)
+//   nirvana-alice [wyglad]          panel Wygląd (domyślny)
+//   nirvana-alice siec [--ukryta]   panel Sieć (--ukryta: od razu okno "Inna sieć")
+//   nirvana-alice zasilanie          panel Zasilanie
+//   nirvana-alice ustawienia         Preferencje: okno z ikonami wszystkich paneli
+//   nirvana-alice schemat NAZWA     ustaw schemat kolorów bez okna (np. redmond97-se/ouroboros)
 #include "platinum.h"
 
 #include <FL/Fl.H>

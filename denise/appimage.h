@@ -1,12 +1,12 @@
-// LisaOS - denise: obsługa AppImage
+// Nirvana Desktop - denise: obsługa AppImage
 //
 // AppImage (typ 2) to plik ELF (mały "runtime") z doklejonym obrazem squashfs.
 // Rambler nigdy nie uruchamia runtime'u, żeby coś odczytać:
 //   * offset obrazu squashfs liczymy z nagłówka ELF,
 //   * ikonę (.DirIcon) wyciągamy przez `unsquashfs -o OFFSET`,
-//   * "instalacja" = rozpakowanie obrazu do ~/.local/share/lisaos/aplikacje/,
+//   * "instalacja" = rozpakowanie obrazu do ~/.local/share/nirvana/aplikacje/,
 //   * uruchomienie = AppRun z rozpakowanego katalogu, w piaskownicy bubblewrap:
-//     system tylko do odczytu, zapis wyłącznie w katalogu domowym (LisaOS HD),
+//     system tylko do odczytu, zapis wyłącznie w katalogu domowym (Nirvana HD),
 //     inni użytkownicy i reszta /home niewidoczni.
 #pragma once
 
@@ -29,7 +29,7 @@ std::string version(const std::string &filename);
 // "Firefox-128.0-x86_64.AppImage" -> "Firefox 128.0" (tylko z nazwy pliku)
 std::string display_name(const std::string &filename);
 
-// Dane z pliku .desktop w AppImage (zapamiętywane w ~/.cache/lisaos/ikony).
+// Dane z pliku .desktop w AppImage (zapamiętywane w ~/.cache/nirvana/ikony).
 struct Meta {
   std::string version;      // X-AppImage-Version
   std::string categories;   // Categories, np. "Game;ArcadeGame;"

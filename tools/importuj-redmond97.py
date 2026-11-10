@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Import schematów kolorów z Redmond97 SE (Sliver X, GPL-3.0) do formatu LisaOS.
+"""Import schematów kolorów z Redmond97 SE (Sliver X, GPL-3.0) do formatu Nirvana Desktop.
 
 Użycie:
     tools/importuj-redmond97.py KATALOG_REDMOND97_SE schematy/redmond97-se
@@ -11,7 +11,7 @@ import pathlib
 import re
 import sys
 
-MAP = {  # klucz Redmond97 -> klucz LisaOS
+MAP = {  # klucz Redmond97 -> klucz Nirvana Desktop
     "bgcolor": "okno",
     "fgcolor": "tekst",
     "basecolor": "tresc",
@@ -61,7 +61,7 @@ def main() -> None:
             continue
         slug = p.stem.removeprefix("theme_")
         out = [
-            "# Schemat kolorów LisaOS",
+            "# Schemat kolorów Nirvana Desktop",
             "# Kolory: Redmond97 SE (Sliver X), https://codeberg.org/Sliver_X/Redmond97-SE",
             "# Licencja źródła: GNU GPL 3.0",
             f"nazwa={name}",

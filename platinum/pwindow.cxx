@@ -1,4 +1,4 @@
-// LisaOS - libplatinum: okno w stylu Platinum
+// Nirvana Desktop - libplatinum: okno w stylu Platinum
 #include "pwindow.h"
 #include "platinum.h"
 #include "anim.h"

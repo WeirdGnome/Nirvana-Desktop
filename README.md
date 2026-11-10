@@ -1,41 +1,46 @@
-# LisaOS
+# Nirvana Desktop
 
 Lekkie środowisko graficzne dla Linuksa (baza: minimalny Devuan) w duchu
 **Mac OS 9 (Platinum)** z nutą **Amigi**. Napisane w C++ i FLTK 1.4.
 
-- **Tryb prosty**: użytkownik widzi tylko swój dysk LisaOS HD (czyli `$HOME`), jak w Androidzie.
+- **Tryb prosty**: użytkownik widzi tylko swój dysk Nirvana HD (czyli `$HOME`), jak w Androidzie.
   Aplikacje to pliki AppImage leżące w `~/Aplikacje`; instalacja = przeciągnięcie pliku.
 - **Tryb root**: pełny system plików i ustawienia zaawansowane, uruchamiany przez
   `pkexec`, wyraźnie oznaczony (czerwony chip w logo, plakietka ROOT).
-- **Rambler, przestrzenny menedżer plików** (komponent `lisaos-denise`): jeden folder = jedno okno, które pamięta swoje położenie.
+- **Rambler, przestrzenny menedżer plików** (komponent `nirvana-denise`): jeden folder = jedno okno, które pamięta swoje położenie.
+
+> **Dawniej LisaOS.** Instalator usuwa stary pakiet `lisaos` i poprawia `~/.xinitrc`
+> oraz ekran logowania; przy pierwszym starcie ustawienia, zainstalowane aplikacje
+> i pamięć podręczna przenoszą się z `~/.config/lisaos`, `~/.local/share/lisaos`
+> i `~/.cache/lisaos` do `…/nirvana`. Polecenie `lisaos-session` dalej działa.
 
 ## Komponenty
 
 | Pakiet              | Rola                                   | Stan        |
 |---------------------|----------------------------------------|-------------|
-| `lisaos-platinum`   | biblioteka wyglądu: kolory, ramki, ikony, chrome okien | prototyp |
-| `lisaos-denise`     | Rambler: menedżer plików + biurko        | prototyp    |
-| `lisaos-insight`      | menedżer okien X11 (Xorg/XLibre), ramki Platinum | działa (0.1) |
-| `lisaos-gary`       | przełącznik aplikacji (na razie w procesie Ramblera) | działa (0.1) |
-| `lisaos-alice`      | panele sterowania: Wygląd, Sieć, Zasilanie | działa (0.1) |
-| `lisaos-shell`      | Lisa Shell - emulator terminala          | działa (0.1) |
-| `lisaos-paula`      | dźwięk                                  | planowany   |
-| `lisaos-kickstart`  | logowanie i start sesji                 | planowany   |
-| `lisaos-guru`       | okno błędów, tryb root                  | planowany   |
+| `nirvana-platinum`   | biblioteka wyglądu: kolory, ramki, ikony, chrome okien | prototyp |
+| `nirvana-denise`     | Rambler: menedżer plików + biurko        | prototyp    |
+| `nirvana-insight`      | menedżer okien X11 (Xorg/XLibre), ramki Platinum | działa (0.1) |
+| `nirvana-gary`       | przełącznik aplikacji (na razie w procesie Ramblera) | działa (0.1) |
+| `nirvana-alice`      | panele sterowania: Wygląd, Sieć, Zasilanie | działa (0.1) |
+| `nirvana-shell`      | Nirvana Shell - emulator terminala          | działa (0.1) |
+| `nirvana-paula`      | dźwięk                                  | planowany   |
+| `nirvana-kickstart`  | logowanie i start sesji                 | planowany   |
+| `nirvana-guru`       | okno błędów, tryb root                  | planowany   |
 
 ## Instalacja na Devuanie 6 „Excalibur” (Debian 13)
 
 Rozpakuj źródła i uruchom instalator:
 
-    tar xzf lisaos-0.1.tar.gz && cd lisaos
+    tar xzf nirvana-0.1.tar.gz && cd nirvana
     sudo ./instaluj.sh                 # albo: sudo ./instaluj.sh --logowanie
 
 Instalator:
 
 1. doinstalowuje narzędzia i biblioteki do budowania (apt),
-2. buduje LisaOS (za pierwszym razem pobiera FLTK 1.4 z GitHuba – potrzebny internet),
-3. tworzy paczkę `build-deb/lisaos_0.1.0_amd64.deb` i instaluje ją przez apt –
-   razem z programami, z których LisaOS korzysta: NetworkManager, udisks2, polkit
+2. buduje Nirvana Desktop (za pierwszym razem pobiera FLTK 1.4 z GitHuba – potrzebny internet),
+3. tworzy paczkę `build-deb/nirvana_0.1.0_amd64.deb` i instaluje ją przez apt –
+   razem z programami, z których Nirvana Desktop korzysta: NetworkManager, udisks2, polkit
    z agentem `lxpolkit`, PulseAudio/PipeWire, bubblewrap, xsecurelock…
 4. dokłada serwer X, jeśli go nie ma, i proponuje PipeWire, jeśli nie ma dźwięku.
 
@@ -43,18 +48,18 @@ Opcje:
 
 | opcja | co robi |
 |---|---|
-| `--logowanie` | instaluje LightDM i ustawia LisaOS jako domyślną sesję |
-| `--xinitrc` | zapisuje `~/.xinitrc` z `exec lisaos-session` (wtedy wystarczy `startx`) |
-| `--tylko-paczka` | tylko buduje `.deb` (np. na innym komputerze: `sudo apt install ./lisaos_*.deb`) |
+| `--logowanie` | instaluje LightDM i ustawia Nirvana Desktop jako domyślną sesję |
+| `--xinitrc` | zapisuje `~/.xinitrc` z `exec nirvana-session` (wtedy wystarczy `startx`) |
+| `--tylko-paczka` | tylko buduje `.deb` (np. na innym komputerze: `sudo apt install ./nirvana_*.deb`) |
 | `--bez-x` | nie instaluje serwera X |
 | `--tak` | bez pytań |
-| `--odinstaluj` | `apt remove lisaos`; ustawienia w katalogu domowym zostają |
+| `--odinstaluj` | `apt remove nirvana`; ustawienia w katalogu domowym zostają |
 
-Po instalacji wybierz sesję **LisaOS** na ekranie logowania albo uruchom
-`startx /usr/bin/lisaos-session` z konsoli. Sesja sama uruchamia magistralę D-Bus
-(`dbus-run-session`), programy z autostartu XDG (`lisaos-autostart`, np. PipeWire)
-i agenta polkit. Aplet `nm-applet` jest pomijany – LisaOS ma własne menu sieci
-(`LISAOS_NM_APPLET=1` go przywraca).
+Po instalacji wybierz sesję **Nirvana Desktop** na ekranie logowania albo uruchom
+`startx /usr/bin/nirvana-session` z konsoli. Sesja sama uruchamia magistralę D-Bus
+(`dbus-run-session`), programy z autostartu XDG (`nirvana-autostart`, np. PipeWire)
+i agenta polkit. Aplet `nm-applet` jest pomijany – Nirvana Desktop ma własne menu sieci
+(`NIRVANA_NM_APPLET=1` go przywraca).
 
 Jeśli karty sieciowe są opisane w `/etc/network/interfaces`, NetworkManager ich
 nie obsłuży – instalator o tym przypomina; zostaw tam tylko `lo`.
@@ -85,23 +90,23 @@ Z własnym FLTK: `-DFLTK_DIR=/ścieżka/do/share/fltk`.
 **Pełna sesja** (insight + biurko Ramblera), np. w zagnieżdżonym serwerze X:
 
     Xephyr :2 -screen 1024x768 &
-    DISPLAY=:2 ./session/lisaos-session
+    DISPLAY=:2 ./session/nirvana-session
 
-Po instalacji (patrz wyżej): `startx /usr/bin/lisaos-session` albo sesja „LisaOS”
-na ekranie logowania (plik `/usr/share/xsessions/lisaos.desktop`).
+Po instalacji (patrz wyżej): `startx /usr/bin/nirvana-session` albo sesja „Nirvana Desktop”
+na ekranie logowania (plik `/usr/share/xsessions/nirvana.desktop`).
 
 **Sam Rambler pod innym pulpitem** (np. GNOME na Rocky/RHEL):
 
-    ./build/lisaos-denise --center                  # cały obszar pod paskiem GNOME
-    ./build/lisaos-denise --center --size 1024x768  # okno 1024x768 na środku
+    ./build/nirvana-denise --center                  # cały obszar pod paskiem GNOME
+    ./build/nirvana-denise --center --size 1024x768  # okno 1024x768 na środku
 
-`--center` (albo zmienna `LISAOS_CENTER=1`) stawia biurko na środku obszaru roboczego,
-czyli z ominięciem pasków pulpitu, więc górny pasek GNOME nie zasłania paska menu LisaOS.
+`--center` (albo zmienna `NIRVANA_CENTER=1`) stawia biurko na środku obszaru roboczego,
+czyli z ominięciem pasków pulpitu, więc górny pasek GNOME nie zasłania paska menu Nirvana Desktop.
 Bez `--size` biurko wypełnia cały obszar roboczy. Pozycje okien folderów są zapisywane
 względem biurka, więc przesuwają się razem z nim.
 
 Opcje Ramblera: `--root`, `--home KATALOG`, `--size 1024x768`, `--center`.
-Czcionkę systemową w stylu Chicago można podać przez `LISAOS_SYSTEM_FONT`
+Czcionkę systemową w stylu Chicago można podać przez `NIRVANA_SYSTEM_FONT`
 (np. wolny font ChicagoFLF).
 
 ## Insight: obsługa okien
@@ -112,7 +117,7 @@ Czcionkę systemową w stylu Chicago można podać przez `LISAOS_SYSTEM_FONT`
   dyskami) pojawia się jego ikona – obrazek programu z `_NET_WM_ICON` i tytuł okna.
   Dwuklik w ikonę przywraca okno. Tak samo działa „minimalizuj” w samym programie
   (Brave, Firefox…); „Ukryj” z menu aplikacji chowa okna bez ikon. Ikony przetrwają
-  Resetuj LISA.
+  Resetuj Nirvanę.
 - prawa i dolna krawędź ramki oraz prawy dolny róg: zmiana rozmiaru
 - klik w okno aplikacji aktywuje je i wyciąga na wierzch; klik w biurko dezaktywuje okna,
   a klik w pasek menu nie zmienia aktywnego okna (menu działa na nie)
@@ -122,7 +127,7 @@ Czcionkę systemową w stylu Chicago można podać przez `LISAOS_SYSTEM_FONT`
   przycinane; maksymalizacja z paska tytułu programu (`_NET_WM_STATE_MAXIMIZED_*`)
   działa jak zoom; biurko Ramblera zawsze leży na dole
 - Flatpaki: sesja przekazuje usługom D-Bus ekran i nazwę pulpitu, a
-  `lisaos-portals.conf` kieruje xdg-desktop-portal do backendu GTK
+  `nirvana-portals.conf` kieruje xdg-desktop-portal do backendu GTK
 - bez kompozytora: aplikacje rysują prosto na ekran (mniej pamięci)
 
 ## Aplikacje (AppImage)
@@ -133,10 +138,10 @@ Czcionkę systemową w stylu Chicago można podać przez `LISAOS_SYSTEM_FONT`
 - **Nazwa z wersją**: `Firefox-128.0.3-x86_64.AppImage` → „Firefox 128.0.3”. Gdy nazwa pliku
   nie ma wersji, Rambler bierze ją z `X-AppImage-Version` w pliku .desktop. Dzięki temu kilka
   wersji tego samego programu da się rozróżnić i mieć zainstalowane jednocześnie.
-  Ikony i dane z .desktop są zapamiętywane w `~/.cache/lisaos/ikony`.
+  Ikony i dane z .desktop są zapamiętywane w `~/.cache/nirvana/ikony`.
 - **Instalacja**: otwarcie AppImage spoza folderu Aplikacje (np. z Pobranych) pyta,
   czy zainstalować. Plik trafia do folderu swojej kategorii w `~/Aplikacje`, a jego zawartość
-  jest rozpakowywana do `~/.local/share/lisaos/aplikacje/`. Bez FUSE i bez wykonywania
+  jest rozpakowywana do `~/.local/share/nirvana/aplikacje/`. Bez FUSE i bez wykonywania
   runtime'u AppImage.
 - **Foldery kategorii** według `Categories=` z pliku .desktop wewnątrz AppImage. Folder
   powstaje przy pierwszej aplikacji danego rodzaju.
@@ -155,7 +160,7 @@ Czcionkę systemową w stylu Chicago można podać przez `LISAOS_SYSTEM_FONT`
 
   ![Dwie wersje gry obok siebie](docs/img/gry.png)
 - **Uruchamianie w piaskownicy** (bubblewrap): cały system tylko do odczytu, zapis
-  wyłącznie w LisaOS HD, inni użytkownicy, `/root`, `/mnt` i `/media` niewidoczne,
+  wyłącznie w Nirvana HD, inni użytkownicy, `/root`, `/mnt` i `/media` niewidoczne,
   własny `/tmp` i własna przestrzeń procesów; sama aplikacja jest tylko do odczytu.
   Bez bubblewrap aplikacja startuje normalnie, a dialog instalacji o tym ostrzega.
 - **Różne runtime'y**: obraz squashfs jest szukany za nagłówkiem ELF (z weryfikacją
@@ -172,24 +177,24 @@ Jak w klasycznym Mac OS: przy otwieraniu, zamykaniu, zwijaniu i powiększaniu
 okien po ekranie przelatują kontury prostokątów („zoom rects”). Foldery w Ramblerze
 wylatują z ikony, z której je otwarto, i wracają do niej przy zamknięciu.
 Sposób rysowania dobiera się sam:
-- **XOR na ekranie**: w sesji LisaOS na Xorg/XLibre bez kompozytora. Najlżejszy.
+- **XOR na ekranie**: w sesji Nirvana Desktop na Xorg/XLibre bez kompozytora. Najlżejszy.
 - **Okno wycięte w kształt konturów** (rozszerzenie X SHAPE): pod XWaylandem
   (np. GNOME na Waylandzie w Rocky/RHEL 10) i na pulpitach z kompozytorem, gdzie
   rysunek na głównym oknie X byłby niewidoczny albo zamalowany.
 
 ![Animacje](docs/img/animacje.gif)
 
-- `LISAOS_ANIMATIONS=0`: wyłącza animacje (ma pierwszeństwo przed panelem Wygląd)
-- `LISAOS_ANIM_MS=200`: wolniejsze klatki (do testów; domyślnie 12 ms)
-- `LISAOS_ANIM_NOGRAB=1`: bez blokady serwera X na czas animacji (do zrzutów ekranu)
-- `LISAOS_ANIM_MODE=xor` lub `ksztalt`: wymusza sposób rysowania
+- `NIRVANA_ANIMATIONS=0`: wyłącza animacje (ma pierwszeństwo przed panelem Wygląd)
+- `NIRVANA_ANIM_MS=200`: wolniejsze klatki (do testów; domyślnie 12 ms)
+- `NIRVANA_ANIM_NOGRAB=1`: bez blokady serwera X na czas animacji (do zrzutów ekranu)
+- `NIRVANA_ANIM_MODE=xor` lub `ksztalt`: wymusza sposób rysowania
 - Jeśli FLTK zbudowano z backendem Wayland, animacje działają tylko w trybie X11:
   uruchom z `FLTK_BACKEND=x11`.
 
 ## Dyski, płyty i zaszyfrowane wolumeny
 
 Podłączony pendrive, dysk USB, karta pamięci, płyta CD/DVD albo partycja z danymi
-pojawia się na biurku pod LisaOS HD, z ikoną pasującą do rodzaju nośnika:
+pojawia się na biurku pod Nirvana HD, z ikoną pasującą do rodzaju nośnika:
 
 - **podwójne kliknięcie** montuje dysk i otwiera jego okno,
 - **dysk zaszyfrowany (LUKS)** ma ikonę z kłódką; po podwójnym kliknięciu pyta o hasło,
@@ -221,7 +226,7 @@ jak w Mac OS 9. Po kliknięciu:
 
 Aplikacja to grupa okien o tej samej klasie `WM_CLASS`. AppImage uruchomione z Ramblera
 pojawiają się pod swoją nazwą i ikoną (np. „Zegar” zamiast „XClock”); przypisanie jest
-zapamiętywane w `~/.config/lisaos/aplikacje.klasy`.
+zapamiętywane w `~/.config/nirvana/aplikacje.klasy`.
 
 **Alt+Tab** (Insight): przytrzymaj Alt i naciskaj Tab, żeby przechodzić po aplikacjach
 od ostatnio używanej; Shift cofa, Escape przerywa, puszczenie Alt wybiera.
@@ -233,17 +238,17 @@ okno biurka nie przyjmuje fokusu, żeby klik w pasek menu nie zmieniał aktywnej
 ## Rambler: praca z plikami
 
 - **Otwieranie**: podwójne kliknięcie lub Enter. AppImage z innego folderu proponuje instalację.
-- **Dwuklik na pustym biurku** otwiera menedżer plików (okno LisaOS HD); gdy jest już
+- **Dwuklik na pustym biurku** otwiera menedżer plików (okno Nirvana HD); gdy jest już
   otwarte, wysuwa je na wierzch.
 - **Okna folderów nie zasłaniają biurka**: otwierane i powiększane przyciskiem zoom
-  zostawiają wolną kolumnę ikon przy lewej krawędzi (LisaOS HD, dyski, ikony okien,
+  zostawiają wolną kolumnę ikon przy lewej krawędzi (Nirvana HD, dyski, ikony okien,
   Kosz nad dokiem) oraz pasek doku na dole. Zoom innych programów też.
   Za duże zapamiętane okna są przy otwarciu zmniejszane do tego obszaru.
 - **Zaznaczanie**: klik, Shift/Ctrl+klik dodaje lub odejmuje, ramka zaznaczania myszą, `Ctrl+A`.
 - **Zmiana nazwy**: `F2` albo klik w nazwę już zaznaczonego elementu (jak w Finderze).
   Zmiana nazwy folderu aktualizuje jego otwarte okna i zapamiętane pozycje.
 - **Przeciąganie**: między oknami przenosi, z `Ctrl` kopiuje; na folder w oknie wrzuca do
-  środka; na ikonę Kosza wyrzuca, na LisaOS HD przenosi do katalogu domowego. Nietrafione
+  środka; na ikonę Kosza wyrzuca, na Nirvana HD przenosi do katalogu domowego. Nietrafione
   upuszczenie „odlatuje” z powrotem na miejsce.
 - **Z innych programów** (XDND, np. przeglądarka, inny menedżer plików): pliki są kopiowane
   do folderu, na którym je upuszczono; upuszczone na Kosz trafiają do kosza.
@@ -269,10 +274,10 @@ Po prawej, ciasno przy krawędzi: zasilanie, głośność, sieć, zegar i przeł
 
 | Menu | Pozycje |
 |------|---------|
-| **Lisa** (logo i napis) | O systemie, Preferencje (okno z panelami), Wykonaj polecenie `Ctrl+E`, Lisa Shell `Ctrl+T`, Otwórz dziennik, Przerysuj wszystko, Uaktualnij wszystko `Ctrl+Shift+R`, Uśpij, Uruchom ponownie, Zakończ `Ctrl+Q` |
+| **Nirvana** (logo i napis) | O systemie, Preferencje (okno z panelami), Wykonaj polecenie `Ctrl+E`, Nirvana Shell `Ctrl+T`, Otwórz dziennik, Przerysuj wszystko, Uaktualnij wszystko `Ctrl+Shift+R`, Uśpij, Uruchom ponownie, Zakończ `Ctrl+Q` |
 | **Okno** | Nowy folder `Ctrl+N`, Otwórz katalog nadrzędny `Ctrl+↑`, Zamknij `Ctrl+W`, Uaktualnij `Ctrl+R`, Zaznacz zawartość `Ctrl+A`, Uporządkuj `Ctrl+.`, Pokaż ukryte pliki `Ctrl+H`, Pokaż jako (ikony/listę), Sortuj, Wielkość ikon (małe/normalne/duże) |
 | **Ikony** | Otwórz `Ctrl+O`, Kopiuj, Wklej, Duplikuj, Zmień nazwę `F2`, Usuń `Ctrl+Backspace`, Informacje `Ctrl+I`, Zamroź `Ctrl+S`, Odmroź, Połóż na doku `Ctrl+L`, Zdejmij z doku `Ctrl+K`, Wysuń `Ctrl+Y` |
-| **Narzędzia** | Formatuj dysk, Opróżnij kosz, Tryb root, Resetuj LISA |
+| **Narzędzia** | Formatuj dysk, Opróżnij kosz, Tryb root, Resetuj Nirvanę |
 
 Pozycje, które w danej chwili nic by nie zrobiły, są wyszarzone, np. Wysuń bez zaznaczonego dysku.
 
@@ -280,7 +285,7 @@ Pozycje, które w danej chwili nic by nie zrobiły, są wyszarzone, np. Wysuń b
   miejscach.
 - **Zamroź** zapisuje pozycje na stałe (zaznaczonych ikon albo całego okna), **Odmroź** je
   zwalnia, **Uporządkuj** ustawia wszystko z powrotem w siatce. Pozycje są w
-  `~/.config/lisaos/ikony.pozycje`.
+  `~/.config/nirvana/ikony.pozycje`.
 - **Wielkość ikon**: małe 16 px, normalne 32 px, duże 64 px (piksele powiększone 2×, ostre jak
   na Amidze). Wielkość jest zapamiętywana dla każdego okna.
 - **Informacje**: rozmiar (foldery liczone), położenie, daty utworzenia, zmiany i otwarcia,
@@ -290,7 +295,7 @@ Pozycje, które w danej chwili nic by nie zrobiły, są wyszarzone, np. Wysuń b
   - dla programów i AppImage parametry uruchamiania („ToolTypes”), dodawane przy każdym
     uruchomieniu.
 
-  Plik z flagą *Program* otwiera się w Lisa Shell.
+  Plik z flagą *Program* otwiera się w Nirvana Shell.
 - **Dok** (w stylu Control Strip z Mac OS): *Połóż na doku* wystawia ikonę pliku, folderu
   albo aplikacji na pasek w lewym dolnym rogu ekranu, *Zdejmij z doku* ją chowa (plik zostaje
   na miejscu).
@@ -299,21 +304,21 @@ Pozycje, które w danej chwili nic by nie zrobiły, są wyszarzone, np. Wysuń b
   - Jedno kliknięcie otwiera.
   - Zakładka po lewej zwija pasek, a stan jest zapamiętywany.
 
-  Lista ikon jest w `~/.config/lisaos/dok`.
+  Lista ikon jest w `~/.config/nirvana/dok`.
 
   ![Dok w trzech schematach i podpowiedź](docs/img/dok.png)
 - **Formatuj dysk**: zaznacz ikonę dysku na biurku i wybierz FAT32, exFAT, ext4 albo NTFS
   (UDisks2). Niesformatowane pendrive'y też pojawiają się na biurku.
-- **Resetuj LISA** uruchamia Insighta i Ramblera od nowa. Okna programów zostają.
+- **Resetuj Nirvanę** uruchamia Insighta i Ramblera od nowa. Okna programów zostają.
 
-![Menu Lisa](docs/img/menu-lisa.png)
+![Menu Nirvana](docs/img/menu-nirvana.png)
 ![Informacje o pliku](docs/img/informacje.png)
 
-Pozycje i tryb widoku okien: `~/.config/lisaos/denise.okna`.
+Pozycje i tryb widoku okien: `~/.config/nirvana/denise.okna`.
 
-## Wygląd (panel lisaos-alice)
+## Wygląd (panel nirvana-alice)
 
-Logo LisaOS → **Panele sterowania → Wygląd…** otwiera panel z listą schematów
+Logo Nirvana Desktop → **Panele sterowania → Wygląd…** otwiera panel z listą schematów
 kolorów i podglądem. Klik na schemacie zmienia od razu sam panel, a **Zastosuj**/**OK**
 przestawia cały system: Rambler i Insight przeładowują paletę bez restartu.
 
@@ -337,21 +342,21 @@ przestawia cały system: Rambler i Insight przeładowują paletę bez restartu.
   ![Gradient promienisty](docs/img/tlo-gradient.png)
 
 - **Tapeta**: wybierana z listy albo przez *Inny plik…* (PNG, JPEG, GIF, BMP, SVG, XPM).
-  - Lista zawiera tapety LisaOS (*Lisa Desktop*, *Góry o świcie*, *Miedź*, *Platyna*), tapety systemowe
+  - Lista zawiera tapety Nirvana Desktop (*Nirvana Desktop*, *Góry o świcie*, *Miedź*, *Platyna*), tapety systemowe
     z `/usr/share/backgrounds` i `/usr/share/wallpapers` oraz obrazy z `~/Obrazy`.
   - Układy: *Wypełnij ekran* (przycina), *Dopasuj* (cały obraz, wzór w pasach),
     *Rozciągnij*, *Na środku* i *Sąsiadująco*.
   - Duże zdjęcia są zmniejszane stopniowo, więc nie powstają schodki ani mora.
   - Pod przezroczystymi fragmentami PNG widać wzór biurka.
   - W Ramblerze: zaznacz obraz i wybierz **Ikony → Ustaw jako tapetę**.
-  - Własne tapety można dodać do `~/.local/share/lisaos/tapety`.
+  - Własne tapety można dodać do `~/.local/share/nirvana/tapety`.
 - **Styl ikon**: *Workbench (Amiga)*, domyślny, albo *Platinum (Mac OS)*. Zmiana działa
   od razu, także w otwartych oknach i na doku.
   - Workbench: własne rysunki w duchu Workbencha 2/3 i MagicWB, w palecie szarości,
     granatu i beżu z czarnymi obrysami.
   - Foldery to szuflady, a dokumenty to „projekty” z zagiętym rogiem. Programy wyglądają
     jak okienko z gadżetami zamykania i głębi.
-  - Dyski to kostki twardych dysków z diodą (LisaOS HD z granatową tabliczką), a nośniki
+  - Dyski to kostki twardych dysków z diodą (Nirvana HD z granatową tabliczką), a nośniki
     wymienne to dyskietki 3,5". Kosz ma pokrywę z uchwytem.
   - Zaznaczona ikona ma odwrócone kolory, jak tryb *complement* w Workbenchu.
   - Plansza wszystkich ikon: `tools/plansza-ikon.cxx`.
@@ -362,24 +367,24 @@ przestawia cały system: Rambler i Insight przeładowują paletę bez restartu.
 - **Skala interfejsu**: *Automatycznie* (z ustawienia `Xft.dpi`, np. 192 dpi = 200%)
   albo 100–300%. Skaluje wszystko naraz: pasek menu, okna, czcionki, ikony, ramki
   i dok; tapeta jest liczona w pełnej rozdzielczości ekranu. Po zmianie biurko
-  i menedżer okien uruchamiają się od nowa (jak **Narzędzia → Resetuj LISA**),
-  otwarte programy zostają. Na próbę: `LISAOS_SKALA=150 lisaos-session`.
+  i menedżer okien uruchamiają się od nowa (jak **Narzędzia → Resetuj Nirvanę**),
+  otwarte programy zostają. Na próbę: `NIRVANA_SKALA=150 nirvana-session`.
 
-  - *Lisa Desktop* (2560×1440, w duchu AmigaOS 4) powstaje ze skryptu
-    `tools/tapeta-lisa-desktop.py [plik] [szerokość wysokość]`. Można ją wygenerować
+  - *Nirvana Desktop* (2560×1440, w duchu AmigaOS 4) powstaje ze skryptu
+    `tools/tapeta-nirvana-desktop.py [plik] [szerokość wysokość]`. Można ją wygenerować
     w rozdzielczości własnego ekranu.
 
-![Tapeta Lisa Desktop](docs/img/tapeta-lisa-desktop.png)
+![Tapeta Nirvana Desktop](docs/img/tapeta-nirvana-desktop.png)
 ![Wygląd z tapetą](docs/img/tapeta.png)
 ![Układy tapety: na środku, sąsiadująco, dopasuj, rozciągnij](docs/img/tapety-uklady.png)
 
 ![Wygląd: Platinum](docs/img/wyglad-platinum.png)
 ![Wygląd: In Tenebris z gradientem i cegiełkami](docs/img/wyglad-in-tenebris.png)
 
-Ustawienia: `~/.config/lisaos/wyglad.conf`. Schematy to proste pliki `klucz=wartość`
-w katalogu `schematy/`, szukane kolejno w `~/.local/share/lisaos/schematy`,
-`<prefiks>/share/lisaos/schematy`, `/usr/local/share/...` i `/usr/share/...`.
-Własny schemat wystarczy tam wrzucić, np. `~/.local/share/lisaos/schematy/moj.conf`:
+Ustawienia: `~/.config/nirvana/wyglad.conf`. Schematy to proste pliki `klucz=wartość`
+w katalogu `schematy/`, szukane kolejno w `~/.local/share/nirvana/schematy`,
+`<prefiks>/share/nirvana/schematy`, `/usr/local/share/...` i `/usr/share/...`.
+Własny schemat wystarczy tam wrzucić, np. `~/.local/share/nirvana/schematy/moj.conf`:
 
 ```ini
 nazwa=Mój schemat
@@ -405,7 +410,7 @@ Schematy Redmond97 SE odtworzysz skryptem `tools/importuj-redmond97.py`
 
 ## Sieć: Wi-Fi, Ethernet, VPN, hotspot
 
-LisaOS zarządza siecią przez NetworkManagera (`nmcli` i D-Bus). Na Devuanie: pakiet
+Nirvana Desktop zarządza siecią przez NetworkManagera (`nmcli` i D-Bus). Na Devuanie: pakiet
 `network-manager` (działa bez systemd, z elogind).
 
 - **Ikona na pasku menu**: siła sygnału Wi-Fi, symbol sieci przewodowej, kłódka przy
@@ -436,16 +441,16 @@ LisaOS zarządza siecią przez NetworkManagera (`nmcli` i D-Bus). Na Devuanie: p
 ![Panel Sieć: Wi-Fi](docs/img/siec-wifi.png)
 ![Panel Sieć: VPN](docs/img/siec-vpn.png)
 
-Testy bez karty Wi-Fi: `LISAOS_NMCLI=tools/atrapa-nmcli.sh` udaje kartę `wlan0` i kilka
+Testy bez karty Wi-Fi: `NIRVANA_NMCLI=tools/atrapa-nmcli.sh` udaje kartę `wlan0` i kilka
 sieci (resztę przekazuje do prawdziwego `nmcli`).
 
-## Lisa Shell (terminal)
+## Nirvana Shell (terminal)
 
-`lisaos-shell` to emulator terminala zgodny z xterm (`TERM=xterm-256color`),
+`nirvana-shell` to emulator terminala zgodny z xterm (`TERM=xterm-256color`),
 zbudowany na bibliotece libvterm (dołączona w `third_party/`, MIT; systemowa
-jest używana, jeśli jest). Uruchamianie: logo → Lisa Shell, w Ramblerze
-Plik → Otwórz w Lisa Shell (Ctrl+T, w folderze aktywnego okna) albo
-`lisaos-shell [--katalog DIR] [-e polecenie]`.
+jest używana, jeśli jest). Uruchamianie: logo → Nirvana Shell, w Ramblerze
+Plik → Otwórz w Nirvana Shell (Ctrl+T, w folderze aktywnego okna) albo
+`nirvana-shell [--katalog DIR] [-e polecenie]`.
 
 - **Wyświetlanie:** 256 kolorów i truecolor, pogrubienie, kursywa, podkreślenie, ekran
   alternatywny. Działają w nim vim, htop, mc, less.
@@ -462,10 +467,10 @@ Plik → Otwórz w Lisa Shell (Ctrl+T, w folderze aktywnego okna) albo
   - prawy klik otwiera menu, a w nim profile kolorów: Klasyczny (jasny), Ciemny,
     Zielony fosfor, Bursztynowy, Workbench (Amiga), Jak schemat kolorów,
   - Ctrl+Shift+= / - / 0 zmienia rozmiar czcionki.
-- **Ustawienia:** `~/.config/lisaos/terminal.conf` (profil, czcionka, rozmiar, kolumny,
+- **Ustawienia:** `~/.config/nirvana/terminal.conf` (profil, czcionka, rozmiar, kolumny,
   wiersze, przewijanie).
 
-![Lisa Shell z htop](docs/img/shell-htop.png)
+![Nirvana Shell z htop](docs/img/shell-htop.png)
 
 ## Zasobnik systemowy
 
@@ -488,9 +493,9 @@ stoją na pasku menu, na lewo od apletu zasilania. Rambler obsługuje oba protok
     prosto do programu.
 - Pasek przestawia się sam, gdy ikon przybywa albo ubywa. Po zakończeniu programu jego
   ikona znika.
-- Po **Resetuj LISA** ikony wracają: programy XEmbed dokują się ponownie po ogłoszeniu
+- Po **Resetuj Nirvanę** ikony wracają: programy XEmbed dokują się ponownie po ogłoszeniu
   `MANAGER`, a Rambler sam odnajduje ikony D-Bus, które już są na szynie.
-- `LISAOS_BEZ_ZASOBNIKA=1` wyłącza zasobnik (np. gdy sesja ma własny).
+- `NIRVANA_BEZ_ZASOBNIKA=1` wyłącza zasobnik (np. gdy sesja ma własny).
 
 ![Zasobnik z menu programu](docs/img/zasobnik.png)
 
@@ -532,7 +537,7 @@ Ikona baterii (albo wtyczki w komputerze stacjonarnym) na pasku menu. W okienku:
 
 Gdy tryb jest włączony, przy ikonie baterii widać mały monitor.
 
-Panel **Zasilanie** (logo → Panele sterowania) ustawia dla sesji LisaOS:
+Panel **Zasilanie** (logo → Panele sterowania) ustawia dla sesji Nirvana Desktop:
 
 - wygaszanie ekranu po bezczynności,
 - blokadę przy wygaszeniu,
@@ -547,26 +552,26 @@ Interfejs jest po polsku (teksty w kodzie) i po angielsku (`po/en.po`). Język
 wybiera się w **Preferencjach** (logo → Preferencje…): *Automatycznie* bierze
 język systemu (`LANGUAGE`, `LC_ALL`, `LC_MESSAGES`, `LANG`); przy systemie w
 języku bez tłumaczenia albo `LANG=C` interfejs jest po angielsku. Wybór trafia
-do `~/.config/lisaos/jezyk` i działa po ponownym uruchomieniu albo
-**Narzędzia → Resetuj LISA**.
+do `~/.config/nirvana/jezyk` i działa po ponownym uruchomieniu albo
+**Narzędzia → Resetuj Nirvanę**.
 
 Po angielsku menu nazywają się jak w Mac OS (*Window*, *Icons*, *Special*),
 liczby mają kropkę dziesiętną, a nowe foldery to `~/Applications/Games`… –
 istniejące `~/Aplikacje/Gry` zostają w użyciu, więc zmiana języka nie rozdziela
 zainstalowanych aplikacji.
 
-![LisaOS po angielsku](docs/img/jezyk-angielski.png)
+![Nirvana Desktop po angielsku](docs/img/jezyk-angielski.png)
 
 Nowy język albo poprawki:
 
-    tools/i18n/pot.py          # po/lisaos.pot z kodu + aktualizacja po/*.po
-    msginit -i po/lisaos.pot -l de -o po/de.po   # nowy język (albo kopia en.po)
+    tools/i18n/pot.py          # po/nirvana.pot z kodu + aktualizacja po/*.po
+    msginit -i po/nirvana.pot -l de -o po/de.po   # nowy język (albo kopia en.po)
     cmake --build build        # msgfmt --check → build/locale/<język>/…
 
 W kodzie: `_("tekst")`, `N_("…")` w tablicach statycznych, `P_("Okno/Sortuj")`
 dla ścieżek menu (tłumaczony każdy człon), `trp(n, "1 element", "elementy",
 "elementów")` dla liczby mnogiej i `fmt(_("Usunąć „%1”?"), nazwa)` zamiast
-sklejania zdań. Katalogi `.mo` LisaOS czyta sam, więc nie potrzeba
+sklejania zdań. Katalogi `.mo` Nirvana Desktop czyta sam, więc nie potrzeba
 wygenerowanych locale systemu (`en_US.UTF-8`).
 
 ## Licencja

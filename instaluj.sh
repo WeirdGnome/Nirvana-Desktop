@@ -1,15 +1,15 @@
 #!/bin/sh
-# LisaOS - instalator dla Devuana 6 "Excalibur" (baza: Debian 13 "trixie")
+# Nirvana Desktop - instalator dla Devuana 6 "Excalibur" (baza: Debian 13 "trixie")
 #
 #   sudo ./instaluj.sh                  zależności, budowa, paczka .deb i instalacja
 #   sudo ./instaluj.sh --logowanie      do tego ekran logowania LightDM
-#   sudo ./instaluj.sh --xinitrc        ~/.xinitrc z "exec lisaos-session" (dla startx)
-#        ./instaluj.sh --tylko-paczka   tylko zbuduj build-deb/lisaos_*.deb (bez instalacji)
-#   sudo ./instaluj.sh --odinstaluj     usuń pakiet lisaos (ustawienia w ~ zostają)
+#   sudo ./instaluj.sh --xinitrc        ~/.xinitrc z "exec nirvana-session" (dla startx)
+#        ./instaluj.sh --tylko-paczka   tylko zbuduj build-deb/nirvana_*.deb (bez instalacji)
+#   sudo ./instaluj.sh --odinstaluj     usuń pakiet nirvana (ustawienia w ~ zostają)
 #
 # Inne opcje: --tak (bez pytań), --bez-x (nie instaluj serwera X), --pomoc.
 #
-# LisaOS instaluje się jako zwykły pakiet "lisaos" (pliki w /usr), więc później
+# Nirvana Desktop instaluje się jako zwykły pakiet "nirvana" (pliki w /usr), więc później
 # można go usunąć przez apt, a apt dociąga programy, z których korzysta
 # (NetworkManager, udisks2, polkit, PulseAudio/PipeWire...).
 set -eu
@@ -54,9 +54,9 @@ jako_uzytkownik() {   # budujemy jako zwykły użytkownik, żeby build-deb nie n
 
 if [ -n "$ODINSTALUJ" ]; then
   [ "$JA" = 0 ] || blad "uruchom przez sudo: sudo $0 --odinstaluj"
-  krok "Usuwanie pakietu lisaos"
-  apt-get remove -y lisaos
-  echo "Ustawienia użytkowników (~/.config/lisaos, ~/Aplikacje) zostały na miejscu."
+  krok "Usuwanie pakietu nirvana"
+  apt-get remove -y nirvana
+  echo "Ustawienia użytkowników (~/.config/nirvana, ~/Aplikacje) zostały na miejscu."
   exit 0
 fi
 
@@ -65,7 +65,7 @@ command -v apt-get >/dev/null 2>&1 || blad "to nie jest system z apt (Devuan/Deb
 
 ID=; VERSION_CODENAME=; PRETTY_NAME=nieznany
 [ -r /etc/os-release ] && . /etc/os-release
-echo "${B}LisaOS 0.1 - instalator${R}"
+echo "${B}Nirvana Desktop 0.1 - instalator${R}"
 echo "System: $PRETTY_NAME"
 if [ "$ID" != devuan ] || [ "$VERSION_CODENAME" != excalibur ]; then
   echo "Instalator jest przygotowany dla Devuana 6 \"Excalibur\" (Debian 13)."
@@ -86,7 +86,7 @@ if [ "$JA" = 0 ]; then
   krok "Odświeżanie listy pakietów"
   apt-get update
   krok "Narzędzia i biblioteki do budowania"
-  # libvterm z systemu, jeśli jest (inaczej LisaOS ma własną kopię)
+  # libvterm z systemu, jeśli jest (inaczej Nirvana Desktop ma własną kopię)
   extra=; jest libvterm-dev && extra=libvterm-dev
   # shellcheck disable=SC2086
   DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends $BUDOWA $extra
@@ -97,7 +97,7 @@ else
 fi
 
 # --- budowa i paczka ----------------------------------------------------------
-krok "Budowanie LisaOS (pierwszy raz pobiera też FLTK 1.4 z GitHuba)"
+krok "Budowanie Nirvana Desktop (pierwszy raz pobiera też FLTK 1.4 z GitHuba)"
 FLTK_OPT=
 [ -n "${FLTK_DIR:-}" ] && FLTK_OPT="-DFLTK_DIR=$FLTK_DIR"
 if [ -d "$BUILD" ] && [ "$JA" = 0 ] && [ -n "$UZYTKOWNIK_BUDUJE" ]; then chown -R "$UZYTKOWNIK_BUDUJE" "$BUILD"; fi
@@ -106,10 +106,10 @@ jako_uzytkownik cmake -S "$SRC" -B "$BUILD" -DCMAKE_BUILD_TYPE=Release -DCMAKE_I
 jako_uzytkownik cmake --build "$BUILD" -j "$(nproc 2>/dev/null || echo 2)"
 
 krok "Tworzenie paczki .deb"
-rm -f "$BUILD"/lisaos_*.deb
+rm -f "$BUILD"/nirvana_*.deb
 # UTF-8: inaczej cpack nie spakuje plików z polskimi literami w nazwie (tapety)
 (cd "$BUILD" && LC_ALL=C.UTF-8 jako_uzytkownik cpack -G DEB >/dev/null)
-DEB=$(ls "$BUILD"/lisaos_*.deb 2>/dev/null | head -n 1)
+DEB=$(ls "$BUILD"/nirvana_*.deb 2>/dev/null | head -n 1)
 [ -n "$DEB" ] || blad "cpack nie utworzył paczki"
 echo "Paczka: $DEB"
 dpkg-deb -f "$DEB" Depends | sed 's/^/  Depends: /'
@@ -121,17 +121,32 @@ if [ -n "$TYLKO_PACZKA" ]; then
 fi
 
 # --- instalacja ---------------------------------------------------------------
-krok "Instalowanie pakietu lisaos i programów, z których korzysta"
+krok "Instalowanie pakietu nirvana i programów, z których korzysta"
 # apt z lokalnym plikiem rozwiązuje zależności; Recommends (NetworkManager,
 # udisks2, polkit, xsecurelock...) instaluje domyślnie, brakujące pomija
 DEBIAN_FRONTEND=noninteractive apt-get install -y "$DEB"
+
+# dawniej LisaOS: pakiet "lisaos" apt usunął sam (Conflicts); ustawienia w ~
+# przeniosą się przy pierwszym starcie; tu poprawiamy ekran logowania i ~/.xinitrc
+if [ -f /etc/lightdm/lightdm.conf.d/50-lisaos.conf ]; then
+  rm -f /etc/lightdm/lightdm.conf.d/50-lisaos.conf
+  printf '[Seat:*]\nuser-session=nirvana\n' > /etc/lightdm/lightdm.conf.d/50-nirvana.conf
+  echo "LightDM: sesja LisaOS zamieniona na Nirvana Desktop."
+fi
+if [ -n "$UZYTKOWNIK" ]; then
+  DOM=$(getent passwd "$UZYTKOWNIK" | cut -d: -f6)
+  if [ -f "$DOM/.xinitrc" ] && grep -q 'lisaos-session' "$DOM/.xinitrc"; then
+    sed -i 's/lisaos-session/nirvana-session/g' "$DOM/.xinitrc"
+    echo "$DOM/.xinitrc: lisaos-session zamienione na nirvana-session."
+  fi
+fi
 
 if [ -z "$BEZ_X" ] && ! command -v Xorg >/dev/null 2>&1; then
   krok "Serwer X"
   DEBIAN_FRONTEND=noninteractive apt-get install -y xserver-xorg xinit
 fi
 
-# dźwięk: PipeWire na Devuanie startuje z autostartu XDG (uruchamia go lisaos-session)
+# dźwięk: PipeWire na Devuanie startuje z autostartu XDG (uruchamia go nirvana-session)
 if ! dpkg -s pipewire-pulse >/dev/null 2>&1 && ! dpkg -s pulseaudio >/dev/null 2>&1; then
   if jest pipewire-pulse && pytaj "Brak serwera dźwięku. Zainstalować PipeWire (pipewire-pulse, wireplumber)?"; then
     DEBIAN_FRONTEND=noninteractive apt-get install -y pipewire-pulse wireplumber
@@ -142,7 +157,7 @@ fi
 if [ -f /etc/network/interfaces ] && grep -Eq '^[[:space:]]*(auto|allow-hotplug|iface)[[:space:]]+(e|w)' /etc/network/interfaces; then
   echo
   echo "Uwaga: karty sieciowe są skonfigurowane w /etc/network/interfaces, więc"
-  echo "NetworkManager (i menu sieci LisaOS) ich nie obsłuży. Żeby oddać je"
+  echo "NetworkManager (i menu sieci Nirvana Desktop) ich nie obsłuży. Żeby oddać je"
   echo "NetworkManagerowi, zostaw tam tylko 'lo' i uruchom: sudo service network-manager restart"
 fi
 
@@ -150,29 +165,29 @@ if [ -n "$LOGOWANIE" ]; then
   krok "Ekran logowania LightDM"
   DEBIAN_FRONTEND=noninteractive apt-get install -y lightdm lightdm-gtk-greeter
   mkdir -p /etc/lightdm/lightdm.conf.d
-  printf '[Seat:*]\nuser-session=lisaos\n' > /etc/lightdm/lightdm.conf.d/50-lisaos.conf
-  echo "LightDM proponuje sesję LisaOS (/etc/lightdm/lightdm.conf.d/50-lisaos.conf)."
+  printf '[Seat:*]\nuser-session=nirvana\n' > /etc/lightdm/lightdm.conf.d/50-nirvana.conf
+  echo "LightDM proponuje sesję Nirvana Desktop (/etc/lightdm/lightdm.conf.d/50-nirvana.conf)."
 fi
 
 if [ -n "$XINITRC" ] && [ -n "$UZYTKOWNIK" ]; then
   DOM=$(getent passwd "$UZYTKOWNIK" | cut -d: -f6)
   if [ -f "$DOM/.xinitrc" ]; then
-    cp "$DOM/.xinitrc" "$DOM/.xinitrc.przed-lisaos"
-    echo "Poprzedni ~/.xinitrc zapisany jako ~/.xinitrc.przed-lisaos"
+    cp "$DOM/.xinitrc" "$DOM/.xinitrc.przed-nirvana"
+    echo "Poprzedni ~/.xinitrc zapisany jako ~/.xinitrc.przed-nirvana"
   fi
-  printf '#!/bin/sh\nexec /usr/bin/lisaos-session\n' > "$DOM/.xinitrc"
+  printf '#!/bin/sh\nexec /usr/bin/nirvana-session\n' > "$DOM/.xinitrc"
   chown "$UZYTKOWNIK" "$DOM/.xinitrc"
-  echo "$DOM/.xinitrc uruchamia LisaOS - wystarczy wpisać startx."
+  echo "$DOM/.xinitrc uruchamia Nirvana Desktop - wystarczy wpisać startx."
 fi
 
 krok "Gotowe"
-echo "LisaOS jest zainstalowany ($(dpkg-query -W -f '${Version}' lisaos))."
+echo "Nirvana Desktop jest zainstalowany ($(dpkg-query -W -f '${Version}' nirvana))."
 dm=
 for d in lightdm sddm gdm3 slim lxdm xdm wdm; do [ -x "/etc/init.d/$d" ] && dm=$d; done
 if [ -n "$dm" ]; then
-  echo "Wyloguj się i wybierz sesję \"LisaOS\" na ekranie logowania ($dm)."
+  echo "Wyloguj się i wybierz sesję \"Nirvana Desktop\" na ekranie logowania ($dm)."
 else
-  echo "Uruchom z konsoli:  startx /usr/bin/lisaos-session"
+  echo "Uruchom z konsoli:  startx /usr/bin/nirvana-session"
   echo "(albo zainstaluj ekran logowania: sudo $0 --logowanie)"
 fi
-echo "Usunięcie:          sudo apt remove lisaos"
+echo "Usunięcie:          sudo apt remove nirvana"
