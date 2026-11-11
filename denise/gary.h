@@ -1,14 +1,14 @@
-// Nirvana Desktop - gary: przełącznik aplikacji (menu aplikacji w prawym górnym rogu)
+// Nirvana Desktop - gary: the application switcher (the application menu in the top right corner)
 //
-// Na razie mieszka w procesie Ramblera, bo to on rysuje globalny pasek menu.
-// Działa na standardzie EWMH, więc pokazuje aplikacje pod Insightem i pod
-// innymi pulpitami (GNOME, KDE, Openbox):
-//   * lista okien:        _NET_CLIENT_LIST
-//   * aktywne okno:       _NET_ACTIVE_WINDOW
-//   * ukrywanie:          WM_CHANGE_STATE (IconicState), stan _NET_WM_STATE_HIDDEN
-//   * przywracanie:       _NET_ACTIVE_WINDOW
-//   * zamykanie:          _NET_CLOSE_WINDOW
-// Aplikacja = grupa okien o tej samej klasie WM_CLASS.
+// For now it lives in the Rambler process, because Rambler draws the global menu bar.
+// It works on the EWMH standard, so it shows applications under Insight and under
+// other desktops (GNOME, KDE, Openbox):
+// * window list:       _NET_CLIENT_LIST
+// * active window:     _NET_ACTIVE_WINDOW
+// * hiding:            WM_CHANGE_STATE (IconicState), the _NET_WM_STATE_HIDDEN state
+// * restoring:         _NET_ACTIVE_WINDOW
+// * closing:           _NET_CLOSE_WINDOW
+// An application = a group of windows with the same WM_CLASS.
 #pragma once
 
 #include <FL/Fl_Image.H>
@@ -19,33 +19,36 @@
 namespace gary {
 
 struct App {
-  std::string cls;            // WM_CLASS (klucz grupy)
-  std::string name;           // nazwa do wyświetlenia
-  std::string icon_file;      // ikona z AppImage (jeśli to aplikacja uruchomiona z Ramblera)
-  std::vector<Window> wins;   // okna tej aplikacji (kolejność z menedżera okien)
-  bool hidden = false;        // wszystkie okna ukryte
+  std::string cls;            // WM_CLASS (the group key)
+  std::string name;           // display name
+  std::string icon_file;      // icon from the AppImage (if this is an application started from Rambler)
+  std::vector<Window> wins;   // windows of this application (order from the window manager)
+  bool hidden = false;        // all windows hidden
 };
 
 void init(const std::string &home);
 
-// Rambler uruchamia AppImage: pierwsza nowa klasa okien, która pojawi się
-// w ciągu kilkunastu sekund, dostaje tę nazwę i ikonę (zapamiętywane na stałe).
+// Rambler starts an AppImage: the first new window class that appears
+// within some seconds gets this name and icon (remembered permanently).
 void note_launch(const std::string &name, const std::string &icon_file);
 
-// Lista okien zmieniła się (PropertyNotify _NET_CLIENT_LIST) - przypisz nowe klasy.
+// The window list changed (PropertyNotify _NET_CLIENT_LIST) - assign the new classes.
 void clients_changed();
 
-// Aplikacje poza Ramblerem; skip(w) == true dla okien Ramblera i biurka.
+// Applications outside Rambler; skip(w) == true for Rambler and desktop windows.
 std::vector<App> list_apps(bool (*skip)(Window));
 
 Window active_window();
 bool is_hidden(Window w);
-void activate(Window w);       // pokaż (jeśli ukryte), wyciągnij na wierzch, daj fokus
-void hide(Window w);           // ukryj (zminimalizuj)
-void close(Window w);          // poproś menedżer okien o zamknięcie
+void activate(Window w);       // show (if hidden), raise, give the focus
+void hide(Window w);           // hide (minimize)
+void close(Window w);          // ask the window manager to close
 
-// Ikona okna z _NET_WM_ICON w rozmiarze size x size (nullptr, jeśli program jej nie podaje).
+// Window icon from _NET_WM_ICON at size x size (nullptr if the program does not give one).
 Fl_Image *window_icon(Window w, int size = 16);
-std::string window_title(Window w);   // _NET_WM_NAME albo WM_NAME
+// The program's icon from the .desktop file (by WM_CLASS) and the icon theme - when the window
+// has no _NET_WM_ICON or only a small one. size x size, nullptr when not found.
+Fl_Image *desktop_icon(Window w, int size = 32);
+std::string window_title(Window w);   // _NET_WM_NAME or WM_NAME
 
 } // namespace gary

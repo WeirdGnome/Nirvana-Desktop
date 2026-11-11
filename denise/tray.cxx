@@ -1,4 +1,4 @@
-// Nirvana Desktop - zasobnik systemowy: XEmbed + StatusNotifierItem (patrz tray.h)
+// Nirvana Desktop - the system tray: XEmbed + StatusNotifierItem (see tray.h)
 #include "tray.h"
 #include "platinum.h"
 #include "anim.h"
@@ -32,9 +32,9 @@ using namespace plat;
 
 namespace tray {
 
-static const int SLOT = 22;     // szerokość miejsca na jedną ikonę
-static const int ICON = 16;     // ikony StatusNotifierItem
-static const int PAD = 3;       // odstęp z lewej przed pierwszą ikoną
+static const int SLOT = 22;     // width of the place for one icon
+static const int ICON = 16;     // StatusNotifierItem icons
+static const int PAD = 3;       // gap on the left before the first icon
 
 // ---------------------------------------------------------------------------
 // Stan
@@ -42,10 +42,10 @@ static const int PAD = 3;       // odstęp z lewej przed pierwszą ikoną
 struct Slot {
   bool xembed = false;
   // XEmbed
-  Window icon = 0, box = 0;     // okno programu i nasze okienko-ramka
+  Window icon = 0, box = 0;     // the program's window and our frame window
   bool mapped = false;
   // StatusNotifierItem
-  std::string service, owner, path;   // owner: unikalna nazwa (:1.42)
+  std::string service, owner, path;   // owner: unique name (:1.42)
   std::string id, title, tip, status = "Active", icon_name, att_icon_name, theme_path, menu;
   bool item_is_menu = false;
   std::unique_ptr<Fl_RGB_Image> img;
@@ -56,7 +56,7 @@ static std::vector<std::unique_ptr<Slot>> g_slots;
 static Fl_Window *g_desk = nullptr;
 static Fl_Widget *g_area = nullptr;
 static std::function<void()> g_changed;
-static Fl_Menu_Button *g_menu = nullptr;   // ukryty przycisk do pokazywania menu dbusmenu
+static Fl_Menu_Button *g_menu = nullptr;   // hidden button for showing the dbusmenu menu
 
 static void changed() {
   if (g_area) g_area->redraw();
@@ -72,7 +72,7 @@ int width() {
 static void place_boxes();
 
 // ---------------------------------------------------------------------------
-// XEmbed: menedżer zasobnika
+// XEmbed: the tray manager
 // ---------------------------------------------------------------------------
 static Display *dpy = nullptr;
 static Window g_manager = 0;
@@ -93,7 +93,7 @@ static void update_mapped(Slot *s) {
   int fmt;
   unsigned long n = 0, after;
   unsigned char *data = nullptr;
-  bool map = true;   // bez _XEMBED_INFO: pokazujemy (tak robi większość zasobników)
+  bool map = true;   // without _XEMBED_INFO: show it (most trays do so)
   if (XGetWindowProperty(dpy, s->icon, a_xembed_info, 0, 2, False, a_xembed_info, &type, &fmt, &n, &after,
                          &data) == Success && data) {
     if (n >= 2 && fmt == 32) map = (((unsigned long *)data)[1] & XEMBED_MAPPED) != 0;
@@ -113,14 +113,14 @@ static void dock(Window icon) {
   auto s = std::make_unique<Slot>();
   s->xembed = true;
   s->icon = icon;
-  // okienka X są w pikselach - skala interfejsu (px)
+  // the X windows are in pixels - the interface scale (px)
   int h = px(MENUBAR_H - 3);
   s->box = XCreateSimpleWindow(dpy, fl_xid(g_desk), -px(SLOT), px(1), px(SLOT), h, 0, 0, bg_pixel());
   XSelectInput(dpy, icon, StructureNotifyMask | PropertyChangeMask);
-  XAddToSaveSet(dpy, icon);   // gdy Rambler zniknie, ikona wraca na okno główne zamiast zginąć
+  XAddToSaveSet(dpy, icon);   // when Rambler goes away, the icon returns to the root window instead of dying
   XReparentWindow(dpy, icon, s->box, 0, 0);
   XResizeWindow(dpy, icon, px(SLOT), h);
-  // XEMBED_EMBEDDED_NOTIFY: program wie, że został osadzony
+  // XEMBED_EMBEDDED_NOTIFY: the program knows it has been embedded
   XEvent ev{};
   ev.xclient.type = ClientMessage;
   ev.xclient.window = icon;
@@ -139,7 +139,7 @@ static void dock(Window icon) {
 }
 
 static void undock(Slot *s, bool destroyed) {
-  if (!destroyed) {   // okno programu żyje: oddajemy je na okno główne
+  if (!destroyed) {   // the program's window is alive: hand it back to the root window
     XSelectInput(dpy, s->icon, NoEventMask);
     XUnmapWindow(dpy, s->icon);
     XReparentWindow(dpy, s->icon, DefaultRootWindow(dpy), 0, 0);
@@ -166,14 +166,14 @@ static int x_events(void *event, void *) {
     break;
   case ReparentNotify:
     if (Slot *s = slot_for_icon(e->xreparent.window))
-      if (e->xreparent.parent != s->box) { s->icon = 0; undock(s, true); return 1; }   // program zabrał okno
+      if (e->xreparent.parent != s->box) { s->icon = 0; undock(s, true); return 1; }   // the program took its window away
     break;
   case PropertyNotify:
     if (e->xproperty.atom == a_xembed_info)
       if (Slot *s = slot_for_icon(e->xproperty.window)) { update_mapped(s); return 1; }
     break;
   case ConfigureNotify:
-    // programy lubią same zmieniać rozmiar ikony - trzymamy ją w ramce
+    // programs like to resize the icon themselves - we keep it in the frame
     if (Slot *s = slot_for_icon(e->xconfigure.window)) {
       int w = px(SLOT), h = px(MENUBAR_H - 3);
       if (e->xconfigure.width != w || e->xconfigure.height != h || e->xconfigure.x || e->xconfigure.y)
@@ -182,7 +182,7 @@ static int x_events(void *event, void *) {
     }
     break;
   case SelectionClear:
-    if (e->xselectionclear.window == g_manager) {   // inny zasobnik przejął selekcję
+    if (e->xselectionclear.window == g_manager) {   // another tray took over the selection
       std::vector<Slot *> xe;
       for (auto &s : g_slots) if (s->xembed) xe.push_back(s.get());
       for (auto *s : xe) undock(s, false);
@@ -207,13 +207,13 @@ static void init_xembed() {
   a_orientation = XInternAtom(dpy, "_NET_SYSTEM_TRAY_ORIENTATION", False);
   a_visual = XInternAtom(dpy, "_NET_SYSTEM_TRAY_VISUAL", False);
   a_manager = XInternAtom(dpy, "MANAGER", False);
-  if (XGetSelectionOwner(dpy, a_selection) != None) return;   // jest już inny zasobnik
+  if (XGetSelectionOwner(dpy, a_selection) != None) return;   // there is another tray already
 
   Window root = RootWindow(dpy, scr);
   g_manager = XCreateSimpleWindow(dpy, root, -1, -1, 1, 1, 0, 0, 0);
-  long orient = 0;   // poziomo
+  long orient = 0;   // horizontal
   XChangeProperty(dpy, g_manager, a_orientation, XA_CARDINAL, 32, PropModeReplace, (unsigned char *)&orient, 1);
-  // zwykły (nieprzezroczysty) wizual: ikony rysują się na tle naszej ramki
+  // a plain (opaque) visual: the icons are drawn on the background of our frame
   long vid = (long)XVisualIDFromVisual(DefaultVisual(dpy, scr));
   XChangeProperty(dpy, g_manager, a_visual, XA_VISUALID, 32, PropModeReplace, (unsigned char *)&vid, 1);
   XSelectInput(dpy, g_manager, StructureNotifyMask);
@@ -223,7 +223,7 @@ static void init_xembed() {
     g_manager = 0;
     return;
   }
-  // ogłoszenie MANAGER: programy, które czekały na zasobnik, dokują się teraz
+  // MANAGER announcement: programs that waited for a tray dock now
   XEvent ev{};
   ev.xclient.type = ClientMessage;
   ev.xclient.window = root;
@@ -242,7 +242,7 @@ void recolor() {
     if (s->xembed) {
       XSetWindowBackground(dpy, s->box, bg_pixel());
       XClearArea(dpy, s->box, 0, 0, 0, 0, False);
-      // ikony z tłem "jak rodzic" muszą się przerysować
+      // icons with a "parent relative" background have to redraw
       XClearArea(dpy, s->icon, 0, 0, 0, 0, True);
     }
   XFlush(dpy);
@@ -262,7 +262,7 @@ void shutdown() {
 }
 
 // ---------------------------------------------------------------------------
-// Ikony z motywu (StatusNotifierItem podaje zwykle nazwę ikony)
+// Icons from the theme (StatusNotifierItem usually gives an icon name)
 // ---------------------------------------------------------------------------
 static std::string icon_theme_name() {
   const char *x = getenv("XDG_CONFIG_HOME");
@@ -303,11 +303,11 @@ static std::vector<std::string> icon_bases() {
   return b;
 }
 
-// Indeks motywu: nazwa ikony -> najlepszy plik (PNG około 22 px, potem SVG).
+// Theme index: icon name -> the best file (PNG around 22 px, then SVG).
 using Index = std::map<std::string, std::pair<int, std::string>>;
 static int score(const std::string &path) {
   bool svg = path.size() > 4 && path.compare(path.size() - 4, 4, ".svg") == 0;
-  int size = 0;   // z katalogu "22x22" albo "/22/"
+  int size = 0;   // from a "22x22" or "/22/" folder
   for (size_t i = 0; i < path.size(); i++)
     if (isdigit((unsigned char)path[i]) && (i == 0 || path[i - 1] == '/')) {
       size = atoi(path.c_str() + i);
@@ -342,8 +342,8 @@ static const Index &theme_index(const std::string &theme) {
 }
 
 static std::string find_icon_exact(const std::string &name, const std::string &theme_path);
-// Jak w specyfikacji motywów ikon: brakującą ikonę zastępuje wersja "-symbolic",
-// a potem coraz krótsza nazwa ("mail-unread" -> "mail").
+// As in the icon theme specification: a missing icon is replaced by the "-symbolic" version,
+// and then by a shorter and shorter name ("mail-unread" -> "mail").
 static std::string find_icon(const std::string &name, const std::string &theme_path) {
   static std::map<std::string, std::string> cache;
   std::string key = name + "|" + theme_path;
@@ -363,7 +363,7 @@ static std::string find_icon_exact(const std::string &name, const std::string &t
   if (name.empty()) return "";
   std::error_code ec;
   if (name[0] == '/') return fs::exists(name, ec) ? name : "";
-  if (!theme_path.empty()) {   // katalog podany przez program (np. ikony w paczce AppImage)
+  if (!theme_path.empty()) {   // a folder given by the program (e.g. icons in an AppImage)
     static std::map<std::string, Index> extra;
     auto &idx = extra[theme_path];
     if (idx.empty()) index_dir(theme_path, idx);
@@ -386,7 +386,7 @@ static std::string find_icon_exact(const std::string &name, const std::string &t
   return "";
 }
 
-// Obraz RGBA 16x16 z pliku; ikony "symboliczne" przyjmują kolor tekstu paska.
+// A 16x16 RGBA image from a file; "symbolic" icons take the bar's text color.
 static Fl_RGB_Image *load_icon(const std::string &file, bool symbolic) {
   static bool reg = false;
   if (!reg) { fl_register_images(); reg = true; }
@@ -399,7 +399,7 @@ static Fl_RGB_Image *load_icon(const std::string &file, bool symbolic) {
     Fl_Image *c = src->copy(ICON, ICON);
     if (auto *r = dynamic_cast<Fl_RGB_Image *>(c)) {
       r->normalize();
-      // przepisujemy do RGBA, żeby niezależnie od formatu mieć ten sam układ
+      // rewritten to RGBA so the layout is the same whatever the format
       int d = r->d(), ld = r->ld() ? r->ld() : r->data_w() * d;
       auto *px = new uchar[ICON * ICON * 4];
       const uchar *sp = (const uchar *)r->data()[0];
@@ -422,7 +422,7 @@ static Fl_RGB_Image *load_icon(const std::string &file, bool symbolic) {
   return out;
 }
 
-// IconPixmap: ARGB32 w kolejności sieciowej (A R G B), kilka rozmiarów do wyboru.
+// IconPixmap: ARGB32 in network order (A R G B), several sizes to choose from.
 struct Pixmap { int w = 0, h = 0; std::vector<uchar> argb; };
 static Fl_RGB_Image *from_pixmap(const Pixmap &p) {
   if (p.w <= 0 || p.h <= 0 || (int)p.argb.size() < p.w * p.h * 4) return nullptr;
@@ -441,7 +441,7 @@ static Fl_RGB_Image *from_pixmap(const Pixmap &p) {
 }
 
 // ---------------------------------------------------------------------------
-// D-Bus: StatusNotifierWatcher (gdy trzeba) i StatusNotifierHost
+// D-Bus: StatusNotifierWatcher (when needed) and StatusNotifierHost
 // ---------------------------------------------------------------------------
 static DBusConnection *bus = nullptr;
 static bool g_own_watcher = false;
@@ -470,7 +470,7 @@ static void emit(const char *member, const std::string &arg) {
   dbus_message_unref(m);
 }
 
-// --- odczyt odpowiedzi -------------------------------------------------------
+// --- reading replies ---------------------------------------------------------
 static std::string iter_string(DBusMessageIter *it) {
   int t = dbus_message_iter_get_arg_type(it);
   if (t == DBUS_TYPE_STRING || t == DBUS_TYPE_OBJECT_PATH) {
@@ -495,7 +495,7 @@ static int iter_int(DBusMessageIter *it) {
   }
   return 0;
 }
-// a(iiay): wybieramy rozmiar najbliższy ikonie (najlepiej nie mniejszy)
+// a(iiay): choose the size closest to the icon (preferably not smaller)
 static Pixmap iter_pixmap(DBusMessageIter *arr) {
   Pixmap best;
   if (dbus_message_iter_get_arg_type(arr) != DBUS_TYPE_ARRAY) return best;
@@ -517,7 +517,7 @@ static Pixmap iter_pixmap(DBusMessageIter *arr) {
       dbus_message_iter_get_fixed_array(&bytes, &data, &n);
       if (data && n) p.argb.assign(data, data + n);
     }
-    auto better = [](const Pixmap &a, const Pixmap &b) {   // czy a lepszy od b
+    auto better = [](const Pixmap &a, const Pixmap &b) {   // is a better than b
       if (!b.w) return true;
       bool ab = a.w >= ICON, bb = b.w >= ICON;
       if (ab != bb) return ab;
@@ -566,12 +566,12 @@ static void apply_props(Slot *s, DBusMessage *reply) {
     else if (k == "ToolTip" && dbus_message_iter_get_arg_type(&v) == DBUS_TYPE_STRUCT) {
       DBusMessageIter st;
       dbus_message_iter_recurse(&v, &st);
-      dbus_message_iter_next(&st);   // nazwa ikony
-      dbus_message_iter_next(&st);   // piksmapy
+      dbus_message_iter_next(&st);   // icon name
+      dbus_message_iter_next(&st);   // pixmaps
       std::string title = iter_string(&st);
       dbus_message_iter_next(&st);
       std::string desc = iter_string(&st);
-      // opis bywa w HTML-u (KDE) - zostawiamy pierwszą linię bez znaczników
+      // the description is sometimes HTML (KDE) - keep the first line without tags
       std::string plain;
       bool tag = false;
       for (char c : desc) {
@@ -636,7 +636,7 @@ static std::string name_owner(const std::string &name) {
   return owner;
 }
 
-// "usługa" albo "usługa/ścieżka" albo sama "/ścieżka" (wtedy usługa = nadawca)
+// "service" or "service/path" or just "/path" (then service = sender)
 static void add_item(std::string service, const std::string &sender) {
   std::string path = "/StatusNotifierItem";
   if (!service.empty() && service[0] == '/') { path = service; service = sender; }
@@ -645,7 +645,7 @@ static void add_item(std::string service, const std::string &sender) {
   std::string owner = name_owner(service);
   if (owner.empty()) return;
   for (auto &s : g_slots)
-    if (!s->xembed && s->owner == owner && s->path == path) return;   // już jest
+    if (!s->xembed && s->owner == owner && s->path == path) return;   // already there
   auto s = std::make_unique<Slot>();
   s->service = service;
   s->owner = owner;
@@ -672,7 +672,7 @@ static void remove_owner(const std::string &name) {
   if (any) changed();
 }
 
-// --- Watcher: właściwości i introspekcja ------------------------------------
+// --- Watcher: properties and introspection ------------------------------------
 static void append_variant_items(DBusMessageIter *it) {
   DBusMessageIter v, a;
   dbus_message_iter_open_container(it, DBUS_TYPE_VARIANT, "as", &v);
@@ -787,7 +787,7 @@ static DBusHandlerResult filter(DBusConnection *, DBusMessage *m, void *) {
                               &new_o, DBUS_TYPE_INVALID) && new_o && !*new_o)
       remove_owner(name);
   } else if (!strcmp(iface, ITEM_IFACE)) {
-    // NewIcon, NewTitle, NewStatus, NewToolTip...: pobieramy właściwości od nowa
+    // NewIcon, NewTitle, NewStatus, NewToolTip...: fetch the properties again
     const char *sender = dbus_message_get_sender(m), *path = dbus_message_get_path(m);
     if (sender && path)
       if (Slot *s = find_item(sender, path)) fetch_props(s);
@@ -806,7 +806,7 @@ static DBusHandlerResult filter(DBusConnection *, DBusMessage *m, void *) {
         }
     }
   }
-  return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;   // inni też mogą chcieć ten sygnał
+  return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;   // others may want this signal too
 }
 
 static void dispatch_now() {
@@ -838,8 +838,8 @@ static void init_sni() {
   dbus_error_free(&e);
   if (g_own_watcher) {
     emit("StatusNotifierHostRegistered", "");
-    // Po restarcie Ramblera (Resetuj Nirvanę) ikony już są na szynie - nie każdy
-    // program rejestruje się ponownie, więc zbieramy je sami po nazwie usługi.
+    // After Rambler restarts (Reset Nirvana) the icons are already on the bus - not every
+    // program registers again, so we collect them ourselves by service name.
     DBusMessage *m = dbus_message_new_method_call("org.freedesktop.DBus", "/org/freedesktop/DBus",
                                                   "org.freedesktop.DBus", "ListNames");
     DBusMessage *rep = dbus_connection_send_with_reply_and_block(bus, m, 2000, &e);
@@ -858,7 +858,7 @@ static void init_sni() {
       dbus_message_unref(rep);
     }
   } else {
-    // obcy watcher (np. KDE): zgłaszamy się jako host i bierzemy jego listę
+    // a foreign watcher (e.g. KDE): register as a host and take its list
     dbus_bus_add_match(bus, "type='signal',interface='org.kde.StatusNotifierWatcher'", nullptr);
     DBusMessage *m = dbus_message_new_method_call(WATCHER, WATCHER_PATH, WATCHER, "RegisterStatusNotifierHost");
     const char *h = host.c_str();
@@ -892,7 +892,7 @@ static void init_sni() {
 }
 
 // ---------------------------------------------------------------------------
-// dbusmenu: menu kontekstowe ikony jako menu Platinum
+// dbusmenu: the icon's context menu as a Platinum menu
 // ---------------------------------------------------------------------------
 struct MenuNode {
   int id = 0;
@@ -948,7 +948,7 @@ static void parse_node(DBusMessageIter *st, MenuNode &n) {   // (ia{sv}av)
 static bool get_layout(const Slot &s, MenuNode &root) {
   DBusError e;
   dbus_error_init(&e);
-  // AboutToShow daje programowi szansę uzupełnić menu (np. listę okien)
+  // AboutToShow gives the program a chance to fill in the menu (e.g. a window list)
   DBusMessage *m = dbus_message_new_method_call(s.owner.c_str(), s.menu.c_str(), "com.canonical.dbusmenu",
                                                 "AboutToShow");
   dbus_int32_t zero = 0;
@@ -972,14 +972,14 @@ static bool get_layout(const Slot &s, MenuNode &root) {
   if (!r) return false;
   bool ok = false;
   if (dbus_message_iter_init(r, &it)) {
-    dbus_message_iter_next(&it);   // numer wersji układu
+    dbus_message_iter_next(&it);   // layout revision number
     if (dbus_message_iter_get_arg_type(&it) == DBUS_TYPE_STRUCT) { parse_node(&it, root); ok = true; }
   }
   dbus_message_unref(r);
   return ok;
 }
 
-// Etykieta dbusmenu ("_Zakończ") -> FLTK ("&Zakończ"); '&' trzeba podwoić.
+// A dbusmenu label ("_Quit") -> FLTK ("&Quit"); '&' has to be doubled.
 static std::string fltk_label(const std::string &l) {
   std::string o;
   for (size_t i = 0; i < l.size(); i++) {
@@ -992,7 +992,7 @@ static std::string fltk_label(const std::string &l) {
   return o;
 }
 
-static std::deque<std::string> g_labels;   // teksty pozycji menu - muszą żyć, dopóki menu jest otwarte
+static std::deque<std::string> g_labels;   // menu item texts - they must live as long as the menu is open
 static void build_items(const MenuNode &n, std::vector<Fl_Menu_Item> &out) {
   for (size_t i = 0; i < n.kids.size(); i++) {
     const MenuNode &k = n.kids[i];
@@ -1013,7 +1013,7 @@ static void build_items(const MenuNode &n, std::vector<Fl_Menu_Item> &out) {
       it.flags |= FL_SUBMENU;
       out.push_back(it);
       build_items(k, out);
-      out.push_back(Fl_Menu_Item{});   // koniec podmenu
+      out.push_back(Fl_Menu_Item{});   // end of a submenu
     } else {
       out.push_back(it);
     }
@@ -1049,7 +1049,7 @@ static bool show_menu(Slot *s, int sx) {
   items.push_back(Fl_Menu_Item{});
   g_menu->menu(items.data());
   std::string owner = s->owner, path = s->path;
-  // menu rozwija się pod ikoną, jak pozostałe menu paska
+  // the menu drops down below the icon, like the other menus of the bar
   const Fl_Menu_Item *picked = g_menu->Fl_Menu_::menu()->pulldown(sx, 0, SLOT, MENUBAR_H - 1, nullptr, g_menu);
   g_menu->menu(nullptr);
   if (picked && !picked->submenu())
@@ -1057,7 +1057,7 @@ static bool show_menu(Slot *s, int sx) {
   return true;
 }
 
-// Activate / SecondaryActivate / ContextMenu (x, y w pikselach ekranu)
+// Activate / SecondaryActivate / ContextMenu (x, y in screen pixels)
 static bool call_xy(const Slot &s, const char *method, int x, int y) {
   DBusMessage *m = dbus_message_new_method_call(s.owner.c_str(), s.path.c_str(), ITEM_IFACE, method);
   dbus_int32_t xx = x, yy = y;
@@ -1084,7 +1084,7 @@ static void scroll(const Slot &s, int delta) {
 }
 
 // ---------------------------------------------------------------------------
-// Widget na pasku menu
+// Widget in the menu bar
 // ---------------------------------------------------------------------------
 class Area : public Fl_Widget {
 public:
@@ -1108,11 +1108,11 @@ public:
     for (auto &s : g_slots) {
       if (!s->shown()) continue;
       int sx = slot_x(i++);
-      if (s->xembed) continue;   // okienko programu leży na wierzchu
+      if (s->xembed) continue;   // the program's window lies on top
       bool down = s.get() == pressed_;
       if (down) { fl_color(SEL); fl_rectf(sx, y(), SLOT, h() - 1); }
       if (s->img) s->img->draw(sx + (SLOT - ICON) / 2, y() + (h() - 1 - ICON) / 2);
-      else {   // brak ikony: pierwsza litera nazwy w ramce
+      else {   // no icon: the first letter of the name in a frame
         std::string t = !s->title.empty() ? s->title : s->id;
         char c[8] = "?";
         if (!t.empty()) snprintf(c, sizeof c, "%c", toupper((unsigned char)t[0]));
@@ -1192,7 +1192,7 @@ private:
   Slot *pressed_ = nullptr, *tip_ = nullptr;
 };
 
-// Okienka XEmbed stoją dokładnie nad swoimi miejscami w widgecie.
+// The XEmbed windows stand exactly above their places in the widget.
 static void place_boxes() {
   if (!g_area || !dpy) return;
   auto *a = (Area *)g_area;
@@ -1222,7 +1222,7 @@ Fl_Widget *make(int X, int Y, int H) {
 void init(Fl_Window *desk, std::function<void()> on_changed) {
   g_desk = desk;
   g_changed = std::move(on_changed);
-  if (getenv("NIRVANA_BEZ_ZASOBNIKA")) return;
+  if (getenv("NIRVANA_NO_TRAY")) return;
   init_xembed();
   if (g_manager) Fl::add_system_handler(x_events, nullptr);
   init_sni();

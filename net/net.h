@@ -1,12 +1,12 @@
-// Nirvana Desktop - sieć: Wi-Fi, Ethernet i inne połączenia przez NetworkManager
+// Nirvana Desktop - network: Wi-Fi, Ethernet and other connections through NetworkManager
 //
-// Odczyty idą przez nmcli w trybie "terse" (LC_ALL=C, żeby stany nie były
-// tłumaczone), długie operacje (łączenie, skanowanie) w tle przez Fl::add_fd,
-// a połączenie z hasłem przez D-Bus (AddAndActivateConnection) - hasło nie
-// trafia do linii poleceń, którą widać w `ps`.
+// Reads go through nmcli in "terse" mode (LC_ALL=C, so the states are not
+// translated), long operations (connecting, scanning) in the background through Fl::add_fd,
+// and a connection with a password through D-Bus (AddAndActivateConnection) - the password
+// never lands on a command line visible in `ps`.
 //
-// Zmiany na bieżąco: proces `nmcli monitor` w tle; każda jego linia to sygnał
-// "coś się zmieniło", po którym odświeżamy stan.
+// Live changes: an `nmcli monitor` process in the background; each of its lines is a signal
+// "something changed", after which we refresh the state.
 #pragma once
 
 #include <functional>
@@ -19,98 +19,98 @@ enum class DevState { Unavailable, Disconnected, Connecting, Connected, Unmanage
 
 struct Device {
   std::string iface, type;       // type: ethernet, wifi, gsm, bridge, ...
-  std::string connection;        // nazwa aktywnego profilu
+  std::string connection;        // name of the active profile
   std::string raw_state;
   DevState state = DevState::Disconnected;
 };
 
-struct Network {                 // sieć Wi-Fi widoczna w okolicy
+struct Network {                 // a Wi-Fi network visible nearby
   std::string ssid, security, bssid, device;
   int signal = 0;                // 0-100
   bool in_use = false;
-  bool known = false;            // jest zapisany profil
+  bool known = false;            // there is a saved profile
   bool secured() const { return !security.empty() && security != "--"; }
   bool enterprise() const { return security.find("802.1X") != std::string::npos; }
 };
 
 struct Details {
   std::string ip4, gateway, dns, hwaddr, speed, ip6;
-  std::string method;            // auto | manual (z profilu)
+  std::string method;            // auto | manual (from the profile)
 };
 
-struct Vpn {                     // profil VPN (wtyczka NetworkManagera albo WireGuard)
+struct Vpn {                     // a VPN profile (NetworkManager plugin or WireGuard)
   std::string name, uuid;
   std::string kind;              // openvpn, wireguard, openconnect, vpnc, pptp, l2tp, ...
   bool active = false, activating = false;
 };
 
 struct State {
-  bool available = false;        // NetworkManager działa
-  std::string problem;           // dlaczego niedostępny
+  bool available = false;        // NetworkManager is running
+  std::string problem;           // why it is unavailable
   bool wifi_hw = false, wifi_on = false;
   bool wwan_on = true;
-  bool airplane() const { return !wifi_on && !wwan_on; }   // wszystkie radia wyłączone
+  bool airplane() const { return !wifi_on && !wwan_on; }   // all radios off
   std::vector<Vpn> vpns;
-  std::string hotspot_ssid;      // niepuste: ta maszyna udostępnia sieć Wi-Fi
-  std::vector<Device> devices;   // bez lo i urządzeń niezarządzanych
-  std::vector<Network> networks; // jedna pozycja na SSID (najsilniejsza)
-  std::vector<std::string> saved_wifi;   // nazwy zapisanych profili Wi-Fi
+  std::string hotspot_ssid;      // non-empty: this machine shares a Wi-Fi network
+  std::vector<Device> devices;   // without lo and unmanaged devices
+  std::vector<Network> networks; // one entry per SSID (the strongest)
+  std::vector<std::string> saved_wifi;   // names of the saved Wi-Fi profiles
 };
 
-bool installed();                // czy jest nmcli
-State query();                   // szybki odczyt (bez skanowania)
+bool installed();                // is nmcli there
+State query();                   // a quick read (no scanning)
 Details details(const std::string &iface);
 const char *type_name(const std::string &type);   // "Wi-Fi", "Ethernet", ...
 const char *state_name(DevState s);
-int bars(int signal);            // 0-4 kreski
+int bars(int signal);            // 0-4 bars
 
-// Najważniejsze połączenie do pokazania na pasku menu.
-// (nie "None" - to makro X11)
+// The most important connection to show in the menu bar.
+// (not "None" - that is an X11 macro)
 struct Summary {
-  enum Kind { Brak, Wifi, Wired, Other } kind = Brak;
+  enum Kind { NoNetwork, Wifi, Wired, Other } kind = NoNetwork;
   bool connecting = false;
   int signal = 0;
   std::string name;
-  std::string vpn;                // nazwa aktywnego VPN (kłódka na ikonie)
+  std::string vpn;                // name of the active VPN (padlock on the icon)
 };
 Summary summary(const State &s);
 
-extern const char *const NEED_PASSWORD;   // komunikat: trzeba zapytać o hasło
+extern const char *const NEED_PASSWORD;   // message: the password has to be asked for
 
-// Operacje w tle; po zakończeniu done(ok, komunikat po polsku).
+// Background operations; when finished done(ok, message in the interface language).
 using Done = std::function<void(bool ok, const std::string &msg)>;
 void rescan();
 void set_wifi(bool on, Done done);
 void connect_device(const std::string &iface, Done done);
 void disconnect_device(const std::string &iface, Done done);
-// Łączenie z siecią Wi-Fi. password puste: sieć otwarta albo zapisana.
-// hidden: sieć ukryta (bez rozgłaszanego SSID).
+// Connecting to a Wi-Fi network. Empty password: an open or saved network.
+// hidden: a hidden network (no broadcast SSID).
 void connect_wifi(const std::string &ssid, const std::string &security,
                   const std::string &password, bool hidden, Done done);
 void forget(const std::string &connection, Done done);
-// IPv4 profilu: manual=false -> DHCP; address w postaci 192.168.1.10/24.
+// The profile's IPv4: manual=false -> DHCP; address as 192.168.1.10/24.
 void set_ipv4(const std::string &connection, bool manual, const std::string &address,
               const std::string &gateway, const std::string &dns, Done done);
 
-// Tryb samolotowy: wyłącza (albo włącza) wszystkie radia - Wi-Fi i modem.
+// Airplane mode: turns all radios off (or on) - Wi-Fi and modem.
 void set_airplane(bool on, Done done);
 
 // --- VPN ---
 const char *vpn_kind_name(const std::string &kind);      // "OpenVPN", "WireGuard", ...
-std::vector<std::string> vpn_plugins();                   // zainstalowane wtyczki (bez WireGuard)
-// Import pliku konfiguracji: .conf z [Interface] -> WireGuard, .ovpn -> OpenVPN,
-// .pcf -> Cisco VPNC. Po imporcie done(ok, nazwa profilu albo błąd).
+std::vector<std::string> vpn_plugins();                   // installed plugins (without WireGuard)
+// Importing a configuration file: .conf with [Interface] -> WireGuard, .ovpn -> OpenVPN,
+// .pcf -> Cisco VPNC. After the import done(ok, profile name or error).
 void vpn_import(const std::string &file, Done done);
-std::string vpn_username(const std::string &uuid);       // z vpn.data (OpenVPN itp.)
-// Połącz; password niepuste -> przekazane plikiem haseł (passwd-file) z prawami 0600.
+std::string vpn_username(const std::string &uuid);       // from vpn.data (OpenVPN etc.)
+// Connect; a non-empty password is passed through a password file (passwd-file) with mode 0600.
 void vpn_up(const std::string &uuid, const std::string &user, const std::string &password, Done done);
 void vpn_down(const std::string &uuid, Done done);
 void remove_connection(const std::string &uuid, Done done);
 
-// --- Hotspot: udostępnianie połączenia przez Wi-Fi (WPA2, IPv4 "shared") ---
+// --- Hotspot: sharing the connection over Wi-Fi (WPA2, IPv4 "shared") ---
 void hotspot(const std::string &ssid, const std::string &password, Done done);
 
-// Obserwowanie zmian (nmcli monitor). changed wołane z opóźnieniem ~0,3 s.
+// Watching for changes (nmcli monitor). changed is called with a ~0.3 s delay.
 void watch(std::function<void()> changed);
 
 }  // namespace net

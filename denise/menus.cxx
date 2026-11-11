@@ -1,11 +1,12 @@
-// Nirvana Desktop - Rambler: akcje menu Nirvana, Okno, Ikony i Narzędzia
+// Nirvana Desktop - Rambler: actions of the Nirvana, Window, Icons and Special menus
 //
-// Układ menu według specyfikacji (w duchu Workbencha):
-//   Nirvana    - polecenia całego systemu (preferencje, wykonaj polecenie, dziennik,
-//                Nirvana Shell, przerysuj/uaktualnij wszystko, uśpij, restart, zakończ)
-//   Okno       - aktywne okno folderu (nowy folder, rodzic, widok, sortowanie, ukryte)
-//   Ikony      - zaznaczone ikony (otwórz, kopiuj, informacje, zamroź, dok)
-//   Narzędzia  - formatowanie dysku, kosz, tryb root, reset środowiska
+// Menu layout (in the spirit of the classic desktops):
+// Nirvana    - whole-system commands (about, preferences, execute command, Nirvana Shell,
+//              system log, reset)
+// System     - lock, sleep, hibernate, log out, restart, shut down
+// Window     - in each folder window: navigation, new folder, view, sorting, hidden files
+// Icons      - in each folder window: open, copy, information, snapshot, dock
+// Special    - format disk, empty Trash
 #include "desktop.h"
 
 #include "appimage.h"
@@ -57,7 +58,7 @@ static std::string config_dir() {
 }
 
 // ---------------------------------------------------------------------------
-// Formularz w oknie dialogowym Ramblera (ikona, tekst, pola, przyciski)
+// A form in a Rambler dialog window (icon, text, fields, buttons)
 // ---------------------------------------------------------------------------
 struct FormIcon : Fl_Widget {
   Entry e;
@@ -128,29 +129,33 @@ static Fl_Box *row_value(int X, int Y, int W, const std::string &t) {
 }
 
 // ---------------------------------------------------------------------------
-// Stan menu: aktywne/nieaktywne pozycje, znaczniki
+// Menu state: active/inactive items, check marks
 // ---------------------------------------------------------------------------
 std::vector<std::string> Desktop::targets() {
   std::vector<std::string> v;
   if (NWin *a = active_folder())
     for (auto &e : a->pane->view()->selection()) v.push_back(e.path);
-  if (v.empty() && !active_folder() && icon_sel_ >= 0 && icon_sel_ < (int)icons_.size() && !icons_[icon_sel_].win)
+  if (v.empty() && !active_folder() && icon_sel_ >= 0 && icon_sel_ < (int)icons_.size() && !icons_[icon_sel_].no_drop())
     v.push_back(icons_[icon_sel_].path);
   return v;
 }
 
-void Desktop::update_menu() {
-  NWin *a = active_folder();
+void Desktop::update_menu() { update_menu(menu_, nullptr); }
+
+// State of the items of menu bar m. a - the folder window the bar belongs to (nullptr:
+// the global desktop bar - then the active window or the selected desktop icon).
+void Desktop::update_menu(Fl_Menu_ *m, NWin *a) {
+  if (!a) a = active_folder();
   bool win_sel = a && !a->pane->view()->selection().empty();
-  bool desk_sel = !a && icon_sel_ >= 0 && icon_sel_ < (int)icons_.size() && !icons_[icon_sel_].win;
+  bool desk_sel = !a && icon_sel_ >= 0 && icon_sel_ < (int)icons_.size() && !icons_[icon_sel_].no_drop();
   const DeskIcon *di = desk_sel ? &icons_[icon_sel_] : nullptr;
   bool vol_sel = di && di->vol >= 0;
   bool icons_mode = a && a->pane->view()->mode() == FolderView::Icons;
-  auto act = [this](const char *path, bool on) {
-    if (auto *it = (Fl_Menu_Item *)menu_->find_item(plat::tr_path(path).c_str())) { if (on) it->activate(); else it->deactivate(); }
+  auto act = [m](const char *path, bool on) {
+    if (auto *it = (Fl_Menu_Item *)m->find_item(plat::tr_path(path).c_str())) { if (on) it->activate(); else it->deactivate(); }
   };
-  auto mark = [this](const char *path, bool on) {
-    if (auto *it = (Fl_Menu_Item *)menu_->find_item(plat::tr_path(path).c_str())) { if (on) it->set(); else it->clear(); }
+  auto mark = [m](const char *path, bool on) {
+    if (auto *it = (Fl_Menu_Item *)m->find_item(plat::tr_path(path).c_str())) { if (on) it->set(); else it->clear(); }
   };
   using applets::PowerAction;
   act(P_("System/Lock Screen"), applets::power_action_available(PowerAction::Lock));
@@ -158,14 +163,19 @@ void Desktop::update_menu() {
   act(P_("System/Hibernate"), applets::power_action_available(PowerAction::Hibernate));
   act(P_("System/Restart…"), applets::power_action_available(PowerAction::Restart));
   act(P_("System/Shut Down…"), applets::power_action_available(PowerAction::ShutDown));
+  act(P_("Special/Format Disk…"), vol_sel && !vols_[di->vol].optical);
+  if (m == menu_) return;   // Window and Icons exist only in folder windows
+
   bool parent_ok = false;
   if (a) {
     std::string par = fs::path(a->path).parent_path().string();
-    parent_ok = par != a->path && allowed(par) && a->path != home_;
+    parent_ok = par != a->path && allowed(par) && a->path != root_path_;
   }
   act(P_("Window/Open Parent"), parent_ok);
+  act(P_("Window/Back"), a && !a->back_hist.empty());
+  act(P_("Window/Forward"), a && !a->fwd_hist.empty());
   for (const char *p : {P_("Window/Close"), P_("Window/Update"), P_("Window/Select Contents"), P_("Window/View as"),
-                        P_("Window/Sort"), P_("Window/Icon Size"), P_("Window/Nirvana Shell Here")})
+                        P_("Window/Sort"), P_("Window/Icon Size")})
     act(p, a != nullptr);
   act(P_("Window/Clean Up"), icons_mode);
   mark(P_("Window/Show Hidden Files"), show_hidden_);
@@ -181,32 +191,190 @@ void Desktop::update_menu() {
     mark(P_("Window/Icon Size/Normal"), v->icon_size() == 32);
     mark(P_("Window/Icon Size/Large"), v->icon_size() == 64);
   }
-  bool file_sel = win_sel;
-  act(P_("Icons/Open"), win_sel || desk_sel);
-  act(P_("Icons/Copy"), file_sel);
+  act(P_("Icons/Open"), win_sel);
+  act(P_("Icons/Copy"), win_sel);
   act(P_("Icons/Paste"), !clipboard_.empty());
-  act(P_("Icons/Duplicate"), file_sel);
-  act(P_("Icons/Rename…"), file_sel);
-  act(P_("Icons/Delete"), file_sel);
-  act(P_("Icons/Information…"), win_sel || desk_sel);
-  {
-    std::vector<std::string> t = targets();
-    act(P_("Icons/Set as Wallpaper"), t.size() == 1 && is_image_file(t[0]));
+  act(P_("Icons/Duplicate"), win_sel);
+  act(P_("Icons/Rename…"), win_sel);
+  act(P_("Icons/Delete"), win_sel);
+  act(P_("Icons/Information…"), win_sel);
+  bool one_image = false, in_dock = false;
+  if (a) {
+    auto sel = a->pane->view()->selection();
+    one_image = sel.size() == 1 && is_image_file(sel[0].path);
+    for (auto &e : sel)
+      if (std::find(dock_.begin(), dock_.end(), e.path) != dock_.end()) in_dock = true;
   }
+  act(P_("Icons/Set as Wallpaper"), one_image);
   act(P_("Icons/Snapshot"), icons_mode);
   act(P_("Icons/Unsnapshot"), icons_mode);
-  bool in_dock = di && di->dock;
-  if (a)
-    for (auto &e : a->pane->view()->selection())
-      if (std::find(dock_.begin(), dock_.end(), e.path) != dock_.end()) in_dock = true;
-  act(P_("Icons/Put on Dock"), file_sel);
+  act(P_("Icons/Put on Dock"), win_sel);
   act(P_("Icons/Remove from Dock"), in_dock);
-  act(P_("Icons/Eject"), vol_sel && (vols_[di->vol].removable || !vols_[di->vol].mountpoint.empty()));
-  act(P_("Special/Format Disk…"), vol_sel && !vols_[di->vol].optical);
 }
 
-// Ikony > Ustaw jako tapetę: zapis w ustawieniach wyglądu, biurko odświeża się
-// przez _NIRVANA_WYGLAD (tak samo jak po "Zastosuj" w panelu Wygląd).
+// ---------------------------------------------------------------------------
+// Context menu of the desktop icons (right button) - the commands that used to
+// be in the Icons menu of the global bar. The same shortcuts work when the desktop has the focus.
+// ---------------------------------------------------------------------------
+namespace {
+struct DeskMenu {
+  std::vector<std::string> labels;
+  std::vector<std::function<void()>> acts;
+  std::vector<Fl_Menu_Item> items;
+  void add(const std::string &label, int shortcut, std::function<void()> f, int flags = 0) {
+    labels.push_back(label);
+    acts.push_back(std::move(f));
+    Fl_Menu_Item it{};
+    it.shortcut_ = shortcut;
+    it.user_data_ = (void *)(long)(acts.size() - 1);
+    it.flags = flags;
+    items.push_back(it);
+  }
+  void divider() { if (!items.empty()) items.back().flags |= FL_MENU_DIVIDER; }
+  Fl_Menu_Item *finish() {
+    for (size_t i = 0; i < items.size(); i++) items[i].text = labels[i].c_str();
+    items.push_back(Fl_Menu_Item{});   // end of the array
+    return items.data();
+  }
+  void run(const Fl_Menu_Item *m) {
+    if (m) { auto f = acts[(long)m->user_data()]; if (f) f(); }
+  }
+};
+}   // namespace
+
+static void build_desk_menu(Desktop *d, DeskMenu &dm, int i, bool has_win, bool has_vol, bool is_dock,
+                            bool is_trash, bool can_eject, bool can_format, std::function<void()> restore,
+                            const std::string &home, bool prefs = false) {
+  if (i < 0) {   // empty desktop
+    dm.add(_("Open Nirvana HD"), 0, [d, home] { d->open_folder(home); });
+    dm.add(_("Desktop Appearance…"), 0, [d] { d->open_appearance(); });
+    return;
+  }
+  if (has_win) { dm.add(_("Restore"), FL_COMMAND + 'o', restore); return; }
+  if (prefs) { dm.add(_("Open"), FL_COMMAND + 'o', [d] { d->open_preferences(); }); return; }
+  if (is_dock) {   // dock tile: open or unpin
+    dm.add(_("Open"), FL_COMMAND + 'o', [d] { d->open_selected(); });
+    dm.add(_("Unpin from Dock"), FL_COMMAND + 'k', [d] { d->dock_remove(); });
+    return;
+  }
+  dm.add(_("Open"), FL_COMMAND + 'o', [d] { d->open_selected(); });
+  dm.add(_("Information…"), FL_COMMAND + 'i', [d] { d->get_info(); });
+  if (is_trash) { dm.divider(); dm.add(_("Empty Trash…"), 0, [d] { d->empty_trash(); }); }
+  if (has_vol) {
+    dm.divider();
+    dm.add(_("Eject"), FL_COMMAND + 'y', [d] { d->eject_selected(); }, can_eject ? 0 : FL_MENU_INACTIVE);
+    dm.add(_("Format Disk…"), 0, [d] { d->format_disk(); }, can_format ? 0 : FL_MENU_INACTIVE);
+  }
+}
+
+// FLTK scrolls a menu that sticks out of the work area (here: into the dock), and does so
+// in the middle of event handling - a click at that moment crashes the program (an FLTK
+// 1.4 bug). So context menus are placed to fit entirely in the work area.
+// X, Y - relative to the window at position (ox, oy) on screen.
+static void fit_popup(const Fl_Menu_Item *m, int &X, int &Y, int ox, int oy) {
+  int n = m->size() - 1, wide = 0;
+  fl_font(FONT_SYSTEM, SIZE_SYSTEM);
+  for (const Fl_Menu_Item *it = m; it && it->text; it = it->next())
+    wide = std::max(wide, (int)fl_width(it->text) + 90);
+  int ih = fl_height() + Fl::menu_linespacing() + 2;
+  int H = n * ih + 16;
+  int wx, wy, ww, wh;
+  Fl::screen_work_area(wx, wy, ww, wh, ox + X, oy + Y);
+  if (oy + Y + H > wy + wh) Y = wy + wh - H - oy;
+  if (oy + Y < wy) Y = wy - oy;
+  if (ox + X + wide > wx + ww) X = wx + ww - wide - ox;
+}
+
+void Desktop::desk_context_menu(int i, int X, int Y) {
+  if (i >= (int)icons_.size()) i = -1;   // the icons may have changed in the meantime
+  icon_sel_ = i;
+  redraw();
+  DeskMenu dm;
+  if (i >= 0) {
+    const DeskIcon &ic = icons_[i];
+    unsigned long win = ic.win;
+    bool vol = ic.vol >= 0;
+    build_desk_menu(this, dm, i, win != 0, vol, ic.dock, ic.path == trash_dir() && !ic.dock,
+                    vol && (vols_[ic.vol].removable || !vols_[ic.vol].mountpoint.empty()),
+                    vol && !vols_[ic.vol].optical, [win] { gary::activate(win); }, home_, ic.prefs);
+  } else {
+    build_desk_menu(this, dm, -1, false, false, false, false, false, false, nullptr, root_path_);
+  }
+  Fl_Menu_Item *items = dm.finish();
+  fit_popup(items, X, Y, x_root(), y_root());
+  const Fl_Menu_Item *m = items->popup(X, Y, nullptr, nullptr, ctx_style_);
+  desk_target_ = true;
+  dm.run(m);
+  desk_target_ = false;
+}
+
+// Right button in a folder window: commands for the selected icons or for the window.
+void Desktop::later(std::function<void()> f) {
+  static std::vector<std::function<void()>> queue;
+  queue.push_back(std::move(f));
+  Fl::add_timeout(0.0, [](void *) {
+    auto q = std::move(queue);
+    queue.clear();
+    for (auto &x : q) x();
+  });
+}
+
+void Desktop::folder_context_menu(NWin *w, int X, int Y) {
+  if (!known(w)) return;
+  auto sel = w->pane->view()->selection();
+  bool in_dock = false;
+  for (auto &e : sel)
+    if (std::find(dock_.begin(), dock_.end(), e.path) != dock_.end()) in_dock = true;
+  DeskMenu dm;
+  if (!sel.empty()) {
+    dm.add(_("Open"), FL_COMMAND + 'o', [this] { open_selected(); });
+    dm.divider();
+    if (in_dock) dm.add(_("Unpin from Dock"), FL_COMMAND + 'k', [this] { dock_remove(); });
+    else dm.add(_("Put on Dock"), FL_COMMAND + 'l', [this] { dock_add(); });
+    dm.divider();
+    dm.add(_("Information…"), FL_COMMAND + 'i', [this] { get_info(); });
+    dm.add(_("Rename…"), FL_F + 2, [this] { rename_selected(); }, sel.size() == 1 ? 0 : FL_MENU_INACTIVE);
+    dm.add(_("Duplicate"), FL_COMMAND + 'd', [this] { duplicate(); });
+    dm.add(_("Copy"), FL_COMMAND + 'c', [this] { copy_selected(); });
+    dm.divider();
+    dm.add(_("Delete"), FL_COMMAND + FL_BackSpace, [this] { move_to_trash(); });
+  } else {
+    dm.add(_("New Folder"), FL_COMMAND + 'n', [this] { new_folder(); });
+    dm.add(_("Paste"), FL_COMMAND + 'v', [this] { paste(); }, clipboard_.empty() ? FL_MENU_INACTIVE : 0);
+    dm.divider();
+    dm.add(_("Update"), FL_COMMAND + 'r', [this] { update_window(); });
+    dm.add(_("Select Contents"), FL_COMMAND + 'a', [this] { select_all(); });
+  }
+  // folder window coordinates -> desktop ones (the menu's owner is a button on the desktop)
+  Fl_Menu_Item *items = dm.finish();
+  X += w->x() - x();
+  Y += w->y() - y();
+  fit_popup(items, X, Y, x_root(), y_root());
+  const Fl_Menu_Item *m = items->popup(X, Y, nullptr, nullptr, ctx_style_);
+  menu_target = w;
+  dm.run(m);
+  if (menu_target == w) menu_target = nullptr;
+}
+
+bool Desktop::desk_shortcut() {
+  if (icon_sel_ < 0 || icon_sel_ >= (int)icons_.size()) return false;
+  const DeskIcon &ic = icons_[icon_sel_];
+  DeskMenu dm;
+  unsigned long win = ic.win;
+  bool vol = ic.vol >= 0;
+  build_desk_menu(this, dm, icon_sel_, win != 0, vol, ic.dock, ic.path == trash_dir() && !ic.dock,
+                  vol && (vols_[ic.vol].removable || !vols_[ic.vol].mountpoint.empty()),
+                  vol && !vols_[ic.vol].optical, [win] { gary::activate(win); }, home_, ic.prefs);
+  const Fl_Menu_Item *m = dm.finish()->test_shortcut();
+  if (!m || !m->active()) return false;
+  desk_target_ = true;
+  dm.run(m);
+  desk_target_ = false;
+  return true;
+}
+
+// Icons > Set as Wallpaper: saved in the appearance settings, the desktop refreshes
+// through _NIRVANA_APPEARANCE (the same as after "Apply" in the Appearance panel).
 void Desktop::set_as_wallpaper() {
   std::vector<std::string> t = targets();
   if (t.size() != 1 || !is_image_file(t[0])) return;
@@ -227,7 +395,7 @@ void Desktop::set_as_wallpaper() {
 // ---------------------------------------------------------------------------
 // Menu Nirvana
 // ---------------------------------------------------------------------------
-void Desktop::open_preferences() { rambler_spawn({rambler_exe("nirvana-alice"), "ustawienia"}); }
+void Desktop::open_preferences() { rambler_spawn({rambler_exe("nirvana-alice"), "preferences"}); }
 
 void Desktop::execute_command() {
   static std::string last;
@@ -251,12 +419,12 @@ void Desktop::execute_command() {
     if (cmd.empty()) return;
     last = cmd;
     show_last = show->value();
-    // katalog i polecenie jako argumenty powłoki - bez sklejania cudzysłowów
+    // the folder and the command as shell arguments - no quote juggling
     const char *script = show_last
         ? "cd -- \"$1\" || exit 1; eval \"$2\"; s=$?; echo; printf \"$3\" \"$s\"; read x"
         : "cd -- \"$1\" || exit 1; eval \"$2\"";
     if (show_last)
-      rambler_spawn({rambler_exe("nirvana-shell"), "--katalog", dir, "-e", "sh", "-c", script, "sh", dir, cmd,
+      rambler_spawn({rambler_exe("nirvana-shell"), "--working-directory", dir, "-e", "sh", "-c", script, "sh", dir, cmd,
                      _("[exit code %s] Press Enter to close…")});
     else
       rambler_spawn({"sh", "-c", script, "sh", dir, cmd});
@@ -265,16 +433,36 @@ void Desktop::execute_command() {
 }
 
 void Desktop::open_log() {
-  // dziennik systemowy: journalctl (systemd), inaczej plik syslog, inaczej dmesg
-  const char *script =
-      "if command -v journalctl >/dev/null 2>&1 && journalctl -n 1 >/dev/null 2>&1; then journalctl -b -e; "
-      "elif [ -r /var/log/syslog ]; then less +G /var/log/syslog; "
-      "elif [ -r /var/log/messages ]; then less +G /var/log/messages; "
-      "else dmesg 2>&1 | less +G; fi";
-  rambler_spawn({rambler_exe("nirvana-shell"), "--katalog", home_, "-e", "sh", "-c", script});
+  // The system log, the first one that can be read:
+  //  1. journalctl (systemd),
+  //  2. /var/log/syslog or /var/log/messages (rsyslog; readable for the "adm" group),
+  //  3. dmesg (blocked for ordinary users when kernel.dmesg_restrict = 1),
+  //  4. the same files through pkexec (asks for the administrator password; only "cat"
+  //     runs as root, the viewer runs as the user),
+  //  5. at least the log of this session (~/.xsession-errors).
+  std::string script =
+      "if command -v journalctl >/dev/null 2>&1 && journalctl -n 1 >/dev/null 2>&1; then exec journalctl -b -e; fi\n"
+      "for f in /var/log/syslog /var/log/messages; do [ -r \"$f\" ] && exec less +G \"$f\"; done\n"
+      "if dmesg >/dev/null 2>&1; then dmesg | less +G; exit; fi\n"
+      "f=/var/log/syslog; [ -e $f ] || f=/var/log/messages\n"
+      "if [ -e $f ] && command -v pkexec >/dev/null 2>&1; then\n"
+      "  printf '%s\\n\\n' \"$1\"\n"
+      "  if pkexec cat \"$f\" > \"$HOME/.cache/nirvana-syslog.$$\" 2>/dev/null; then\n"
+      "    less +G \"$HOME/.cache/nirvana-syslog.$$\"; rm -f \"$HOME/.cache/nirvana-syslog.$$\"; exit; fi\n"
+      "  rm -f \"$HOME/.cache/nirvana-syslog.$$\"\n"
+      "fi\n"
+      "if [ -r \"$HOME/.xsession-errors\" ]; then\n"
+      "  { printf '%s\\n\\n' \"$2\"; cat \"$HOME/.xsession-errors\"; } | less +G\n"
+      "else printf '%s\\n' \"$3\"; read x; fi\n";
+  mkdir((home_ + "/.cache").c_str(), 0755);
+  rambler_spawn({rambler_exe("nirvana-shell"), "--working-directory", home_, "-e", "sh", "-c", script, "sh",
+                 _("The system log is readable only by the administrator. Enter the password to view it."),
+                 _("The system log is not available without administrator rights (tip: add yourself to the "
+                   "\"adm\" group). Below is the log of this session."),
+                 _("No log is available. Press Enter to close…")});
 }
 
-// Menu System - te same polecenia, co wcześniej w aplecie zasilania
+// System menu - the same commands as formerly in the power applet
 void Desktop::system_lock() { applets::power_action(applets::PowerAction::Lock); }
 void Desktop::system_sleep() { applets::power_action(applets::PowerAction::Sleep); }
 void Desktop::system_hibernate() { applets::power_action(applets::PowerAction::Hibernate); }
@@ -283,14 +471,14 @@ void Desktop::system_restart() { applets::power_action(applets::PowerAction::Res
 void Desktop::system_shutdown() { applets::power_action(applets::PowerAction::ShutDown); }
 
 // ---------------------------------------------------------------------------
-// Menu Okno
+// Window menu
 // ---------------------------------------------------------------------------
 void Desktop::open_parent() {
   NWin *a = active_folder();
   if (!a) return;
   std::string par = fs::path(a->path).parent_path().string();
-  if (par == a->path || !allowed(par) || a->path == home_) return;
-  open_folder(par);
+  if (par == a->path || !allowed(par) || a->path == root_path_) return;
+  navigate(a, par);
 }
 
 void Desktop::update_window() {
@@ -312,8 +500,8 @@ void Desktop::toggle_hidden() {
 }
 
 void Desktop::save_rambler_conf() {
-  std::ofstream(config_dir() + "/rambler.conf") << "ukryte=" << (show_hidden_ ? 1 : 0) << "\n"
-                                               << "dok_zwiniety=" << (dock_collapsed_ ? 1 : 0) << "\n";
+  std::ofstream(config_dir() + "/rambler.conf") << "show_hidden=" << (show_hidden_ ? 1 : 0) << "\n"
+                                               << "dock_collapsed=" << (dock_collapsed_ ? 1 : 0) << "\n";
 }
 
 void Desktop::set_sort(FolderView::SortKey k) {
@@ -340,7 +528,7 @@ void Desktop::icons_normal() { set_icon_size(32); }
 void Desktop::icons_large() { set_icon_size(64); }
 
 // ---------------------------------------------------------------------------
-// Menu Ikony: Informacje (Get Info / Information z Workbencha)
+// Icons menu: Information (properties of a file)
 // ---------------------------------------------------------------------------
 static std::string fmt_time(time_t t) {
   if (!t) return "—";
@@ -357,7 +545,7 @@ static std::string fmt_size(uintmax_t b) {
   if (b >= 1024) r += " (" + std::to_string(b) + " B)";
   return r;
 }
-// Rozmiar folderu - z limitem czasu, żeby duży katalog nie zamroził Ramblera.
+// Folder size - with a time limit, so a large folder does not freeze Rambler.
 static std::string folder_size(const std::string &p) {
   uintmax_t total = 0;
   long files = 0;
@@ -374,8 +562,8 @@ static std::string folder_size(const std::string &p) {
   return plat::fmt(_("%1, files: %2"), fmt_size(total), std::to_string(files));
 }
 
-// Komentarz (xattr user.xdg.comment - standard freedesktop) i parametry
-// uruchamiania (ToolTypes: user.nirvana.parametry, zapasowo plik w ~/.config).
+// Comment (xattr user.xdg.comment - the freedesktop standard) and launch
+// arguments (ToolTypes: user.nirvana.tooltypes, a file in ~/.config as a fallback).
 static std::string xattr_get(const std::string &p, const char *name, bool *supported = nullptr) {
   char buf[4096];
   ssize_t n = getxattr(p.c_str(), name, buf, sizeof buf - 1);
@@ -386,10 +574,11 @@ static bool xattr_set(const std::string &p, const char *name, const std::string 
   if (v.empty()) return removexattr(p.c_str(), name) == 0 || errno == ENODATA;
   return setxattr(p.c_str(), name, v.data(), v.size(), 0) == 0;
 }
-static std::string tooltypes_file() { return config_dir() + "/parametry"; }
+static std::string tooltypes_file() { return config_dir() + "/tooltypes"; }
 std::string tooltypes(const std::string &path) {
   bool ok = false;
-  std::string v = xattr_get(path, "user.nirvana.parametry", &ok);
+  std::string v = xattr_get(path, "user.nirvana.tooltypes", &ok);
+  if (v.empty()) v = xattr_get(path, "user.nirvana.parametry", &ok);   // written before 0.0.7
   if (!v.empty()) return v;
   std::ifstream in(tooltypes_file());
   std::string line;
@@ -400,8 +589,11 @@ std::string tooltypes(const std::string &path) {
   return "";
 }
 static void set_tooltypes(const std::string &path, const std::string &v) {
-  if (xattr_set(path, "user.nirvana.parametry", v)) return;
-  // system plików bez atrybutów rozszerzonych: zapis w pliku
+  if (xattr_set(path, "user.nirvana.tooltypes", v)) {
+    removexattr(path.c_str(), "user.nirvana.parametry");   // name used before 0.0.7
+    return;
+  }
+  // a file system without extended attributes: stored in a file
   std::vector<std::string> keep;
   std::ifstream in(tooltypes_file());
   std::string line;
@@ -414,7 +606,7 @@ static void set_tooltypes(const std::string &path, const std::string &v) {
   for (auto &l : keep) out << l << '\n';
   if (!v.empty()) out << v << '\t' << path << '\n';
 }
-// Podział parametrów jak w powłoce (spacje, cudzysłowy).
+// Splitting arguments as in the shell (spaces, quotes).
 std::vector<std::string> split_args(const std::string &s) {
   std::vector<std::string> v;
   std::string cur;
@@ -436,7 +628,7 @@ void Desktop::get_info() {
   auto t = targets();
   if (t.empty()) return;
   std::string path = t[0];
-  // dysk z biurka: pojemność i system plików
+  // a disk from the desktop: capacity and file system
   int vi = -1;
   if (!active_folder() && icon_sel_ >= 0 && icon_sel_ < (int)icons_.size()) vi = icons_[icon_sel_].vol;
   Entry e;
@@ -444,7 +636,7 @@ void Desktop::get_info() {
   e.name = fs::path(path).filename().string();
   std::error_code ec;
   e.dir = fs::is_directory(path, ec);
-  e.icon = icon_for(e.name, e.dir);
+  e.icon = icon_for_path(path, e.dir);
   e.label = e.name;
   if (NWin *a = active_folder())
     for (auto &x : a->pane->view()->selection()) if (x.path == path) e = x;
@@ -504,7 +696,7 @@ void Desktop::get_info() {
     snprintf(perm, sizeof perm, "%04o", have_st ? st.st_mode & 07777 : 0);
     row(_("Permissions:"), perm);
   }
-  // flagi i komentarz
+  // flags and comment
   Fl_Check_Button *ro = nullptr, *ex = nullptr;
   Fl_Input *comment = nullptr, *args = nullptr;
   if (vi < 0 && have_st) {
@@ -516,7 +708,7 @@ void Desktop::get_info() {
       ex = new Fl_Check_Button(vx + 136, y - 1, 140, 20, _("Program"));
       ex->labelsize(SIZE_SMALL + 1);
       ex->value((st.st_mode & S_IXUSR) != 0);
-      ex->tooltip(_("Execute permission (like the e flag in Workbench)"));
+      ex->tooltip(_("Execute permission (the e flag)"));
     }
     y += 26;
     bool xa = false;
@@ -539,7 +731,7 @@ void Desktop::get_info() {
       y += 28;
     }
   }
-  bool owner_ok = have_st && (st.st_uid == getuid() || root_);
+  bool owner_ok = have_st && st.st_uid == getuid();
   if (!owner_ok) { if (ro) ro->deactivate(); if (ex) ex->deactivate(); }
   end_form(win, W, H, ox, oy, {{_("Cancel"), nullptr}, {"OK", [this, path, ro, ex, comment, args, have_st, st] {
     std::string err;
@@ -558,7 +750,7 @@ void Desktop::get_info() {
 }
 
 // ---------------------------------------------------------------------------
-// Zamrożenie (Snapshot) i dok (Leave Out / Put Away)
+// Snapshot and the dock (Leave Out / Put Away)
 // ---------------------------------------------------------------------------
 void Desktop::snapshot() {
   NWin *a = active_folder();
@@ -566,7 +758,7 @@ void Desktop::snapshot() {
   FolderView *v = a->pane->view();
   std::vector<std::string> p;
   for (auto &e : v->selection()) p.push_back(e.path);
-  if (p.empty()) p = v->all_paths();   // nic nie zaznaczono: całe okno
+  if (p.empty()) p = v->all_paths();   // nothing selected: the whole window
   v->snapshot(p);
 }
 
@@ -584,7 +776,7 @@ void Desktop::unsnapshot() {
 
 void Desktop::load_dock() {
   dock_.clear();
-  std::ifstream in(config_dir() + "/dok");
+  std::ifstream in(config_dir() + "/dock");
   std::string line;
   std::error_code ec;
   while (std::getline(in, line))
@@ -592,7 +784,7 @@ void Desktop::load_dock() {
 }
 
 void Desktop::save_dock() {
-  std::ofstream out(config_dir() + "/dok");
+  std::ofstream out(config_dir() + "/dock");
   for (auto &p : dock_) out << p << '\n';
 }
 
@@ -618,7 +810,7 @@ void Desktop::dock_remove() {
 }
 
 // ---------------------------------------------------------------------------
-// Menu Narzędzia
+// Special menu
 // ---------------------------------------------------------------------------
 void Desktop::format_disk() {
   if (active_folder() || icon_sel_ < 0 || icon_sel_ >= (int)icons_.size() || icons_[icon_sel_].vol < 0) {
@@ -636,14 +828,14 @@ void Desktop::format_dialog(int vi) {
   NWin *win = begin_form(_("Format Disk"), W, H, &e,
                          plat::fmt(_("Formatting “%1” (%2)."), v.name, vol::human_size(v.size)), ox, oy);
   auto *warn = new Fl_Box(ox + 64, oy + 40, W - 80, 18, _("All data on this disk will be erased!"));
-  warn->labelcolor(ROOT_TINT);
+  warn->labelcolor(ALERT);
   warn->labelfont(FONT_SYSTEM);
   warn->labelsize(SIZE_SMALL + 1);
   warn->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
   auto *name = new Fl_Input(ox + 180, oy + 70, W - 196, 22, _("Name:"));
   name->box(WELL_BOX);
   name->labelsize(SIZE_SMALL + 1);
-  name->value(v.unformatted ? "DYSK" : v.name.substr(0, 11).c_str());
+  name->value(v.unformatted ? "DISK" : v.name.substr(0, 11).c_str());
   auto *fsch = new Fl_Choice(ox + 180, oy + 100, W - 196, 22, _("File system:"));
   fsch->labelsize(SIZE_SMALL + 1);
   fsch->textsize(SIZE_SMALL + 1);
@@ -671,7 +863,7 @@ void Desktop::format_dialog(int vi) {
   }}});
 }
 
-// Reset Nirvana: Insight i Rambler uruchamiają się od nowa (okna programów zostają).
+// Reset Nirvana: Insight and Rambler start again (program windows stay).
 void Desktop::reset_nirvana() {
   for (auto *w : wins_) if (w->pane) remember(w, true);
   spatial_.save();

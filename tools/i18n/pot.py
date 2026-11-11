@@ -6,7 +6,7 @@
 Run from the top directory: tools/i18n/pot.py"""
 import glob, os, re, subprocess, sys
 sys.path.insert(0, os.path.dirname(__file__))
-from literaly import literals
+from literals import literals
 
 root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 os.chdir(root)
@@ -38,4 +38,4 @@ for po in glob.glob("po/*.po"):
     subprocess.run(["msgmerge", "-q", "--update", "--backup=none", "--no-fuzzy-matching", po, pot], check=True)
     subprocess.run(["msgattrib", "--no-obsolete", "-o", po, po], check=True)
 n = len(re.findall(r'^msgid ', open(pot, encoding="utf-8").read(), re.M)) - 1
-print(f"{pot}: {n} tekstów")
+print(f"{pot}: {n} texts")

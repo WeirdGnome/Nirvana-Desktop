@@ -1,12 +1,13 @@
 // Nirvana Desktop - libplatinum
-// Wygląd "Platinum" (w duchu wytycznych Mac OS 8/9) dla FLTK 1.4.
-// Wszystkie komponenty Nirvana Desktop (insight, denise, gary, alice...) rysują
-// przez tę bibliotekę, żeby całość wyglądała spójnie.
+// The "Platinum" look (bevelled gray, in the spirit of the classic 1990s desktops) for FLTK 1.4.
+// All Nirvana Desktop components (insight, denise, gary, alice...) draw
+// through this library, so that everything looks consistent.
 #pragma once
 
 #include "i18n.h"
 
 #include <FL/Enumerations.H>
+#include <ctime>
 #include <string>
 #include <vector>
 
@@ -14,34 +15,34 @@ class Fl_RGB_Image;
 
 namespace plat {
 
-// ---- Paleta ---------------------------------------------------------------
-// Wszystkie kolory to indeksy palety FLTK, a nie wartości RGB. Dzięki temu
-// zmiana schematu (panel Wygląd) to tylko Fl::set_color() + redraw() - widgety,
-// które zapamiętały np. color(plat::GRAY), same dostają nowy kolor.
-extern Fl_Color GRAY;          // tło okien i paneli ("okno")         = FL_BACKGROUND_COLOR
-extern Fl_Color TEXT;          // tekst na tle okien ("tekst")         = FL_FOREGROUND_COLOR
-extern Fl_Color CONTENT;       // wnętrze list i pól ("tresc")         = FL_BACKGROUND2_COLOR
-extern Fl_Color SEL;           // zaznaczenie ("zaznaczenie")          = FL_SELECTION_COLOR
-extern Fl_Color CONTENT_TEXT;  // tekst w listach i polach
-extern Fl_Color SEL_TEXT;      // tekst zaznaczony
-extern Fl_Color ICON_SEL;      // tło podpisu zaznaczonej ikony
-extern Fl_Color ICON_SEL_TEXT; // tekst podpisu zaznaczonej ikony
-extern Fl_Color LIGHT;         // jasna krawędź wypukłości
-extern Fl_Color MID;           // średni cień
-extern Fl_Color SHADOW;        // ciemny cień
-extern Fl_Color DARK;          // obrys ("obramowanie")
-extern Fl_Color HILITE;        // akcent: suwak przewijania ("akcent")
-extern Fl_Color STRIPE;        // ciemne prążki paska tytułu
-extern Fl_Color TITLE_TEXT;    // tytuł aktywnego okna
-extern Fl_Color TITLE_I_TEXT;  // tytuł nieaktywnego okna
-extern Fl_Color DESK_A;        // kolor biurka
-extern Fl_Color DESK_B;        // drugi ton wzoru biurka
-extern Fl_Color ROOT_TINT;     // akcent trybu root
+// ---- Palette --------------------------------------------------------------
+// All colors are FLTK palette indexes, not RGB values. Thanks to that
+// a scheme change (Appearance panel) is just Fl::set_color() + redraw() - widgets
+// that stored e.g. color(plat::GRAY) get the new color by themselves.
+extern Fl_Color GRAY;          // window and panel background ("window") = FL_BACKGROUND_COLOR
+extern Fl_Color TEXT;          // text on the window background ("text") = FL_FOREGROUND_COLOR
+extern Fl_Color CONTENT;       // inside of lists and fields ("content") = FL_BACKGROUND2_COLOR
+extern Fl_Color SEL;           // selection ("selection")            = FL_SELECTION_COLOR
+extern Fl_Color CONTENT_TEXT;  // text in lists and fields
+extern Fl_Color SEL_TEXT;      // selected text
+extern Fl_Color ICON_SEL;      // background of a selected icon's label
+extern Fl_Color ICON_SEL_TEXT; // text of a selected icon's label
+extern Fl_Color LIGHT;         // light edge of a bevel
+extern Fl_Color MID;           // mid shadow
+extern Fl_Color SHADOW;        // dark shadow
+extern Fl_Color DARK;          // outline ("border")
+extern Fl_Color HILITE;        // accent: the scroll thumb ("accent")
+extern Fl_Color STRIPE;        // dark stripes of the title bar
+extern Fl_Color TITLE_TEXT;    // title of the active window
+extern Fl_Color TITLE_I_TEXT;  // title of an inactive window
+extern Fl_Color DESK_A;        // desktop color
+extern Fl_Color DESK_B;        // second tone of the desktop pattern
+extern Fl_Color ALERT;         // warning red
 
-// ---- Schematy kolorów i ustawienia wyglądu --------------------------------
-// Schemat to plik klucz=wartość w katalogu "schematy" (np. platinum.conf,
-// redmond97-se/ouroboros.conf); identyfikatorem jest ścieżka bez ".conf".
-enum class TitleStyle { Stripes, Solid, Gradient };
+// ---- Color schemes and appearance settings --------------------------------
+// A scheme is a key=value file in the "schemes" folder (e.g. platinum.conf,
+// redmond97-se/ouroboros.conf); its identifier is the path without ".conf".
+enum class TitleStyle { Stripes, Solid, Gradient, Glossy };   // Glossy: a glass bar with a shine
 
 struct Scheme {
   std::string id, name, source;
@@ -50,135 +51,178 @@ struct Scheme {
   unsigned sel = 0x4444AA, sel_text = 0xFFFFFF, border = 0x000000;
   unsigned title = 0xDDDDDD, title2 = 0xDDDDDD, title_text = 0x000000;
   unsigned title_i = 0xDDDDDD, title_i2 = 0xDDDDDD, title_i_text = 0x777777;
-  int icon_sel = -1, accent = -1, desk = -1;   // -1: wylicz z pozostałych
-  int light = -1, mid = -1, shadow = -1;       // -1: wylicz z koloru okna
+  int icon_sel = -1, accent = -1, desk = -1;   // -1: computed from the others
+  int light = -1, mid = -1, shadow = -1;       // -1: computed from the window color
 };
+
+// The desktop (~/.config/nirvana/desktop.conf, Preferences > Desktop)
+struct DesktopSettings {
+  bool icon_margin = true;   // zoomed and new windows leave the column of desktop icons free, with gaps
+  bool dock_room = true;     // windows stay above the dock
+};
+DesktopSettings read_desktop();
+bool write_desktop(const DesktopSettings &d);
+void notify_desktop_changed();   // Rambler and Insight follow at once (_NIRVANA_DESKTOP)
+constexpr const char *DESKTOP_ATOM = "_NIRVANA_DESKTOP";
+
+// The clock in the menu bar and its timers (~/.config/nirvana/clock.conf, Preferences > Date & Time)
+struct ClockSettings {
+  bool h24 = true;          // 24-hour clock (otherwise 3:07 PM)
+  bool seconds = false;
+  bool date = false;        // "11 Nov" before the time
+  bool weekday = false;     // "Wed" before the time
+  int work = 25, short_break = 5, long_break = 15, rounds = 4;   // pomodoro, minutes
+  bool sound = true;        // a sound when a timer ends
+  bool auto_next = false;   // pomodoro: start the next phase without asking
+};
+ClockSettings read_clock();
+bool write_clock(const ClockSettings &c);
+std::string clock_file();
+// Names for dates in the interface language (0 = January / Sunday as in struct tm)
+std::string month_name(int m);          // "January"
+std::string month_in_date(int m);       // "November" ("listopada" in Polish)
+std::string month_short(int m);         // "Jan"
+std::string weekday_name(int d);        // "Wednesday"
+std::string weekday_short(int d);       // "Wed"
+std::string weekday_letters(int d);     // "We" (calendar header)
+std::string clock_text(const ClockSettings &c, time_t t, bool with_seconds);   // "Wed 11 Nov 15:07"
 
 struct Appearance {                 // ~/.config/nirvana/wyglad.conf
-  std::string scheme = "platinum";
-  int style = -1;                   // -1: jak w schemacie, inaczej (int)TitleStyle
-  int desk = -1;                    // -1: kolor biurka ze schematu
-  std::string background = "wzor";  // wzor, kolor (jednolity), gradient
-  int desk2 = -1;                   // drugi kolor gradientu; -1: ciemniejszy odcień koloru biurka
-  std::string gradient = "pionowy"; // pionowy, poziomy, ukosny, promienisty
-  std::string pattern = "kropki";   // patrz PATTERNS
+  std::string scheme = "redmond97-se/in-tenebris";   // In Tenebris by default
+  int style = -1;                   // -1: as in the scheme, otherwise (int)TitleStyle
+  int desk = -1;                    // -1: the scheme's desktop color
+  std::string background = "pattern";  // pattern, color (solid), gradient
+  int desk2 = -1;                   // second gradient color; -1: a darker shade of the desktop color
+  std::string gradient = "vertical"; // vertical, horizontal, diagonal, radial
+  std::string pattern = "bricks";    // see PATTERNS
   bool animations = true;
-  std::string icons = "workbench";  // styl ikon: workbench (Amiga) albo platinum (Mac OS)
-  std::string wallpaper;            // plik tapety; pusty = sam wzór
-  std::string wallpaper_mode = "wypelnij";   // patrz WALLPAPER_MODES
-  int scale = 0;                    // skala interfejsu w procentach; 0 = automatycznie (Xft.dpi)
+  std::string icons = "platinum";   // icon style: retro or platinum
+  std::string wallpaper;            // wallpaper file; empty = just the pattern
+  std::string wallpaper_mode = "fill";   // see WALLPAPER_MODES
+  int scale = 0;                    // interface scale in percent; 0 = automatic (Xft.dpi)
 };
 
-// Skale do wyboru w panelu Wygląd (procenty); 0 = automatycznie
+// Scales offered in the Appearance panel (percent); 0 = automatic
 extern const int SCALES[];
-// Skala z ustawień / NIRVANA_SKALA / Xft.dpi - ustawiana w init() dla wszystkich ekranów.
+// Scale from the settings / NIRVANA_SCALE / Xft.dpi - set in init() for all screens.
 float configured_scale(const Appearance &a);
 
-std::vector<std::string> scheme_dirs();                      // kolejność wyszukiwania
-std::vector<Scheme> list_schemes();                          // posortowane, bez duplikatów
-bool load_scheme(const std::string &id, Scheme &out);        // po identyfikatorze
+std::vector<std::string> scheme_dirs();                      // search order
+std::vector<Scheme> list_schemes();                          // sorted, without duplicates
+bool load_scheme(const std::string &id, Scheme &out);        // by identifier
 bool parse_scheme(const std::string &file, Scheme &out);
 Scheme builtin_platinum();
 Appearance read_appearance();
 bool write_appearance(const Appearance &a);
 std::string appearance_file();
 
-void apply(const Scheme &s, const Appearance &a);   // ustaw paletę
-void reload_appearance();          // odczytaj ustawienia i schemat, zastosuj
+void apply(const Scheme &s, const Appearance &a);   // set the palette
+void reload_appearance();          // read the settings and the scheme, apply
 const Scheme &current_scheme();
+std::string data_file(const std::string &rel);   // a file from share/nirvana (or the source tree), "" if missing
 const Appearance &current_appearance();
 TitleStyle title_style();
 
-void polish_file_chooser();   // etykiety okna wyboru pliku FLTK po polsku
+void localize_file_chooser();   // labels of the FLTK file chooser in the interface language
 
-// Tapeta: układy, lista gotowych obrazów i tło biurka gotowe do narysowania.
-extern const char *const WALLPAPER_MODES[];        // wypelnij, dopasuj, rozciagnij, srodek, kafelki
-extern const char *const WALLPAPER_MODE_NAMES[];   // nazwy do wyświetlenia
+// Wallpaper: layouts, the list of ready images and a desktop background ready to draw.
+extern const char *const WALLPAPER_MODES[];        // fill, fit, stretch, center, tile
+extern const char *const WALLPAPER_MODE_NAMES[];   // display names
 bool is_image_file(const std::string &path);
-bool image_loadable(const std::string &path);       // czy FLTK potrafi otworzyć ten obraz
-std::vector<std::string> wallpaper_dirs();          // tapety Nirvana Desktop (share/nirvana/tapety)
-std::vector<std::string> wallpaper_candidates();    // Nirvana Desktop, systemowe, ~/Obrazy
-std::string wallpaper_title(const std::string &path);   // "Góry" z ".../Góry.jpg"
-// Biurko W x H: wzór w kolorach schematu, na nim tapeta (jeśli jest i da się wczytać).
-// *loaded = false, gdy tapety nie udało się otworzyć.
+bool image_loadable(const std::string &path);       // can FLTK open this image
+std::vector<std::string> wallpaper_dirs();          // Nirvana Desktop wallpapers (share/nirvana/wallpapers)
+std::string pictures_dir();                         // XDG_PICTURES_DIR (user-dirs.dirs), else ~/Pictures
+std::vector<std::string> wallpaper_candidates();    // Nirvana Desktop, system ones, the Pictures folder
+std::string wallpaper_title(const std::string &path);   // "Mountains" from ".../Mountains.jpg"
+// Desktop W x H: the pattern in the scheme colors, the wallpaper on top (if set and loadable).
+// *loaded = false when the wallpaper could not be opened.
 ::Fl_RGB_Image *render_desktop(const Appearance &a, int W, int H, bool *loaded = nullptr);
 
-extern const char *const BACKGROUNDS[];       // wzor, kolor, gradient
+extern const char *const BACKGROUNDS[];       // pattern, color, gradient
 extern const char *const BACKGROUND_NAMES[];
-extern const char *const GRADIENTS[];         // pionowy, poziomy, ukosny, promienisty
+extern const char *const GRADIENTS[];         // vertical, horizontal, diagonal, radial
 extern const char *const GRADIENT_NAMES[];
-unsigned gradient_second(const Appearance &a); // drugi kolor gradientu (RGB)
+unsigned gradient_second(const Appearance &a); // second gradient color (RGB)
 
-extern const char *const PATTERNS[];        // identyfikatory wzorów (nullptr na końcu)
-extern const char *const PATTERN_NAMES[];   // nazwy do wyświetlenia
-// Kafelek wzoru biurka (RGB, 8x8 albo 16x16) w kolorach DESK_A/DESK_B.
-// Wywołujący zwalnia obraz (delete).
-unsigned char *pattern_tile(const std::string &pattern, int &w, int &h);   // RGB w*h*3, zwolnij delete[]
+extern const char *const PATTERNS[];        // pattern identifiers (nullptr at the end)
+extern const char *const PATTERN_NAMES[];   // display names
+// A desktop pattern tile (RGB, 8x8 or 16x16) in the DESK_A/DESK_B colors.
+// The caller frees the image (delete).
+unsigned char *pattern_tile(const std::string &pattern, int &w, int &h);   // RGB w*h*3, free with delete[]
 
-// Powiadomienia o zmianie wyglądu: panel ustawia właściwość _NIRVANA_WYGLAD
-// na oknie głównym X, a Rambler i Insight po jej zmianie wołają
-// reload_appearance() i odświeżają okna.
-constexpr const char *APPEARANCE_ATOM = "_NIRVANA_WYGLAD";
+// Appearance change notifications: the panel sets the _NIRVANA_APPEARANCE property
+// on the X root window, and Rambler and Insight call reload_appearance()
+// when it changes and refresh their windows.
+constexpr const char *APPEARANCE_ATOM = "_NIRVANA_APPEARANCE";
 void notify_appearance_changed();
 
-// ---- Typy ramek (Fl_Boxtype) ----------------------------------------------
-extern Fl_Boxtype UP_BOX;       // wypukły panel
-extern Fl_Boxtype DOWN_BOX;     // wklęsły panel
-extern Fl_Boxtype BUTTON_BOX;   // zaokrąglony przycisk
-extern Fl_Boxtype BUTTON_DOWN;  // wciśnięty przycisk
-extern Fl_Boxtype WELL_BOX;     // "studnia" - pole tekstowe, lista
-extern Fl_Boxtype MENUBAR_BOX;  // pasek menu
-extern Fl_Boxtype THUMB_BOX;    // lawendowy suwak przewijania z rowkami
-extern Fl_Boxtype TRACK_BOX;    // tor suwaka
+// ---- Box types (Fl_Boxtype) ----------------------------------------------
+extern Fl_Boxtype UP_BOX;       // raised panel
+extern Fl_Boxtype DOWN_BOX;     // sunken panel
+extern Fl_Boxtype BUTTON_BOX;   // rounded button
+extern Fl_Boxtype BUTTON_DOWN;  // pressed button
+extern Fl_Boxtype WELL_BOX;     // "well" - text field, list
+extern Fl_Boxtype MENUBAR_BOX;  // menu bar
+extern Fl_Boxtype THUMB_BOX;    // lavender scroll thumb with grooves
+extern Fl_Boxtype TRACK_BOX;    // scroll track
 
-// ---- Czcionki ----------------------------------------------------------------
-extern Fl_Font FONT_SYSTEM;     // tytuły, menu (odpowiednik Charcoal 12)
-extern Fl_Font FONT_SMALL;      // etykiety ikon (odpowiednik Geneva 9/10)
+// ---- Fonts -------------------------------------------------------------------
+extern Fl_Font FONT_SYSTEM;     // titles, menus (like Charcoal 12)
+extern Fl_Font FONT_SMALL;      // icon labels (like Geneva 9/10)
 constexpr int SIZE_SYSTEM = 12;
 constexpr int SIZE_SMALL  = 11;
 
-// Inicjalizacja: box types, czcionki, wygląd z ~/.config/nirvana/wyglad.conf.
-// root=true włącza akcent trybu administratora.
-void init(bool root = false);
-bool root_mode();
+// Initialization: box types, fonts, the look from ~/.config/nirvana/appearance.conf.
+// Also moves old settings to the current names (migrate_old_config).
+void init();
 
-// ---- Ikony (32x32, rysowane wektorowo) ------------------------------------
+// ---- Icons (32x32, vector drawn) ------------------------------------------
 enum class Icon { Folder, OpenFolder, Document, Application, Home, Trash, TrashFull, Image, Music,
-                  HardDisk, Removable, Optical, Encrypted, Eject, Network, Wifi };
-void draw_icon(Icon icon, int x, int y, bool selected);   // w stylu z ustawień wyglądu
-bool draw_icon_workbench(Icon icon, int x, int y, bool selected);
-int icon_style();   // 0 = Workbench, 1 = Platinum (klucz dla pamięci podręcznych ikon)
+                  HardDisk, Removable, Optical, Encrypted, Eject, Network, Wifi, Preferences, Applications, Terminal,
+                  // category folders in the Applications folder (a folder with an emblem),
+                  // in the order of appimage::categories()
+                  CatGames, CatInternet, CatOffice, CatGraphics, CatMultimedia, CatDevelopment,
+                  CatEducation, CatScience, CatSystem, CatAccessories, CatOther,
+                  Last = CatOther };
+// The emblem of a category folder (0 = Games … 10 = Other) in a 14x14 box at x, y.
+// style 1 (Platinum) darkens a selected emblem, style 0 (Retro) inverts its colors.
+void draw_category_emblem(int category, int x, int y, bool selected, int style);
+void draw_icon(Icon icon, int x, int y, bool selected);   // in the style from the appearance settings
+bool draw_icon_retro(Icon icon, int x, int y, bool selected);
+int icon_style();   // 0 = Retro, 1 = Platinum (key for the icon caches)
 void draw_logo(int x, int y, int size);
+// An icon rendered to an RGBA image (e.g. a window icon for _NET_WM_ICON); delete it.
+Fl_RGB_Image *icon_image(Icon icon, int size);
 
-// Małe ikony sieci (pasek menu, listy). on - kolor zapalonych elementów,
-// off - przygaszonych.
-void draw_wifi(int x, int y, int level /*0-4, -1: wyłączone*/, Fl_Color on, Fl_Color off);   // 16x13
+// Small network icons (menu bar, lists). on - color of the lit elements,
+// off - of the dimmed ones.
+void draw_wifi(int x, int y, int level /*0-4, -1: off*/, Fl_Color on, Fl_Color off);   // 16x13
 void draw_wired(int x, int y, Fl_Color c);                       // 16x13
 void draw_signal(int x, int y, int level /*0-4*/, Fl_Color on, Fl_Color off);   // 13x10
 void draw_lock(int x, int y, Fl_Color c);                        // 7x9
-// Dźwięk i zasilanie (scale > 1 dla dużych wersji, np. w OSD).
+// Sound and power (scale > 1 for large versions, e.g. in the OSD).
 void draw_speaker(int x, int y, int level /*0-3*/, bool muted, Fl_Color c, double scale = 1);   // 16x13
 void draw_battery(int x, int y, int percent, bool charging, Fl_Color c, double scale = 1);       // 22x11
 void draw_plug(int x, int y, Fl_Color c);                        // 14x13
 void draw_sun(int x, int y, Fl_Color c, double scale = 1);       // 13x13
 void draw_display(int x, int y, Fl_Color c);
-// Gadżet głębi z Amigi (Workbench): tylny prostokąt i nachodzący na niego przedni.
+// A depth gadget: a back rectangle and a front one overlapping it.
 void draw_depth_gadget(int x, int y, bool pressed);              // 18x14
 
-// ---- Chrome okna -------------------------------------------------------------
-constexpr int TITLE_H = 20;   // wysokość paska tytułu
-constexpr int FRAME   = 5;    // grubość ramki
-constexpr int BOX     = 11;   // rozmiar przycisków na pasku tytułu
-constexpr int MENUBAR_H = 20; // wysokość globalnego paska menu
-constexpr int SCROLL_W  = 15; // szerokość pasków przewijania
+// ---- Window chrome -------------------------------------------------------------
+constexpr int TITLE_H = 20;   // title bar height
+constexpr int FRAME   = 5;    // frame thickness
+constexpr int BOX     = 13;   // size of the title bar buttons
+constexpr int MENUBAR_H = 20; // height of the global menu bar
+constexpr int SCROLL_W  = 15; // width of the scrollbars
 void draw_titlebar(int x, int y, int w, const char *title, bool active,
-                   int pressed_box = 0 /* 0 brak, 1 zamknij, 2 zoom, 3 zwiń */,
-                   int boxes = 1 /* 0: dialog bez przycisków, 1: wszystkie, 2: bez "zoom" */);
+                   int pressed_box = 0 /* 0 none, 1 close, 2 zoom, 3 iconify */,
+                   int boxes = 1 /* 0: dialog without buttons, 1: all, 2: without "zoom" */);
 void draw_frame(int x, int y, int w, int h, bool active, bool shaded);
 void draw_grow_box(int x, int y);
 
-// Pomocnicze
-std::string ellipsize(const std::string &s, int max_w);   // obcięcie tekstu z "…"
-std::string polish_items(int n);                           // "1 element", "3 elementy", "7 elementów"
+// Helpers
+std::string ellipsize(const std::string &s, int max_w);   // text cut with "…"
+std::string items_text(int n);                           // "1 item", "3 items" (with plural forms of the language)
 
 } // namespace plat

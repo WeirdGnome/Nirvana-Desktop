@@ -1,0 +1,53 @@
+#!/bin/sh
+# Nirvana Desktop - sets the time zone, the date and time, or network time. Runs as root
+# through pkexec (polkit action org.nirvana-desktop.time) for Preferences > Date & Time.
+#
+#   nirvana-time-helper timezone Europe/Warsaw
+#   nirvana-time-helper time "2026-11-11 15:07:00"
+#   nirvana-time-helper ntp on|off          (systemd: timedatectl; otherwise not available)
+#
+# The arguments are checked strictly - only a zone that exists in /usr/share/zoneinfo
+# and a date in exactly that format are accepted.
+set -u
+PATH=/usr/sbin:/usr/bin:/sbin:/bin
+export PATH
+[ "$(id -u)" = 0 ] || { echo "must run as root"; exit 1; }
+systemd() { [ -d /run/systemd/system ] && command -v timedatectl >/dev/null 2>&1; }
+
+case "${1:-}" in
+timezone)
+  z="${2:-}"
+  printf '%s' "$z" | grep -Eq '^[A-Za-z0-9_+-]+(/[A-Za-z0-9_+-]+)*$' || { echo "bad time zone: $z"; exit 2; }
+  [ -f "/usr/share/zoneinfo/$z" ] || { echo "unknown time zone: $z"; exit 2; }
+  if systemd; then
+    timedatectl set-timezone "$z"
+    exit $?
+  fi
+  ln -sf "/usr/share/zoneinfo/$z" /etc/localtime || exit 1
+  echo "$z" > /etc/timezone
+  # Debian/Devuan: keep the tzdata package configuration in step
+  [ -x /usr/sbin/dpkg-reconfigure ] && DEBIAN_FRONTEND=noninteractive dpkg-reconfigure -f noninteractive tzdata >/dev/null 2>&1
+  exit 0
+  ;;
+time)
+  t="${2:-}"
+  printf '%s' "$t" | grep -Eq '^[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}(:[0-9]{2})?$' || { echo "bad date: $t"; exit 2; }
+  if systemd; then
+    timedatectl set-time "$t"
+    exit $?
+  fi
+  date -s "$t" >/dev/null || exit 1
+  command -v hwclock >/dev/null 2>&1 && hwclock --systohc 2>/dev/null
+  exit 0
+  ;;
+ntp)
+  case "${2:-}" in on) v=true ;; off) v=false ;; *) echo "usage: ntp on|off"; exit 2 ;; esac
+  systemd || { echo "network time is managed by the time service (chrony, ntpsec, openntpd)"; exit 3; }
+  timedatectl set-ntp "$v"
+  exit $?
+  ;;
+*)
+  echo "usage: nirvana-time-helper timezone ZONE | time 'YYYY-MM-DD HH:MM[:SS]' | ntp on|off"
+  exit 2
+  ;;
+esac

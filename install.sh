@@ -17,6 +17,7 @@ set -eu
 cd "$(dirname "$(readlink -f "$0")")"
 SRC=$(pwd)
 BUILD="$SRC/build-deb"
+VERSION=$(head -n 1 "$SRC/VERSION" 2>/dev/null || echo "?")
 
 YES=; LOGIN=; XINITRC=; PACKAGE_ONLY=; UNINSTALL=; NO_X=
 for a in "$@"; do
@@ -65,7 +66,7 @@ command -v apt-get >/dev/null 2>&1 || die "this is not an apt-based system (Devu
 
 ID=; VERSION_CODENAME=; PRETTY_NAME=unknown
 [ -r /etc/os-release ] && . /etc/os-release
-echo "${B}Nirvana Desktop 0.1 - installer${R}"
+echo "${B}Nirvana Desktop $VERSION - installer${R}"
 echo "System: $PRETTY_NAME"
 if [ "$ID" != devuan ] || [ "$VERSION_CODENAME" != excalibur ]; then
   echo "This installer is made for Devuan 6 \"Excalibur\" (Debian 13)."
@@ -80,7 +81,8 @@ available() { apt-cache show "$1" >/dev/null 2>&1; }
 BUILD_DEPS="build-essential cmake git pkg-config gettext dpkg-dev file
   libx11-dev libxext-dev libxft-dev libxinerama-dev libxcursor-dev libxfixes-dev
   libxrender-dev libxss-dev libfontconfig-dev libdbus-1-dev
-  libpng-dev libjpeg-dev zlib1g-dev"
+  libpng-dev libjpeg-dev zlib1g-dev
+  libgl-dev libxcomposite-dev libxdamage-dev"
 
 if [ "$ME" = 0 ]; then
   step "Updating the package lists"
@@ -116,7 +118,7 @@ dpkg-deb -f "$DEB" Depends | sed 's/^/  Depends: /'
 
 if [ -n "$PACKAGE_ONLY" ]; then
   echo
-  echo "To install the package:  sudo apt install $DEB"
+  echo "To install the package:  sudo apt install --reinstall $DEB"
   exit 0
 fi
 
@@ -124,22 +126,15 @@ fi
 step "Installing the nirvana package and the programs it uses"
 # apt with a local file resolves dependencies; Recommends (NetworkManager,
 # udisks2, polkit, xsecurelock...) are installed by default, missing ones skipped
-DEBIAN_FRONTEND=noninteractive apt-get install -y "$DEB"
-
-# formerly LisaOS: apt removed the old "lisaos" package (Conflicts); settings in ~
-# move on the first start; here we fix the login screen and ~/.xinitrc
-if [ -f /etc/lightdm/lightdm.conf.d/50-lisaos.conf ]; then
-  rm -f /etc/lightdm/lightdm.conf.d/50-lisaos.conf
-  printf '[Seat:*]\nuser-session=nirvana\n' > /etc/lightdm/lightdm.conf.d/50-nirvana.conf
-  echo "LightDM: the LisaOS session was replaced with Nirvana Desktop."
-fi
-if [ -n "$USER_NAME" ]; then
-  HOME_DIR=$(getent passwd "$USER_NAME" | cut -d: -f6)
-  if [ -f "$HOME_DIR/.xinitrc" ] && grep -q 'lisaos-session' "$HOME_DIR/.xinitrc"; then
-    sed -i 's/lisaos-session/nirvana-session/g' "$HOME_DIR/.xinitrc"
-    echo "$HOME_DIR/.xinitrc: lisaos-session replaced with nirvana-session."
-  fi
-fi
+# --reinstall: also when the same version is already installed (rebuilt package);
+# --allow-downgrades: the package from this folder wins even over a newer number
+# apt reads local packages as the "_apt" user, who cannot enter a home folder
+# (otherwise: "N: Download is performed unsandboxed as root") - copy it out first
+APT_DIR=$(mktemp -d /tmp/nirvana-install.XXXXXX)
+chmod 755 "$APT_DIR"
+cp "$DEB" "$APT_DIR/" && chmod 644 "$APT_DIR/$(basename "$DEB")"
+DEBIAN_FRONTEND=noninteractive apt-get install -y --reinstall --allow-downgrades "$APT_DIR/$(basename "$DEB")"
+rm -rf "$APT_DIR"
 
 if [ -z "$NO_X" ] && ! command -v Xorg >/dev/null 2>&1; then
   step "X server"

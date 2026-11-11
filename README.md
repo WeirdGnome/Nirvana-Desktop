@@ -3,19 +3,18 @@
 *[Polska wersja: README.pl.md](README.pl.md)*
 
 A lightweight desktop environment for Linux (based on a minimal Devuan) in the spirit
-of **Mac OS 9 (Platinum)** with a touch of the **Amiga**. Written in C++ and FLTK 1.4.
+of the **classic desktops of the 1990s**: bevelled gray windows, a menu bar at the top and icons
+on the desktop. Written in C++ and FLTK 1.4.
 
 - **Simple mode**: the user only sees their own Nirvana HD disk (that is `$HOME`), as on Android.
-  Applications are AppImage files in `~/Applications`; installing means dragging a file.
-- **Root mode**: the full file system and advanced settings, started through
-  `pkexec` and clearly marked (red chip in the logo, ROOT badge).
-- **Rambler, a spatial file manager** (component `nirvana-denise`): one folder = one window that remembers its position.
+  Applications are AppImage files in the hidden `~/.nirvana-apps`, opened with the
+  **Applications** icon on the desktop; installing means opening or dragging a file.
+- **Rambler, a file manager** (component `nirvana-denise`): a single window that browses folders
+  (back, forward, parent folder, location field), with its own Window and Icons menus.
 - **English by default**, Polish when the system locale is Polish (see [Languages](#languages)).
 
-> **Formerly LisaOS.** The installer removes the old `lisaos` package and fixes `~/.xinitrc`
-> and the login screen; on the first start settings, installed applications and the cache
-> move from `~/.config/lisaos`, `~/.local/share/lisaos` and `~/.cache/lisaos` to
-> `…/nirvana`. The `lisaos-session` command still works.
+> **Settings from older versions** (Polish file names and keys until 0.0.6) are moved to the
+> current English ones on the first start of a newer version.
 
 ## Components
 
@@ -23,29 +22,33 @@ of **Mac OS 9 (Platinum)** with a touch of the **Amiga**. Written in C++ and FLT
 |---------------------|----------------------------------------|-------------|
 | `nirvana-platinum`  | look library: colours, frames, icons, window chrome | prototype |
 | `nirvana-denise`    | Rambler: file manager + desktop         | prototype   |
-| `nirvana-insight`   | X11 window manager (Xorg/XLibre), Platinum frames | works (0.1) |
-| `nirvana-gary`      | application switcher (for now inside the Rambler process) | works (0.1) |
-| `nirvana-alice`     | control panels: Appearance, Network, Power | works (0.1) |
-| `nirvana-shell`     | Nirvana Shell - terminal emulator       | works (0.1) |
+| `nirvana-insight`   | X11 window manager (Xorg/XLibre), Platinum frames | works |
+| `nirvana-gary`      | application switcher (for now inside the Rambler process) | works |
+| `nirvana-alice`     | control panels: Appearance, Network, Power, Date & Time, Shader | works |
+| `nirvana-shader`    | full-screen GLSL effects (a small compositor) | works |
+| `nirvana-shell`     | Nirvana Shell - terminal emulator       | works |
 | `nirvana-paula`     | sound                                   | planned     |
 | `nirvana-kickstart` | login and session start                 | planned     |
-| `nirvana-guru`      | error window, root mode                 | planned     |
+| `nirvana-guru`      | error window                            | planned     |
 
 ## Installing on Devuan 6 "Excalibur" (Debian 13)
 
 Unpack the sources and run the installer:
 
-    tar xzf nirvana-0.1.tar.gz && cd nirvana
+    tar xzf nirvana-desktop-0.0.21.tar.gz && cd nirvana-desktop
     sudo ./install.sh                 # or: sudo ./install.sh --login-screen
 
 The installer:
 
 1. installs the build tools and libraries (apt),
 2. builds Nirvana Desktop (the first time it downloads FLTK 1.4 from GitHub – internet needed),
-3. creates the package `build-deb/nirvana_0.1.0_amd64.deb` and installs it with apt –
+3. creates the package `build-deb/nirvana_<version>_amd64.deb` and installs it with apt –
    together with the programs Nirvana Desktop uses: NetworkManager, udisks2, polkit
    with the `lxpolkit` agent, PulseAudio/PipeWire, bubblewrap, xsecurelock…
 4. adds the X server if it is missing and offers PipeWire if there is no sound.
+
+The version number is in the `VERSION` file and goes up with every released package. Running
+the installer from a newer package replaces the installed version.
 
 Options:
 
@@ -73,10 +76,11 @@ Dependencies (Devuan/Debian):
 
     sudo apt install build-essential cmake git libx11-dev libxft-dev \
         libxinerama-dev libxcursor-dev libxfixes-dev libxrender-dev \
-        squashfs-tools bubblewrap libdbus-1-dev udisks2 polkitd pkexec \
+        squashfs-tools bubblewrap libdbus-1-dev udisks2 polkitd \
         network-manager network-manager-openvpn \  # network and VPN
         libxss-dev pulseaudio-utils alsa-utils \  # sound and power applets
-        gettext                                   # translations (msgfmt)
+        gettext \                                 # translations (msgfmt)
+        libgl-dev libxcomposite-dev libxdamage-dev # nirvana-shader (full-screen effects)
 
 Optional: `power-profiles-daemon` (power profiles), `xsecurelock`, `i3lock`
 or `slock` (screen lock). On Rocky: `libXScrnSaver-devel pulseaudio-utils`.
@@ -108,25 +112,31 @@ area, i.e. avoiding the desktop panels, so the GNOME top bar does not cover the 
 Desktop menu bar. Without `--size` the desktop fills the whole work area. Folder window
 positions are saved relative to the desktop, so they move together with it.
 
-Rambler options: `--root`, `--home DIR`, `--size 1024x768`, `--center`.
-A Chicago-style system font can be set with `NIRVANA_SYSTEM_FONT`
-(e.g. the free ChicagoFLF font).
+Rambler options: `--home DIR`, `--size 1024x768`, `--center`.
+Another system font (for example a free bitmap-style one) can be set with `NIRVANA_SYSTEM_FONT`.
 
 ## Insight: window handling
 
 - title bar: dragging moves the window, a double click iconifies it
-- buttons: close (on the left, politely via `WM_DELETE_WINDOW`), iconify and zoom (on the right)
-- **Workbench-style iconification:** the window disappears and its icon appears on the
+- buttons: close (on the left, politely via `WM_DELETE_WINDOW`), iconify and zoom (on the right),
+  in the scheme colors, with a contrasting rim and accent-filled glyphs
+  (in the style of old home-computer window gadgets), also shown in inactive windows
+- **Iconification to the desktop:** the window disappears and its icon appears on the
   desktop (in the left column, below the disks) – the program's picture from `_NET_WM_ICON`
-  and the window title. Double-clicking the icon brings the window back. "Minimize" inside
-  the program itself (Brave, Firefox…) works the same way; "Hide" from the application menu
+  and the window title on a yellow label, so minimized windows stand out from disks and
+  files. The outlines fly from the window into its icon, and back when a double click on the
+  icon brings the window back. "Minimize" inside
+  the program itself (e.g. a web browser) works the same way; "Hide" from the application menu
   hides windows without icons. Icons survive Reset Nirvana.
+- **undecorated windows** (`_MOTIF_WM_HINTS` without decorations – skinned players such as
+  qmmp or Audacious, programs with their own title bar) get no frame: they draw and move
+  themselves, Insight only handles focus, stacking, iconification and the work area
 - right and bottom frame edges and the bottom-right corner: resizing
 - clicking an application window activates it and raises it; clicking the desktop deactivates
   windows, and clicking the menu bar does not change the active window (the menu acts on it)
 - Rambler folders and dialogs are ordinary X windows, so they behave like any application
 - windows never go under the menu bar or onto the dock: Insight publishes `_NET_WORKAREA`, so
-  programs (Brave, Firefox, GTK, Qt) open inside that area and windows that are too large are
+  programs (GTK, Qt, browsers) open inside that area and windows that are too large are
   trimmed; maximizing from a program's title bar (`_NET_WM_STATE_MAXIMIZED_*`) works like
   zoom; the Rambler desktop always stays at the bottom
 - Flatpaks: the session passes the display and desktop name to D-Bus services, and
@@ -139,16 +149,28 @@ A Chicago-style system font can be set with `NIRVANA_SYSTEM_FONT`
 - **Icons and names**: Rambler reads the icon (`.DirIcon`, PNG or SVG) straight from the
   squashfs image inside the AppImage, **without running it**. It computes the image offset
   from the ELF header and uses `unsquashfs`.
-- **Name with version**: `Firefox-128.0.3-x86_64.AppImage` → "Firefox 128.0.3". When the file
+- **Name with version**: `Editor-1.4.2-x86_64.AppImage` → "Editor 1.4.2". When the file
   name has no version, Rambler takes it from `X-AppImage-Version` in the .desktop file. That way
   several versions of the same program can be told apart and installed side by side.
-  Icons and .desktop data are cached in `~/.cache/nirvana/ikony`.
+  Icons and .desktop data are cached in `~/.cache/nirvana/icons`.
+- **Where applications live**: in the hidden folder `~/.nirvana-apps`, so they do not clutter
+  Nirvana HD. The **Applications** icon on the desktop opens it. Right-click an application
+  there and choose **Put on Dock** to keep it at hand; right-click a dock tile for **Open** and
+  **Unpin from Dock**. An old `~/Applications` (`~/Aplikacje`) folder is moved there
+  automatically, together with dock entries and remembered windows.
 - **Installation**: opening an AppImage from outside the Applications folder (e.g. from
-  Downloads) asks whether to install it. The file goes to its category folder in
-  `~/Applications`, and its contents are extracted to `~/.local/share/nirvana/aplikacje/`.
-  No FUSE, and the AppImage runtime is not executed.
-- **Category folders** follow `Categories=` from the .desktop file inside the AppImage. A folder
-  is created with the first application of its kind.
+  Downloads) asks whether to install it and **in which category** (Games, Internet, Office,
+  Graphics, Multimedia, Development, Education, Science, System, Accessories, Other). The
+  category from the AppImage is preselected. The file goes to that category folder, and its
+  contents are extracted to `~/.local/share/nirvana/apps/`. No FUSE, and the AppImage
+  runtime is not executed.
+- **Category folders**: the suggested category follows `Categories=` from the .desktop file
+  inside the AppImage. A folder is created with the first application of its kind. Each
+  category folder has its own icon – a folder (or drawer) with an emblem: a gamepad, a globe,
+  a page with a pencil, a palette, a film frame, `</>`, a graduation cap, a flask, a gear,
+  a calculator and a cardboard box.
+
+  ![Category folder icons: Retro, Retro selected, Platinum, Platinum selected](docs/img/category-icons.png)
 
   | Category | Folder | Category | Folder |
   |-----------|--------|-----------|--------|
@@ -160,10 +182,10 @@ A Chicago-style system font can be set with `NIRVANA_SYSTEM_FONT`
 
   An AppImage without a category goes to the `Other` folder. An AppImage dragged straight into
   the Applications folder also goes to its category folder. Installing a version that is
-  already installed asks whether to replace it or run it. In Polish the folders are
-  `~/Aplikacje/Gry`, `Grafika`… – existing folders are kept when the language changes.
+  already installed asks whether to replace it or run it. In Polish the category
+  folders are `Gry`, `Grafika`… – existing folders are kept when the language changes.
 
-  ![Two versions of a game side by side](docs/img/gry.png)
+  ![Two versions of a game side by side](docs/img/games.png)
 - **Running in a sandbox** (bubblewrap): the whole system is read-only, writing is only
   possible in Nirvana HD, other users, `/root`, `/mnt` and `/media` are invisible, with its
   own `/tmp` and its own process namespace; the application itself is read-only.
@@ -173,12 +195,12 @@ A Chicago-style system font can be set with `NIRVANA_SYSTEM_FONT`
   squashfs inside (e.g. DwarFS in "uruntime"), the AppImage extracts itself with
   `--appimage-extract`, but in a sandbox without network that can only write to a temporary
   directory. The icon of such an application appears after installation.
-- Test AppImages: `tools/testowe-appimage.sh DIR`. "Zegar" (clock) writes
-  `~/piaskownica.txt` with what it sees from inside the sandbox.
+- Test AppImages: `tools/test-appimages.sh DIR`. "Clock" writes
+  `~/sandbox.txt` with what it sees from inside the sandbox.
 
 ## Window animations
 
-As in classic Mac OS: when windows open, close and zoom, rectangle outlines fly across the
+As on the classic desktops: when windows open, close and zoom, rectangle outlines fly across the
 screen ("zoom rects"). Rambler folders fly out of the icon they were opened from and return
 to it when closed. The drawing method is chosen automatically:
 - **XOR on the screen**: in the Nirvana Desktop session on Xorg/XLibre without a compositor. The lightest.
@@ -186,12 +208,11 @@ to it when closed. The drawing method is chosen automatically:
   (e.g. GNOME on Wayland in Rocky/RHEL 10) and on desktops with a compositor, where
   drawing on the root window would be invisible or painted over.
 
-![Animations](docs/img/animacje.gif)
 
 - `NIRVANA_ANIMATIONS=0`: turns animations off (overrides the Appearance panel)
 - `NIRVANA_ANIM_MS=200`: slower frames (for testing; 12 ms by default)
 - `NIRVANA_ANIM_NOGRAB=1`: no X server grab during the animation (for screenshots)
-- `NIRVANA_ANIM_MODE=xor` or `ksztalt` (shape): forces the drawing method
+- `NIRVANA_ANIM_MODE=xor` or `shape`: forces the drawing method
 - If FLTK was built with the Wayland backend, animations only work in X11 mode:
   run with `FLTK_BACKEND=x11`.
 
@@ -203,9 +224,8 @@ below Nirvana HD, with an icon that matches the kind of medium:
 - **double-click** mounts the disk and opens its window,
 - **an encrypted disk (LUKS)** has a padlock icon; double-clicking asks for the password,
   unlocks and mounts it (wrong password: a message and another try),
-- **dragging a disk icon to the Trash ejects it** (the Trash turns into an eject symbol,
-  as in Mac OS): unmount, LUKS close, disc eject or USB disk power-off; **Icons > Eject**
-  (`Ctrl+Y`) does the same,
+- **dragging a disk icon to the Trash ejects it** (the Trash turns into an eject symbol): unmount, LUKS close, disc eject or USB disk power-off; **Eject** in the disk
+  icon's context menu (right mouse button, `Ctrl+Y`) does the same,
 - files dropped on a disk icon are **copied** to it (the disk mounts itself),
 - windows showing a disk close when the disk is ejected or removed,
 - sandboxed AppImage applications see the user's mounted media.
@@ -220,8 +240,8 @@ Devuan needs `udisks2` and polkit with elogind; Rocky: `udisks2`, `dbus-devel`.
 
 ## Application switcher (gary)
 
-The top-right corner of the menu bar shows the icon and name of the frontmost application,
-as in Mac OS 9. Clicking it shows:
+The top-right corner of the menu bar shows the icon and name of the frontmost application.
+Clicking it shows:
 
 - the list of running applications with icons; choosing one brings all its windows to the
   front, hidden applications have a greyed icon,
@@ -229,8 +249,8 @@ as in Mac OS 9. Clicking it shows:
 - the **Rambler Windows** submenu: open folders, collapse/expand/close all.
 
 An application is a group of windows with the same `WM_CLASS`. AppImages started from Rambler
-appear under their own name and icon (e.g. "Zegar" instead of "XClock"); the mapping is
-remembered in `~/.config/nirvana/aplikacje.klasy`.
+appear under their own name and icon (e.g. "Clock" instead of "XClock"); the mapping is
+remembered in `~/.config/nirvana/app-classes`.
 
 **Alt+Tab** (Insight): hold Alt and press Tab to go through the applications starting with the
 most recently used; Shift goes back, Escape cancels, releasing Alt chooses.
@@ -241,15 +261,35 @@ desktop window does not take focus, so clicking the menu bar does not change the
 
 ## Rambler: working with files
 
+- **One window**: opening a folder shows it in the same window. Above the contents there is
+  the window's own menu bar (**Window**, **Icons**) and a navigation bar: back, forward,
+  parent folder and the location field (`~` = home folder; type a path and press Enter –
+  a file path opens its folder with the file selected). Shortcuts: `Alt+←` back, `Alt+→`
+  forward, `Ctrl+↑` parent folder. Going up selects the folder you came from.
+- **More windows**: **Window > New Window** (`Ctrl+Shift+N`) or `Ctrl` + double-click on a folder.
+  Desktop icons (Nirvana HD, disks, Trash) open in the most recently used window.
 - **Opening**: double-click or Enter. An AppImage from another folder offers installation.
 - **Double-clicking the empty desktop** opens the file manager (the Nirvana HD window); if it
   is already open, it is brought to the front.
+- **Desktop icons** in the left column: Nirvana HD, **Applications**, **Preferences**, disks,
+  iconified windows; the **Trash** always stays in the same place at the bottom, above the
+  dock – adding to or emptying the dock does not move it.
+- **Context menus** (right mouse button):
+  - desktop icons: Open, Information, Eject, Format Disk, Empty Trash, Restore (window icons);
+    `Ctrl+O`, `Ctrl+I`, `Ctrl+Y` work on the selected desktop icon,
+  - dock tiles: Open, Unpin from Dock,
+  - icons in a folder window: Open, Put on Dock / Unpin from Dock, Information, Rename,
+    Duplicate, Copy, Delete; empty space in a window: New Folder, Paste, Update, Select Contents,
+  - the empty desktop: Open Nirvana HD, Desktop Appearance.
 - **Folder windows do not cover the desktop**: when opened and when zoomed they leave the
   column of icons at the left edge free (Nirvana HD, disks, window icons, the Trash above
   the dock) as well as the dock at the bottom. Zooming other programs does the same.
   Remembered windows that are too large are shrunk to this area when they open.
+  **Preferences → Desktop** turns this off: without *Keep the desktop icons free* windows use the
+  whole screen below the menu bar (no icon column, no gaps), without *Keep windows above the dock*
+  they reach the bottom edge. The change applies at once (`~/.config/nirvana/desktop.conf`).
 - **Selecting**: click, Shift/Ctrl+click adds or removes, rubber-band selection with the mouse, `Ctrl+A`.
-- **Renaming**: `F2` or a click on the name of an item that is already selected (as in the Finder).
+- **Renaming**: `F2` or a click on the name of an item that is already selected.
   Renaming a folder updates its open windows and remembered positions.
 - **Dragging**: between windows moves, with `Ctrl` copies; onto a folder in a window drops into
   it; onto the Trash icon throws away, onto Nirvana HD moves to the home folder. A missed drop
@@ -267,35 +307,63 @@ desktop window does not take focus, so clicking the menu bar does not change the
 
 ### Menu bar
 
-On the right, packed against the edge: power, volume, network, the clock and the application
-switcher (depth gadget). In the middle, as on the Workbench 3.1 screen title bar, the free
-memory (`MemAvailable`) and the free space on the disk holding the home folder. The values
-refresh every 3 seconds, and the tooltip also shows the total sizes. On a narrow screen the
+On the right, packed against the edge with equal gaps (each icon has 4 px on each side and its
+own width): updates, power, volume, network, the clock and the application switcher (depth
+gadget). In the middle, like the screen title bars of old home computers, the used
+memory and the used space on the disk holding the home folder, each out of the total, e.g.
+`512MB used memory of 16GB     40GB used disk of 512GB     38MB used by Nirvana` (below 1 GB in MB,
+below 10 GB with one decimal). The last value is the memory of Nirvana Desktop itself: all
+`nirvana-*` processes of the user (window manager, desktop, terminals, panels, shader), counted
+as PSS – shared libraries split between the processes, so it is the real cost. Not included:
+what the X server keeps for Nirvana's windows (pixmaps, glyphs) and the services the session
+starts (the session D-Bus, PipeWire, the polkit agent). With `nirvana-shader` running on a
+computer without a GPU, most of it is the OpenGL software renderer (llvmpipe). The values refresh
+every 3 seconds; the tooltip shows the free amounts and the memory of each Nirvana program. On a narrow screen the
 text gets shorter.
 
-![Menu bar](docs/img/pasek.png)
+![Menu bar](docs/img/menubar.png)
 
-### Menus (in the spirit of Workbench)
+### Menus
 
 | Menu | Items |
 |------|---------|
 | **Nirvana** (logo and name) | About This Computer, Preferences (window with panels), Execute Command `Ctrl+E`, Nirvana Shell `Ctrl+T`, Open System Log, Reset Nirvana |
+
+**Open System Log** shows the first log it can read: `journalctl`, `/var/log/syslog` or
+`/var/log/messages` (readable for the `adm` group), `dmesg`; when none is readable it asks for
+the administrator password (pkexec – only reading the file runs as root), and as a last resort
+shows the log of the session (`~/.xsession-errors`).
 | **System** | Lock Screen, Sleep, Hibernate, Log Out `Ctrl+Q`, Restart, Shut Down |
-| **Window** | New Folder `Ctrl+N`, Open Parent `Ctrl+↑`, Close `Ctrl+W`, Update `Ctrl+R`, Select Contents `Ctrl+A`, Clean Up `Ctrl+.`, Show Hidden Files `Ctrl+H`, View as (icons/list), Sort, Icon Size (small/normal/large) |
-| **Icons** | Open `Ctrl+O`, Copy, Paste, Duplicate, Rename `F2`, Delete `Ctrl+Backspace`, Information `Ctrl+I`, Snapshot `Ctrl+S`, Unsnapshot, Put on Dock `Ctrl+L`, Remove from Dock `Ctrl+K`, Eject `Ctrl+Y` |
-| **Special** | Format Disk, Empty Trash, Root Mode |
+| **Special** | Format Disk, Empty Trash |
+
+**About This Computer** shows the system in the manner of neofetch: a large logo with the
+color swatches on the left and `user@host` with the parameters on the right – OS, host, kernel,
+uptime, packages (dpkg/rpm, Flatpak, AppImage), shell, resolution, desktop environment, window
+manager and its theme, theme, icons, font, cursor, terminal and its font, CPU, GPU, memory,
+disk, battery, local IP and locale. The other two tabs hold the **Licence** (GPL-3.0) and the
+**Acknowledgements**.
+
+![About This Computer](docs/img/about.png)
+
+In every file manager window:
+
+| Menu | Items |
+|------|---------|
+| **Window** | New Window `Ctrl+Shift+N`, New Folder `Ctrl+N`, Back `Alt+←`, Forward `Alt+→`, Open Parent `Ctrl+↑`, Close `Ctrl+W`, Update `Ctrl+R`, Select Contents `Ctrl+A`, Clean Up `Ctrl+.`, Show Hidden Files `Ctrl+H`, View as (icons/list), Sort, Icon Size (small/normal/large) |
+| **Icons** | Open `Ctrl+O`, Copy, Paste, Duplicate, Rename `F2`, Delete `Ctrl+Backspace`, Information `Ctrl+I`, Set as Wallpaper, Snapshot `Ctrl+S`, Unsnapshot, Put on Dock `Ctrl+L`, Remove from Dock `Ctrl+K` |
 
 Items that would do nothing at the moment are greyed out, e.g. Eject without a selected disk,
-or Hibernate when the computer cannot hibernate. The System menu asks before logging out,
+Hibernate when the computer cannot hibernate,
+or Back at the start of the history. The System menu asks before logging out,
 restarting and shutting down, and refuses to sleep in presentation mode.
 
 - **Icons in windows** can be moved with the mouse within the window. The others stay where
   they are.
 - **Snapshot** saves positions permanently (of the selected icons or of the whole window),
   **Unsnapshot** releases them, **Clean Up** puts everything back on the grid. Positions are in
-  `~/.config/nirvana/ikony.pozycje`.
-- **Icon Size**: small 16 px, normal 32 px, large 64 px (pixels doubled, sharp as on the
-  Amiga). The size is remembered for each window.
+  `~/.config/nirvana/icon-positions`.
+- **Icon Size**: small 16 px, normal 32 px, large 64 px (pixels doubled, sharp, retro
+  style). The size is remembered for each window.
 - **Information**: size (folders are counted), location, creation, modification and access
   dates, owner, permissions. The window can also set:
   - the *Read only* and *Program* flags (execute permission),
@@ -303,7 +371,7 @@ restarting and shutting down, and refuses to sleep in presentation mode.
   - for programs and AppImages, start arguments ("ToolTypes"), added every time it is started.
 
   A file with the *Program* flag opens in Nirvana Shell.
-- **Dock** (in the style of the Mac OS Control Strip): *Put on Dock* places the icon of a file,
+- **Dock** (a strip of tiles): *Put on Dock* places the icon of a file,
   folder or application on the strip in the bottom-left corner of the screen, *Remove from Dock*
   takes it off (the file stays where it is).
   - Tiles in the scheme colours touch each other and the screen edges.
@@ -311,17 +379,18 @@ restarting and shutting down, and refuses to sleep in presentation mode.
   - A single click opens.
   - The tab on the left collapses the strip, and that state is remembered.
 
-  The list of icons is in `~/.config/nirvana/dok`.
+  The list of icons is in `~/.config/nirvana/dock`.
 
-  ![The dock in three schemes and a tooltip](docs/img/dok.png)
+  ![The dock in three schemes and a tooltip](docs/img/dock.png)
 - **Format Disk**: select a disk icon on the desktop and choose FAT32, exFAT, ext4 or NTFS
   (UDisks2). Unformatted USB sticks also appear on the desktop.
 - **Reset Nirvana** restarts Insight and Rambler. Program windows stay open.
+- **If Rambler crashes**, the session starts it again instead of logging you out (the
+  reason goes to `~/.xsession-errors`). Only five crashes within 30 seconds end the session.
 
 ![The Nirvana menu](docs/img/menu-nirvana.png)
-![File information](docs/img/informacje.png)
 
-Window positions and view modes: `~/.config/nirvana/denise.okna`.
+Window positions and view modes: `~/.config/nirvana/windows`.
 
 ## Appearance (nirvana-alice panel)
 
@@ -329,10 +398,14 @@ Nirvana logo → **Preferences… → Appearance** opens a panel with the list o
 preview. Clicking a scheme changes the panel itself right away, and **Apply**/**OK** switches
 the whole system: Rambler and Insight reload the palette without a restart.
 
-- **Colour scheme**: built-in *Platinum*, *Graphite* (dark) and *Workbench 2* (a nod to the
-  Amiga), plus over 40 schemes from
+- **Colour scheme**: built-in *Platinum*, *Graphite* (dark), *Retro Blue* (gray with a blue
+  accent) and *Glacier* (cool silver windows, glass title bars in deep blue – best with the
+  *Glacier* wallpaper), plus over 40 schemes from
   [Redmond97 SE](https://codeberg.org/Sliver_X/Redmond97-SE) (GPL-3.0).
-- **Title bar**: as in the scheme, Platinum stripes, solid colour or gradient.
+- **Default look**: the *In Tenebris* scheme, the *Bricks* pattern and Platinum icons.
+- **Title bar**: as in the scheme, Platinum stripes, solid colour, gradient or glass (a shine on
+  the upper half, the darker middle, as on the glossy desktops of the 2000s); with glass the menu
+  bar at the top and the bars of the folder windows are glass too.
 - **Desktop background**: *Pattern*, *Solid color* or *Gradient*.
   - Colours are picked from two swatches. The second gradient colour is by default a darker
     (or, on a dark background, lighter) version of the first one. *From scheme* returns to the
@@ -340,79 +413,80 @@ the whole system: Rambler and Insight reload the palette without a restart.
   - Gradient: vertical, horizontal, diagonal or radial. It is dithered (Bayer matrix), so even
     subtle transitions show no banding.
   - 20 patterns in two shades of the desktop colour: plain, dots, polka dots, grid, fine grid,
-    checkerboard, diagonal stripes, horizontal and vertical stripes, bricks, raster (Amiga),
+    checkerboard, diagonal stripes, horizontal and vertical stripes, bricks, raster,
     diamonds, crosses, zigzag, herringbone, weave, waves, scales, stars, sand.
   - The wallpaper lies on this background: it shows in the bars with the *Fit* layout, around a
     *Center* image and under transparent parts of PNG files.
 
-  ![Desktop patterns](docs/img/wzory.png)
-  ![Radial gradient](docs/img/tlo-gradient.png)
+  ![Desktop patterns](docs/img/patterns.png)
+  ![Radial gradient](docs/img/background-gradient.png)
 
 - **Wallpaper**: chosen from the list or with *Other File…* (PNG, JPEG, GIF, BMP, SVG, XPM).
-  - The list contains the Nirvana Desktop wallpapers (*Nirvana Desktop*, *Góry o świcie*,
-    *Miedź*, *Platyna*), system wallpapers from `/usr/share/backgrounds` and
+  - The list contains the Nirvana Desktop wallpapers (*Nirvana Desktop*, *Glacier*, *Mountains at Dawn*,
+    *Copper*, *Platinum*), system wallpapers from `/usr/share/backgrounds` and
     `/usr/share/wallpapers`, and images from `~/Pictures` (`~/Obrazy`).
   - Layouts: *Fill screen* (crops), *Fit* (the whole image, pattern in the bars),
     *Stretch*, *Center* and *Tile*.
   - Large photos are scaled down in steps, so there are no jaggies or moiré.
   - In Rambler: select an image and choose **Icons → Set as Wallpaper**.
-  - Your own wallpapers can be added to `~/.local/share/nirvana/tapety`.
-  - *Nirvana Desktop* (2560×1440, in the spirit of AmigaOS 4) is made by the script
-    `tools/tapeta-nirvana-desktop.py [file] [width height]`, so it can be generated at the
+  - Your own wallpapers can be added to `~/.local/share/nirvana/wallpapers`.
+  - *Nirvana Desktop* (2560×1440, glossy, with light ribbons and a mirrored floor) is made by the script
+    `tools/wallpaper-nirvana-desktop.py [file] [width height]`, so it can be generated at the
     resolution of your own screen.
-- **Icon style**: *Workbench (Amiga)*, the default, or *Platinum (Mac OS)*. The change applies
+- **Icon style**: *Retro* or *Platinum*. The change applies
   immediately, also in open windows and on the dock.
-  - Workbench: original drawings in the spirit of Workbench 2/3 and MagicWB, in a palette of
+  - Retro: original drawings in the style of early-1990s home computers, in a palette of
     greys, navy and beige with black outlines.
   - Folders are drawers, and documents are "projects" with a folded corner. Programs look like
     a little window with close and depth gadgets.
   - Disks are hard-drive boxes with an LED (Nirvana HD with a navy label), and removable media
     are 3.5" floppies. The Trash has a lid with a handle.
-  - A selected icon has inverted colours, like the *complement* mode in Workbench.
-  - A sheet with all icons: `tools/plansza-ikon.cxx`.
+  - A selected icon has inverted colours (a *complement* highlight).
+  - A sheet with all icons: `tools/icon-sheet.cxx`.
 
-  ![Workbench icons (normal and selected) and Platinum](docs/img/ikony.png)
-  ![The Workbench 2 scheme with Workbench icons](docs/img/ikony-workbench.png)
+  ![Retro icons (normal and selected) and Platinum](docs/img/icons.png)
+  ![The Retro Blue scheme with Retro icons](docs/img/icons-retro.png)
 - **Window animations**: on or off.
 - **Interface scale**: *Automatic* (from the `Xft.dpi` setting, e.g. 192 dpi = 200%)
   or 100–300%. It scales everything at once: the menu bar, windows, fonts, icons, frames
   and the dock; the wallpaper is rendered at the full screen resolution. After a change the
   desktop and the window manager restart (as with **Special → Reset Nirvana**), open programs
-  stay. To try it: `NIRVANA_SKALA=150 nirvana-session`.
+  stay. To try it: `NIRVANA_SCALE=150 nirvana-session`.
 
-![The Nirvana Desktop wallpaper](docs/img/tapeta-nirvana-desktop.png)
-![Appearance with a wallpaper](docs/img/tapeta.png)
-![Wallpaper layouts: center, tile, fit, stretch](docs/img/tapety-uklady.png)
+![The Nirvana Desktop wallpaper](docs/img/wallpaper-nirvana-desktop.png)
+![Appearance with a wallpaper](docs/img/wallpaper.png)
+![Wallpaper layouts: center, tile, fit, stretch](docs/img/wallpaper-layouts.png)
 
-![Appearance: Platinum](docs/img/wyglad-platinum.png)
-![Appearance: In Tenebris with a gradient and bricks](docs/img/wyglad-in-tenebris.png)
+![Appearance: Platinum](docs/img/appearance-platinum.png)
+![Appearance: In Tenebris with a gradient and bricks](docs/img/appearance-in-tenebris.png)
+![The Glacier scheme with the Glacier wallpaper](docs/img/scheme-glacier.png)
 
-Settings: `~/.config/nirvana/wyglad.conf`. Schemes are simple `key=value` files in the
-`schematy/` directory, searched in `~/.local/share/nirvana/schematy`,
-`<prefix>/share/nirvana/schematy`, `/usr/local/share/...` and `/usr/share/...` in that order.
-To add your own scheme just put it there, e.g. `~/.local/share/nirvana/schematy/mine.conf`
-(the keys are Polish):
+Settings: `~/.config/nirvana/appearance.conf`. Schemes are simple `key=value` files in the
+`schemes/` directory, searched in `~/.local/share/nirvana/schemes`,
+`<prefix>/share/nirvana/schemes`, `/usr/local/share/...` and `/usr/share/...` in that order.
+To add your own scheme just put it there, e.g. `~/.local/share/nirvana/schemes/mine.conf`
+
 
 ```ini
-nazwa=My scheme              # name
-styl_paska=prazki            # title bar: prazki (stripes) | kolor (colour) | gradient
-okno=#DDDDDD                 # window background
-tekst=#000000                # text
-tresc=#FFFFFF                # inside of lists and fields
-tekst_tresci=#000000         # text inside lists and fields
-zaznaczenie=#4444AA          # selection
-tekst_zaznaczenia=#FFFFFF    # selected text
-obramowanie=#000000          # border
-pasek=#4444AA                # title bar (kolor/gradient style)
-pasek2=#8888DD               # second gradient colour
-tekst_paska=#FFFFFF          # title bar text
-pasek_nieaktywny=#AAAAAA     # inactive title bar
-tekst_paska_nieaktywnego=#555555
-akcent=#AAAAE6               # scroll bar thumb (optional)
-biurko=#5E6FA8               # desktop (optional)
+name=My scheme               # name
+title_style=stripes          # title bar: stripes | solid | gradient
+window=#DDDDDD               # window background
+text=#000000                 # text
+content=#FFFFFF              # inside of lists and fields
+content_text=#000000         # text inside lists and fields
+selection=#4444AA            # selection
+selection_text=#FFFFFF       # selected text
+border=#000000               # border
+title=#4444AA                # title bar (solid/gradient style)
+title2=#8888DD               # second gradient colour
+title_text=#FFFFFF           # title bar text
+title_inactive=#AAAAAA       # inactive title bar
+title_inactive_text=#555555
+accent=#AAAAE6               # scroll bar thumb (optional)
+desktop=#5E6FA8              # desktop (optional)
 ```
 
-The Redmond97 SE schemes can be recreated with `tools/importuj-redmond97.py`
+The Redmond97 SE schemes can be recreated with `tools/import-redmond97.py`
 (colours from `builder/presets/theme_*.conf`).
 
 ## Network: Wi-Fi, Ethernet, VPN, hotspot
@@ -445,10 +519,8 @@ the `network-manager` package (works without systemd, with elogind).
   - VPN goes through a temporary `passwd-file` (0600), deleted right after connecting.
 - Enterprise Wi-Fi (WPA Enterprise / 802.1X) is not supported yet: use `nmtui`.
 
-![Network panel: Wi-Fi](docs/img/siec-wifi.png)
-![Network panel: VPN](docs/img/siec-vpn.png)
 
-Testing without a Wi-Fi adapter: `NIRVANA_NMCLI=tools/atrapa-nmcli.sh` fakes a `wlan0` adapter
+Testing without a Wi-Fi adapter: `NIRVANA_NMCLI=tools/fake-nmcli.sh` fakes a `wlan0` adapter
 and a few networks (everything else is passed on to the real `nmcli`).
 
 ## Nirvana Shell (terminal)
@@ -457,7 +529,7 @@ and a few networks (everything else is passed on to the real `nmcli`).
 built on the libvterm library (bundled in `third_party/`, MIT; the system one is used
 if available). Start it from the logo → Nirvana Shell, in Rambler with `Ctrl+T` (in the
 folder of the active window) or with
-`nirvana-shell [--katalog DIR] [-e command]`.
+`nirvana-shell [--working-directory DIR] [-e command]`.
 
 - **Display:** 256 colours and truecolor, bold, italic, underline, alternate screen. vim,
   htop, mc and less work in it.
@@ -471,16 +543,15 @@ folder of the active window) or with
   Before closing a window where something is running, the terminal asks.
 - **Look:**
   - a right click opens the menu, with colour profiles: Classic (light), Dark,
-    Green phosphor, Amber, Workbench (Amiga), Like the color scheme,
+    Green phosphor, Amber, Retro blue, Like the color scheme,
   - Ctrl+Shift+= / - / 0 changes the font size.
 - **Settings:** `~/.config/nirvana/terminal.conf` (profile, font, size, columns,
   rows, scrollback).
 
-![Nirvana Shell with htop](docs/img/shell-htop.png)
 
 ## System tray
 
-Icons of programs running in the background (messengers, cloud, Steam, Discord, nm-applet...)
+Icons of programs running in the background (messengers, cloud storage, game launchers, nm-applet...)
 sit in the menu bar, to the left of the power applet. Rambler supports both protocols:
 
 - **StatusNotifierItem** (D-Bus): Qt 5/6, KDE, Electron, libappindicator / Ayatana.
@@ -501,9 +572,8 @@ sit in the menu bar, to the left of the power applet. Rambler supports both prot
 - The bar rearranges itself as icons come and go. When a program quits, its icon disappears.
 - After **Reset Nirvana** the icons come back: XEmbed programs dock again after the `MANAGER`
   announcement, and Rambler itself finds the D-Bus icons that are already on the bus.
-- `NIRVANA_BEZ_ZASOBNIKA=1` turns the tray off (e.g. when the session has its own).
+- `NIRVANA_NO_TRAY=1` turns the tray off (e.g. when the session has its own).
 
-![The tray with a program menu](docs/img/zasobnik.png)
 
 ## Sound
 
@@ -521,15 +591,81 @@ desktop handles them.
 Works with PulseAudio and PipeWire (`pactl`). Without a sound server it uses plain ALSA
 (`amixer`: Master and Capture).
 
-![Volume](docs/img/glosnosc.png)
+
+## Clock, calendar, pomodoro, timer and stopwatch
+
+The clock at the right end of the menu bar shows the time and, if chosen, the seconds, the date
+and the day of the week (12- or 24-hour). A click opens:
+
+- the time with seconds and the full date,
+- a **month calendar** – the arrows or the mouse wheel change the month, a click on the title
+  goes back to today; weekends are dimmed, today is highlighted,
+- three tools, each in its own tab:
+  - **Pomodoro**: work and breaks (25/5 min, a long 15 min break after 4 rounds – all can be
+    changed), Start/Pause, Skip, Reset; a red tomato for work, a green one for a break,
+  - **Timer**: presets of 1–60 minutes, +1 min, Start/Pause, Reset,
+  - **Stopwatch** with tenths of a second and laps.
+
+A running (or paused) tool shows its time in the menu bar next to the clock, so it stays in
+sight with the window closed. When time is up a sound plays (the freedesktop sound theme through
+`paplay`/`pw-play`, otherwise the bell) and a window says so – for the pomodoro with a button
+for the next phase (or the next phase starts by itself, if so set).
+
+![The clock with the calendar and the pomodoro](docs/img/clock.png)
+
+### Date & Time (Preferences)
+
+- the clock in the menu bar: 24-hour, seconds, date, day of the week – with a live preview,
+- pomodoro: the lengths of work and breaks, the number of rounds, starting the next phase by
+  itself, the sound,
+- **time zone**: a region and a city from the tz database; set for the whole system,
+- **date and time** by hand, and whether network time is working (systemd-timesyncd through
+  `timedatectl`, otherwise a running chrony, ntpsec or openntpd).
+
+The system settings go through `/usr/libexec/nirvana-time-helper` with pkexec (it accepts only a
+zone that exists and a date in a fixed format); like the updates, administrators at the computer
+are not asked for a password. Without systemd the zone is set by `/etc/localtime` and
+`/etc/timezone` (Devuan) and the time with `date` + `hwclock`.
+
+![Date & Time](docs/img/datetime.png)
+
+## Software updates
+
+An icon with a parcel in the menu bar looks for system updates a minute after login and then every
+6 hours, and shows their number in a red badge. The small window lists them and has **Install
+Updates…**, **Check for Updates** and **Show Log**; while installing, the icon and the window show the
+progress.
+
+| Package manager | Checking (no root) | Installing |
+|---|---|---|
+| apt (Devuan, Debian, Ubuntu) | lists downloaded into `~/.cache/nirvana/apt` | `apt-get dist-upgrade` with progress |
+| dnf (Fedora, Rocky) | `dnf check-update` | `dnf upgrade` |
+| pacman (Arch) | `checkupdates` (pacman-contrib) | `pacman -Syu` |
+| zypper (openSUSE) | `zypper list-updates` | `zypper update` |
+| apk (Alpine), xbps (Void) | the local lists | `apk upgrade`, `xbps-install -Syu` |
+| Flatpak | `flatpak remote-ls --updates` | `flatpak update --system` |
+
+Checking never needs root: on apt the package lists are downloaded into the user's cache, so the
+system's lists are not touched (the idea of `checkupdates`). Installing runs
+`/usr/libexec/nirvana-update-helper` through pkexec. It does only the fixed upgrade, with no
+arguments passed on; the polkit rule installed with Nirvana Desktop lets administrators (the
+`sudo`, `wheel` or `admin` group) sitting at the computer do it **without a password**. Other
+users are asked for the administrator password. The log of the last installation is in
+`~/.cache/nirvana/update.log`.
 
 ## Power and presentation mode
 
-A battery icon (or a plug on a desktop computer) in the menu bar. The small window shows:
+A battery icon (or a plug on a desktop computer) in the menu bar. Next to the battery: a lightning
+bolt while charging, a down arrow while running on the battery (red below 10%), a small plug when
+the adapter is connected and the battery is full. The small window shows:
 
 - the battery state with the time until empty or full,
 - a screen brightness slider (through logind, without root),
-- the power profile, if `power-profiles-daemon` is running,
+- the power profile (power saver, balanced, performance): through `power-profiles-daemon`, and
+  without it (e.g. Devuan without systemd) straight through the kernel – the ACPI platform profile,
+  otherwise the CPU energy preference (EPP), otherwise the cpufreq governor. That is set by
+  `nirvana-power-helper` through pkexec; polkit allows it to the user at the computer without a
+  password, and the choice is restored at the next login,
 - a link to the Power panel.
 
 Lock Screen, Sleep, Hibernate, Log Out, Restart and Shut Down are in the **System** menu.
@@ -551,7 +687,41 @@ The **Power** panel (logo → Preferences…) sets for the Nirvana Desktop sessi
 - sleeping after inactivity, separately on battery and on the power adapter,
 - the reaction to 3% battery; a warning appears at 10%.
 
-![Power and presentation mode](docs/img/zasilanie-projekcja.png)
+
+## Shader: full-screen effects
+
+**Preferences → Shader** puts an effect over the whole desktop. Choosing it in the list applies it
+at once; the choice is remembered and started with the session. 17 built-in effects:
+CRT monitor, Scanlines, Amber monitor, Green phosphor, Grayscale, Sepia, Night light, VHS tape
+(animated), Film grain (animated), Large pixels, 64 colors (dithered), Halftone, LCD, Thermal
+camera, Dreamy glow, Underwater (animated) and Inverted colors.
+
+![The CRT monitor effect](docs/img/shader-crt.png)
+![All the effects](docs/img/shaders.png)
+
+`nirvana-shader` is a small compositor: the windows are redirected off screen (Composite),
+composed with XRender into one picture and drawn through a fragment shader with OpenGL
+(`GLX_EXT_texture_from_pixmap`, otherwise a copy). It reads the windows through window
+pictures instead of binding a texture to each window, so resizing, closing or iconifying windows
+cannot leave it with a stale pixmap; X errors are logged, not fatal; and if it ends in any way,
+the X server shows the windows directly again. While it runs, the window animations use the
+shaped-window method instead of XOR. Mouse input is not affected (the overlay is transparent to
+input).
+
+    nirvana-shader crt          # start with an effect (or switch the running one)
+    nirvana-shader --list       # the available shaders
+    nirvana-shader --stop
+
+Your own shaders: GLSL 1.20 fragment shaders in `~/.local/share/nirvana/shaders/NAME.frag`.
+Before the file comes a prelude with `u_resolution`, `u_time` (a shader that uses it is animated,
+30 frames per second), `v_texcoord` (0..1, origin bottom left) and `vec4 screen(vec2 uv)`; the
+result goes to `gl_FragColor`. The first comment line is the description in the panel.
+
+    // Blue tint.
+    void main() { gl_FragColor = vec4(screen(v_texcoord).rgb * vec3(0.8, 0.9, 1.2), 1.0); }
+
+Another compositor (picom, compton) cannot run at the same time. Without graphics acceleration
+(e.g. in a virtual machine, llvmpipe) animated effects use a lot of CPU.
 
 ## Languages
 
@@ -559,11 +729,11 @@ The interface is in **English** by default (the texts in the code) and in **Poli
 (`po/pl.po`). *Automatic* in **Preferences** (logo → Preferences…) follows the system
 language (`LANGUAGE`, `LC_ALL`, `LC_MESSAGES`, `LANG`): with a Polish locale (`pl_PL.UTF-8`)
 the interface is Polish, with any other locale or `LANG=C` it is English. The language can
-also be chosen by hand; the choice goes to `~/.config/nirvana/jezyk` and applies after a
+also be chosen by hand; the choice goes to `~/.config/nirvana/language` and applies after a
 restart or **Special → Reset Nirvana**.
 
 In Polish the menus are called *Okno*, *Ikony*, *Narzędzia*, numbers use a decimal comma,
-and new folders are `~/Aplikacje/Gry`… – folders that already exist stay in use whatever the
+and new category folders are `Gry`, `Grafika`… – folders that already exist stay in use whatever the
 language, so changing it does not split installed applications.
 
 A new language or corrections:
@@ -579,7 +749,13 @@ In the code: `_("text")`, `N_("…")` in static tables, `P_("Window/Sort")` for 
 
 ## Licence
 
-To be decided (proposed: GPL-3.0-or-later; FLTK is LGPL with an exception that allows
-static linking).
-libvterm in `third_party/libvterm` (Paul Evans) is under the MIT licence.
-The schemes in `schematy/redmond97-se/` come from Redmond97 SE (Sliver X, matthewmx86) and are GPL-3.0.
+Nirvana Desktop is free software under the **GNU General Public License, version 3 or later**
+(GPL-3.0-or-later). The full text is in [`LICENSE`](LICENSE); it is installed to
+`/usr/share/nirvana/LICENSE` and shown in **Nirvana → About This Computer → Licence**.
+
+- FLTK is under the LGPL-2.0 with exceptions that allow static linking.
+- libvterm in `third_party/libvterm` (Paul Evans) is under the MIT licence.
+- The schemes in `schemes/redmond97-se/` come from Redmond97 SE (Sliver X, matthewmx86) and are GPL-3.0.
+
+The people and projects whose work Nirvana Desktop is built on are listed in
+**About This Computer → Acknowledgements**.

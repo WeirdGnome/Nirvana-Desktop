@@ -1,8 +1,8 @@
-// Nirvana Desktop - libplatinum: tapeta biurka
+// Nirvana Desktop - libplatinum: the desktop wallpaper
 //
-// Tło biurka to zawsze wzór w kolorach schematu, a na nim (opcjonalnie) obraz.
-// Wzór widać w pasach przy układzie "Dopasuj", wokół małego obrazu "Na środku"
-// i pod przezroczystymi fragmentami PNG.
+// The desktop background is always a pattern in the scheme colors, with an (optional) image on top.
+// The pattern shows in the bars with the "Fit" layout, around a small "Center" image
+// and below the transparent parts of a PNG.
 #include "platinum.h"
 
 #include <FL/Fl.H>
@@ -13,6 +13,7 @@
 #include <cmath>
 #include <cstring>
 #include <filesystem>
+#include <fstream>
 #include <map>
 #include <set>
 #include <strings.h>
@@ -23,7 +24,7 @@ namespace fs = std::filesystem;
 
 namespace plat {
 
-const char *const WALLPAPER_MODES[] = {"wypelnij", "dopasuj", "rozciagnij", "srodek", "kafelki", nullptr};
+const char *const WALLPAPER_MODES[] = {"fill", "fit", "stretch", "center", "tile", nullptr};
 const char *const WALLPAPER_MODE_NAMES[] = {N_("Fill screen"), N_("Fit"), N_("Stretch"), N_("Center"),
                                             N_("Tile"), nullptr};
 
@@ -51,15 +52,15 @@ static std::string home() { const char *h = getenv("HOME"); return h ? h : "/"; 
 std::vector<std::string> wallpaper_dirs() {
   std::vector<std::string> d;
   const char *xdg = getenv("XDG_DATA_HOME");
-  d.push_back((xdg && *xdg ? std::string(xdg) : home() + "/.local/share") + "/nirvana/tapety");
+  d.push_back((xdg && *xdg ? std::string(xdg) : home() + "/.local/share") + "/nirvana/wallpapers");
   std::error_code ec;
   fs::path exe = fs::read_symlink("/proc/self/exe", ec);
   if (!ec) {
-    d.push_back((exe.parent_path() / "../share/nirvana/tapety").string());   // prefiks instalacji
-    d.push_back((exe.parent_path() / "../tapety").string());                // katalog build/
+    d.push_back((exe.parent_path() / "../share/nirvana/wallpapers").string());   // installation prefix
+    d.push_back((exe.parent_path() / "../wallpapers").string());                // the build/ folder
   }
-  d.push_back("/usr/local/share/nirvana/tapety");
-  d.push_back("/usr/share/nirvana/tapety");
+  d.push_back("/usr/local/share/nirvana/wallpapers");
+  d.push_back("/usr/share/nirvana/wallpapers");
   std::vector<std::string> out;
   for (auto &x : d) if (fs::is_directory(x, ec)) out.push_back(fs::weakly_canonical(x, ec).string());
   return out;
@@ -67,12 +68,27 @@ std::vector<std::string> wallpaper_dirs() {
 
 std::string wallpaper_title(const std::string &path) {
   fs::path p(path);
-  // KDE: Nazwa/contents/images/1920x1080.jpg -> "Nazwa"
+  // KDE: Name/contents/images/1920x1080.jpg -> "Name"
   if (p.parent_path().filename() == "images" && p.parent_path().parent_path().filename() == "contents")
     return p.parent_path().parent_path().parent_path().filename().string();
   std::string s = p.stem().string();
   for (char &c : s) if (c == '_') c = ' ';
   return s;
+}
+
+std::string pictures_dir() {
+  // ~/.config/user-dirs.dirs: XDG_PICTURES_DIR="$HOME/Pictures" (localized by xdg-user-dirs)
+  const char *x = getenv("XDG_CONFIG_HOME");
+  std::ifstream in((x && *x ? std::string(x) : home() + "/.config") + "/user-dirs.dirs");
+  std::string line;
+  while (std::getline(in, line)) {
+    if (line.rfind("XDG_PICTURES_DIR=", 0) != 0) continue;
+    std::string v = line.substr(17);
+    if (v.size() >= 2 && v.front() == '"' && v.back() == '"') v = v.substr(1, v.size() - 2);
+    if (v.rfind("$HOME", 0) == 0) v = home() + v.substr(5);
+    if (!v.empty() && v[0] == '/') return v;
+  }
+  return home() + "/Pictures";
 }
 
 std::vector<std::string> wallpaper_candidates() {
@@ -81,7 +97,7 @@ std::vector<std::string> wallpaper_candidates() {
   std::error_code ec;
   auto scan = [&](const fs::path &dir, int depth) {
     std::vector<std::string> found;
-    std::map<std::string, std::pair<uintmax_t, std::string>> kde;   // motyw KDE -> największy obraz
+    std::map<std::string, std::pair<uintmax_t, std::string>> kde;   // KDE theme -> the largest image
     auto opts = fs::directory_options::skip_permission_denied;
     for (auto it = fs::recursive_directory_iterator(dir, opts, ec); it != fs::recursive_directory_iterator();
          it.increment(ec)) {
@@ -109,14 +125,13 @@ std::vector<std::string> wallpaper_candidates() {
   for (auto &d : wallpaper_dirs()) scan(d, 1);
   for (auto d : {"/usr/share/backgrounds", "/usr/share/wallpapers", "/usr/share/images/desktop-base"})
     if (fs::is_directory(d, ec)) scan(d, 4);
-  for (auto d : {home() + "/Obrazy", home() + "/Pictures"})
-    if (fs::is_directory(d, ec)) scan(d, 0);   // tylko pierwszy poziom
+  if (fs::is_directory(pictures_dir(), ec)) scan(pictures_dir(), 0);   // only the first level
   return out;
 }
 
 // ---------------------------------------------------------------------------
-// Skalowanie: przy dużym zmniejszeniu najpierw połowimy (dwuliniowo = średnia
-// z 2x2), żeby zdjęcie z aparatu nie dostało schodków i mory.
+// Scaling: with a large reduction we first halve (bilinear = average
+// of 2x2), so that a camera photo gets no jaggies and moire.
 static Fl_Image *scaled(const Fl_Image *src, int W, int H) {
   Fl_Image::RGB_scaling(FL_RGB_SCALING_BILINEAR);
   const Fl_Image *cur = src;
@@ -132,9 +147,9 @@ static Fl_Image *scaled(const Fl_Image *src, int W, int H) {
   return out;
 }
 
-// Nałóż obraz (dowolna głębia 1-4) na bufor RGB w punkcie (ox, oy), z przycięciem.
+// Blend an image (any depth 1-4) onto an RGB buffer at (ox, oy), with clipping.
 static void blit(std::vector<unsigned char> &buf, int W, int H, Fl_Image *img, int ox, int oy) {
-  if (auto *r = dynamic_cast<Fl_RGB_Image *>(img)) r->normalize();   // SVG rasteryzuje się dopiero tu
+  if (auto *r = dynamic_cast<Fl_RGB_Image *>(img)) r->normalize();   // SVG is rasterized only here
   if (!img || img->d() < 1 || !img->data() || !img->data()[0]) return;
   int iw = img->data_w(), ih = img->data_h(), d = img->d();
   int ld = img->ld() ? img->ld() : iw * d;
@@ -158,18 +173,18 @@ static void blit(std::vector<unsigned char> &buf, int W, int H, Fl_Image *img, i
   }
 }
 
-// Tło pod tapetą: wzór, jednolity kolor albo gradient.
+// The background below the wallpaper: a pattern, a solid color or a gradient.
 static void fill_background(const Appearance &a, std::vector<unsigned char> &buf, int W, int H) {
   uchar c1[3];
   Fl::get_color(DESK_A, c1[0], c1[1], c1[2]);
-  if (a.background == "kolor") {
+  if (a.background == "color") {
     for (size_t i = 0; i < (size_t)W * H; i++) memcpy(&buf[i * 3], c1, 3);
     return;
   }
   if (a.background == "gradient") {
     unsigned c2v = gradient_second(a);
     double c2[3] = {double(c2v >> 16 & 255), double(c2v >> 8 & 255), double(c2v & 255)};
-    // macierz Bayera 4x4: dithering zamiast pasów w płynnych przejściach
+    // 4x4 Bayer matrix: dithering instead of bands in smooth transitions
     static const int bayer[4][4] = {{0, 8, 2, 10}, {12, 4, 14, 6}, {3, 11, 1, 9}, {15, 7, 13, 5}};
     const std::string &g = a.gradient;
     double cx = (W - 1) / 2.0, cy = (H - 1) / 2.0, rmax = std::hypot(cx, cy);
@@ -177,9 +192,9 @@ static void fill_background(const Appearance &a, std::vector<unsigned char> &buf
       unsigned char *row = &buf[(size_t)y * W * 3];
       for (int x = 0; x < W; x++) {
         double t;
-        if (g == "poziomy") t = W > 1 ? x / double(W - 1) : 0;
-        else if (g == "ukosny") t = (W + H > 2) ? (x + y) / double(W + H - 2) : 0;
-        else if (g == "promienisty") t = rmax > 0 ? std::hypot(x - cx, y - cy) / rmax : 0;
+        if (g == "horizontal") t = W > 1 ? x / double(W - 1) : 0;
+        else if (g == "diagonal") t = (W + H > 2) ? (x + y) / double(W + H - 2) : 0;
+        else if (g == "radial") t = rmax > 0 ? std::hypot(x - cx, y - cy) / rmax : 0;
         else t = H > 1 ? y / double(H - 1) : 0;
         double dth = (bayer[y & 3][x & 3] + 0.5) / 16.0;
         for (int k = 0; k < 3; k++) {
@@ -215,10 +230,10 @@ Fl_RGB_Image *render_desktop(const Appearance &a, int W, int H, bool *loaded) {
       int iw = src->data_w(), ih = src->data_h();
       if (iw > 0 && ih > 0 && !src->fail()) {
         const std::string &m = a.wallpaper_mode;
-        if (m == "kafelki" || m == "srodek") {
-          // bez skalowania (SVG nie ma "naturalnej" wielkości w pikselach - rasteryzujemy 1:1)
+        if (m == "tile" || m == "center") {
+          // without scaling (SVG has no "natural" size in pixels - we rasterize 1:1)
           Fl_Image *img = src->copy(iw, ih);
-          if (m == "kafelki")
+          if (m == "tile")
             for (int y = 0; y < H; y += ih)
               for (int x = 0; x < W; x += iw) blit(buf, W, H, img, x, y);
           else
@@ -226,9 +241,9 @@ Fl_RGB_Image *render_desktop(const Appearance &a, int W, int H, bool *loaded) {
           delete img;
         } else {
           int dw = W, dh = H;
-          if (m != "rozciagnij") {
+          if (m != "stretch") {
             double sx = (double)W / iw, sy = (double)H / ih;
-            double s = m == "dopasuj" ? std::min(sx, sy) : std::max(sx, sy);
+            double s = m == "fit" ? std::min(sx, sy) : std::max(sx, sy);
             dw = std::max(1, (int)(iw * s + 0.5));
             dh = std::max(1, (int)(ih * s + 0.5));
           }

@@ -1,5 +1,6 @@
-// Nirvana Desktop - aplety paska menu: głośność i zasilanie
+// Nirvana Desktop - menu bar applets: volume and power
 #include "applets.h"
+#include "applet_ui.h"
 
 #include "audio.h"
 #include "platinum.h"
@@ -32,177 +33,7 @@ static audio::State g_audio;
 static power::State g_power;
 
 // ---------------------------------------------------------------------------
-// Okienko pod ikoną paska menu (jak menu, ale z suwakami)
-// ---------------------------------------------------------------------------
-class Popup : public Fl_Double_Window {
-public:
-  std::function<void()> on_close;
-  Popup(int W, int H) : Fl_Double_Window(W, H) {
-    border(0);
-    set_override();
-    color(GRAY);
-    end();
-    resizable(nullptr);   // zmiana rozmiaru po zbudowaniu treści nie może jej skalować
-  }
-  void open_at(int X, int Y) {
-    int sx, sy, sw, sh;
-    Fl::screen_xywh(sx, sy, sw, sh, X, Y);
-    position(std::clamp(X, sx, sx + sw - w()), Y);
-    show();
-    Fl::grab(this);
-  }
-  void close() {
-    if (Fl::grab() == this) Fl::grab(nullptr);
-    hide();
-    if (on_close) on_close();
-  }
-  std::function<void()> track_hover;   // ustawiane niżej - podświetlanie wierszy menu
-  int handle(int e) override {
-    if (e == FL_PUSH) {
-      int ex = Fl::event_x(), ey = Fl::event_y();
-      if (ex < 0 || ey < 0 || ex >= w() || ey >= h()) { close(); return 1; }
-    }
-    if ((e == FL_MOVE || e == FL_DRAG || e == FL_ENTER || e == FL_LEAVE) && track_hover) {
-      int r = Fl_Double_Window::handle(e);
-      track_hover();
-      return r ? r : 1;
-    }
-    if (e == FL_KEYBOARD && Fl::event_key() == FL_Escape) { close(); return 1; }
-    return Fl_Double_Window::handle(e);
-  }
-  void draw() override {
-    // ramka jak w menu Platinum: czarny obrys i cień
-    fl_color(GRAY);
-    fl_rectf(0, 0, w(), h());
-    fl_color(DARK);
-    fl_rect(0, 0, w() - 1, h() - 1);
-    fl_color(SHADOW);
-    fl_yxline(w() - 1, 1, h() - 1);
-    fl_xyline(1, h() - 1, w() - 1);
-    fl_color(LIGHT);
-    fl_xyline(1, 1, w() - 3);
-    fl_yxline(1, 1, h() - 3);
-    for (int i = 0; i < children(); i++) {
-      draw_child(*child(i));
-      draw_outside_label(*child(i));
-    }
-  }
-};
-
-// Fl_Choice zamyka własne menu przez Fl::grab(0) - po nim przywracamy chwyt okienka.
-class GrabChoice : public Fl_Choice {
-public:
-  GrabChoice(int X, int Y, int W, int H, const char *l = nullptr) : Fl_Choice(X, Y, W, H, l) {
-    textfont(FONT_SMALL);
-    textsize(SIZE_SMALL + 1);
-    labelsize(SIZE_SMALL + 1);
-  }
-  int handle(int e) override {
-    int r = Fl_Choice::handle(e);
-    if ((e == FL_PUSH || e == FL_KEYBOARD) && window() && window()->shown()) Fl::grab(window());
-    return r;
-  }
-};
-
-// Suwak Platinum: rowek, wypełnienie w kolorze zaznaczenia, uchwyt.
-class PSlider : public Fl_Slider {
-public:
-  PSlider(int X, int Y, int W, int H) : Fl_Slider(X, Y, W, H) {
-    type(FL_HOR_SLIDER);
-    bounds(0, 100);
-    step(1);
-    box(FL_NO_BOX);
-  }
-  void draw() override {
-    int tw = 11, th = h() - 2;
-    double f = (value() - minimum()) / (maximum() - minimum());
-    int tx = x() + (int)((w() - tw) * f);
-    int gy = y() + h() / 2 - 3;
-    fl_draw_box(WELL_BOX, x(), gy, w(), 6, active_r() ? CONTENT : GRAY);
-    if (active_r()) { fl_color(SEL); fl_rectf(x() + 2, gy + 2, std::max(0, tx - x()), 2); }
-    fl_draw_box(THUMB_BOX, tx, y() + 1, tw, th, active_r() ? HILITE : GRAY);
-    fl_color(SHADOW);
-    for (int i = 0; i < 3; i++) fl_yxline(tx + 3 + i * 2, y() + 5, y() + th - 4);
-  }
-  int handle(int e) override {
-    if (e == FL_MOUSEWHEEL) {
-      value(std::clamp(value() - Fl::event_dy() * 5, minimum(), maximum()));
-      do_callback();
-      redraw();
-      return 1;
-    }
-    return Fl_Slider::handle(e);
-  }
-};
-
-// Pozycja jak w menu: tekst, podświetlenie pod myszą, klik wywołuje akcję.
-class MenuRow : public Fl_Button {
-public:
-  MenuRow(int X, int Y, int W, const char *l) : Fl_Button(X, Y, W, 20, l) {
-    box(FL_FLAT_BOX);
-    labelfont(FONT_SYSTEM);
-    labelsize(SIZE_SYSTEM);
-    align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
-  }
-  // Podświetlenie ustawia okienko (Popup) według położenia myszy: przy chwycie
-  // myszy (Fl::grab) FL_LEAVE nie zawsze dochodzi i wiersze zostawały podświetlone.
-  void hover(bool h) { if (h != hover_) { hover_ = h; redraw(); } }
-  int handle(int e) override {
-    if (e == FL_ENTER || e == FL_LEAVE) return 1;
-    return Fl_Button::handle(e);
-  }
-  void draw() override {
-    bool hl = (hover_ || value()) && active_r();
-    fl_color(hl ? SEL : GRAY);
-    fl_rectf(x(), y(), w(), h());
-    fl_font(labelfont(), labelsize());
-    // nieaktywne: pół drogi między tekstem a tłem - czytelne też w ciemnych schematach
-    fl_color(!active_r() ? fl_color_average(TEXT, GRAY, 0.45f) : hl ? SEL_TEXT : TEXT);
-    fl_draw(label(), x() + 14, y(), w() - 18, h(), FL_ALIGN_LEFT);
-  }
-private:
-  bool hover_ = false;
-};
-
-// Wiersz pod myszą podświetlony, pozostałe nie.
-static void update_hover(Fl_Window *w) {
-  int ex = Fl::event_x(), ey = Fl::event_y();
-  bool inside = ex >= 0 && ey >= 0 && ex < w->w() && ey < w->h();
-  for (int i = 0; i < w->children(); i++)
-    if (auto *r = dynamic_cast<MenuRow *>(w->child(i)))
-      r->hover(inside && ex >= r->x() && ex < r->x() + r->w() && ey >= r->y() && ey < r->y() + r->h());
-}
-
-class Sep : public Fl_Widget {
-public:
-  Sep(int X, int Y, int W) : Fl_Widget(X, Y, W, 6) {}
-  void draw() override {
-    fl_color(SHADOW); fl_xyline(x(), y() + 2, x() + w() - 1);
-    fl_color(LIGHT); fl_xyline(x(), y() + 3, x() + w() - 1);
-  }
-};
-
-static Fl_Box *text_box(int X, int Y, int W, const char *t, bool bold = false, int H = 18) {
-  auto *b = new Fl_Box(X, Y, W, H);
-  b->copy_label(t);
-  b->labelfont(bold ? FONT_SYSTEM : FONT_SMALL);
-  b->labelsize(bold ? SIZE_SYSTEM : SIZE_SMALL + 1);
-  b->labelcolor(TEXT);
-  b->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE | FL_ALIGN_CLIP);
-  return b;
-}
-
-template <class F>
-static Fl_Check_Button *check(int X, int Y, int W, const char *t, bool v, F cb) {
-  auto *c = new Fl_Check_Button(X, Y, W, 20, t);
-  c->labelsize(SIZE_SMALL + 1);
-  c->value(v);
-  c->callback([](Fl_Widget *w, void *d) { (*(F *)d)(((Fl_Check_Button *)w)->value()); }, new F(cb));
-  return c;
-}
-
-// ---------------------------------------------------------------------------
-// OSD: pasek głośności/jasności na dole ekranu
+// OSD: a volume/brightness bar at the bottom of the screen
 // ---------------------------------------------------------------------------
 class Osd : public Fl_Double_Window {
 public:
@@ -241,7 +72,7 @@ static void osd(Osd::Kind k, int v, bool m) {
 }
 
 // ---------------------------------------------------------------------------
-// Głośność
+// Volume
 // ---------------------------------------------------------------------------
 class VolumeApplet;
 static VolumeApplet *g_vol;
@@ -250,10 +81,10 @@ class VolumeApplet : public Fl_Widget {
 public:
   VolumeApplet(int X, int Y, int W, int H) : Fl_Widget(X, Y, W, H) { g_vol = this; }
   Popup *pop = nullptr;
-  std::string layout_key;   // co jest w okienku (urządzenia, strumienie) - zmiana = przebudowa
+  std::string layout_key;   // what is in the popup (devices, streams) - a change = rebuild
   struct Row { PSlider *slider; Fl_Box *pct; Fl_Check_Button *mute; };
   Row out{}, in{};
-  std::vector<std::pair<int, Row>> streams;   // indeks strumienia -> wiersz
+  std::vector<std::pair<int, Row>> streams;   // stream index -> row
 
   void draw() override {
     fl_push_clip(x(), y(), w(), h());
@@ -293,14 +124,14 @@ public:
   void build() {
     const int W = 300;
     pop->begin();
-    pop->clear();             // clear() ustawia resizable(this) - wyłączamy z powrotem
+    pop->clear();             // clear() sets resizable(this) - turn it off again
     pop->resizable(nullptr);
     pop->begin();
     int y = 8;
     streams.clear();
     out = in = Row{};
     const audio::State &s = g_audio;
-    if (s.backend == audio::State::Brak) {
+    if (s.backend == audio::State::NoBackend) {
       text_box(12, y, W - 24, _("Sound"), true);
       y += 22;
       auto *b = text_box(12, y, W - 24, s.problem.c_str(), false, 36);
@@ -337,10 +168,10 @@ public:
         row.pct = text_box(W - 52, y, 44, (std::to_string(d->volume) + "%").c_str());
         row.pct->align(FL_ALIGN_RIGHT | FL_ALIGN_INSIDE);
         y += 26;
-        // wybór urządzenia (i portu, gdy ma kilka: głośniki/słuchawki)
+        // device choice (and port, when there are several: speakers/headphones)
         if (s.backend == audio::State::Pulse && (list.size() > 1 || d->ports.size() > 1)) {
           auto *ch = new GrabChoice(82, y, W - 94, 22, output ? _("Output:") : _("Input:"));
-          static std::vector<std::pair<std::string, std::string>> opts_out, opts_in;   // urządzenie, port
+          static std::vector<std::pair<std::string, std::string>> opts_out, opts_in;   // device, port
           auto &opts = output ? opts_out : opts_in;
           opts.clear();
           int sel = 0;
@@ -391,7 +222,7 @@ public:
           text_box(12, y, 100, t.app.c_str());
           int idx = t.index;
           r.mute = new Fl_Check_Button(112, y, 20, 20);
-          r.mute->value(!t.mute);   // zaznaczone = słychać
+          r.mute->value(!t.mute);   // checked = audible
           r.mute->tooltip(_("This application is audible"));
           r.mute->callback([](Fl_Widget *w, void *i) {
             audio::set_stream_mute((int)(long)i, !((Fl_Check_Button *)w)->value());
@@ -411,12 +242,12 @@ public:
     layout_key = key_of(s);
   }
 
-  // Nowy stan z serwera: przy tych samych urządzeniach tylko wartości, inaczej przebudowa.
+  // A new state from the server: with the same devices only the values, otherwise a rebuild.
   void sync() {
     redraw();
     if (!pop || !pop->shown()) return;
     if (key_of(g_audio) != layout_key) {
-      if (Fl::pushed()) return;   // nie przebudowujemy w trakcie przeciągania
+      if (Fl::pushed()) return;   // no rebuild while dragging
       int X = pop->x(), Y = pop->y();
       build();
       pop->position(X, Y);
@@ -458,7 +289,7 @@ public:
 Fl_Widget *make_volume(int X, int Y, int W, int H) { return new VolumeApplet(X, Y, W, H); }
 
 // ---------------------------------------------------------------------------
-// Zasilanie
+// Power
 // ---------------------------------------------------------------------------
 class PowerApplet;
 static PowerApplet *g_pow;
@@ -477,12 +308,30 @@ public:
     bool open = pop && pop->shown();
     if (open) { fl_color(SEL); fl_rectf(x(), y(), w(), h() - 1); }
     Fl_Color c = open ? SEL_TEXT : TEXT;
-    // do prawej - aplety stoją ciasno, bez dziury przed ikoną głośności
+    // to the right - the applets sit tightly, without a gap before the volume icon
     int iw = g_power.percent >= 0 ? 23 : 14;
     int ix = x() + w() - 4 - iw;
-    if (power::projection()) draw_display(ix - 14, y() + 5, c);   // tryb projekcji: monitor przed ikoną
-    if (g_power.percent >= 0) draw_battery(ix, y() + 4, g_power.percent, g_power.charging, c);
-    else draw_plug(ix, y() + 3, c);
+    int lx = ix;   // what goes before the battery
+    if (g_power.percent >= 0) {
+      draw_battery(ix, y() + 4, g_power.percent, g_power.charging, c);
+      if (!g_power.charging && !g_power.on_ac) {        // discharging: an arrow pointing down
+        lx -= 8;
+        fl_color(g_power.percent <= 10 ? fl_rgb_color(0xC0, 0x20, 0x20) : c);
+        fl_rectf(lx + 2, y() + 4, 2, 5);
+        fl_polygon(lx, y() + 8, lx + 6, y() + 8, lx + 3, y() + 12);
+      } else if (!g_power.charging) {                   // on the adapter and full: a small plug
+        lx -= 9;
+        fl_color(c);
+        fl_rectf(lx + 1, y() + 4, 1, 3);
+        fl_rectf(lx + 5, y() + 4, 1, 3);
+        fl_rectf(lx, y() + 7, 7, 3);
+        fl_rectf(lx + 2, y() + 10, 3, 1);
+        fl_rectf(lx + 3, y() + 11, 1, 3);
+      }
+    } else {
+      draw_plug(ix, y() + 3, c);
+    }
+    if (power::projection()) draw_display(lx - 14, y() + 5, c);   // projection mode: a monitor before the icons
   }
   int handle(int e) override {
     if (e == FL_PUSH) {
@@ -498,7 +347,7 @@ public:
   void build() {
     const int W = 290;
     pop->begin();
-    pop->clear();             // clear() ustawia resizable(this) - wyłączamy z powrotem
+    pop->clear();             // clear() sets resizable(this) - turn it off again
     pop->resizable(nullptr);
     pop->begin();
     int y = 8;
@@ -529,7 +378,12 @@ public:
       ch->value(sel);
       ch->callback([](Fl_Widget *w, void *) {
         int v = ((Fl_Choice *)w)->value();
-        if (v >= 0 && v < (int)g_power.profiles.size()) power::set_profile(g_power.profiles[v]);
+        if (v < 0 || v >= (int)g_power.profiles.size()) return;
+        if (power::set_profile(g_power.profiles[v])) { g_power.profile = g_power.profiles[v]; return; }
+        // not changed (no permission, no way to change it): show the real state again
+        for (size_t i = 0; i < g_power.profiles.size(); i++)
+          if (g_power.profiles[i] == g_power.profile) ((Fl_Choice *)w)->value((int)i);
+        w->redraw();
       });
       y += 30;
     }
@@ -537,7 +391,7 @@ public:
     y += 10;
     auto *pj = check(10, y, W - 20, _("Presentation Mode"), power::projection(), [](bool on) {
       power::set_projection(on);
-      if (g_pow) g_pow->redraw();
+      if (g_pow) g_pow->sync();
     });
     pj->labelfont(FONT_SYSTEM);
     pj->labelsize(SIZE_SYSTEM);
@@ -546,7 +400,7 @@ public:
     hint->labelsize(SIZE_SMALL);
     hint->align(FL_ALIGN_LEFT | FL_ALIGN_TOP | FL_ALIGN_INSIDE | FL_ALIGN_WRAP);
     y += 32;
-    // blokada, uśpienie, wylogowanie, wyłączenie... są w menu System na pasku menu
+    // lock, sleep, log out, shut down... are in the System menu of the menu bar
     new Sep(8, y, W - 16);
     y += 8;
     auto *r = new MenuRow(2, y, W - 4, _("Power Settings…"));
@@ -561,7 +415,7 @@ public:
     if (!pop) {
       pop = new Popup(290, 100);
       pop->on_close = [this] {
-        for (int i = 0; i < pop->children(); i++)   // po zamknięciu bez podświetleń
+        for (int i = 0; i < pop->children(); i++)   // after closing without highlights
           if (auto *r = dynamic_cast<MenuRow *>(pop->child(i))) r->hover(false);
         redraw();
       };
@@ -574,6 +428,7 @@ public:
 
   void sync() {
     redraw();
+    if (w() != power_width() && g_host.relayout) g_host.relayout();
     if (!pop || !pop->shown()) return;
     if (bat_label) {
       std::string head = g_power.percent >= 0 ? plat::fmt(_("Battery: %1"), power::battery_text(g_power)) : std::string(_("AC power"));
@@ -599,7 +454,7 @@ void PowerApplet::act(Fl_Widget *, void *d) {
     case 1: power::lock_screen(); break;
     case 2:
       if (power::projection()) { report(_("Presentation mode is on - turn it off to put the computer to sleep.")); break; }
-      if (g_host.nirvana_session) power::lock_screen();   // po wybudzeniu ekran jest zablokowany
+      if (g_host.nirvana_session) power::lock_screen();   // after waking up the screen is locked
       report(power::suspend());
       break;
     case 3:
@@ -646,7 +501,7 @@ bool power_action_available(PowerAction a) {
 }
 
 // ---------------------------------------------------------------------------
-// Klawisze multimedialne, bezczynność, odświeżanie
+// Multimedia keys, idleness, refreshing
 // ---------------------------------------------------------------------------
 static KeyCode k_up, k_down, k_mute, k_micmute, k_bup, k_bdown;
 static int g_ss_event = -1;
@@ -666,7 +521,7 @@ static void grab_keys() {
   k_micmute = kc(XF86XK_AudioMicMute);
   k_bup = kc(XF86XK_MonBrightnessUp);
   k_bdown = kc(XF86XK_MonBrightnessDown);
-  // GNOME/KDE trzymają te klawisze same - wtedy XGrabKey kończy się BadAccess i nic nie robimy
+  // GNOME/KDE hold these keys themselves - then XGrabKey ends with BadAccess and we do nothing
   XSync(d, False);
   auto old = XSetErrorHandler(ignore_errors);
   for (KeyCode k : {k_up, k_down, k_mute, k_micmute, k_bup, k_bdown})
@@ -704,7 +559,7 @@ static int x_events(void *event, void *) {
     }
   }
   if (g_ss_event >= 0 && e->type == g_ss_event) {
-    // wygaszacz X się włączył: blokada (jak xss-lock), chyba że trwa projekcja
+    // the X screensaver started: lock (like xss-lock), unless a projection is running
     auto *se = (XScreenSaverNotifyEvent *)e;
     if (se->state == ScreenSaverOn && g_host.nirvana_session && g_idle.lock_on_blank && !power::projection())
       power::lock_screen();
@@ -717,21 +572,21 @@ static int x_events(void *event, void *) {
   return 0;
 }
 
-// Co 20 s: bateria, jasność, usypianie po bezczynności, ostrzeżenia.
+// Every 20 s: battery, brightness, sleeping when idle, warnings.
 static void power_tick(void *) {
   g_power = power::query();
   if (g_pow) g_pow->sync();
   if (g_host.nirvana_session && !power::projection()) {
     int limit = g_power.on_ac ? g_idle.sleep_ac_min : g_idle.sleep_battery_min;
     int idle = power::idle_seconds();
-    if (idle < g_last_sleep_idle) g_last_sleep_idle = 0;   // był ruch od ostatniego uśpienia
+    if (idle < g_last_sleep_idle) g_last_sleep_idle = 0;   // there was activity since the last sleep
     if (limit > 0 && idle >= limit * 60 && !g_last_sleep_idle && g_power.can_suspend) {
       g_last_sleep_idle = idle;
       if (g_idle.lock_on_blank) power::lock_screen();
       power::suspend();
     }
   }
-  // bateria: ostrzeżenie przy 10%, przy 3% hibernacja albo uśpienie
+  // battery: a warning at 10%, at 3% hibernate or sleep
   if (g_power.percent >= 0 && !g_power.on_ac) {
     if (g_power.percent <= 10 && !g_warned_low && g_host.dialog) {
       g_warned_low = true;
@@ -748,8 +603,18 @@ static void power_tick(void *) {
   Fl::repeat_timeout(20.0, power_tick);
 }
 
+const Host &current_host() { return g_host; }
+
+int power_width() {
+  int wdt = g_power.percent >= 0 ? 23 : 14;
+  if (g_power.percent >= 0 && !g_power.charging) wdt += g_power.on_ac ? 9 : 8;
+  if (power::projection()) wdt += 14;
+  return wdt + 8;
+}
+
 void init(const Host &host) {
   g_host = host;
+  if (host.nirvana_session) power::restore_profile();   // kernel profiles are forgotten at a restart
   fl_open_display();
   grab_keys();
   int ev, er;
@@ -760,6 +625,7 @@ void init(const Host &host) {
   Fl::add_system_handler(x_events, nullptr);
   apply_settings();
   g_power = power::query();
+  if (g_host.relayout) g_host.relayout();   // the battery icon has its width now
   Fl::add_timeout(20.0, power_tick);
   audio::watch([] { if (g_vol) g_vol->refresh(false); });
 }

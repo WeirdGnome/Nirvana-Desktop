@@ -1,4 +1,4 @@
-// Nirvana Desktop - denise: obsługa AppImage
+// Nirvana Desktop - denise: AppImage support
 #include "appimage.h"
 #include "i18n.h"
 
@@ -25,10 +25,10 @@ namespace fs = std::filesystem;
 namespace appimage {
 
 // ---------------------------------------------------------------------------
-// Procesy
+// Processes
 // ---------------------------------------------------------------------------
 
-// Uruchom i poczekaj; wyjście programu idzie do /dev/null. Zwraca kod wyjścia.
+// Run and wait; the program's output goes to /dev/null. Returns the exit code.
 static int run_wait(const std::vector<std::string> &args) {
   pid_t pid = fork();
   if (pid < 0) return -1;
@@ -46,7 +46,7 @@ static int run_wait(const std::vector<std::string> &args) {
   return WIFEXITED(st) ? WEXITSTATUS(st) : -1;
 }
 
-// Uruchom i zbierz standardowe wyjście (stderr do /dev/null).
+// Run and collect the standard output (stderr to /dev/null).
 static std::string run_capture(const std::vector<std::string> &args) {
   int fds[2];
   if (pipe(fds) < 0) return "";
@@ -73,8 +73,8 @@ static std::string run_capture(const std::vector<std::string> &args) {
   return out;
 }
 
-// Podwójny fork: aplikacja staje się dzieckiem init, więc nie zostawia zombie,
-// a Rambler może bezpiecznie czekać na własne procesy (unsquashfs).
+// Double fork: the application becomes a child of init, so it leaves no zombie,
+// and Rambler can safely wait for its own processes (unsquashfs).
 void spawn(const char *const argv[]) {
   pid_t pid = fork();
   if (pid < 0) return;
@@ -103,7 +103,7 @@ static bool have(const char *prog) {
 // ---------------------------------------------------------------------------
 // ELF i squashfs
 // ---------------------------------------------------------------------------
-// Koniec obrazu ELF = koniec tablicy nagłówków sekcji.
+// End of the ELF image = end of the section header table.
 static bool elf_end(const std::string &path, uint64_t &end) {
   std::ifstream f(path, std::ios::binary);
   unsigned char id[EI_NIDENT];
@@ -123,7 +123,7 @@ static bool elf_end(const std::string &path, uint64_t &end) {
   return true;
 }
 
-// Prawdziwy superblok squashfs 4.x, a nie przypadkowe "hsqs" w danych.
+// A real squashfs 4.x superblock, not a random "hsqs" in the data.
 static bool squashfs_super(const unsigned char *p) {
   if (memcmp(p, "hsqs", 4) != 0) return false;
   uint32_t block_size; uint16_t block_log, major;
@@ -133,15 +133,15 @@ static bool squashfs_super(const unsigned char *p) {
   return major == 4 && block_log >= 12 && block_log <= 20 && block_size == (1u << block_log);
 }
 
-// Szuka obrazu za ELF-em. Klasyczny runtime AppImage kładzie go dokładnie na końcu
-// ELF-a, ale nowsze (np. uruntime) potrafią dodać wyrównanie albo dane pośrodku.
-// kind: "squashfs", "dwarfs" albo "" (nie znaleziono).
+// Looks for the image after the ELF. The classic AppImage runtime puts it exactly at the end
+// of the ELF, but newer ones (e.g. uruntime) can add padding or data in between.
+// kind: "squashfs", "dwarfs" or "" (not found).
 static bool find_payload(const std::string &path, uint64_t &offset, std::string &kind) {
   kind.clear();
   uint64_t start;
   if (!elf_end(path, start)) return false;
   std::ifstream f(path, std::ios::binary);
-  const uint64_t LIMIT = 64ull << 20;          // szukamy w pierwszych 64 MB za ELF-em
+  const uint64_t LIMIT = 64ull << 20;          // search the first 64 MB after the ELF
   const size_t CHUNK = 1 << 20, OVER = 64;
   std::vector<unsigned char> buf(CHUNK + OVER);
   for (uint64_t pos = start; pos < start + LIMIT; pos += CHUNK) {
@@ -153,7 +153,7 @@ static bool find_payload(const std::string &path, uint64_t &offset, std::string 
     for (size_t k = 0; k + 32 <= got && k < CHUNK; k++) {
       if (buf[k] == 'h' && squashfs_super(&buf[k])) { offset = pos + k; kind = "squashfs"; return true; }
       if (buf[k] == 'D' && k + 6 <= got && !memcmp(&buf[k], "DWARFS", 6)) {
-        offset = pos + k; kind = "dwarfs"; return false;   // nie umiemy czytać bez uruchamiania
+        offset = pos + k; kind = "dwarfs"; return false;   // we cannot read it without running it
       }
     }
   }
@@ -165,7 +165,7 @@ bool squashfs_offset(const std::string &path, uint64_t &offset) {
   return find_payload(path, offset, kind);
 }
 
-// Klucz pliku: zmienia się, gdy plik zostanie podmieniony na inną wersję.
+// File key: changes when the file is replaced with another version.
 static std::string key(const std::string &path) {
   struct stat st;
   if (stat(path.c_str(), &st) != 0) return "";
@@ -190,11 +190,11 @@ static bool extract(const std::string &path, uint64_t off, const std::string &de
 std::string icon(const std::string &path, const std::string &home) {
   std::string k = key(path);
   if (k.empty()) return "";
-  fs::path cache = fs::path(home) / ".cache/nirvana/ikony";
+  fs::path cache = fs::path(home) / ".cache/nirvana/icons";
   std::error_code ec;
   for (auto ext : {".png", ".svg"})
     if (fs::exists(cache / (k + ext), ec)) return (cache / (k + ext)).string();
-  if (fs::exists(cache / (k + ".brak"), ec)) return "";   // już wiemy, że ikony nie ma
+  if (fs::exists(cache / (k + ".none"), ec)) return "";   // we already know there is no icon
 
   fs::create_directories(cache, ec);
   auto store = [&](const std::string &data) -> std::string {
@@ -205,7 +205,7 @@ std::string icon(const std::string &path, const std::string &home) {
     std::ofstream(cache / (k + ext), std::ios::binary) << data;
     return (cache / (k + ext)).string();
   };
-  // Aplikacja już zainstalowana (np. rozpakowana przez własny runtime) - ikona jest na dysku.
+  // Application already installed (e.g. extracted by its own runtime) - the icon is on disk.
   fs::path installed_icon = fs::path(install_dir(path, home)) / ".DirIcon";
   if (fs::exists(installed_icon, ec)) {
     std::ifstream in(installed_icon, std::ios::binary);
@@ -214,8 +214,8 @@ std::string icon(const std::string &path, const std::string &home) {
   }
   uint64_t off;
   static bool tool = have("unsquashfs");
-  // Bez squashfs (np. DwarFS) ikonę pokażemy po instalacji. Pamiętamy to w tej sesji,
-  // żeby przy każdym odświeżeniu folderu nie przeszukiwać od nowa dziesiątek MB pliku.
+  // Without squashfs (e.g. DwarFS) the icon is shown after installation. We remember that in this
+  // session so that every folder refresh does not search tens of MB of the file again.
   static std::set<std::string> no_payload;
   if (no_payload.count(k)) return "";
   if (!tool || !squashfs_offset(path, off)) { no_payload.insert(k); return ""; }
@@ -225,15 +225,15 @@ std::string icon(const std::string &path, const std::string &home) {
   std::string result;
   if (extract(path, off, tmp.string(), {".DirIcon"})) {
     fs::path ic = tmp / ".DirIcon";
-    std::ifstream in(ic, std::ios::binary);   // dowiązanie wskazuje na rozpakowany plik
+    std::ifstream in(ic, std::ios::binary);   // the symlink points to an extracted file
     result = store(std::string((std::istreambuf_iterator<char>(in)), {}));
   }
   fs::remove_all(tmp, ec);
-  if (result.empty()) std::ofstream(cache / (k + ".brak"));
+  if (result.empty()) std::ofstream(cache / (k + ".none"));
   return result;
 }
 
-// Nazwa pliku bez rozszerzenia i architektury: "Firefox-128.0-x86_64.AppImage" -> "Firefox-128.0"
+// File name without the extension and architecture: "Firefox-128.0-x86_64.AppImage" -> "Firefox-128.0"
 static std::string strip(const std::string &filename) {
   std::string s = filename;
   if (s.size() > 9 && strcasecmp(s.c_str() + s.size() - 9, ".appimage") == 0) s.resize(s.size() - 9);
@@ -257,7 +257,7 @@ std::string version(const std::string &filename) {
   std::smatch m;
   std::string s = strip(filename);
   if (!std::regex_search(s, m, ver_re())) return "";
-  // sam numer wersji z ewentualnym dopiskiem: "2.10.25-20210610-withplugins" -> "2.10.25",
+  // just the version number with an optional suffix: "2.10.25-20210610-withplugins" -> "2.10.25",
   // "24.8.2.1.basic" -> "24.8.2.1", "3.0-beta2" -> "3.0-beta2"
   static const std::regex num(R"(^[0-9]+(\.[0-9]+)*([-~.]?(alpha|beta|rc|pre|a|b)[0-9]*(?![A-Za-z]))?)", std::regex::icase);
   std::string tail = m[1].str();
@@ -271,7 +271,7 @@ std::string display_name(const std::string &filename) {
 }
 
 // ---------------------------------------------------------------------------
-// Metadane z pliku .desktop w AppImage: kategorie i wersja
+// Metadata from the .desktop file in the AppImage: categories and version
 // ---------------------------------------------------------------------------
 static Meta parse_desktop(std::istream &in) {
   Meta m;
@@ -296,8 +296,8 @@ static Meta read_meta_file(const fs::path &f) {
   Meta m;
   std::string line;
   while (std::getline(in, line)) {
-    if (line.rfind("wersja=", 0) == 0) m.version = line.substr(7);
-    else if (line.rfind("kategorie=", 0) == 0) m.categories = line.substr(10);
+    if (line.rfind("version=", 0) == 0) m.version = line.substr(8);
+    else if (line.rfind("categories=", 0) == 0) m.categories = line.substr(11);
   }
   return m;
 }
@@ -305,7 +305,7 @@ static Meta read_meta_file(const fs::path &f) {
 Meta meta(const std::string &path, const std::string &home) {
   std::string k = key(path);
   if (k.empty()) return {};
-  fs::path cache = fs::path(home) / ".cache/nirvana/ikony";
+  fs::path cache = fs::path(home) / ".cache/nirvana/icons";
   fs::path mf = cache / (k + ".meta");
   std::error_code ec;
   if (fs::exists(mf, ec)) return read_meta_file(mf);
@@ -316,7 +316,7 @@ Meta meta(const std::string &path, const std::string &home) {
   auto from_dir = [&](const fs::path &dir) {
     for (auto &e : fs::directory_iterator(dir, ec))
       if (e.path().extension() == ".desktop") {
-        std::ifstream in(e.path());   // dowiązanie wskazuje na plik w usr/share/applications
+        std::ifstream in(e.path());   // the symlink points to a file in usr/share/applications
         m = parse_desktop(in);
         found = true;
         return;
@@ -327,7 +327,7 @@ Meta meta(const std::string &path, const std::string &home) {
   static bool tool = have("unsquashfs");
   uint64_t off;
   if (!found && tool && squashfs_offset(path, off)) {
-    // nazwa pliku .desktop w korzeniu obrazu, potem rozpakowanie tylko jego
+    // the name of the .desktop file in the image root, then extracting only that file
     std::string list = run_capture({"unsquashfs", "-o", std::to_string(off), "-l", "-d", "", path});
     std::string name;
     size_t pos = 0;
@@ -348,11 +348,11 @@ Meta meta(const std::string &path, const std::string &home) {
       fs::remove_all(tmp, ec);
     }
   }
-  // Zapamiętujemy też brak danych (bez szukania przy każdym odświeżeniu folderu),
-  // ale nie zanim aplikacja w formacie innym niż squashfs zostanie zainstalowana.
+  // We also remember missing data (no search on every folder refresh),
+  // but not before an application in a format other than squashfs is installed.
   if (found || (tool && squashfs_offset(path, off))) {
     std::ofstream out(mf);
-    out << "wersja=" << m.version << "\nkategorie=" << m.categories << "\n";
+    out << "version=" << m.version << "\ncategories=" << m.categories << "\n";
   }
   return m;
 }
@@ -364,15 +364,15 @@ std::string label(const std::string &path, const std::string &home) {
   return v.empty() ? app_name(file) : app_name(file) + " " + v;
 }
 
-// Nazwa folderu: polska, gdy taki folder już jest, inaczej przetłumaczona.
-// Nazwa folderu: ten, który już jest (angielski, przetłumaczony albo polski
-// z wcześniejszych wersji, gdy polski był domyślny), inaczej przetłumaczony.
+// Folder name: the one that already exists (English, translated, or Polish
+// from earlier versions when Polish was the default), otherwise translated.
+static const std::pair<const char *, const char *> legacy[] = {
+  {"Applications", "Aplikacje"}, {"Games", "Gry"}, {"Graphics", "Grafika"}, {"Office", "Biuro"},
+  {"Development", "Programowanie"}, {"Education", "Edukacja"}, {"Science", "Nauka"},
+  {"Accessories", "Akcesoria"}, {"Other", "Inne"},
+};
+
 static std::string folder_name(const std::string &parent, const char *en) {
-  static const std::pair<const char *, const char *> legacy[] = {
-    {"Applications", "Aplikacje"}, {"Games", "Gry"}, {"Graphics", "Grafika"}, {"Office", "Biuro"},
-    {"Development", "Programowanie"}, {"Education", "Edukacja"}, {"Science", "Nauka"},
-    {"Accessories", "Akcesoria"}, {"Other", "Inne"},
-  };
   std::error_code ec;
   auto exists = [&](const std::string &n) { return fs::is_directory(fs::path(parent) / n, ec); };
   if (exists(en)) return en;
@@ -382,11 +382,47 @@ static std::string folder_name(const std::string &parent, const char *en) {
   return _(en);
 }
 
-std::string apps_dir(const std::string &home) { return home + "/" + folder_name(home, N_("Applications")); }
+std::string apps_dir(const std::string &home) { return home + "/.nirvana-apps"; }
 
-std::string category_folder(const std::string &path, const std::string &home) {
-  std::string parent = apps_dir(home);
-  // główne kategorie freedesktop.org -> foldery w ~/Aplikacje
+std::string migrate_apps_dir(const std::string &home) {
+  std::error_code ec;
+  fs::path dst = apps_dir(home);
+  for (const char *n : {"Applications", "Aplikacje"}) {
+    fs::path old = fs::path(home) / n;
+    if (!fs::is_directory(old, ec) || fs::is_symlink(old, ec)) continue;
+    if (!fs::exists(dst, ec)) {
+      fs::rename(old, dst, ec);
+      if (!ec) return old.string();
+      ec.clear();
+      continue;
+    }
+    // both exist: move the content, without overwriting
+    for (auto &de : fs::directory_iterator(old, ec)) {
+      fs::path to = dst / de.path().filename();
+      if (fs::exists(to, ec)) {
+        if (fs::is_directory(de.path(), ec) && fs::is_directory(to, ec))
+          for (auto &x : fs::directory_iterator(de.path(), ec))
+            if (!fs::exists(to / x.path().filename(), ec)) fs::rename(x.path(), to / x.path().filename(), ec);
+        continue;
+      }
+      fs::rename(de.path(), to, ec);
+    }
+    fs::remove(old, ec);   // only when empty
+    return old.string();
+  }
+  return "";
+}
+
+const std::vector<const char *> &categories() {
+  static const std::vector<const char *> c = {
+    N_("Games"), N_("Internet"), N_("Office"), N_("Graphics"), N_("Multimedia"), N_("Development"),
+    N_("Education"), N_("Science"), N_("System"), N_("Accessories"), N_("Other"),
+  };
+  return c;
+}
+
+const char *detect_category(const std::string &path, const std::string &home) {
+  // main freedesktop.org categories -> folders in the applications folder
   static const std::pair<const char *, const char *> map[] = {
     {"Game", N_("Games")},          {"Graphics", N_("Graphics")},   {"AudioVideo", N_("Multimedia")},
     {"Audio", N_("Multimedia")},  {"Video", N_("Multimedia")},   {"Network", N_("Internet")},
@@ -400,15 +436,34 @@ std::string category_folder(const std::string &path, const std::string &home) {
     size_t sc = cats.find(';', pos);
     std::string c = cats.substr(pos, sc == std::string::npos ? std::string::npos : sc - pos);
     pos = sc == std::string::npos ? cats.size() : sc + 1;
-    for (auto &[k, v] : map) if (c == k) return folder_name(parent, v);
+    for (auto &[k, v] : map) if (c == k) return v;
   }
-  return folder_name(parent, N_("Other"));
+  return N_("Other");
+}
+
+std::string category_dir_name(const std::string &home, const char *category) {
+  return folder_name(apps_dir(home), category);
+}
+
+int category_of_folder(const std::string &name) {
+  const auto &cats = categories();
+  for (size_t i = 0; i < cats.size(); i++) {
+    const char *en = cats[i];
+    if (strcasecmp(name.c_str(), en) == 0 || strcasecmp(name.c_str(), _(en)) == 0) return (int)i;
+    for (auto &[e, pl] : legacy)
+      if (!strcmp(e, en) && strcasecmp(name.c_str(), pl) == 0) return (int)i;
+  }
+  return -1;
+}
+
+std::string category_folder(const std::string &path, const std::string &home) {
+  return category_dir_name(home, detect_category(path, home));
 }
 
 std::string install_dir(const std::string &path, const std::string &home) {
   std::string name = display_name(fs::path(path).filename().string());
   for (char &c : name) if (c == '/' || c == ' ') c = '-';
-  return (fs::path(home) / ".local/share/nirvana/aplikacje" / (name + "-" + key(path).substr(0, 8))).string();
+  return (fs::path(home) / ".local/share/nirvana/apps" / (name + "-" + key(path).substr(0, 8))).string();
 }
 
 bool is_installed(const std::string &path, const std::string &home) {
@@ -416,8 +471,8 @@ bool is_installed(const std::string &path, const std::string &home) {
   return fs::exists(fs::path(install_dir(path, home)) / "AppRun", ec);
 }
 
-// Awaryjnie: niech AppImage rozpakuje się sam (--appimage-extract). Robimy to
-// w piaskownicy bez sieci, z zapisem tylko do katalogu tymczasowego.
+// Fallback: let the AppImage extract itself (--appimage-extract). We do that
+// in a sandbox without network, writing only to a temporary folder.
 static bool self_extract(const std::string &path, const fs::path &tmp) {
   std::error_code ec;
   fs::create_directories(tmp, ec);
@@ -426,7 +481,7 @@ static bool self_extract(const std::string &path, const fs::path &tmp) {
   if (sandbox_available()) {
     r = run_wait({"bwrap", "--ro-bind", "/", "/", "--dev", "/dev", "--proc", "/proc",
                   "--tmpfs", "/tmp", "--bind", tmp.string(), tmp.string(),
-                  "--ro-bind", path, path,           // sam plik AppImage, tylko do odczytu
+                  "--ro-bind", path, path,           // the AppImage file itself, read-only
                   "--unshare-all", "--new-session", "--die-with-parent",
                   "--setenv", "HOME", tmp.string(), "--chdir", tmp.string(),
                   path, "--appimage-extract"});
@@ -436,7 +491,7 @@ static bool self_extract(const std::string &path, const fs::path &tmp) {
   return r == 0;
 }
 
-// Katalog z AppRun wewnątrz tego, co rozpakował runtime ("squashfs-root", "AppDir"...).
+// The folder with AppRun inside what the runtime extracted ("squashfs-root", "AppDir"...).
 static fs::path find_appdir(const fs::path &tmp) {
   std::error_code ec;
   if (fs::exists(tmp / "AppRun", ec)) return tmp;
@@ -456,7 +511,7 @@ std::string install(const std::string &path, const std::string &home) {
   bool sqfs = find_payload(path, off, kind);
   fs::path appdir;
   if (sqfs && have("unsquashfs")) {
-    // Droga podstawowa: rozpakowanie bez uruchamiania czegokolwiek z AppImage.
+    // The main way: extraction without running anything from the AppImage.
     if (extract(path, off, tmp.string())) appdir = find_appdir(tmp);
   }
   if (appdir.empty()) {
@@ -471,13 +526,13 @@ std::string install(const std::string &path, const std::string &home) {
       return _("This AppImage uses the DwarFS format and its runtime\ncould not extract it.");
     return _("Could not extract the application.\nIt may not be an AppImage, or the file is damaged.");
   }
-  if (appdir != tmp) {          // przenieś katalog aplikacji na miejsce tymczasowego
+  if (appdir != tmp) {          // move the application folder in place of the temporary one
     fs::path moved = tmp.string() + "-appdir";
     fs::rename(appdir, moved, ec);
     fs::remove_all(tmp, ec);
     fs::rename(moved, tmp, ec);
   }
-  // Starsze wersje tej samej aplikacji są już niepotrzebne.
+  // Older versions of the same application are no longer needed.
   std::string prefix = dir.filename().string();
   prefix = prefix.substr(0, prefix.size() - 8);
   for (auto &e : fs::directory_iterator(dir.parent_path(), ec)) {
@@ -500,28 +555,28 @@ void launch(const std::string &path, const std::string &home, const std::vector<
   std::string dir = install_dir(path, home), apprun = dir + "/AppRun";
   if (!sandbox_available()) {
     std::vector<std::string> a = {"env", "APPDIR=" + dir, "APPIMAGE=" + path, "ARGV0=" + path, "HOME=" + home, apprun};
-    a.insert(a.end(), args.begin(), args.end());   // parametry z okna Informacje
+    a.insert(a.end(), args.begin(), args.end());   // arguments from the Information window
     spawn(a);
     return;
   }
   std::vector<std::string> a = {
       "bwrap",
-      // cały system tylko do odczytu
+      // the whole system read-only
       "--ro-bind", "/", "/",
       "--dev", "/dev",
       "--proc", "/proc",
-      // własny, pusty /tmp; gniazdo X11 udostępniamy, żeby okna działały
+      // our own empty /tmp; the X11 socket is shared so that windows work
       "--tmpfs", "/tmp",
       "--bind-try", "/tmp/.X11-unix", "/tmp/.X11-unix",
-      // inni użytkownicy i nośniki są niewidoczne
+      // other users and media are invisible
       "--tmpfs", "/home", "--tmpfs", "/root", "--tmpfs", "/mnt", "--tmpfs", "/media",
-      // Nirvana HD - jedyne miejsce z prawem zapisu (plus nośniki użytkownika niżej)
+      // Nirvana HD - the only place with write access (plus the user's media below)
       "--bind", home, home,
-      // sama aplikacja nie może się modyfikować
+      // the application cannot modify itself
       "--ro-bind", dir, dir,
   };
-  // Zamontowane pendrive'y, płyty i dyski użytkownika (UDisks2 montuje je w
-  // /media/UŻYTKOWNIK albo /run/media/UŻYTKOWNIK) - żeby otworzyć z nich plik.
+  // Mounted USB sticks, discs and disks of the user (UDisks2 mounts them in
+  // /media/USER or /run/media/USER) - to open files from them.
   if (const char *user = getenv("USER")) {
     for (std::string base : {"/media/", "/run/media/"}) {
       std::string p = base + user;
@@ -532,7 +587,7 @@ void launch(const std::string &path, const std::string &home, const std::vector<
     a.insert(a.end(), {"--ro-bind-try", xa, xa});
   }
   if (const char *rt = getenv("XDG_RUNTIME_DIR")) {
-    // dźwięk i szyna sesji, jeśli są
+    // sound and the session bus, if present
     for (auto s : {"/pulse", "/pipewire-0", "/bus"}) {
       std::string p = std::string(rt) + s;
       a.insert(a.end(), {"--bind-try", p, p});

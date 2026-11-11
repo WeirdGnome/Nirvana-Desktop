@@ -1,4 +1,4 @@
-// Nirvana Desktop - sieć: implementacja (nmcli + D-Bus NetworkManagera)
+// Nirvana Desktop - network: implementation (nmcli + NetworkManager's D-Bus)
 #include "net.h"
 #include "i18n.h"
 
@@ -24,7 +24,7 @@ using plat::fmt;
 using plat::trn;
 
 static const char *nmcli() {
-  const char *e = getenv("NIRVANA_NMCLI");   // do testów: atrapa nmcli
+  const char *e = getenv("NIRVANA_NMCLI");   // for testing: a fake nmcli
   return e && *e ? e : "nmcli";
 }
 
@@ -44,7 +44,7 @@ bool installed() {
 }
 
 // ---------------------------------------------------------------------------
-// Uruchamianie nmcli
+// Running nmcli
 // ---------------------------------------------------------------------------
 static pid_t start(const std::vector<std::string> &args, int &out_fd) {
   int p[2];
@@ -52,12 +52,12 @@ static pid_t start(const std::vector<std::string> &args, int &out_fd) {
   pid_t pid = fork();
   if (pid < 0) { close(p[0]); close(p[1]); return -1; }
   if (pid == 0) {
-    prctl(PR_SET_PDEATHSIG, SIGTERM);   // np. "nmcli monitor" nie przeżyje Ramblera
+    prctl(PR_SET_PDEATHSIG, SIGTERM);   // e.g. "nmcli monitor" does not outlive Rambler
     dup2(p[1], 1);
     dup2(p[1], 2);
     int devnull = open("/dev/null", O_RDONLY);
     if (devnull >= 0) dup2(devnull, 0);
-    setenv("LC_ALL", "C", 1);   // stany i komunikaty po angielsku - parsujemy je
+    setenv("LC_ALL", "C", 1);   // states and messages in English - we parse them
     std::vector<char *> argv;
     argv.push_back((char *)nmcli());
     for (auto &a : args) argv.push_back((char *)a.c_str());
@@ -84,13 +84,13 @@ static int run(const std::vector<std::string> &args, std::string &out) {
   return WIFEXITED(st) ? WEXITSTATUS(st) : -1;
 }
 
-// Polskie komunikaty dla typowych błędów nmcli / NetworkManagera.
+// Readable, translated messages for typical nmcli / NetworkManager errors.
 extern const char *const NEED_PASSWORD;
 static std::string pl_error(const std::string &raw, bool had_password = false) {
   auto has = [&](const char *s) { return strcasestr(raw.c_str(), s) != nullptr; };
   if (has("Secrets were required") || has("no secrets") || has("802-1x") || has("password is required") ||
       has("secrets are required") || has("No agents were available"))
-    return had_password ? _("Wrong password.") : NEED_PASSWORD;   // znacznik, nie tłumaczymy
+    return had_password ? _("Wrong password.") : NEED_PASSWORD;   // a marker, not translated
   if (has("No network with SSID")) return _("This network is not in range.");
   if (has("not authorized") || has("Insufficient privileges") || has("PermissionDenied"))
     return _("You are not allowed to change network settings.");
@@ -113,7 +113,7 @@ static std::string pl_error(const std::string &raw, bool had_password = false) {
 }
 const char *const NEED_PASSWORD = "This network requires a password.";
 
-// Pola w trybie -t: dwukropek rozdziela, "\:" i "\\" to znaki dosłowne.
+// Fields in -t mode: a colon separates, "\:" and "\\" are literal characters.
 static std::vector<std::string> fields(const std::string &line) {
   std::vector<std::string> f(1);
   for (size_t i = 0; i < line.size(); i++) {
@@ -136,7 +136,7 @@ static std::vector<std::string> lines(const std::string &s) {
   return v;
 }
 
-// Zadanie w tle: wyjście zbieramy przez Fl::add_fd, kończymy po EOF.
+// A background job: the output is collected through Fl::add_fd, finished at EOF.
 struct Job {
   pid_t pid;
   int fd;
@@ -174,7 +174,7 @@ static void simple(const std::vector<std::string> &args, Done done, const char *
 }
 
 // ---------------------------------------------------------------------------
-// Odczyt stanu
+// Reading the state
 // ---------------------------------------------------------------------------
 static DevState parse_state(const std::string &s) {
   if (s.rfind("connected", 0) == 0) return DevState::Connected;
@@ -217,7 +217,7 @@ State query() {
     if (d.type == "wifi") st.wifi_hw = true;
     st.devices.push_back(d);
   }
-  // przewodowe na początku, potem Wi-Fi, potem reszta
+  // wired first, then Wi-Fi, then the rest
   auto rank = [](const Device &d) { return d.type == "ethernet" ? 0 : d.type == "wifi" ? 1 : 2; };
   std::stable_sort(st.devices.begin(), st.devices.end(),
                    [&](const Device &a, const Device &b) { return rank(a) < rank(b); });
@@ -243,7 +243,7 @@ State query() {
       st.vpns.push_back(v);
     }
   }
-  // hotspot: aktywne połączenie Wi-Fi w trybie punktu dostępu
+  // hotspot: an active Wi-Fi connection in access point mode
   for (auto &d : st.devices)
     if (d.type == "wifi" && d.state == DevState::Connected) {
       std::string m;
@@ -295,7 +295,7 @@ Details details(const std::string &iface) {
     auto c = l.find(':');
     if (c == std::string::npos) continue;
     std::string k = l.substr(0, c), v;
-    for (size_t i = c + 1; i < l.size(); i++) {   // wartość z "\:" -> ":"
+    for (size_t i = c + 1; i < l.size(); i++) {   // value with "\:" -> ":"
       if (l[i] == '\\' && i + 1 < l.size()) { v += l[++i]; continue; }
       v += l[i];
     }
@@ -343,11 +343,11 @@ Summary summary(const State &s) {
   if (!s.available) return r;
   for (auto &v : s.vpns) if (v.active) r.vpn = v.name;
   for (auto &d : s.devices) {
-    if (d.state == DevState::Connecting && r.kind == Summary::Brak) { r.connecting = true; r.name = d.connection; }
+    if (d.state == DevState::Connecting && r.kind == Summary::NoNetwork) { r.connecting = true; r.name = d.connection; }
     if (d.state != DevState::Connected) continue;
     Summary::Kind k = d.type == "ethernet" ? Summary::Wired : d.type == "wifi" ? Summary::Wifi : Summary::Other;
-    // przewodowe ma pierwszeństwo, jak w systemie: zwykle to ono jest domyślną trasą
-    if (r.kind == Summary::Brak || (k == Summary::Wired && r.kind != Summary::Wired)) {
+    // wired takes precedence, as in the system: it is usually the default route
+    if (r.kind == Summary::NoNetwork || (k == Summary::Wired && r.kind != Summary::Wired)) {
       r.kind = k;
       r.connecting = false;
       r.name = d.connection;
@@ -359,7 +359,7 @@ Summary summary(const State &s) {
 }
 
 // ---------------------------------------------------------------------------
-// Operacje
+// Operations
 // ---------------------------------------------------------------------------
 void rescan() { run_async({"device", "wifi", "rescan"}, nullptr); }
 
@@ -389,7 +389,7 @@ const char *vpn_kind_name(const std::string &k) {
 }
 
 std::vector<std::string> vpn_plugins() {
-  // wtyczki NetworkManagera opisują pliki *.name: service=org.freedesktop.NetworkManager.openvpn
+  // NetworkManager plugins describe *.name files: service=org.freedesktop.NetworkManager.openvpn
   std::vector<std::string> out;
   for (const char *dir : {"/usr/lib/NetworkManager/VPN", "/etc/NetworkManager/VPN", "/usr/lib64/NetworkManager/VPN"}) {
     std::string ls;
@@ -416,7 +416,7 @@ std::vector<std::string> vpn_plugins() {
 }
 
 void vpn_import(const std::string &file, Done done) {
-  // rodzaj po zawartości i rozszerzeniu
+  // the kind from the content and extension
   std::string type, lower = file;
   for (auto &c : lower) c = (char)tolower((unsigned char)c);
   auto ends = [&](const char *e) { size_t n = strlen(e); return lower.size() >= n && lower.compare(lower.size() - n, n, e) == 0; };
@@ -442,7 +442,7 @@ void vpn_import(const std::string &file, Done done) {
       return;
     }
   }
-  // WireGuard: nazwa profilu = nazwa pliku (bez .conf) i musi być poprawną nazwą interfejsu
+  // WireGuard: the profile name = the file name (without .conf) and must be a valid interface name
   run_async({"connection", "import", "type", type, "file", file}, [done, type](int code, const std::string &out) {
     if (code != 0) {
       if (type == "wireguard" && strcasestr(out.c_str(), "interface name"))
@@ -450,7 +450,7 @@ void vpn_import(const std::string &file, Done done) {
       else done(false, pl_error(out));
       return;
     }
-    // "Connection 'Firma' (uuid) successfully added."
+    // "Connection 'Office' (uuid) successfully added."
     std::string name;
     auto a = out.find('\''), b = out.find('\'', a + 1);
     if (a != std::string::npos && b != std::string::npos) name = out.substr(a + 1, b - a - 1);
@@ -461,7 +461,7 @@ void vpn_import(const std::string &file, Done done) {
 std::string vpn_username(const std::string &uuid) {
   std::string out;
   run({"-g", "vpn.data", "connection", "show", "uuid", uuid}, out);
-  // "connection-type = password, username = jan, remote = ..."
+  // "connection-type = password, username = john, remote = ..."
   auto p = out.find("username = ");
   if (p == std::string::npos) return "";
   p += 11;
@@ -474,7 +474,7 @@ void vpn_up(const std::string &uuid, const std::string &user, const std::string 
     std::vector<std::string> a = {"--wait", "40", "connection", "up", "uuid", uuid};
     std::string pf;
     if (!password.empty()) {
-      // Hasło przez plik (0600) zamiast w argumentach, które widać w `ps`.
+      // The password through a file (0600) instead of in arguments visible in `ps`.
       const char *rt = getenv("XDG_RUNTIME_DIR");
       std::string dir = rt && *rt ? rt : "/tmp";
       char tmpl[512];
@@ -492,8 +492,8 @@ void vpn_up(const std::string &uuid, const std::string &user, const std::string 
     run_async(a, [done, pf, uuid, had = !password.empty()](int code, const std::string &out) {
       if (!pf.empty()) unlink(pf.c_str());
       if (code == 3) {
-        // Limit czasu: np. OpenVPN po złym haśle ponawia logowanie bez końca.
-        // Przerywamy próbę, żeby połączenie nie wisiało w stanie "łączenie".
+        // Time limit: e.g. OpenVPN retries the login forever after a wrong password.
+        // We stop the attempt so the connection does not hang in the "connecting" state.
         run_async({"connection", "down", "uuid", uuid}, [done, had](int, const std::string &) {
           if (done) done(false, had ? _("The VPN server does not respond or rejected the login. Check the user name and password.")
                                     : _("The VPN connection timed out."));
@@ -504,7 +504,7 @@ void vpn_up(const std::string &uuid, const std::string &user, const std::string 
     });
   };
   if (!user.empty() && user != vpn_username(uuid)) {
-    // nazwa użytkownika trafia do profilu (to nie sekret)
+    // the user name goes into the profile (it is not a secret)
     run_async({"connection", "modify", "uuid", uuid, "+vpn.data", "username=" + user},
               [go, done](int code, const std::string &out) {
                 if (code != 0) { done(false, pl_error(out)); return; }
@@ -545,7 +545,7 @@ void set_ipv4(const std::string &conn, bool manual, const std::string &address,
   });
 }
 
-// --- D-Bus: połączenie z hasłem ----------------------------------------------
+// --- D-Bus: connecting with a password ----------------------------------------
 static const char *NM = "org.freedesktop.NetworkManager";
 
 static void put_var_str(DBusMessageIter *dict, const char *key, const std::string &val) {
@@ -590,7 +590,7 @@ static void put_var_bytes(DBusMessageIter *dict, const char *key, const std::str
   dbus_message_iter_close_container(&e, &v);
   dbus_message_iter_close_container(dict, &e);
 }
-// Sekcja ustawień: klucz -> słownik a{sv}, wypełniany przez fill.
+// A settings section: key -> an a{sv} dictionary, filled by fill.
 static void section(DBusMessageIter *top, const char *name, const std::function<void(DBusMessageIter *)> &fill) {
   DBusMessageIter e, d;
   dbus_message_iter_open_container(top, DBUS_TYPE_DICT_ENTRY, nullptr, &e);
@@ -635,7 +635,7 @@ static std::string device_path(DBusConnection *c, const std::string &iface, std:
   return out;
 }
 
-// Stan aktywnego połączenia: 1 łączy, 2 aktywne, 3 rozłącza, 4 rozłączone; -1 zniknęło.
+// State of the active connection: 1 connecting, 2 active, 3 disconnecting, 4 disconnected; -1 gone.
 static int active_state(DBusConnection *c, const std::string &path) {
   DBusMessage *m = dbus_message_new_method_call(NM, path.c_str(), "org.freedesktop.DBus.Properties", "Get");
   const char *iface = "org.freedesktop.NetworkManager.Connection.Active", *prop = "State";
@@ -675,7 +675,7 @@ static void watch_activation(void *d) {
   int st = c ? active_state(c, p->active) : -1;
   if (st == 2) { auto done = p->done; delete p; if (done) done(true, _("Connected.")); return; }
   if (st == 1 && ++p->ticks < 60) { Fl::repeat_timeout(0.75, watch_activation, d); return; }
-  // Nie wyszło (zwykle złe hasło): usuń świeżo dodany profil, żeby nie zapamiętać błędnego hasła.
+  // It failed (usually a wrong password): remove the freshly added profile so the wrong password is not remembered.
   if (c && !p->settings.empty()) delete_settings(c, p->settings);
   auto done = p->done;
   delete p;
@@ -683,7 +683,7 @@ static void watch_activation(void *d) {
                                  : _("Could not connect. Check the password."));
 }
 
-// AddAndActivateConnection: profil Wi-Fi z hasłem przekazanym przez D-Bus.
+// AddAndActivateConnection: a Wi-Fi profile with the password passed through D-Bus.
 static std::string add_and_activate(DBusConnection *c, const std::string &dev, const std::string &ssid,
                                     const std::string &security, const std::string &password, bool hidden,
                                     std::string &conn_path, std::string &active_path, bool ap = false) {
@@ -705,14 +705,14 @@ static std::string add_and_activate(DBusConnection *c, const std::string &dev, c
     if (hidden) put_var_bool(d, "hidden", true);
     if (ap) { put_var_str(d, "mode", "ap"); put_var_str(d, "band", "bg"); }
   });
-  if (ap) {   // punkt dostępu: NetworkManager rozdaje adresy i udostępnia połączenie (NAT)
+  if (ap) {   // access point: NetworkManager hands out addresses and shares the connection (NAT)
     section(&top, "ipv4", [&](DBusMessageIter *d) { put_var_str(d, "method", "shared"); });
     section(&top, "ipv6", [&](DBusMessageIter *d) { put_var_str(d, "method", "ignore"); });
   }
   if (!password.empty()) {
     section(&top, "802-11-wireless-security", [&](DBusMessageIter *d) {
       put_var_str(d, "key-mgmt", key_mgmt);
-      if (key_mgmt == "none") {   // WEP: 5/13 znaków albo 10/26 cyfr szesnastkowych
+      if (key_mgmt == "none") {   // WEP: 5/13 characters or 10/26 hex digits
         put_var_str(d, "wep-key0", password);
         size_t n = password.size();
         put_var_u32(d, "wep-key-type", (n == 5 || n == 13 || n == 10 || n == 26) ? 1 : 2);
@@ -736,13 +736,13 @@ static std::string add_and_activate(DBusConnection *c, const std::string &dev, c
 
 static void connect_with_password(const std::string &ssid, const std::string &security,
                                   const std::string &password, bool hidden, Done done) {
-  // urządzenie Wi-Fi: to, które widzi sieć, albo pierwsze z brzegu
+  // the Wi-Fi device: the one that sees the network, or the first one
   State st = query();
   std::string iface;
   for (auto &n : st.networks) if (n.ssid == ssid) iface = n.device;
   if (iface.empty()) for (auto &d : st.devices) if (d.type == "wifi") { iface = d.iface; break; }
   if (iface.empty()) { done(false, _("No Wi-Fi adapter.")); return; }
-  // stary profil (np. z nieaktualnym hasłem) zastępujemy nowym
+  // an old profile (e.g. with an outdated password) is replaced with a new one
   for (auto &s : st.saved_wifi)
     if (s == ssid) { std::string o; run({"connection", "delete", "id", ssid}, o); }
 
@@ -762,8 +762,8 @@ static void connect_with_password(const std::string &ssid, const std::string &se
 void connect_wifi(const std::string &ssid, const std::string &security,
                   const std::string &password, bool hidden, Done done) {
   if (getenv("NIRVANA_NMCLI") && !password.empty()) {
-    // Tryb testowy z atrapą nmcli (bez prawdziwej karty Wi-Fi nie ma czego wołać przez
-    // D-Bus). Tylko tu hasło idzie w argumentach - atrapa i tak jest lokalnym skryptem.
+    // Test mode with a fake nmcli (without a real Wi-Fi card there is nothing to call through
+    // D-Bus). Only here the password goes in the arguments - the fake is a local script anyway.
     run_async({"--wait", "45", "device", "wifi", "connect", ssid, "password", password},
               [done](int code, const std::string &out) { if (done) done(code == 0, code == 0 ? _("Connected.") : pl_error(out, true)); });
     return;
@@ -776,7 +776,7 @@ void connect_wifi(const std::string &ssid, const std::string &security,
   if (hidden) a.insert(a.end(), {"hidden", "yes"});
   run_async(a, [done, ssid](int code, const std::string &out) {
     if (code == 0) { if (done) done(true, _("Connected.")); return; }
-    // nmcli zostawia profil po nieudanej próbie - sprzątamy, żeby kolejna zapytała o hasło
+    // nmcli leaves the profile after a failed attempt - clean up so the next one asks for the password
     if (strcasestr(out.c_str(), "Secrets were required")) {
       std::string o;
       run({"connection", "delete", "id", ssid}, o);
@@ -787,7 +787,7 @@ void connect_wifi(const std::string &ssid, const std::string &security,
 
 void hotspot(const std::string &ssid, const std::string &password, Done done) {
   if (password.size() < 8) { done(false, _("The hotspot password must be at least 8 characters long.")); return; }
-  if (getenv("NIRVANA_NMCLI")) {   // atrapa (testy bez karty Wi-Fi)
+  if (getenv("NIRVANA_NMCLI")) {   // fake (testing without a Wi-Fi card)
     simple({"device", "wifi", "hotspot", "ssid", ssid, "password", password}, done, _("Hotspot is on."));
     return;
   }
@@ -796,7 +796,7 @@ void hotspot(const std::string &ssid, const std::string &password, Done done) {
   for (auto &d : st.devices) if (d.type == "wifi") { iface = d.iface; break; }
   if (iface.empty()) { done(false, _("No Wi-Fi adapter.")); return; }
   std::string o;
-  run({"connection", "delete", "id", "Hotspot"}, o);   // poprzedni hotspot (inne hasło/nazwa)
+  run({"connection", "delete", "id", "Hotspot"}, o);   // the previous hotspot (another password/name)
   std::string err;
   DBusConnection *c = bus(err);
   if (!c) { done(false, _("No connection to the system D-Bus.")); return; }
@@ -813,7 +813,7 @@ void hotspot(const std::string &ssid, const std::string &password, Done done) {
 }
 
 // ---------------------------------------------------------------------------
-// Obserwowanie zmian
+// Watching for changes
 // ---------------------------------------------------------------------------
 static std::function<void()> g_changed;
 static pid_t g_mon_pid = -1;
@@ -830,7 +830,7 @@ static void mon_cb(int fd, void *) {
   if (g_mon_pid > 0) waitpid(g_mon_pid, nullptr, WNOHANG);
   g_mon_pid = -1;
   poke();
-  Fl::add_timeout(5.0, start_monitor);   // nmcli monitor padł (np. restart NM) - spróbuj znów
+  Fl::add_timeout(5.0, start_monitor);   // nmcli monitor died (e.g. NM restarted) - try again
 }
 static void start_monitor(void *) {
   int fd;
@@ -838,7 +838,7 @@ static void start_monitor(void *) {
   if (g_mon_pid < 0) return;
   Fl::add_fd(fd, FL_READ, mon_cb);
 }
-static void periodic(void *) {   // siła sygnału nie wywołuje zdarzeń monitora
+static void periodic(void *) {   // signal strength does not cause monitor events
   poke();
   Fl::repeat_timeout(30.0, periodic);
 }

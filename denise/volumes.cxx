@@ -1,4 +1,4 @@
-// Nirvana Desktop - denise: dyski, płyty i zaszyfrowane wolumeny (LUKS)
+// Nirvana Desktop - denise: disks, discs and encrypted volumes (LUKS)
 #include "volumes.h"
 #include "i18n.h"
 
@@ -13,7 +13,7 @@
 namespace vol {
 
 // ---------------------------------------------------------------------------
-// lsblk -P: linie KLUCZ="wartość" (znaki specjalne jako \xNN)
+// lsblk -P: lines KEY="value" (special characters as \xNN)
 // ---------------------------------------------------------------------------
 using Row = std::map<std::string, std::string>;
 
@@ -65,7 +65,7 @@ std::string human_size(uint64_t b) {
   const char *u[] = {"B", "KB", "MB", "GB", "TB"};
   double v = (double)b;
   int i = 0;
-  while (v >= 1000 && i < 4) { v /= 1000; i++; }   // jak producenci dysków: 16 GB
+  while (v >= 1000 && i < 4) { v /= 1000; i++; }   // as disk makers count: 16 GB
   char buf[32];
   snprintf(buf, sizeof buf, v < 10 && i > 0 ? "%.1f %s" : "%.0f %s", v, u[i]);
   return plat::decimal(buf);
@@ -85,7 +85,7 @@ std::vector<Volume> scan() {
     for (auto &r : rows) if (r["PKNAME"] == kname) v.push_back(&r);
     return v;
   };
-  // Czy urządzenie (albo coś "pod nim", np. odszyfrowany LUKS) należy do systemu?
+  // Does the device (or something "below" it, e.g. a decrypted LUKS) belong to the system?
   std::function<bool(const std::string &, int)> system_part = [&](const std::string &kname, int depth) {
     auto it = by_kname.find(kname);
     if (it == by_kname.end() || depth > 8) return false;
@@ -112,7 +112,7 @@ std::vector<Volume> scan() {
     if (fs == "swap" || fs == "LVM2_member" || fs == "linux_raid_member") continue;
     if (type == "disk" && !children(r["KNAME"]).empty() && fs != "crypto_LUKS") continue;
     if (fs.empty()) {
-      // bez systemu plików: pokazujemy tylko nośniki wymienne (do sformatowania)
+      // without a file system: only removable media are shown (to be formatted)
       Row *d = top_disk(r["KNAME"]);
       bool rem = d && ((*d)["RM"] == "1" || (*d)["HOTPLUG"] == "1" || (*d)["TRAN"] == "usb" ||
                        (*d)["TRAN"] == "mmc" || (*d)["TRAN"] == "sdio");
@@ -147,7 +147,7 @@ std::vector<Volume> scan() {
         if (!(*c)["LABEL"].empty()) label = (*c)["LABEL"];
       }
     }
-    // nazwa: etykieta albo opis z rozmiarem
+    // name: the label or a description with the size
     if (!label.empty()) v.name = label;
     else if (v.optical) v.name = _("Disc");
     else if (v.encrypted && !v.unlocked) v.name = plat::fmt(_("Encrypted disk %1"), human_size(v.size));
@@ -164,7 +164,7 @@ std::vector<Volume> scan() {
 }
 
 // ---------------------------------------------------------------------------
-// UDisks2 przez D-Bus
+// UDisks2 through D-Bus
 // ---------------------------------------------------------------------------
 static const char *UD = "org.freedesktop.UDisks2";
 
@@ -184,7 +184,7 @@ bool udisks_available() {
   if (!c) return false;
   DBusError err;
   dbus_error_init(&err);
-  // uruchomiona albo do uruchomienia na żądanie (aktywacja D-Bus)
+  // running, or started on demand (D-Bus activation)
   bool ok = dbus_bus_name_has_owner(c, UD, &err);
   dbus_error_free(&err);
   if (!ok) {
@@ -196,7 +196,7 @@ bool udisks_available() {
   return ok;
 }
 
-// Ścieżka obiektu: znaki inne niż [A-Za-z0-9] jako _xx (np. dm-0 -> dm_2d0).
+// Object path: characters other than [A-Za-z0-9] as _xx (e.g. dm-0 -> dm_2d0).
 static std::string block_path(const std::string &kname) {
   std::string p = "/org/freedesktop/UDisks2/block_devices/";
   for (unsigned char c : kname) {
@@ -212,16 +212,16 @@ static void append_empty_options(DBusMessageIter *it) {
   dbus_message_iter_close_container(it, &dict);
 }
 
-static std::string polish_error(const std::string &name, const std::string &msg) {
+static std::string localized_error(const std::string &name, const std::string &msg) {
   if (name.find("NotAuthorized") != std::string::npos)
     return _("You are not allowed to do this.\n(A polkit agent or administrator rights are needed.)");
   if (name.find("DeviceBusy") != std::string::npos || msg.find("busy") != std::string::npos)
     return _("The disk is in use - close the files and programs that use it.");
-  if (name.find("NotMounted") != std::string::npos) return "";   // już odmontowany - to nie błąd
+  if (name.find("NotMounted") != std::string::npos) return "";   // already unmounted - not an error
   return msg;
 }
 
-// Wywołanie metody UDisks2; reply (opcjonalnie) dostaje odpowiedź do odczytu.
+// A UDisks2 method call; reply (optional) gets the answer to read.
 static std::string call(const std::string &path, const char *iface, const char *method,
                         const std::function<void(DBusMessageIter *)> &args, DBusMessage **reply,
                         int timeout_ms = 120000) {
@@ -236,7 +236,7 @@ static std::string call(const std::string &path, const char *iface, const char *
   DBusMessage *r = dbus_connection_send_with_reply_and_block(c, m, timeout_ms, &err);
   dbus_message_unref(m);
   if (!r) {
-    std::string e = polish_error(err.name ? err.name : "", err.message ? err.message : _("unknown error"));
+    std::string e = localized_error(err.name ? err.name : "", err.message ? err.message : _("unknown error"));
     dbus_error_free(&err);
     return e.empty() ? "" : e;
   }
@@ -356,7 +356,7 @@ std::string format(const Volume &v, const std::string &type, const std::string &
       dbus_message_iter_close_container(&dict, &en);
     };
     if (!label.empty()) put_s("label", label);
-    if (type == "ext4") put_b("take-ownership", true);   // właścicielem nowego systemu plików jest użytkownik
+    if (type == "ext4") put_b("take-ownership", true);   // the user owns the new file system
     dbus_message_iter_close_container(it, &dict);
   }, nullptr, 600000);
   return e.empty() ? "" : plat::fmt(_("Could not format “%1”:"), v.name) + "\n" + e;
@@ -366,13 +366,13 @@ std::string eject(const Volume &v) {
   if (std::string e = unmount(v); !e.empty()) return e;
   if (std::string e = lock(v); !e.empty()) return e;
   std::string drive = drive_of(v.disk_kname.empty() ? v.kname : v.disk_kname);
-  if (drive.empty()) return "";   // np. obraz dysku (loop) - wystarczy odmontowanie
+  if (drive.empty()) return "";   // e.g. a disk image (loop) - unmounting is enough
   std::string e;
   if (v.optical || drive_bool(drive, "Ejectable"))
     e = call(drive, "org.freedesktop.UDisks2.Drive", "Eject", append_empty_options, nullptr);
   if (e.empty() && v.removable && !v.optical && drive_bool(drive, "CanPowerOff"))
     e = call(drive, "org.freedesktop.UDisks2.Drive", "PowerOff", append_empty_options, nullptr);
-  // Odmontowanie się udało, więc dysk można bezpiecznie wyjąć nawet bez wyłączenia.
+  // Unmounting succeeded, so the disk can be safely removed even without powering it off.
   return "";
 }
 

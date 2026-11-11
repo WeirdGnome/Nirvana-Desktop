@@ -1,4 +1,4 @@
-// Nirvana Desktop - libplatinum: okno z własną ramką Platinum
+// Nirvana Desktop - libplatinum: a window with its own Platinum frame
 #include "framewin.h"
 #include "anim.h"
 #include "platinum.h"
@@ -46,7 +46,7 @@ static bool wm_supports(const char *what) {
   return r;
 }
 
-// Wszystkie ramki odświeżamy, gdy zmienia się aktywne okno.
+// All frames are refreshed when the active window changes.
 static std::set<FrameWindow *> g_frames;
 static int watch(void *event, void *) {
   XEvent *e = (XEvent *)event;
@@ -79,7 +79,7 @@ FrameWindow::FrameWindow(int W, int H, const char *title, bool dialog)
     : Fl_Double_Window(W, H, title), dialog_(dialog) {
   const char *e = getenv("NIRVANA_CSD");
   csd_ = e ? !strcmp(e, "1") : !wm_is_insight();
-  if (csd_) border(0);   // bez obcych dekoracji - ramkę rysujemy sami
+  if (csd_) border(0);   // without foreign decorations - we draw the frame ourselves
   full_h_ = H;
 #if defined(FLTK_USE_X11)
   static bool watching = false;
@@ -108,7 +108,7 @@ void FrameWindow::finish() {
     c->position(c->x() + FRAME_W, c->y() + TITLE_W);
   }
   int W = w() + 2 * FRAME_W, H = h() + TITLE_W + FRAME_W;
-  // size() przeskalowałoby dzieci (resizable) - ustawiamy rozmiar bez tego
+  // size() would scale the children (resizable) - we set the size without that
   Fl_Widget *r = resizable();
   resizable(nullptr);
   size(W, H);
@@ -127,7 +127,7 @@ bool FrameWindow::active() {
 
 void FrameWindow::draw() {
   if (!csd_) { Fl_Double_Window::draw(); return; }
-  // Zmiana tylko w środku: odrysuj zmienione widgety, ramka zostaje w buforze.
+  // A change only inside: redraw the changed widgets, the frame stays in the buffer.
   if (!(damage() & ~FL_DAMAGE_CHILD)) {
     for (int i = 0; i < children(); i++) update_child(*child(i));
     return;
@@ -140,16 +140,16 @@ void FrameWindow::draw() {
   fl_rectf(FRAME_W, TITLE_W, w() - 2 * FRAME_W, h() - TITLE_W - FRAME_W);
   for (int i = 0; i < children(); i++) {
     draw_child(*child(i));
-    draw_outside_label(*child(i));   // np. "Hasło:" po lewej stronie pola
+    draw_outside_label(*child(i));   // e.g. "Password:" on the left side of the field
   }
 }
 
-// 1 zamknij, 3 zwiń (przycisku "zoom" panele nie mają)
+// 1 close, 3 shade (the panels have no "zoom" button)
 int FrameWindow::hit(int ex, int ey) const {
   if (dialog_ || ey < 0 || ey >= TITLE_W) return 0;
   int by = (TITLE_W - BOX) / 2;
   if (ey < by || ey >= by + BOX) return 0;
-  // jak draw_titlebar(): boxes = 1 (z "zoom") albo 2 (bez)
+  // as draw_titlebar(): boxes = 1 (with "zoom") or 2 (without)
   int close_x = 8, zoom_x = w() - 8 - BOX, shade_x = sizable_ ? zoom_x - BOX - 5 : zoom_x;
   if (ex >= close_x && ex < close_x + BOX) return 1;
   if (ex >= shade_x && ex < shade_x + BOX) return 3;
@@ -174,7 +174,7 @@ bool FrameWindow::in_grow(int ex, int ey) const {
   return sizable_ && !shaded_ && ex >= w() - FRAME_W - 15 && ey >= h() - FRAME_W - 15;
 }
 
-// Zoom: przełączanie między własnym rozmiarem a całym obszarem roboczym.
+// Zoom: switching between the own size and the whole work area.
 void FrameWindow::toggle_zoom() {
   if (!sizable_ || shaded_) return;
   Rect from = {x(), y(), w(), h()}, to;
@@ -182,7 +182,7 @@ void FrameWindow::toggle_zoom() {
     unzoom_[0] = x(); unzoom_[1] = y(); unzoom_[2] = w(); unzoom_[3] = h();
     int sx, sy, sw, sh;
     Fl::screen_work_area(sx, sy, sw, sh, x() + w() / 2, y() + h() / 2);
-    // pasek menu Nirvana Desktop zajmuje górę ekranu, gdy nie ma go w obszarze roboczym
+    // the Nirvana Desktop menu bar takes the top of the screen when it is not in the work area
     if (sy < MENUBAR_H) { sh -= MENUBAR_H - sy; sy = MENUBAR_H; }
     to = {sx + 2, sy + 2, sw - 4, sh - 4};
   } else {
@@ -205,9 +205,9 @@ void FrameWindow::start_moveresize(int direction) {
   ev.xclient.window = fl_xid(this);
   ev.xclient.message_type = atom("_NET_WM_MOVERESIZE");
   ev.xclient.format = 32;
-  ev.xclient.data.l[0] = px(press_x_);   // EWMH: piksele, nie jednostki FLTK
+  ev.xclient.data.l[0] = px(press_x_);   // EWMH: pixels, not FLTK units
   ev.xclient.data.l[1] = px(press_y_);
-  ev.xclient.data.l[2] = direction;   // 8 przesuń, 4 rozmiar od prawego dolnego rogu
+  ev.xclient.data.l[2] = direction;   // 8 move, 4 resize from the bottom right corner
   ev.xclient.data.l[3] = Button1;
   ev.xclient.data.l[4] = 1;
   XSendEvent(fl_display, DefaultRootWindow(fl_display), False,
@@ -268,7 +268,7 @@ int FrameWindow::handle(int e) {
       int b = pressed_;
       drag_ = NONE; pressed_ = armed_ = 0;
       redraw();
-      if (b == 1) do_callback();   // jak zamknięcie przez menedżer okien
+      if (b == 1) do_callback();   // like closing through the window manager
       if (b == 3) toggle_shade();
       if (b == 2) toggle_zoom();
       return 1;

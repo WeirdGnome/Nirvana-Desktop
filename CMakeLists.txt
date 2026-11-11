@@ -1,5 +1,8 @@
 cmake_minimum_required(VERSION 3.16)
-project(NirvanaDesktop VERSION 0.1.0 LANGUAGES C CXX)
+# The version is in the VERSION file - raised with every released package.
+file(STRINGS "${CMAKE_CURRENT_SOURCE_DIR}/VERSION" NIRVANA_VERSION LIMIT_COUNT 1)
+project(NirvanaDesktop VERSION ${NIRVANA_VERSION} LANGUAGES C CXX)
+add_compile_definitions(NIRVANA_VERSION="${NIRVANA_VERSION}")
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -57,7 +60,8 @@ add_library(nirvana-platinum STATIC
   platinum/anim.cxx
   platinum/theme.cxx
   platinum/wallpaper.cxx
-  platinum/icons_wb.cxx
+  platinum/clockconf.cxx
+  platinum/icons_retro.cxx
   platinum/framewin.cxx)
 find_package(X11 REQUIRED)
 target_include_directories(nirvana-platinum PUBLIC platinum)
@@ -90,6 +94,9 @@ add_executable(nirvana-denise
   denise/volumes.cxx
   denise/applets.cxx
   denise/menus.cxx
+  denise/updates.cxx
+  denise/clock.cxx
+  denise/about.cxx
   denise/tray.cxx)
 target_link_libraries(nirvana-denise PRIVATE nirvana-platinum nirvana-net nirvana-audio nirvana-power fltk::images PkgConfig::DBUS)
 
@@ -98,7 +105,7 @@ add_executable(nirvana-insight insight/main.cxx)
 target_link_libraries(nirvana-insight PRIVATE nirvana-platinum X11::X11)
 
 # --- alice: control panels ---------------------------------------------------
-add_executable(nirvana-alice alice/main.cxx alice/wyglad.cxx alice/siec.cxx alice/zasilanie.cxx alice/ustawienia.cxx)
+add_executable(nirvana-alice alice/main.cxx alice/appearance.cxx alice/network.cxx alice/power.cxx alice/preferences.cxx alice/shader.cxx alice/datetime.cxx alice/desktop.cxx)
 target_link_libraries(nirvana-alice PRIVATE nirvana-platinum nirvana-net nirvana-power)
 
 # --- Nirvana Shell: terminal emulator (system libvterm or the bundled one) ---
@@ -115,16 +122,32 @@ endif()
 add_executable(nirvana-shell shell/main.cxx)
 target_link_libraries(nirvana-shell PRIVATE nirvana-platinum ${NIRVANA_VTERM} util)
 
+# --- nirvana-shader: full-screen GLSL effects (a small compositor) -------------
+pkg_check_modules(SHADERDEPS IMPORTED_TARGET gl xcomposite xdamage xfixes xrender xext)
+if(SHADERDEPS_FOUND)
+  add_executable(nirvana-shader shader/nirvana-shader.cxx)
+  target_link_libraries(nirvana-shader PRIVATE PkgConfig::SHADERDEPS X11::X11)
+  install(TARGETS nirvana-shader RUNTIME DESTINATION bin COMPONENT nirvana)
+else()
+  message(WARNING "OpenGL/XComposite/XDamage development files not found - nirvana-shader is not built "
+                  "(Devuan: libgl-dev libxcomposite-dev libxdamage-dev libxfixes-dev libxrender-dev)")
+endif()
+install(DIRECTORY shaders/ DESTINATION share/nirvana/shaders COMPONENT nirvana)
+# system updates: the check (as the user) and the helper (root, through pkexec/polkit)
+install(PROGRAMS update/nirvana-update-check update/nirvana-update-helper update/nirvana-power-helper update/nirvana-time-helper DESTINATION libexec COMPONENT nirvana)
+install(FILES update/org.nirvana-desktop.policy DESTINATION share/polkit-1/actions COMPONENT nirvana)
+install(FILES update/50-nirvana.rules DESTINATION share/polkit-1/rules.d COMPONENT nirvana)
+
 # Everything in the "nirvana" component - the .deb package does not take FLTK files
 # (FetchContent adds its own install rules for headers and libraries).
 install(TARGETS nirvana-denise nirvana-insight nirvana-alice nirvana-shell RUNTIME DESTINATION bin COMPONENT nirvana)
-install(DIRECTORY schematy/ DESTINATION share/nirvana/schematy COMPONENT nirvana)
-install(DIRECTORY tapety/ DESTINATION share/nirvana/tapety COMPONENT nirvana)
+install(DIRECTORY schemes/ DESTINATION share/nirvana/schemes COMPONENT nirvana)
+install(DIRECTORY wallpapers/ DESTINATION share/nirvana/wallpapers COMPONENT nirvana)
 install(PROGRAMS session/nirvana-session session/nirvana-autostart DESTINATION bin COMPONENT nirvana)
-install(PROGRAMS session/lisaos-session DESTINATION bin COMPONENT nirvana)   # old ~/.xinitrc files
 install(FILES session/nirvana.desktop DESTINATION share/xsessions COMPONENT nirvana)
 install(FILES session/nirvana-portals.conf DESTINATION share/xdg-desktop-portal COMPONENT nirvana)
 install(FILES README.md README.pl.md DESTINATION share/doc/nirvana COMPONENT nirvana)
+install(FILES LICENSE DESTINATION share/nirvana COMPONENT nirvana)   # shown in About This Computer
 
 # --- .deb package (Devuan 6 "Excalibur" / Debian 13): cpack -G DEB ----------
 # Library dependencies come from dpkg-shlibdeps; the rest (programs Nirvana Desktop
@@ -134,25 +157,23 @@ set(CPACK_GENERATOR DEB)
 set(CPACK_PACKAGE_NAME nirvana)
 set(CPACK_PACKAGE_VENDOR "Nirvana Desktop")
 set(CPACK_PACKAGE_CONTACT "Nirvana Desktop <nirvana@localhost>")
-set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "lightweight desktop in the spirit of Mac OS 9 and the Amiga")
+set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "lightweight desktop in the spirit of the classic 1990s desktops")
 set(CPACK_PACKAGE_DESCRIPTION "Nirvana Desktop is an X11 session built with FLTK: the Insight window manager,
 the Rambler desktop and file manager, an application switcher, control panels (Alice)
 and the Nirvana Shell terminal. English and Polish interface.")
 set(CPACK_PACKAGING_INSTALL_PREFIX /usr)
 set(CPACK_INSTALL_CMAKE_PROJECTS "${CMAKE_BINARY_DIR};NirvanaDesktop;nirvana;/")
+set(CPACK_DEBIAN_PACKAGE_VERSION "${NIRVANA_VERSION}")
 set(CPACK_DEBIAN_FILE_NAME DEB-DEFAULT)
 set(CPACK_DEBIAN_PACKAGE_SECTION x11)
+set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_SOURCE_DIR}/LICENSE")
 set(CPACK_DEBIAN_PACKAGE_PRIORITY optional)
 set(CPACK_DEBIAN_PACKAGE_SHLIBDEPS ON)
 set(CPACK_DEBIAN_PACKAGE_DEPENDS "dbus-bin | dbus")
-# formerly the "lisaos" package - apt removes it on installation (same role, other files)
-set(CPACK_DEBIAN_PACKAGE_CONFLICTS "lisaos")
-set(CPACK_DEBIAN_PACKAGE_REPLACES "lisaos")
-set(CPACK_DEBIAN_PACKAGE_PROVIDES "lisaos")
 set(CPACK_DEBIAN_PACKAGE_RECOMMENDS
   "xserver-xorg, xinit, fonts-dejavu-core, libpam-elogind | elogind, polkitd, pkexec, lxpolkit, \
 udisks2, network-manager, pulseaudio-utils, alsa-utils, squashfs-tools, bubblewrap, xsecurelock, xdg-utils, \
-xdg-desktop-portal, xdg-desktop-portal-gtk")
+xdg-desktop-portal, xdg-desktop-portal-gtk, libgl1-mesa-dri")
 set(CPACK_DEBIAN_PACKAGE_SUGGESTS
   "lightdm, network-manager-openvpn, network-manager-vpnc, wireguard-tools, power-profiles-daemon, pipewire-pulse")
 include(CPack)
