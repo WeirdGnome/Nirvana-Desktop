@@ -34,7 +34,7 @@ Napisane w C++ i FLTK 1.4.
 
 Rozpakuj źródła i uruchom instalator:
 
-    tar xzf nirvana-desktop-0.0.21.tar.gz && cd nirvana-desktop
+    tar xzf nirvana-desktop-0.0.22.tar.gz && cd nirvana-desktop
     sudo ./install.sh                 # albo: sudo ./install.sh --login-screen
 
 Instalator:
@@ -81,7 +81,8 @@ Zależności (Devuan/Debian):
         network-manager network-manager-openvpn \  # sieć i VPN
         libxss-dev pulseaudio-utils alsa-utils \ # aplety dźwięku i zasilania
         gettext \                                 # tłumaczenia (msgfmt)
-        libgl-dev libxcomposite-dev libxdamage-dev # nirvana-shader (efekty pełnoekranowe)
+        libgl-dev libxcomposite-dev libxdamage-dev \ # nirvana-shader (efekty pełnoekranowe)
+        libcups2-dev                              # drukarki (opcjonalnie)
 
 Opcjonalnie: `power-profiles-daemon` (profile zasilania), `xsecurelock`, `i3lock`
 albo `slock` (blokada ekranu). Na Rocky: `libXScrnSaver-devel pulseaudio-utils`.
@@ -624,6 +625,37 @@ komputerze nie są pytani o hasło. Bez systemd strefę ustawia `/etc/localtime`
 (Devuan), a godzinę `date` + `hwclock`.
 
 ![Data i czas](docs/img/datetime.png)
+
+## Drukarki
+
+Ikona drukarki pojawia się na pasku menu, gdy CUPS ma drukarkę albo zadanie drukowania.
+Niebieski znaczek pokazuje liczbę zadań, czerwony – gdy domyślna drukarka stanęła (brak papieru,
+zacięcie, otwarta pokrywa…). Okienko pokazuje każdą drukarkę z jej stanem, zadania z **×** do
+anulowania każdego z nich, **Anuluj wszystkie moje zadania**, **Drukuj stronę testową**
+i **Ustawienia drukarek…**.
+
+**Preferencje → Drukarki**:
+
+- drukarki z opisem, sterownikiem, połączeniem, stanem i zadaniami w kolejce; **Ustaw jako
+  domyślną** (dla Ciebie, `lpoptions`), **Drukuj stronę testową**, **Pauza/Wznów**, **Usuń**,
+- **Dodaj drukarkę…**: *Szukaj* pokazuje to, co znajdzie CUPS (USB, sieć, IPP/AirPrint); adres
+  można też wpisać (`ipp://192.168.1.20/ipp/print`, `socket://…`). Drukarki sieciowe mówiące IPP
+  dostają drukowanie **bez sterownika** (IPP Everywhere) na górze listy; w przeciwnym razie
+  proponowane są sterowniki producenta,
+- **brakujące sterowniki**: gdy dla producenta nie ma sterownika, okno to mówi, a **Zainstaluj
+  sterowniki…** proponuje właściwe pakiety (HPLIP dla HP, brlaser dla Brothera, ESC/P-R dla
+  Epsona, Gutenprint, SpliX, foo2zjs, Foomatic, pliki PPD producentów, cups-filters) – nazwy
+  pakietów są dobierane dla apt, dnf, pacmana albo zyppera; lista sterowników od razu się
+  uzupełnia,
+- **brak CUPS**: panel proponuje zainstalowanie (albo uruchomienie) systemu drukowania.
+
+Dodawanie, usuwanie, wstrzymywanie i instalacja idą przez `/usr/libexec/nirvana-print-helper`
+z pkexec (tylko sprawdzone nazwy, adresy znanych rodzajów i sterowniki oferowane przez sam
+CUPS); administratorzy przy komputerze nie są pytani o hasło. Odczyt stanu, anulowanie własnych
+zadań, strona testowa i własna domyślna drukarka nie wymagają uprawnień.
+
+![Aplet drukarki](docs/img/printers-applet.png)
+![Preferencje > Drukarki](docs/img/printers.png)
 
 ## Aktualizacje oprogramowania
 

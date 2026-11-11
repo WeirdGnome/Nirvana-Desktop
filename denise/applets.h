@@ -37,6 +37,10 @@ int updates_width();
 // System updates (updates.cxx): the number of updates on the icon, installing with progress.
 Fl_Widget *make_updates(int X, int Y, int W, int H);
 bool updates_supported();
+// Printers (printer.cxx, CUPS): hidden (width 0) without printers and print jobs
+Fl_Widget *make_printer(int X, int Y, int W, int H);
+int printer_width();
+void refresh_printers();
 // The clock (clock.cxx): time, calendar, pomodoro, timer, stopwatch. Its width follows
 // the content; relayout is called when it changes.
 Fl_Widget *make_clock(int H, std::function<void()> relayout);   // a known package manager (or flatpak) is installed

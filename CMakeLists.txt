@@ -79,6 +79,30 @@ pkg_check_modules(XSS REQUIRED IMPORTED_TARGET xscrnsaver)
 add_library(nirvana-audio STATIC audio/audio.cxx)
 target_include_directories(nirvana-audio PUBLIC audio)
 target_link_libraries(nirvana-audio PUBLIC nirvana-i18n fltk::fltk)
+# --- printing (CUPS) - optional: without libcups there is no printer applet and panel ---
+# (pkg-config first; when cups.pc lacks its own dependencies, the header and the library)
+pkg_check_modules(CUPS IMPORTED_TARGET cups)
+if(CUPS_FOUND)
+  set(NIRVANA_CUPS PkgConfig::CUPS)
+else()
+  find_path(CUPS_HEADER cups/cups.h)
+  find_library(CUPS_LIBRARY cups)
+  if(CUPS_HEADER AND CUPS_LIBRARY)
+    set(CUPS_FOUND TRUE)
+    set(NIRVANA_CUPS ${CUPS_LIBRARY})
+  endif()
+endif()
+if(CUPS_FOUND)
+  add_library(nirvana-print STATIC print/print.cxx)
+  target_include_directories(nirvana-print PUBLIC print)
+  target_link_libraries(nirvana-print PUBLIC nirvana-i18n ${NIRVANA_CUPS})
+  target_compile_definitions(nirvana-print PUBLIC NIRVANA_PRINT=1)
+  set(NIRVANA_PRINT_LIB nirvana-print)
+else()
+  message(WARNING "libcups development files not found - no printer applet (Devuan: libcups2-dev)")
+  set(NIRVANA_PRINT_LIB "")
+endif()
+
 add_library(nirvana-power STATIC power/power.cxx)
 target_include_directories(nirvana-power PUBLIC power)
 target_link_libraries(nirvana-power PUBLIC nirvana-i18n fltk::fltk PkgConfig::DBUS PkgConfig::XSS X11::Xext X11::X11)
@@ -96,17 +120,18 @@ add_executable(nirvana-denise
   denise/menus.cxx
   denise/updates.cxx
   denise/clock.cxx
+  denise/printer.cxx
   denise/about.cxx
   denise/tray.cxx)
-target_link_libraries(nirvana-denise PRIVATE nirvana-platinum nirvana-net nirvana-audio nirvana-power fltk::images PkgConfig::DBUS)
+target_link_libraries(nirvana-denise PRIVATE nirvana-platinum nirvana-net nirvana-audio nirvana-power ${NIRVANA_PRINT_LIB} fltk::images PkgConfig::DBUS)
 
 # --- insight: X11 window manager ---------------------------------------------
 add_executable(nirvana-insight insight/main.cxx)
 target_link_libraries(nirvana-insight PRIVATE nirvana-platinum X11::X11)
 
 # --- alice: control panels ---------------------------------------------------
-add_executable(nirvana-alice alice/main.cxx alice/appearance.cxx alice/network.cxx alice/power.cxx alice/preferences.cxx alice/shader.cxx alice/datetime.cxx alice/desktop.cxx)
-target_link_libraries(nirvana-alice PRIVATE nirvana-platinum nirvana-net nirvana-power)
+add_executable(nirvana-alice alice/main.cxx alice/appearance.cxx alice/network.cxx alice/power.cxx alice/preferences.cxx alice/shader.cxx alice/datetime.cxx alice/desktop.cxx alice/printers.cxx)
+target_link_libraries(nirvana-alice PRIVATE nirvana-platinum nirvana-net nirvana-power ${NIRVANA_PRINT_LIB})
 
 # --- Nirvana Shell: terminal emulator (system libvterm or the bundled one) ---
 pkg_check_modules(VTERM IMPORTED_TARGET vterm>=0.3)
@@ -134,7 +159,7 @@ else()
 endif()
 install(DIRECTORY shaders/ DESTINATION share/nirvana/shaders COMPONENT nirvana)
 # system updates: the check (as the user) and the helper (root, through pkexec/polkit)
-install(PROGRAMS update/nirvana-update-check update/nirvana-update-helper update/nirvana-power-helper update/nirvana-time-helper DESTINATION libexec COMPONENT nirvana)
+install(PROGRAMS update/nirvana-update-check update/nirvana-update-helper update/nirvana-power-helper update/nirvana-time-helper update/nirvana-print-helper DESTINATION libexec COMPONENT nirvana)
 install(FILES update/org.nirvana-desktop.policy DESTINATION share/polkit-1/actions COMPONENT nirvana)
 install(FILES update/50-nirvana.rules DESTINATION share/polkit-1/rules.d COMPONENT nirvana)
 
@@ -175,5 +200,5 @@ set(CPACK_DEBIAN_PACKAGE_RECOMMENDS
 udisks2, network-manager, pulseaudio-utils, alsa-utils, squashfs-tools, bubblewrap, xsecurelock, xdg-utils, \
 xdg-desktop-portal, xdg-desktop-portal-gtk, libgl1-mesa-dri")
 set(CPACK_DEBIAN_PACKAGE_SUGGESTS
-  "lightdm, network-manager-openvpn, network-manager-vpnc, wireguard-tools, power-profiles-daemon, pipewire-pulse")
+  "lightdm, network-manager-openvpn, network-manager-vpnc, wireguard-tools, power-profiles-daemon, pipewire-pulse, cups")
 include(CPack)

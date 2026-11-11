@@ -35,7 +35,7 @@ on the desktop. Written in C++ and FLTK 1.4.
 
 Unpack the sources and run the installer:
 
-    tar xzf nirvana-desktop-0.0.21.tar.gz && cd nirvana-desktop
+    tar xzf nirvana-desktop-0.0.22.tar.gz && cd nirvana-desktop
     sudo ./install.sh                 # or: sudo ./install.sh --login-screen
 
 The installer:
@@ -80,7 +80,8 @@ Dependencies (Devuan/Debian):
         network-manager network-manager-openvpn \  # network and VPN
         libxss-dev pulseaudio-utils alsa-utils \  # sound and power applets
         gettext \                                 # translations (msgfmt)
-        libgl-dev libxcomposite-dev libxdamage-dev # nirvana-shader (full-screen effects)
+        libgl-dev libxcomposite-dev libxdamage-dev \ # nirvana-shader (full-screen effects)
+        libcups2-dev                              # printers (optional)
 
 Optional: `power-profiles-daemon` (power profiles), `xsecurelock`, `i3lock`
 or `slock` (screen lock). On Rocky: `libXScrnSaver-devel pulseaudio-utils`.
@@ -628,6 +629,35 @@ are not asked for a password. Without systemd the zone is set by `/etc/localtime
 `/etc/timezone` (Devuan) and the time with `date` + `hwclock`.
 
 ![Date & Time](docs/img/datetime.png)
+
+## Printers
+
+A printer icon appears in the menu bar when CUPS has a printer or a print job. A blue badge
+shows the number of jobs, red when the default printer has stopped (out of paper, a jam, an
+open cover…). The small window shows each printer with its state, the jobs with a **×** to
+cancel each one, **Cancel All My Jobs**, **Print Test Page** and **Printer Settings…**.
+
+**Preferences → Printers**:
+
+- the printers with their description, driver, connection, state and waiting jobs; **Set as
+  Default** (for you, `lpoptions`), **Print Test Page**, **Pause/Resume**, **Remove**,
+- **Add Printer…**: *Search* lists what CUPS finds (USB, network, IPP/AirPrint); an address can
+  be typed too (`ipp://192.168.1.20/ipp/print`, `socket://…`). Network printers that speak IPP
+  get **driverless** printing (IPP Everywhere) at the top of the list; otherwise the drivers of
+  the manufacturer are offered,
+- **missing drivers**: when there is no driver for the manufacturer, the window says so and
+  **Install Drivers…** offers the right packages (HPLIP for HP, brlaser for Brother, ESC/P-R
+  for Epson, Gutenprint, SpliX, foo2zjs, Foomatic, the manufacturer PPDs, cups-filters) – the
+  package names are chosen for apt, dnf, pacman or zypper; the list of drivers fills in at once,
+- **no CUPS at all**: the panel offers to install (or start) the printing system.
+
+Adding, removing, pausing and installing go through `/usr/libexec/nirvana-print-helper` with
+pkexec (only checked names, addresses of known kinds and drivers CUPS itself offers);
+administrators at the computer are not asked for a password. Reading the state, cancelling your
+own jobs, the test page and your default printer need no rights.
+
+![The printer applet](docs/img/printers-applet.png)
+![Preferences > Printers](docs/img/printers.png)
 
 ## Software updates
 

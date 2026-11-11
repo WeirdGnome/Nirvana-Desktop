@@ -1,0 +1,139 @@
+#!/bin/sh
+# Nirvana Desktop - printer administration for Preferences > Printers. Runs as root
+# through pkexec (polkit action org.nirvana-desktop.print; administrators at the computer
+# are not asked for a password). Every argument is checked - only these requests exist:
+#
+#   nirvana-print-helper install-cups                 the printing system (CUPS) + start it
+#   nirvana-print-helper install-drivers ID...        driver packages, IDs from the list below
+#   nirvana-print-helper devices                      the printers CUPS can see (lpinfo -v)
+#   nirvana-print-helper add NAME URI MODEL           a new printer (MODEL "everywhere" = driverless)
+#   nirvana-print-helper delete NAME
+#   nirvana-print-helper default NAME                 the default printer for everybody
+#   nirvana-print-helper enable NAME | disable NAME   resume / pause the queue
+#
+# Driver IDs (the package names differ between the distributions):
+#   gutenprint  many inkjets (Canon, Epson...)       hplip    HP
+#   brother     Brother lasers (brlaser)              epson    Epson inkjets (ESC/P-R)
+#   samsung     Samsung/Xerox SPL lasers (splix)      foo2zjs  ZjStream lasers (HP, Minolta, Oki...)
+#   foomatic    the Foomatic driver database          ppds     manufacturer PPDs (Kyocera, Ricoh, Lexmark...)
+#   filters     cups-filters (driverless printing, PDF)
+set -u
+PATH=/usr/sbin:/usr/bin:/sbin:/bin
+LC_ALL=C
+export PATH LC_ALL
+[ "$(id -u)" = 0 ] || { echo "must run as root"; exit 1; }
+have() { command -v "$1" >/dev/null 2>&1; }
+name_ok() { printf '%s' "$1" | grep -Eq '^[A-Za-z0-9_.-]{1,127}$'; }
+
+pm() {   # the package manager
+  if have apt-get && [ -r /var/lib/dpkg/status ]; then echo apt
+  elif have dnf; then echo dnf
+  elif have pacman; then echo pacman
+  elif have zypper; then echo zypper
+  else echo none; fi
+}
+
+pkg_for() {   # driver ID -> package name for this distribution ("" when there is none)
+  case "$(pm):$1" in
+    apt:gutenprint) echo printer-driver-gutenprint ;; apt:hplip) echo hplip ;;
+    apt:brother) echo printer-driver-brlaser ;; apt:epson) echo printer-driver-escpr ;;
+    apt:samsung) echo printer-driver-splix ;; apt:foo2zjs) echo printer-driver-foo2zjs ;;
+    apt:foomatic) echo foomatic-db-compressed-ppds ;; apt:ppds) echo openprinting-ppds ;;
+    apt:filters) echo cups-filters ;;
+    dnf:gutenprint) echo gutenprint-cups ;; dnf:hplip) echo hplip ;; dnf:brother) echo brlaser ;;
+    dnf:epson) echo epson-inkjet-printer-escpr ;; dnf:samsung) echo splix ;;
+    dnf:foomatic|dnf:ppds) echo foomatic-db-ppds ;; dnf:filters) echo cups-filters ;;
+    pacman:gutenprint) echo gutenprint ;; pacman:hplip) echo hplip ;; pacman:samsung) echo splix ;;
+    pacman:foomatic) echo foomatic-db ;; pacman:ppds) echo foomatic-db-nonfree-ppds ;;
+    pacman:filters) echo cups-filters ;;
+    zypper:gutenprint) echo gutenprint ;; zypper:hplip) echo hplip ;; zypper:epson) echo epson-inkjet-printer-escpr ;;
+    zypper:samsung) echo splix ;; zypper:foomatic|zypper:ppds) echo OpenPrintingPPDs ;; zypper:filters) echo cups-filters ;;
+    *) echo "" ;;
+  esac
+}
+
+install() {   # one package at a time - one missing package must not stop the others
+  rc=0
+  for p in "$@"; do
+    echo "STEP installing $p"
+    case "$(pm)" in
+      apt) DEBIAN_FRONTEND=noninteractive apt-get -q -y install "$p" || { apt-get -q update && DEBIAN_FRONTEND=noninteractive apt-get -q -y install "$p"; } || rc=1 ;;
+      dnf) dnf -y install "$p" || rc=1 ;;
+      pacman) pacman -S --needed --noconfirm "$p" || rc=1 ;;
+      zypper) zypper --non-interactive install "$p" || rc=1 ;;
+      *) echo "no known package manager"; return 1 ;;
+    esac
+  done
+  return $rc
+}
+
+start_cups() {
+  if [ -d /run/systemd/system ]; then systemctl enable --now cups >/dev/null 2>&1
+  elif have service; then service cups start >/dev/null 2>&1; update-rc.d cups defaults >/dev/null 2>&1
+  elif have rc-service; then rc-update add cupsd default >/dev/null 2>&1; rc-service cupsd start >/dev/null 2>&1
+  fi
+  return 0
+}
+
+case "${1:-}" in
+install-cups)
+  case "$(pm)" in
+    apt) install cups cups-filters ;; dnf) install cups cups-filters ;;
+    pacman) install cups cups-filters ;; zypper) install cups cups-filters ;;
+    *) echo "no known package manager"; exit 1 ;;
+  esac
+  rc=$?
+  start_cups
+  exit $rc
+  ;;
+install-drivers)
+  shift
+  [ $# -gt 0 ] || { echo "no drivers given"; exit 2; }
+  pkgs=
+  for id in "$@"; do
+    case "$id" in gutenprint|hplip|brother|epson|samsung|foo2zjs|foomatic|ppds|filters) ;; *) echo "unknown driver: $id"; exit 2 ;; esac
+    p="$(pkg_for "$id")"
+    if [ -n "$p" ]; then pkgs="$pkgs $p"; else echo "NOTE $id is not packaged for this system"; fi
+  done
+  [ -n "$pkgs" ] || exit 3
+  # shellcheck disable=SC2086
+  install $pkgs
+  rc=$?
+  start_cups   # (a restart is not needed - CUPS sees new drivers at once)
+  exit $rc
+  ;;
+devices)
+  exec lpinfo -l -v 2>/dev/null
+  ;;
+add)
+  n="${2:-}" uri="${3:-}" model="${4:-}"
+  name_ok "$n" || { echo "bad printer name"; exit 2; }
+  printf '%s' "$uri" | grep -Eq '^(ipp|ipps|http|https|usb|socket|lpd|dnssd|hp|hpfax|smb|beh|cups-pdf|serial|parallel|implicitclass):[^[:space:]]+$' || { echo "bad device URI"; exit 2; }
+  if [ "$model" = everywhere ]; then
+    lpadmin -p "$n" -E -v "$uri" -m everywhere || exit 1
+  else
+    # only a model that CUPS itself offers
+    lpinfo -m 2>/dev/null | cut -d' ' -f1 | grep -Fxq -- "$model" || { echo "unknown driver: $model"; exit 2; }
+    lpadmin -p "$n" -E -v "$uri" -m "$model" || exit 1
+  fi
+  cupsenable "$n" 2>/dev/null; cupsaccept "$n" 2>/dev/null
+  exit 0
+  ;;
+delete)
+  name_ok "${2:-}" || { echo "bad printer name"; exit 2; }
+  exec lpadmin -x "$2"
+  ;;
+default)
+  name_ok "${2:-}" || { echo "bad printer name"; exit 2; }
+  exec lpadmin -d "$2"
+  ;;
+enable|disable)
+  name_ok "${2:-}" || { echo "bad printer name"; exit 2; }
+  if [ "$1" = enable ]; then cupsenable "$2" && cupsaccept "$2"; else cupsdisable "$2"; fi
+  exit $?
+  ;;
+*)
+  echo "usage: nirvana-print-helper install-cups | install-drivers ID... | devices | add NAME URI MODEL | delete NAME | default NAME | enable NAME | disable NAME"
+  exit 2
+  ;;
+esac

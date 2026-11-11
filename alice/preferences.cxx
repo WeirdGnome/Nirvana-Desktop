@@ -37,7 +37,7 @@ void open_panel(const char *name) {
 
 class PanelIcon : public Fl_Button {
 public:
-  enum Kind { Appearance, Desktop, Network, Power, Shader, DateTime } kind;
+  enum Kind { Appearance, Desktop, Network, Power, Shader, DateTime, Printers } kind;
   PanelIcon(int X, int Y, Kind k, const char *l) : Fl_Button(X, Y, 96, 74, l), kind(k) {
     box(FL_NO_BOX);
     labelsize(SIZE_SMALL + 1);
@@ -67,6 +67,17 @@ public:
         fl_color(GRAY); fl_rectf(ix + 10, iy + 6, 19, 16);
         fl_color(SEL); fl_rectf(ix + 10, iy + 6, 19, 3);
         fl_color(DARK); fl_rect(ix + 10, iy + 6, 19, 16); fl_rect(ix, iy + 2, 32, 24);
+        break;
+      }
+      case Printers: {   // a printer with a sheet coming out
+        fl_color(fl_rgb_color(0xF4, 0xF4, 0xF0)); fl_rectf(ix + 8, iy, 16, 9);
+        fl_color(DARK); fl_rect(ix + 8, iy, 16, 9);
+        fl_color(fl_rgb_color(0xC8, 0xC8, 0xC0)); fl_rectf(ix, iy + 8, 32, 12);
+        fl_color(DARK); fl_rect(ix, iy + 8, 32, 12);
+        fl_color(fl_rgb_color(0x3D, 0xB5, 0x4A)); fl_rectf(ix + 26, iy + 11, 3, 2);
+        fl_color(fl_rgb_color(0xFF, 0xFF, 0xFF)); fl_rectf(ix + 7, iy + 17, 18, 10);
+        fl_color(DARK); fl_rect(ix + 7, iy + 17, 18, 10);
+        for (int i = 0; i < 3; i++) fl_xyline(ix + 10, iy + 20 + i * 2, ix + 21);
         break;
       }
       case DateTime: {   // a clock face with a calendar page
@@ -118,7 +129,7 @@ public:
 int panel_preferences() {
   // at most 5 icons in a row, then a new row
   const int PER_ROW = 5, CELL_W = 106, CELL_H = 84;
-  const int N = 6;   // the number of panels below
+  const int N = 7;   // the number of panels below
   const int rows = (N + PER_ROW - 1) / PER_ROW;
   const int W = 14 * 2 + PER_ROW * CELL_W - 10, icons_h = 20 + rows * CELL_H;
   const int H = icons_h + 90;
@@ -130,6 +141,7 @@ int panel_preferences() {
       {PanelIcon::Network, _("Network"), "network"},
       {PanelIcon::Power, _("Power"), "power"},
       {PanelIcon::DateTime, _("Date & Time"), "datetime"},
+      {PanelIcon::Printers, _("Printers"), "printers"},
       {PanelIcon::Shader, _("Shader"), "shader"},
   };
   static_assert(sizeof(panels) / sizeof(panels[0]) == N, "N must match the panels");
