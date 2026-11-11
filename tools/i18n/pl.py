@@ -538,4 +538,9 @@ T = {
     'Open Nirvana HD': 'Otwórz Nirvana HD',
     'Desktop Appearance…': 'Wygląd biurka…',
     'Restore': 'Przywróć',
+    # pasek menu: zajęta pamięć i dysk
+    '%1 used memory of %2     %3 used disk of %4': '%1 zajętej pamięci z %2     %3 zajętego dysku z %4',
+    '%1 used memory of %2': '%1 zajętej pamięci z %2',
+    'memory %1/%2   disk %3/%4': 'pamięć %1/%2   dysk %3/%4',
+    'memory %1/%2': 'pamięć %1/%2',
 }

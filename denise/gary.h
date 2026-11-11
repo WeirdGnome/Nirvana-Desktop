@@ -46,6 +46,9 @@ void close(Window w);          // poproś menedżer okien o zamknięcie
 
 // Ikona okna z _NET_WM_ICON w rozmiarze size x size (nullptr, jeśli program jej nie podaje).
 Fl_Image *window_icon(Window w, int size = 16);
+// Ikona programu z pliku .desktop (po WM_CLASS) i motywu ikon - gdy okno nie
+// ma _NET_WM_ICON albo ma tylko małą. size x size, nullptr gdy nie znaleziono.
+Fl_Image *desktop_icon(Window w, int size = 32);
 std::string window_title(Window w);   // _NET_WM_NAME albo WM_NAME
 
 } // namespace gary

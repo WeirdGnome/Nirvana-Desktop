@@ -281,9 +281,11 @@ okno biurka nie przyjmuje fokusu, żeby klik w pasek menu nie zmieniał aktywnej
 ### Pasek menu
 
 Po prawej, ciasno przy krawędzi: zasilanie, głośność, sieć, zegar i przełącznik aplikacji
-(gadżet głębi). Na środku, jak na pasku ekranu Workbencha 3.1, widać wolną pamięć
-(`MemAvailable`) i wolne miejsce na dysku z katalogiem domowym. Wartości odświeżają się co
-3 sekundy, a podpowiedź pokazuje też całkowite rozmiary. Na wąskim ekranie napis się skraca.
+(gadżet głębi). Na środku, jak na pasku ekranu Workbencha 3.1, widać zajętą pamięć
+i zajęte miejsce na dysku z katalogiem domowym, każde z całości, np.
+`512MB zajętej pamięci z 16GB     40GB zajętego dysku z 512GB` (poniżej 1 GB w MB, poniżej 10 GB
+z jednym miejscem po przecinku). Wartości odświeżają się co 3 sekundy, a podpowiedź pokazuje
+ilości wolne. Na wąskim ekranie napis się skraca.
 
 ![Pasek menu](docs/img/pasek.png)
 
@@ -348,6 +350,7 @@ przestawia cały system: Rambler i Insight przeładowują paletę bez restartu.
 - **Schemat kolorów**: wbudowane *Platinum*, *Grafit* (ciemny) i *Workbench 2*
   (ukłon w stronę Amigi) oraz ponad 40 schematów z
   [Redmond97 SE](https://codeberg.org/Sliver_X/Redmond97-SE) (GPL-3.0).
+- **Wygląd domyślny**: schemat *In Tenebris*, wzór *Cegiełki* i ikony Platinum.
 - **Pasek tytułu**: jak w schemacie, prążki Platinum, jednolity kolor albo gradient.
 - **Tło biurka**: *Wzór*, *Jednolity kolor* albo *Gradient*.
   - Kolory wybiera się z dwóch próbek. Drugi kolor gradientu domyślnie jest ciemniejszą

@@ -561,6 +561,14 @@ static void manage(Window w, bool existing) {
   XSelectInput(dpy, w, PropertyChangeMask | StructureNotifyMask);
   if (wa.map_state == IsViewable) c->ignore_unmap++;   // reparent wygeneruje UnmapNotify
   XReparentWindow(dpy, w, fx, px(FRAME), px(TITLE_H));
+  // Prośby okna o zmianę rozmiaru (np. uchwyt w rogu okna Ramblera) muszą trafić
+  // do nas także po przeniesieniu do ramki - inaczej okno rośnie lub maleje,
+  // a ramka zostaje w starym rozmiarze.
+  {
+    XWindowAttributes fa;
+    XGetWindowAttributes(dpy, fx, &fa);
+    XSelectInput(dpy, fx, fa.your_event_mask | SubstructureRedirectMask);
+  }
   set_frame_extents(w);
   XMapWindow(dpy, w);
   set_wm_state(w, NormalState);

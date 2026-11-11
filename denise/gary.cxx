@@ -4,6 +4,8 @@
 
 #include <FL/Fl.H>
 #include <FL/Fl_RGB_Image.H>
+#include <FL/Fl_Shared_Image.H>
+#include <FL/Fl_Image.H>
 #include <FL/platform.H>
 #include <X11/Xatom.h>
 #include <X11/Xutil.h>
@@ -269,7 +271,156 @@ Fl_Image *window_icon(Window w, int size) {
     }
   }
   if (data) XFree(data);
-  cache[{w, size}] = result;
+  if (result) cache[{w, size}] = result;   // brak ikony nie jest zapamiętywany - program może ją ustawić później
+  return result;
+}
+
+// --- ikona z pliku .desktop i motywu ikon -------------------------------------
+static std::vector<std::string> data_dirs() {
+  std::vector<std::string> v;
+  const char *h = getenv("HOME");
+  std::string home = h ? h : "/";
+  const char *xd = getenv("XDG_DATA_HOME");
+  v.push_back(xd && *xd ? xd : home + "/.local/share");
+  v.push_back(home + "/.local/share/flatpak/exports/share");
+  v.push_back("/var/lib/flatpak/exports/share");
+  const char *dirs = getenv("XDG_DATA_DIRS");
+  std::stringstream ss(dirs && *dirs ? dirs : "/usr/local/share:/usr/share");
+  std::string d;
+  while (std::getline(ss, d, ':'))
+    if (!d.empty() && std::find(v.begin(), v.end(), d) == v.end()) v.push_back(d);
+  for (const char *x : {"/usr/local/share", "/usr/share"})
+    if (std::find(v.begin(), v.end(), x) == v.end()) v.push_back(x);
+  return v;
+}
+
+static std::string lower(std::string s) {
+  for (auto &c : s) c = (char)tolower((unsigned char)c);
+  return s;
+}
+
+// Wartość klucza z sekcji [Desktop Entry]
+static std::string desktop_key(const std::string &file, const char *key) {
+  std::ifstream in(file);
+  std::string line, k = std::string(key) + "=";
+  bool entry = false;
+  while (std::getline(in, line)) {
+    if (!line.empty() && line[0] == '[') { entry = line == "[Desktop Entry]"; continue; }
+    if (entry && line.rfind(k, 0) == 0) return line.substr(k.size());
+  }
+  return "";
+}
+
+// Plik .desktop programu o klasie okna cls / nazwie name.
+static std::string find_desktop_file(const std::string &cls, const std::string &name) {
+  std::string lc = lower(cls), ln = lower(name);
+  std::string by_name;
+  for (auto &dd : data_dirs()) {
+    std::error_code ec;
+    fs::path apps = fs::path(dd) / "applications";
+    if (!fs::is_directory(apps, ec)) continue;
+    for (auto &de : fs::directory_iterator(apps, fs::directory_options::skip_permission_denied, ec)) {
+      if (de.path().extension() != ".desktop") continue;
+      std::string f = de.path().string(), id = lower(de.path().stem().string());
+      // dokładne dopasowanie po StartupWMClass jest najpewniejsze
+      std::string wmc = lower(desktop_key(f, "StartupWMClass"));
+      if (!wmc.empty() && (wmc == lc || wmc == ln)) return f;
+      // "librewolf", "abiword", "io.gitlab.librewolf-community" (Flatpak)
+      if (by_name.empty() && (id == lc || id == ln)) by_name = f;
+      if (by_name.empty()) {
+        auto dot = id.rfind('.');
+        std::string last = dot == std::string::npos ? id : id.substr(dot + 1);
+        if (dot != std::string::npos && (last == lc || last == ln || last.rfind(lc + "-", 0) == 0)) by_name = f;
+      }
+    }
+  }
+  return by_name;
+}
+
+static std::string gtk_icon_theme() {
+  const char *x = getenv("XDG_CONFIG_HOME");
+  const char *h = getenv("HOME");
+  std::string cfg = x && *x ? x : std::string(h ? h : "/") + "/.config";
+  for (auto f : {cfg + "/gtk-3.0/settings.ini", cfg + "/gtk-4.0/settings.ini"}) {
+    std::ifstream in(f);
+    std::string line;
+    while (std::getline(in, line))
+      if (line.rfind("gtk-icon-theme-name", 0) == 0) {
+        std::string v = line.substr(line.find('=') + 1);
+        v.erase(0, v.find_first_not_of(" \t\""));
+        v.erase(v.find_last_not_of(" \t\"") + 1);
+        if (!v.empty()) return v;
+      }
+  }
+  return "";
+}
+
+// Plik ikony o nazwie name z motywu (najbliżej rozmiaru size), hicolor albo pixmaps.
+static std::string theme_icon_file(const std::string &name, int size) {
+  std::error_code ec;
+  if (name.empty()) return "";
+  if (name[0] == '/') return fs::exists(name, ec) ? name : "";
+  std::vector<std::string> themes;
+  std::string t = gtk_icon_theme();
+  if (!t.empty()) themes.push_back(t);
+  for (auto x : {"hicolor", "Adwaita", "breeze", "Papirus"}) if (t != x) themes.push_back(x);
+  std::vector<std::string> bases;
+  const char *h = getenv("HOME");
+  bases.push_back(std::string(h ? h : "/") + "/.icons");
+  for (auto &d : data_dirs()) bases.push_back(d + "/icons");
+  std::vector<int> sizes = {size, 48, 64, 128, 256, 512, 24, 22};
+  for (auto &th : themes)
+    for (auto &b : bases) {
+      fs::path root = fs::path(b) / th;
+      if (!fs::is_directory(root, ec)) continue;
+      for (int sz : sizes) {
+        std::string dim = std::to_string(sz) + "x" + std::to_string(sz);
+        for (auto p : {root / dim / "apps" / (name + ".png"), root / "apps" / std::to_string(sz) / (name + ".png"),
+                       root / "apps" / std::to_string(sz) / (name + ".svg")})
+          if (fs::exists(p, ec)) return p.string();
+      }
+      for (auto p : {root / "scalable" / "apps" / (name + ".svg"), root / "apps" / "scalable" / (name + ".svg")})
+        if (fs::exists(p, ec)) return p.string();
+    }
+  for (auto &d : data_dirs())
+    for (auto ext : {".png", ".svg", ".xpm"}) {
+      fs::path p = fs::path(d) / "pixmaps" / (name + ext);
+      if (fs::exists(p, ec)) return p.string();
+    }
+  return "";
+}
+
+Fl_Image *desktop_icon(Window w, int size) {
+  static std::map<std::string, Fl_Image *> cache;   // klasa okna -> obrazek
+  XClassHint ch;
+  std::string cls, name;
+  if (XGetClassHint(fl_display, w, &ch)) {
+    if (ch.res_class) { cls = ch.res_class; XFree(ch.res_class); }
+    if (ch.res_name) { name = ch.res_name; XFree(ch.res_name); }
+  }
+  if (cls.empty() && name.empty()) return nullptr;
+  std::string key = cls + "|" + name + "|" + std::to_string(size);
+  if (auto it = cache.find(key); it != cache.end()) return it->second;
+  std::string icon;
+  std::string df = find_desktop_file(cls, name);
+  if (!df.empty()) icon = desktop_key(df, "Icon");
+  std::string file = theme_icon_file(icon, size);
+  if (file.empty()) file = theme_icon_file(lower(cls), size);
+  if (file.empty()) file = theme_icon_file(lower(name), size);
+  Fl_Image *result = nullptr;
+  if (!file.empty()) {
+    static bool reg = false;
+    if (!reg) { fl_register_images(); reg = true; }
+    if (Fl_Shared_Image *sh = Fl_Shared_Image::get(file.c_str())) {
+      if (sh->w() > 0 && sh->h() > 0) {
+        Fl_Image::RGB_scaling(FL_RGB_SCALING_BILINEAR);
+        const Fl_Image *src = sh->image() ? sh->image() : sh;
+        result = src->copy(size, size);
+      }
+      sh->release();
+    }
+  }
+  cache[key] = result;
   return result;
 }
 

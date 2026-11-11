@@ -129,6 +129,16 @@ public:
     return b;
   }
 
+  // Poniżej 1 GB w MB, wyżej w GB (do 10 GB z jednym miejscem po przecinku): "512MB", "3,2GB", "16GB"
+  static std::string size_text(unsigned long long mb) {
+    char b[32];
+    if (mb < 1024) snprintf(b, sizeof b, "%lluMB", mb);
+    else if (mb < 10 * 1024) snprintf(b, sizeof b, "%.1fGB", mb / 1024.0);
+    else snprintf(b, sizeof b, "%.0fGB", mb / 1024.0);
+    if (plat::language() == "pl") for (char *c = b; *c; c++) if (*c == '.') *c = ',';
+    return b;
+  }
+
   void sample() {
     unsigned long long mem_kb = 0, mem_total = 0;
     if (FILE *f = fopen("/proc/meminfo", "r")) {
@@ -147,11 +157,17 @@ public:
       disk_mb = (unsigned long long)sv.f_bavail * sv.f_frsize / (1024 * 1024);
       disk_total = (unsigned long long)sv.f_blocks * sv.f_frsize / (1024 * 1024);
     }
-    std::string mem = group(mem_kb / 1024) + " MB";
-    std::string dsk = group(disk_mb) + " MB";
-    std::string full = plat::fmt(_("%1 free memory     %2 free disk"), mem, dsk);
-    std::string brief = plat::fmt(_("%1 memory   %2 disk"), mem, dsk);
-    std::string tip = plat::fmt(_("Memory: %1 free of %2"), mem, group(mem_total / 1024) + " MB");
+    // zajęte z całości, np. "512MB zajętej pamięci z 16GB"
+    unsigned long long mem_used = mem_total > mem_kb ? (mem_total - mem_kb) / 1024 : 0;
+    unsigned long long disk_used = 0;
+    if (disk_ok) disk_used = (unsigned long long)(sv.f_blocks - sv.f_bfree) * sv.f_frsize / (1024 * 1024);
+    std::string mu = size_text(mem_used), mt = size_text(mem_total / 1024);
+    std::string du = size_text(disk_used), dt = size_text(disk_total);
+    std::string full = disk_ok ? plat::fmt(_("%1 used memory of %2     %3 used disk of %4"), mu, mt, du, dt)
+                               : plat::fmt(_("%1 used memory of %2"), mu, mt);
+    std::string brief = disk_ok ? plat::fmt(_("memory %1/%2   disk %3/%4"), mu, mt, du, dt)
+                                : plat::fmt(_("memory %1/%2"), mu, mt);
+    std::string tip = plat::fmt(_("Memory: %1 free of %2"), group(mem_kb / 1024) + " MB", group(mem_total / 1024) + " MB");
     if (disk_ok) tip += "\n" + plat::fmt(_("Disk (%1): %2 free of %3"), disk_, gb(disk_mb), gb(disk_total));
     if (full != full_ || brief != brief_) { full_ = full; brief_ = brief; redraw(); }
     if (tip != tip_) { tip_ = tip; tooltip(tip_.c_str()); }
@@ -654,7 +670,9 @@ static Fl_Image *iconic_image(Window w, const std::string &home) {
         if (Fl_Image *img = entry_icon_image(e, 32, false)) return img;
       }
   (void)home;
-  return gary::window_icon(w, 32);
+  // _NET_WM_ICON od programu; gdy go nie ma - ikona z pliku .desktop i motywu
+  if (Fl_Image *img = gary::window_icon(w, 32)) return img;
+  return gary::desktop_icon(w, 32);
 }
 
 void Desktop::layout_icons() {

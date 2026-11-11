@@ -279,9 +279,10 @@ desktop window does not take focus, so clicking the menu bar does not change the
 ### Menu bar
 
 On the right, packed against the edge: power, volume, network, the clock and the application
-switcher (depth gadget). In the middle, as on the Workbench 3.1 screen title bar, the free
-memory (`MemAvailable`) and the free space on the disk holding the home folder. The values
-refresh every 3 seconds, and the tooltip also shows the total sizes. On a narrow screen the
+switcher (depth gadget). In the middle, as on the Workbench 3.1 screen title bar, the used
+memory and the used space on the disk holding the home folder, each out of the total, e.g.
+`512MB used memory of 16GB     40GB used disk of 512GB` (below 1 GB in MB, below 10 GB with one
+decimal). The values refresh every 3 seconds, and the tooltip shows the free amounts. On a narrow screen the
 text gets shorter.
 
 ![Menu bar](docs/img/pasek.png)
@@ -349,6 +350,7 @@ the whole system: Rambler and Insight reload the palette without a restart.
 - **Colour scheme**: built-in *Platinum*, *Graphite* (dark) and *Workbench 2* (a nod to the
   Amiga), plus over 40 schemes from
   [Redmond97 SE](https://codeberg.org/Sliver_X/Redmond97-SE) (GPL-3.0).
+- **Default look**: the *In Tenebris* scheme, the *Bricks* pattern and Platinum icons.
 - **Title bar**: as in the scheme, Platinum stripes, solid colour or gradient.
 - **Desktop background**: *Pattern*, *Solid color* or *Gradient*.
   - Colours are picked from two swatches. The second gradient colour is by default a darker

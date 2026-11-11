@@ -55,15 +55,15 @@ struct Scheme {
 };
 
 struct Appearance {                 // ~/.config/nirvana/wyglad.conf
-  std::string scheme = "platinum";
+  std::string scheme = "redmond97-se/in-tenebris";   // domyślnie In Tenebris
   int style = -1;                   // -1: jak w schemacie, inaczej (int)TitleStyle
   int desk = -1;                    // -1: kolor biurka ze schematu
   std::string background = "wzor";  // wzor, kolor (jednolity), gradient
   int desk2 = -1;                   // drugi kolor gradientu; -1: ciemniejszy odcień koloru biurka
   std::string gradient = "pionowy"; // pionowy, poziomy, ukosny, promienisty
-  std::string pattern = "kropki";   // patrz PATTERNS
+  std::string pattern = "cegly";    // patrz PATTERNS
   bool animations = true;
-  std::string icons = "workbench";  // styl ikon: workbench (Amiga) albo platinum (Mac OS)
+  std::string icons = "platinum";   // styl ikon: workbench (Amiga) albo platinum (Mac OS)
   std::string wallpaper;            // plik tapety; pusty = sam wzór
   std::string wallpaper_mode = "wypelnij";   // patrz WALLPAPER_MODES
   int scale = 0;                    // skala interfejsu w procentach; 0 = automatycznie (Xft.dpi)
