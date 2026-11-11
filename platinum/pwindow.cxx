@@ -1,4 +1,4 @@
-// Nirvana Desktop - libplatinum: okno w stylu Platinum
+// Nirvana Desktop - libplatinum: a Platinum style window
 #include "pwindow.h"
 #include "platinum.h"
 #include "anim.h"
@@ -14,7 +14,7 @@ namespace plat {
 PWindow::PWindow(int X, int Y, int W, int H, const char *title)
     : Fl_Group(X, Y, W, H), full_h_(H) {
   copy_label(title);
-  align(FL_ALIGN_INSIDE);           // etykietę rysujemy sami w pasku tytułu
+  align(FL_ALIGN_INSIDE);           // we draw the label ourselves in the title bar
   labeltype(FL_NO_LABEL);
   box(FL_NO_BOX);
   content_ = new Fl_Group(X + FRAME, Y + TITLE_H, W - 2 * FRAME, H - TITLE_H - FRAME);
@@ -28,7 +28,7 @@ void PWindow::layout_content() {
   content_->resize(x() + FRAME, y() + TITLE_H, w() - 2 * FRAME, ch);
 }
 
-// Własne rozmieszczenie: treść zawsze wypełnia obszar wewnątrz ramki.
+// Our own layout: the content always fills the area inside the frame.
 void PWindow::resize(int X, int Y, int W, int H) {
   Fl_Widget::resize(X, Y, W, H);
   layout_content();
@@ -53,7 +53,7 @@ bool PWindow::in_grow(int ex, int ey) const {
   return ex >= gx && ex < gx + SCROLL_W && ey >= gy && ey < gy + SCROLL_W;
 }
 
-// Geometria widżetu we współrzędnych ekranu (do animacji)
+// Widget geometry in screen coordinates (for animations)
 static Rect screen_rect(Fl_Widget *w, int X, int Y, int W, int H) {
   Fl_Window *win = w->window();
   int ox = win ? win->x_root() : 0, oy = win ? win->y_root() : 0;
@@ -110,7 +110,7 @@ int PWindow::handle(int e) {
         redraw();
         return 1;
       }
-      // podwójne kliknięcie w pasek tytułu zwija okno (jak w Mac OS 9)
+      // a double click on the title bar shades the window (as in Mac OS 9)
       if (Fl::event_clicks() && !dialog_) { Fl::event_clicks(0); toggle_shade(); drag_ = NONE; return 1; }
       drag_ = MOVE; drag_dx_ = ex - x(); drag_dy_ = ey - y();
       return 1;
@@ -119,7 +119,7 @@ int PWindow::handle(int e) {
       drag_ = GROW; drag_dx_ = x() + w() - ex; drag_dy_ = y() + h() - ey;
       return 1;
     }
-    // ramka okna też pozwala przesuwać okno
+    // the window frame can be used for moving too
     bool on_frame = ex < x() + FRAME || ex >= x() + w() - FRAME || ey >= y() + h() - FRAME;
     if (on_frame) { drag_ = MOVE; drag_dx_ = ex - x(); drag_dy_ = ey - y(); return 1; }
     break;
@@ -151,7 +151,7 @@ int PWindow::handle(int e) {
       int b = pressed_;
       drag_ = NONE; pressed_ = armed_ = 0;
       redraw();
-      if (b == 1 && on_close) { on_close(this); return 1; }   // uwaga: okno może już nie istnieć
+      if (b == 1 && on_close) { on_close(this); return 1; }   // note: the window may no longer exist
       if (b == 2) toggle_zoom();
       if (b == 3) toggle_shade();
       return 1;
@@ -170,7 +170,7 @@ void PWindow::draw() {
   draw_frame(x(), y(), w(), h(), active_, shaded_);
   draw_titlebar(x(), y(), w(), label(), active_, pressed_, !dialog_);
   if (shaded_) return;
-  // wąska wklęsła krawędź wokół treści
+  // a narrow sunken edge around the content
   fl_color(active_ ? SHADOW : MID);
   fl_rect(content_->x() - 1, content_->y() - 1, content_->w() + 2, content_->h() + 2);
   draw_children();

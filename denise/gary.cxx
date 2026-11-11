@@ -1,4 +1,4 @@
-// Nirvana Desktop - gary: przełącznik aplikacji
+// Nirvana Desktop - gary: the application switcher
 #include "gary.h"
 #include "i18n.h"
 
@@ -29,14 +29,14 @@ static Atom atom(const char *n) { return XInternAtom(fl_display, n, False); }
 static Window root() { return DefaultRootWindow(fl_display); }
 
 // ---------------------------------------------------------------------------
-// Klasa okna -> nazwa i ikona aplikacji uruchomionej z Ramblera (AppImage)
+// Window class -> name and icon of an application started from Rambler (AppImage)
 // ---------------------------------------------------------------------------
 struct Known { std::string name, icon; };
-static std::map<std::string, Known> g_known;     // zapamiętane na stałe
+static std::map<std::string, Known> g_known;     // remembered permanently
 static std::string g_file;
 struct Launch { std::string name, icon; double when; };
-static std::vector<Launch> g_pending;            // świeżo uruchomione, jeszcze bez okna
-static std::set<std::string> g_seen;             // klasy widziane w bieżącej sesji
+static std::vector<Launch> g_pending;            // freshly started, no window yet
+static std::set<std::string> g_seen;             // classes seen in this session
 
 static double now() {
   using namespace std::chrono;
@@ -54,7 +54,7 @@ void init(const std::string &home) {
   dir /= "nirvana";
   std::error_code ec;
   fs::create_directories(dir, ec);
-  g_file = (dir / "aplikacje.klasy").string();
+  g_file = (dir / "app-classes").string();
   bool stale = false;
   {
   std::ifstream in(g_file);
@@ -64,9 +64,7 @@ void init(const std::string &home) {
     std::string cls, name, icon;
     if (std::getline(ss, cls, '\t') && std::getline(ss, name, '\t')) {
       std::getline(ss, icon, '\t');
-      // po zmianie nazwy LisaOS -> Nirvana pamięć podręczna ikon jest w innym miejscu
-      if (auto p = icon.find("/lisaos/"); p != std::string::npos) { icon.replace(p, 8, "/nirvana/"); stale = true; }
-      if (!icon.empty() && !fs::exists(icon, ec)) { icon.clear(); stale = true; }   // ikona zniknęła
+      if (!icon.empty() && !fs::exists(icon, ec)) { icon.clear(); stale = true; }   // the icon is gone
       g_known[cls] = {name, icon};
     }
   }
@@ -79,7 +77,7 @@ void note_launch(const std::string &name, const std::string &icon_file) {
 }
 
 // ---------------------------------------------------------------------------
-// Właściwości okien
+// Window properties
 // ---------------------------------------------------------------------------
 static std::vector<Window> client_list() {
   std::vector<Window> v;
@@ -116,11 +114,11 @@ static bool has_atom(Window w, const char *prop, const char *value) {
 
 // "org.gnome.Nautilus" -> "Nautilus", "firefox" -> "Firefox"
 static std::string pretty(const std::string &cls) {
-  if (!strcasecmp(cls.c_str(), "nirvana-alice")) return _("Appearance");   // panele Nirvana Desktop (FLTK zmienia "l" na "L")
-  if (!strcasecmp(cls.c_str(), "nirvana-siec")) return _("Network");
+  if (!strcasecmp(cls.c_str(), "nirvana-alice")) return _("Appearance");   // Nirvana Desktop panels (FLTK changes "l" to "L")
+  if (!strcasecmp(cls.c_str(), "nirvana-network")) return _("Network");
   if (!strcasecmp(cls.c_str(), "nirvana-shell")) return _("Nirvana Shell");
-  if (!strcasecmp(cls.c_str(), "nirvana-zasilanie")) return _("Power");
-  if (!strcasecmp(cls.c_str(), "nirvana-preferencje")) return _("Preferences");
+  if (!strcasecmp(cls.c_str(), "nirvana-power")) return _("Power");
+  if (!strcasecmp(cls.c_str(), "nirvana-preferences")) return _("Preferences");
   std::string s = cls;
   if (auto dot = s.rfind('.'); dot != std::string::npos && dot + 1 < s.size()) s = s.substr(dot + 1);
   if (!s.empty() && islower((unsigned char)s[0])) s[0] = (char)toupper((unsigned char)s[0]);
@@ -128,7 +126,7 @@ static std::string pretty(const std::string &cls) {
 }
 
 void clients_changed() {
-  // Nowe klasy okien zestawiamy ze świeżo uruchomionymi AppImage.
+  // New window classes are matched with freshly started AppImages.
   double t = now();
   g_pending.erase(std::remove_if(g_pending.begin(), g_pending.end(),
                                  [t](const Launch &l) { return t - l.when > 20; }),
@@ -215,11 +213,11 @@ static void message(Window w, const char *type, long l0, long l1, long l2) {
   XFlush(fl_display);
 }
 
-void activate(Window w) { message(w, "_NET_ACTIVE_WINDOW", 2, CurrentTime, 0); }   // 2 = przełącznik
+void activate(Window w) { message(w, "_NET_ACTIVE_WINDOW", 2, CurrentTime, 0); }   // 2 = switcher
 void hide(Window w) {
-  // znacznik dla Insighta: to "Ukryj" z menu aplikacji, nie ikonizacja - bez ikony na biurku
+  // a mark for Insight: this is "Hide" from the application menu, not iconifying - no icon on the desktop
   long one = 1;
-  XChangeProperty(fl_display, w, atom("_NIRVANA_UKRYJ"), XA_CARDINAL, 32, PropModeReplace, (unsigned char *)&one, 1);
+  XChangeProperty(fl_display, w, atom("_NIRVANA_HIDE"), XA_CARDINAL, 32, PropModeReplace, (unsigned char *)&one, 1);
   XIconifyWindow(fl_display, w, DefaultScreen(fl_display));
   XFlush(fl_display);
 }
@@ -240,7 +238,7 @@ std::string window_title(Window w) {
 void close(Window w) { message(w, "_NET_CLOSE_WINDOW", CurrentTime, 2, 0); }
 
 // ---------------------------------------------------------------------------
-// Ikona okna z _NET_WM_ICON (tablica: szer, wys, piksele ARGB, ... kolejne rozmiary)
+// Window icon from _NET_WM_ICON (array: width, height, ARGB pixels, ... further sizes)
 // ---------------------------------------------------------------------------
 Fl_Image *window_icon(Window w, int size) {
   static std::map<std::pair<Window, int>, Fl_Image *> cache;
@@ -249,12 +247,12 @@ Fl_Image *window_icon(Window w, int size) {
   Atom type; int fmt; unsigned long n, after; unsigned char *data = nullptr;
   if (XGetWindowProperty(fl_display, w, atom("_NET_WM_ICON"), 0, 1 << 20, False, XA_CARDINAL, &type,
                          &fmt, &n, &after, &data) == Success && data && n > 2) {
-    unsigned long *p = (unsigned long *)data;   // Xlib: 32-bitowe wartości w long
+    unsigned long *p = (unsigned long *)data;   // Xlib: 32-bit values in long
     unsigned long best = 0, best_w = 0, i = 0;
     while (i + 2 < n) {
       unsigned long iw = p[i], ih = p[i + 1];
       if (!iw || !ih || i + 2 + iw * ih > n) break;
-      // najmniejsza ikona nie mniejsza niż size, a jeśli takiej nie ma - największa
+      // the smallest icon not smaller than size, and if there is none - the largest
       unsigned long sz = (unsigned long)size;
       bool better = !best_w || (iw >= sz && (best_w < sz || iw < best_w)) || (best_w < sz && iw > best_w);
       if (better) { best = i; best_w = iw; }
@@ -271,18 +269,18 @@ Fl_Image *window_icon(Window w, int size) {
         rgba[k * 4 + 3] = (argb >> 24) & 0xFF;
       }
       auto *img = new Fl_RGB_Image(rgba, (int)iw, (int)ih, 4);
-      img->alloc_array = 1;   // obraz zwolni dane sam
+      img->alloc_array = 1;   // the image frees the data itself
       Fl_RGB_Image::RGB_scaling(FL_RGB_SCALING_BILINEAR);
       result = img->copy(size, size);
       delete img;
     }
   }
   if (data) XFree(data);
-  if (result) cache[{w, size}] = result;   // brak ikony nie jest zapamiętywany - program może ją ustawić później
+  if (result) cache[{w, size}] = result;   // a missing icon is not remembered - the program may set it later
   return result;
 }
 
-// --- ikona z pliku .desktop i motywu ikon -------------------------------------
+// --- icon from the .desktop file and the icon theme ------------------------------
 static std::vector<std::string> data_dirs() {
   std::vector<std::string> v;
   const char *h = getenv("HOME");
@@ -306,7 +304,7 @@ static std::string lower(std::string s) {
   return s;
 }
 
-// Wartość klucza z sekcji [Desktop Entry]
+// Value of a key from the [Desktop Entry] section
 static std::string desktop_key(const std::string &file, const char *key) {
   std::ifstream in(file);
   std::string line, k = std::string(key) + "=";
@@ -318,7 +316,7 @@ static std::string desktop_key(const std::string &file, const char *key) {
   return "";
 }
 
-// Plik .desktop programu o klasie okna cls / nazwie name.
+// The .desktop file of the program with window class cls / name name.
 static std::string find_desktop_file(const std::string &cls, const std::string &name) {
   std::string lc = lower(cls), ln = lower(name);
   std::string by_name;
@@ -329,7 +327,7 @@ static std::string find_desktop_file(const std::string &cls, const std::string &
     for (auto &de : fs::directory_iterator(apps, fs::directory_options::skip_permission_denied, ec)) {
       if (de.path().extension() != ".desktop") continue;
       std::string f = de.path().string(), id = lower(de.path().stem().string());
-      // dokładne dopasowanie po StartupWMClass jest najpewniejsze
+      // an exact match by StartupWMClass is the most reliable
       std::string wmc = lower(desktop_key(f, "StartupWMClass"));
       if (!wmc.empty() && (wmc == lc || wmc == ln)) return f;
       // "librewolf", "abiword", "io.gitlab.librewolf-community" (Flatpak)
@@ -362,7 +360,7 @@ static std::string gtk_icon_theme() {
   return "";
 }
 
-// Plik ikony o nazwie name z motywu (najbliżej rozmiaru size), hicolor albo pixmaps.
+// The icon file named name from the theme (closest to size), hicolor or pixmaps.
 static std::string theme_icon_file(const std::string &name, int size) {
   std::error_code ec;
   if (name.empty()) return "";
@@ -398,7 +396,7 @@ static std::string theme_icon_file(const std::string &name, int size) {
 }
 
 Fl_Image *desktop_icon(Window w, int size) {
-  static std::map<std::string, Fl_Image *> cache;   // klasa okna -> obrazek
+  static std::map<std::string, Fl_Image *> cache;   // window class -> image
   XClassHint ch;
   std::string cls, name;
   if (XGetClassHint(fl_display, w, &ch)) {

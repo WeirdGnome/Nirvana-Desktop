@@ -1,14 +1,14 @@
-// Nirvana Desktop - Nirvana Shell: emulator terminala
+// Nirvana Desktop - Nirvana Shell: a terminal emulator
 //
-// Zgodny z xterm (TERM=xterm-256color): stan ekranu, sekwencje sterujące,
-// klawiatura i mysz to libvterm; tutaj jest pty, rysowanie w FLTK,
-// przewijanie wstecz, zaznaczanie, schowek, profile kolorów i okna.
+// Compatible with xterm (TERM=xterm-256color): screen state, control sequences,
+// keyboard and mouse are libvterm; here is the pty, drawing in FLTK,
+// scrollback, selection, clipboard, color profiles and windows.
 //
 //   nirvana-shell [--katalog DIR] [-e POLECENIE ARG...]
 //
-// Skróty: Ctrl+Shift+C/V kopiuj/wklej, Ctrl+Shift+N nowe okno, Ctrl+Shift+W
-// zamknij, Ctrl+Shift+= / - / 0 czcionka, Shift+PgUp/PgDn przewijanie.
-// Prawy przycisk myszy: menu (profile, czcionka, reset...).
+// Shortcuts: Ctrl+Shift+C/V copy/paste, Ctrl+Shift+N new window, Ctrl+Shift+W
+// close, Ctrl+Shift+= / - / 0 font, Shift+PgUp/PgDn scrolling.
+// Right mouse button: menu (profiles, font, reset...).
 #include "framewin.h"
 #include "platinum.h"
 
@@ -51,7 +51,7 @@ using namespace plat;
 namespace {
 
 // ---------------------------------------------------------------------------
-// Profile kolorów
+// Color profiles
 // ---------------------------------------------------------------------------
 struct Profile {
   const char *id, *name;
@@ -59,25 +59,25 @@ struct Profile {
   unsigned pal[16];
 };
 
-// Paleta 16 kolorów: dla jasnego tła ciemniejsze odcienie, żeby żółty i
-// biały dało się przeczytać.
+// A 16-color palette: darker shades for a light background, so that yellow and
+// white stay readable.
 const unsigned PAL_LIGHT[16] = {0x000000, 0xB21818, 0x18A218, 0x8C6D00, 0x1A3FB8, 0xA020A0, 0x0F8A8A, 0xA0A0A0,
                                 0x606060, 0xE03030, 0x2BBF2B, 0xB89400, 0x3D63E8, 0xD040D0, 0x1FB3B3, 0xFFFFFF};
 const unsigned PAL_DARK[16] = {0x2E3436, 0xCC0000, 0x4E9A06, 0xC4A000, 0x3465A4, 0x75507B, 0x06989A, 0xD3D7CF,
                                0x555753, 0xEF2929, 0x8AE234, 0xFCE94F, 0x729FCF, 0xAD7FA8, 0x34E2E2, 0xEEEEEC};
 
 Profile PROFILES[] = {
-    {"klasyczny", N_("Classic (light)"), 0x000000, 0xFFFFFF, 0x000000, 0xB4C8FF, {}},
-    {"ciemny", N_("Dark"), 0xD3D7CF, 0x1E1F22, 0xD3D7CF, 0x3D4F7A, {}},
-    {"zielony", N_("Green phosphor"), 0x33FF66, 0x081208, 0x33FF66, 0x1E5A2A, {}},
-    {"bursztyn", N_("Amber"), 0xFFB000, 0x160E00, 0xFFB000, 0x5A3E00, {}},
+    {"classic", N_("Classic (light)"), 0x000000, 0xFFFFFF, 0x000000, 0xB4C8FF, {}},
+    {"dark", N_("Dark"), 0xD3D7CF, 0x1E1F22, 0xD3D7CF, 0x3D4F7A, {}},
+    {"green", N_("Green phosphor"), 0x33FF66, 0x081208, 0x33FF66, 0x1E5A2A, {}},
+    {"amber", N_("Amber"), 0xFFB000, 0x160E00, 0xFFB000, 0x5A3E00, {}},
     {"workbench", N_("Workbench (Amiga)"), 0xFFFFFF, 0x0055AA, 0xFF8800, 0x000022, {}},
-    {"schemat", N_("Like the color scheme"), 0, 0, 0, 0, {}},   // kolory Nirvana Desktop
+    {"scheme", N_("Like the color scheme"), 0, 0, 0, 0, {}},   // Nirvana Desktop colors
 };
 const int NPROFILES = sizeof PROFILES / sizeof PROFILES[0];
 
 struct Settings {
-  std::string profile = "klasyczny";
+  std::string profile = "classic";
   std::string font = "DejaVu Sans Mono";
   int size = 12, cols = 80, rows = 24, scrollback = 5000;
 };
@@ -95,12 +95,12 @@ void load_settings() {
     auto eq = line.find('=');
     if (line.empty() || line[0] == '#' || eq == std::string::npos) continue;
     std::string k = line.substr(0, eq), v = line.substr(eq + 1);
-    if (k == "profil") g_set.profile = v;
-    else if (k == "czcionka" && !v.empty()) g_set.font = v;
-    else if (k == "rozmiar") g_set.size = std::clamp(atoi(v.c_str()), 6, 48);
-    else if (k == "kolumny") g_set.cols = std::clamp(atoi(v.c_str()), 20, 500);
-    else if (k == "wiersze") g_set.rows = std::clamp(atoi(v.c_str()), 5, 200);
-    else if (k == "przewijanie") g_set.scrollback = std::clamp(atoi(v.c_str()), 0, 100000);
+    if (k == "profile") g_set.profile = v;
+    else if (k == "font" && !v.empty()) g_set.font = v;
+    else if (k == "size") g_set.size = std::clamp(atoi(v.c_str()), 6, 48);
+    else if (k == "columns") g_set.cols = std::clamp(atoi(v.c_str()), 20, 500);
+    else if (k == "rows") g_set.rows = std::clamp(atoi(v.c_str()), 5, 200);
+    else if (k == "scrollback") g_set.scrollback = std::clamp(atoi(v.c_str()), 0, 100000);
   }
 }
 void save_settings() {
@@ -109,8 +109,8 @@ void save_settings() {
   mkdir(dir.substr(0, dir.rfind('/')).c_str(), 0755);
   mkdir(dir.c_str(), 0755);
   std::ofstream out(f);
-  out << "# Nirvana Shell\nprofil=" << g_set.profile << "\nczcionka=" << g_set.font << "\nrozmiar=" << g_set.size
-      << "\nkolumny=" << g_set.cols << "\nwiersze=" << g_set.rows << "\nprzewijanie=" << g_set.scrollback << "\n";
+  out << "# Nirvana Shell\nprofile=" << g_set.profile << "\nfont=" << g_set.font << "\nsize=" << g_set.size
+      << "\ncolumns=" << g_set.cols << "\nrows=" << g_set.rows << "\nscrollback=" << g_set.scrollback << "\n";
 }
 
 const Profile &profile_by_id(const std::string &id) {
@@ -124,10 +124,10 @@ unsigned rgb_of(Fl_Color c) {
   return (r << 16) | (g << 8) | b;
 }
 
-// Profil z uzupełnionymi kolorami (dla "schemat" - z palety Nirvana Desktop).
+// A profile with filled-in colors (for "scheme" - from the Nirvana Desktop palette).
 Profile resolved(const Profile &p) {
   Profile r = p;
-  if (!strcmp(p.id, "schemat")) {
+  if (!strcmp(p.id, "scheme")) {
     r.fg = rgb_of(CONTENT_TEXT);
     r.bg = rgb_of(CONTENT);
     r.cursor = rgb_of(CONTENT_TEXT);
@@ -138,7 +138,7 @@ Profile resolved(const Profile &p) {
   return r;
 }
 
-// Czcionki: cztery odmiany w wolnych numerach FLTK (Xft: ' ' zwykła, B, I, P).
+// Fonts: four variants in free FLTK numbers (Xft: ' ' regular, B, I, P).
 Fl_Font FONT_BASE = FL_FREE_FONT + 20;
 void set_fonts() {
   static std::string names[4];
@@ -153,7 +153,7 @@ class Term;
 std::vector<Term *> g_terms;
 
 // ---------------------------------------------------------------------------
-// Okno terminala
+// Terminal window
 // ---------------------------------------------------------------------------
 using Line = std::vector<VTermScreenCell>;
 
@@ -186,18 +186,18 @@ public:
   int pty = -1;
   pid_t child = -1;
   int rows = 24, cols = 80;
-  int cw = 7, chh = 14, asc = 11;          // komórka: szerokość, wysokość, linia bazowa
+  int cw = 7, chh = 14, asc = 11;          // cell: width, height, baseline
   static constexpr int PAD = 3;
-  std::deque<Line> sb;                     // przewijanie wstecz (najstarsze na początku)
-  int scroll = 0;                          // ile wierszy w górę od dołu
+  std::deque<Line> sb;                     // scrollback (oldest first)
+  int scroll = 0;                          // how many rows up from the bottom
   VTermPos cursor{0, 0};
   bool cursor_visible = true, altscreen = false, reverse = false, focus_report = false;
   int cursor_shape = VTERM_PROP_CURSORSHAPE_BLOCK, mouse_mode = 0;
   std::string title = "Nirvana Shell";
-  // zaznaczenie we współrzędnych bufora: wiersz < 0 to przewijanie wstecz
+  // selection in buffer coordinates: row < 0 is the scrollback
   bool sel_active = false, selecting = false;
   int sel_r0 = 0, sel_c0 = 0, sel_r1 = 0, sel_c1 = 0;
-  int sel_mode = 0;                        // 0 znaki, 1 słowa, 2 wiersze
+  int sel_mode = 0;                        // 0 characters, 1 words, 2 lines
   bool flash = false;
   bool closing = false;
 
@@ -205,7 +205,7 @@ public:
   void apply_profile(const Profile &p);
   void set_grid(int r, int c);
   void update_scrollbar();
-  bool get_cell(int row, int col, VTermScreenCell &cell) const;   // wiersz bufora
+  bool get_cell(int row, int col, VTermScreenCell &cell) const;   // buffer row
   int buf_row(int screen_row) const { return screen_row - scroll; }
   void scroll_to(int s);
   std::string selection_text() const;
@@ -217,7 +217,7 @@ public:
   void close_request();
   std::string running_program() const;
 
-  // wywołania libvterm
+  // libvterm callbacks
   static int cb_damage(VTermRect r, void *u) { ((Term *)u)->area->redraw(); (void)r; return 1; }
   static int cb_moverect(VTermRect, VTermRect, void *u) { ((Term *)u)->area->redraw(); return 1; }
   static int cb_movecursor(VTermPos p, VTermPos, int vis, void *u) {
@@ -262,7 +262,7 @@ int Term::cb_settermprop(VTermProp prop, VTermValue *v, void *u) {
 }
 
 int Term::cb_bell(void *u) {
-  // dzwonek wizualny: krótkie odwrócenie kolorów
+  // visual bell: a short color inversion
   Term *t = (Term *)u;
   t->flash = true;
   t->area->redraw();
@@ -283,10 +283,10 @@ int Term::cb_pushline(int ncols, const VTermScreenCell *cells, void *u) {
   Term *t = (Term *)u;
   if (g_set.scrollback <= 0) return 1;
   int n = ncols;
-  while (n > 0 && blank_default(cells[n - 1])) n--;   // bez pustego ogona - mniej pamięci
+  while (n > 0 && blank_default(cells[n - 1])) n--;   // without an empty tail - less memory
   t->sb.emplace_back(cells, cells + n);
   if ((int)t->sb.size() > g_set.scrollback) t->sb.pop_front();
-  else if (t->scroll > 0) t->scroll++;   // widok stoi w miejscu, gdy czytasz historię
+  else if (t->scroll > 0) t->scroll++;   // the view stays put while you read the history
   t->update_scrollbar();
   return 1;
 }
@@ -307,7 +307,7 @@ int Term::cb_popline(int ncols, VTermScreenCell *cells, void *u) {
   return 1;
 }
 
-// --- rysowanie --------------------------------------------------------------------
+// --- drawing ----------------------------------------------------------------------
 static Fl_Color fl_rgb(unsigned c) { return fl_rgb_color((c >> 16) & 255, (c >> 8) & 255, c & 255); }
 
 bool Term::get_cell(int row, int col, VTermScreenCell &cell) const {
@@ -350,7 +350,7 @@ void TermArea::draw() {
     int py = y() + Term::PAD + r * t->chh;
     for (int c = 0; c < t->cols; c++) {
       if (!t->get_cell(br, c, cell)) continue;
-      if (cell.width == 0) continue;   // druga połowa szerokiego znaku
+      if (cell.width == 0) continue;   // second half of a wide character
       VTermColor fg = cell.fg, bg = cell.bg;
       bool dfg = VTERM_COLOR_IS_DEFAULT_FG(&fg), dbg = VTERM_COLOR_IS_DEFAULT_BG(&bg);
       if (!dfg) vterm_screen_convert_color_to_rgb(t->vs, &fg);
@@ -386,7 +386,7 @@ void TermArea::draw() {
       if (cell.attrs.strike) { fl_color(fl_rgb(f)); fl_xyline(px, py + t->chh / 2, px + cwid - 1); }
       if (cur && (!focused || t->cursor_shape != VTERM_PROP_CURSORSHAPE_BLOCK)) {
         fl_color(fl_rgb(t->prof.cursor));
-        if (!focused) fl_rect(px, py, cwid, t->chh);   // bez fokusu: pusty prostokąt
+        if (!focused) fl_rect(px, py, cwid, t->chh);   // without focus: an empty rectangle
         else if (t->cursor_shape == VTERM_PROP_CURSORSHAPE_UNDERLINE) fl_rectf(px, py + t->chh - 2, cwid, 2);
         else fl_rectf(px, py, 2, t->chh);
       }
@@ -456,7 +456,7 @@ void Term::apply_profile(const Profile &p) {
   area->redraw();
 }
 
-// --- zaznaczenie i schowek ----------------------------------------------------------
+// --- selection and clipboard ---------------------------------------------------------
 std::string Term::selection_text() const {
   if (!sel_active) return "";
   int r0 = sel_r0, c0 = sel_c0, r1 = sel_r1, c1 = sel_c1;
@@ -485,7 +485,7 @@ void Term::copy(int clipboard) {
 }
 
 void Term::paste_text(const char *t, int len) {
-  // wklejanie w nawiasach (bracketed paste) - libvterm wie, czy program o to prosił
+  // bracketed paste - libvterm knows whether the program asked for it
   vterm_keyboard_start_paste(vt);
   std::string s(t, len);
   for (auto &ch : s) if (ch == '\n') ch = '\r';
@@ -512,7 +512,7 @@ void Term::write_pty(const char *d, size_t n) {
   }
 }
 
-// --- klawiatura ----------------------------------------------------------------------
+// --- keyboard ------------------------------------------------------------------------
 void Term::send_key(int key, int state, const char *text) {
   int mod = VTERM_MOD_NONE;
   if (state & FL_SHIFT) mod |= VTERM_MOD_SHIFT;
@@ -541,7 +541,7 @@ void Term::send_key(int key, int state, const char *text) {
   if (vk != VTERM_KEY_NONE) {
     vterm_keyboard_key(vt, vk, m);
   } else if ((state & (FL_CTRL | FL_ALT)) && key > 0 && key < 0x7f) {
-    // Ctrl+litera, Alt+litera: z kodu klawisza (tekst bywa już przetworzony)
+    // Ctrl+letter, Alt+letter: from the key code (the text may already be processed)
     unsigned cp = key;
     if (state & FL_SHIFT && cp >= 'a' && cp <= 'z') cp -= 32;
     vterm_keyboard_unichar(vt, cp, (VTermModifier)(mod & ~VTERM_MOD_SHIFT));
@@ -570,7 +570,7 @@ void Term::pty_cb(int fd, void *u) {
     return;
   }
   if (n < 0 && (errno == EINTR || errno == EAGAIN)) return;
-  // powłoka się zakończyła
+  // the shell has exited
   Fl::remove_fd(fd);
   t->closing = true;
   Fl::add_timeout(0.0, [](void *d) { delete (Term *)d; }, t);
@@ -586,7 +586,7 @@ std::string Term::running_program() const {
   return name.empty() ? "program" : name;
 }
 
-// Pytanie przed zamknięciem, gdy w terminalu coś działa (np. vim, kopiowanie).
+// Ask before closing when something runs in the terminal (e.g. vim, copying).
 bool ask_close(Term *t, const std::string &prog) {
   int W = 400, H = 130;
   auto *w = new FrameWindow(W, H, "Nirvana Shell", true);
@@ -635,7 +635,7 @@ void Term::close_request() {
   Fl::add_timeout(0.0, [](void *d) { delete (Term *)d; }, this);
 }
 
-// --- menu kontekstowe ------------------------------------------------------------------
+// --- context menu --------------------------------------------------------------------
 void new_window(const std::string &dir);
 std::string cwd_of(pid_t pid) {
   char buf[4096];
@@ -701,13 +701,13 @@ void set_font_size(int s) {
   save_settings();
   for (Term *t : g_terms) {
     t->metrics();
-    // rozmiar okna zostaje, zmienia się liczba wierszy i kolumn
+    // the window size stays, the number of rows and columns changes
     t->area->resize(t->area->x(), t->area->y(), t->area->w(), t->area->h());
     t->area->redraw();
   }
 }
 
-// --- zdarzenia -----------------------------------------------------------------------
+// --- events --------------------------------------------------------------------------
 int TermArea::handle(int e) {
   Term *t = term;
   auto cell_at = [&](int &r, int &c) {
@@ -758,7 +758,7 @@ int TermArea::handle(int e) {
         t->sel_active = false;
         t->sel_r0 = t->sel_r1 = br;
         t->sel_c0 = t->sel_c1 = c;
-      } else if (t->sel_mode == 1) {   // słowo
+      } else if (t->sel_mode == 1) {   // word
         auto word = [&](int cc) {
           VTermScreenCell cell;
           if (!t->get_cell(br, cc, cell)) return false;
@@ -771,7 +771,7 @@ int TermArea::handle(int e) {
         t->sel_active = true;
         t->sel_r0 = t->sel_r1 = br; t->sel_c0 = a; t->sel_c1 = z;
         t->copy(0);
-      } else {                          // wiersz
+      } else {                          // line
         t->sel_active = true;
         t->sel_r0 = t->sel_r1 = br; t->sel_c0 = 0; t->sel_c1 = t->cols - 1;
         t->copy(0);
@@ -786,7 +786,7 @@ int TermArea::handle(int e) {
         return 1;
       }
       if (!t->selecting) return 1;
-      // przewijanie przy przeciąganiu poza okno
+      // scrolling while dragging outside the window
       if (Fl::event_y() < y()) t->scroll_to(t->scroll + 1);
       else if (Fl::event_y() > y() + h()) t->scroll_to(t->scroll - 1);
       t->sel_active = true;
@@ -803,7 +803,7 @@ int TermArea::handle(int e) {
       }
       if (t->selecting) {
         t->selecting = false;
-        if (t->sel_active) t->copy(0);   // zaznaczenie = schowek X (PRIMARY)
+        if (t->sel_active) t->copy(0);   // selection = X selection (PRIMARY)
       }
       return 1;
     case FL_MOUSEWHEEL: {
@@ -815,7 +815,7 @@ int TermArea::handle(int e) {
         vterm_mouse_button(t->vt, b, true, (VTermModifier)mod);
         return 1;
       }
-      if (t->altscreen) {   // less, man, vim bez myszy: kółko jako strzałki
+      if (t->altscreen) {   // less, man, vim without the mouse: the wheel as arrows
         for (int i = 0; i < 3; i++) vterm_keyboard_key(t->vt, dy < 0 ? VTERM_KEY_UP : VTERM_KEY_DOWN, VTERM_MOD_NONE);
         return 1;
       }
@@ -857,7 +857,7 @@ int TermArea::handle(int e) {
   return Fl_Widget::handle(e);
 }
 
-// --- tworzenie ------------------------------------------------------------------------
+// --- creation ------------------------------------------------------------------------
 Term::Term(const std::string &dir, const std::vector<std::string> &cmd) {
   metrics();
   rows = g_set.rows;
@@ -866,6 +866,11 @@ Term::Term(const std::string &dir, const std::vector<std::string> &cmd) {
   int W = aw + SCROLL_W, H = ah;
   win = new FrameWindow(W, H, "Nirvana Shell");
   win->xclass("nirvana-shell");
+  {   // window icon (_NET_WM_ICON): the desktop icon when minimized, the application switcher
+    static const Fl_RGB_Image *icons[2] = {plat::icon_image(plat::Icon::Terminal, 32),
+                                           plat::icon_image(plat::Icon::Terminal, 16)};
+    win->icons(icons, 2);
+  }
   area = new TermArea(this, 0, 0, aw, ah);
   sbar = new Fl_Scrollbar(aw, 0, SCROLL_W, ah - SCROLL_W);
   sbar->box(TRACK_BOX);
@@ -877,7 +882,7 @@ Term::Term(const std::string &dir, const std::vector<std::string> &cmd) {
     t->scroll_to((int)t->sb.size() - ((Fl_Scrollbar *)w)->value());
   }, this);
   new GrowBox(aw, ah - SCROLL_W);
-  auto *rz = new Fl_Box(0, 0, aw, ah - SCROLL_W);   // to rośnie przy zmianie rozmiaru
+  auto *rz = new Fl_Box(0, 0, aw, ah - SCROLL_W);   // this grows on resize
   rz->box(FL_NO_BOX);
   win->end();
   win->sizable(rz);
@@ -906,7 +911,7 @@ Term::Term(const std::string &dir, const std::vector<std::string> &cmd) {
   vterm_screen_reset(vs, 1);
   apply_profile(profile_by_id(g_set.profile));
 
-  // powłoka w pty
+  // the shell in a pty
   winsize ws{};
   ws.ws_row = rows;
   ws.ws_col = cols;
@@ -915,13 +920,13 @@ Term::Term(const std::string &dir, const std::vector<std::string> &cmd) {
     setenv("TERM", "xterm-256color", 1);
     setenv("COLORTERM", "truecolor", 1);
     setenv("TERM_PROGRAM", "NirvanaShell", 1);
-    // Terminal mówi tylko UTF-8: bez tego vim i inne programy w locale "C"
-    // pokazywałyby polskie litery jako krzaki.
+    // The terminal speaks only UTF-8: without this, vim and other programs in the "C" locale
+    // would show non-ASCII letters as garbage.
     if (strcmp(nl_langinfo(CODESET), "UTF-8") != 0) setenv("LC_CTYPE", "C.UTF-8", 1);
     unsetenv("LINES");
     unsetenv("COLUMNS");
-    // Domyślna obsługa sygnałów: proces uruchomiony w tle dziedziczy np.
-    // zignorowany SIGINT i wtedy Ctrl+C nie przerywałby programów w terminalu.
+    // Default signal handling: a process started in the background inherits e.g. an
+    // ignored SIGINT, and then Ctrl+C would not interrupt programs in the terminal.
     for (int sig : {SIGINT, SIGQUIT, SIGTERM, SIGHUP, SIGPIPE, SIGCHLD, SIGTSTP, SIGTTIN, SIGTTOU, SIGALRM})
       signal(sig, SIG_DFL);
     sigset_t none;
@@ -951,7 +956,7 @@ Term::Term(const std::string &dir, const std::vector<std::string> &cmd) {
   }
   g_terms.push_back(this);
 
-  // kaskada: każde kolejne okno trochę niżej i w prawo
+  // cascade: each next window a bit lower and to the right
   int sx, sy, sw, sh;
   Fl::screen_work_area(sx, sy, sw, sh);
   int n = (int)g_terms.size() - 1;
@@ -991,12 +996,12 @@ int main(int argc, char **argv) {
   std::vector<std::string> cmd;
   for (int i = 1; i < argc; i++) {
     std::string a = argv[i];
-    if ((a == "--katalog" || a == "--working-directory") && i + 1 < argc) dir = argv[++i];
+    if (a == "--working-directory" && i + 1 < argc) dir = argv[++i];
     else if (a == "-e" && i + 1 < argc) { for (int j = i + 1; j < argc; j++) cmd.push_back(argv[j]); break; }
   }
   if (dir.empty()) { const char *h = getenv("HOME"); if (h) dir = h; }
   new Term(dir, cmd);
-  // koniec, gdy zamknięto ostatnie okno
+  // end when the last window is closed
   while (!g_terms.empty()) Fl::wait();
   return 0;
 }

@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.16)
-# Wersja w pliku VERSION - podbijana przy każdym wydaniu paczki.
+# The version is in the VERSION file - raised with every released package.
 file(STRINGS "${CMAKE_CURRENT_SOURCE_DIR}/VERSION" NIRVANA_VERSION LIMIT_COUNT 1)
 project(NirvanaDesktop VERSION ${NIRVANA_VERSION} LANGUAGES C CXX)
 add_compile_definitions(NIRVANA_VERSION="${NIRVANA_VERSION}")
@@ -101,7 +101,7 @@ add_executable(nirvana-insight insight/main.cxx)
 target_link_libraries(nirvana-insight PRIVATE nirvana-platinum X11::X11)
 
 # --- alice: control panels ---------------------------------------------------
-add_executable(nirvana-alice alice/main.cxx alice/wyglad.cxx alice/siec.cxx alice/zasilanie.cxx alice/ustawienia.cxx)
+add_executable(nirvana-alice alice/main.cxx alice/appearance.cxx alice/network.cxx alice/power.cxx alice/preferences.cxx)
 target_link_libraries(nirvana-alice PRIVATE nirvana-platinum nirvana-net nirvana-power)
 
 # --- Nirvana Shell: terminal emulator (system libvterm or the bundled one) ---
@@ -121,10 +121,9 @@ target_link_libraries(nirvana-shell PRIVATE nirvana-platinum ${NIRVANA_VTERM} ut
 # Everything in the "nirvana" component - the .deb package does not take FLTK files
 # (FetchContent adds its own install rules for headers and libraries).
 install(TARGETS nirvana-denise nirvana-insight nirvana-alice nirvana-shell RUNTIME DESTINATION bin COMPONENT nirvana)
-install(DIRECTORY schematy/ DESTINATION share/nirvana/schematy COMPONENT nirvana)
-install(DIRECTORY tapety/ DESTINATION share/nirvana/tapety COMPONENT nirvana)
+install(DIRECTORY schemes/ DESTINATION share/nirvana/schemes COMPONENT nirvana)
+install(DIRECTORY wallpapers/ DESTINATION share/nirvana/wallpapers COMPONENT nirvana)
 install(PROGRAMS session/nirvana-session session/nirvana-autostart DESTINATION bin COMPONENT nirvana)
-install(PROGRAMS session/lisaos-session DESTINATION bin COMPONENT nirvana)   # old ~/.xinitrc files
 install(FILES session/nirvana.desktop DESTINATION share/xsessions COMPONENT nirvana)
 install(FILES session/nirvana-portals.conf DESTINATION share/xdg-desktop-portal COMPONENT nirvana)
 install(FILES README.md README.pl.md DESTINATION share/doc/nirvana COMPONENT nirvana)
@@ -149,10 +148,6 @@ set(CPACK_DEBIAN_PACKAGE_SECTION x11)
 set(CPACK_DEBIAN_PACKAGE_PRIORITY optional)
 set(CPACK_DEBIAN_PACKAGE_SHLIBDEPS ON)
 set(CPACK_DEBIAN_PACKAGE_DEPENDS "dbus-bin | dbus")
-# formerly the "lisaos" package - apt removes it on installation (same role, other files)
-set(CPACK_DEBIAN_PACKAGE_CONFLICTS "lisaos")
-set(CPACK_DEBIAN_PACKAGE_REPLACES "lisaos")
-set(CPACK_DEBIAN_PACKAGE_PROVIDES "lisaos")
 set(CPACK_DEBIAN_PACKAGE_RECOMMENDS
   "xserver-xorg, xinit, fonts-dejavu-core, libpam-elogind | elogind, polkitd, lxpolkit, \
 udisks2, network-manager, pulseaudio-utils, alsa-utils, squashfs-tools, bubblewrap, xsecurelock, xdg-utils, \

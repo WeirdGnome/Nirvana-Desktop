@@ -1,10 +1,10 @@
-// Nirvana Desktop - libplatinum: ikony w stylu Workbencha (Amiga)
+// Nirvana Desktop - libplatinum: Workbench style icons (Amiga)
 //
-// Własne rysunki 32x32 w duchu ikon Workbencha 2/3 i MagicWB: paleta szarości,
-// granatu i beżu, czarne obrysy, jasne krawędzie od lewej i u góry. Foldery to
-// szuflady (na Amidze "drawer"), dyski to kostki twardych dysków i dyskietki 3,5",
-// kosz ma pokrywę z uchwytem. Zaznaczona ikona ma odwrócone kolory - jak tryb
-// "complement" w Workbenchu.
+// Our own 32x32 drawings in the spirit of the Workbench 2/3 and MagicWB icons: a palette of grays,
+// navy and beige, black outlines, light edges on the left and at the top. Folders are
+// drawers ("drawer" on the Amiga), disks are hard disk boxes and 3.5" floppies,
+// the Trash has a lid with a handle. A selected icon has inverted colors - like the
+// "complement" mode in Workbench.
 #include "platinum.h"
 
 #include <FL/Fl.H>
@@ -12,55 +12,55 @@
 
 namespace plat {
 
-// paleta (w duchu 8 kolorów MagicWB)
+// palette (in the spirit of the 8 MagicWB colors)
 enum : unsigned {
-  K = 0x000000,   // czerń - obrysy
-  W = 0xFFFFFF,   // biel - światło
-  G = 0x959595,   // szary - korpus
-  L = 0xB8B8B8,   // jasnoszary
-  D = 0x676767,   // ciemnoszary - cień
-  B = 0x3B67A2,   // granat Workbencha
-  BL = 0x7E9DD0,  // jasny granat
-  O = 0xAA907C,   // beż
-  P = 0xFFA997,   // brzoskwiniowy
-  Y = 0xF2C447,   // żółty (kontrolki, słońce)
-  R = 0xC8483A,   // czerwony (dioda)
+  K = 0x000000,   // black - outlines
+  W = 0xFFFFFF,   // white - light
+  G = 0x959595,   // gray - body
+  L = 0xB8B8B8,   // light gray
+  D = 0x676767,   // dark gray - shadow
+  B = 0x3B67A2,   // Workbench navy
+  BL = 0x7E9DD0,  // light navy
+  O = 0xAA907C,   // beige
+  P = 0xFFA997,   // peach
+  Y = 0xF2C447,   // yellow (controls, sun)
+  R = 0xC8483A,   // red (LED)
 };
 
 static bool g_sel = false;
 static void c(unsigned v) {
-  if (g_sel) v = 0xFFFFFF ^ v;   // complement: odwrócone kolory
+  if (g_sel) v = 0xFFFFFF ^ v;   // complement: inverted colors
   fl_color(fl_rgb_color(v >> 16, v >> 8 & 255, v & 255));
 }
 static void r(int x, int y, int w, int h, unsigned v) { c(v); fl_rectf(x, y, w, h); }
-// prostokąt z obrysem i wypukłą krawędzią (światło z lewej u góry)
+// a rectangle with an outline and a raised edge (light from the top left)
 static void raised(int x, int y, int w, int h, unsigned fill, bool outline = true) {
   r(x, y, w, h, fill);
   c(W); fl_xyline(x + 1, y + 1, x + w - 2); fl_yxline(x + 1, y + 1, y + h - 2);
   c(D); fl_xyline(x + 1, y + h - 2, x + w - 2); fl_yxline(x + w - 2, y + 1, y + h - 2);
   if (outline) { c(K); fl_rect(x, y, w, h); }
 }
-// wklęsły (wciśnięty) prostokąt
+// a sunken (pressed) rectangle
 static void sunken(int x, int y, int w, int h, unsigned fill) {
   r(x, y, w, h, fill);
   c(D); fl_xyline(x, y, x + w - 1); fl_yxline(x, y, y + h - 1);
   c(W); fl_xyline(x + 1, y + h - 1, x + w - 1); fl_yxline(x + w - 1, y + 1, y + h - 1);
 }
 
-// --- szuflada (folder) -------------------------------------------------------
+// --- drawer (folder) -----------------------------------------------------------
 static void drawer(int x, int y, bool open) {
-  // szafka
+  // cabinet
   raised(x + 2, y + 5, 28, 24, G);
-  r(x + 3, y + 6, 26, 3, B);                       // granatowy wierzch
+  r(x + 3, y + 6, 26, 3, B);                       // navy top
   c(BL); fl_xyline(x + 3, y + 6, x + 28);
   if (!open) {
-    sunken(x + 6, y + 12, 20, 13, L);               // front szuflady
-    raised(x + 12, y + 16, 8, 4, O);                // uchwyt
+    sunken(x + 6, y + 12, 20, 13, L);               // drawer front
+    raised(x + 12, y + 16, 8, 4, O);                // handle
     c(K); fl_xyline(x + 13, y + 18, x + 18);
-    r(x + 9, y + 13, 5, 2, W);                      // etykietka
+    r(x + 9, y + 13, 5, 2, W);                      // label
   } else {
-    r(x + 6, y + 12, 20, 13, K);                    // pusta wnęka
-    // wysunięta szuflada z kartkami, większa (bliżej patrzącego)
+    r(x + 6, y + 12, 20, 13, K);                    // empty recess
+    // an open drawer with papers, larger (closer to the viewer)
     r(x + 6, y + 9, 9, 9, W); c(K); fl_rect(x + 6, y + 9, 9, 9);
     r(x + 13, y + 7, 9, 10, W); c(K); fl_rect(x + 13, y + 7, 9, 10);
     c(B); for (int i = 0; i < 3; i++) fl_xyline(x + 15, y + 10 + i * 2, x + 20);
@@ -70,9 +70,9 @@ static void drawer(int x, int y, bool open) {
   }
 }
 
-// --- projekt (dokument) ------------------------------------------------------
+// --- project (document) --------------------------------------------------------
 static void project(int x, int y) {
-  // kartka z zagiętym rogiem
+  // a sheet with a folded corner
   c(W);
   fl_begin_polygon();
   fl_vertex(x + 6, y + 2); fl_vertex(x + 20, y + 2); fl_vertex(x + 26, y + 8);
@@ -86,7 +86,7 @@ static void project(int x, int y) {
   fl_vertex(x + 26, y + 30); fl_vertex(x + 6, y + 30);
   fl_end_loop();
   fl_line(x + 20, y + 2, x + 20, y + 8); fl_line(x + 20, y + 8, x + 26, y + 8);
-  c(G); fl_xyline(x + 7, y + 29, x + 25);   // cień kartki
+  c(G); fl_xyline(x + 7, y + 29, x + 25);   // sheet shadow
 }
 
 static void doc(int x, int y) {
@@ -97,9 +97,9 @@ static void doc(int x, int y) {
 
 static void picture(int x, int y) {
   project(x, y);
-  r(x + 9, y + 11, 15, 15, BL);                    // niebo
-  r(x + 18, y + 13, 4, 4, Y);                      // słońce
-  c(O);                                            // wzgórza (wielokąt wklęsły)
+  r(x + 9, y + 11, 15, 15, BL);                    // sky
+  r(x + 18, y + 13, 4, 4, Y);                      // sun
+  c(O);                                            // hills (concave polygon)
   fl_begin_complex_polygon();
   fl_vertex(x + 9, y + 26); fl_vertex(x + 9, y + 21); fl_vertex(x + 13, y + 17);
   fl_vertex(x + 17, y + 21); fl_vertex(x + 20, y + 19); fl_vertex(x + 24, y + 23); fl_vertex(x + 24, y + 26);
@@ -110,30 +110,30 @@ static void picture(int x, int y) {
 static void music(int x, int y) {
   project(x, y);
   c(B);
-  fl_rectf(x + 10, y + 21, 4, 3); fl_rectf(x + 18, y + 19, 4, 3);   // główki nut
+  fl_rectf(x + 10, y + 21, 4, 3); fl_rectf(x + 18, y + 19, 4, 3);   // note heads
   fl_yxline(x + 13, y + 12, y + 22); fl_yxline(x + 21, y + 10, y + 20);
-  fl_rectf(x + 13, y + 11, 9, 2);                                      // belka
+  fl_rectf(x + 13, y + 11, 9, 2);                                      // beam
   c(K); fl_xyline(x + 10, y + 24, x + 13); fl_xyline(x + 18, y + 22, x + 21);
 }
 
-// --- narzędzie (program): okienko Workbencha z gadżetami ---------------------
+// --- tool (program): a Workbench window with gadgets ----------------------------
 static void tool(int x, int y) {
   raised(x + 2, y + 4, 28, 24, G);
-  r(x + 3, y + 5, 26, 5, B);                       // pasek tytułu
-  raised(x + 4, y + 6, 4, 3, W, false);            // gadżet zamykania
+  r(x + 3, y + 5, 26, 5, B);                       // title bar
+  raised(x + 4, y + 6, 4, 3, W, false);            // close gadget
   c(K); fl_rect(x + 4, y + 6, 4, 3);
-  c(W); fl_rect(x + 22, y + 6, 4, 3);              // gadżet głębi (dwa prostokąty)
+  c(W); fl_rect(x + 22, y + 6, 4, 3);              // depth gadget (two rectangles)
   c(K); fl_rect(x + 24, y + 7, 4, 3);
-  sunken(x + 5, y + 12, 22, 13, L);                // wnętrze okna
-  raised(x + 8, y + 15, 7, 4, O);                  // przyciski programu
+  sunken(x + 5, y + 12, 22, 13, L);                // window inside
+  raised(x + 8, y + 15, 7, 4, O);                  // program buttons
   raised(x + 17, y + 15, 7, 4, O);
-  r(x + 8, y + 21, 16, 2, B);                      // suwak
+  r(x + 8, y + 21, 16, 2, B);                      // slider
   r(x + 14, y + 20, 3, 4, K);
 }
 
-// --- twardy dysk -------------------------------------------------------------
+// --- hard disk -----------------------------------------------------------------
 static void hard_disk(int x, int y, bool home) {
-  // górna ściana (perspektywa)
+  // top side (perspective)
   c(L);
   fl_begin_polygon();
   fl_vertex(x + 5, y + 9); fl_vertex(x + 30, y + 9); fl_vertex(x + 27, y + 14); fl_vertex(x + 2, y + 14);
@@ -142,7 +142,7 @@ static void hard_disk(int x, int y, bool home) {
   fl_begin_loop();
   fl_vertex(x + 5, y + 9); fl_vertex(x + 30, y + 9); fl_vertex(x + 27, y + 14); fl_vertex(x + 2, y + 14);
   fl_end_loop();
-  // boczna ściana
+  // side
   c(D);
   fl_begin_polygon();
   fl_vertex(x + 27, y + 14); fl_vertex(x + 30, y + 9); fl_vertex(x + 30, y + 21); fl_vertex(x + 27, y + 26);
@@ -151,15 +151,15 @@ static void hard_disk(int x, int y, bool home) {
   fl_begin_loop();
   fl_vertex(x + 27, y + 14); fl_vertex(x + 30, y + 9); fl_vertex(x + 30, y + 21); fl_vertex(x + 27, y + 26);
   fl_end_loop();
-  // przód
+  // front
   raised(x + 2, y + 14, 26, 13, G);
-  r(x + 5, y + 18, home ? 9 : 7, 5, home ? B : D);   // tabliczka (Nirvana HD - granatowa)
+  r(x + 5, y + 18, home ? 9 : 7, 5, home ? B : D);   // plate (Nirvana HD - navy)
   if (home) { c(W); fl_xyline(x + 6, y + 20, x + 12); }
-  c(K); for (int i = 0; i < 4; i++) fl_yxline(x + 16 + i * 2, y + 18, y + 22);   // kratka wentylacji
-  r(x + 24, y + 22, 2, 2, R);                       // dioda
+  c(K); for (int i = 0; i < 4; i++) fl_yxline(x + 16 + i * 2, y + 18, y + 22);   // vent grille
+  r(x + 24, y + 22, 2, 2, R);                       // LED
 }
 
-// --- dyskietka 3,5" (nośnik wymienny) ----------------------------------------
+// --- 3.5" floppy (removable medium) --------------------------------------------
 static void floppy(int x, int y) {
   c(D);
   fl_begin_polygon();
@@ -171,16 +171,16 @@ static void floppy(int x, int y) {
   fl_vertex(x + 4, y + 3); fl_vertex(x + 28, y + 3); fl_vertex(x + 28, y + 29); fl_vertex(x + 6, y + 29);
   fl_vertex(x + 4, y + 27);
   fl_end_loop();
-  raised(x + 10, y + 3, 14, 10, L);                // metalowa zasuwka
-  r(x + 18, y + 5, 3, 6, K);                        // okienko
-  r(x + 7, y + 16, 19, 12, W);                      // etykieta
+  raised(x + 10, y + 3, 14, 10, L);                // metal shutter
+  r(x + 18, y + 5, 3, 6, K);                        // window
+  r(x + 7, y + 16, 19, 12, W);                      // label
   c(K); fl_rect(x + 7, y + 16, 19, 12);
   r(x + 7, y + 16, 19, 3, B);
   c(B); fl_xyline(x + 9, y + 22, x + 23); fl_xyline(x + 9, y + 25, x + 20);
-  r(x + 5, y + 5, 2, 2, K);                         // otwór zabezpieczenia
+  r(x + 5, y + 5, 2, 2, K);                         // write-protect hole
 }
 
-// --- płyta -------------------------------------------------------------------
+// --- disc ----------------------------------------------------------------------
 static void optical(int x, int y) {
   c(L); fl_pie(x + 3, y + 3, 26, 26, 0, 360);
   c(BL); fl_pie(x + 3, y + 3, 26, 26, 20, 70);
@@ -191,16 +191,16 @@ static void optical(int x, int y) {
   c(K); fl_pie(x + 14, y + 14, 4, 4, 0, 360);
 }
 
-static void padlock(int x, int y) {   // mała kłódka w prawym dolnym rogu
+static void padlock(int x, int y) {   // a small padlock in the bottom right corner
   c(K); fl_arc(x + 19, y + 15, 9, 10, 0, 180);
   fl_arc(x + 20, y + 16, 7, 8, 0, 180);
   raised(x + 18, y + 20, 11, 9, Y);
   r(x + 23, y + 23, 2, 3, K);
 }
 
-// --- kosz ---------------------------------------------------------------------
+// --- Trash ---------------------------------------------------------------------
 static void trashcan(int x, int y, bool full) {
-  // korpus z żebrowaniem
+  // ribbed body
   c(G);
   fl_begin_polygon();
   fl_vertex(x + 7, y + 10); fl_vertex(x + 25, y + 10); fl_vertex(x + 23, y + 30); fl_vertex(x + 9, y + 30);
@@ -212,10 +212,10 @@ static void trashcan(int x, int y, bool full) {
   fl_vertex(x + 7, y + 10); fl_vertex(x + 25, y + 10); fl_vertex(x + 23, y + 30); fl_vertex(x + 9, y + 30);
   fl_end_loop();
   if (!full) {
-    raised(x + 5, y + 7, 22, 4, L);                 // pokrywa
-    raised(x + 13, y + 4, 6, 3, D);                 // uchwyt
+    raised(x + 5, y + 7, 22, 4, L);                 // lid
+    raised(x + 13, y + 4, 6, 3, D);                 // handle
   } else {
-    // papiery i przekrzywiona pokrywa
+    // papers and a tilted lid
     r(x + 9, y + 6, 6, 6, W); c(K); fl_rect(x + 9, y + 6, 6, 6);
     r(x + 15, y + 4, 7, 7, W); c(K); fl_rect(x + 15, y + 4, 7, 7);
     c(B); fl_xyline(x + 16, y + 6, x + 20); fl_xyline(x + 16, y + 8, x + 19);
@@ -230,7 +230,7 @@ static void trashcan(int x, int y, bool full) {
   }
 }
 
-// --- wysuń, sieć, Wi-Fi --------------------------------------------------------
+// --- eject, network, Wi-Fi -------------------------------------------------------
 static void eject(int x, int y) {
   raised(x + 3, y + 3, 26, 26, G);
   c(B);
@@ -256,9 +256,9 @@ static void network(int x, int y) {
 }
 
 static void wifi(int x, int y) {
-  raised(x + 6, y + 22, 20, 7, G);                 // podstawa (router)
+  raised(x + 6, y + 22, 20, 7, G);                 // base (router)
   r(x + 9, y + 25, 2, 2, Y); r(x + 13, y + 25, 2, 2, Y);
-  c(K); fl_yxline(x + 22, y + 13, y + 22);         // antena
+  c(K); fl_yxline(x + 22, y + 13, y + 22);         // antenna
   c(B);
   fl_line_style(FL_SOLID, 2);
   fl_arc(x + 16, y + 6, 12, 12, 20, 160);

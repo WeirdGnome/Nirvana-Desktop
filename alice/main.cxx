@@ -1,26 +1,27 @@
-// Nirvana Desktop - alice: panele sterowania
+// Nirvana Desktop - alice: control panels
 //
-//   nirvana-alice [wyglad]          panel Wygląd (domyślny)
-//   nirvana-alice siec [--ukryta]   panel Sieć (--ukryta: od razu okno "Inna sieć")
-//   nirvana-alice zasilanie          panel Zasilanie
-//   nirvana-alice ustawienia         Preferencje: okno z ikonami wszystkich paneli
-//   nirvana-alice schemat NAZWA     ustaw schemat kolorów bez okna (np. redmond97-se/ouroboros)
+//   nirvana-alice [appearance]          Appearance panel (default)
+//   nirvana-alice network [--hidden]    Network panel (--hidden: open the "Other network" window)
+//   nirvana-alice power                 Power panel
+//   nirvana-alice preferences           Preferences: a window with the icons of all panels
+//   nirvana-alice scheme NAME           set the color scheme without a window
+//                                       (e.g. redmond97-se/ouroboros)
 #include "platinum.h"
 
 #include <FL/Fl.H>
 #include <cstdio>
 #include <cstring>
 
-int panel_wyglad();
-int panel_siec(bool hidden_dialog);
-int panel_zasilanie();
-int panel_ustawienia();
+int panel_appearance();
+int panel_network(bool hidden_dialog);
+int panel_power();
+int panel_preferences();
 
 int main(int argc, char **argv) {
   plat::init();
   Fl::visual(FL_RGB);
-  const char *which = argc > 1 ? argv[1] : "wyglad";
-  if (!strcmp(which, "schemat") && argc > 2) {
+  const char *which = argc > 1 ? argv[1] : "appearance";
+  if (!strcmp(which, "scheme") && argc > 2) {
     plat::Scheme sc;
     if (!plat::load_scheme(argv[2], sc)) { fprintf(stderr, "%s\n", plat::fmt(_("No such scheme: %1"), argv[2]).c_str()); return 1; }
     plat::Appearance a = plat::read_appearance();
@@ -29,11 +30,8 @@ int main(int argc, char **argv) {
     plat::notify_appearance_changed();
     return 0;
   }
-  if (!strcmp(which, "siec") || !strcmp(which, "sieć")) {
-    bool hidden = argc > 2 && !strcmp(argv[2], "--ukryta");
-    return panel_siec(hidden);
-  }
-  if (!strcmp(which, "zasilanie")) return panel_zasilanie();
-  if (!strcmp(which, "ustawienia") || !strcmp(which, "preferencje")) return panel_ustawienia();
-  return panel_wyglad();
+  if (!strcmp(which, "network")) return panel_network(argc > 2 && !strcmp(argv[2], "--hidden"));
+  if (!strcmp(which, "power")) return panel_power();
+  if (!strcmp(which, "preferences")) return panel_preferences();
+  return panel_appearance();
 }

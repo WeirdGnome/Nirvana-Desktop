@@ -129,21 +129,6 @@ step "Installing the nirvana package and the programs it uses"
 # --allow-downgrades: the package from this folder wins even over a newer number
 DEBIAN_FRONTEND=noninteractive apt-get install -y --reinstall --allow-downgrades "$DEB"
 
-# formerly LisaOS: apt removed the old "lisaos" package (Conflicts); settings in ~
-# move on the first start; here we fix the login screen and ~/.xinitrc
-if [ -f /etc/lightdm/lightdm.conf.d/50-lisaos.conf ]; then
-  rm -f /etc/lightdm/lightdm.conf.d/50-lisaos.conf
-  printf '[Seat:*]\nuser-session=nirvana\n' > /etc/lightdm/lightdm.conf.d/50-nirvana.conf
-  echo "LightDM: the LisaOS session was replaced with Nirvana Desktop."
-fi
-if [ -n "$USER_NAME" ]; then
-  HOME_DIR=$(getent passwd "$USER_NAME" | cut -d: -f6)
-  if [ -f "$HOME_DIR/.xinitrc" ] && grep -q 'lisaos-session' "$HOME_DIR/.xinitrc"; then
-    sed -i 's/lisaos-session/nirvana-session/g' "$HOME_DIR/.xinitrc"
-    echo "$HOME_DIR/.xinitrc: lisaos-session replaced with nirvana-session."
-  fi
-fi
-
 if [ -z "$NO_X" ] && ! command -v Xorg >/dev/null 2>&1; then
   step "X server"
   DEBIAN_FRONTEND=noninteractive apt-get install -y xserver-xorg xinit

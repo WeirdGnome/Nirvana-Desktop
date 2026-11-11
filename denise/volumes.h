@@ -1,13 +1,13 @@
-// Nirvana Desktop - denise: dyski, płyty i zaszyfrowane wolumeny (LUKS)
+// Nirvana Desktop - denise: disks, discs and encrypted volumes (LUKS)
 //
-// Wykrywanie: lsblk (dane z udev). Akcje: UDisks2 przez D-Bus (libdbus) - ta sama
-// usługa, której używają GNOME i KDE; działa na Devuanie (z elogind) i na Rocky.
-// Hasło LUKS idzie prosto w wywołaniu D-Bus, nie trafia do argumentów procesów.
+// Detection: lsblk (data from udev). Actions: UDisks2 through D-Bus (libdbus) - the same
+// service GNOME and KDE use; works on Devuan (with elogind) and on Rocky.
+// The LUKS password goes straight into the D-Bus call, never into process arguments.
 //
-// Co pokazujemy na biurku:
-//   * nośniki wymienne i podłączane na gorąco (USB, karty), napędy optyczne z płytą,
-//   * partycje wewnętrzne z systemem plików lub LUKS, o ile nie są częścią systemu
-//     (ani one, ani nic "pod nimi" nie jest zamontowane poza /media, /run/media, /mnt).
+// What is shown on the desktop:
+// * removable and hot-plugged media (USB, cards), optical drives with a disc,
+// * internal partitions with a file system or LUKS, unless they are part of the system
+// (neither they nor anything "below" them is mounted outside /media, /run/media, /mnt).
 #pragma once
 
 #include <cstdint>
@@ -19,33 +19,33 @@
 namespace vol {
 
 struct Volume {
-  std::string dev;          // urządzenie, np. /dev/sdb1 (dla LUKS: kontener)
-  std::string kname;        // nazwa jądra (sdb1, sr0, dm-0) - do ścieżki obiektu UDisks2
-  std::string disk_kname;   // cały dysk (sdb) - do wysuwania / wyłączania
-  std::string name;         // nazwa wyświetlana
-  std::string fstype;       // system plików (po odszyfrowaniu - wewnętrzny)
-  std::string mountpoint;   // "" gdy niezamontowany
-  std::string uuid;         // stabilny identyfikator (do porównań między skanami)
+  std::string dev;          // the device, e.g. /dev/sdb1 (for LUKS: the container)
+  std::string kname;        // kernel name (sdb1, sr0, dm-0) - for the UDisks2 object path
+  std::string disk_kname;   // the whole disk (sdb) - for ejecting / powering off
+  std::string name;         // display name
+  std::string fstype;       // file system (after decryption - the inner one)
+  std::string mountpoint;   // "" when not mounted
+  std::string uuid;         // a stable identifier (for comparisons between scans)
   uint64_t size = 0;
-  bool removable = false;   // USB, karta, płyta - można bezpiecznie wysunąć
+  bool removable = false;   // USB, card, disc - can be safely ejected
   bool optical = false;
-  bool encrypted = false;   // kontener LUKS
-  bool unlocked = false;    // ... odblokowany (istnieje urządzenie odszyfrowane)
-  bool unformatted = false; // nośnik wymienny bez systemu plików (do sformatowania)
-  std::string clear_kname;  // urządzenie odszyfrowane (dm-0)
+  bool encrypted = false;   // LUKS container
+  bool unlocked = false;    // ... unlocked (a decrypted device exists)
+  bool unformatted = false; // a removable medium without a file system (to be formatted)
+  std::string clear_kname;  // the decrypted device (dm-0)
   plat::Icon icon = plat::Icon::HardDisk;
 };
 
 std::vector<Volume> scan();
 
-// Akcje zwracają "" przy powodzeniu albo komunikat błędu po polsku.
+// Actions return "" on success or an error message in the interface language.
 std::string mount(const Volume &v, std::string &mountpoint);
 std::string unmount(const Volume &v);
 std::string unlock(const Volume &v, const std::string &passphrase);
 std::string lock(const Volume &v);
-// Bezpieczne odłączenie: odmontuj, zamknij LUKS, potem wysuń płytę albo wyłącz dysk USB.
+// Safe removal: unmount, close LUKS, then eject the disc or power off the USB disk.
 std::string eject(const Volume &v);
-// Formatowanie (UDisks2 Block.Format): type = vfat, exfat, ext4, ntfs.
+// Formatting (UDisks2 Block.Format): type = vfat, exfat, ext4, ntfs.
 std::string format(const Volume &v, const std::string &type, const std::string &label);
 
 bool udisks_available();

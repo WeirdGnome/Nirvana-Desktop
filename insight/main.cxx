@@ -1,15 +1,15 @@
-// Nirvana Desktop - nirvana-insight: menedżer okien X11 w stylu Platinum
+// Nirvana Desktop - nirvana-insight: an X11 window manager in the Platinum style
 //
-// Insight to klasyczny "reparenting" window manager:
-//   * każde okno aplikacji dostaje ramkę (okno FLTK rysowane przez libplatinum),
-//   * aplikacja zostaje przeniesiona do wnętrza ramki (XReparentWindow),
-//   * pasek tytułu obsługuje przesuwanie, zamykanie, zoom i windowshade,
-//   * brak kompozytora - aplikacje rysują prosto na ekranie, co oszczędza pamięć.
+// Insight is a classic "reparenting" window manager:
+// * every application window gets a frame (an FLTK window drawn by libplatinum),
+// * the application is moved inside the frame (XReparentWindow),
+// * the title bar handles moving, closing, zoom and iconifying,
+// * no compositor - applications draw straight to the screen, which saves memory.
 //
-// Okno biurka Ramblera (WM_CLASS "Nirvana-Desktop" lub _NET_WM_WINDOW_TYPE_DESKTOP)
-// nie dostaje ramki i zawsze leży na samym dole.
+// The Rambler desktop window (WM_CLASS "Nirvana-Desktop" or _NET_WM_WINDOW_TYPE_DESKTOP)
+// gets no frame and always lies at the very bottom.
 //
-// Działa na Xorg i XLibre (czysty Xlib, bez rozszerzeń).
+// Works on Xorg and XLibre (plain Xlib, no extensions).
 
 #include <FL/Fl.H>
 #include <FL/Fl_Double_Window.H>
@@ -40,19 +40,19 @@ static Window root;
 static char **g_argv;
 static int screen_w, screen_h;
 
-static Atom A_WYGLAD;
+static Atom A_APPEARANCE;
 static Atom A_WM_PROTOCOLS, A_WM_DELETE, A_WM_STATE, A_NET_WM_NAME, A_UTF8,
     A_NET_WM_TYPE, A_NET_WM_TYPE_DESKTOP, A_NET_WM_TYPE_DOCK, A_NET_SUPPORTED,
     A_NET_CHECK, A_NET_ACTIVE, A_NET_WM_STATE, A_NET_WM_STATE_SHADED, A_NET_WM_TYPE_DIALOG,
     A_NET_CLIENT_LIST, A_NET_CLOSE, A_NET_WM_STATE_HIDDEN, A_WM_CHANGE_STATE,
     A_NET_WM_STATE_MAX_V, A_NET_WM_STATE_MAX_H, A_NET_WORKAREA, A_NET_FRAME_EXTENTS,
-    A_NET_REQUEST_FRAME_EXTENTS, A_NIRVANA_DOK;
+    A_NET_REQUEST_FRAME_EXTENTS, A_NIRVANA_DOCK;
 
 class Frame;
 
-// Obszar roboczy (jednostki FLTK): ekran bez paska menu u góry i doku Ramblera
-// na dole (_NIRVANA_DOK = wysokość doku, 0 gdy pusty). Okna programów go nie
-// zasłaniają: przy otwarciu, przy maksymalizacji i przy zoomie.
+// Work area (FLTK units): the screen without the menu bar at the top and Rambler's dock
+// at the bottom (_NIRVANA_DOCK = dock height, 0 when empty). Program windows do not
+// cover it: when opened, maximized or zoomed.
 static int g_dock_h = 0;
 static Rect work_area() { return {0, MENUBAR_H, screen_w, screen_h - MENUBAR_H - g_dock_h}; }
 
@@ -62,18 +62,18 @@ static void read_dock_height() {
   unsigned long n, after;
   unsigned char *data = nullptr;
   g_dock_h = 0;
-  if (XGetWindowProperty(dpy, DefaultRootWindow(dpy), A_NIRVANA_DOK, 0, 1, False, XA_CARDINAL, &type, &fmt, &n,
+  if (XGetWindowProperty(dpy, DefaultRootWindow(dpy), A_NIRVANA_DOCK, 0, 1, False, XA_CARDINAL, &type, &fmt, &n,
                          &after, &data) == Success && data && n == 1 && fmt == 32)
     g_dock_h = std::clamp((int)*(long *)data, 0, screen_h / 3);
   if (data) XFree(data);
 }
 
-// _NET_WORKAREA (w pikselach) - z niego programy (Chromium, GTK, Qt) biorą
-// rozmiar okna "zmaksymalizowanego" i pierwszego otwarcia.
-// Góra obszaru to 0, nie dół paska menu: FLTK (1.4.x, Menu_Window::autoscroll)
-// przesuwa pasek menu leżący nad obszarem roboczym w dół przy przejściu między
-// tytułami menu - menu Ramblera rozjeżdżało się po przesunięciu myszy. Pasek
-// menu i tak chroni sam Insight (okna nie wchodzą pod niego, zoom też).
+// _NET_WORKAREA (in pixels) - programs (Chromium, GTK, Qt) take the size of a
+// "maximized" window and of the first opening from it.
+// The top of the area is 0, not the bottom of the menu bar: FLTK (1.4.x, Menu_Window::autoscroll)
+// moves a menu bar lying above the work area down when moving between menu
+// titles - Rambler's menus fell apart when the mouse moved. Insight protects the
+// menu bar itself anyway (windows do not go under it, zoom neither).
 static void publish_workarea() {
   Rect area = work_area();
   area.h += area.y;
@@ -91,15 +91,15 @@ static void publish_workarea() {
                   PropModeReplace, (unsigned char *)geo, 2);
 }
 
-// _NET_FRAME_EXTENTS: grubość ramki (lewo, prawo, góra, dół) w pikselach
+// _NET_FRAME_EXTENTS: frame thickness (left, right, top, bottom) in pixels
 static void set_frame_extents(Window w) {
   long ext[4] = {px(FRAME), px(FRAME), px(TITLE_H), px(FRAME)};
   XChangeProperty(dpy, w, A_NET_FRAME_EXTENTS, XA_CARDINAL, 32, PropModeReplace, (unsigned char *)ext, 4);
 }
 
-// _NIRVANA_OBSZAR_OKIEN (x, y, szer., wys.) na oknie głównym - ustawia Rambler.
+// _NIRVANA_WINDOW_AREA (x, y, width, height) on the root window - set by Rambler.
 static bool rambler_area(plat::Rect &r) {
-  Atom a = XInternAtom(dpy, "_NIRVANA_OBSZAR_OKIEN", False), type;
+  Atom a = XInternAtom(dpy, "_NIRVANA_WINDOW_AREA", False), type;
   int fmt;
   unsigned long n, after;
   unsigned char *data = nullptr;
@@ -118,19 +118,19 @@ struct Client {
   Frame *frame = nullptr;
   std::string title;
   bool shaded = false, zoomed = false;
-  int full_h = 0;                 // wysokość ramki przed zwinięciem
+  int full_h = 0;                 // frame height before shading
   int unzoom[4] = {0, 0, 0, 0};
-  int ignore_unmap = 0;           // UnmapNotify wywołane przez nas (reparent)
-  bool dialog = false;            // okno dialogowe: bez przycisków i zmiany rozmiaru
-  bool own_anim = false;          // programy Nirvana Desktop same animują otwieranie/zamykanie
-  bool hidden = false;            // ukryte (Ukryj / Ukryj inne w menu aplikacji)
-  bool iconic = false;            // zikonizowane: ukryte, a na biurku jest jego ikona
-  unsigned long mru = 0;          // kiedy ostatnio aktywne (do Alt+Tab)
-  std::string cls;                // WM_CLASS - okna jednej aplikacji mają tę samą klasę
+  int ignore_unmap = 0;           // UnmapNotify caused by us (reparent)
+  bool dialog = false;            // dialog window: no buttons and no resizing
+  bool own_anim = false;          // Nirvana Desktop programs animate opening/closing themselves
+  bool hidden = false;            // hidden (Hide / Hide Others in the application menu)
+  bool iconic = false;            // iconified: hidden, and its icon is on the desktop
+  unsigned long mru = 0;          // when it was last active (for Alt+Tab)
+  std::string cls;                // WM_CLASS - the windows of one application share the class
 };
 
-static std::map<Window, Client *> clients;   // okno aplikacji -> klient
-static Window desktop_win = 0;                // okno biurka (bez ramki)
+static std::map<Window, Client *> clients;   // application window -> client
+static Window desktop_win = 0;                // desktop window (no frame)
 static Client *g_active = nullptr;
 
 static void focus(Client *c);
@@ -138,7 +138,7 @@ static void unmanage(Client *c, bool destroyed);
 static void iconify_client(Client *c);
 
 // ---------------------------------------------------------------------------
-// Pomocnicze funkcje Xlib
+// Xlib helpers
 // ---------------------------------------------------------------------------
 static int ignore_errors(Display *, XErrorEvent *) { return 0; }
 
@@ -198,7 +198,7 @@ static std::string get_class(Window w) {
   return r;
 }
 
-// _NET_WM_STATE: informujemy aplikację (np. Ramblera), czy okno jest zwinięte.
+// _NET_WM_STATE: tell the application (e.g. Rambler) whether the window is shaded.
 static void publish_state(Client *c) {
   Atom st[4];
   int n = 0;
@@ -224,26 +224,26 @@ static void set_wm_state(Window w, long state) {
 }
 
 // ---------------------------------------------------------------------------
-// Ramka okna
+// Window frame
 // ---------------------------------------------------------------------------
 class Frame : public Fl_Double_Window {
 public:
   Client *c;
   Frame(Client *cl, int X, int Y, int W, int H)
-      : Fl_Double_Window(X, Y, W, H, "insight-ramka"), c(cl) {
+      : Fl_Double_Window(X, Y, W, H, "insight-frame"), c(cl) {
     border(0);
     box(FL_NO_BOX);
     end();
   }
 
-  // Obszar klienta wewnątrz ramki
+  // Client area inside the frame
   int cw() const { return w() - 2 * FRAME; }
   int ch() const { return (c->shaded ? c->full_h : h()) - TITLE_H - FRAME; }
 
-  // Po każdej zmianie geometrii ramki dopasowujemy okno aplikacji
-  // i wysyłamy mu syntetyczny ConfigureNotify (wymóg ICCCM).
+  // After every change of the frame geometry we fit the application window
+  // and send it a synthetic ConfigureNotify (required by ICCCM).
   void sync_client() {
-    // ramka jest w jednostkach FLTK, okno aplikacji w pikselach (skala interfejsu)
+    // the frame is in FLTK units, the application window in pixels (interface scale)
     int pw = px(w() - FRAME) - px(FRAME), ph = px(TITLE_H + ch()) - px(TITLE_H);
     XMoveResizeWindow(dpy, c->win, px(FRAME), px(TITLE_H), std::max(1, pw), std::max(1, ph));
     XConfigureEvent ce{};
@@ -270,7 +270,7 @@ public:
     if (!c->shaded && !c->dialog) {
       fl_color(act ? SHADOW : MID);
       fl_rect(FRAME - 1, TITLE_H - 1, cw() + 2, ch() + 2);
-      // uchwyt zmiany rozmiaru na ramce w prawym dolnym rogu
+      // resize handle on the frame in the bottom right corner
       fl_color(act ? SHADOW : MID);
       for (int i = 0; i < 3; i++)
         fl_line(w() - 2 - i * 3, h() - FRAME + 1, w() - FRAME + 1 - i * 3 + 3, h() - 2);
@@ -296,7 +296,7 @@ public:
     if (!c->shaded) {
       c->full_h = h();
       c->shaded = true;
-      size(w(), TITLE_H);          // okno aplikacji zostaje, ale ramka całkowicie je przycina
+      size(w(), TITLE_H);          // the application window stays, but the frame clips it completely
     } else {
       c->shaded = false;
       size(w(), c->full_h);
@@ -309,8 +309,8 @@ public:
     if (c->shaded) toggle_shade();
     if (!c->zoomed) {
       c->unzoom[0] = x(); c->unzoom[1] = y(); c->unzoom[2] = w(); c->unzoom[3] = h();
-      // zoom zostawia widoczne ikony biurka (Nirvana HD, dyski, kosz, ikony okien)
-      // i dok - obszar podaje Rambler; bez Ramblera: obszar roboczy
+      // zoom keeps the desktop icons visible (Nirvana HD, disks, Trash, window icons)
+      // and the dock - Rambler gives the area; without Rambler: the work area
       Rect wa = work_area();
       Rect to = {wa.x + 4, wa.y + 4, wa.w - 8, wa.h - 8};
       rambler_area(to);
@@ -351,9 +351,9 @@ public:
         if (Fl::event_clicks() && !c->dialog) { Fl::event_clicks(0); iconify_client(c); drag_ = NONE; return 1; }
         drag_ = MOVE;
       } else if (!c->shaded && !c->dialog && (ex >= w() - 16 || ey >= h() - FRAME)) {
-        drag_ = GROW;          // prawa lub dolna krawędź / prawy dolny róg
+        drag_ = GROW;          // right or bottom edge / bottom right corner
       } else {
-        drag_ = MOVE;          // lewa krawędź ramki
+        drag_ = MOVE;          // left edge of the frame
       }
       dx_ = Fl::event_x_root() - x(); dy_ = Fl::event_y_root() - y();
       gw_ = w() - ex; gh_ = h() - ey;
@@ -361,7 +361,7 @@ public:
     case FL_DRAG:
       if (drag_ == MOVE) {
         int nx = Fl::event_x_root() - dx_;
-        int ny = std::max(MENUBAR_H, Fl::event_y_root() - dy_);   // pasek menu zostaje widoczny
+        int ny = std::max(MENUBAR_H, Fl::event_y_root() - dy_);   // the menu bar stays visible
         position(nx, ny);
         c->zoomed = false;
       } else if (drag_ == GROW) {
@@ -380,7 +380,7 @@ public:
         redraw();
         if (b == 1) close_client();
         else if (b == 2) toggle_zoom();
-        else if (b == 3) iconify_client(c);   // ikona okna na biurku (jak w Workbenchu)
+        else if (b == 3) iconify_client(c);   // window icon on the desktop (as in Workbench)
       }
       drag_ = NONE;
       return 1;
@@ -394,12 +394,12 @@ private:
 };
 
 // ---------------------------------------------------------------------------
-// Zarządzanie oknami
+// Window management
 // ---------------------------------------------------------------------------
-static std::vector<Window> client_order;   // kolejność pojawiania się (EWMH)
+static std::vector<Window> client_order;   // order of appearance (EWMH)
 static unsigned long mru_clock = 0;
 
-// _NET_CLIENT_LIST: lista okien dla przełącznika aplikacji (i innych programów)
+// _NET_CLIENT_LIST: the window list for the application switcher (and other programs)
 static void publish_client_list() {
   XChangeProperty(dpy, root, A_NET_CLIENT_LIST, XA_WINDOW, 32, PropModeReplace,
                   (unsigned char *)client_order.data(), (int)client_order.size());
@@ -412,7 +412,7 @@ static void set_active_none() {
   if (desktop_win) XSetInputFocus(dpy, desktop_win, RevertToPointerRoot, CurrentTime);
 }
 
-// Najświeższe widoczne okno poza wskazanym - dostaje fokus po ukryciu/zamknięciu.
+// The most recent visible window other than the given one - gets the focus after hiding/closing.
 static Client *most_recent_visible(Client *except) {
   Client *best = nullptr;
   for (auto &[w, c] : clients)
@@ -420,19 +420,19 @@ static Client *most_recent_visible(Client *except) {
   return best;
 }
 
-// _NIRVANA_IKONY na oknie głównym: zikonizowane okna (kolejność ikonizowania).
-// Rambler rysuje z niej ikony okien na biurku; dwuklik = _NET_ACTIVE_WINDOW.
+// _NIRVANA_ICONS on the root window: the iconified windows (in iconify order).
+// Rambler draws the window icons on the desktop from it; double-click = _NET_ACTIVE_WINDOW.
 static std::vector<Window> g_iconic;
 static void publish_iconic() {
-  XChangeProperty(dpy, DefaultRootWindow(dpy), XInternAtom(dpy, "_NIRVANA_IKONY", False), XA_WINDOW, 32,
+  XChangeProperty(dpy, DefaultRootWindow(dpy), XInternAtom(dpy, "_NIRVANA_ICONS", False), XA_WINDOW, 32,
                   PropModeReplace, (unsigned char *)g_iconic.data(), (int)g_iconic.size());
 }
 static void set_iconic(Client *c, bool on) {
   if (c->iconic == on) return;
   c->iconic = on;
-  // znacznik na samym oknie: po Resetuj Nirvanę nowy Insight wie, które ukryte
-  // okna były ikonami, a które tylko "Ukryj"
-  Atom mark = XInternAtom(dpy, "_NIRVANA_IKONA", False);
+  // a mark on the window itself: after Reset Nirvana the new Insight knows which hidden
+  // windows were icons and which were only "Hide"
+  Atom mark = XInternAtom(dpy, "_NIRVANA_ICONIFIED", False);
   long one = 1;
   if (on) XChangeProperty(dpy, c->win, mark, XA_CARDINAL, 32, PropModeReplace, (unsigned char *)&one, 1);
   else XDeleteProperty(dpy, c->win, mark);
@@ -453,8 +453,8 @@ static void show_client(Client *c) {
 static void hide_client(Client *c) {
   if (c->hidden) return;
   c->hidden = true;
-  // Ramkę zdejmujemy surowym XUnmapWindow - hide() w FLTK zniszczyłoby okno X
-  // ramki razem z oknem aplikacji w środku.
+  // The frame is taken down with a raw XUnmapWindow - FLTK's hide() would destroy the X
+  // window of the frame together with the application window inside.
   XUnmapWindow(dpy, fl_xid(c->frame));
   set_wm_state(c->win, IconicState);
   publish_state(c);
@@ -465,8 +465,8 @@ static void hide_client(Client *c) {
   }
 }
 
-// Przycisk w pasku tytułu, dwuklik w pasek albo "minimalizuj" w programie:
-// okno znika, a na biurku pojawia się jego ikona.
+// The title bar button, a double click on the bar or "minimize" in the program:
+// the window disappears and its icon appears on the desktop.
 static void iconify_client(Client *c) {
   if (c->dialog || c->hidden) return;
   Rect r = c->frame->geom();
@@ -494,11 +494,11 @@ static void manage(Window w, bool existing) {
   if (clients.count(w) || w == desktop_win) return;
   XWindowAttributes wa;
   if (!XGetWindowAttributes(dpy, w, &wa) || wa.override_redirect) return;
-  for (auto &[cw, c] : clients) if (fl_xid(c->frame) == w) return;   // nasze ramki
-  if (fl_find(w)) return;                                          // inne okna FLTK insighta
+  for (auto &[cw, c] : clients) if (fl_xid(c->frame) == w) return;   // our frames
+  if (fl_find(w)) return;                                          // other FLTK windows of insight
 
   if (is_desktop(w)) {
-    // Biurko: bez ramki, pełny ekran, zawsze na dole.
+    // Desktop: no frame, full screen, always at the bottom.
     desktop_win = w;
     XMapWindow(dpy, w);
     XLowerWindow(dpy, w);
@@ -519,8 +519,8 @@ static void manage(Window w, bool existing) {
               has_atom(w, A_NET_WM_TYPE, A_NET_WM_TYPE_DIALOG) || cls == "Nirvana-Dialog";
 
   int x = un(wa.x), y = un(wa.y);
-  // StaticGravity (FLTK, wiele innych programów): podana pozycja dotyczy samego
-  // okna aplikacji, więc ramkę stawiamy tak, żeby treść wylądowała dokładnie tam.
+  // StaticGravity (FLTK, many other programs): the given position refers to the
+  // application window itself, so the frame is placed so that the content lands exactly there.
   XSizeHints sh;
   long supplied;
   if (XGetWMNormalHints(dpy, w, &sh, &supplied) && (sh.flags & PWinGravity) &&
@@ -535,8 +535,8 @@ static void manage(Window w, bool existing) {
     cascade++;
   }
   int fw = un(wa.width) + 2 * FRAME, fh = un(wa.height) + TITLE_H + FRAME;
-  // okno mieści się w obszarze roboczym: pod paskiem menu i nad dokiem
-  // (Chromium/Brave przy pierwszym starcie biorą rozmiar całego ekranu)
+  // the window fits into the work area: below the menu bar and above the dock
+  // (Chromium/Brave take the size of the whole screen on the first start)
   Rect area = work_area();
   if (!c->dialog || fh > area.h) {
     fw = std::min(fw, area.w);
@@ -546,24 +546,24 @@ static void manage(Window w, bool existing) {
   }
   y = std::max(y, MENUBAR_H);
 
-  // nowe okno "wylatuje" ze środka miejsca, w którym się pojawi
+  // a new window "flies out" of the middle of the place where it will appear
   if (!existing && !c->own_anim) zoom_rects(center_of({x, y, fw, fh}), {x, y, fw, fh});
   c->frame = new Frame(c, x, y, fw, fh);
   c->frame->xclass("Nirvana-Frame");
   c->frame->show();
   Window fx = fl_xid(c->frame);
-  // FLTK oznacza swoje okna jako cele XDND. Ramka nim nie jest - inaczej pliki
-  // przeciągane z innych programów trafiałyby w ramkę, a nie w okno aplikacji.
+  // FLTK marks its windows as XDND targets. The frame is not one - otherwise files
+  // dragged from other programs would land in the frame instead of the application window.
   XDeleteProperty(dpy, fx, XInternAtom(dpy, "XdndAware", False));
 
   XAddToSaveSet(dpy, w);
   XSetWindowBorderWidth(dpy, w, 0);
   XSelectInput(dpy, w, PropertyChangeMask | StructureNotifyMask);
-  if (wa.map_state == IsViewable) c->ignore_unmap++;   // reparent wygeneruje UnmapNotify
+  if (wa.map_state == IsViewable) c->ignore_unmap++;   // reparenting will cause an UnmapNotify
   XReparentWindow(dpy, w, fx, px(FRAME), px(TITLE_H));
-  // Prośby okna o zmianę rozmiaru (np. uchwyt w rogu okna Ramblera) muszą trafić
-  // do nas także po przeniesieniu do ramki - inaczej okno rośnie lub maleje,
-  // a ramka zostaje w starym rozmiarze.
+  // Resize requests of a window (e.g. the grow box of a Rambler window) must reach
+  // us also after reparenting into the frame - otherwise the window grows or shrinks
+  // while the frame keeps its old size.
   {
     XWindowAttributes fa;
     XGetWindowAttributes(dpy, fx, &fa);
@@ -572,11 +572,11 @@ static void manage(Window w, bool existing) {
   set_frame_extents(w);
   XMapWindow(dpy, w);
   set_wm_state(w, NormalState);
-  // program chce startować zmaksymalizowany (np. Brave zapamiętał taki stan)
+  // the program wants to start maximized (e.g. Brave remembered that state)
   if (!c->dialog && (has_atom(w, A_NET_WM_STATE, A_NET_WM_STATE_MAX_V) ||
                      has_atom(w, A_NET_WM_STATE, A_NET_WM_STATE_MAX_H)))
     c->frame->toggle_zoom();
-  // klik w okno aplikacji ma je aktywować - przechwytujemy go synchronicznie
+  // a click in an application window should activate it - we catch it synchronously
   XGrabButton(dpy, AnyButton, AnyModifier, w, False, ButtonPressMask, GrabModeSync,
               GrabModeAsync, None, None);
   clients[w] = c;
@@ -601,10 +601,10 @@ static void unmanage(Client *c, bool destroyed) {
   Rect gone = c->frame->geom();
   c->frame->hide();
   XSync(dpy, False);
-  if (!c->own_anim) zoom_rects(gone, center_of(gone));   // zamykane okno "zapada się" do środka
+  if (!c->own_anim) zoom_rects(gone, center_of(gone));   // a closing window "collapses" into its center
   Fl::delete_widget(c->frame);
   delete c;
-  // fokus na ostatnio używane widoczne okno
+  // focus on the most recently used visible window
   if (!g_active) {
     if (Client *n = most_recent_visible(nullptr)) focus(n);
     else set_active_none();
@@ -617,13 +617,13 @@ static Client *client_of(Window w) {
 }
 
 // ---------------------------------------------------------------------------
-// Alt+Tab: przełączanie aplikacji (jak Cmd+Tab w Mac OS 9)
+// Alt+Tab: switching applications (like Cmd+Tab in Mac OS 9)
 // ---------------------------------------------------------------------------
 static bool cycling = false;
 static std::vector<Client *> cycle_list;
 static int cycle_idx = 0;
 
-// Wyciąga na wierzch wszystkie okna aplikacji, a fokus daje wybranemu.
+// Raises all windows of the application and gives the focus to the chosen one.
 static void bring_app_forward(Client *c) {
   std::vector<Client *> same;
   for (auto &[w, o] : clients)
@@ -638,7 +638,7 @@ static void bring_app_forward(Client *c) {
 
 static void alt_tab(bool backwards) {
   if (!cycling) {
-    // aplikacje od ostatnio używanej; każda reprezentowana przez najświeższe okno
+    // applications from the most recently used; each represented by its newest window
     std::vector<Client *> all;
     for (auto &[w, c] : clients) if (!c->dialog) all.push_back(c);
     std::sort(all.begin(), all.end(), [](Client *a, Client *b) { return a->mru > b->mru; });
@@ -651,7 +651,7 @@ static void alt_tab(bool backwards) {
     if (cycle_list.size() < 2) return;
     cycling = true;
     cycle_idx = 0;
-    // klawiatura do nas, żeby zauważyć puszczenie Alt
+    // keyboard to us, to notice Alt being released
     XGrabKeyboard(dpy, root, True, GrabModeAsync, GrabModeAsync, CurrentTime);
   }
   int n = (int)cycle_list.size();
@@ -666,7 +666,7 @@ static void alt_tab_end() {
   XUngrabKeyboard(dpy, CurrentTime);
 }
 
-// Panel Wygląd zmienił schemat: nowa paleta, tło głównego okna, ramki.
+// The Appearance panel changed the scheme: new palette, root window background, frames.
 static void set_root_background() {
   uchar r, g, b;
   Fl::get_color(plat::DESK_A, r, g, b);
@@ -680,7 +680,7 @@ static void appearance_changed() {
   for (auto &[w, c] : clients) c->frame->redraw();
 }
 
-// Surowe zdarzenia X - obsługujemy te, które dotyczą okien aplikacji i korzenia.
+// Raw X events - we handle the ones about application windows and the root.
 static int x_handler(void *event, void *) {
   XEvent *e = (XEvent *)event;
   switch (e->type) {
@@ -703,7 +703,7 @@ static int x_handler(void *event, void *) {
   }
   case MapRequest:
     if (e->xmaprequest.window == desktop_win) {
-      // biurko pokazane ponownie (np. Rambler przestawił mu typ na DESKTOP)
+      // the desktop shown again (e.g. Rambler switched its type to DESKTOP)
       XMapWindow(dpy, desktop_win);
       XLowerWindow(dpy, desktop_win);
     } else if (Client *c = client_of(e->xmaprequest.window)) XMapWindow(dpy, c->win);
@@ -715,17 +715,17 @@ static int x_handler(void *event, void *) {
     if (Client *c = client_of(r.window)) {
       Frame *f = c->frame;
       int nx = f->x(), ny = f->y(), nw = f->w(), nh = f->h(), nh_shrink = 0;
-      // prośba programu jest w pikselach, ramka w jednostkach FLTK
+      // the program's request is in pixels, the frame in FLTK units
       if (r.value_mask & CWX) nx = un(r.x) - FRAME;
       if (r.value_mask & CWY) {
         ny = un(r.y) - TITLE_H;
-        // okno chce stanąć pod paskiem menu: przesuń je niżej i skróć o tyle samo
+        // the window wants to stand under the menu bar: move it lower and shorten it by as much
         if (ny < MENUBAR_H && (r.value_mask & CWHeight)) nh_shrink = MENUBAR_H - ny;
         ny = std::max(MENUBAR_H, ny);
       }
       if (r.value_mask & CWWidth) nw = un(r.width) + 2 * FRAME;
       if (r.value_mask & CWHeight) nh = un(r.height) + TITLE_H + FRAME - nh_shrink;
-      Rect area = work_area();   // nie większe niż obszar roboczy, nie nad paskiem menu
+      Rect area = work_area();   // no larger than the work area, not above the menu bar
       nw = std::min(nw, area.w);
       if (!c->shaded) nh = std::min(nh, area.h);
       if (c->shaded) { c->full_h = nh; nh = f->h(); }
@@ -755,14 +755,14 @@ static int x_handler(void *event, void *) {
     return 0;
 
   case PropertyNotify:
-    if (e->xproperty.window == root && e->xproperty.atom == A_NIRVANA_DOK) {
+    if (e->xproperty.window == root && e->xproperty.atom == A_NIRVANA_DOCK) {
       read_dock_height();
       publish_workarea();
       return 0;
     }
-    if (e->xproperty.window == root && e->xproperty.atom == A_WYGLAD) {
+    if (e->xproperty.window == root && e->xproperty.atom == A_APPEARANCE) {
       appearance_changed();
-      return 0;   // niech zobaczą to też inne obsługi
+      return 0;   // let the other handlers see it too
     }
     if (Client *c = client_of(e->xproperty.window)) {
       if (e->xproperty.atom == XA_WM_NAME || e->xproperty.atom == A_NET_WM_NAME) {
@@ -780,12 +780,12 @@ static int x_handler(void *event, void *) {
       return 1;
     }
     if (desktop_win && e->xbutton.window == desktop_win) {
-      // Pasek menu działa na aktywne okno - klik w niego niczego nie zmienia.
+      // The menu bar acts on the active window - clicking it changes nothing.
       if (e->xbutton.y_root < MENUBAR_H) {
         XAllowEvents(dpy, ReplayPointer, CurrentTime);
         return 1;
       }
-      // klik w biurko: żadne okno nie jest aktywne
+      // click on the desktop: no window is active
       Client *old = g_active;
       g_active = nullptr;
       if (old) old->frame->redraw();
@@ -799,23 +799,23 @@ static int x_handler(void *event, void *) {
 
   case ClientMessage:
     if (e->xclient.window == root && e->xclient.message_type == XInternAtom(dpy, "_NIRVANA_RESTART", False)) {
-      // Narzędzia > Resetuj Nirvanę: uruchom się od nowa. Okna klientów są w "save set",
-      // więc po zamknięciu połączenia wracają do okna głównego, a nowy Insight
-      // przejmuje je przy starcie (XQueryTree).
+      // Special > Reset Nirvana: restart ourselves. Client windows are in the "save set",
+      // so after the connection closes they go back to the root window, and the new Insight
+      // takes them over at startup (XQueryTree).
       char exe[4096];
       ssize_t n = readlink("/proc/self/exe", exe, sizeof exe - 1);
-      exe[n > 0 ? n : 0] = 0;   // prawdziwa ścieżka - inaczej proces nazywałby się "exe"
-      // po aktualizacji pakietu działający plik jest usunięty: "/usr/bin/x (deleted)"
+      exe[n > 0 ? n : 0] = 0;   // the real path - otherwise the process would be called "exe"
+      // after a package upgrade the running file is deleted: "/usr/bin/x (deleted)"
       if (char *d = n > 0 ? strstr(exe, " (deleted)") : nullptr) *d = 0;
       if (n > 0 && access(exe, X_OK) != 0) n = 0;
       XCloseDisplay(dpy);
       if (n > 0) execv(exe, g_argv);
-      execvp("nirvana-insight", g_argv);   // PATH (np. po aktualizacji)
+      execvp("nirvana-insight", g_argv);   // PATH (e.g. after an upgrade)
       execv(g_argv[0], g_argv);
       _exit(1);
     }
     if (e->xclient.message_type == A_NET_WM_STATE) {
-      // data.l[0]: 0 usuń, 1 dodaj, 2 przełącz; l[1], l[2]: właściwości
+      // data.l[0]: 0 remove, 1 add, 2 toggle; l[1], l[2]: properties
       Client *c = client_of(e->xclient.window);
       if (!c) return 0;
       long act = e->xclient.data.l[0];
@@ -824,14 +824,14 @@ static int x_handler(void *event, void *) {
         bool want = act == 2 ? !c->shaded : act == 1;
         if (want != c->shaded && !c->dialog) c->frame->toggle_shade();
       }
-      // maksymalizacja (przycisk w pasku tytułu Chromium, Firefox...) = zoom
+      // maximizing (the title bar button of Chromium, Firefox...) = zoom
       Atom a1 = (Atom)e->xclient.data.l[1], a2 = (Atom)e->xclient.data.l[2];
       if (a1 == A_NET_WM_STATE_MAX_V || a1 == A_NET_WM_STATE_MAX_H || a2 == A_NET_WM_STATE_MAX_V ||
           a2 == A_NET_WM_STATE_MAX_H) {
         bool want = act == 2 ? !c->zoomed : act == 1;
         if (want != c->zoomed && !c->dialog) c->frame->toggle_zoom();
       }
-      // _NET_WM_STATE_HIDDEN: część programów minimalizuje się w ten sposób
+      // _NET_WM_STATE_HIDDEN: some programs minimize this way
       if (a1 == A_NET_WM_STATE_HIDDEN || a2 == A_NET_WM_STATE_HIDDEN) {
         bool want = act == 2 ? !c->hidden : act == 1;
         if (want && !c->hidden) iconify_client(c);
@@ -840,24 +840,24 @@ static int x_handler(void *event, void *) {
       return 1;
     }
     if (e->xclient.message_type == A_NET_REQUEST_FRAME_EXTENTS) {
-      // program pyta o ramkę jeszcze przed pokazaniem okna (GTK, Chromium)
+      // the program asks for the frame even before showing the window (GTK, Chromium)
       set_frame_extents(e->xclient.window);
       return 1;
     }
     if (e->xclient.message_type == A_NET_ACTIVE) {
       if (Client *c = client_of(e->xclient.window)) {
         if (c->shaded) c->frame->toggle_shade();
-        focus(c);                 // ukryte okno zostaje też pokazane
+        focus(c);                 // a hidden window is shown as well
       }
       return 1;
     }
     if (e->xclient.message_type == A_WM_CHANGE_STATE) {
-      // ICCCM: aplikacja (lub przełącznik) prosi o ukrycie okna
+      // ICCCM: the application (or the switcher) asks to hide the window
       if (Client *c = client_of(e->xclient.window))
         if (e->xclient.data.l[0] == IconicState) {
-          // "Ukryj" z menu aplikacji (gary) oznacza okno _NIRVANA_UKRYJ - bez ikony
-          // na biurku; minimalizacja z samego programu tworzy ikonę.
-          Atom mark = XInternAtom(dpy, "_NIRVANA_UKRYJ", False);
+          // "Hide" from the application menu (gary) marks the window with _NIRVANA_HIDE - no icon
+          // on the desktop; minimizing from the program itself creates an icon.
+          Atom mark = XInternAtom(dpy, "_NIRVANA_HIDE", False);
           Atom type; int fmt; unsigned long n, after; unsigned char *data = nullptr;
           bool plain = XGetWindowProperty(dpy, c->win, mark, 0, 1, True, AnyPropertyType, &type, &fmt, &n, &after,
                                           &data) == Success && type != None;
@@ -887,12 +887,12 @@ int main(int argc, char **argv) {
   fl_open_display();
   dpy = fl_display;
   root = DefaultRootWindow(dpy);
-  plat::init();   // ustawia też skalę interfejsu
+  plat::init();   // also sets the interface scale
   screen_w = un(DisplayWidth(dpy, DefaultScreen(dpy)));
   screen_h = un(DisplayHeight(dpy, DefaultScreen(dpy)));
 
-  // Zostań menedżerem okien: tylko jeden klient może przechwytywać
-  // SubstructureRedirect na korzeniu.
+  // Become the window manager: only one client can select
+  // SubstructureRedirect on the root.
   XSetErrorHandler(detect_wm);
   XSelectInput(dpy, root, SubstructureRedirectMask | SubstructureNotifyMask | PropertyChangeMask);
   XSync(dpy, False);
@@ -900,7 +900,7 @@ int main(int argc, char **argv) {
     fprintf(stderr, "insight: another window manager is already running\n");
     return 1;
   }
-  XSetErrorHandler(ignore_errors);   // okna znikają w dowolnym momencie - to normalne
+  XSetErrorHandler(ignore_errors);   // windows disappear at any moment - that is normal
 
   A_WM_PROTOCOLS = XInternAtom(dpy, "WM_PROTOCOLS", False);
   A_WM_DELETE = XInternAtom(dpy, "WM_DELETE_WINDOW", False);
@@ -913,7 +913,7 @@ int main(int argc, char **argv) {
   A_NET_SUPPORTED = XInternAtom(dpy, "_NET_SUPPORTED", False);
   A_NET_CHECK = XInternAtom(dpy, "_NET_SUPPORTING_WM_CHECK", False);
   A_NET_ACTIVE = XInternAtom(dpy, "_NET_ACTIVE_WINDOW", False);
-  A_WYGLAD = XInternAtom(dpy, plat::APPEARANCE_ATOM, False);
+  A_APPEARANCE = XInternAtom(dpy, plat::APPEARANCE_ATOM, False);
   A_NET_WM_STATE = XInternAtom(dpy, "_NET_WM_STATE", False);
   A_NET_WM_STATE_SHADED = XInternAtom(dpy, "_NET_WM_STATE_SHADED", False);
   A_NET_WM_TYPE_DIALOG = XInternAtom(dpy, "_NET_WM_WINDOW_TYPE_DIALOG", False);
@@ -925,10 +925,10 @@ int main(int argc, char **argv) {
   A_NET_WORKAREA = XInternAtom(dpy, "_NET_WORKAREA", False);
   A_NET_FRAME_EXTENTS = XInternAtom(dpy, "_NET_FRAME_EXTENTS", False);
   A_NET_REQUEST_FRAME_EXTENTS = XInternAtom(dpy, "_NET_REQUEST_FRAME_EXTENTS", False);
-  A_NIRVANA_DOK = XInternAtom(dpy, "_NIRVANA_DOK", False);
+  A_NIRVANA_DOCK = XInternAtom(dpy, "_NIRVANA_DOCK", False);
   A_WM_CHANGE_STATE = XInternAtom(dpy, "WM_CHANGE_STATE", False);
 
-  // Minimalne EWMH: kto jest menedżerem okien i co obsługuje.
+  // Minimal EWMH: who the window manager is and what it supports.
   Window check = XCreateSimpleWindow(dpy, root, -1, -1, 1, 1, 0, 0, 0);
   XChangeProperty(dpy, root, A_NET_CHECK, XA_WINDOW, 32, PropModeReplace, (unsigned char *)&check, 1);
   XChangeProperty(dpy, check, A_NET_CHECK, XA_WINDOW, 32, PropModeReplace, (unsigned char *)&check, 1);
@@ -945,19 +945,19 @@ int main(int argc, char **argv) {
   publish_workarea();
 
   XDefineCursor(dpy, root, XCreateFontCursor(dpy, XC_left_ptr));
-  set_root_background();   // kolor biurka ze schematu, zanim wstanie Rambler
+  set_root_background();   // the scheme's desktop color before Rambler comes up
 
   Fl::add_system_handler(x_handler, nullptr);
 
-  // Alt+Tab i Alt+Shift+Tab - także przy włączonym NumLocku i CapsLocku
+  // Alt+Tab and Alt+Shift+Tab - also with NumLock and CapsLock on
   KeyCode tab = XKeysymToKeycode(dpy, XK_Tab);
   for (unsigned extra : {0u, (unsigned)Mod2Mask, (unsigned)LockMask, (unsigned)(Mod2Mask | LockMask)})
     for (unsigned shift : {0u, (unsigned)ShiftMask})
       XGrabKey(dpy, tab, Mod1Mask | shift | extra, root, True, GrabModeAsync, GrabModeAsync);
 
-  // Przejmij okna, które już istnieją.
-  // Okna zikonizowane (WM_STATE = Iconic, np. po Resetuj Nirvanę) wracają jako ikony.
-  publish_iconic();   // pusta lista - stara mogła zostać po poprzednim Insighcie
+  // Take over the windows that already exist.
+  // Iconified windows (WM_STATE = Iconic, e.g. after Reset Nirvana) come back as icons.
+  publish_iconic();   // empty list - an old one could be left by the previous Insight
   Window r, p, *kids = nullptr;
   unsigned n = 0;
   if (XQueryTree(dpy, root, &r, &p, &kids, &n)) {
@@ -965,15 +965,15 @@ int main(int argc, char **argv) {
     for (unsigned i = 0; i < n; i++) {
       XWindowAttributes wa;
       if (!XGetWindowAttributes(dpy, kids[i], &wa) || wa.override_redirect || kids[i] == check) continue;
-      // serwer X mapuje okna z "save set" po wyjściu starego Insighta, więc stan
-      // ukrycia bierzemy z WM_STATE, a ikonę z naszego znacznika _NIRVANA_IKONA
+      // the X server maps "save set" windows after the old Insight exits, so the hidden
+      // state comes from WM_STATE, and the icon from our _NIRVANA_ICONIFIED mark
       bool iconic = false, icon = false;
       Atom type; int fmt; unsigned long cnt, after; unsigned char *data = nullptr;
       if (XGetWindowProperty(dpy, kids[i], A_WM_STATE, 0, 2, False, A_WM_STATE, &type, &fmt, &cnt, &after,
                              &data) == Success && data && cnt >= 1)
         iconic = ((long *)data)[0] == IconicState;
       if (data) { XFree(data); data = nullptr; }
-      if (iconic && XGetWindowProperty(dpy, kids[i], XInternAtom(dpy, "_NIRVANA_IKONA", False), 0, 1, False,
+      if (iconic && XGetWindowProperty(dpy, kids[i], XInternAtom(dpy, "_NIRVANA_ICONIFIED", False), 0, 1, False,
                                        AnyPropertyType, &type, &fmt, &cnt, &after, &data) == Success)
         icon = type != None;
       if (data) XFree(data);
@@ -988,5 +988,5 @@ int main(int argc, char **argv) {
     if (kids) XFree(kids);
   }
 
-  for (;;) Fl::wait(1e20);   // pętla działa także wtedy, gdy nie ma żadnego okna
+  for (;;) Fl::wait(1e20);   // the loop also runs when there is no window at all
 }

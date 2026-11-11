@@ -1,9 +1,9 @@
-// Nirvana Desktop - denise: biurko, pasek menu i okna menedżera plików (Rambler)
+// Nirvana Desktop - denise: the desktop, the menu bar and the file manager windows (Rambler)
 //
-// Biurko (wzór, ikony dysku i kosza, globalny pasek menu) to jedno okno X
-// typu DESKTOP. Każdy folder i każdy dialog to osobne okno X - ramki,
-// przesuwanie, zwijanie i fokus zapewnia menedżer okien (Insight).
-// Pasek menu działa na aktywne okno, które odczytujemy z _NET_ACTIVE_WINDOW.
+// The desktop (pattern, disk and Trash icons, the global menu bar) is a single X window
+// of type DESKTOP. Every folder and every dialog is a separate X window - frames,
+// moving, shading and focus are provided by the window manager (Insight).
+// The menu bar acts on the active window, which we read from _NET_ACTIVE_WINDOW.
 #pragma once
 
 #include <FL/Fl_Button.H>
@@ -25,50 +25,50 @@
 #include "spatial.h"
 
 class Desktop;
-void rambler_spawn(const std::vector<std::string> &args);   // podwójny fork
+void rambler_spawn(const std::vector<std::string> &args);   // double fork
 std::string rambler_exe(const char *name);                  // np. "nirvana-shell"
-std::string tooltypes(const std::string &path);             // parametry uruchamiania (Informacje)
+std::string tooltypes(const std::string &path);             // launch arguments (Information)
 std::vector<std::string> split_args(const std::string &s);
 
-// Okno najwyższego poziomu Ramblera: folder albo dialog.
+// A top-level Rambler window: a folder or a dialog.
 class NWin : public Fl_Double_Window {
 public:
   NWin(Desktop *d, int X, int Y, int W, int H, const char *title, bool dialog);
 
   Desktop *desk;
-  FolderPane *pane = nullptr;                  // nullptr dla dialogów
+  FolderPane *pane = nullptr;                  // nullptr for dialogs
   std::string path;
-  // Okno folderu: własny pasek menu (Okno, Ikony) i pasek nawigacji
-  // (wstecz, dalej, folder nadrzędny, położenie) nad zawartością.
+  // Folder window: its own menu bar (Window, Icons) and a navigation bar
+  // (back, forward, parent folder, location) above the content.
   Fl_Menu_Bar *menubar = nullptr;
   Fl_Button *back_b = nullptr, *fwd_b = nullptr, *up_b = nullptr;
   Fl_Input *loc = nullptr;
-  std::vector<std::string> back_hist, fwd_hist;   // historia przeglądania
-  static constexpr int MB_H = 20, NAV_H = 26;     // wysokości pasków
-  std::vector<std::function<void()>> actions;  // akcje przycisków dialogu
+  std::vector<std::string> back_hist, fwd_hist;   // browsing history
+  static constexpr int MB_H = 20, NAV_H = 26;     // bar heights
+  std::vector<std::function<void()>> actions;  // actions of the dialog buttons
   bool dialog;
-  // Własna ramka Platinum (CSD), gdy menedżerem okien nie jest Insight -
-  // np. pod GNOME. Wtedy okno jest bez dekoracji, a treść leży w środku ramki.
+  // Our own Platinum frame (CSD) when the window manager is not Insight -
+  // e.g. under GNOME. Then the window has no decorations and the content lies inside the frame.
   bool csd;
-  int ox() const { return csd ? plat::FRAME : 0; }          // przesunięcie treści
+  int ox() const { return csd ? plat::FRAME : 0; }          // content offset
   int oy() const { return csd ? plat::TITLE_H : 0; }
-  int extra_w() const { return csd ? 2 * plat::FRAME : 0; } // ramka razem
+  int extra_w() const { return csd ? 2 * plat::FRAME : 0; } // the whole frame
   int extra_h() const { return csd ? plat::TITLE_H + plat::FRAME : 0; }
-  plat::Rect content_rect();  // położenie treści na ekranie (pełna wysokość)
+  plat::Rect content_rect();  // position of the content on screen (full height)
 
-  bool is_active();     // czy to okno ma fokus (wg menedżera okien)
-  bool shaded();       // czy menedżer okien je zwinął
-  void set_shaded(bool s);    // poproś menedżer okien o zwinięcie/rozwinięcie
-  void activate_window();     // wyciągnij na wierzch i daj fokus
-  plat::Rect frame_rect();   // przybliżony obrys z ramką (do animacji)
+  bool is_active();     // does this window have the focus (according to the window manager)
+  bool shaded();       // has the window manager shaded it
+  void set_shaded(bool s);    // ask the window manager to shade/unshade
+  void activate_window();     // raise and give the focus
+  plat::Rect frame_rect();   // approximate outline with the frame (for animations)
 
   ~NWin() override;
-  int handle(int e) override;   // skróty klawiszowe trafiają do globalnego paska menu
+  int handle(int e) override;   // keyboard shortcuts go to the global menu bar
   void resize(int X, int Y, int W, int H) override;
   void draw() override;
 
 private:
-  // stan własnej ramki
+  // state of our own frame
   int csd_handle(int e);
   int hit_button(int ex, int ey) const;
   void csd_toggle_shade();
@@ -76,7 +76,7 @@ private:
   void start_moveresize(int direction);
   bool csd_shaded_ = false, csd_zoomed_ = false;
   int full_h_ = 0, unzoom_[4] = {0, 0, 0, 0};
-  enum { NONE, PENDING, MOVE, GROW, BTN } drag_ = NONE;   // PENDING: wciśnięte, jeszcze bez ruchu
+  enum { NONE, PENDING, MOVE, GROW, BTN } drag_ = NONE;   // PENDING: pressed, no movement yet
   int press_x_ = 0, press_y_ = 0;
   int drag_dx_ = 0, drag_dy_ = 0, armed_ = 0, pressed_ = 0;
 };
@@ -85,39 +85,39 @@ class Desktop : public Fl_Double_Window {
 public:
   Desktop(int W, int H, const std::string &home);
 
-  // Folder w oknie menedżera plików: domyślnie w ostatnio używanym oknie
-  // (jedno okno, które nawiguje), new_window - zawsze w nowym oknie.
+  // A folder in a file manager window: by default in the most recently used window
+  // (one window that navigates), new_window - always in a new window.
   void open_folder(const std::string &path, bool animate = true, bool new_window = false);
   enum class Nav { Go, Back, Forward };
   void navigate(NWin *w, const std::string &path, Nav how = Nav::Go);
-  void update_nav(NWin *w);       // przyciski i pole położenia
+  void update_nav(NWin *w);       // buttons and the location field
   void go_back();
   void go_forward();
   void new_window();
-  void go_location(NWin *w);      // Enter w polu położenia
-  NWin *menu_target = nullptr;    // okno, z którego paska menu wybrano polecenie
-  void restore();                 // otwórz okna zapamiętane z poprzedniej sesji
-  void close(NWin *w);            // zamknięcie okna (przycisk ramki, Ctrl+W, dialog)
+  void go_location(NWin *w);      // Enter in the location field
+  NWin *menu_target = nullptr;    // the window whose menu bar the command was chosen from
+  void restore();                 // open the windows remembered from the previous session
+  void close(NWin *w);            // closing a window (frame button, Ctrl+W, dialog)
   void remember(NWin *w, bool open);
-  void active_changed();          // menedżer okien zmienił aktywne okno
-  void clients_changed();         // zmieniła się lista okien (_NET_CLIENT_LIST)
-  void current_app(std::string &name, Fl_Image *&icon);   // aktywna aplikacja dla paska
-  std::vector<NWin *> folder_windows();                    // widoczne okna folderów
-  int shortcut();                 // skrót z innego okna -> pasek menu
+  void active_changed();          // the window manager changed the active window
+  void clients_changed();         // the window list changed (_NET_CLIENT_LIST)
+  void current_app(std::string &name, Fl_Image *&icon);   // the active application for the bar
+  std::vector<NWin *> folder_windows();                    // visible folder windows
+  int shortcut();                 // a shortcut from another window -> the menu bar
 
-  // Środowisko okien (wykrywane przy starcie)
-  bool csd_mode = false;          // menedżer okien to nie Insight: rysujemy ramki sami
-  bool wm_present = false;        // jakikolwiek menedżer okien zgodny z EWMH
-  bool wm_moveresize = false;     // WM obsługuje _NET_WM_MOVERESIZE (przesuwanie za nas)
-  NWin *manual_active = nullptr;  // aktywne okno, gdy nie ma menedżera okien
-  void redraw_frames();           // odśwież ramki (zmiana aktywnego okna)
+  // Window environment (detected at startup)
+  bool csd_mode = false;          // the window manager is not Insight: we draw the frames ourselves
+  bool wm_present = false;        // any EWMH-compliant window manager
+  bool wm_moveresize = false;     // the WM supports _NET_WM_MOVERESIZE (moves for us)
+  NWin *manual_active = nullptr;  // the active window when there is no window manager
+  void redraw_frames();           // refresh the frames (active window change)
   void detect_wm();
   plat::Rect desk_rect() { return {x_root(), y_root(), w(), h()}; }
 
   int handle(int e) override;
   void draw() override;
 
-  // akcje menu
+  // menu actions
   void about();
   void new_folder();
   void open_selected();
@@ -125,13 +125,13 @@ public:
   void move_to_trash();
   void empty_trash();
   void refresh_all();
-  void appearance_changed();      // panel Wygląd zmienił schemat (_NIRVANA_WYGLAD)
-  void open_appearance();         // uruchom panel Wygląd (nirvana-alice)
-  void open_network();            // panel Sieć
-  void open_power();              // panel Zasilanie
-  void open_terminal();           // Nirvana Shell w folderze aktywnego okna
+  void appearance_changed();      // the Appearance panel changed the scheme (_NIRVANA_APPEARANCE)
+  void open_appearance();         // start the Appearance panel (nirvana-alice)
+  void open_network();            // Network panel
+  void open_power();              // Power panel
+  void open_terminal();           // Nirvana Shell in the active window's folder
   void open_terminal_home();
-  // sieć (pasek menu)
+  // network (menu bar)
   void build_net_menu(Fl_Menu_Button *m);
   void net_action(bool connect, const std::string &iface);
   void net_refresh();
@@ -146,24 +146,24 @@ public:
   void duplicate();
   void copy_selected();
   void paste();
-  // pliki przeciągnięte z innych programów (lista file://) - kopiujemy do dest
+  // files dragged from other programs (file:// list) - copied into dest
   void drop_uris(const std::string &uri_list, const std::string &dest);
   void select_all();
   void view_icons();
   void view_list();
   void shade_all(bool shade);
   void close_all();
-  // --- menu Nirvana / Okno / Ikony / Narzędzia (menus.cxx) ---
-  void update_menu();            // aktywne/nieaktywne pozycje przed otwarciem menu
-  void update_menu(Fl_Menu_ *m, NWin *a);   // to samo dla wskazanego paska (okno folderu)
-  // Menu podręczne (prawy przycisk) otwieramy po obsłużeniu kliknięcia, nie w jego
-  // trakcie - menu FLTK otwarte wprost z FL_PUSH potrafiło się wywrócić przy szybkim
-  // ponownym otwarciu. X, Y - położenie w oknie, w którym kliknięto.
+  // --- Nirvana / Window / Icons / Special menus (menus.cxx) ---
+  void update_menu();            // active/inactive items before a menu opens
+  void update_menu(Fl_Menu_ *m, NWin *a);   // the same for the given menu bar (folder window)
+  // Context menus (right button) open after the click has been handled, not during it -
+  // an FLTK menu opened straight from FL_PUSH could crash when quickly
+  // reopened. X, Y - position in the window that was clicked.
   void desk_context_menu(int icon, int X, int Y);
   void folder_context_menu(NWin *w, int X, int Y);
-  static void later(std::function<void()> f);   // wykonaj po bieżącym zdarzeniu
-  Fl_Menu_Button *ctx_style_ = nullptr;           // ukryty przycisk: wygląd menu podręcznych
-  bool desk_shortcut();                     // skróty ikon biurka (bez aktywnego okna)
+  static void later(std::function<void()> f);   // run after the current event
+  Fl_Menu_Button *ctx_style_ = nullptr;           // hidden button: the look of the context menus
+  bool desk_shortcut();                     // shortcuts of desktop icons (no active window)
   void open_preferences();
   void execute_command();
   void open_log();
@@ -186,7 +186,7 @@ public:
   void icons_normal();
   void icons_large();
   void get_info();
-  void set_as_wallpaper();   // zaznaczony obraz na biurko
+  void set_as_wallpaper();   // the selected image onto the desktop
   void snapshot();
   void unsnapshot();
   void dock_add();
@@ -204,21 +204,21 @@ private:
     std::string name, path;
     plat::Icon icon;
     int x, y;
-    int vol = -1;   // indeks w vols_ dla ikon dysków
-    bool dock = false;   // ikona wyciągnięta na biurko (dok w lewym dolnym rogu)
-    Entry entry;         // dla doku: plik/folder/aplikacja
-    unsigned long win = 0;      // ikona zikonizowanego okna (Window); dwuklik je przywraca
-    bool prefs = false;         // ikona Preferencji (otwiera panel, nie folder)
-    bool no_drop() const { return win || prefs; }   // na tę ikonę nie upuszcza się plików
-    Fl_Image *img = nullptr;    // jej obrazek (z _NET_WM_ICON albo AppImage)
+    int vol = -1;   // index into vols_ for disk icons
+    bool dock = false;   // an icon left out on the desktop (the dock in the bottom left corner)
+    Entry entry;         // for the dock: file/folder/application
+    unsigned long win = 0;      // icon of an iconified window (Window); a double click restores it
+    bool prefs = false;         // the Preferences icon (opens the panel, not a folder)
+    bool no_drop() const { return win || prefs; }   // files cannot be dropped on this icon
+    Fl_Image *img = nullptr;    // its picture (from _NET_WM_ICON or the AppImage)
   };
-  int icon_cols_ = 1;   // kolumny ikon przy lewej krawędzi (dyski, okna, kosz)
-  // dok: ścieżki w ~/.config/nirvana/dok
+  int icon_cols_ = 1;   // icon columns at the left edge (disks, windows, Trash)
+  // dock: paths in ~/.config/nirvana/dock
   std::vector<std::string> dock_;
-  bool dock_collapsed_ = false;   // dok zwinięty do samej zakładki
-  int dock_shown_ = 0;            // ile ikon doku się zmieściło
-  int dock_press_ = -1;           // wciśnięty kafelek doku (otwarcie po puszczeniu)
-  int tip_icon_ = -1;             // kafelek z widoczną podpowiedzią
+  bool dock_collapsed_ = false;   // dock collapsed to just the tab
+  int dock_shown_ = 0;            // how many dock icons fit
+  int dock_press_ = -1;           // the pressed dock tile (opens on release)
+  int tip_icon_ = -1;             // the tile with a visible tooltip
   void dock_rect(int &X, int &Y, int &W, int &H) const;
   void draw_dock();
   void toggle_dock();
@@ -226,11 +226,11 @@ private:
   void load_dock();
   void save_dock();
   void format_dialog(int vi);
-  std::vector<std::string> targets();   // zaznaczone ikony (okno albo biurko)
+  std::vector<std::string> targets();   // selected icons (window or desktop)
   void set_icon_size(int s);
   void set_sort(FolderView::SortKey k);
   bool show_hidden_ = false;
-  // --- dyski i płyty ---
+  // --- disks and discs ---
   std::vector<vol::Volume> vols_;
   void watch_volumes();
   void rescan_volumes();
@@ -242,20 +242,20 @@ private:
   void ask_secret(const std::string &title, plat::Icon icon, const std::string &text,
                   const std::string &msg, const char *ok_label,
                   std::function<void(std::string &)> on_ok);
-  int volume_at_path(const std::string &path) const;   // wolumen zawierający ścieżkę
-  // przeciąganie ikony dysku po biurku (do kosza = wysuń)
+  int volume_at_path(const std::string &path) const;   // the volume containing the path
+  // dragging a disk icon over the desktop (to the Trash = eject)
   int vdrag_icon_ = -1, vpress_x_ = 0, vpress_y_ = 0;
   bool vdragging_ = false;
   Fl_Window *vghost_ = nullptr;
 
   NWin *find(const std::string &path);
   bool known(NWin *w) const;
-  NWin *active_folder();          // aktywne okno folderu (lub nullptr)
+  NWin *active_folder();          // the active folder window (or nullptr)
   void layout_icons();
 public:
   void iconic_changed() { icon_sel_ = -1; layout_icons(); redraw(); }
-  // Obszar na okna folderów (treść okna, współrzędne biurka): bez kolumny ikon
-  // dysków i kosza z prawej i bez doku na dole - zawsze je widać, też po zoomie.
+  // The area for folder windows (window content, desktop coordinates): without the
+  // icon column on the left and without the dock at the bottom - always visible, also after zoom.
   plat::Rect folder_area() const;
 private:
   void publish_folder_area();
@@ -263,25 +263,25 @@ private:
   void watch_trash();
   int icon_at(int ex, int ey) const;
   bool allowed(const std::string &path) const;
-  bool source_rect(const std::string &path, plat::Rect &out);  // ikona, z której "wylatuje" okno
+  bool source_rect(const std::string &path, plat::Rect &out);  // the icon the window "flies out" of
   plat::Rect to_screen(plat::Rect r) const { return {r.x + x_root(), r.y + y_root(), r.w, r.h}; }
   std::string title_for(const std::string &path) const;
   std::string trash_dir() const;
   bool trash_full() const;
-  void open_entry(const Entry &e, NWin *from = nullptr);   // folder: nawigacja w oknie from
+  void open_entry(const Entry &e, NWin *from = nullptr);   // folder: navigation in the window from
   void build_folder_bars(NWin *win, int X, int Y, int W);
-  bool desk_target_ = false;      // polecenie z menu podręcznego biurka
+  bool desk_target_ = false;      // a command from the desktop context menu
   void open_appimage(const std::string &path);
   void run_app(const std::string &path);
   std::string apps_dir() const;
   bool in_apps(const std::string &path) const;
   std::string app_destination(const std::string &path) const;
-  // operacje na plikach
+  // file operations
   std::string rename_path(const std::string &old, const std::string &name);
   bool trash_path(const std::string &path, std::string &err);
   void transfer(const std::vector<Entry> &items, const std::string &dest, bool copy, bool replace);
-  void path_moved(const std::string &from, const std::string &to);   // okna i pamięć pozycji
-  // przeciąganie
+  void path_moved(const std::string &from, const std::string &to);   // windows and position memory
+  // dragging
   struct DropTarget { NWin *win = nullptr; int item = -2; int icon = -1; };
   DropTarget target_at(int xr, int yr);
   void drag_start(NWin *src, const std::vector<Entry> &items);
@@ -294,31 +294,31 @@ private:
     std::vector<Entry> items;
     Fl_Window *ghost = nullptr;
     NWin *hl_win = nullptr;
-    int px = 0, py = 0;   // gdzie zaczęło się przeciąganie (ekran)
+    int px = 0, py = 0;   // where the drag started (screen)
   } drag_;
-  int icon_drop_ = -1;            // ikona biurka podświetlona jako cel upuszczania
-  std::vector<std::string> clipboard_;   // ścieżki skopiowane przez Edycja > Kopiuj
+  int icon_drop_ = -1;            // the desktop icon highlighted as the drop target
+  std::vector<std::string> clipboard_;   // paths copied with Icons > Copy
   void dialog(const std::string &title, const std::string &text,
               std::vector<std::pair<std::string, std::function<void()>>> buttons);
   static void dialog_cb(Fl_Widget *b, void *idx);
 
   std::string home_, root_path_;
   Spatial spatial_;
-  std::vector<NWin *> wins_;      // kolejność: ostatnio aktywne na końcu
+  std::vector<NWin *> wins_;      // order: most recently active at the end
   std::vector<DeskIcon> icons_;
   int icon_sel_ = -1;
   Fl_Menu_Bar *menu_;
-  Fl_Widget *app_menu_ = nullptr;   // gary: menu aplikacji w prawym górnym rogu
+  Fl_Widget *app_menu_ = nullptr;   // gary: the application menu in the top right corner
   int active_app_index(const std::vector<gary::App> &apps);
   Fl_Widget *extras_;
   Fl_Widget *vol_w_ = nullptr, *pow_w_ = nullptr, *tray_w_ = nullptr, *mem_w_ = nullptr;
   bool tray_pending_ = false;
 public:
-  void layout_bar();        // rozmieszczenie apletów i zasobnika na pasku menu
-  void start_tray();        // po show(): zasobnik systemowy (XEmbed + StatusNotifierItem)
+  void layout_bar();        // placing the applets and the tray in the menu bar
+  void start_tray();        // after show(): the system tray (XEmbed + StatusNotifierItem)
 private:
   std::unique_ptr<Fl_Tiled_Image> pattern_;
-  std::unique_ptr<Fl_RGB_Image> wallpaper_;   // biurko z tapetą (wzór + obraz), gdy jest tapeta
+  std::unique_ptr<Fl_RGB_Image> wallpaper_;   // the desktop with the wallpaper (pattern + image), when there is a wallpaper
   Fl_Menu_Item *logo_item_ = nullptr;
   void set_logo();
   Fl_RGB_Image *logo_img_ = nullptr;

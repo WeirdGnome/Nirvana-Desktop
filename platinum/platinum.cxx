@@ -1,4 +1,4 @@
-// Nirvana Desktop - libplatinum: implementacja wyglądu Platinum
+// Nirvana Desktop - libplatinum: the Platinum look implementation
 #include "platinum.h"
 
 #include <FL/Fl.H>
@@ -8,6 +8,8 @@
 #include <FL/fl_ask.H>
 #include <FL/fl_utf8.h>
 #include <FL/platform.H>
+#include <FL/Fl_Image_Surface.H>
+#include <FL/Fl_RGB_Image.H>
 #include <algorithm>
 #include <cmath>
 #include <cstdlib>
@@ -52,7 +54,7 @@ static void down_box(int x, int y, int w, int h, Fl_Color c) {
 static void up_frame(int x, int y, int w, int h, Fl_Color) { bevel(x, y, w, h, LIGHT, MID); }
 static void down_frame(int x, int y, int w, int h, Fl_Color) { bevel(x, y, w, h, MID, LIGHT); }
 
-// Przycisk Platinum: czarny zaokrąglony obrys, jasny górny-lewy brzeg.
+// Platinum button: a black rounded outline, a light top-left edge.
 static void button_box(int x, int y, int w, int h, Fl_Color c) {
   fl_color(c);
   fl_rounded_rectf(x, y, w, h, 3);
@@ -76,7 +78,7 @@ static void button_down(int x, int y, int w, int h, Fl_Color) {
   fl_rounded_rect(x, y, w, h, 3);
 }
 
-// "Studnia": białe wnętrze, ciemny obrys wewnętrzny, jasny zewnętrzny.
+// "Well": a white inside, a dark inner outline, a light outer one.
 static void well_box(int x, int y, int w, int h, Fl_Color c) {
   fl_color(c);
   fl_rectf(x + 2, y + 2, w - 4, h - 4);
@@ -96,20 +98,20 @@ static void menubar_box(int x, int y, int w, int h, Fl_Color c) {
   fl_xyline(x, y + h - 1, x + w - 1);
 }
 
-// Suwak przewijania: lawendowy z rowkami pośrodku, jak w Mac OS 9.
+// Scroll thumb: lavender with grooves in the middle, as in Mac OS 9.
 static void thumb_box(int x, int y, int w, int h, Fl_Color c) {
   fl_color(c);
   fl_rectf(x, y, w, h);
   bevel(x + 1, y + 1, w - 2, h - 2, fl_lighter(c), fl_darker(c));
   fl_color(DARK);
   fl_rect(x, y, w, h);
-  if (w > h + 6) {          // poziomy
+  if (w > h + 6) {          // horizontal
     int cx = x + w / 2 - 4;
     for (int i = 0; i < 4; i++) {
       fl_color(fl_lighter(c)); fl_yxline(cx + i * 2, y + 4, y + h - 5);
       fl_color(fl_darker(c));  fl_yxline(cx + i * 2 + 1, y + 4, y + h - 5);
     }
-  } else if (h > w + 6) {   // pionowy
+  } else if (h > w + 6) {   // vertical
     int cy = y + h / 2 - 4;
     for (int i = 0; i < 4; i++) {
       fl_color(fl_lighter(c)); fl_xyline(x + 4, cy + i * 2, x + w - 5);
@@ -129,14 +131,14 @@ static void track_box(int x, int y, int w, int h, Fl_Color) {
 }
 
 // ---------------------------------------------------------------------------
-// Skala interfejsu
+// Interface scale
 // ---------------------------------------------------------------------------
 const int SCALES[] = {0, 100, 125, 150, 175, 200, 250, 300, -1};
 static float g_scale = 1.0f;
 
 float ui_scale() { return g_scale; }
 
-// Xft.dpi z zasobów X (to samo czyta GNOME/KDE/Xfce): 96 dpi = 100%, 192 = 200%
+// Xft.dpi from the X resources (GNOME/KDE/Xfce read the same): 96 dpi = 100%, 192 = 200%
 static float xft_scale() {
 #if defined(FLTK_USE_X11)
   if (!fl_x11_display()) return 1.0f;
@@ -153,7 +155,7 @@ static float xft_scale() {
 }
 
 float configured_scale(const Appearance &a) {
-  if (const char *e = getenv("NIRVANA_SKALA")) {   // np. NIRVANA_SKALA=150 albo 1.5
+  if (const char *e = getenv("NIRVANA_SCALE")) {   // e.g. NIRVANA_SCALE=150 or 1.5
     double v = atof(e);
     if (v > 4) v /= 100;
     if (v >= 0.5 && v <= 4) return (float)v;
@@ -164,9 +166,9 @@ float configured_scale(const Appearance &a) {
 
 static void apply_scale() {
   fl_open_display();
-  // Wszystkie programy Nirvana Desktop (menedżer okien, biurko, panele) muszą mieć tę
-  // samą skalę - wymieniają między sobą współrzędne. Własna skala zamiast
-  // automatyki FLTK; bez zmiany skali skrótem Ctrl +/-.
+  // All Nirvana Desktop programs (window manager, desktop, panels) must use the
+  // same scale - they exchange coordinates. Our own scale instead of FLTK's
+  // automatic one; no scale changes with Ctrl +/-.
   g_scale = std::clamp(configured_scale(read_appearance()), 0.5f, 4.0f);
   Fl::keyboard_screen_scaling(0);
   Fl::option(Fl::OPTION_SHOW_SCALING, false);
@@ -174,9 +176,9 @@ static void apply_scale() {
 }
 
 void init() {
-  init_i18n();   // przed pierwszym tekstem interfejsu
+  init_i18n();   // before the first interface text
   Fl::scheme("none");
-  reload_appearance();   // schemat kolorów z ~/.config/nirvana/wyglad.conf
+  reload_appearance();   // color scheme from ~/.config/nirvana/appearance.conf
   apply_scale();
 
   int f = FL_FREE_BOXTYPE;
@@ -189,7 +191,7 @@ void init() {
   THUMB_BOX   = Fl_Boxtype(f++); Fl::set_boxtype(THUMB_BOX, thumb_box, 1, 1, 2, 2);
   TRACK_BOX   = Fl_Boxtype(f++); Fl::set_boxtype(TRACK_BOX, track_box, 1, 1, 2, 2);
 
-  // Standardowe widgety FLTK też dostają wygląd Platinum.
+  // Standard FLTK widgets get the Platinum look too.
   Fl::set_boxtype(FL_UP_BOX, up_box, 1, 1, 2, 2);
   Fl::set_boxtype(FL_THIN_UP_BOX, up_box, 1, 1, 2, 2);
   Fl::set_boxtype(FL_DOWN_BOX, down_box, 1, 1, 2, 2);
@@ -197,18 +199,18 @@ void init() {
   Fl::set_boxtype(FL_UP_FRAME, up_frame, 1, 1, 2, 2);
   Fl::set_boxtype(FL_DOWN_FRAME, down_frame, 1, 1, 2, 2);
 
-  // Jeśli w systemie jest wolna czcionka w stylu Chicago, użyj jej.
+  // If the system has a free Chicago-style font, use it.
   if (const char *ff = getenv("NIRVANA_SYSTEM_FONT")) {
     Fl::set_font(FL_FREE_FONT, ff);
     FONT_SYSTEM = FL_FREE_FONT;
   }
-  // przyciski okien dialogowych FLTK (fl_alert, wybór koloru...) po polsku
+  // buttons of FLTK dialogs (fl_alert, color chooser...) in the interface language
   fl_ok = _("OK");
   fl_cancel = _("Cancel");
   fl_yes = _("Yes");
   fl_no = _("No");
   fl_close = _("Close");
-  // podpowiedzi (dok, aplety, gary): dymek pomocy jak w Mac OS
+  // tooltips (dock, applets, gary): a help balloon as in Mac OS
   Fl_Tooltip::font(FONT_SMALL);
   Fl_Tooltip::size(SIZE_SMALL + 1);
   Fl_Tooltip::color(fl_rgb_color(255, 255, 204));
@@ -218,9 +220,9 @@ void init() {
 }
 
 // ---------------------------------------------------------------------------
-// Ikony
+// Icons
 // ---------------------------------------------------------------------------
-// Zaznaczona ikona w Mac OS 9 jest przyciemniona - robimy to samo.
+// A selected icon in Mac OS 9 is darkened - we do the same.
 static inline void col(unsigned v, bool sel) {
   Fl_Color c = rgb(v);
   fl_color(sel ? fl_color_average(c, FL_BLACK, 0.5f) : c);
@@ -236,7 +238,7 @@ static void folder(int x, int y, bool sel, bool open) {
   col(0x7272C8, sel);
   fl_xyline(x + 3, y + 26, x + 28);
   fl_yxline(x + 28, y + 10, y + 26);
-  if (open) {  // folder z otwartym oknem: wzór kreskowany
+  if (open) {  // folder with an open window: a hatched pattern
     col(0x55559A, sel);
     for (int yy = y + 11; yy < y + 26; yy += 2)
       for (int xx = x + 4 + (yy & 2); xx < x + 28; xx += 4) fl_point(xx, yy);
@@ -244,6 +246,49 @@ static void folder(int x, int y, bool sel, bool open) {
   fl_color(DARK);
   fl_loop(x + 2, y + 9, x + 4, y + 6, x + 13, y + 6, x + 15, y + 9);
   fl_rect(x + 2, y + 9, 28, 19);
+}
+
+// Terminal (Nirvana Shell): a small monitor with a dark screen and a green ">_" prompt
+static void terminal_icon(int x, int y, bool sel) {
+  col(0xD6D6D6, sel);                       // case
+  fl_rectf(x + 2, y + 3, 28, 22);
+  col(0xF4F4F4, sel);
+  fl_xyline(x + 3, y + 4, x + 28);
+  fl_yxline(x + 3, y + 5, y + 23);
+  col(0x9A9A9A, sel);
+  fl_xyline(x + 3, y + 24, x + 29);
+  fl_yxline(x + 29, y + 4, y + 24);
+  col(0x0E1A12, sel);                       // screen
+  fl_rectf(x + 5, y + 6, 22, 16);
+  col(0x3CE06A, sel);                       // prompt
+  fl_line_style(FL_SOLID, 2);
+  fl_line(x + 8, y + 9, x + 12, y + 13);
+  fl_line(x + 12, y + 13, x + 8, y + 17);
+  fl_line_style(0);
+  fl_rectf(x + 14, y + 17, 7, 2);
+  col(0xB8B8B8, sel);                       // stand
+  fl_polygon(x + 11, y + 25, x + 21, y + 25, x + 23, y + 29, x + 9, y + 29);
+  fl_color(DARK);
+  fl_rect(x + 2, y + 3, 28, 22);
+  fl_rect(x + 5, y + 6, 22, 16);
+  fl_loop(x + 11, y + 25, x + 21, y + 25, x + 23, y + 29, x + 9, y + 29);
+}
+
+// Applications: a folder with four colorful application tiles (2 x 2) on its front
+static void applications_icon(int x, int y, bool sel) {
+  folder(x, y, sel, false);
+  static const unsigned tiles[4][2] = {   // face, highlight
+    {0xD8433B, 0xF59A92}, {0x3E9A4A, 0x95D99C}, {0x3A6FC8, 0x9CC0F2}, {0xE8A21C, 0xFAD786}};
+  for (int i = 0; i < 4; i++) {
+    int tx = x + 9 + (i % 2) * 8, ty = y + 11 + (i / 2) * 8;
+    col(tiles[i][0], sel);
+    fl_rectf(tx, ty, 7, 7);
+    col(tiles[i][1], sel);
+    fl_xyline(tx + 1, ty + 1, tx + 4);     // gloss on the upper-left edge
+    fl_yxline(tx + 1, ty + 2, ty + 3);
+    fl_color(DARK);
+    fl_rect(tx, ty, 7, 7);
+  }
 }
 
 static void page(int x, int y, bool sel) {
@@ -267,7 +312,7 @@ static void application(int x, int y, bool sel) {
   col(0xE6DAFF, sel);
   fl_polygon(cx, cy - 8, cx + 8, cy, cx, cy + 8, cx - 8, cy);
   col(0x5B3FA0, sel);
-  fl_line(cx - 4, cy + 4, cx + 5, cy - 5);   // "ołówek" na rombie
+  fl_line(cx - 4, cy + 4, cx + 5, cy - 5);   // a "pencil" on the diamond
   fl_line(cx - 3, cy + 4, cx + 5, cy - 4);
   fl_color(DARK);
   fl_loop(cx, cy - 14, cx + 14, cy, cx, cy + 14, cx - 14, cy);
@@ -282,7 +327,7 @@ static void home_disk(int x, int y, bool sel) {
   fl_rectf(x + 3, y + 19, 26, 5);
   col(0x22CC44, sel);
   fl_rectf(x + 24, y + 20, 3, 2);
-  // mały domek na obudowie
+  // a small house on the case
   col(0x5B3FA0, sel);
   fl_polygon(x + 6, y + 15, x + 9, y + 12, x + 12, y + 15);
   fl_rectf(x + 7, y + 15, 4, 3);
@@ -303,7 +348,7 @@ static void trash(int x, int y, bool sel, bool full) {
   for (int i = 0; i < 4; i++) fl_line(x + 11 + i * 3, y + 13, x + 11 + i * 3, y + 27);
   fl_color(DARK);
   fl_loop(x + 8, y + 10, x + 24, y + 10, x + 23, y + 30, x + 9, y + 30);
-  // pokrywa (przy pełnym koszu uchylona)
+  // the lid (ajar when the Trash is full)
   col(0xBDBDBD, sel);
   if (full) {
     fl_polygon(x + 6, y + 8, x + 25, y + 5, x + 26, y + 8, x + 7, y + 10);
@@ -318,7 +363,7 @@ static void trash(int x, int y, bool sel, bool full) {
   }
 }
 
-// Dysk wewnętrzny: szara obudowa z diodą (jak Nirvana HD, bez domku)
+// Internal disk: a gray case with an LED (like Nirvana HD, without the house)
 static void hard_disk(int x, int y, bool sel) {
   col(0xD8D8D8, sel); fl_rectf(x + 2, y + 10, 28, 15);
   col(0xFFFFFF, sel); fl_xyline(x + 3, y + 11, x + 28);
@@ -327,19 +372,19 @@ static void hard_disk(int x, int y, bool sel) {
   fl_color(DARK); fl_rect(x + 2, y + 10, 28, 15);
 }
 
-// Pendrive: korpus z wtykiem USB
+// USB stick: a body with a USB plug
 static void removable(int x, int y, bool sel) {
-  col(0xC0C0C0, sel); fl_rectf(x + 20, y + 12, 8, 9);              // wtyk
+  col(0xC0C0C0, sel); fl_rectf(x + 20, y + 12, 8, 9);              // plug
   col(0x707070, sel); fl_rectf(x + 23, y + 14, 2, 2); fl_rectf(x + 23, y + 18, 2, 2);
-  col(0x5B3FA0, sel); fl_rectf(x + 3, y + 9, 18, 15);              // korpus
+  col(0x5B3FA0, sel); fl_rectf(x + 3, y + 9, 18, 15);              // body
   col(0x8C74C8, sel); fl_xyline(x + 4, y + 10, x + 19);
-  col(0xF0C040, sel); fl_rectf(x + 6, y + 14, 6, 5);               // naklejka
+  col(0xF0C040, sel); fl_rectf(x + 6, y + 14, 6, 5);               // label
   fl_color(DARK);
   fl_rect(x + 3, y + 9, 18, 15);
   fl_rect(x + 20, y + 12, 8, 9);
 }
 
-// Płyta CD/DVD: srebrny krążek z otworem i tęczowym połyskiem
+// CD/DVD: a silver disc with a hole and a rainbow sheen
 static void optical(int x, int y, bool sel) {
   col(0xE4E4EC, sel); fl_pie(x + 3, y + 3, 26, 26, 0, 360);
   col(0xB8C8F0, sel); fl_pie(x + 3, y + 3, 26, 26, 20, 70);
@@ -350,25 +395,25 @@ static void optical(int x, int y, bool sel) {
   fl_arc(x + 13, y + 13, 6, 6, 0, 360);
 }
 
-// Dysk zaszyfrowany: dysk z kłódką
+// Encrypted disk: a disk with a padlock
 static void encrypted(int x, int y, bool sel) {
   hard_disk(x, y + 3, sel);
-  col(0xF0C040, sel); fl_rectf(x + 18, y + 13, 11, 9);             // korpus kłódki
+  col(0xF0C040, sel); fl_rectf(x + 18, y + 13, 11, 9);             // padlock body
   fl_color(DARK); fl_rect(x + 18, y + 13, 11, 9);
-  fl_arc(x + 19, y + 6, 9, 12, 0, 180);                            // pałąk
+  fl_arc(x + 19, y + 6, 9, 12, 0, 180);                            // shackle
   fl_line(x + 19, y + 12, x + 19, y + 13);
   fl_line(x + 27, y + 12, x + 27, y + 13);
-  fl_rectf(x + 23, y + 16, 1, 3);                                  // dziurka
+  fl_rectf(x + 23, y + 16, 1, 3);                                  // keyhole
 }
 
-// Symbol wysuwania (kosz podczas przeciągania dysku, jak w Mac OS)
+// Eject symbol (the Trash while dragging a disk, as in Mac OS)
 static void eject_icon(int x, int y, bool sel) {
   col(0x404040, sel);
   fl_polygon(x + 16, y + 5, x + 28, y + 19, x + 4, y + 19);
   fl_rectf(x + 4, y + 23, 25, 5);
 }
 
-// Sieć: kula ziemska z wtyczką (panel Sieć, okna dialogowe)
+// Network: a globe with a plug (Network panel, dialogs)
 static void network_icon(int x, int y, bool sel) {
   col(0x3A78C8, sel);
   fl_pie(x + 4, y + 2, 24, 24, 0, 360);
@@ -381,7 +426,7 @@ static void network_icon(int x, int y, bool sel) {
   fl_arc(x + 4, y + 2, 24, 24, 0, 360);
   fl_arc(x + 10, y + 2, 12, 24, 0, 360);
   fl_xyline(x + 5, y + 14, x + 27);
-  // kabel z wtyczką
+  // cable with a plug
   col(0x404040, sel);
   fl_line_style(FL_SOLID, 2);
   fl_line(x + 16, y + 26, x + 16, y + 29);
@@ -389,20 +434,20 @@ static void network_icon(int x, int y, bool sel) {
   fl_rectf(x + 12, y + 28, 9, 4);
 }
 
-// Preferencje: okienko panelu sterowania z trzema suwakami
+// Preferences: a control panel window with three sliders
 static void preferences_icon(int x, int y, bool sel) {
   col(0xD8D8D8, sel);
   fl_rectf(x + 3, y + 4, 26, 24);
   col(0x6A5AB8, sel);
-  fl_rectf(x + 3, y + 4, 26, 5);            // pasek tytułu
+  fl_rectf(x + 3, y + 4, 26, 5);            // title bar
   col(0xFFFFFF, sel);
   fl_rectf(x + 5, y + 6, 2, 1);
   for (int i = 0; i < 3; i++) {
     int ly = y + 13 + i * 5, kx = x + 8 + (i == 0 ? 12 : i == 1 ? 4 : 9);
     col(0x606060, sel);
-    fl_xyline(x + 7, ly, x + 25);           // rowek suwaka
+    fl_xyline(x + 7, ly, x + 25);           // slider groove
     col(0x3A78C8 + i * 0x301000, sel);
-    fl_rectf(kx, ly - 2, 5, 5);             // gałka
+    fl_rectf(kx, ly - 2, 5, 5);             // knob
     fl_color(DARK);
     fl_rect(kx, ly - 2, 5, 5);
   }
@@ -424,7 +469,7 @@ static void wifi_icon(int x, int y, bool sel) {
 }
 
 void draw_wifi(int x, int y, int level, Fl_Color on, Fl_Color off) {
-  // kropka i trzy łuki rozchodzące się w górę (16x13)
+  // a dot and three arcs spreading upwards (16x13)
   int cx = x + 8, by = y + 12;
   fl_color(level >= 1 ? on : off);
   fl_pie(cx - 1, by - 2, 3, 3, 0, 360);
@@ -435,7 +480,7 @@ void draw_wifi(int x, int y, int level, Fl_Color on, Fl_Color off) {
     fl_arc(cx - r, by - r, 2 * r + 1, 2 * r + 1, 45, 135);
   }
   fl_line_style(0);
-  if (level < 0) {   // wyłączone: ukośna kreska
+  if (level < 0) {   // off: a diagonal line
     fl_color(on);
     fl_line_style(FL_SOLID, 2);
     fl_line(x + 2, y + 1, x + 14, y + 12);
@@ -444,7 +489,7 @@ void draw_wifi(int x, int y, int level, Fl_Color on, Fl_Color off) {
 }
 
 void draw_wired(int x, int y, Fl_Color c) {
-  // trzy połączone kwadraty - klasyczny symbol sieci
+  // three connected squares - the classic network symbol
   fl_color(c);
   fl_rectf(x + 5, y, 6, 5);
   fl_rectf(x, y + 8, 6, 5);
@@ -468,7 +513,7 @@ void draw_speaker(int x, int y, int level, bool muted, Fl_Color c, double sc) {
   fl_translate(x, y);
   fl_scale(sc);
   fl_color(c);
-  // korpus i lejek
+  // body and cone
   fl_begin_polygon();
   fl_vertex(0, 4); fl_vertex(3, 4); fl_vertex(7, 0.5); fl_vertex(7, 12.5); fl_vertex(3, 9); fl_vertex(0, 9);
   fl_end_polygon();
@@ -500,7 +545,7 @@ void draw_battery(int x, int y, int pct, bool charging, Fl_Color c, double sc) {
     fl_color(pct <= 10 && !charging ? fl_rgb_color(0xC0, 0x20, 0x20) : c);
     fl_begin_polygon(); fl_vertex(2, 2); fl_vertex(2 + fw, 2); fl_vertex(2 + fw, 9); fl_vertex(2, 9); fl_end_polygon();
   }
-  if (charging) {   // błyskawica w kolorze tła paska na wypełnieniu
+  if (charging) {   // a lightning bolt in the bar background color on the fill
     fl_color(GRAY);
     fl_begin_polygon(); fl_vertex(11, 1); fl_vertex(6.5, 6); fl_vertex(9.5, 6); fl_vertex(8, 10); fl_vertex(13, 4.5); fl_vertex(10, 4.5); fl_end_polygon();
     fl_color(c);
@@ -545,12 +590,12 @@ void draw_depth_gadget(int x, int y, bool pressed) {
   Fl_Color line = pressed ? SEL_TEXT : TEXT;
   Fl_Color back = pressed ? SEL : GRAY;
   Fl_Color front = pressed ? fl_color_average(SEL_TEXT, SEL, 0.35f) : LIGHT;
-  // tylny: lewy górny, sam obrys
+  // back: top left, outline only
   fl_color(back);
   fl_rectf(x, y, 12, 9);
   fl_color(line);
   fl_rect(x, y, 12, 9);
-  // przedni: prawy dolny, wypełniony, przykrywa róg tylnego
+  // front: bottom right, filled, covers the corner of the back one
   fl_color(front);
   fl_rectf(x + 6, y + 5, 12, 9);
   fl_color(line);
@@ -610,13 +655,15 @@ void draw_icon(Icon icon, int x, int y, bool sel) {
   case Icon::Network:     network_icon(x, y, sel); break;
   case Icon::Wifi:        wifi_icon(x, y, sel); break;
   case Icon::Preferences: preferences_icon(x, y, sel); break;
+  case Icon::Applications: applications_icon(x, y, sel); break;
+  case Icon::Terminal:    terminal_icon(x, y, sel); break;
   }
 }
 
-// Logo Nirvana Desktop: chip DIP (ukłon w stronę układów Amigi) z literą "N".
+// The Nirvana Desktop logo: a DIP chip (a nod to the Amiga chips) with the letter "N".
 void draw_logo(int x, int y, int s) {
   Fl_Color body = rgb(0x4B3590);
-  fl_color(rgb(0x777777));   // logo ma stałe kolory, niezależne od schematu
+  fl_color(rgb(0x777777));   // the logo has fixed colors, independent of the scheme
   for (int i = 0; i < 4; i++) {
     int px = x + 3 + i * (s - 6) / 3;
     fl_rectf(px, y, 2, 2);
@@ -628,28 +675,49 @@ void draw_logo(int x, int y, int s) {
   fl_rect(x + 1, y + 2, s - 2, s - 4);
   fl_color(FL_WHITE);
   int nx = x + s / 2 - 3, ny = y + 4, nh = s - 8, nw = 7;
-  fl_rectf(nx, ny, 2, nh);                 // N: dwie kreski i skos
+  fl_rectf(nx, ny, 2, nh);                 // N: two strokes and a diagonal
   fl_rectf(nx + nw - 2, ny, 2, nh);
   for (int k = 0; k < nh; k++) fl_rectf(nx + 1 + k * (nw - 3) / std::max(1, nh - 1), ny + k, 2, 1);
   fl_color(rgb(0xF0C040));
-  fl_pie(x + 2, y + 3, 3, 3, 0, 360);   // znacznik pinu 1
+  fl_pie(x + 2, y + 3, 3, 3, 0, 360);   // pin 1 mark
 }
 
 // ---------------------------------------------------------------------------
-// Chrome okna
+// Window chrome
 // ---------------------------------------------------------------------------
+// Title bar buttons in fixed colors, whatever the scheme: red closes, yellow
+// minimizes (iconifies), green maximizes (zoom). Platinum square shape with a bevel.
+static unsigned mix_rgb(unsigned a, unsigned b, double t) {
+  auto ch = [&](int sh) { return (unsigned)(((a >> sh) & 0xFF) * (1 - t) + ((b >> sh) & 0xFF) * t + 0.5) << sh; };
+  return ch(16) | ch(8) | ch(0);
+}
+
 static void title_button(int x, int y, int kind, bool pressed) {
-  fl_color(SHADOW);
+  static const unsigned face[] = {0, 0xE5483F, 0x3DB54A, 0xF2B526};   // 1 close, 2 zoom, 3 iconify
+  static const unsigned dark[] = {0, 0x8E1F19, 0x1F6E28, 0x9A6B00};
+  unsigned f = face[kind], d = dark[kind];
+  if (pressed) f = mix_rgb(f, 0x000000, 0.25);
+  auto rgb = [](unsigned v) { return fl_rgb_color(v >> 16, (v >> 8) & 0xFF, v & 0xFF); };
+  fl_color(rgb(d));
   fl_rect(x, y, BOX, BOX);
-  fl_color(pressed ? SHADOW : GRAY);
+  fl_color(rgb(f));
   fl_rectf(x + 1, y + 1, BOX - 2, BOX - 2);
-  if (!pressed) bevel(x + 1, y + 1, BOX - 2, BOX - 2, LIGHT, MID);
-  fl_color(pressed ? LIGHT : DARK);
-  if (kind == 2) {                        // zoom: mały kwadrat w rogu
-    fl_rect(x + 2, y + 2, 5, 5);
-  } else if (kind == 3) {                 // zwiń (windowshade): pozioma kreska
-    fl_xyline(x + 2, y + 4, x + BOX - 3);
-    fl_xyline(x + 2, y + 6, x + BOX - 3);
+  if (!pressed) {   // light upper-left edge, darker lower-right edge
+    fl_color(rgb(mix_rgb(f, 0xFFFFFF, 0.55)));
+    fl_xyline(x + 1, y + 1, x + BOX - 3);
+    fl_yxline(x + 1, y + 2, y + BOX - 3);
+    fl_color(rgb(mix_rgb(f, 0x000000, 0.2)));
+    fl_xyline(x + 2, y + BOX - 2, x + BOX - 2);
+    fl_yxline(x + BOX - 2, y + 2, y + BOX - 3);
+  }
+  fl_color(rgb(d));
+  if (kind == 2) {                        // zoom: a small square in the corner
+    fl_rect(x + 3, y + 3, 5, 5);
+  } else if (kind == 3) {                 // iconify: a horizontal line
+    fl_xyline(x + 3, y + 5, x + BOX - 4);
+  } else if (kind == 1 && pressed) {      // close: a cross while pressed
+    fl_line(x + 3, y + 3, x + BOX - 4, y + BOX - 4);
+    fl_line(x + 3, y + BOX - 4, x + BOX - 4, y + 3);
   }
 }
 
@@ -657,7 +725,7 @@ void draw_titlebar(int x, int y, int w, const char *title, bool active, int pres
   int by = y + (TITLE_H - BOX) / 2;
   int close_x = x + 8;
   int zoom_x = x + w - 8 - BOX;
-  int shade_x = boxes == 2 ? zoom_x : zoom_x - BOX - 5;   // bez "zoom": zwijanie w rogu
+  int shade_x = boxes == 2 ? zoom_x : zoom_x - BOX - 5;   // without "zoom": iconify in the corner
 
   fl_font(FONT_SYSTEM, SIZE_SYSTEM);
   std::string t = ellipsize(title ? title : "", w - 2 * (BOX * 2 + 30));
@@ -666,7 +734,7 @@ void draw_titlebar(int x, int y, int w, const char *title, bool active, int pres
 
   TitleStyle st = title_style();
   if (st != TitleStyle::Stripes) {
-    // Kolorowy pasek (schematy w stylu Redmond97): jednolity albo gradient.
+    // A colored bar (Redmond97 style schemes): solid or gradient.
     const Scheme &sc = current_scheme();
     unsigned c1 = active ? sc.title : sc.title_i, c2 = active ? sc.title2 : sc.title_i2;
     int fx = x + 3, fw = w - 6, fy = y + 3, fh = TITLE_H - 5;
@@ -687,7 +755,7 @@ void draw_titlebar(int x, int y, int w, const char *title, bool active, int pres
       if (boxes != 2) title_button(zoom_x, by, 2, pressed == 2);
     }
   } else if (active) {
-    // Prążki: ciemna linia nad jasną, przerwane przy tytule i przyciskach.
+    // Stripes: a dark line above a light one, interrupted at the title and the buttons.
     auto stripe = [&](int x0, int x1) {
       if (x1 <= x0) return;
       for (int yy = y + 4; yy <= y + TITLE_H - 6; yy += 2) {
@@ -722,7 +790,7 @@ void draw_frame(int x, int y, int w, int h, bool active, bool shaded) {
   if (active) bevel(x + 1, y + 1, w - 2, h - 2, LIGHT, MID);
   fl_color(active ? DARK : SHADOW);
   fl_rect(x, y, w, h);
-  // cień okna (prawa i dolna krawędź), jak w Platinum
+  // window shadow (right and bottom edge), as in Platinum
   if (!shaded) {
     fl_color(SHADOW);
     fl_xyline(x + 2, y + h, x + w);
@@ -731,7 +799,7 @@ void draw_frame(int x, int y, int w, int h, bool active, bool shaded) {
 }
 
 void draw_grow_box(int x, int y) {
-  // 15x15, dwie zachodzące na siebie ramki - uchwyt zmiany rozmiaru
+  // 15x15, two overlapping frames - the resize handle
   fl_color(GRAY);
   fl_rectf(x, y, 15, 15);
   fl_color(SHADOW);
@@ -743,7 +811,7 @@ void draw_grow_box(int x, int y) {
 }
 
 // ---------------------------------------------------------------------------
-// Pomocnicze
+// Helpers
 // ---------------------------------------------------------------------------
 std::string ellipsize(const std::string &s, int max_w) {
   if (max_w <= 0) return "";
@@ -751,7 +819,7 @@ std::string ellipsize(const std::string &s, int max_w) {
   std::string t = s;
   const char *ell = "\xE2\x80\xA6";  // "…"
   while (!t.empty()) {
-    // usuń ostatni znak UTF-8
+    // remove the last UTF-8 character
     const char *b = t.c_str();
     const char *e = b + t.size();
     const char *p = fl_utf8back(e - 1, b, e);
@@ -761,12 +829,12 @@ std::string ellipsize(const std::string &s, int max_w) {
   return ell;
 }
 
-std::string polish_items(int n) {
+std::string items_text(int n) {
   return fmt(trn(n, "%1 item", "%1 items"), std::to_string(n));
 }
 
-// Okno wyboru pliku FLTK po polsku (Sieć: import VPN, Wygląd: tapeta).
-void polish_file_chooser() {
+// The FLTK file chooser in the interface language (Network: VPN import, Appearance: wallpaper).
+void localize_file_chooser() {
   fl_cancel = _("Cancel");
   fl_ok = _("Choose");
   Fl_File_Chooser::add_favorites_label = _("Add to Favorites");
@@ -785,4 +853,44 @@ void polish_file_chooser() {
   Fl_File_Chooser::show_label = _("Show:");
 }
 
-} // namespace plat
+// An icon as an RGBA image: drawn at 32x32 on a transparent background (an
+// offscreen with alpha), scaled to `size`.
+Fl_RGB_Image *icon_image(Icon icon, int size) {
+  // two renderings, on black and on white: the alpha comes from their difference
+  unsigned char *px[2] = {nullptr, nullptr};
+  for (int pass = 0; pass < 2; pass++) {
+    Fl_Image_Surface surf(32, 32);
+    Fl_Surface_Device::push_current(&surf);
+    fl_color(pass ? FL_WHITE : FL_BLACK);
+    fl_rectf(0, 0, 32, 32);
+    draw_icon(icon, 0, 0, false);
+    Fl_Surface_Device::pop_current();
+    Fl_RGB_Image *img = surf.image();
+    px[pass] = new unsigned char[32 * 32 * 3];
+    const unsigned char *src = (const unsigned char *)img->data()[0];
+    int d = img->d(), ld = img->ld() ? img->ld() : img->data_w() * d;
+    for (int yy = 0; yy < 32; yy++)
+      for (int xx = 0; xx < 32; xx++)
+        for (int c = 0; c < 3; c++) px[pass][(yy * 32 + xx) * 3 + c] = src[yy * ld + xx * d + c];
+    delete img;
+  }
+  auto *rgba = new unsigned char[32 * 32 * 4];
+  for (int i = 0; i < 32 * 32; i++) {
+    int a = 255 - (px[1][i * 3 + 1] - px[0][i * 3 + 1]);   // green channel difference
+    a = std::clamp(a, 0, 255);
+    for (int c = 0; c < 3; c++)
+      rgba[i * 4 + c] = a ? (unsigned char)std::min(255, px[0][i * 3 + c] * 255 / a) : 0;
+    rgba[i * 4 + 3] = (unsigned char)a;
+  }
+  delete[] px[0];
+  delete[] px[1];
+  auto *full = new Fl_RGB_Image(rgba, 32, 32, 4);
+  full->alloc_array = 1;
+  if (size == 32) return full;
+  Fl_RGB_Image::RGB_scaling(FL_RGB_SCALING_BILINEAR);
+  auto *out = (Fl_RGB_Image *)full->copy(size, size);
+  delete full;
+  return out;
+}
+
+}  // namespace plat

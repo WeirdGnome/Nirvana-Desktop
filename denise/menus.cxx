@@ -1,11 +1,12 @@
-// Nirvana Desktop - Rambler: akcje menu Nirvana, Okno, Ikony i Narzędzia
+// Nirvana Desktop - Rambler: actions of the Nirvana, Window, Icons and Special menus
 //
-// Układ menu według specyfikacji (w duchu Workbencha):
-//   Nirvana    - polecenia całego systemu (preferencje, wykonaj polecenie, dziennik,
-//                Nirvana Shell, przerysuj/uaktualnij wszystko, uśpij, restart, zakończ)
-//   Okno       - aktywne okno folderu (nowy folder, rodzic, widok, sortowanie, ukryte)
-//   Ikony      - zaznaczone ikony (otwórz, kopiuj, informacje, zamroź, dok)
-//   Narzędzia  - formatowanie dysku, kosz
+// Menu layout (in the spirit of Workbench):
+// Nirvana    - whole-system commands (about, preferences, execute command, Nirvana Shell,
+//              system log, reset)
+// System     - lock, sleep, hibernate, log out, restart, shut down
+// Window     - in each folder window: navigation, new folder, view, sorting, hidden files
+// Icons      - in each folder window: open, copy, information, snapshot, dock
+// Special    - format disk, empty Trash
 #include "desktop.h"
 
 #include "appimage.h"
@@ -57,7 +58,7 @@ static std::string config_dir() {
 }
 
 // ---------------------------------------------------------------------------
-// Formularz w oknie dialogowym Ramblera (ikona, tekst, pola, przyciski)
+// A form in a Rambler dialog window (icon, text, fields, buttons)
 // ---------------------------------------------------------------------------
 struct FormIcon : Fl_Widget {
   Entry e;
@@ -128,7 +129,7 @@ static Fl_Box *row_value(int X, int Y, int W, const std::string &t) {
 }
 
 // ---------------------------------------------------------------------------
-// Stan menu: aktywne/nieaktywne pozycje, znaczniki
+// Menu state: active/inactive items, check marks
 // ---------------------------------------------------------------------------
 std::vector<std::string> Desktop::targets() {
   std::vector<std::string> v;
@@ -141,8 +142,8 @@ std::vector<std::string> Desktop::targets() {
 
 void Desktop::update_menu() { update_menu(menu_, nullptr); }
 
-// Stan pozycji paska m. a - okno folderu, do którego należy pasek (nullptr:
-// globalny pasek biurka - wtedy aktywne okno albo zaznaczona ikona biurka).
+// State of the items of menu bar m. a - the folder window the bar belongs to (nullptr:
+// the global desktop bar - then the active window or the selected desktop icon).
 void Desktop::update_menu(Fl_Menu_ *m, NWin *a) {
   if (!a) a = active_folder();
   bool win_sel = a && !a->pane->view()->selection().empty();
@@ -163,7 +164,7 @@ void Desktop::update_menu(Fl_Menu_ *m, NWin *a) {
   act(P_("System/Restart…"), applets::power_action_available(PowerAction::Restart));
   act(P_("System/Shut Down…"), applets::power_action_available(PowerAction::ShutDown));
   act(P_("Special/Format Disk…"), vol_sel && !vols_[di->vol].optical);
-  if (m == menu_) return;   // Okno i Ikony są tylko w oknach folderów
+  if (m == menu_) return;   // Window and Icons exist only in folder windows
 
   bool parent_ok = false;
   if (a) {
@@ -212,8 +213,8 @@ void Desktop::update_menu(Fl_Menu_ *m, NWin *a) {
 }
 
 // ---------------------------------------------------------------------------
-// Menu podręczne ikon biurka (prawy przycisk) - polecenia, które wcześniej
-// były w menu Ikony globalnego paska. Te same skróty działają, gdy fokus ma biurko.
+// Context menu of the desktop icons (right button) - the commands that used to
+// be in the Icons menu of the global bar. The same shortcuts work when the desktop has the focus.
 // ---------------------------------------------------------------------------
 namespace {
 struct DeskMenu {
@@ -232,7 +233,7 @@ struct DeskMenu {
   void divider() { if (!items.empty()) items.back().flags |= FL_MENU_DIVIDER; }
   Fl_Menu_Item *finish() {
     for (size_t i = 0; i < items.size(); i++) items[i].text = labels[i].c_str();
-    items.push_back(Fl_Menu_Item{});   // koniec tablicy
+    items.push_back(Fl_Menu_Item{});   // end of the array
     return items.data();
   }
   void run(const Fl_Menu_Item *m) {
@@ -244,14 +245,14 @@ struct DeskMenu {
 static void build_desk_menu(Desktop *d, DeskMenu &dm, int i, bool has_win, bool has_vol, bool is_dock,
                             bool is_trash, bool can_eject, bool can_format, std::function<void()> restore,
                             const std::string &home, bool prefs = false) {
-  if (i < 0) {   // puste biurko
+  if (i < 0) {   // empty desktop
     dm.add(_("Open Nirvana HD"), 0, [d, home] { d->open_folder(home); });
     dm.add(_("Desktop Appearance…"), 0, [d] { d->open_appearance(); });
     return;
   }
   if (has_win) { dm.add(_("Restore"), FL_COMMAND + 'o', restore); return; }
   if (prefs) { dm.add(_("Open"), FL_COMMAND + 'o', [d] { d->open_preferences(); }); return; }
-  if (is_dock) {   // kafelek doku: otwórz albo odepnij
+  if (is_dock) {   // dock tile: open or unpin
     dm.add(_("Open"), FL_COMMAND + 'o', [d] { d->open_selected(); });
     dm.add(_("Unpin from Dock"), FL_COMMAND + 'k', [d] { d->dock_remove(); });
     return;
@@ -266,10 +267,10 @@ static void build_desk_menu(Desktop *d, DeskMenu &dm, int i, bool has_win, bool 
   }
 }
 
-// FLTK przewija menu, które wystaje poza obszar roboczy (u nas: w dok), i robi to
-// w środku obsługi zdarzeń - kliknięcie w tym momencie wywraca program (błąd FLTK
-// 1.4). Dlatego menu podręczne stawiamy tak, żeby całe mieściło się w obszarze.
-// X, Y - względem okna o położeniu (ox, oy) na ekranie.
+// FLTK scrolls a menu that sticks out of the work area (here: into the dock), and does so
+// in the middle of event handling - a click at that moment crashes the program (an FLTK
+// 1.4 bug). So context menus are placed to fit entirely in the work area.
+// X, Y - relative to the window at position (ox, oy) on screen.
 static void fit_popup(const Fl_Menu_Item *m, int &X, int &Y, int ox, int oy) {
   int n = m->size() - 1, wide = 0;
   fl_font(FONT_SYSTEM, SIZE_SYSTEM);
@@ -285,7 +286,7 @@ static void fit_popup(const Fl_Menu_Item *m, int &X, int &Y, int ox, int oy) {
 }
 
 void Desktop::desk_context_menu(int i, int X, int Y) {
-  if (i >= (int)icons_.size()) i = -1;   // ikony mogły się zmienić w międzyczasie
+  if (i >= (int)icons_.size()) i = -1;   // the icons may have changed in the meantime
   icon_sel_ = i;
   redraw();
   DeskMenu dm;
@@ -307,7 +308,7 @@ void Desktop::desk_context_menu(int i, int X, int Y) {
   desk_target_ = false;
 }
 
-// Prawy przycisk w oknie folderu: polecenia dla zaznaczonych ikon albo dla okna.
+// Right button in a folder window: commands for the selected icons or for the window.
 void Desktop::later(std::function<void()> f) {
   static std::vector<std::function<void()>> queue;
   queue.push_back(std::move(f));
@@ -344,7 +345,7 @@ void Desktop::folder_context_menu(NWin *w, int X, int Y) {
     dm.add(_("Update"), FL_COMMAND + 'r', [this] { update_window(); });
     dm.add(_("Select Contents"), FL_COMMAND + 'a', [this] { select_all(); });
   }
-  // współrzędne okna folderu -> biurka (właścicielem menu jest przycisk na biurku)
+  // folder window coordinates -> desktop ones (the menu's owner is a button on the desktop)
   Fl_Menu_Item *items = dm.finish();
   X += w->x() - x();
   Y += w->y() - y();
@@ -372,8 +373,8 @@ bool Desktop::desk_shortcut() {
   return true;
 }
 
-// Ikony > Ustaw jako tapetę: zapis w ustawieniach wyglądu, biurko odświeża się
-// przez _NIRVANA_WYGLAD (tak samo jak po "Zastosuj" w panelu Wygląd).
+// Icons > Set as Wallpaper: saved in the appearance settings, the desktop refreshes
+// through _NIRVANA_APPEARANCE (the same as after "Apply" in the Appearance panel).
 void Desktop::set_as_wallpaper() {
   std::vector<std::string> t = targets();
   if (t.size() != 1 || !is_image_file(t[0])) return;
@@ -394,7 +395,7 @@ void Desktop::set_as_wallpaper() {
 // ---------------------------------------------------------------------------
 // Menu Nirvana
 // ---------------------------------------------------------------------------
-void Desktop::open_preferences() { rambler_spawn({rambler_exe("nirvana-alice"), "ustawienia"}); }
+void Desktop::open_preferences() { rambler_spawn({rambler_exe("nirvana-alice"), "preferences"}); }
 
 void Desktop::execute_command() {
   static std::string last;
@@ -418,12 +419,12 @@ void Desktop::execute_command() {
     if (cmd.empty()) return;
     last = cmd;
     show_last = show->value();
-    // katalog i polecenie jako argumenty powłoki - bez sklejania cudzysłowów
+    // the folder and the command as shell arguments - no quote juggling
     const char *script = show_last
         ? "cd -- \"$1\" || exit 1; eval \"$2\"; s=$?; echo; printf \"$3\" \"$s\"; read x"
         : "cd -- \"$1\" || exit 1; eval \"$2\"";
     if (show_last)
-      rambler_spawn({rambler_exe("nirvana-shell"), "--katalog", dir, "-e", "sh", "-c", script, "sh", dir, cmd,
+      rambler_spawn({rambler_exe("nirvana-shell"), "--working-directory", dir, "-e", "sh", "-c", script, "sh", dir, cmd,
                      _("[exit code %s] Press Enter to close…")});
     else
       rambler_spawn({"sh", "-c", script, "sh", dir, cmd});
@@ -432,16 +433,16 @@ void Desktop::execute_command() {
 }
 
 void Desktop::open_log() {
-  // dziennik systemowy: journalctl (systemd), inaczej plik syslog, inaczej dmesg
+  // the system log: journalctl (systemd), otherwise the syslog file, otherwise dmesg
   const char *script =
       "if command -v journalctl >/dev/null 2>&1 && journalctl -n 1 >/dev/null 2>&1; then journalctl -b -e; "
       "elif [ -r /var/log/syslog ]; then less +G /var/log/syslog; "
       "elif [ -r /var/log/messages ]; then less +G /var/log/messages; "
       "else dmesg 2>&1 | less +G; fi";
-  rambler_spawn({rambler_exe("nirvana-shell"), "--katalog", home_, "-e", "sh", "-c", script});
+  rambler_spawn({rambler_exe("nirvana-shell"), "--working-directory", home_, "-e", "sh", "-c", script});
 }
 
-// Menu System - te same polecenia, co wcześniej w aplecie zasilania
+// System menu - the same commands as formerly in the power applet
 void Desktop::system_lock() { applets::power_action(applets::PowerAction::Lock); }
 void Desktop::system_sleep() { applets::power_action(applets::PowerAction::Sleep); }
 void Desktop::system_hibernate() { applets::power_action(applets::PowerAction::Hibernate); }
@@ -450,7 +451,7 @@ void Desktop::system_restart() { applets::power_action(applets::PowerAction::Res
 void Desktop::system_shutdown() { applets::power_action(applets::PowerAction::ShutDown); }
 
 // ---------------------------------------------------------------------------
-// Menu Okno
+// Window menu
 // ---------------------------------------------------------------------------
 void Desktop::open_parent() {
   NWin *a = active_folder();
@@ -479,8 +480,8 @@ void Desktop::toggle_hidden() {
 }
 
 void Desktop::save_rambler_conf() {
-  std::ofstream(config_dir() + "/rambler.conf") << "ukryte=" << (show_hidden_ ? 1 : 0) << "\n"
-                                               << "dok_zwiniety=" << (dock_collapsed_ ? 1 : 0) << "\n";
+  std::ofstream(config_dir() + "/rambler.conf") << "show_hidden=" << (show_hidden_ ? 1 : 0) << "\n"
+                                               << "dock_collapsed=" << (dock_collapsed_ ? 1 : 0) << "\n";
 }
 
 void Desktop::set_sort(FolderView::SortKey k) {
@@ -507,7 +508,7 @@ void Desktop::icons_normal() { set_icon_size(32); }
 void Desktop::icons_large() { set_icon_size(64); }
 
 // ---------------------------------------------------------------------------
-// Menu Ikony: Informacje (Get Info / Information z Workbencha)
+// Icons menu: Information (Get Info / Information from Workbench)
 // ---------------------------------------------------------------------------
 static std::string fmt_time(time_t t) {
   if (!t) return "—";
@@ -524,7 +525,7 @@ static std::string fmt_size(uintmax_t b) {
   if (b >= 1024) r += " (" + std::to_string(b) + " B)";
   return r;
 }
-// Rozmiar folderu - z limitem czasu, żeby duży katalog nie zamroził Ramblera.
+// Folder size - with a time limit, so a large folder does not freeze Rambler.
 static std::string folder_size(const std::string &p) {
   uintmax_t total = 0;
   long files = 0;
@@ -541,8 +542,8 @@ static std::string folder_size(const std::string &p) {
   return plat::fmt(_("%1, files: %2"), fmt_size(total), std::to_string(files));
 }
 
-// Komentarz (xattr user.xdg.comment - standard freedesktop) i parametry
-// uruchamiania (ToolTypes: user.nirvana.parametry, zapasowo plik w ~/.config).
+// Comment (xattr user.xdg.comment - the freedesktop standard) and launch
+// arguments (ToolTypes: user.nirvana.tooltypes, a file in ~/.config as a fallback).
 static std::string xattr_get(const std::string &p, const char *name, bool *supported = nullptr) {
   char buf[4096];
   ssize_t n = getxattr(p.c_str(), name, buf, sizeof buf - 1);
@@ -553,10 +554,11 @@ static bool xattr_set(const std::string &p, const char *name, const std::string 
   if (v.empty()) return removexattr(p.c_str(), name) == 0 || errno == ENODATA;
   return setxattr(p.c_str(), name, v.data(), v.size(), 0) == 0;
 }
-static std::string tooltypes_file() { return config_dir() + "/parametry"; }
+static std::string tooltypes_file() { return config_dir() + "/tooltypes"; }
 std::string tooltypes(const std::string &path) {
   bool ok = false;
-  std::string v = xattr_get(path, "user.nirvana.parametry", &ok);
+  std::string v = xattr_get(path, "user.nirvana.tooltypes", &ok);
+  if (v.empty()) v = xattr_get(path, "user.nirvana.parametry", &ok);   // written before 0.0.7
   if (!v.empty()) return v;
   std::ifstream in(tooltypes_file());
   std::string line;
@@ -567,8 +569,11 @@ std::string tooltypes(const std::string &path) {
   return "";
 }
 static void set_tooltypes(const std::string &path, const std::string &v) {
-  if (xattr_set(path, "user.nirvana.parametry", v)) return;
-  // system plików bez atrybutów rozszerzonych: zapis w pliku
+  if (xattr_set(path, "user.nirvana.tooltypes", v)) {
+    removexattr(path.c_str(), "user.nirvana.parametry");   // name used before 0.0.7
+    return;
+  }
+  // a file system without extended attributes: stored in a file
   std::vector<std::string> keep;
   std::ifstream in(tooltypes_file());
   std::string line;
@@ -581,7 +586,7 @@ static void set_tooltypes(const std::string &path, const std::string &v) {
   for (auto &l : keep) out << l << '\n';
   if (!v.empty()) out << v << '\t' << path << '\n';
 }
-// Podział parametrów jak w powłoce (spacje, cudzysłowy).
+// Splitting arguments as in the shell (spaces, quotes).
 std::vector<std::string> split_args(const std::string &s) {
   std::vector<std::string> v;
   std::string cur;
@@ -603,7 +608,7 @@ void Desktop::get_info() {
   auto t = targets();
   if (t.empty()) return;
   std::string path = t[0];
-  // dysk z biurka: pojemność i system plików
+  // a disk from the desktop: capacity and file system
   int vi = -1;
   if (!active_folder() && icon_sel_ >= 0 && icon_sel_ < (int)icons_.size()) vi = icons_[icon_sel_].vol;
   Entry e;
@@ -671,7 +676,7 @@ void Desktop::get_info() {
     snprintf(perm, sizeof perm, "%04o", have_st ? st.st_mode & 07777 : 0);
     row(_("Permissions:"), perm);
   }
-  // flagi i komentarz
+  // flags and comment
   Fl_Check_Button *ro = nullptr, *ex = nullptr;
   Fl_Input *comment = nullptr, *args = nullptr;
   if (vi < 0 && have_st) {
@@ -725,7 +730,7 @@ void Desktop::get_info() {
 }
 
 // ---------------------------------------------------------------------------
-// Zamrożenie (Snapshot) i dok (Leave Out / Put Away)
+// Snapshot and the dock (Leave Out / Put Away)
 // ---------------------------------------------------------------------------
 void Desktop::snapshot() {
   NWin *a = active_folder();
@@ -733,7 +738,7 @@ void Desktop::snapshot() {
   FolderView *v = a->pane->view();
   std::vector<std::string> p;
   for (auto &e : v->selection()) p.push_back(e.path);
-  if (p.empty()) p = v->all_paths();   // nic nie zaznaczono: całe okno
+  if (p.empty()) p = v->all_paths();   // nothing selected: the whole window
   v->snapshot(p);
 }
 
@@ -751,7 +756,7 @@ void Desktop::unsnapshot() {
 
 void Desktop::load_dock() {
   dock_.clear();
-  std::ifstream in(config_dir() + "/dok");
+  std::ifstream in(config_dir() + "/dock");
   std::string line;
   std::error_code ec;
   while (std::getline(in, line))
@@ -759,7 +764,7 @@ void Desktop::load_dock() {
 }
 
 void Desktop::save_dock() {
-  std::ofstream out(config_dir() + "/dok");
+  std::ofstream out(config_dir() + "/dock");
   for (auto &p : dock_) out << p << '\n';
 }
 
@@ -785,7 +790,7 @@ void Desktop::dock_remove() {
 }
 
 // ---------------------------------------------------------------------------
-// Menu Narzędzia
+// Special menu
 // ---------------------------------------------------------------------------
 void Desktop::format_disk() {
   if (active_folder() || icon_sel_ < 0 || icon_sel_ >= (int)icons_.size() || icons_[icon_sel_].vol < 0) {
@@ -810,7 +815,7 @@ void Desktop::format_dialog(int vi) {
   auto *name = new Fl_Input(ox + 180, oy + 70, W - 196, 22, _("Name:"));
   name->box(WELL_BOX);
   name->labelsize(SIZE_SMALL + 1);
-  name->value(v.unformatted ? "DYSK" : v.name.substr(0, 11).c_str());
+  name->value(v.unformatted ? "DISK" : v.name.substr(0, 11).c_str());
   auto *fsch = new Fl_Choice(ox + 180, oy + 100, W - 196, 22, _("File system:"));
   fsch->labelsize(SIZE_SMALL + 1);
   fsch->textsize(SIZE_SMALL + 1);
@@ -838,7 +843,7 @@ void Desktop::format_dialog(int vi) {
   }}});
 }
 
-// Reset Nirvana: Insight i Rambler uruchamiają się od nowa (okna programów zostają).
+// Reset Nirvana: Insight and Rambler start again (program windows stay).
 void Desktop::reset_nirvana() {
   for (auto *w : wins_) if (w->pane) remember(w, true);
   spatial_.save();

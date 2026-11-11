@@ -1,4 +1,4 @@
-// Nirvana Desktop - dźwięk: implementacja (pactl / amixer)
+// Nirvana Desktop - sound: implementation (pactl / amixer)
 #include "audio.h"
 #include "i18n.h"
 
@@ -70,7 +70,7 @@ static std::vector<std::string> split_lines(const std::string &s) {
   return v;
 }
 
-// "front-left: 65536 / 100% / 0.00 dB,   front-right: 32768 /  50% / ..." -> średnia procentów
+// "front-left: 65536 / 100% / 0.00 dB,   front-right: 32768 /  50% / ..." -> average of the percentages
 static int parse_volume(const std::string &v) {
   int sum = 0, n = 0;
   size_t p = 0;
@@ -88,7 +88,7 @@ static std::string unquote(std::string v) {
   return v;
 }
 
-// Bloki "Sink #0", "Source #2", "Sink Input #5": pola z jednym tabem, właściwości z dwoma.
+// Blocks "Sink #0", "Source #2", "Sink Input #5": fields with one tab, properties with two.
 struct Block {
   int index = -1;
   std::vector<std::pair<std::string, std::string>> fields, props;
@@ -174,7 +174,7 @@ const Device *State::source() const {
   return sources.empty() ? nullptr : &sources[0];
 }
 
-// --- ALSA (bez serwera dźwięku) ---------------------------------------------------
+// --- ALSA (no sound server) -------------------------------------------------------
 static bool alsa_control(const char *ctl, Device &d) {
   std::string out;
   if (run({"amixer", "-M", "get", ctl}, &out) != 0) return false;
@@ -219,7 +219,7 @@ State query() {
     run({"pactl", "list", "sources"}, &out);
     for (auto &b : parse_blocks(out)) {
       std::string mon = b.get("Monitor of Sink");
-      if (!mon.empty() && mon != "n/a") continue;   // monitor wyjścia to nie mikrofon
+      if (!mon.empty() && mon != "n/a") continue;   // an output's monitor is not a microphone
       st.sources.push_back(to_device(b));
     }
     out.clear();
@@ -234,7 +234,7 @@ State query() {
       s.mute = b.get("Mute") == "yes";
       s.volume = parse_volume(b.get("Volume"));
       s.sink = atoi(b.get("Sink").c_str());
-      // dźwięki zdarzeń (np. kliknięcia z pulseaudio) pomijamy
+      // event sounds (e.g. clicks from pulseaudio) are skipped
       if (b.prop("media.role") == "event" || b.prop("media.role") == "filter") continue;
       st.streams.push_back(s);
     }
@@ -256,7 +256,7 @@ State query() {
   return st;
 }
 
-// --- operacje ------------------------------------------------------------------------
+// --- operations ----------------------------------------------------------------------
 void set_volume(const State &s, bool output, const std::string &dev, int pct) {
   pct = std::clamp(pct, 0, 150);
   if (s.backend == State::Alsa) { run({"amixer", "-q", "-M", "set", dev, std::to_string(pct) + "%"}); return; }
@@ -269,7 +269,7 @@ void set_mute(const State &s, bool output, const std::string &dev, bool mute) {
 void set_default(bool output, const std::string &dev) {
   run({"pactl", output ? "set-default-sink" : "set-default-source", dev});
   if (!output) return;
-  // PulseAudio przenosi tylko nowe strumienie - grające przenosimy sami
+  // PulseAudio moves only new streams - we move the playing ones ourselves
   State st = query();
   for (auto &s : st.streams) run({"pactl", "move-sink-input", std::to_string(s.index), dev});
 }
@@ -299,7 +299,7 @@ void toggle_mute(bool output) {
   if (d) set_mute(st, output, d->name, !d->mute);
 }
 
-// --- obserwowanie ----------------------------------------------------------------------
+// --- watching -------------------------------------------------------------------------
 static std::function<void()> g_changed;
 static void fire(void *) { if (g_changed) g_changed(); }
 static void poke() { Fl::remove_timeout(fire); Fl::add_timeout(0.15, fire); }
@@ -309,7 +309,7 @@ static void sub_cb(int fd, void *) {
   char buf[2048];
   ssize_t n = read(fd, buf, sizeof buf);
   if (n > 0) {
-    // "Event 'change' on sink #0" - reagujemy na wszystko poza klientami
+    // "Event 'change' on sink #0" - we react to everything except clients
     std::string s(buf, n);
     if (s.find("sink") != std::string::npos || s.find("source") != std::string::npos ||
         s.find("server") != std::string::npos || s.find("card") != std::string::npos)
@@ -322,11 +322,11 @@ static void sub_cb(int fd, void *) {
   if (g_sub > 0) waitpid(g_sub, nullptr, WNOHANG);
   g_sub = -1;
   poke();
-  Fl::add_timeout(3.0, start_sub);   // serwer dźwięku wstał na nowo albo jeszcze nie działa
+  Fl::add_timeout(3.0, start_sub);   // the sound server came up again or is not running yet
 }
 static void start_sub(void *) {
   State st = query();
-  if (st.backend != State::Pulse) {   // ALSA albo nic: sprawdzamy co 2 s
+  if (st.backend != State::Pulse) {   // ALSA or nothing: check every 2 s
     poke();
     Fl::add_timeout(2.0, start_sub);
     return;

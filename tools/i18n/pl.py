@@ -1,4 +1,4 @@
-# Polish translation (source for po/pl.po - tools/i18n/wypelnij.py pl)
+# Polish translation (source for po/pl.po - tools/i18n/fill.py pl)
 # English text in the code -> Polish
 T = {
     'No such scheme: %1': 'Nie ma schematu: %1',
@@ -531,14 +531,14 @@ T = {
     'Bigger': 'Większa',
     'Smaller': 'Mniejsza',
     'Normal Size': 'Normalna',
-    # menedżer plików w jednym oknie
+    # single-window file manager
     'Back': 'Wstecz',
     'Forward': 'Dalej',
     'The folder “%1” could not be found.': 'Nie znaleziono folderu „%1”.',
     'Open Nirvana HD': 'Otwórz Nirvana HD',
     'Desktop Appearance…': 'Wygląd biurka…',
     'Restore': 'Przywróć',
-    # pasek menu: zajęta pamięć i dysk
+    # menu bar: used memory and disk
     '%1 used memory of %2     %3 used disk of %4': '%1 zajętej pamięci z %2     %3 zajętego dysku z %4',
     '%1 used memory of %2': '%1 zajętej pamięci z %2',
     'memory %1/%2   disk %3/%4': 'pamięć %1/%2   dysk %3/%4',
@@ -547,4 +547,5 @@ T = {
     'Install the application “%1”?': 'Zainstalować aplikację „%1”?',
     'Category:': 'Kategoria:',
     'Unpin from Dock': 'Odepnij z doku',
+    'saved': 'zapisana',
 }

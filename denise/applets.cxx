@@ -1,4 +1,4 @@
-// Nirvana Desktop - aplety paska menu: głośność i zasilanie
+// Nirvana Desktop - menu bar applets: volume and power
 #include "applets.h"
 
 #include "audio.h"
@@ -32,7 +32,7 @@ static audio::State g_audio;
 static power::State g_power;
 
 // ---------------------------------------------------------------------------
-// Okienko pod ikoną paska menu (jak menu, ale z suwakami)
+// A popup below a menu bar icon (like a menu, but with sliders)
 // ---------------------------------------------------------------------------
 class Popup : public Fl_Double_Window {
 public:
@@ -42,7 +42,7 @@ public:
     set_override();
     color(GRAY);
     end();
-    resizable(nullptr);   // zmiana rozmiaru po zbudowaniu treści nie może jej skalować
+    resizable(nullptr);   // resizing after building the content must not scale it
   }
   void open_at(int X, int Y) {
     int sx, sy, sw, sh;
@@ -56,7 +56,7 @@ public:
     hide();
     if (on_close) on_close();
   }
-  std::function<void()> track_hover;   // ustawiane niżej - podświetlanie wierszy menu
+  std::function<void()> track_hover;   // set below - highlighting of the menu rows
   int handle(int e) override {
     if (e == FL_PUSH) {
       int ex = Fl::event_x(), ey = Fl::event_y();
@@ -71,7 +71,7 @@ public:
     return Fl_Double_Window::handle(e);
   }
   void draw() override {
-    // ramka jak w menu Platinum: czarny obrys i cień
+    // a frame as in the Platinum menu: black outline and shadow
     fl_color(GRAY);
     fl_rectf(0, 0, w(), h());
     fl_color(DARK);
@@ -89,7 +89,7 @@ public:
   }
 };
 
-// Fl_Choice zamyka własne menu przez Fl::grab(0) - po nim przywracamy chwyt okienka.
+// Fl_Choice closes its own menu with Fl::grab(0) - after it we restore the popup's grab.
 class GrabChoice : public Fl_Choice {
 public:
   GrabChoice(int X, int Y, int W, int H, const char *l = nullptr) : Fl_Choice(X, Y, W, H, l) {
@@ -104,7 +104,7 @@ public:
   }
 };
 
-// Suwak Platinum: rowek, wypełnienie w kolorze zaznaczenia, uchwyt.
+// Platinum slider: groove, fill in the selection color, knob.
 class PSlider : public Fl_Slider {
 public:
   PSlider(int X, int Y, int W, int H) : Fl_Slider(X, Y, W, H) {
@@ -135,7 +135,7 @@ public:
   }
 };
 
-// Pozycja jak w menu: tekst, podświetlenie pod myszą, klik wywołuje akcję.
+// An item as in a menu: text, highlight under the mouse, a click runs the action.
 class MenuRow : public Fl_Button {
 public:
   MenuRow(int X, int Y, int W, const char *l) : Fl_Button(X, Y, W, 20, l) {
@@ -144,8 +144,8 @@ public:
     labelsize(SIZE_SYSTEM);
     align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
   }
-  // Podświetlenie ustawia okienko (Popup) według położenia myszy: przy chwycie
-  // myszy (Fl::grab) FL_LEAVE nie zawsze dochodzi i wiersze zostawały podświetlone.
+  // The popup sets the highlight from the mouse position: with the mouse
+  // grabbed (Fl::grab) FL_LEAVE does not always arrive and rows stayed highlighted.
   void hover(bool h) { if (h != hover_) { hover_ = h; redraw(); } }
   int handle(int e) override {
     if (e == FL_ENTER || e == FL_LEAVE) return 1;
@@ -156,7 +156,7 @@ public:
     fl_color(hl ? SEL : GRAY);
     fl_rectf(x(), y(), w(), h());
     fl_font(labelfont(), labelsize());
-    // nieaktywne: pół drogi między tekstem a tłem - czytelne też w ciemnych schematach
+    // inactive: halfway between the text and the background - readable in dark schemes too
     fl_color(!active_r() ? fl_color_average(TEXT, GRAY, 0.45f) : hl ? SEL_TEXT : TEXT);
     fl_draw(label(), x() + 14, y(), w() - 18, h(), FL_ALIGN_LEFT);
   }
@@ -164,7 +164,7 @@ private:
   bool hover_ = false;
 };
 
-// Wiersz pod myszą podświetlony, pozostałe nie.
+// The row under the mouse highlighted, the others not.
 static void update_hover(Fl_Window *w) {
   int ex = Fl::event_x(), ey = Fl::event_y();
   bool inside = ex >= 0 && ey >= 0 && ex < w->w() && ey < w->h();
@@ -202,7 +202,7 @@ static Fl_Check_Button *check(int X, int Y, int W, const char *t, bool v, F cb) 
 }
 
 // ---------------------------------------------------------------------------
-// OSD: pasek głośności/jasności na dole ekranu
+// OSD: a volume/brightness bar at the bottom of the screen
 // ---------------------------------------------------------------------------
 class Osd : public Fl_Double_Window {
 public:
@@ -241,7 +241,7 @@ static void osd(Osd::Kind k, int v, bool m) {
 }
 
 // ---------------------------------------------------------------------------
-// Głośność
+// Volume
 // ---------------------------------------------------------------------------
 class VolumeApplet;
 static VolumeApplet *g_vol;
@@ -250,10 +250,10 @@ class VolumeApplet : public Fl_Widget {
 public:
   VolumeApplet(int X, int Y, int W, int H) : Fl_Widget(X, Y, W, H) { g_vol = this; }
   Popup *pop = nullptr;
-  std::string layout_key;   // co jest w okienku (urządzenia, strumienie) - zmiana = przebudowa
+  std::string layout_key;   // what is in the popup (devices, streams) - a change = rebuild
   struct Row { PSlider *slider; Fl_Box *pct; Fl_Check_Button *mute; };
   Row out{}, in{};
-  std::vector<std::pair<int, Row>> streams;   // indeks strumienia -> wiersz
+  std::vector<std::pair<int, Row>> streams;   // stream index -> row
 
   void draw() override {
     fl_push_clip(x(), y(), w(), h());
@@ -293,14 +293,14 @@ public:
   void build() {
     const int W = 300;
     pop->begin();
-    pop->clear();             // clear() ustawia resizable(this) - wyłączamy z powrotem
+    pop->clear();             // clear() sets resizable(this) - turn it off again
     pop->resizable(nullptr);
     pop->begin();
     int y = 8;
     streams.clear();
     out = in = Row{};
     const audio::State &s = g_audio;
-    if (s.backend == audio::State::Brak) {
+    if (s.backend == audio::State::NoBackend) {
       text_box(12, y, W - 24, _("Sound"), true);
       y += 22;
       auto *b = text_box(12, y, W - 24, s.problem.c_str(), false, 36);
@@ -337,10 +337,10 @@ public:
         row.pct = text_box(W - 52, y, 44, (std::to_string(d->volume) + "%").c_str());
         row.pct->align(FL_ALIGN_RIGHT | FL_ALIGN_INSIDE);
         y += 26;
-        // wybór urządzenia (i portu, gdy ma kilka: głośniki/słuchawki)
+        // device choice (and port, when there are several: speakers/headphones)
         if (s.backend == audio::State::Pulse && (list.size() > 1 || d->ports.size() > 1)) {
           auto *ch = new GrabChoice(82, y, W - 94, 22, output ? _("Output:") : _("Input:"));
-          static std::vector<std::pair<std::string, std::string>> opts_out, opts_in;   // urządzenie, port
+          static std::vector<std::pair<std::string, std::string>> opts_out, opts_in;   // device, port
           auto &opts = output ? opts_out : opts_in;
           opts.clear();
           int sel = 0;
@@ -391,7 +391,7 @@ public:
           text_box(12, y, 100, t.app.c_str());
           int idx = t.index;
           r.mute = new Fl_Check_Button(112, y, 20, 20);
-          r.mute->value(!t.mute);   // zaznaczone = słychać
+          r.mute->value(!t.mute);   // checked = audible
           r.mute->tooltip(_("This application is audible"));
           r.mute->callback([](Fl_Widget *w, void *i) {
             audio::set_stream_mute((int)(long)i, !((Fl_Check_Button *)w)->value());
@@ -411,12 +411,12 @@ public:
     layout_key = key_of(s);
   }
 
-  // Nowy stan z serwera: przy tych samych urządzeniach tylko wartości, inaczej przebudowa.
+  // A new state from the server: with the same devices only the values, otherwise a rebuild.
   void sync() {
     redraw();
     if (!pop || !pop->shown()) return;
     if (key_of(g_audio) != layout_key) {
-      if (Fl::pushed()) return;   // nie przebudowujemy w trakcie przeciągania
+      if (Fl::pushed()) return;   // no rebuild while dragging
       int X = pop->x(), Y = pop->y();
       build();
       pop->position(X, Y);
@@ -458,7 +458,7 @@ public:
 Fl_Widget *make_volume(int X, int Y, int W, int H) { return new VolumeApplet(X, Y, W, H); }
 
 // ---------------------------------------------------------------------------
-// Zasilanie
+// Power
 // ---------------------------------------------------------------------------
 class PowerApplet;
 static PowerApplet *g_pow;
@@ -477,10 +477,10 @@ public:
     bool open = pop && pop->shown();
     if (open) { fl_color(SEL); fl_rectf(x(), y(), w(), h() - 1); }
     Fl_Color c = open ? SEL_TEXT : TEXT;
-    // do prawej - aplety stoją ciasno, bez dziury przed ikoną głośności
+    // to the right - the applets sit tightly, without a gap before the volume icon
     int iw = g_power.percent >= 0 ? 23 : 14;
     int ix = x() + w() - 4 - iw;
-    if (power::projection()) draw_display(ix - 14, y() + 5, c);   // tryb projekcji: monitor przed ikoną
+    if (power::projection()) draw_display(ix - 14, y() + 5, c);   // projection mode: a monitor before the icon
     if (g_power.percent >= 0) draw_battery(ix, y() + 4, g_power.percent, g_power.charging, c);
     else draw_plug(ix, y() + 3, c);
   }
@@ -498,7 +498,7 @@ public:
   void build() {
     const int W = 290;
     pop->begin();
-    pop->clear();             // clear() ustawia resizable(this) - wyłączamy z powrotem
+    pop->clear();             // clear() sets resizable(this) - turn it off again
     pop->resizable(nullptr);
     pop->begin();
     int y = 8;
@@ -546,7 +546,7 @@ public:
     hint->labelsize(SIZE_SMALL);
     hint->align(FL_ALIGN_LEFT | FL_ALIGN_TOP | FL_ALIGN_INSIDE | FL_ALIGN_WRAP);
     y += 32;
-    // blokada, uśpienie, wylogowanie, wyłączenie... są w menu System na pasku menu
+    // lock, sleep, log out, shut down... are in the System menu of the menu bar
     new Sep(8, y, W - 16);
     y += 8;
     auto *r = new MenuRow(2, y, W - 4, _("Power Settings…"));
@@ -561,7 +561,7 @@ public:
     if (!pop) {
       pop = new Popup(290, 100);
       pop->on_close = [this] {
-        for (int i = 0; i < pop->children(); i++)   // po zamknięciu bez podświetleń
+        for (int i = 0; i < pop->children(); i++)   // after closing without highlights
           if (auto *r = dynamic_cast<MenuRow *>(pop->child(i))) r->hover(false);
         redraw();
       };
@@ -599,7 +599,7 @@ void PowerApplet::act(Fl_Widget *, void *d) {
     case 1: power::lock_screen(); break;
     case 2:
       if (power::projection()) { report(_("Presentation mode is on - turn it off to put the computer to sleep.")); break; }
-      if (g_host.nirvana_session) power::lock_screen();   // po wybudzeniu ekran jest zablokowany
+      if (g_host.nirvana_session) power::lock_screen();   // after waking up the screen is locked
       report(power::suspend());
       break;
     case 3:
@@ -646,7 +646,7 @@ bool power_action_available(PowerAction a) {
 }
 
 // ---------------------------------------------------------------------------
-// Klawisze multimedialne, bezczynność, odświeżanie
+// Multimedia keys, idleness, refreshing
 // ---------------------------------------------------------------------------
 static KeyCode k_up, k_down, k_mute, k_micmute, k_bup, k_bdown;
 static int g_ss_event = -1;
@@ -666,7 +666,7 @@ static void grab_keys() {
   k_micmute = kc(XF86XK_AudioMicMute);
   k_bup = kc(XF86XK_MonBrightnessUp);
   k_bdown = kc(XF86XK_MonBrightnessDown);
-  // GNOME/KDE trzymają te klawisze same - wtedy XGrabKey kończy się BadAccess i nic nie robimy
+  // GNOME/KDE hold these keys themselves - then XGrabKey ends with BadAccess and we do nothing
   XSync(d, False);
   auto old = XSetErrorHandler(ignore_errors);
   for (KeyCode k : {k_up, k_down, k_mute, k_micmute, k_bup, k_bdown})
@@ -704,7 +704,7 @@ static int x_events(void *event, void *) {
     }
   }
   if (g_ss_event >= 0 && e->type == g_ss_event) {
-    // wygaszacz X się włączył: blokada (jak xss-lock), chyba że trwa projekcja
+    // the X screensaver started: lock (like xss-lock), unless a projection is running
     auto *se = (XScreenSaverNotifyEvent *)e;
     if (se->state == ScreenSaverOn && g_host.nirvana_session && g_idle.lock_on_blank && !power::projection())
       power::lock_screen();
@@ -717,21 +717,21 @@ static int x_events(void *event, void *) {
   return 0;
 }
 
-// Co 20 s: bateria, jasność, usypianie po bezczynności, ostrzeżenia.
+// Every 20 s: battery, brightness, sleeping when idle, warnings.
 static void power_tick(void *) {
   g_power = power::query();
   if (g_pow) g_pow->sync();
   if (g_host.nirvana_session && !power::projection()) {
     int limit = g_power.on_ac ? g_idle.sleep_ac_min : g_idle.sleep_battery_min;
     int idle = power::idle_seconds();
-    if (idle < g_last_sleep_idle) g_last_sleep_idle = 0;   // był ruch od ostatniego uśpienia
+    if (idle < g_last_sleep_idle) g_last_sleep_idle = 0;   // there was activity since the last sleep
     if (limit > 0 && idle >= limit * 60 && !g_last_sleep_idle && g_power.can_suspend) {
       g_last_sleep_idle = idle;
       if (g_idle.lock_on_blank) power::lock_screen();
       power::suspend();
     }
   }
-  // bateria: ostrzeżenie przy 10%, przy 3% hibernacja albo uśpienie
+  // battery: a warning at 10%, at 3% hibernate or sleep
   if (g_power.percent >= 0 && !g_power.on_ac) {
     if (g_power.percent <= 10 && !g_warned_low && g_host.dialog) {
       g_warned_low = true;

@@ -1,4 +1,4 @@
-// Nirvana Desktop - zasilanie: implementacja
+// Nirvana Desktop - power: implementation
 #include "power.h"
 #include "i18n.h"
 
@@ -25,7 +25,7 @@
 
 namespace power {
 
-// --- drobiazgi ------------------------------------------------------------------------
+// --- small helpers --------------------------------------------------------------------
 static std::string read_file(const std::string &p) {
   std::ifstream in(p);
   std::string s;
@@ -50,7 +50,7 @@ static std::vector<std::string> list_dir(const std::string &d) {
   return v;
 }
 static std::string supply_dir() {
-  const char *e = getenv("NIRVANA_POWER_SUPPLY");   // do testów: atrapa /sys/class/power_supply
+  const char *e = getenv("NIRVANA_POWER_SUPPLY");   // for testing: a fake /sys/class/power_supply
   return e && *e ? e : "/sys/class/power_supply";
 }
 static std::string backlight_dir() {
@@ -97,7 +97,7 @@ static bool have(const std::string &prog) {
   }
   return false;
 }
-// Program w tle, bez czekania (podwójny fork - nie zostaje zombie).
+// A program in the background, without waiting (double fork - no zombie is left).
 static void detach(const std::vector<std::string> &args) {
   pid_t pid = fork();
   if (pid == 0) {
@@ -151,7 +151,7 @@ static std::string login_action(const char *method) {
   DBusConnection *c = bus(DBUS_BUS_SYSTEM);
   if (!c) return _("No system D-Bus.");
   DBusMessage *m = dbus_message_new_method_call(LOGIN, LOGIN_PATH, LOGIN_MGR, method);
-  dbus_bool_t interactive = TRUE;   // polkit może zapytać o hasło
+  dbus_bool_t interactive = TRUE;   // polkit may ask for a password
   dbus_message_append_args(m, DBUS_TYPE_BOOLEAN, &interactive, DBUS_TYPE_INVALID);
   std::string err;
   DBusMessage *r = call(c, m, &err, 30000);
@@ -179,7 +179,7 @@ State query() {
       if (type == "Mains") any_mains = true;
       if (read_num(d + "/online", 0) == 1) mains_online = true;
     } else if (type == "Battery") {
-      if (read_file(d + "/scope") == "Device") continue;   // mysz, klawiatura bezprzewodowa
+      if (read_file(d + "/scope") == "Device") continue;   // mouse, wireless keyboard
       if (read_num(d + "/present", 1) == 0) continue;
       Battery b;
       b.name = n;
@@ -209,7 +209,7 @@ State query() {
       else if (s.charging) s.minutes = (int)(60.0 * (e_full_sum - e_now_sum) / power_sum);
     }
   }
-  // jasność: preferujemy firmware > platform > raw
+  // brightness: we prefer firmware > platform > raw
   std::string bl = backlight_dir(), best;
   int best_rank = 9;
   for (auto &n : list_dir(bl)) {
@@ -224,7 +224,7 @@ State query() {
       s.brightness = (int)std::lround(100.0 * cur / max);
     }
   }
-  // profile zasilania
+  // power profiles
   if (have("powerprofilesctl")) {
     std::string out;
     if (run({"powerprofilesctl", "get"}, &out) == 0) {
@@ -237,7 +237,7 @@ State query() {
         if (e == std::string::npos) e = out.size();
         std::string l = out.substr(p, e - p);
         p = e + 1;
-        // "* balanced:" albo "  power-saver:"
+        // "* balanced:" or "  power-saver:"
         if (l.size() > 3 && l.back() == ':' && (l[0] == '*' || (l[0] == ' ' && l[1] == ' ' && l[2] != ' '))) {
           std::string name = l.substr(0, l.size() - 1);
           name.erase(0, name.find_first_not_of(" *"));
@@ -282,7 +282,7 @@ const char *profile_name(const std::string &p) {
   return p.c_str();
 }
 
-// --- jasność -----------------------------------------------------------------------------
+// --- brightness --------------------------------------------------------------------------
 static bool logind_brightness(const std::string &dev, unsigned value) {
   DBusConnection *c = bus(DBUS_BUS_SYSTEM);
   if (!c) return false;
@@ -301,14 +301,14 @@ bool set_brightness(const State &s, int pct) {
   std::string d = backlight_dir() + "/" + s.backlight;
   long max = read_num(d + "/max_brightness");
   if (max <= 0) return false;
-  pct = std::clamp(pct, 1, 100);   // 0 wyłączałby podświetlenie zupełnie
+  pct = std::clamp(pct, 1, 100);   // 0 would turn the backlight off completely
   unsigned v = (unsigned)std::max(1L, std::lround(max * pct / 100.0));
-  if (getenv("NIRVANA_BACKLIGHT")) {   // atrapa: zapis prosto do pliku
+  if (getenv("NIRVANA_BACKLIGHT")) {   // fake: write straight to the file
     std::ofstream(d + "/brightness") << v << "\n";
     return true;
   }
   if (logind_brightness(s.backlight, v)) return true;
-  if (FILE *f = fopen((d + "/brightness").c_str(), "w")) {   // zapisywalne (np. reguła udev)
+  if (FILE *f = fopen((d + "/brightness").c_str(), "w")) {   // writable (e.g. a udev rule)
     fprintf(f, "%u\n", v);
     fclose(f);
     return true;
@@ -324,7 +324,7 @@ void step_brightness(int delta) {
 
 bool set_profile(const std::string &p) { return run({"powerprofilesctl", "set", p}) == 0; }
 
-// --- akcje ------------------------------------------------------------------------------
+// --- actions ----------------------------------------------------------------------------
 std::string suspend() { return login_action("Suspend"); }
 std::string hibernate() { return login_action("Hibernate"); }
 std::string poweroff() { return login_action("PowerOff"); }
@@ -349,13 +349,13 @@ bool lock_screen() {
   return true;
 }
 
-// --- tryb projekcji -----------------------------------------------------------------------
+// --- projection mode ---------------------------------------------------------------------
 static bool g_proj = false;
 static int g_inhibit_fd = -1;
 static unsigned g_gnome_cookie = 0, g_fdo_cookie = 0;
 static bool g_dpms_was_on = false;
 static void keep_awake(void *) {
-  // dla wygaszaczy z własnym licznikiem bezczynności (xscreensaver, xss-lock)
+  // for screensavers with their own idle counter (xscreensaver, xss-lock)
   if (!g_proj) return;
   XResetScreenSaver(fl_display);
   XFlush(fl_display);
@@ -371,7 +371,7 @@ std::vector<std::string> set_projection(bool on) {
   Display *dpy = fl_display;
   int ev, er;
   if (on) {
-    // 1. ekran X: wygaszacz i DPMS
+    // 1. the X screen: screensaver and DPMS
     if (XScreenSaverQueryExtension(dpy, &ev, &er)) { XScreenSaverSuspend(dpy, True); done.push_back(_("screen blanking")); }
     if (DPMSQueryExtension(dpy, &ev, &er) && DPMSCapable(dpy)) {
       CARD16 level; BOOL st;
@@ -381,7 +381,7 @@ std::vector<std::string> set_projection(bool on) {
     }
     XFlush(dpy);
     Fl::add_timeout(50.0, keep_awake);
-    // 2. logind/elogind: bezczynność i usypianie
+    // 2. logind/elogind: idleness and sleeping
     if (DBusConnection *c = bus(DBUS_BUS_SYSTEM)) {
       DBusMessage *m = dbus_message_new_method_call(LOGIN, LOGIN_PATH, LOGIN_MGR, "Inhibit");
       const char *what = "idle:sleep", *who = "Nirvana Desktop", *why = "Tryb projekcji", *mode = "block";
@@ -396,12 +396,12 @@ std::vector<std::string> set_projection(bool on) {
         dbus_message_unref(r);
       }
     }
-    // 3. środowiska z własnym zarządzaniem bezczynnością (GNOME, KDE, Xfce)
+    // 3. environments with their own idle management (GNOME, KDE, Xfce)
     if (DBusConnection *c = bus(DBUS_BUS_SESSION)) {
       DBusMessage *m = dbus_message_new_method_call("org.gnome.SessionManager", "/org/gnome/SessionManager",
                                                     "org.gnome.SessionManager", "Inhibit");
       const char *app = "nirvana", *why = "Tryb projekcji";
-      dbus_uint32_t xid = 0, flags = 4 | 8;   // usypianie | bezczynność
+      dbus_uint32_t xid = 0, flags = 4 | 8;   // sleep | idle
       dbus_message_append_args(m, DBUS_TYPE_STRING, &app, DBUS_TYPE_UINT32, &xid, DBUS_TYPE_STRING, &why,
                                DBUS_TYPE_UINT32, &flags, DBUS_TYPE_INVALID);
       if (DBusMessage *r = call(c, m, nullptr, 2000)) {
@@ -446,11 +446,11 @@ std::vector<std::string> set_projection(bool on) {
   return done;
 }
 
-// --- bezczynność -------------------------------------------------------------------------
+// --- idleness ---------------------------------------------------------------------------
 static std::string idle_file() {
   const char *x = getenv("XDG_CONFIG_HOME");
   const char *h = getenv("HOME");
-  return (x && *x ? std::string(x) : std::string(h ? h : "/") + "/.config") + "/nirvana/zasilanie.conf";
+  return (x && *x ? std::string(x) : std::string(h ? h : "/") + "/.config") + "/nirvana/power.conf";
 }
 
 IdleSettings read_idle() {
@@ -462,11 +462,11 @@ IdleSettings read_idle() {
     if (line.empty() || line[0] == '#' || eq == std::string::npos) continue;
     std::string k = line.substr(0, eq);
     int v = atoi(line.c_str() + eq + 1);
-    if (k == "wygaszanie") s.blank_min = std::clamp(v, 0, 240);
-    else if (k == "blokada") s.lock_on_blank = v != 0;
-    else if (k == "usypianie_bateria") s.sleep_battery_min = std::clamp(v, 0, 600);
-    else if (k == "usypianie_zasilacz") s.sleep_ac_min = std::clamp(v, 0, 600);
-    else if (k == "krytyczna") s.critical_action = std::clamp(v, 0, 2);
+    if (k == "blank_minutes") s.blank_min = std::clamp(v, 0, 240);
+    else if (k == "lock_on_blank") s.lock_on_blank = v != 0;
+    else if (k == "sleep_battery_minutes") s.sleep_battery_min = std::clamp(v, 0, 600);
+    else if (k == "sleep_ac_minutes") s.sleep_ac_min = std::clamp(v, 0, 600);
+    else if (k == "critical_action") s.critical_action = std::clamp(v, 0, 2);
   }
   return s;
 }
@@ -478,9 +478,9 @@ bool write_idle(const IdleSettings &s) {
   mkdir(dir.c_str(), 0755);
   std::ofstream out(f);
   out << "# Nirvana Desktop - power settings (minutes, 0 = never)\n"
-      << "wygaszanie=" << s.blank_min << "\nblokada=" << (s.lock_on_blank ? 1 : 0)
-      << "\nusypianie_bateria=" << s.sleep_battery_min << "\nusypianie_zasilacz=" << s.sleep_ac_min
-      << "\nkrytyczna=" << s.critical_action << "\n";
+      << "blank_minutes=" << s.blank_min << "\nlock_on_blank=" << (s.lock_on_blank ? 1 : 0)
+      << "\nsleep_battery_minutes=" << s.sleep_battery_min << "\nsleep_ac_minutes=" << s.sleep_ac_min
+      << "\ncritical_action=" << s.critical_action << "\n";
   return (bool)out;
 }
 
@@ -492,7 +492,7 @@ void apply_idle(const IdleSettings &s) {
   int ev, er;
   if (DPMSQueryExtension(dpy, &ev, &er) && DPMSCapable(dpy)) {
     if (t > 0) {
-      // najpierw wygaszenie (czarny ekran), po kolejnej minucie monitor w uśpienie
+      // first blanking (a black screen), after another minute the monitor goes to sleep
       DPMSSetTimeouts(dpy, t + 60, t + 60, t + 60);
       if (!g_proj) DPMSEnable(dpy);
     } else {

@@ -1,4 +1,4 @@
-// Nirvana Desktop - denise: pamięć przestrzenna menedżera plików
+// Nirvana Desktop - denise: the file manager's spatial memory
 #include "spatial.h"
 
 #include <cstdlib>
@@ -14,9 +14,9 @@ Spatial::Spatial(const std::string &home) {
   dir /= "nirvana";
   std::error_code ec;
   fs::create_directories(dir, ec);
-  file_ = (dir / "denise.okna").string();
+  file_ = (dir / "windows").string();
 
-  // Format linii: x y w h zwinięte otwarte [lista [ikony]]<TAB>ścieżka
+  // Line format: x y w h shaded open [list [icons]]<TAB>path
   std::ifstream in(file_);
   std::string line;
   while (std::getline(in, line)) {
@@ -28,7 +28,7 @@ Spatial::Spatial(const std::string &home) {
     if (ss >> s.x >> s.y >> s.w >> s.h >> sh >> op) {
       s.shaded = sh; s.open = op;
       int li = 0;
-      if (ss >> li) s.list = li;   // pole dodane w Ramblerze 0.2 - starsze pliki go nie mają
+      if (ss >> li) s.list = li;   // a field added in Rambler 0.2 - older files do not have it
       int is = 0;
       if (ss >> is && (is == 16 || is == 32 || is == 64)) s.icons = is;   // od 0.3
       map_[line.substr(tab + 1)] = s;

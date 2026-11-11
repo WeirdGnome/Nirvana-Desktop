@@ -1,12 +1,12 @@
-// Nirvana Desktop - zasobnik systemowy (system tray) na pasku menu Ramblera
+// Nirvana Desktop - the system tray in Rambler's menu bar
 //
-// Obsługuje oba protokoły, których używają programy:
-//   * XEmbed (freedesktop System Tray): Rambler przejmuje selekcję
-//     _NET_SYSTEM_TRAY_S<ekran> i osadza okienka ikon (GTK2/3, Qt4, Wine, xembed),
-//   * StatusNotifierItem przez D-Bus (Qt5/6, KDE, Electron, libappindicator):
-//     gdy nikt inny tego nie robi, Rambler jest też org.kde.StatusNotifierWatcher.
-//     Ikony rysujemy sami (motyw ikon albo piksmapy), menu kontekstowe
-//     przychodzą przez com.canonical.dbusmenu i pokazujemy je jako menu Platinum.
+// Supports both protocols programs use:
+// * XEmbed (freedesktop System Tray): Rambler takes the selection
+// _NET_SYSTEM_TRAY_S<screen> and embeds the icon windows (GTK2/3, Qt4, Wine, xembed),
+// * StatusNotifierItem over D-Bus (Qt5/6, KDE, Electron, libappindicator):
+// when nobody else does it, Rambler is also org.kde.StatusNotifierWatcher.
+// We draw the icons ourselves (icon theme or pixmaps), context menus
+// come through com.canonical.dbusmenu and are shown as Platinum menus.
 #pragma once
 
 #include <FL/Fl_Widget.H>
@@ -16,12 +16,12 @@ class Fl_Window;
 
 namespace tray {
 
-// Widget z ikonami: postaw go na pasku menu; jego szerokość podaje width().
+// Widget with the icons: put it in the menu bar; width() gives its width.
 Fl_Widget *make(int X, int Y, int H);
-// Uruchom zasobnik. changed() woła się, gdy zmienia się liczba ikon (przestaw pasek).
+// Start the tray. changed() is called when the number of icons changes (re-layout the bar).
 void init(Fl_Window *desk, std::function<void()> changed);
-int width();          // potrzebna szerokość (0, gdy pusto)
-void recolor();       // po zmianie schematu: tło okienek XEmbed
-void shutdown();      // zwolnij selekcję i oddaj okienka ikon (przed restartem/wyjściem)
+int width();          // needed width (0 when empty)
+void recolor();       // after a scheme change: background of the XEmbed windows
+void shutdown();      // release the selection and hand back the icon windows (before a restart/exit)
 
 }  // namespace tray
