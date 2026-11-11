@@ -1,6 +1,6 @@
 // Nirvana Desktop - libplatinum: a Platinum style window
 //
-// PWindow is an FLTK group drawing the full Mac OS 9 window "chrome":
+// PWindow is an FLTK group drawing the full window "chrome":
 // a striped title bar, the close button, zoom, windowshade
 // and the resize handle. In the prototype stage the windows lived inside the desktop
 // (one process). nirvana-insight uses the same drawing functions to draw

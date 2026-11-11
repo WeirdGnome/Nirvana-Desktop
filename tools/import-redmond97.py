@@ -38,6 +38,10 @@ def norm(v: str) -> str:
     return v.upper() if v.startswith("#") else v
 
 
+# Preset names that are someone else's trademarks get neutral names (slug, name).
+RENAMES = {"windows-95": ("periwinkle", "Periwinkle"), "more-windows": ("many-panes", "Many Panes")}
+
+
 def main() -> None:
     src = pathlib.Path(sys.argv[1])
     dst = pathlib.Path(sys.argv[2])
@@ -60,6 +64,8 @@ def main() -> None:
         if "window" not in vals:
             continue
         slug = p.stem.removeprefix("theme_")
+        if slug in RENAMES:
+            slug, name = RENAMES[slug]
         out = [
             "# Nirvana Desktop color scheme",
             "# Colors: Redmond97 SE (Sliver X), https://codeberg.org/Sliver_X/Redmond97-SE",

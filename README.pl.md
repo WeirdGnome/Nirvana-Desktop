@@ -3,7 +3,8 @@
 *[English version: README.md](README.md)*
 
 Lekkie środowisko graficzne dla Linuksa (baza: minimalny Devuan) w duchu
-**Mac OS 9 (Platinum)** z nutą **Amigi**. Napisane w C++ i FLTK 1.4.
+**klasycznych pulpitów lat 90.**: szare okna z fazowaniem, pasek menu u góry i ikony na biurku.
+Napisane w C++ i FLTK 1.4.
 
 - **Tryb prosty**: użytkownik widzi tylko swój dysk Nirvana HD (czyli `$HOME`), jak w Androidzie.
   Aplikacje to pliki AppImage w ukrytym `~/.nirvana-apps`, otwieranym ikoną **Aplikacje**
@@ -32,7 +33,7 @@ Lekkie środowisko graficzne dla Linuksa (baza: minimalny Devuan) w duchu
 
 Rozpakuj źródła i uruchom instalator:
 
-    tar xzf nirvana-desktop-0.0.10.tar.gz && cd nirvana-desktop
+    tar xzf nirvana-desktop-0.0.11.tar.gz && cd nirvana-desktop
     sudo ./install.sh                 # albo: sudo ./install.sh --login-screen
 
 Instalator:
@@ -111,26 +112,25 @@ Bez `--size` biurko wypełnia cały obszar roboczy. Pozycje okien folderów są 
 względem biurka, więc przesuwają się razem z nim.
 
 Opcje Ramblera: `--home KATALOG`, `--size 1024x768`, `--center`.
-Czcionkę systemową w stylu Chicago można podać przez `NIRVANA_SYSTEM_FONT`
-(np. wolny font ChicagoFLF).
+Inną czcionkę systemową (np. wolną, w stylu bitmapowym) można podać przez `NIRVANA_SYSTEM_FONT`.
 
 ## Insight: obsługa okien
 
 - pasek tytułu: przeciąganie przesuwa okno, podwójne kliknięcie je ikonizuje
 - przyciski: zamknij (z lewej, uprzejmie przez `WM_DELETE_WINDOW`), ikonizuj i zoom (z prawej),
   w kolorach schematu, z kontrastową obwódką i symbolami wypełnionymi kolorem akcentu
-  (inspiracja gadżetami Amigi), widoczne także w oknach nieaktywnych
-- **ikonizacja jak w Workbenchu:** okno znika, a na biurku (w lewej kolumnie, pod
+  (w stylu gadżetów okien starych komputerów domowych), widoczne także w oknach nieaktywnych
+- **ikonizacja na biurko:** okno znika, a na biurku (w lewej kolumnie, pod
   dyskami) pojawia się jego ikona – obrazek programu z `_NET_WM_ICON` i tytuł okna na żółtym
   tle, więc zminimalizowane okna odróżniają się od dysków i plików. Dwuklik w ikonę przywraca okno. Tak samo działa „minimalizuj” w samym programie
-  (Brave, Firefox…); „Ukryj” z menu aplikacji chowa okna bez ikon. Ikony przetrwają
+  (np. w przeglądarce); „Ukryj” z menu aplikacji chowa okna bez ikon. Ikony przetrwają
   Resetuj Nirvanę.
 - prawa i dolna krawędź ramki oraz prawy dolny róg: zmiana rozmiaru
 - klik w okno aplikacji aktywuje je i wyciąga na wierzch; klik w biurko dezaktywuje okna,
   a klik w pasek menu nie zmienia aktywnego okna (menu działa na nie)
 - foldery i dialogi Ramblera to zwykłe okna X, więc zachowują się jak każda aplikacja
 - okna nie wchodzą pod pasek menu ani na dok: Insight publikuje `_NET_WORKAREA`, więc
-  programy (Brave, Firefox, GTK, Qt) otwierają się w tym obszarze, a za duże okna są
+  programy (GTK, Qt, przeglądarki) otwierają się w tym obszarze, a za duże okna są
   przycinane; maksymalizacja z paska tytułu programu (`_NET_WM_STATE_MAXIMIZED_*`)
   działa jak zoom; biurko Ramblera zawsze leży na dole
 - Flatpaki: sesja przekazuje usługom D-Bus ekran i nazwę pulpitu, a
@@ -142,7 +142,7 @@ Czcionkę systemową w stylu Chicago można podać przez `NIRVANA_SYSTEM_FONT`
 - **Ikony i nazwy**: Rambler czyta ikonę (`.DirIcon`, PNG lub SVG) prosto z obrazu
   squashfs wewnątrz AppImage, **bez uruchamiania go**. Offset obrazu liczy z nagłówka
   ELF i używa `unsquashfs`.
-- **Nazwa z wersją**: `Firefox-128.0.3-x86_64.AppImage` → „Firefox 128.0.3”. Gdy nazwa pliku
+- **Nazwa z wersją**: `Edytor-1.4.2-x86_64.AppImage` → „Edytor 1.4.2”. Gdy nazwa pliku
   nie ma wersji, Rambler bierze ją z `X-AppImage-Version` w pliku .desktop. Dzięki temu kilka
   wersji tego samego programu da się rozróżnić i mieć zainstalowane jednocześnie.
   Ikony i dane z .desktop są zapamiętywane w `~/.cache/nirvana/icons`.
@@ -186,7 +186,7 @@ Czcionkę systemową w stylu Chicago można podać przez `NIRVANA_SYSTEM_FONT`
 
 ## Animacje okien
 
-Jak w klasycznym Mac OS: przy otwieraniu, zamykaniu, zwijaniu i powiększaniu
+Jak na klasycznych pulpitach: przy otwieraniu, zamykaniu, zwijaniu i powiększaniu
 okien po ekranie przelatują kontury prostokątów („zoom rects”). Foldery w Ramblerze
 wylatują z ikony, z której je otwarto, i wracają do niej przy zamknięciu.
 Sposób rysowania dobiera się sam:
@@ -195,7 +195,6 @@ Sposób rysowania dobiera się sam:
   (np. GNOME na Waylandzie w Rocky/RHEL 10) i na pulpitach z kompozytorem, gdzie
   rysunek na głównym oknie X byłby niewidoczny albo zamalowany.
 
-![Animacje](docs/img/animations.gif)
 
 - `NIRVANA_ANIMATIONS=0`: wyłącza animacje (ma pierwszeństwo przed panelem Wygląd)
 - `NIRVANA_ANIM_MS=200`: wolniejsze klatki (do testów; domyślnie 12 ms)
@@ -213,7 +212,7 @@ pojawia się na biurku pod Nirvana HD, z ikoną pasującą do rodzaju nośnika:
 - **dysk zaszyfrowany (LUKS)** ma ikonę z kłódką; po podwójnym kliknięciu pyta o hasło,
   odblokowuje i montuje (złe hasło: komunikat i ponowne pytanie),
 - **przeciągnięcie ikony dysku do kosza wysuwa go** (kosz zmienia się w symbol
-  wysuwania, jak w Mac OS): odmontowanie, zamknięcie LUKS, wysunięcie płyty albo
+  wysuwania): odmontowanie, zamknięcie LUKS, wysunięcie płyty albo
   wyłączenie dysku USB; to samo robi **Wysuń** w menu
   podręcznym ikony dysku (prawy przycisk myszy, `Ctrl+Y`),
 - pliki upuszczone na ikonę dysku są **kopiowane** na niego (dysk montuje się sam),
@@ -230,8 +229,8 @@ Na Devuanie potrzebne są `udisks2` i polkit z elogind; na Rocky: `udisks2`, `db
 
 ## Przełącznik aplikacji (gary)
 
-Prawy górny róg paska menu pokazuje ikonę i nazwę aplikacji na pierwszym planie,
-jak w Mac OS 9. Po kliknięciu:
+Prawy górny róg paska menu pokazuje ikonę i nazwę aplikacji na pierwszym planie.
+Po kliknięciu:
 
 - lista uruchomionych aplikacji z ikonami; wybór wyciąga wszystkie jej okna na wierzch,
   ukryte aplikacje mają wyszarzoną ikonę,
@@ -277,7 +276,7 @@ okno biurka nie przyjmuje fokusu, żeby klik w pasek menu nie zmieniał aktywnej
   Kosz nad dokiem) oraz pasek doku na dole. Zoom innych programów też.
   Za duże zapamiętane okna są przy otwarciu zmniejszane do tego obszaru.
 - **Zaznaczanie**: klik, Shift/Ctrl+klik dodaje lub odejmuje, ramka zaznaczania myszą, `Ctrl+A`.
-- **Zmiana nazwy**: `F2` albo klik w nazwę już zaznaczonego elementu (jak w Finderze).
+- **Zmiana nazwy**: `F2` albo klik w nazwę już zaznaczonego elementu.
   Zmiana nazwy folderu aktualizuje jego otwarte okna i zapamiętane pozycje.
 - **Przeciąganie**: między oknami przenosi, z `Ctrl` kopiuje; na folder w oknie wrzuca do
   środka; na ikonę Kosza wyrzuca, na Nirvana HD przenosi do katalogu domowego. Nietrafione
@@ -296,7 +295,7 @@ okno biurka nie przyjmuje fokusu, żeby klik w pasek menu nie zmieniał aktywnej
 ### Pasek menu
 
 Po prawej, ciasno przy krawędzi: zasilanie, głośność, sieć, zegar i przełącznik aplikacji
-(gadżet głębi). Na środku, jak na pasku ekranu Workbencha 3.1, widać zajętą pamięć
+(gadżet głębi). Na środku, jak na paskach ekranu starych komputerów domowych, widać zajętą pamięć
 i zajęte miejsce na dysku z katalogiem domowym, każde z całości, np.
 `512MB zajętej pamięci z 16GB     40GB zajętego dysku z 512GB` (poniżej 1 GB w MB, poniżej 10 GB
 z jednym miejscem po przecinku). Wartości odświeżają się co 3 sekundy, a podpowiedź pokazuje
@@ -304,13 +303,22 @@ ilości wolne. Na wąskim ekranie napis się skraca.
 
 ![Pasek menu](docs/img/menubar.png)
 
-### Menu (w duchu Workbencha)
+### Menu
 
 | Menu | Pozycje |
 |------|---------|
 | **Nirvana** (logo i napis) | O systemie, Preferencje (okno z panelami), Wykonaj polecenie `Ctrl+E`, Nirvana Shell `Ctrl+T`, Otwórz dziennik, Resetuj Nirvanę |
 | **System** | Zablokuj ekran, Uśpij, Hibernuj, Wyloguj `Ctrl+Q`, Uruchom ponownie, Wyłącz |
 | **Narzędzia** | Formatuj dysk, Opróżnij kosz |
+
+**O systemie** pokazuje system na wzór neofetch: po lewej duże logo z próbkami kolorów,
+po prawej `użytkownik@komputer` i parametry – system, komputer, jądro, czas pracy, pakiety
+(dpkg/rpm, Flatpak, AppImage), powłoka, rozdzielczość, środowisko, menedżer okien i jego motyw,
+motyw, ikony, czcionka, kursor, terminal i jego czcionka, procesor, grafika, pamięć, dysk,
+bateria, lokalny IP i ustawienia regionalne. Dwie pozostałe karty to **Licencja** (GPL-3.0)
+i **Podziękowania**.
+
+![O systemie](docs/img/about.png)
 
 W każdym oknie menedżera plików:
 
@@ -326,8 +334,8 @@ Pozycje, które w danej chwili nic by nie zrobiły, są wyszarzone, np. Wysuń b
 - **Zamroź** zapisuje pozycje na stałe (zaznaczonych ikon albo całego okna), **Odmroź** je
   zwalnia, **Uporządkuj** ustawia wszystko z powrotem w siatce. Pozycje są w
   `~/.config/nirvana/icon-positions`.
-- **Wielkość ikon**: małe 16 px, normalne 32 px, duże 64 px (piksele powiększone 2×, ostre jak
-  na Amidze). Wielkość jest zapamiętywana dla każdego okna.
+- **Wielkość ikon**: małe 16 px, normalne 32 px, duże 64 px (piksele powiększone 2×, ostre, w stylu
+  retro). Wielkość jest zapamiętywana dla każdego okna.
 - **Informacje**: rozmiar (foldery liczone), położenie, daty utworzenia, zmiany i otwarcia,
   właściciel, uprawnienia. W oknie można też ustawić:
   - flagi *Tylko do odczytu* i *Program* (prawo uruchamiania),
@@ -336,7 +344,7 @@ Pozycje, które w danej chwili nic by nie zrobiły, są wyszarzone, np. Wysuń b
     uruchomieniu.
 
   Plik z flagą *Program* otwiera się w Nirvana Shell.
-- **Dok** (w stylu Control Strip z Mac OS): *Połóż na doku* wystawia ikonę pliku, folderu
+- **Dok** (pasek kafelków): *Połóż na doku* wystawia ikonę pliku, folderu
   albo aplikacji na pasek w lewym dolnym rogu ekranu, *Zdejmij z doku* ją chowa (plik zostaje
   na miejscu).
   - Kafelki w kolorach schematu przylegają do siebie i do krawędzi ekranu.
@@ -354,7 +362,6 @@ Pozycje, które w danej chwili nic by nie zrobiły, są wyszarzone, np. Wysuń b
   do `~/.xsession-errors`). Dopiero pięć wywrotek w ciągu 30 sekund kończy sesję.
 
 ![Menu Nirvana](docs/img/menu-nirvana.png)
-![Informacje o pliku](docs/img/information.png)
 
 Pozycje i tryb widoku okien: `~/.config/nirvana/windows`.
 
@@ -364,8 +371,8 @@ Logo Nirvana Desktop → **Panele sterowania → Wygląd…** otwiera panel z li
 kolorów i podglądem. Klik na schemacie zmienia od razu sam panel, a **Zastosuj**/**OK**
 przestawia cały system: Rambler i Insight przeładowują paletę bez restartu.
 
-- **Schemat kolorów**: wbudowane *Platinum*, *Grafit* (ciemny) i *Workbench 2*
-  (ukłon w stronę Amigi) oraz ponad 40 schematów z
+- **Schemat kolorów**: wbudowane *Platinum*, *Grafit* (ciemny) i *Retro niebieski*
+  (szary z niebieskim akcentem) oraz ponad 40 schematów z
   [Redmond97 SE](https://codeberg.org/Sliver_X/Redmond97-SE) (GPL-3.0).
 - **Wygląd domyślny**: schemat *In Tenebris*, wzór *Cegiełki* i ikony Platinum.
 - **Pasek tytułu**: jak w schemacie, prążki Platinum, jednolity kolor albo gradient.
@@ -376,7 +383,7 @@ przestawia cały system: Rambler i Insight przeładowują paletę bez restartu.
   - Gradient: pionowy, poziomy, ukośny albo promienisty. Ma dithering (macierz Bayera),
     więc nawet przy subtelnych przejściach nie widać pasów.
   - 20 wzorów w dwóch odcieniach koloru biurka: gładki, kropki, groszki, krata, drobna
-    kratka, szachownica, ukośne prążki, paski poziome i pionowe, cegiełki, raster (Amiga),
+    kratka, szachownica, ukośne prążki, paski poziome i pionowe, cegiełki, raster,
     romby, krzyżyki, zygzak, jodełka, tkanina, fale, łuski, gwiazdki, piasek.
   - Tapeta leży na tym tle: widać je w pasach przy układzie *Dopasuj*, wokół obrazu
     *Na środku* i pod przezroczystymi fragmentami PNG.
@@ -393,19 +400,19 @@ przestawia cały system: Rambler i Insight przeładowują paletę bez restartu.
   - Pod przezroczystymi fragmentami PNG widać wzór biurka.
   - W Ramblerze: zaznacz obraz i wybierz **Ikony → Ustaw jako tapetę**.
   - Własne tapety można dodać do `~/.local/share/nirvana/wallpapers`.
-- **Styl ikon**: *Workbench (Amiga)*, domyślny, albo *Platinum (Mac OS)*. Zmiana działa
+- **Styl ikon**: *Retro* albo *Platinum*. Zmiana działa
   od razu, także w otwartych oknach i na doku.
-  - Workbench: własne rysunki w duchu Workbencha 2/3 i MagicWB, w palecie szarości,
+  - Retro: własne rysunki w stylu komputerów domowych z początku lat 90., w palecie szarości,
     granatu i beżu z czarnymi obrysami.
   - Foldery to szuflady, a dokumenty to „projekty” z zagiętym rogiem. Programy wyglądają
     jak okienko z gadżetami zamykania i głębi.
   - Dyski to kostki twardych dysków z diodą (Nirvana HD z granatową tabliczką), a nośniki
     wymienne to dyskietki 3,5". Kosz ma pokrywę z uchwytem.
-  - Zaznaczona ikona ma odwrócone kolory, jak tryb *complement* w Workbenchu.
+  - Zaznaczona ikona ma odwrócone kolory (podświetlenie *complement*).
   - Plansza wszystkich ikon: `tools/icon-sheet.cxx`.
 
-  ![Ikony Workbench (normalne i zaznaczone) i Platinum](docs/img/icons.png)
-  ![Schemat Workbench 2 z ikonami Workbench](docs/img/icons-workbench.png)
+  ![Ikony Retro (normalne i zaznaczone) i Platinum](docs/img/icons.png)
+  ![Schemat Retro niebieski z ikonami Retro](docs/img/icons-retro.png)
 - **Animacje okien**: włączone lub wyłączone.
 - **Skala interfejsu**: *Automatycznie* (z ustawienia `Xft.dpi`, np. 192 dpi = 200%)
   albo 100–300%. Skaluje wszystko naraz: pasek menu, okna, czcionki, ikony, ramki
@@ -413,7 +420,7 @@ przestawia cały system: Rambler i Insight przeładowują paletę bez restartu.
   i menedżer okien uruchamiają się od nowa (jak **Narzędzia → Resetuj Nirvanę**),
   otwarte programy zostają. Na próbę: `NIRVANA_SCALE=150 nirvana-session`.
 
-  - *Nirvana Desktop* (2560×1440, w duchu AmigaOS 4) powstaje ze skryptu
+  - *Nirvana Desktop* (2560×1440, błyszcząca, ze świetlnymi wstęgami i lustrzaną podłogą) powstaje ze skryptu
     `tools/wallpaper-nirvana-desktop.py [plik] [szerokość wysokość]`. Można ją wygenerować
     w rozdzielczości własnego ekranu.
 
@@ -481,8 +488,6 @@ Nirvana Desktop zarządza siecią przez NetworkManagera (`nmcli` i D-Bus). Na De
   - VPN idzie przez tymczasowy plik `passwd-file` (0600), usuwany zaraz po połączeniu.
 - Sieci firmowe Wi-Fi (WPA Enterprise / 802.1X) jeszcze nie: `nmtui`.
 
-![Panel Sieć: Wi-Fi](docs/img/network-wifi.png)
-![Panel Sieć: VPN](docs/img/network-vpn.png)
 
 Testy bez karty Wi-Fi: `NIRVANA_NMCLI=tools/fake-nmcli.sh` udaje kartę `wlan0` i kilka
 sieci (resztę przekazuje do prawdziwego `nmcli`).
@@ -508,16 +513,15 @@ Plik → Otwórz w Nirvana Shell (Ctrl+T, w folderze aktywnego okna) albo
   Przed zamknięciem okna, w którym coś działa, terminal pyta.
 - **Wygląd:**
   - prawy klik otwiera menu, a w nim profile kolorów: Klasyczny (jasny), Ciemny,
-    Zielony fosfor, Bursztynowy, Workbench (Amiga), Jak schemat kolorów,
+    Zielony fosfor, Bursztynowy, Retro niebieski, Jak schemat kolorów,
   - Ctrl+Shift+= / - / 0 zmienia rozmiar czcionki.
 - **Ustawienia:** `~/.config/nirvana/terminal.conf` (profil, czcionka, rozmiar, kolumny,
   wiersze, przewijanie).
 
-![Nirvana Shell z htop](docs/img/shell-htop.png)
 
 ## Zasobnik systemowy
 
-Ikony programów działających w tle (komunikatory, chmura, Steam, Discord, nm-applet...)
+Ikony programów działających w tle (komunikatory, chmura, launchery gier, nm-applet...)
 stoją na pasku menu, na lewo od apletu zasilania. Rambler obsługuje oba protokoły:
 
 - **StatusNotifierItem** (D-Bus): Qt 5/6, KDE, Electron, libappindicator / Ayatana.
@@ -540,7 +544,6 @@ stoją na pasku menu, na lewo od apletu zasilania. Rambler obsługuje oba protok
   `MANAGER`, a Rambler sam odnajduje ikony D-Bus, które już są na szynie.
 - `NIRVANA_NO_TRAY=1` wyłącza zasobnik (np. gdy sesja ma własny).
 
-![Zasobnik z menu programu](docs/img/tray.png)
 
 ## Dźwięk
 
@@ -558,7 +561,6 @@ tamto środowisko.
 Działa z PulseAudio i PipeWire (`pactl`). Bez serwera dźwięku używa czystej ALSA
 (`amixer`: Master i Capture).
 
-![Głośność](docs/img/volume.png)
 
 ## Zasilanie i tryb projekcji
 
@@ -589,7 +591,6 @@ Panel **Zasilanie** (logo → Panele sterowania) ustawia dla sesji Nirvana Deskt
 - usypianie po bezczynności, osobno na baterii i z zasilacza,
 - reakcję na 3% baterii; przy 10% pojawia się ostrzeżenie.
 
-![Zasilanie i tryb projekcji](docs/img/power-projection.png)
 
 ## Języki
 
@@ -618,7 +619,13 @@ liczby mnogiej i `fmt(_("Delete “%1”?"), name)` zamiast sklejania zdań. Kat
 
 ## Licencja
 
-Do ustalenia (proponowana: GPL-3.0-or-later; FLTK jest na LGPL z wyjątkiem
-pozwalającym na linkowanie statyczne).
-libvterm w `third_party/libvterm` (Paul Evans) jest na licencji MIT.
-Schematy w `schemes/redmond97-se/` pochodzą z Redmond97 SE (Sliver X, matthewmx86) i są na GPL-3.0.
+Nirvana Desktop jest wolnym oprogramowaniem na licencji **GNU General Public License w wersji 3
+lub późniejszej** (GPL-3.0-or-later). Pełny tekst jest w pliku [`LICENSE`](LICENSE); instaluje się
+do `/usr/share/nirvana/LICENSE` i jest widoczny w **Nirvana → O systemie → Licencja**.
+
+- FLTK jest na LGPL-2.0 z wyjątkami pozwalającymi na linkowanie statyczne.
+- libvterm w `third_party/libvterm` (Paul Evans) jest na licencji MIT.
+- Schematy w `schemes/redmond97-se/` pochodzą z Redmond97 SE (Sliver X, matthewmx86) i są na GPL-3.0.
+
+Ludzie i projekty, na których pracy zbudowano Nirvana Desktop, są wymienieni w
+**O systemie → Podziękowania**.

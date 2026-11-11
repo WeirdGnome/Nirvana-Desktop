@@ -92,8 +92,8 @@ public:
 };
 
 // ---------------------------------------------------------------------------
-// Middle of the bar: memory and disk usage, as on the Workbench 3.1
-// Workbench 3.1 screen title ("Workbench Screen  1,234,567 graphics mem  ...").
+// Middle of the bar: memory and disk usage, like the screen title bars of old
+// home computers that showed the free memory.
 // ---------------------------------------------------------------------------
 class MemInfo : public Fl_Widget {
 public:
@@ -252,8 +252,7 @@ public:
       fl_color(selection_color());
       fl_rectf(x(), y(), w(), h() - 1);
     }
-    // A nod to the Amiga: instead of the application name, the depth gadget from the
-    // Workbench screen title bar (two overlapping rectangles). The name is in the tooltip and the menu.
+    // Instead of the application name: a depth gadget (two overlapping rectangles). The name is in the tooltip and the menu.
     draw_depth_gadget(x() + (w() - 18) / 2 + 1, y() + 3, open_);
     // separator on the left
     fl_color(SHADOW); fl_yxline(x(), y() + 3, y() + h() - 5);
@@ -333,7 +332,7 @@ static void net_label_measure(const Fl_Label *o, int &W, int &H) {
 
 static std::string alice_exe();
 static Entry entry_for(const std::string &path);
-// A dock like the Mac OS Control Strip: a strip of tiles at the left and bottom screen edge,
+// The dock: a strip of tiles at the left and bottom screen edge,
 // names in tooltips. A collapse tab on the left, a rounded end on the right.
 static const int DOCK_TILE = 40;   // tile (32 px icon + frame)
 static const int DOCK_TAB = 14;    // collapse tab
@@ -696,7 +695,7 @@ void Desktop::layout_icons() {
     p.prefs = true;
     place(p);
   }
-  // disks and discs below Nirvana HD, as in Mac OS
+  // disks and discs below Nirvana HD
   for (int i = 0; i < (int)vols_.size(); i++) {
     DeskIcon d{vols_[i].name, vols_[i].mountpoint, vols_[i].icon, 0, 0};
     d.vol = i;
@@ -714,7 +713,7 @@ void Desktop::layout_icons() {
   }
   icons_.push_back({_("Trash"), trash_dir(), trash_full() ? Icon::TrashFull : Icon::Trash, 0, trash_y});
   icon_cols_ = cols;
-  // dock: icons left out on the desktop (Leave Out from Workbench), as a strip in the bottom
+  // dock: icons left out on the desktop (Leave Out), as a strip in the bottom
   // left corner. The icon position as for the others: the picture at (x + 24, y).
   dock_shown_ = 0;
   if (!dock_collapsed_) {
@@ -956,7 +955,7 @@ NWin::NWin(Desktop *d, int X, int Y, int W, int H, const char *title, bool dlg)
   xclass(dlg ? "Nirvana-Dialog" : "Nirvana-Rambler");
   callback([](Fl_Widget *w, void *) {
     auto *n = (NWin *)w;
-    // Escape closes a dialog, but not a folder window (as in Mac OS)
+    // Escape closes a dialog, but not a folder window
     if (!n->dialog && Fl::event() == FL_SHORTCUT && Fl::event_key() == FL_Escape) return;
     n->desk->close(n);
   });
@@ -1295,7 +1294,7 @@ void Desktop::open_folder(const std::string &path, bool animate, bool new_window
   std::error_code ec;
   if (path == trash_dir()) fs::create_directories(path, ec);
   if (NWin *w = new_window ? nullptr : find(path)) {
-    // already open: as in Mac OS - outlines show where its window is
+    // already open: outlines show where its window is
     Rect src;
     if (animate && source_rect(path, src)) zoom_rects(src, w->frame_rect());
     if (w->shaded()) w->set_shaded(false);
@@ -1715,7 +1714,7 @@ void Desktop::draw() {
     auto &ic = icons_[i];
     bool sel = i == icon_sel_ || i == icon_drop_;
     Icon shown = ic.icon;
-    if (vdragging_ && ic.path == trash_dir()) shown = Icon::Eject;   // as in Mac OS
+    if (vdragging_ && ic.path == trash_dir()) shown = Icon::Eject;
     if (ic.dock) continue;   // the dock is drawn by draw_dock(): tiles without labels
     if (ic.img) {   // window icon: the program's picture; selected - darkened
       ic.img->draw(ic.x + 24, ic.y);
@@ -1799,7 +1798,7 @@ int Desktop::handle(int e) {
     icon_sel_ = i;
     vdrag_icon_ = (i >= 0 && icons_[i].vol >= 0) ? i : -1;   // a disk can be dragged to the Trash
     vpress_x_ = Fl::event_x_root(); vpress_y_ = Fl::event_y_root();
-    dock_press_ = (i >= 0 && icons_[i].dock) ? i : -1;   // dock: a single click, like the Control Strip
+    dock_press_ = (i >= 0 && icons_[i].dock) ? i : -1;   // dock: a single click
     if (dock_press_ < 0 && i >= 0 && Fl::event_clicks()) {
       Fl::event_clicks(0);
       vdrag_icon_ = -1;
@@ -1926,18 +1925,7 @@ void Desktop::dialog(const std::string &title, const std::string &text,
 // ---------------------------------------------------------------------------
 // Menu actions
 // ---------------------------------------------------------------------------
-void Desktop::about() {
-  long pages = sysconf(_SC_PHYS_PAGES), psize = sysconf(_SC_PAGE_SIZE);
-  char mem[64];
-  snprintf(mem, sizeof mem, "%.1f", (double)pages * psize / (1024.0 * 1024 * 1024));
-  if (plat::language() == "pl") for (char *p = mem; *p; p++) if (*p == '.') *p = ',';
-  std::string fltk = std::to_string(Fl::api_version() / 10000) + "." +
-                     std::to_string(Fl::api_version() / 100 % 100) + "." + std::to_string(Fl::api_version() % 100);
-  std::string text = std::string("Nirvana Desktop " NIRVANA_VERSION " “Tempo”\n") + _("A desktop in the spirit of Mac OS 9 and the Amiga") + "\n\n" +
-                     plat::fmt(_("Built-in memory: %1 GB"), mem) + "\n" +
-                     plat::fmt(_("File manager: Rambler %1 · FLTK %2"), NIRVANA_VERSION, fltk);
-  dialog(_("About Nirvana Desktop"), text, {{_("OK"), nullptr}});
-}
+// Desktop::about() is in about.cxx
 
 void Desktop::new_folder() {
   NWin *a = active_folder();
@@ -2734,7 +2722,7 @@ void Desktop::drag_end(int xr, int yr, bool copy) {
   else if (t.icon >= 0) {
     dest = icons_[t.icon].path;
     if (int vi = icons_[t.icon].vol; vi >= 0) {
-      copy = true;   // to another disk we copy, as in Mac OS
+      copy = true;   // to another disk we copy
       if (dest.empty()) {
         if (vols_[vi].encrypted && !vols_[vi].unlocked) {
           dialog(_("Encrypted Disk"), plat::fmt(_("Open the disk “%1” and enter its password first."), vols_[vi].name),
@@ -2750,7 +2738,7 @@ void Desktop::drag_end(int xr, int yr, bool copy) {
     }
   }
 
-  // Dropping on the background of the same window in icon view: moving the icons (Workbench)
+  // Dropping on the background of the same window in icon view: moving the icons
   if (t.win == src && t.item < 0 && !copy && known(src) &&
       src->pane->view()->mode() == FolderView::Icons) {
     FolderView *v = src->pane->view();
@@ -2762,7 +2750,7 @@ void Desktop::drag_end(int xr, int yr, bool copy) {
     return;
   }
   if (dest.empty() || (t.win == src && t.item < 0 && !copy)) {
-    // a missed drop: the icon "flies back" to its place, as in Mac OS
+    // a missed drop: the icon "flies back" to its place
     Rect back;
     if (known(src) && src->pane->view()->icon_rect(items[0].path, back)) {
       back = {back.x + src->x(), back.y + src->y(), back.w, back.h};
@@ -2885,7 +2873,7 @@ void Desktop::drop_uris(const std::string &list, const std::string &dest) {
     if (!errors.empty()) dialog(_("Trash"), _("Could not move to the Trash:") + std::string("\n") + errors, {{"OK", nullptr}});
     return;
   }
-  // from another program: we copy (like dragging between disks in Mac OS)
+  // from another program: we copy (like dragging between disks)
   transfer(items, dest, true, false);
 }
 

@@ -92,7 +92,7 @@ public:
   void draw() override;
   int handle(int e) override;
 
-  // --- icon size and positions (as in Workbench) ---
+  // --- icon size and positions  ---
   void set_icon_size(int s);            // 16, 32 or 64
   int icon_size() const { return isize_; }
   int cell_w() const { return isize_ == 16 ? 76 : isize_ == 64 ? 104 : 80; }

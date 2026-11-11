@@ -60,7 +60,7 @@ add_library(nirvana-platinum STATIC
   platinum/anim.cxx
   platinum/theme.cxx
   platinum/wallpaper.cxx
-  platinum/icons_wb.cxx
+  platinum/icons_retro.cxx
   platinum/framewin.cxx)
 find_package(X11 REQUIRED)
 target_include_directories(nirvana-platinum PUBLIC platinum)
@@ -93,6 +93,7 @@ add_executable(nirvana-denise
   denise/volumes.cxx
   denise/applets.cxx
   denise/menus.cxx
+  denise/about.cxx
   denise/tray.cxx)
 target_link_libraries(nirvana-denise PRIVATE nirvana-platinum nirvana-net nirvana-audio nirvana-power fltk::images PkgConfig::DBUS)
 
@@ -127,6 +128,7 @@ install(PROGRAMS session/nirvana-session session/nirvana-autostart DESTINATION b
 install(FILES session/nirvana.desktop DESTINATION share/xsessions COMPONENT nirvana)
 install(FILES session/nirvana-portals.conf DESTINATION share/xdg-desktop-portal COMPONENT nirvana)
 install(FILES README.md README.pl.md DESTINATION share/doc/nirvana COMPONENT nirvana)
+install(FILES LICENSE DESTINATION share/nirvana COMPONENT nirvana)   # shown in About This Computer
 
 # --- .deb package (Devuan 6 "Excalibur" / Debian 13): cpack -G DEB ----------
 # Library dependencies come from dpkg-shlibdeps; the rest (programs Nirvana Desktop
@@ -136,7 +138,7 @@ set(CPACK_GENERATOR DEB)
 set(CPACK_PACKAGE_NAME nirvana)
 set(CPACK_PACKAGE_VENDOR "Nirvana Desktop")
 set(CPACK_PACKAGE_CONTACT "Nirvana Desktop <nirvana@localhost>")
-set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "lightweight desktop in the spirit of Mac OS 9 and the Amiga")
+set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "lightweight desktop in the spirit of the classic 1990s desktops")
 set(CPACK_PACKAGE_DESCRIPTION "Nirvana Desktop is an X11 session built with FLTK: the Insight window manager,
 the Rambler desktop and file manager, an application switcher, control panels (Alice)
 and the Nirvana Shell terminal. English and Polish interface.")
@@ -145,6 +147,7 @@ set(CPACK_INSTALL_CMAKE_PROJECTS "${CMAKE_BINARY_DIR};NirvanaDesktop;nirvana;/")
 set(CPACK_DEBIAN_PACKAGE_VERSION "${NIRVANA_VERSION}")
 set(CPACK_DEBIAN_FILE_NAME DEB-DEFAULT)
 set(CPACK_DEBIAN_PACKAGE_SECTION x11)
+set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_SOURCE_DIR}/LICENSE")
 set(CPACK_DEBIAN_PACKAGE_PRIORITY optional)
 set(CPACK_DEBIAN_PACKAGE_SHLIBDEPS ON)
 set(CPACK_DEBIAN_PACKAGE_DEPENDS "dbus-bin | dbus")

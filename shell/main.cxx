@@ -71,7 +71,7 @@ Profile PROFILES[] = {
     {"dark", N_("Dark"), 0xD3D7CF, 0x1E1F22, 0xD3D7CF, 0x3D4F7A, {}},
     {"green", N_("Green phosphor"), 0x33FF66, 0x081208, 0x33FF66, 0x1E5A2A, {}},
     {"amber", N_("Amber"), 0xFFB000, 0x160E00, 0xFFB000, 0x5A3E00, {}},
-    {"workbench", N_("Workbench (Amiga)"), 0xFFFFFF, 0x0055AA, 0xFF8800, 0x000022, {}},
+    {"retro", N_("Retro blue"), 0xFFFFFF, 0x0055AA, 0xFF8800, 0x000022, {}},
     {"scheme", N_("Like the color scheme"), 0, 0, 0, 0, {}},   // Nirvana Desktop colors
 };
 const int NPROFILES = sizeof PROFILES / sizeof PROFILES[0];
@@ -114,7 +114,8 @@ void save_settings() {
 }
 
 const Profile &profile_by_id(const std::string &id) {
-  for (auto &p : PROFILES) if (id == p.id) return p;
+  std::string want = id == "workbench" ? "retro" : id;   // the old name of the profile
+  for (auto &p : PROFILES) if (want == p.id) return p;
   return PROFILES[0];
 }
 

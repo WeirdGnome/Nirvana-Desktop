@@ -380,7 +380,7 @@ public:
         redraw();
         if (b == 1) close_client();
         else if (b == 2) toggle_zoom();
-        else if (b == 3) iconify_client(c);   // window icon on the desktop (as in Workbench)
+        else if (b == 3) iconify_client(c);   // window icon on the desktop
       }
       drag_ = NONE;
       return 1;
@@ -617,7 +617,7 @@ static Client *client_of(Window w) {
 }
 
 // ---------------------------------------------------------------------------
-// Alt+Tab: switching applications (like Cmd+Tab in Mac OS 9)
+// Alt+Tab: switching applications 
 // ---------------------------------------------------------------------------
 static bool cycling = false;
 static std::vector<Client *> cycle_list;

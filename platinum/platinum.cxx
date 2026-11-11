@@ -98,7 +98,7 @@ static void menubar_box(int x, int y, int w, int h, Fl_Color c) {
   fl_xyline(x, y + h - 1, x + w - 1);
 }
 
-// Scroll thumb: lavender with grooves in the middle, as in Mac OS 9.
+// Scroll thumb: lavender with grooves in the middle.
 static void thumb_box(int x, int y, int w, int h, Fl_Color c) {
   fl_color(c);
   fl_rectf(x, y, w, h);
@@ -199,7 +199,7 @@ void init() {
   Fl::set_boxtype(FL_UP_FRAME, up_frame, 1, 1, 2, 2);
   Fl::set_boxtype(FL_DOWN_FRAME, down_frame, 1, 1, 2, 2);
 
-  // If the system has a free Chicago-style font, use it.
+  // If the user has chosen a system font (e.g. a free bitmap-style one), use it.
   if (const char *ff = getenv("NIRVANA_SYSTEM_FONT")) {
     Fl::set_font(FL_FREE_FONT, ff);
     FONT_SYSTEM = FL_FREE_FONT;
@@ -210,7 +210,7 @@ void init() {
   fl_yes = _("Yes");
   fl_no = _("No");
   fl_close = _("Close");
-  // tooltips (dock, applets, gary): a help balloon as in Mac OS
+  // tooltips (dock, applets, gary): a yellow help balloon
   Fl_Tooltip::font(FONT_SMALL);
   Fl_Tooltip::size(SIZE_SMALL + 1);
   Fl_Tooltip::color(fl_rgb_color(255, 255, 204));
@@ -222,7 +222,7 @@ void init() {
 // ---------------------------------------------------------------------------
 // Icons
 // ---------------------------------------------------------------------------
-// A selected icon in Mac OS 9 is darkened - we do the same.
+// A selected icon is darkened.
 static inline void col(unsigned v, bool sel) {
   Fl_Color c = rgb(v);
   fl_color(sel ? fl_color_average(c, FL_BLACK, 0.5f) : c);
@@ -406,7 +406,7 @@ static void encrypted(int x, int y, bool sel) {
   fl_rectf(x + 23, y + 16, 1, 3);                                  // keyhole
 }
 
-// Eject symbol (the Trash while dragging a disk, as in Mac OS)
+// Eject symbol (the Trash while dragging a disk)
 static void eject_icon(int x, int y, bool sel) {
   col(0x404040, sel);
   fl_polygon(x + 16, y + 5, x + 28, y + 19, x + 4, y + 19);
@@ -613,7 +613,7 @@ void draw_lock(int x, int y, Fl_Color c) {
 int icon_style() { return current_appearance().icons == "platinum" ? 1 : 0; }
 
 void draw_icon(Icon icon, int x, int y, bool sel) {
-  if (icon_style() == 0 && draw_icon_workbench(icon, x, y, sel)) return;
+  if (icon_style() == 0 && draw_icon_retro(icon, x, y, sel)) return;
   switch (icon) {
   case Icon::Folder:      folder(x, y, sel, false); break;
   case Icon::OpenFolder:  folder(x, y, sel, true); break;
@@ -660,33 +660,39 @@ void draw_icon(Icon icon, int x, int y, bool sel) {
   }
 }
 
-// The Nirvana Desktop logo: a DIP chip (a nod to the Amiga chips) with the letter "N".
+// The Nirvana Desktop logo: a DIP chip (a nod to the custom chips of old home computers) with the letter "N".
+// Drawn for 32 px; larger sizes scale the strokes and get more pins.
 void draw_logo(int x, int y, int s) {
+  double k = std::max(1.0, s / 32.0);
+  auto u = [&](double v) { return std::max(1, (int)(v * k + 0.5)); };
   Fl_Color body = rgb(0x4B3590);
   fl_color(rgb(0x777777));   // the logo has fixed colors, independent of the scheme
-  for (int i = 0; i < 4; i++) {
-    int px = x + 3 + i * (s - 6) / 3;
-    fl_rectf(px, y, 2, 2);
-    fl_rectf(px, y + s - 2, 2, 2);
+  int pins = s >= 64 ? 8 : 4, pw = u(2);
+  for (int i = 0; i < pins; i++) {
+    int px = x + u(3) + i * (s - 2 * u(3)) / (pins - 1) - (i ? pw / 2 : 0);
+    if (i == pins - 1) px = x + s - u(3) - pw + 1;
+    if (pins == 4) px = x + 3 + i * (s - 6) / 3;   // the 32 px original
+    fl_rectf(px, y, pw, u(2));
+    fl_rectf(px, y + s - u(2), pw, u(2));
   }
   fl_color(body);
-  fl_rectf(x + 1, y + 2, s - 2, s - 4);
+  fl_rectf(x + u(1), y + u(2), s - 2 * u(1), s - 2 * u(2));
   fl_color(FL_BLACK);
-  fl_rect(x + 1, y + 2, s - 2, s - 4);
+  for (int i = 0; i < u(1); i++) fl_rect(x + u(1) + i, y + u(2) + i, s - 2 * u(1) - 2 * i, s - 2 * u(2) - 2 * i);
   fl_color(FL_WHITE);
-  int nx = x + s / 2 - 3, ny = y + 4, nh = s - 8, nw = 7;
-  fl_rectf(nx, ny, 2, nh);                 // N: two strokes and a diagonal
-  fl_rectf(nx + nw - 2, ny, 2, nh);
-  for (int k = 0; k < nh; k++) fl_rectf(nx + 1 + k * (nw - 3) / std::max(1, nh - 1), ny + k, 2, 1);
+  int nw = u(7), sw = u(2), nx = x + s / 2 - u(3), ny = y + u(4), nh = s - 2 * u(4);
+  fl_rectf(nx, ny, sw, nh);                 // N: two strokes and a diagonal
+  fl_rectf(nx + nw - sw, ny, sw, nh);
+  for (int j = 0; j < nh; j++) fl_rectf(nx + sw / 2 + j * (nw - sw - 1) / std::max(1, nh - 1), ny + j, sw, 1);
   fl_color(rgb(0xF0C040));
-  fl_pie(x + 2, y + 3, 3, 3, 0, 360);   // pin 1 mark
+  fl_pie(x + u(2), y + u(3), u(3), u(3), 0, 360);   // pin 1 mark
 }
 
 // ---------------------------------------------------------------------------
 // Window chrome
 // ---------------------------------------------------------------------------
 // Title bar buttons in the scheme colors, drawn boldly so they stand out on any
-// bar (an echo of the Amiga gadgets, in Platinum proportions): a contrasting
+// bar (an echo of the old home-computer window gadgets): a contrasting
 // rim, a deep bevel and solid glyphs filled with the accent color. The colors
 // follow the scheme, but are pushed apart when it is too low-contrast (dark
 // schemes). Inactive windows keep the buttons, only the glyph fill turns gray.

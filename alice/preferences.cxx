@@ -1,7 +1,6 @@
 // Nirvana Desktop - alice: Preferences (the set of control panels)
 //
-// A window with the panel icons, like the Control Panels folder in Mac OS or the
-// Prefs drawer in Workbench. A double click (or a click) opens a panel in its own window.
+// A window with the panel icons, like a drawer of preference programs. A double click (or a click) opens a panel in its own window.
 #include "framewin.h"
 #include "platinum.h"
 

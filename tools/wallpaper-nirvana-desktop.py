@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Nirvana Desktop - generator of the "Nirvana Desktop" wallpaper in the spirit of AmigaOS 4:
+# Nirvana Desktop - generator of the "Nirvana Desktop" wallpaper in a glossy late-1990s/2000s style:
 # a navy depth, a nebula, ribbons of light, a mirror floor and a glass logo.
 # Everything drawn from scratch (no third-party graphics). Font: Inter (SIL OFL).
 #

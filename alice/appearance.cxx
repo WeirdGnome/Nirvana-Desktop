@@ -374,10 +374,10 @@ int panel_appearance() {
   });
 
   g_icons = new Fl_Choice(400, 428, 185, 22, _("Icon style:"));
-  g_icons->add(_("Workbench (Amiga)|Platinum (Mac OS)"));
+  g_icons->add(_("Retro|Platinum"));
   g_icons->value(g_cur.icons == "platinum" ? 1 : 0);
   g_icons->callback([](Fl_Widget *, void *) {
-    g_cur.icons = g_icons->value() == 1 ? "platinum" : "workbench";
+    g_cur.icons = g_icons->value() == 1 ? "platinum" : "retro";
     preview();
   });
 

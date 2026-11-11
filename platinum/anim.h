@@ -1,4 +1,4 @@
-// Nirvana Desktop - libplatinum: window animations in the classic Mac OS style
+// Nirvana Desktop - libplatinum: window animations: flying outlines
 //
 // "Zoom rects": when a window opens, closes, is iconified or zoomed, a series of
 // rectangle outlines flies across the screen. The outlines are drawn with

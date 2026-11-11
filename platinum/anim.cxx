@@ -1,4 +1,4 @@
-// Nirvana Desktop - libplatinum: window animations in the classic Mac OS style
+// Nirvana Desktop - libplatinum: window animations: flying outlines
 //
 // Two ways of drawing the outlines:
 //

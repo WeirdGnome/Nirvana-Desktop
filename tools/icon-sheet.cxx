@@ -12,8 +12,8 @@ int main(int, char **argv) {
   Fl_Surface_Device::push_current(&surf);
   fl_color(fl_rgb_color(0x5E, 0x6F, 0xA8)); fl_rectf(0, 0, N * CW + 8, 3 * 44 + 8);
   for (int i = 0; i < N; i++) {
-    draw_icon_workbench((Icon)i, 8 + i * CW, 6, false);
-    draw_icon_workbench((Icon)i, 8 + i * CW, 50, true);
+    draw_icon_retro((Icon)i, 8 + i * CW, 6, false);
+    draw_icon_retro((Icon)i, 8 + i * CW, 50, true);
   }
   Appearance a = current_appearance(); a.icons = "platinum";
   for (int i = 0; i < N; i++) {   // for comparison: Platinum (draw_icon in the platinum style)

@@ -1,6 +1,6 @@
 // Nirvana Desktop - Rambler: actions of the Nirvana, Window, Icons and Special menus
 //
-// Menu layout (in the spirit of Workbench):
+// Menu layout (in the spirit of the classic desktops):
 // Nirvana    - whole-system commands (about, preferences, execute command, Nirvana Shell,
 //              system log, reset)
 // System     - lock, sleep, hibernate, log out, restart, shut down
@@ -508,7 +508,7 @@ void Desktop::icons_normal() { set_icon_size(32); }
 void Desktop::icons_large() { set_icon_size(64); }
 
 // ---------------------------------------------------------------------------
-// Icons menu: Information (Get Info / Information from Workbench)
+// Icons menu: Information (properties of a file)
 // ---------------------------------------------------------------------------
 static std::string fmt_time(time_t t) {
   if (!t) return "—";
@@ -688,7 +688,7 @@ void Desktop::get_info() {
       ex = new Fl_Check_Button(vx + 136, y - 1, 140, 20, _("Program"));
       ex->labelsize(SIZE_SMALL + 1);
       ex->value((st.st_mode & S_IXUSR) != 0);
-      ex->tooltip(_("Execute permission (like the e flag in Workbench)"));
+      ex->tooltip(_("Execute permission (the e flag)"));
     }
     y += 26;
     bool xa = false;

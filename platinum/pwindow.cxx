@@ -110,7 +110,7 @@ int PWindow::handle(int e) {
         redraw();
         return 1;
       }
-      // a double click on the title bar shades the window (as in Mac OS 9)
+      // a double click on the title bar shades the window
       if (Fl::event_clicks() && !dialog_) { Fl::event_clicks(0); toggle_shade(); drag_ = NONE; return 1; }
       drag_ = MOVE; drag_dx_ = ex - x(); drag_dy_ = ey - y();
       return 1;

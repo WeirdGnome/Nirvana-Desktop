@@ -74,5 +74,5 @@ unless the scheme gives them explicitly (`light`, `mid`, `shadow`).
 
 ## Naming
 
-- Versions: Mac OS 8/9 code names: 1.0 "Tempo", 2.0 "Allegro", 3.0 "Sonata".
-- Components: the window manager Insight; the others are named after Amiga chips (Denise, Paula, Gary, Alice).
+- Versions: plain numbers from the `VERSION` file, no code names.
+- Components: the window manager Insight; the others have short personal names (Denise, Paula, Gary, Alice).

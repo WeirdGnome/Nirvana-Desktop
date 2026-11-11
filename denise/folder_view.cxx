@@ -126,7 +126,7 @@ static Fl_Image *small_icon(Icon icon, bool sel) {
 }
 
 // Large 64x64 icons: the 32x32 drawing enlarged 2x without smoothing - crisp
-// pixels like on the Amiga or an old Mac screen.
+// pixels like on an old computer screen.
 static Fl_Image *big_icon(Icon icon, bool sel) {
   static std::map<std::pair<Fl_Color, int>, Fl_Image *> cache;
   std::pair<Fl_Color, int> key{Fl::get_color(CONTENT), ((int)icon * 2 + sel) * 2 + icon_style()};
@@ -175,7 +175,7 @@ void draw_entry_icon(const Entry &e, int x, int y, bool sel, int size, bool open
 }
 
 // ---------------------------------------------------------------------------
-// Snapshot icon positions (Snapshot from Workbench): "x y<TAB>path".
+// Snapshot icon positions (Snapshot): "x y<TAB>path".
 // ---------------------------------------------------------------------------
 static std::map<std::string, std::pair<int, int>> g_snap;
 static bool g_snap_loaded = false;
@@ -249,7 +249,7 @@ void FolderView::load(const std::string &path, bool show_hidden) {
   redraw();
 }
 
-// Mac OS sorts alphabetically without putting folders first; the list can
+// Sorting is alphabetical without putting folders first; the list can
 // also be sorted by date, size and kind (ties: by name).
 void FolderView::sort_entries() {
   SortKey k = sort_;
@@ -280,7 +280,7 @@ void FolderView::relayout(int avail_w, int min_h) {
     int cw = cell_w(), ch = cell_h();
     cols_ = std::max(1, (avail_w - 8) / cw);
     // Icons placed by hand take their grid cells; the rest fills
-    // the free places in order (like Workbench for icons without a saved position).
+    // the free places in order (for icons without a saved position).
     cells_.assign(entries_.size(), Pt{0, 0});
     std::vector<std::vector<char>> used;
     auto mark = [&](int col, int row) {
@@ -337,7 +337,7 @@ void FolderView::set_icon_size(int s) {
 }
 
 void FolderView::move_items(const std::vector<std::string> &paths, int dx, int dy) {
-  // The other icons stay where they are (as in Workbench) - we remember their
+  // The other icons stay where they are  - we remember their
   // current places so they do not jump into a freed grid cell.
   for (size_t i = 0; i < entries_.size() && i < cells_.size(); i++)
     if (!free_.count(entries_[i].path)) free_[entries_[i].path] = cells_[i];
@@ -525,7 +525,7 @@ void FolderView::draw() {
   fl_rectf(x(), y(), w(), h());
   if (mode_ == Icons) draw_icons(); else draw_list();
 
-  // selection rectangle (dotted, as in the Finder)
+  // selection rectangle (dotted)
   if (state_ == BANDING) {
     int x0 = std::min(band_x_, press_x_), y0 = std::min(band_y_, press_y_);
     int x1 = std::max(band_x_, press_x_), y1 = std::max(band_y_, press_y_);
@@ -690,7 +690,7 @@ int FolderView::handle(int e) {
       for (char s : sel_) n += s;
       if (n > 1) select_only(press_index_);
       else if (was_selected_ && press_label_)
-        Fl::add_timeout(0.6, rename_timeout, this);   // as in the Finder: a moment, then editing the name
+        Fl::add_timeout(0.6, rename_timeout, this);   // a moment, then editing the name
     }
     state_ = IDLE;
     redraw();
@@ -858,7 +858,7 @@ void FolderPane::resize(int X, int Y, int W, int H) {
   view_->relayout(inner_w, inner_h);
   view_->position(X - sx, Y + top - sy);
   scroll_->scroll_to(0, std::min(sy, std::max(0, view_->h() - inner_h)));
-  // When everything fits, the scrollbar is dimmed (gray thumb), as in Mac OS 9.
+  // When everything fits, the scrollbar is dimmed (gray thumb).
   bool need = view_->h() > inner_h;
   scroll_->scrollbar.selection_color(need ? HILITE : GRAY);
   scroll_->hscrollbar.selection_color(GRAY);
@@ -891,7 +891,7 @@ void FolderPane::draw() {
     int base = hy + HEADER_H / 2 + fl_height() / 2 - fl_descent();
     auto header = [&](FolderView::SortKey key, int cx, int cw, const char *txt, bool right) {
       bool on = view_->sort_key() == key;
-      if (on) {   // the sort column is darker, as in the Finder
+      if (on) {   // the sort column is darker
         fl_color(MID);
         fl_rectf(cx + 2, hy + 1, cw - 2, HEADER_H - 2);
       }
@@ -917,7 +917,7 @@ void FolderPane::draw() {
     fl_pop_clip();
   }
   draw_children();
-  // resize handle in the corner between the scrollbars (as in Mac OS 9)
+  // resize handle in the corner between the scrollbars
   draw_grow_box(x() + w() - SCROLL_W, y() + h() - SCROLL_W);
 }
 
@@ -937,7 +937,7 @@ void FolderPane::start_rename(int index) {
   editor_->value(e->name.c_str());
   editor_->when(FL_WHEN_ENTER_KEY_ALWAYS | FL_WHEN_RELEASE_ALWAYS);
   editor_->callback(rename_cb, this);
-  // select the name without the extension (as in the Finder)
+  // select the name without the extension
   size_t dot = e->dir ? std::string::npos : e->name.rfind('.');
   int end_sel = (dot == std::string::npos || dot == 0) ? (int)e->name.size() : (int)dot;
   editor_->insert_position(0, end_sel);

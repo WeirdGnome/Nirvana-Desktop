@@ -42,7 +42,7 @@ const char *const PATTERNS[] = {"plain", "dots", "polka_dots", "grid", "fine_gri
                                 "sand", nullptr};
 const char *const PATTERN_NAMES[] = {N_("Plain"), N_("Dots"), N_("Polka dots"), N_("Grid"), N_("Fine grid"), N_("Checkerboard"),
                                      N_("Diagonal stripes"), N_("Horizontal stripes"), N_("Vertical stripes"), N_("Bricks"),
-                                     N_("Raster (Amiga)"), N_("Diamonds"), N_("Crosses"), N_("Zigzag"), N_("Herringbone"), N_("Weave"),
+                                     N_("Raster"), N_("Diamonds"), N_("Crosses"), N_("Zigzag"), N_("Herringbone"), N_("Weave"),
                                      N_("Waves"), N_("Scales"), N_("Stars"), N_("Sand"), nullptr};
 const char *const BACKGROUNDS[] = {"pattern", "color", "gradient", nullptr};
 const char *const BACKGROUND_NAMES[] = {N_("Pattern"), N_("Solid color"), N_("Gradient"), nullptr};
@@ -120,6 +120,19 @@ std::vector<std::string> scheme_dirs() {
   std::vector<std::string> out;
   for (auto &x : d) if (is_dir(x)) out.push_back(x);
   return out;
+}
+
+std::string data_file(const std::string &rel) {
+  std::vector<std::string> d;
+  std::string e = exe_dir();
+  if (!e.empty()) {
+    d.push_back(e + "/../share/nirvana/" + rel);   // installed in a prefix
+    d.push_back(e + "/../" + rel);                 // running from the build/ folder
+  }
+  d.push_back("/usr/local/share/nirvana/" + rel);
+  d.push_back("/usr/share/nirvana/" + rel);
+  for (auto &x : d) if (!access(x.c_str(), R_OK)) return x;
+  return "";
 }
 
 // names of the schemes from the files in schemes/ - for translation (the Appearance panel calls _(name))
@@ -250,7 +263,11 @@ Appearance read_appearance() {
     std::string k = line.substr(0, eq), v = line.substr(eq + 1);
     while (!v.empty() && isspace((unsigned char)v.back())) v.pop_back();
     unsigned c;
-    if (k == "scheme" && !v.empty()) a.scheme = v;
+    if (k == "scheme" && !v.empty()) {
+      // renamed schemes
+      a.scheme = v == "workbench" ? "retro-blue" : v == "redmond97-se/windows-95" ? "redmond97-se/periwinkle"
+               : v == "redmond97-se/more-windows" ? "redmond97-se/many-panes" : v;
+    }
     else if (k == "title_style")
       a.style = v == "stripes" ? (int)TitleStyle::Stripes : v == "solid" ? (int)TitleStyle::Solid
               : v == "gradient" ? (int)TitleStyle::Gradient : -1;
@@ -259,7 +276,7 @@ Appearance read_appearance() {
       for (int i = 0; PATTERNS[i]; i++) if (v == PATTERNS[i]) a.pattern = v;
     } else if (k == "animations") a.animations = !(v == "0" || v == "no");
     else if (k == "wallpaper") a.wallpaper = v;
-    else if (k == "icons") a.icons = v == "platinum" ? "platinum" : "workbench";
+    else if (k == "icons") a.icons = v == "platinum" ? "platinum" : "retro";   // "workbench" was the old name
     else if (k == "background") {
       for (int i = 0; BACKGROUNDS[i]; i++) if (v == BACKGROUNDS[i]) a.background = v;
     } else if (k == "desktop_color2") a.desk2 = parse_color(v, c) ? (int)c : -1;

@@ -1,10 +1,9 @@
-// Nirvana Desktop - libplatinum: Workbench style icons (Amiga)
+// Nirvana Desktop - libplatinum: Retro style icons
 //
-// Our own 32x32 drawings in the spirit of the Workbench 2/3 and MagicWB icons: a palette of grays,
+// Our own 32x32 drawings in the style of early-1990s home computers: a palette of grays,
 // navy and beige, black outlines, light edges on the left and at the top. Folders are
-// drawers ("drawer" on the Amiga), disks are hard disk boxes and 3.5" floppies,
-// the Trash has a lid with a handle. A selected icon has inverted colors - like the
-// "complement" mode in Workbench.
+// drawers, disks are hard disk boxes and 3.5" floppies, the Trash has a lid with a
+// handle. A selected icon has inverted colors (a "complement" highlight).
 #include "platinum.h"
 
 #include <FL/Fl.H>
@@ -12,14 +11,14 @@
 
 namespace plat {
 
-// palette (in the spirit of the 8 MagicWB colors)
+// palette: 8 colors
 enum : unsigned {
   K = 0x000000,   // black - outlines
   W = 0xFFFFFF,   // white - light
   G = 0x959595,   // gray - body
   L = 0xB8B8B8,   // light gray
   D = 0x676767,   // dark gray - shadow
-  B = 0x3B67A2,   // Workbench navy
+  B = 0x3B67A2,   // navy
   BL = 0x7E9DD0,  // light navy
   O = 0xAA907C,   // beige
   P = 0xFFA997,   // peach
@@ -116,7 +115,7 @@ static void music(int x, int y) {
   c(K); fl_xyline(x + 10, y + 24, x + 13); fl_xyline(x + 18, y + 22, x + 21);
 }
 
-// --- tool (program): a Workbench window with gadgets ----------------------------
+// --- tool (program): a little window with gadgets ----------------------------
 static void tool(int x, int y) {
   raised(x + 2, y + 4, 28, 24, G);
   r(x + 3, y + 5, 26, 5, B);                       // title bar
@@ -266,7 +265,7 @@ static void wifi(int x, int y) {
   fl_line_style(0);
 }
 
-bool draw_icon_workbench(Icon icon, int x, int y, bool sel) {
+bool draw_icon_retro(Icon icon, int x, int y, bool sel) {
   g_sel = sel;
   switch (icon) {
   case Icon::Folder:      drawer(x, y, false); break;

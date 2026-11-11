@@ -1,5 +1,5 @@
 // Nirvana Desktop - libplatinum
-// The "Platinum" look (in the spirit of the Mac OS 8/9 guidelines) for FLTK 1.4.
+// The "Platinum" look (bevelled gray, in the spirit of the classic 1990s desktops) for FLTK 1.4.
 // All Nirvana Desktop components (insight, denise, gary, alice...) draw
 // through this library, so that everything looks consistent.
 #pragma once
@@ -63,7 +63,7 @@ struct Appearance {                 // ~/.config/nirvana/wyglad.conf
   std::string gradient = "vertical"; // vertical, horizontal, diagonal, radial
   std::string pattern = "bricks";    // see PATTERNS
   bool animations = true;
-  std::string icons = "platinum";   // icon style: workbench (Amiga) or platinum (Mac OS)
+  std::string icons = "platinum";   // icon style: retro or platinum
   std::string wallpaper;            // wallpaper file; empty = just the pattern
   std::string wallpaper_mode = "fill";   // see WALLPAPER_MODES
   int scale = 0;                    // interface scale in percent; 0 = automatic (Xft.dpi)
@@ -86,6 +86,7 @@ std::string appearance_file();
 void apply(const Scheme &s, const Appearance &a);   // set the palette
 void reload_appearance();          // read the settings and the scheme, apply
 const Scheme &current_scheme();
+std::string data_file(const std::string &rel);   // a file from share/nirvana (or the source tree), "" if missing
 const Appearance &current_appearance();
 TitleStyle title_style();
 
@@ -146,8 +147,8 @@ void init();
 enum class Icon { Folder, OpenFolder, Document, Application, Home, Trash, TrashFull, Image, Music,
                   HardDisk, Removable, Optical, Encrypted, Eject, Network, Wifi, Preferences, Applications, Terminal };
 void draw_icon(Icon icon, int x, int y, bool selected);   // in the style from the appearance settings
-bool draw_icon_workbench(Icon icon, int x, int y, bool selected);
-int icon_style();   // 0 = Workbench, 1 = Platinum (key for the icon caches)
+bool draw_icon_retro(Icon icon, int x, int y, bool selected);
+int icon_style();   // 0 = Retro, 1 = Platinum (key for the icon caches)
 void draw_logo(int x, int y, int size);
 // An icon rendered to an RGBA image (e.g. a window icon for _NET_WM_ICON); delete it.
 Fl_RGB_Image *icon_image(Icon icon, int size);
@@ -164,7 +165,7 @@ void draw_battery(int x, int y, int percent, bool charging, Fl_Color c, double s
 void draw_plug(int x, int y, Fl_Color c);                        // 14x13
 void draw_sun(int x, int y, Fl_Color c, double scale = 1);       // 13x13
 void draw_display(int x, int y, Fl_Color c);
-// The Amiga depth gadget (Workbench): a back rectangle and a front one overlapping it.
+// A depth gadget: a back rectangle and a front one overlapping it.
 void draw_depth_gadget(int x, int y, bool pressed);              // 18x14
 
 // ---- Window chrome -------------------------------------------------------------
