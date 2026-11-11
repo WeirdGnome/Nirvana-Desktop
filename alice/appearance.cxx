@@ -254,7 +254,7 @@ int panel_appearance() {
   new Preview(252, 32, 331, 211);
 
   g_style = new Fl_Choice(400, 256, 185, 22, _("Title bar:"));
-  g_style->add(_("As in scheme|Stripes (Platinum)|Solid color|Gradient"));
+  g_style->add(_("As in scheme|Stripes (Platinum)|Solid color|Gradient|Glass"));
   g_style->value(g_cur.style + 1);
   g_style->callback([](Fl_Widget *, void *) { g_cur.style = g_style->value() - 1; preview(); });
 

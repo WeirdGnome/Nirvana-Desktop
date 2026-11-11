@@ -119,7 +119,7 @@ T = {
     'Color Scheme': 'Schemat kolorów',
     'Preview': 'Podgląd',
     'Title bar:': 'Pasek tytułu:',
-    'As in scheme|Stripes (Platinum)|Solid color|Gradient': 'Jak w schemacie|Prążki (Platinum)|Jednolity kolor|Gradient',
+    'As in scheme|Stripes (Platinum)|Solid color|Gradient|Glass': 'Jak w schemacie|Prążki (Platinum)|Jednolity kolor|Gradient|Szkło',
     'Desktop background:': 'Tło biurka:',
     'Colors:': 'Kolory:',
     'Desktop color (gradient start)': 'Kolor biurka (początek gradientu)',
@@ -802,4 +802,6 @@ T = {
     'Off: zoomed windows reach the bottom edge and may cover the dock.': 'Wyłączone: powiększone okna sięgają dolnej krawędzi i mogą zasłonić dok.',
     'Preview of a zoomed window.': 'Podgląd powiększonego okna.',
     'The change applies at once, also to windows zoomed from now on.': 'Zmiana działa od razu, także dla okien powiększanych od teraz.',
+    'glass': 'szkło',
+    'Glacier': 'Lodowiec',
 }

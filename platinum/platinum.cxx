@@ -871,6 +871,12 @@ static void title_button(int x, int y, int kind, bool pressed, bool active) {
   }
 }
 
+static unsigned mix_hex(unsigned a, unsigned b, double t) {
+  t = std::clamp(t, 0.0, 1.0);
+  auto ch = [&](int sh) { return (unsigned)(((a >> sh) & 0xFF) * (1 - t) + ((b >> sh) & 0xFF) * t + 0.5) << sh; };
+  return ch(16) | ch(8) | ch(0);
+}
+
 void draw_titlebar(int x, int y, int w, const char *title, bool active, int pressed, int boxes) {
   int by = y + (TITLE_H - BOX) / 2;
   int close_x = x + 8;
@@ -888,7 +894,18 @@ void draw_titlebar(int x, int y, int w, const char *title, bool active, int pres
     const Scheme &sc = current_scheme();
     unsigned c1 = active ? sc.title : sc.title_i, c2 = active ? sc.title2 : sc.title_i2;
     int fx = x + 3, fw = w - 6, fy = y + 3, fh = TITLE_H - 5;
-    if (st == TitleStyle::Solid || c1 == c2) {
+    if (st == TitleStyle::Glossy) {
+      // glass: a light upper half fading down, the darker middle, a little light at the bottom
+      for (int i = 0; i < fh; i++) {
+        double t = fh > 1 ? (double)i / (fh - 1) : 0;
+        unsigned c = t < 0.5 ? mix_hex(c1, 0xFFFFFF, 0.42 - 0.6 * t) : mix_hex(c2, c1, (t - 0.5) * 1.6);
+        fl_color(fl_rgb_color(c >> 16, (c >> 8) & 0xFF, c & 0xFF));
+        fl_xyline(fx, fy + i, fx + fw - 1);
+      }
+      unsigned hl = mix_hex(c1, 0xFFFFFF, 0.65);   // the shine on the top edge
+      fl_color(fl_rgb_color(hl >> 16, (hl >> 8) & 0xFF, hl & 0xFF));
+      fl_xyline(fx + 1, fy, fx + fw - 2);
+    } else if (st == TitleStyle::Solid || c1 == c2) {
       fl_color(fl_rgb_color(c1 >> 16, (c1 >> 8) & 0xFF, c1 & 0xFF));
       fl_rectf(fx, fy, fw, fh);
     } else {

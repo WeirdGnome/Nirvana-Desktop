@@ -35,7 +35,7 @@ on the desktop. Written in C++ and FLTK 1.4.
 
 Unpack the sources and run the installer:
 
-    tar xzf nirvana-desktop-0.0.19.tar.gz && cd nirvana-desktop
+    tar xzf nirvana-desktop-0.0.20.tar.gz && cd nirvana-desktop
     sudo ./install.sh                 # or: sudo ./install.sh --login-screen
 
 The installer:
@@ -398,11 +398,13 @@ Nirvana logo → **Preferences… → Appearance** opens a panel with the list o
 preview. Clicking a scheme changes the panel itself right away, and **Apply**/**OK** switches
 the whole system: Rambler and Insight reload the palette without a restart.
 
-- **Colour scheme**: built-in *Platinum*, *Graphite* (dark) and *Retro Blue* (gray with a blue
-  accent), plus over 40 schemes from
+- **Colour scheme**: built-in *Platinum*, *Graphite* (dark), *Retro Blue* (gray with a blue
+  accent) and *Glacier* (cool silver windows, glass title bars in deep blue – best with the
+  *Glacier* wallpaper), plus over 40 schemes from
   [Redmond97 SE](https://codeberg.org/Sliver_X/Redmond97-SE) (GPL-3.0).
 - **Default look**: the *In Tenebris* scheme, the *Bricks* pattern and Platinum icons.
-- **Title bar**: as in the scheme, Platinum stripes, solid colour or gradient.
+- **Title bar**: as in the scheme, Platinum stripes, solid colour, gradient or glass (a shine on
+  the upper half, the darker middle, as on the glossy desktops of the 2000s).
 - **Desktop background**: *Pattern*, *Solid color* or *Gradient*.
   - Colours are picked from two swatches. The second gradient colour is by default a darker
     (or, on a dark background, lighter) version of the first one. *From scheme* returns to the
@@ -419,7 +421,7 @@ the whole system: Rambler and Insight reload the palette without a restart.
   ![Radial gradient](docs/img/background-gradient.png)
 
 - **Wallpaper**: chosen from the list or with *Other File…* (PNG, JPEG, GIF, BMP, SVG, XPM).
-  - The list contains the Nirvana Desktop wallpapers (*Nirvana Desktop*, *Mountains at Dawn*,
+  - The list contains the Nirvana Desktop wallpapers (*Nirvana Desktop*, *Glacier*, *Mountains at Dawn*,
     *Copper*, *Platinum*), system wallpapers from `/usr/share/backgrounds` and
     `/usr/share/wallpapers`, and images from `~/Pictures` (`~/Obrazy`).
   - Layouts: *Fill screen* (crops), *Fit* (the whole image, pattern in the bars),
@@ -456,6 +458,7 @@ the whole system: Rambler and Insight reload the palette without a restart.
 
 ![Appearance: Platinum](docs/img/appearance-platinum.png)
 ![Appearance: In Tenebris with a gradient and bricks](docs/img/appearance-in-tenebris.png)
+![The Glacier scheme with the Glacier wallpaper](docs/img/scheme-glacier.png)
 
 Settings: `~/.config/nirvana/appearance.conf`. Schemes are simple `key=value` files in the
 `schemes/` directory, searched in `~/.local/share/nirvana/schemes`,

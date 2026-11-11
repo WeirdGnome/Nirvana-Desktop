@@ -136,7 +136,7 @@ std::string data_file(const std::string &rel) {
 }
 
 // names of the schemes from the files in schemes/ - for translation (the Appearance panel calls _(name))
-[[maybe_unused]] static const char *const SCHEME_NAMES[] = {N_("Graphite")};
+[[maybe_unused]] static const char *const SCHEME_NAMES[] = {N_("Graphite"), N_("Retro Blue"), N_("Glacier")};
 
 Scheme builtin_platinum() {
   Scheme s;
@@ -167,7 +167,8 @@ bool parse_scheme(const std::string &file, Scheme &s) {
     if (k == "name") s.name = v;
     else if (k == "source") s.source = v;
     else if (k == "title_style")
-      s.style = v == "stripes" ? TitleStyle::Stripes : v == "gradient" ? TitleStyle::Gradient : TitleStyle::Solid;
+      s.style = v == "stripes" ? TitleStyle::Stripes : v == "gradient" ? TitleStyle::Gradient
+              : v == "glossy" ? TitleStyle::Glossy : TitleStyle::Solid;
     else if (!col) continue;
     else if (k == "window") { s.window = c; have_window = true; }
     else if (k == "text") s.text = c;
@@ -270,7 +271,7 @@ Appearance read_appearance() {
     }
     else if (k == "title_style")
       a.style = v == "stripes" ? (int)TitleStyle::Stripes : v == "solid" ? (int)TitleStyle::Solid
-              : v == "gradient" ? (int)TitleStyle::Gradient : -1;
+              : v == "gradient" ? (int)TitleStyle::Gradient : v == "glossy" ? (int)TitleStyle::Glossy : -1;
     else if (k == "desktop_color") a.desk = parse_color(v, c) ? (int)c : -1;
     else if (k == "pattern") {
       for (int i = 0; PATTERNS[i]; i++) if (v == PATTERNS[i]) a.pattern = v;
@@ -301,7 +302,7 @@ bool write_appearance(const Appearance &a) {
   {
     std::ofstream out(tmp);
     if (!out) return false;
-    static const char *st[] = {"stripes", "solid", "gradient"};
+    static const char *st[] = {"stripes", "solid", "gradient", "glossy"};
     out << "# Nirvana Desktop - appearance settings (Appearance panel)\n"
         << "scheme=" << a.scheme << "\n"
         << "title_style=" << (a.style < 0 ? "" : st[a.style]) << "\n"
@@ -332,6 +333,11 @@ void apply(const Scheme &s, const Appearance &a) {
   if (g_style == TitleStyle::Gradient) {
     if (g_scheme.title2 == g_scheme.title) g_scheme.title2 = mix(g_scheme.title, 0xFFFFFF, 0.45);
     if (g_scheme.title_i2 == g_scheme.title_i) g_scheme.title_i2 = mix(g_scheme.title_i, 0xFFFFFF, 0.3);
+  }
+  // Glass: the second color is the darker middle of the bar
+  if (g_style == TitleStyle::Glossy) {
+    if (g_scheme.title2 == g_scheme.title) g_scheme.title2 = mix(g_scheme.title, 0x000000, 0.22);
+    if (g_scheme.title_i2 == g_scheme.title_i) g_scheme.title_i2 = mix(g_scheme.title_i, 0x000000, 0.12);
   }
   unsigned face = s.window;
   bool light_face = lum(face) > 0.5;

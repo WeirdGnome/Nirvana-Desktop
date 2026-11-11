@@ -34,7 +34,7 @@ Napisane w C++ i FLTK 1.4.
 
 Rozpakuj źródła i uruchom instalator:
 
-    tar xzf nirvana-desktop-0.0.19.tar.gz && cd nirvana-desktop
+    tar xzf nirvana-desktop-0.0.20.tar.gz && cd nirvana-desktop
     sudo ./install.sh                 # albo: sudo ./install.sh --login-screen
 
 Instalator:
@@ -394,11 +394,13 @@ Logo Nirvana Desktop → **Panele sterowania → Wygląd…** otwiera panel z li
 kolorów i podglądem. Klik na schemacie zmienia od razu sam panel, a **Zastosuj**/**OK**
 przestawia cały system: Rambler i Insight przeładowują paletę bez restartu.
 
-- **Schemat kolorów**: wbudowane *Platinum*, *Grafit* (ciemny) i *Retro niebieski*
-  (szary z niebieskim akcentem) oraz ponad 40 schematów z
+- **Schemat kolorów**: wbudowane *Platinum*, *Grafit* (ciemny), *Retro niebieski*
+  (szary z niebieskim akcentem) i *Lodowiec* (chłodne srebrne okna, szklane paski tytułu w głębokim
+  błękicie – najlepiej z tapetą *Glacier*) oraz ponad 40 schematów z
   [Redmond97 SE](https://codeberg.org/Sliver_X/Redmond97-SE) (GPL-3.0).
 - **Wygląd domyślny**: schemat *In Tenebris*, wzór *Cegiełki* i ikony Platinum.
-- **Pasek tytułu**: jak w schemacie, prążki Platinum, jednolity kolor albo gradient.
+- **Pasek tytułu**: jak w schemacie, prążki Platinum, jednolity kolor, gradient albo szkło (połysk
+  w górnej połowie i ciemniejszy środek, jak na błyszczących pulpitach z lat 2000).
 - **Tło biurka**: *Wzór*, *Jednolity kolor* albo *Gradient*.
   - Kolory wybiera się z dwóch próbek. Drugi kolor gradientu domyślnie jest ciemniejszą
     (albo, na ciemnym tle, jaśniejszą) wersją pierwszego. *Ze schematu* wraca do kolorów
@@ -415,7 +417,7 @@ przestawia cały system: Rambler i Insight przeładowują paletę bez restartu.
   ![Gradient promienisty](docs/img/background-gradient.png)
 
 - **Tapeta**: wybierana z listy albo przez *Inny plik…* (PNG, JPEG, GIF, BMP, SVG, XPM).
-  - Lista zawiera tapety Nirvana Desktop (*Nirvana Desktop*, *Mountains at Dawn*, *Copper*, *Platinum*), tapety systemowe
+  - Lista zawiera tapety Nirvana Desktop (*Nirvana Desktop*, *Glacier*, *Mountains at Dawn*, *Copper*, *Platinum*), tapety systemowe
     z `/usr/share/backgrounds` i `/usr/share/wallpapers` oraz obrazy z `~/Obrazy`.
   - Układy: *Wypełnij ekran* (przycina), *Dopasuj* (cały obraz, wzór w pasach),
     *Rozciągnij*, *Na środku* i *Sąsiadująco*.
@@ -453,6 +455,7 @@ przestawia cały system: Rambler i Insight przeładowują paletę bez restartu.
 
 ![Wygląd: Platinum](docs/img/appearance-platinum.png)
 ![Wygląd: In Tenebris z gradientem i cegiełkami](docs/img/appearance-in-tenebris.png)
+![Schemat Lodowiec z tapetą Glacier](docs/img/scheme-glacier.png)
 
 Ustawienia: `~/.config/nirvana/appearance.conf`. Schematy to proste pliki `klucz=wartość`
 w katalogu `schemes/`, szukane kolejno w `~/.local/share/nirvana/schemes`,

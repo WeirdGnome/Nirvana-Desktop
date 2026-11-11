@@ -418,7 +418,8 @@ public:
 std::vector<Fact> gather(const std::string &home) {
   const Scheme &sc = current_scheme();
   std::string scheme = sc.name.empty() ? "Platinum" : _(sc.name.c_str());
-  const char *style = sc.style == TitleStyle::Stripes ? _("stripes") : sc.style == TitleStyle::Solid ? _("solid") : _("gradient");
+  const char *style = sc.style == TitleStyle::Stripes ? _("stripes") : sc.style == TitleStyle::Solid ? _("solid")
+                    : sc.style == TitleStyle::Glossy ? _("glass") : _("gradient");
   std::string font = std::string(Fl::get_font_name(FONT_SYSTEM)) + " " + std::to_string(SIZE_SYSTEM);
   if (font[0] == ' ' || font[0] == 'B') font.erase(0, 1);   // Xft names start with a style letter
   std::vector<Fact> f = {

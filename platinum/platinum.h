@@ -42,7 +42,7 @@ extern Fl_Color ALERT;         // warning red
 // ---- Color schemes and appearance settings --------------------------------
 // A scheme is a key=value file in the "schemes" folder (e.g. platinum.conf,
 // redmond97-se/ouroboros.conf); its identifier is the path without ".conf".
-enum class TitleStyle { Stripes, Solid, Gradient };
+enum class TitleStyle { Stripes, Solid, Gradient, Glossy };   // Glossy: a glass bar with a shine
 
 struct Scheme {
   std::string id, name, source;
