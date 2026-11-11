@@ -1935,7 +1935,17 @@ void Desktop::dialog(const std::string &title, const std::string &text,
     th = 0;
     fl_measure(text.c_str(), tw, th, 0);
   }
-  int W = std::max(320, tw + 100), H = std::max(130, th + 80);
+  // each button as wide as its label (Polish "Uruchom ponownie" does not fit in 76 px)
+  std::vector<int> bw;
+  int all_w = 0;
+  for (size_t i = 0; i < buttons.size(); i++) {
+    fl_font(i + 1 == buttons.size() ? FONT_SYSTEM : FONT_SMALL, SIZE_SYSTEM);
+    int w = std::max(76, (int)fl_width(buttons[i].first.c_str()) + 24);
+    bw.push_back(w);
+    all_w += w + 8;
+  }
+  fl_font(FONT_SYSTEM, SIZE_SYSTEM);
+  int W = std::max({320, tw + 100, all_w + 24}), H = std::max(130, th + 80);
   int X = (w() - W) / 2, Y = (h() - H) / 3;
 
   int ox = csd_mode ? FRAME : 0, oy = csd_mode ? TITLE_H : 0;
@@ -1955,8 +1965,8 @@ void Desktop::dialog(const std::string &title, const std::string &text,
 
   int bx = ox + W - 16;
   for (int i = (int)buttons.size() - 1; i >= 0; i--) {
-    bx -= 84;
-    auto *b = new Fl_Button(bx, oy + H - 36, 76, 22);
+    bx -= bw[i] + 8;
+    auto *b = new Fl_Button(bx, oy + H - 36, bw[i], 22);
     b->copy_label(buttons[i].first.c_str());
     b->box(BUTTON_BOX);
     b->down_box(BUTTON_DOWN);
@@ -1965,7 +1975,6 @@ void Desktop::dialog(const std::string &title, const std::string &text,
     b->labelsize(SIZE_SYSTEM);
     b->callback(dialog_cb, (void *)(long)i);
     if (i == (int)buttons.size() - 1) b->shortcut(FL_Enter);
-    bx -= 6;
   }
   for (auto &b : buttons) win->actions.push_back(b.second);
   win->end();
@@ -3039,9 +3048,14 @@ void Desktop::ask_secret(const std::string &title, Icon icon, const std::string 
   pass->box(WELL_BOX);
   pass->textfont(FONT_SMALL);
   pass->textsize(SIZE_SYSTEM);
-  int bx = ox + W - 16 - 84;
+  auto button_w = [](const char *label, bool def) {
+    fl_font(def ? FONT_SYSTEM : FONT_SMALL, SIZE_SYSTEM);
+    return std::max(76, (int)fl_width(label) + 24);
+  };
+  int okw = button_w(ok_label, true), cw = button_w(_("Cancel"), false);
+  int bx = ox + W - 16 - okw;
   auto make_button = [&](int X2, const char *label, bool def, int idx) {
-    auto *b = new Fl_Button(X2, oy + H - 36, 76, 22, label);
+    auto *b = new Fl_Button(X2, oy + H - 36, button_w(label, def), 22, label);
     b->box(BUTTON_BOX);
     b->down_box(BUTTON_DOWN);
     b->color(GRAY);
@@ -3050,7 +3064,7 @@ void Desktop::ask_secret(const std::string &title, Icon icon, const std::string 
     b->callback(dialog_cb, (void *)(long)idx);
     if (def) b->shortcut(FL_Enter);
   };
-  make_button(bx - 90, _("Cancel"), false, 0);
+  make_button(bx - 8 - cw, _("Cancel"), false, 0);
   make_button(bx, ok_label, true, 1);
   win->actions.push_back(nullptr);
   win->actions.push_back([pass, on_ok] {
