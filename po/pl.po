@@ -3,7 +3,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Nirvana Desktop 0.1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-11 19:53+0000\n"
+"POT-Creation-Date: 2026-11-11 20:06+0000\n"
 "PO-Revision-Date: 2026-11-09 13:00+0000\n"
 "Last-Translator: Nirvana Desktop\n"
 "Language-Team: Polish\n"
@@ -11,119 +11,118 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=3; plural=(n==1 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 "
-"|| n%100>=20) ? 1 : 2);\n"
+"Plural-Forms: nplurals=3; plural=(n==1 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
 
-#: alice/appearance.cxx:91
+#: alice/appearance.cxx:92
 msgid "Window"
 msgstr "Okno"
 
-#: alice/appearance.cxx:91 denise/about.cxx:437
+#: alice/appearance.cxx:92 denise/about.cxx:437
 msgid "Icons"
 msgstr "Ikony"
 
-#: alice/appearance.cxx:91 dm/nirvana-dm-greeter.cxx:429
+#: alice/appearance.cxx:92 dm/nirvana-dm-greeter.cxx:429
 #: dm/nirvana-dm-greeter.cxx:430 dm/nirvana-dm-greeter.cxx:431
 msgid "Special"
 msgstr "Narzędzia"
 
-#: alice/appearance.cxx:102
+#: alice/appearance.cxx:103 platinum/filedialog.cxx:409
 msgid "Documents"
 msgstr "Dokumenty"
 
-#: alice/appearance.cxx:136
+#: alice/appearance.cxx:137
 msgid "3 items, 12.4 GB free"
 msgstr "3 elementy, 12,4 GB wolne"
 
-#: alice/appearance.cxx:136
+#: alice/appearance.cxx:137
 msgid "2 items"
 msgstr "2 elementy"
 
-#: alice/appearance.cxx:145
+#: alice/appearance.cxx:146 platinum/filedialog.cxx:412
 msgid "Music"
 msgstr "Muzyka"
 
-#: alice/appearance.cxx:146
+#: alice/appearance.cxx:147
 msgid "Letter.txt"
 msgstr "List.txt"
 
-#: alice/appearance.cxx:147
+#: alice/appearance.cxx:148
 msgid "Game"
 msgstr "Gra"
 
-#: alice/appearance.cxx:152
+#: alice/appearance.cxx:153
 msgid "Photos"
 msgstr "Zdjęcia"
 
-#: alice/appearance.cxx:179
+#: alice/appearance.cxx:180
 msgid "Source: %1"
 msgstr "Źródło: %1"
 
-#: alice/appearance.cxx:179
+#: alice/appearance.cxx:180
 msgid "custom"
 msgstr "własny"
 
-#: alice/appearance.cxx:233 alice/preferences.cxx:149 denise/gary.cxx:117
+#: alice/appearance.cxx:234 alice/preferences.cxx:149 denise/gary.cxx:117
 msgid "Appearance"
 msgstr "Wygląd"
 
-#: alice/appearance.cxx:236
+#: alice/appearance.cxx:237
 msgid "Color Scheme"
 msgstr "Schemat kolorów"
 
-#: alice/appearance.cxx:249 platinum/platinum.cxx:1037
+#: alice/appearance.cxx:250 platinum/platinum.cxx:1037
 msgid "Preview"
 msgstr "Podgląd"
 
-#: alice/appearance.cxx:256
+#: alice/appearance.cxx:257
 msgid "Title bar:"
 msgstr "Pasek tytułu:"
 
-#: alice/appearance.cxx:257
+#: alice/appearance.cxx:258
 msgid "As in scheme|Stripes (Platinum)|Solid color|Gradient|Glass"
 msgstr "Jak w schemacie|Prążki (Platinum)|Jednolity kolor|Gradient|Szkło"
 
-#: alice/appearance.cxx:261
+#: alice/appearance.cxx:262
 msgid "Desktop background:"
 msgstr "Tło biurka:"
 
-#: alice/appearance.cxx:269
+#: alice/appearance.cxx:270
 msgid "Colors:"
 msgstr "Kolory:"
 
-#: alice/appearance.cxx:271
+#: alice/appearance.cxx:272
 msgid "Desktop color (gradient start)"
 msgstr "Kolor biurka (początek gradientu)"
 
-#: alice/appearance.cxx:275
+#: alice/appearance.cxx:276
 msgid "Desktop color"
 msgstr "Kolor biurka"
 
-#: alice/appearance.cxx:282 alice/appearance.cxx:287
+#: alice/appearance.cxx:283 alice/appearance.cxx:288
 msgid "Second gradient color"
 msgstr "Drugi kolor gradientu"
 
-#: alice/appearance.cxx:292
+#: alice/appearance.cxx:293
 msgid "From scheme"
 msgstr "Ze schematu"
 
-#: alice/appearance.cxx:297
+#: alice/appearance.cxx:298
 msgid "Desktop pattern:"
 msgstr "Wzór biurka:"
 
-#: alice/appearance.cxx:303
+#: alice/appearance.cxx:304
 msgid "Direction:"
 msgstr "Kierunek:"
 
-#: alice/appearance.cxx:311
+#: alice/appearance.cxx:312
 msgid "Wallpaper:"
 msgstr "Tapeta:"
 
-#: alice/appearance.cxx:324
+#: alice/appearance.cxx:325
 msgid "None (pattern only)"
 msgstr "Brak (sam wzór)"
 
-#: alice/appearance.cxx:325
+#: alice/appearance.cxx:326
 msgid "Other File…"
 msgstr "Inny plik…"
 
@@ -131,9 +130,9 @@ msgstr "Inny plik…"
 msgid "Choose Wallpaper"
 msgstr "Wybierz tapetę"
 
-#: alice/appearance.cxx:337 alice/user.cxx:333
-msgid "Images (*.{png,jpg,jpeg,gif,bmp,svg,svgz,xpm})"
-msgstr "Obrazy (*.{png,jpg,jpeg,gif,bmp,svg,svgz,xpm})"
+#: alice/appearance.cxx:337 alice/user.cxx:331
+msgid "Images"
+msgstr "Obrazy"
 
 #: alice/appearance.cxx:345 denise/menus.cxx:382 denise/menus.cxx:389
 msgid "Wallpaper"
@@ -179,26 +178,28 @@ msgstr ""
 msgid "Window animations"
 msgstr "Animacje okien"
 
-#: alice/appearance.cxx:410 alice/datetime.cxx:385 alice/network.cxx:244
-#: alice/network.cxx:341 alice/network.cxx:389 alice/network.cxx:493
-#: alice/network.cxx:744 alice/power.cxx:127 alice/printers.cxx:163
-#: alice/printers.cxx:319 alice/user.cxx:544 alice/user.cxx:702
+#: alice/appearance.cxx:410 alice/datetime.cxx:385 alice/network.cxx:245
+#: alice/network.cxx:342 alice/network.cxx:390 alice/network.cxx:492
+#: alice/network.cxx:743 alice/power.cxx:127 alice/printers.cxx:163
+#: alice/printers.cxx:319 alice/user.cxx:543 alice/user.cxx:701
 #: denise/applets.cxx:443 denise/desktop.cxx:1671 denise/desktop.cxx:1705
 #: denise/desktop.cxx:2056 denise/desktop.cxx:2610 denise/desktop.cxx:3053
 #: denise/menus.cxx:417 denise/menus.cxx:736 denise/menus.cxx:845
-#: denise/menus.cxx:850 denise/updates.cxx:273 platinum/platinum.cxx:228
-#: platinum/platinum.cxx:1024 shell/main.cxx:615
+#: denise/menus.cxx:850 denise/updates.cxx:273 platinum/filedialog.cxx:341
+#: platinum/filedialog.cxx:575 platinum/platinum.cxx:228
+#: platinum/platinum.cxx:1024 polkit/nirvana-polkit-agent.cxx:158
+#: shell/main.cxx:615
 msgid "Cancel"
 msgstr "Anuluj"
 
 #: alice/appearance.cxx:411 alice/datetime.cxx:386 alice/power.cxx:128
-#: alice/user.cxx:703
+#: alice/user.cxx:702
 msgid "Apply"
 msgstr "Zastosuj"
 
 #: alice/appearance.cxx:412 alice/datetime.cxx:387 alice/desktop.cxx:103
 #: alice/power.cxx:129 alice/printers.cxx:442 alice/shader.cxx:262
-#: alice/user.cxx:704 denise/about.cxx:607 denise/clock.cxx:174
+#: alice/user.cxx:703 denise/about.cxx:611 denise/clock.cxx:174
 #: denise/desktop.cxx:1650 platinum/platinum.cxx:227
 msgid "OK"
 msgstr "OK"
@@ -355,7 +356,7 @@ msgstr ""
 "Strefa czasowa i data wymagają uprawnień administratora; administratorzy "
 "przy komputerze nie są pytani o hasło."
 
-#: alice/desktop.cxx:83 alice/preferences.cxx:150
+#: alice/desktop.cxx:83 alice/preferences.cxx:150 platinum/filedialog.cxx:408
 msgid "Desktop"
 msgstr "Pulpit"
 
@@ -398,32 +399,32 @@ msgstr "Zmiana działa od razu, także dla okien powiększanych od teraz."
 msgid "No such scheme: %1"
 msgstr "Nie ma schematu: %1"
 
-#: alice/network.cxx:128
+#: alice/network.cxx:129
 msgid "saved"
 msgstr "zapisana"
 
-#: alice/network.cxx:159 alice/network.cxx:613 net/net.cxx:331
+#: alice/network.cxx:160 alice/network.cxx:612 net/net.cxx:331
 msgid "connected"
 msgstr "połączono"
 
-#: alice/network.cxx:159 net/net.cxx:332 print/print.cxx:128
+#: alice/network.cxx:160 net/net.cxx:332 print/print.cxx:128
 msgid "connecting…"
 msgstr "łączenie…"
 
-#: alice/network.cxx:194
+#: alice/network.cxx:195
 msgid "Other Wi-Fi Network"
 msgstr "Inna sieć Wi-Fi"
 
-#: alice/network.cxx:194 denise/desktop.cxx:2262 denise/desktop.cxx:2273
+#: alice/network.cxx:195 denise/desktop.cxx:2262 denise/desktop.cxx:2273
 #: denise/desktop.cxx:2280
 msgid "Wi-Fi Network"
 msgstr "Sieć Wi-Fi"
 
-#: alice/network.cxx:200
+#: alice/network.cxx:201
 msgid "Connect to a network that does not broadcast its name."
 msgstr "Połącz z siecią, która nie rozgłasza nazwy."
 
-#: alice/network.cxx:201 denise/desktop.cxx:2281
+#: alice/network.cxx:202 denise/desktop.cxx:2281
 msgid ""
 "The network “%1” is secured.\n"
 "Enter the password to connect."
@@ -431,125 +432,127 @@ msgstr ""
 "Sieć „%1” jest zabezpieczona.\n"
 "Podaj hasło, aby się połączyć."
 
-#: alice/network.cxx:220 alice/network.cxx:485
+#: alice/network.cxx:221 alice/network.cxx:484
 msgid "Network name:"
 msgstr "Nazwa sieci:"
 
-#: alice/network.cxx:224
+#: alice/network.cxx:225
 msgid "Security:"
 msgstr "Zabezpieczenia:"
 
-#: alice/network.cxx:225
+#: alice/network.cxx:226
 msgid "WPA\\/WPA2 Personal|WPA3 Personal|None"
 msgstr "WPA\\/WPA2 Personal|WPA3 Personal|Brak"
 
-#: alice/network.cxx:229 alice/network.cxx:387 dm/nirvana-dm-greeter.cxx:497
+#: alice/network.cxx:230 alice/network.cxx:388 dm/nirvana-dm-greeter.cxx:497
+#: polkit/nirvana-polkit-agent.cxx:149
 msgid "Password:"
 msgstr "Hasło:"
 
-#: alice/network.cxx:232
+#: alice/network.cxx:233
 msgid "Show password"
 msgstr "Pokaż hasło"
 
-#: alice/network.cxx:245 alice/network.cxx:390 alice/network.cxx:427
-#: alice/network.cxx:561 alice/network.cxx:651 alice/network.cxx:702
-#: alice/network.cxx:728 denise/desktop.cxx:2166 denise/desktop.cxx:2240
+#: alice/network.cxx:246 alice/network.cxx:391 alice/network.cxx:428
+#: alice/network.cxx:560 alice/network.cxx:650 alice/network.cxx:701
+#: alice/network.cxx:727 denise/desktop.cxx:2166 denise/desktop.cxx:2240
 #: denise/desktop.cxx:2281
 msgid "Connect"
 msgstr "Połącz"
 
-#: alice/network.cxx:274
+#: alice/network.cxx:275
 msgid "Enterprise networks (802.1X) are not supported yet - use nmtui."
 msgstr "Sieci firmowe (802.1X) nie są jeszcze obsługiwane - użyj nmtui."
 
-#: alice/network.cxx:278 alice/network.cxx:410 denise/desktop.cxx:2232
+#: alice/network.cxx:279 alice/network.cxx:411 denise/desktop.cxx:2232
 #: denise/desktop.cxx:2269 denise/desktop.cxx:3084 denise/volumes.cxx:317
 #: net/net.cxx:93
 msgid "Wrong password."
 msgstr "Nieprawidłowe hasło."
 
-#: alice/network.cxx:279 denise/desktop.cxx:2270 net/net.cxx:683
+#: alice/network.cxx:280 denise/desktop.cxx:2270 net/net.cxx:683
 #: net/net.cxx:809
 msgid "Could not connect. Check the password."
 msgstr "Nie udało się połączyć. Sprawdź hasło."
 
-#: alice/network.cxx:283 alice/network.cxx:304 alice/network.cxx:547
+#: alice/network.cxx:284 alice/network.cxx:305 alice/network.cxx:546
 msgid "Connected to “%1”."
 msgstr "Połączono z siecią „%1”."
 
-#: alice/network.cxx:287 alice/network.cxx:293 alice/network.cxx:301
+#: alice/network.cxx:288 alice/network.cxx:294 alice/network.cxx:302
 msgid "Connecting to “%1”…"
 msgstr "Łączenie z „%1”…"
 
-#: alice/network.cxx:314
+#: alice/network.cxx:315
 msgid "IPv4 Settings"
 msgstr "Ustawienia IPv4"
 
-#: alice/network.cxx:315
+#: alice/network.cxx:316
 msgid "Connection “%1”"
 msgstr "Połączenie „%1”"
 
-#: alice/network.cxx:320
+#: alice/network.cxx:321
 msgid "Configure:"
 msgstr "Konfiguracja:"
 
-#: alice/network.cxx:321
+#: alice/network.cxx:322
 msgid "Automatically (DHCP)|Manually"
 msgstr "Automatycznie (DHCP)|Ręcznie"
 
-#: alice/network.cxx:323
+#: alice/network.cxx:324
 msgid "Address/prefix:"
 msgstr "Adres/prefiks:"
 
-#: alice/network.cxx:324 alice/network.cxx:666
+#: alice/network.cxx:325 alice/network.cxx:665
 msgid "Gateway:"
 msgstr "Brama:"
 
-#: alice/network.cxx:325 alice/network.cxx:666
+#: alice/network.cxx:326 alice/network.cxx:665
 msgid "DNS servers:"
 msgstr "Serwery DNS:"
 
-#: alice/network.cxx:342 platinum/platinum.cxx:1038
+#: alice/network.cxx:343 platinum/filedialog.cxx:246
+#: platinum/filedialog.cxx:248 platinum/platinum.cxx:1038
 msgid "Save"
 msgstr "Zapisz"
 
-#: alice/network.cxx:350
+#: alice/network.cxx:351
 msgid "Enter an IPv4 address, e.g. 192.168.1.20/24."
 msgstr "Podaj adres IPv4, np. 192.168.1.20/24."
 
-#: alice/network.cxx:352
+#: alice/network.cxx:353
 msgid "Saving IPv4 settings…"
 msgstr "Zapisywanie ustawień IPv4…"
 
-#: alice/network.cxx:353 net/net.cxx:544
+#: alice/network.cxx:354 net/net.cxx:544
 msgid "IPv4 settings saved."
 msgstr "Zapisano ustawienia IPv4."
 
-#: alice/network.cxx:369
+#: alice/network.cxx:370
 msgid "The VPN connection “%1” requires a login."
 msgstr "Połączenie VPN „%1” wymaga logowania."
 
-#: alice/network.cxx:384
+#: alice/network.cxx:385
 msgid "User name:"
 msgstr "Użytkownik:"
 
-#: alice/network.cxx:408
+#: alice/network.cxx:409
 msgid "Connecting to VPN “%1”…"
 msgstr "Łączenie z VPN „%1”…"
 
-#: alice/network.cxx:414
+#: alice/network.cxx:415
 msgid "Connected to VPN “%1”."
 msgstr "Połączono z VPN „%1”."
 
-#: alice/network.cxx:427 alice/network.cxx:561 denise/desktop.cxx:2163
+#: alice/network.cxx:428 alice/network.cxx:560 denise/desktop.cxx:2163
 msgid "Disconnect"
 msgstr "Rozłącz"
 
-#: alice/network.cxx:436
+#: alice/network.cxx:437
 msgid "Connected to “%1” (%2)."
 msgstr "Połączono z „%1” (%2)."
 
-#: alice/network.cxx:437
+#: alice/network.cxx:438
 msgid ""
 "You have no VPN connections yet. Import a file from your administrator or "
 "VPN provider."
@@ -557,11 +560,11 @@ msgstr ""
 "Nie masz jeszcze żadnego połączenia VPN. Zaimportuj plik od administratora "
 "albo dostawcy VPN."
 
-#: alice/network.cxx:438
+#: alice/network.cxx:439
 msgid "No active VPN connection."
 msgstr "Brak aktywnego połączenia VPN."
 
-#: alice/network.cxx:453
+#: alice/network.cxx:454
 msgid ""
 "Supported: %1. Other types need a NetworkManager plugin (network-manager-… "
 "packages)."
@@ -573,43 +576,47 @@ msgstr ""
 msgid "Import VPN Configuration"
 msgstr "Importuj konfigurację VPN"
 
-#: alice/network.cxx:466
+#: alice/network.cxx:463
+msgid "VPN configurations"
+msgstr "Konfiguracje VPN"
+
+#: alice/network.cxx:465
 msgid "Importing…"
 msgstr "Importowanie…"
 
-#: alice/network.cxx:468
+#: alice/network.cxx:467
 msgid "Added VPN connection “%1”."
 msgstr "Dodano połączenie VPN „%1”."
 
-#: alice/network.cxx:476
+#: alice/network.cxx:475
 msgid "Hotspot"
 msgstr "Hotspot"
 
-#: alice/network.cxx:482
+#: alice/network.cxx:481
 msgid "Share your internet connection with other devices over Wi-Fi."
 msgstr "Udostępnij połączenie z internetem innym urządzeniom przez Wi-Fi."
 
-#: alice/network.cxx:491
+#: alice/network.cxx:490
 msgid "Password (min. 8):"
 msgstr "Hasło (min. 8):"
 
-#: alice/network.cxx:494
+#: alice/network.cxx:493
 msgid "Turn On"
 msgstr "Włącz"
 
-#: alice/network.cxx:500
+#: alice/network.cxx:499
 msgid "Turning on hotspot…"
 msgstr "Włączanie hotspotu…"
 
-#: alice/network.cxx:502 net/net.cxx:791 net/net.cxx:809
+#: alice/network.cxx:501 net/net.cxx:791 net/net.cxx:809
 msgid "Hotspot is on."
 msgstr "Hotspot włączony."
 
-#: alice/network.cxx:525 denise/desktop.cxx:2149
+#: alice/network.cxx:524 denise/desktop.cxx:2149
 msgid "Network unavailable"
 msgstr "Sieć niedostępna"
 
-#: alice/network.cxx:527
+#: alice/network.cxx:526
 msgid ""
 "Nirvana Desktop manages networking through NetworkManager: install the "
 "network-manager package and start the NetworkManager service."
@@ -617,98 +624,98 @@ msgstr ""
 "Nirvana Desktop zarządza siecią przez NetworkManagera: zainstaluj pakiet "
 "network-manager i uruchom usługę NetworkManager."
 
-#: alice/network.cxx:534
+#: alice/network.cxx:533
 msgid "No connections"
 msgstr "Brak połączeń"
 
-#: alice/network.cxx:535
+#: alice/network.cxx:534
 msgid "No network adapters managed by NetworkManager were found."
 msgstr "Nie znaleziono kart sieciowych zarządzanych przez NetworkManagera."
 
-#: alice/network.cxx:546
+#: alice/network.cxx:545
 msgid "Hotspot: sharing your connection as “%1”."
 msgstr "Hotspot: udostępniasz połączenie jako sieć „%1”."
 
-#: alice/network.cxx:548
+#: alice/network.cxx:547
 msgid "Connected (“%1”)."
 msgstr "Połączono („%1”)."
 
-#: alice/network.cxx:550 alice/network.cxx:661
+#: alice/network.cxx:549 alice/network.cxx:660
 msgid "Connecting…"
 msgstr "Łączenie…"
 
-#: alice/network.cxx:552
+#: alice/network.cxx:551
 msgid "Wi-Fi adapter unavailable."
 msgstr "Karta Wi-Fi niedostępna."
 
-#: alice/network.cxx:552 alice/network.cxx:687
+#: alice/network.cxx:551 alice/network.cxx:686
 msgid "Wi-Fi is off."
 msgstr "Wi-Fi jest wyłączone."
 
-#: alice/network.cxx:553
+#: alice/network.cxx:552
 msgid "The network cable is unplugged."
 msgstr "Kabel sieciowy jest odłączony."
 
-#: alice/network.cxx:555 alice/network.cxx:658 net/net.cxx:525
+#: alice/network.cxx:554 alice/network.cxx:657 net/net.cxx:525
 msgid "Disconnected."
 msgstr "Rozłączono."
 
-#: alice/network.cxx:593 denise/desktop.cxx:2193
+#: alice/network.cxx:592 denise/desktop.cxx:2193
 msgid "Looking for networks…"
 msgstr "Szukam sieci…"
 
-#: alice/network.cxx:593
+#: alice/network.cxx:592
 msgid "(Wi-Fi off)"
 msgstr "(Wi-Fi wyłączone)"
 
-#: alice/network.cxx:613
+#: alice/network.cxx:612
 msgid "no connections"
 msgstr "brak połączeń"
 
-#: alice/network.cxx:613 net/net.cxx:335
+#: alice/network.cxx:612 net/net.cxx:335
 msgid "disconnected"
 msgstr "rozłączono"
 
-#: alice/network.cxx:626 alice/preferences.cxx:151 denise/desktop.cxx:2179
+#: alice/network.cxx:625 alice/preferences.cxx:151 denise/desktop.cxx:2179
 #: denise/desktop.cxx:2220 denise/desktop.cxx:2251 denise/gary.cxx:118
 #: net/net.cxx:326
 msgid "Network"
 msgstr "Sieć"
 
-#: alice/network.cxx:629
+#: alice/network.cxx:628
 msgid "Connections"
 msgstr "Połączenia"
 
-#: alice/network.cxx:649
+#: alice/network.cxx:648
 msgid "IPv4…"
 msgstr "IPv4…"
 
-#: alice/network.cxx:658
+#: alice/network.cxx:657
 msgid "Disconnecting…"
 msgstr "Rozłączanie…"
 
-#: alice/network.cxx:661 net/net.cxx:522 net/net.cxx:676 net/net.cxx:768
+#: alice/network.cxx:660 net/net.cxx:522 net/net.cxx:676 net/net.cxx:768
 #: net/net.cxx:778
 msgid "Connected."
 msgstr "Połączono."
 
-#: alice/network.cxx:666
+#: alice/network.cxx:665
 msgid "IPv4 address:"
 msgstr "Adres IPv4:"
 
-#: alice/network.cxx:666
+#: alice/network.cxx:665
 msgid "IPv6 address:"
 msgstr "Adres IPv6:"
 
-#: alice/network.cxx:666
+#: alice/network.cxx:665
 msgid "MAC address:"
 msgstr "Adres MAC:"
 
-#: alice/network.cxx:666
+#: alice/network.cxx:665
 msgid "Speed:"
 msgstr "Szybkość:"
 
-#: alice/network.cxx:676
+#: alice/network.cxx:675
 msgid ""
 "Plug in the cable or click “Connect”. The address is obtained automatically "
 "(DHCP) unless you set it manually under “IPv4…”."
@@ -716,100 +723,100 @@ msgstr ""
 "Podłącz kabel albo kliknij „Połącz”. Adres zostanie pobrany automatycznie "
 "(DHCP), chyba że w „IPv4…” ustawisz go ręcznie."
 
-#: alice/network.cxx:682
+#: alice/network.cxx:681
 msgid "Wi-Fi on"
 msgstr "Wi-Fi włączone"
 
-#: alice/network.cxx:686
+#: alice/network.cxx:685
 msgid "Turning Wi-Fi on…"
 msgstr "Włączanie Wi-Fi…"
 
-#: alice/network.cxx:686
+#: alice/network.cxx:685
 msgid "Turning Wi-Fi off…"
 msgstr "Wyłączanie Wi-Fi…"
 
-#: alice/network.cxx:687
+#: alice/network.cxx:686
 msgid "Wi-Fi is on."
 msgstr "Wi-Fi włączone."
 
-#: alice/network.cxx:689
+#: alice/network.cxx:688
 msgid "Networks in range:"
 msgstr "Sieci w zasięgu:"
 
-#: alice/network.cxx:705
+#: alice/network.cxx:704
 msgid "Choose a network from the list."
 msgstr "Wybierz sieć z listy."
 
-#: alice/network.cxx:707 denise/desktop.cxx:2201
+#: alice/network.cxx:706 denise/desktop.cxx:2201
 msgid "Other Network…"
 msgstr "Inna sieć…"
 
-#: alice/network.cxx:708
+#: alice/network.cxx:707
 msgid "Forget"
 msgstr "Zapomnij"
 
-#: alice/network.cxx:711
+#: alice/network.cxx:710
 msgid "Choose a saved network."
 msgstr "Wybierz zapisaną sieć."
 
-#: alice/network.cxx:714 net/net.cxx:528
+#: alice/network.cxx:713 net/net.cxx:528
 msgid "Network forgotten."
 msgstr "Zapomniano sieć."
 
-#: alice/network.cxx:716
+#: alice/network.cxx:715
 msgid "Hotspot…"
 msgstr "Hotspot…"
 
-#: alice/network.cxx:732 alice/network.cxx:743
+#: alice/network.cxx:731 alice/network.cxx:742
 msgid "Choose a VPN connection."
 msgstr "Wybierz połączenie VPN."
 
-#: alice/network.cxx:734
+#: alice/network.cxx:733
 msgid "Disconnecting VPN…"
 msgstr "Rozłączanie VPN…"
 
-#: alice/network.cxx:735 net/net.cxx:519
+#: alice/network.cxx:734 net/net.cxx:519
 msgid "VPN disconnected."
 msgstr "Rozłączono VPN."
 
-#: alice/network.cxx:740
+#: alice/network.cxx:739
 msgid "Import…"
 msgstr "Importuj…"
 
-#: alice/network.cxx:741 alice/network.cxx:744 denise/menus.cxx:340
+#: alice/network.cxx:740 alice/network.cxx:743 denise/menus.cxx:340
 msgid "Delete"
 msgstr "Usuń"
 
-#: alice/network.cxx:744
+#: alice/network.cxx:743
 #, c-format
 msgid "Delete the VPN connection “%s”?"
 msgstr "Usunąć połączenie VPN „%s”?"
 
-#: alice/network.cxx:745
+#: alice/network.cxx:744
 msgid "VPN connection deleted."
 msgstr "Usunięto połączenie VPN."
 
-#: alice/network.cxx:753 denise/desktop.cxx:2216
+#: alice/network.cxx:752 denise/desktop.cxx:2216
 msgid "Airplane Mode"
 msgstr "Tryb samolotowy"
 
-#: alice/network.cxx:757
+#: alice/network.cxx:756
 msgid "Turning off all radios…"
 msgstr "Wyłączanie wszystkich radiów…"
 
-#: alice/network.cxx:757
+#: alice/network.cxx:756
 msgid "Turning radios on…"
 msgstr "Włączanie radiów…"
 
-#: alice/network.cxx:758 net/net.cxx:368
+#: alice/network.cxx:757 net/net.cxx:368
 msgid "Airplane mode is on."
 msgstr "Tryb samolotowy włączony."
 
-#: alice/network.cxx:758 net/net.cxx:368
+#: alice/network.cxx:757 net/net.cxx:368
 msgid "Airplane mode is off."
 msgstr "Tryb samolotowy wyłączony."
 
-#: alice/network.cxx:763 platinum/platinum.cxx:231 shell/main.cxx:616
+#: alice/network.cxx:762 platinum/platinum.cxx:231 shell/main.cxx:616
 msgid "Close"
 msgstr "Zamknij"
 
@@ -892,8 +899,8 @@ msgid ""
 "Presentation mode (battery menu in the menu bar) suspends screen blanking, "
 "locking and sleep."
 msgstr ""
-"Tryb projekcji (menu baterii na pasku menu) wstrzymuje wygaszanie, blokadę i "
-"usypianie."
+"Tryb projekcji (menu baterii na pasku menu) wstrzymuje wygaszanie, blokadę i"
+" usypianie."
 
 #: alice/power.cxx:118
 msgid ""
@@ -907,7 +914,7 @@ msgstr ""
 msgid "Preferences"
 msgstr "Preferencje"
 
-#: alice/preferences.cxx:148 alice/user.cxx:625
+#: alice/preferences.cxx:148 alice/user.cxx:624
 msgid "User"
 msgstr "Użytkownik"
 
@@ -1019,8 +1026,8 @@ msgstr "Bez sterownika (IPP Everywhere / AirPrint) – zalecane"
 
 #: alice/printers.cxx:234
 msgid ""
-"No driver for %1 is installed. Install the drivers for this manufacturer and "
-"the list fills in."
+"No driver for %1 is installed. Install the drivers for this manufacturer and"
+" the list fills in."
 msgstr ""
 "Nie ma zainstalowanego sterownika dla %1. Zainstaluj sterowniki tego "
 "producenta, a lista się uzupełni."
@@ -1093,6 +1100,7 @@ msgid "2. The driver"
 msgstr "2. Sterownik"
 
 #: alice/printers.cxx:316 denise/menus.cxx:835 dm/nirvana-dm-greeter.cxx:489
+#: platinum/filedialog.cxx:323
 msgid "Name:"
 msgstr "Nazwa:"
 
@@ -1197,7 +1205,8 @@ msgid "Scanlines"
 msgstr "Linie kineskopu"
 
 #: alice/shader.cxx:38
-msgid "Only the dark lines of a tube screen; the picture stays flat and sharp."
+msgid ""
+"Only the dark lines of a tube screen; the picture stays flat and sharp."
 msgstr "Tylko ciemne linie kineskopu; obraz zostaje płaski i ostry."
 
 #: alice/shader.cxx:39
@@ -1238,7 +1247,8 @@ msgstr "Światło nocne"
 
 #: alice/shader.cxx:43
 msgid "Warmer colors with less blue light, for the evening."
-msgstr "Cieplejsze kolory z mniejszą ilością niebieskiego światła, na wieczór."
+msgstr ""
+"Cieplejsze kolory z mniejszą ilością niebieskiego światła, na wieczór."
 
 #: alice/shader.cxx:44
 msgid "VHS tape"
@@ -1246,7 +1256,8 @@ msgstr "Kaseta VHS"
 
 #: alice/shader.cxx:44
 msgid ""
-"Color bleeding, a shaky picture, noise and a rolling tracking band. Animated."
+"Color bleeding, a shaky picture, noise and a rolling tracking band. "
+"Animated."
 msgstr ""
 "Rozmyte kolory, drżący obraz, szum i przesuwający się pas zakłóceń. "
 "Animowany."
@@ -1296,10 +1307,11 @@ msgid "LCD"
 msgstr "LCD"
 
 #: alice/shader.cxx:49
-msgid "A coarse liquid crystal panel with visible red, green and blue stripes."
+msgid ""
+"A coarse liquid crystal panel with visible red, green and blue stripes."
 msgstr ""
-"Gruboziarnisty panel ciekłokrystaliczny z widocznymi czerwonymi, zielonymi i "
-"niebieskimi paskami."
+"Gruboziarnisty panel ciekłokrystaliczny z widocznymi czerwonymi, zielonymi i"
+" niebieskimi paskami."
 
 #: alice/shader.cxx:50
 msgid "Thermal camera"
@@ -1362,8 +1374,8 @@ msgid ""
 "Effects use OpenGL. Without graphics acceleration animated effects can be "
 "slow."
 msgstr ""
-"Efekty używają OpenGL. Bez akceleracji grafiki efekty animowane mogą działać "
-"wolno."
+"Efekty używają OpenGL. Bez akceleracji grafiki efekty animowane mogą działać"
+" wolno."
 
 #: alice/shader.cxx:225
 msgid "Full-screen effect"
@@ -1377,91 +1389,91 @@ msgstr "Opis"
 msgid "Your own shaders (GLSL fragment shaders, *.frag) go to"
 msgstr "Własne shadery (shadery fragmentów GLSL, *.frag) umieść w"
 
-#: alice/user.cxx:92
+#: alice/user.cxx:93
 msgid "nirvana-user-helper is missing."
 msgstr "Brakuje nirvana-user-helper."
 
-#: alice/user.cxx:310
+#: alice/user.cxx:311
 msgid "Use this picture"
 msgstr "Użyj tego obrazka"
 
-#: alice/user.cxx:326
+#: alice/user.cxx:327
 msgid "Click Apply or OK to save the picture."
 msgstr "Kliknij Zastosuj lub OK, aby zapisać zdjęcie."
 
-#: alice/user.cxx:333
+#: alice/user.cxx:331
 msgid "Choose Picture"
 msgstr "Wybierz zdjęcie"
 
-#: alice/user.cxx:338
+#: alice/user.cxx:337
 msgid "This file is not a picture that can be opened."
 msgstr "Tego pliku nie da się otworzyć jako obrazu."
 
-#: alice/user.cxx:405 alice/user.cxx:418
+#: alice/user.cxx:404 alice/user.cxx:417
 msgid "the picture"
 msgstr "zdjęcie"
 
-#: alice/user.cxx:406 alice/user.cxx:419
+#: alice/user.cxx:405 alice/user.cxx:418
 msgid "the login screen picture (%1)"
 msgstr "zdjęcie na ekranie logowania (%1)"
 
-#: alice/user.cxx:406 alice/user.cxx:419 alice/user.cxx:428 alice/user.cxx:439
+#: alice/user.cxx:405 alice/user.cxx:418 alice/user.cxx:427 alice/user.cxx:438
 msgid "not allowed"
 msgstr "brak zgody"
 
-#: alice/user.cxx:409
+#: alice/user.cxx:408
 msgid "the picture (%1)"
 msgstr "zdjęcie (%1)"
 
-#: alice/user.cxx:426
+#: alice/user.cxx:425
 msgid "the full name"
 msgstr "imię i nazwisko"
 
-#: alice/user.cxx:428
+#: alice/user.cxx:427
 msgid "the full name (%1)"
 msgstr "imię i nazwisko (%1)"
 
-#: alice/user.cxx:436
+#: alice/user.cxx:435
 msgid "automatic login"
 msgstr "automatyczne logowanie"
 
-#: alice/user.cxx:439
+#: alice/user.cxx:438
 msgid "automatic login (%1)"
 msgstr "automatyczne logowanie (%1)"
 
-#: alice/user.cxx:446
+#: alice/user.cxx:445
 msgid "Not changed: %1."
 msgstr "Nie zmieniono: %1."
 
-#: alice/user.cxx:451
+#: alice/user.cxx:450
 msgid "Saved: %1."
 msgstr "Zapisano: %1."
 
-#: alice/user.cxx:524
+#: alice/user.cxx:523
 msgid "the current password is not right"
 msgstr "obecne hasło jest nieprawidłowe"
 
-#: alice/user.cxx:525
+#: alice/user.cxx:524
 msgid "passwd did not accept it"
 msgstr "passwd go nie przyjął"
 
-#: alice/user.cxx:530
+#: alice/user.cxx:529
 msgid "Change Password"
 msgstr "Zmiana hasła"
 
-#: alice/user.cxx:537
+#: alice/user.cxx:536
 msgid "Current password:"
 msgstr "Obecne hasło:"
 
-#: alice/user.cxx:538
+#: alice/user.cxx:537
 msgid "New password:"
 msgstr "Nowe hasło:"
 
-#: alice/user.cxx:539
+#: alice/user.cxx:538
 msgid "Repeat new password:"
 msgstr "Powtórz nowe hasło:"
 
-#: alice/user.cxx:543
+#: alice/user.cxx:542
 msgid ""
 "Use at least 8 characters; a few unrelated words are easy to remember and "
 "hard to guess."
@@ -1469,111 +1481,111 @@ msgstr ""
 "Użyj co najmniej 8 znaków; kilka niezwiązanych słów łatwo zapamiętać, a "
 "trudno odgadnąć."
 
-#: alice/user.cxx:545
+#: alice/user.cxx:544
 msgid "Change"
 msgstr "Zmień"
 
-#: alice/user.cxx:567
+#: alice/user.cxx:566
 msgid "The new passwords are not the same."
 msgstr "Nowe hasła się różnią."
 
-#: alice/user.cxx:569
+#: alice/user.cxx:568
 msgid "Type the new password."
 msgstr "Wpisz nowe hasło."
 
-#: alice/user.cxx:571
+#: alice/user.cxx:570
 msgid "Changing the password…"
 msgstr "Zmienianie hasła…"
 
-#: alice/user.cxx:577
+#: alice/user.cxx:576
 msgid "The password was changed."
 msgstr "Hasło zostało zmienione."
 
-#: alice/user.cxx:581
+#: alice/user.cxx:580
 msgid "The password was not changed: %1"
 msgstr "Hasło nie zostało zmienione: %1"
 
-#: alice/user.cxx:630
+#: alice/user.cxx:629
 msgid "Picture"
 msgstr "Zdjęcie"
 
-#: alice/user.cxx:634
+#: alice/user.cxx:633
 msgid "Choose Picture…"
 msgstr "Wybierz zdjęcie…"
 
-#: alice/user.cxx:636
+#: alice/user.cxx:635
 msgid "No Picture"
 msgstr "Bez zdjęcia"
 
-#: alice/user.cxx:641
+#: alice/user.cxx:640
 msgid "Click Apply or OK to remove the picture."
 msgstr "Kliknij Zastosuj lub OK, aby usunąć zdjęcie."
 
-#: alice/user.cxx:644
+#: alice/user.cxx:643
 msgid "The login screen shows this picture next to your name."
 msgstr "Ekran logowania pokazuje to zdjęcie przy Twojej nazwie."
 
-#: alice/user.cxx:652
+#: alice/user.cxx:651
 msgid "Account"
 msgstr "Konto"
 
-#: alice/user.cxx:654
+#: alice/user.cxx:653
 msgid "Login name:"
 msgstr "Login:"
 
-#: alice/user.cxx:655
+#: alice/user.cxx:654
 msgid "Account type:"
 msgstr "Typ konta:"
 
-#: alice/user.cxx:655
+#: alice/user.cxx:654
 msgid "Administrator"
 msgstr "Administrator"
 
-#: alice/user.cxx:655
+#: alice/user.cxx:654
 msgid "Standard user"
 msgstr "Zwykły użytkownik"
 
-#: alice/user.cxx:656
+#: alice/user.cxx:655
 msgid "Home folder:"
 msgstr "Katalog domowy:"
 
-#: alice/user.cxx:657
+#: alice/user.cxx:656
 msgid "Shell:"
 msgstr "Powłoka:"
 
-#: alice/user.cxx:658
+#: alice/user.cxx:657
 msgid "Groups:"
 msgstr "Grupy:"
 
-#: alice/user.cxx:661
+#: alice/user.cxx:660
 msgid "Full name:"
 msgstr "Imię i nazwisko:"
 
-#: alice/user.cxx:666
+#: alice/user.cxx:665
 msgid "Logging In"
 msgstr "Logowanie"
 
-#: alice/user.cxx:668
+#: alice/user.cxx:667
 msgid "Change Password…"
 msgstr "Zmień hasło…"
 
-#: alice/user.cxx:670
+#: alice/user.cxx:669
 msgid "Log in automatically, without the login screen"
 msgstr "Loguj automatycznie, bez ekranu logowania"
 
-#: alice/user.cxx:679
+#: alice/user.cxx:678
 msgid "Needs the Nirvana-DM login screen (LightDM)."
 msgstr "Wymaga ekranu logowania Nirvana-DM (LightDM)."
 
-#: alice/user.cxx:682
+#: alice/user.cxx:681
 msgid "Only an administrator can turn it on."
 msgstr "Może to włączyć tylko administrator."
 
-#: alice/user.cxx:684
+#: alice/user.cxx:683
 msgid "Anyone who switches the computer on gets your desktop."
 msgstr "Każdy, kto włączy komputer, dostanie Twój pulpit."
 
-#: alice/user.cxx:689
+#: alice/user.cxx:688
 msgid "Or pick one of these:"
 msgstr "Albo wybierz jeden z tych:"
 
@@ -1787,14 +1799,16 @@ msgid ""
 "The full text of the licence follows (only the English original is legally "
 "binding)."
 msgstr ""
-"Poniżej pełny tekst licencji (wiążący prawnie jest tylko oryginał angielski)."
+"Poniżej pełny tekst licencji (wiążący prawnie jest tylko oryginał "
+"angielski)."
 
 #: denise/about.cxx:476
 msgid ""
-"The licence file was not found. See https://www.gnu.org/licenses/gpl-3.0.html"
+"The licence file was not found. See "
+"https://www.gnu.org/licenses/gpl-3.0.html"
 msgstr ""
-"Nie znaleziono pliku licencji. Zobacz https://www.gnu.org/licenses/gpl-3.0."
-"html"
+"Nie znaleziono pliku licencji. Zobacz "
+"https://www.gnu.org/licenses/gpl-3.0.html"
 
 #: denise/about.cxx:485
 msgid ""
@@ -1822,67 +1836,67 @@ msgstr "emulacja terminala w Nirvana Shell"
 msgid "the X.Org Foundation and the X Window System authors"
 msgstr "X.Org Foundation i autorzy X Window System"
 
-#: denise/about.cxx:492
+#: denise/about.cxx:496
 msgid "Color schemes"
 msgstr "Schematy kolorów"
 
-#: denise/about.cxx:495
+#: denise/about.cxx:499
 msgid "Programs Nirvana Desktop works with"
 msgstr "Programy, z którymi współpracuje Nirvana Desktop"
 
-#: denise/about.cxx:499
+#: denise/about.cxx:503
 msgid "Standards"
 msgstr "Standardy"
 
-#: denise/about.cxx:500
+#: denise/about.cxx:504
 msgid "Trash, autostart"
 msgstr "Kosz, autostart"
 
-#: denise/about.cxx:503
+#: denise/about.cxx:507
 msgid "and the AppImage team"
 msgstr "i zespół AppImage"
 
-#: denise/about.cxx:504
+#: denise/about.cxx:508
 msgid "Inspirations"
 msgstr "Inspiracje"
 
-#: denise/about.cxx:505
+#: denise/about.cxx:509
 msgid ""
 "the desktops of the late 1980s and the 1990s: bevelled gray windows, a menu "
 "bar at the top, icons on the desktop"
 msgstr ""
-"pulpity końca lat 80. i lat 90.: szare okna z fazowaniem, pasek menu u góry, "
-"ikony na biurku"
+"pulpity końca lat 80. i lat 90.: szare okna z fazowaniem, pasek menu u góry,"
+" ikony na biurku"
 
-#: denise/about.cxx:506
+#: denise/about.cxx:510
 msgid "the layout of “About This Computer”"
 msgstr "układ okna „O systemie”"
 
-#: denise/about.cxx:507
+#: denise/about.cxx:511
 msgid "the system underneath"
 msgstr "system pod spodem"
 
-#: denise/about.cxx:508
+#: denise/about.cxx:512
 msgid "Made with"
 msgstr "Stworzone z pomocą"
 
-#: denise/about.cxx:509
+#: denise/about.cxx:513
 msgid "co-author of the code"
 msgstr "współautor kodu"
 
-#: denise/about.cxx:552
+#: denise/about.cxx:556
 msgid "About This Computer"
 msgstr "O systemie"
 
-#: denise/about.cxx:556
+#: denise/about.cxx:560
 msgid "System Info"
 msgstr "System"
 
-#: denise/about.cxx:556
+#: denise/about.cxx:560
 msgid "Licence"
 msgstr "Licencja"
 
-#: denise/about.cxx:556
+#: denise/about.cxx:560
 msgid "Acknowledgements"
 msgstr "Podziękowania"
 
@@ -1987,6 +2001,7 @@ msgid "Input:"
 msgstr "Wejście:"
 
 #: denise/applets.cxx:217 denise/desktop.cxx:727 denise/desktop.cxx:907
+#: platinum/filedialog.cxx:414
 msgid "Applications"
 msgstr "Aplikacje"
 
@@ -2237,6 +2252,7 @@ msgstr "Otwórz katalog nadrzędny"
 
 #: denise/desktop.cxx:1524 denise/desktop.cxx:3073 denise/menus.cxx:254
 #: denise/menus.cxx:256 denise/menus.cxx:260 denise/menus.cxx:330
+#: platinum/filedialog.cxx:246 platinum/filedialog.cxx:248
 msgid "Open"
 msgstr "Otwórz"
 
@@ -2266,7 +2282,7 @@ msgstr ""
 "„%1” jest już zainstalowany w folderze %2.\n"
 "Inne wersje tego programu mogą być zainstalowane obok."
 
-#: denise/desktop.cxx:1672 denise/desktop.cxx:2611
+#: denise/desktop.cxx:1672 denise/desktop.cxx:2611 platinum/filedialog.cxx:575
 msgid "Replace"
 msgstr "Zastąp"
 
@@ -2567,7 +2583,8 @@ msgstr "Duplikuj"
 msgid "Copy"
 msgstr "Kopiuj"
 
-#: denise/menus.cxx:342 platinum/platinum.cxx:1036
+#: denise/menus.cxx:342 platinum/filedialog.cxx:298
+#: platinum/filedialog.cxx:553 platinum/platinum.cxx:1036
 msgid "New Folder"
 msgstr "Nowy folder"
 
@@ -2790,8 +2807,8 @@ msgstr "Wszystkie dane na tym dysku zostaną usunięte!"
 
 #: denise/menus.cxx:842
 msgid ""
-"FAT32 (USB stick - works everywhere)|exFAT (large files, Windows and Mac)|"
-"ext4 (Linux)|NTFS (Windows)"
+"FAT32 (USB stick - works everywhere)|exFAT (large files, Windows and "
+"Mac)|ext4 (Linux)|NTFS (Windows)"
 msgstr ""
 "FAT32 (pendrive - działa wszędzie)|exFAT (duże pliki, Windows i Mac)|ext4 "
 "(Linux)|NTFS (Windows)"
@@ -2892,8 +2909,8 @@ msgstr[2] "Zainstalować %1 aktualizacji?"
 
 #: denise/updates.cxx:271
 msgid ""
-"You can keep working meanwhile. Programs that are running may need a restart "
-"afterwards."
+"You can keep working meanwhile. Programs that are running may need a restart"
+" afterwards."
 msgstr ""
 "W tym czasie możesz dalej pracować. Uruchomione programy mogą potem wymagać "
 "ponownego uruchomienia."
@@ -3180,11 +3197,11 @@ msgstr "Nie można odczytać pliku."
 
 #: net/net.cxx:436
 msgid ""
-"Unknown format. Supported: WireGuard (.conf), OpenVPN (.ovpn), Cisco VPNC (."
-"pcf)."
-msgstr ""
-"Nieznany format. Obsługiwane: WireGuard (.conf), OpenVPN (.ovpn), Cisco VPNC "
+"Unknown format. Supported: WireGuard (.conf), OpenVPN (.ovpn), Cisco VPNC "
 "(.pcf)."
+msgstr ""
+"Nieznany format. Obsługiwane: WireGuard (.conf), OpenVPN (.ovpn), Cisco VPNC"
+" (.pcf)."
 
 #: net/net.cxx:440
 msgid ""
@@ -3195,11 +3212,11 @@ msgstr ""
 
 #: net/net.cxx:449
 msgid ""
-"A WireGuard file name must be a short interface name (e.g. wg0.conf, office."
-"conf)."
+"A WireGuard file name must be a short interface name (e.g. wg0.conf, "
+"office.conf)."
 msgstr ""
-"Nazwa pliku WireGuard musi być krótką nazwą interfejsu (np. wg0.conf, firma."
-"conf)."
+"Nazwa pliku WireGuard musi być krótką nazwą interfejsu (np. wg0.conf, "
+"firma.conf)."
 
 #: net/net.cxx:483
 msgid "Cannot create a temporary file."
@@ -3466,6 +3483,90 @@ msgstr "So"
 msgid "%2 %1"
 msgstr "%1 %2"
 
+#: platinum/filedialog.cxx:246
+msgid "Choose Folder"
+msgstr "Wybierz folder"
+
+#: platinum/filedialog.cxx:248 platinum/platinum.cxx:1025
+msgid "Choose"
+msgstr "Wybierz"
+
+#: platinum/filedialog.cxx:255
+msgid "All files"
+msgstr "Wszystkie pliki"
+
+#: platinum/filedialog.cxx:261
+msgid "Places"
+msgstr "Miejsca"
+
+#: platinum/filedialog.cxx:289
+msgid "The folders above this one"
+msgstr "Foldery nad tym"
+
+#: platinum/filedialog.cxx:295
+msgid "Up"
+msgstr "W górę"
+
+#: platinum/filedialog.cxx:296
+msgid "The folder above (Backspace)"
+msgstr "Folder wyżej (Backspace)"
+
+#: platinum/filedialog.cxx:318
+msgid "Show hidden files"
+msgstr "Pokaż ukryte pliki"
+
+#: platinum/filedialog.cxx:329 platinum/platinum.cxx:1039
+msgid "Show:"
+msgstr "Pokaż:"
+
+#: platinum/filedialog.cxx:333
+msgid "Files"
+msgstr "Pliki"
+
+#: platinum/filedialog.cxx:402
+msgid "Home"
+msgstr "Katalog domowy"
+
+#: platinum/filedialog.cxx:410
+msgid "Downloads"
+msgstr "Pobrane"
+
+#: platinum/filedialog.cxx:411
+msgid "Pictures"
+msgstr "Obrazy"
+
+#: platinum/filedialog.cxx:413
+msgid "Videos"
+msgstr "Wideo"
+
+#: platinum/filedialog.cxx:415
+msgid "File system"
+msgstr "System plików"
+
+#: platinum/filedialog.cxx:493
+msgid "This folder cannot be opened: %1"
+msgstr "Nie można otworzyć tego folderu: %1"
+
+#: platinum/filedialog.cxx:553
+msgid "Folder name"
+msgstr "Nazwa folderu"
+
+#: platinum/filedialog.cxx:557
+msgid "The folder could not be created: %1"
+msgstr "Nie udało się utworzyć folderu: %1"
+
+#: platinum/filedialog.cxx:571
+msgid "The folder %1 does not exist."
+msgstr "Folder %1 nie istnieje."
+
+#: platinum/filedialog.cxx:576
+msgid "\"%1\" already exists. Replace it?"
+msgstr "„%1” już istnieje. Zastąpić?"
+
+#: platinum/filedialog.cxx:615
+msgid "Go to folder:"
+msgstr "Przejdź do folderu:"
+
 #. TRANSLATORS: date: %1 day, %2 month (abbreviated), %3 year, %4 time - the
 #. order may change
 #: platinum/i18n.cxx:390
@@ -3486,10 +3587,6 @@ msgid_plural "%1 items"
 msgstr[0] "%1 element"
 msgstr[1] "%1 elementy"
 msgstr[2] "%1 elementów"
-
-#: platinum/platinum.cxx:1025
-msgid "Choose"
-msgstr "Wybierz"
 
 #: platinum/platinum.cxx:1026
 msgid "Add to Favorites"
@@ -3530,10 +3627,6 @@ msgstr "Zarządzaj ulubionymi"
 #: platinum/platinum.cxx:1035
 msgid "New folder name:"
 msgstr "Nazwa nowego folderu:"
-
-#: platinum/platinum.cxx:1039
-msgid "Show:"
-msgstr "Pokaż:"
 
 #: platinum/theme.cxx:43
 msgid "Plain"
@@ -3674,6 +3767,46 @@ msgstr "Na środku"
 #: platinum/wallpaper.cxx:29
 msgid "Tile"
 msgstr "Sąsiadująco"
+
+#: polkit/nirvana-polkit-agent.cxx:107
+msgid "Authentication"
+msgstr "Uwierzytelnianie"
+
+#: polkit/nirvana-polkit-agent.cxx:112
+msgid "Confirm with your password"
+msgstr "Potwierdź swoim hasłem"
+
+#: polkit/nirvana-polkit-agent.cxx:112
+msgid "Administrator rights are needed"
+msgstr "Potrzebne są uprawnienia administratora"
+
+#: polkit/nirvana-polkit-agent.cxx:116
+msgid "A program wants to do something that needs your permission."
+msgstr "Program chce zrobić coś, co wymaga Twojej zgody."
+
+#: polkit/nirvana-polkit-agent.cxx:120
+msgid "Program: %1"
+msgstr "Program: %1"
+
+#: polkit/nirvana-polkit-agent.cxx:128
+msgid "Authenticate as:"
+msgstr "Uwierzytelnij jako:"
+
+#: polkit/nirvana-polkit-agent.cxx:143
+msgid "Authenticate as %1."
+msgstr "Uwierzytelnij jako %1."
+
+#: polkit/nirvana-polkit-agent.cxx:159
+msgid "Authenticate"
+msgstr "Uwierzytelnij"
+
+#: polkit/nirvana-polkit-agent.cxx:222
+msgid "That password is not right - try again."
+msgstr "To hasło jest nieprawidłowe – spróbuj ponownie."
+
+#: polkit/nirvana-polkit-agent.cxx:234
+msgid "Checking…"
+msgstr "Sprawdzanie…"
 
 #: power/power.cxx:152
 msgid "No system D-Bus."

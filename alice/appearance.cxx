@@ -16,6 +16,7 @@
 #include <FL/Fl_File_Chooser.H>
 #include <FL/fl_ask.H>
 #include <FL/Fl_RGB_Image.H>
+#include "filedialog.h"
 #include "framewin.h"
 #include <FL/Fl_Hold_Browser.H>
 #include <FL/fl_draw.H>
@@ -332,10 +333,9 @@ int panel_appearance() {
     int i = g_wall->value();
     if (i < 0 || i >= (int)g_walls.size()) return;
     if (g_walls[i] == "*") {
-      std::string start = pictures_dir() + "/";
-      localize_file_chooser();
-      const char *f = fl_file_chooser(_("Choose Wallpaper"), _("Images (*.{png,jpg,jpeg,gif,bmp,svg,svgz,xpm})"),
-                                      start.c_str(), 0);
+      static std::string chosen;
+      chosen = choose_file(_("Choose Wallpaper"), {{_("Images"), {"*.png", "*.jpg", "*.jpeg", "*.gif", "*.bmp", "*.svg", "*.svgz", "*.xpm"}}}, pictures_dir());
+      const char *f = chosen.empty() ? nullptr : chosen.c_str();
       if (!f) {   // cancelled - back to the previous item
         auto it = std::find(g_walls.begin(), g_walls.end(), g_cur.wallpaper);
         g_wall->value(it == g_walls.end() ? 0 : (int)(it - g_walls.begin()));

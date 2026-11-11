@@ -6,8 +6,10 @@
 # the system one (Hidden=true disables the entry). Honours OnlyShowIn/NotShowIn
 # (desktop name: Nirvana) and TryExec. Field codes %f %u %U... are dropped.
 # nm-applet is skipped (Nirvana Desktop has its own network menu; NIRVANA_NM_APPLET=1 enables it).
-# Finally, if no autostart entry provided a polkit agent, it starts the first one
-# found - without it mounting disks and root mode cannot ask for a password.
+# The polkit agent (the password window) is Nirvana Desktop's own, nirvana-polkit-agent;
+# other agents from the autostart folders are skipped (NIRVANA_POLKIT_AGENT=0: the other way
+# round). Without Nirvana's one, if no autostart entry provided an agent, it starts the first
+# one found - without an agent mounting disks and root mode cannot ask for a password.
 #
 #   nirvana-autostart [-n]      -n: only print what would be started
 
@@ -40,6 +42,14 @@ in_list() {
 }
 
 polkit_started=
+here=$(dirname "$(readlink -f "$0")")
+AGENT=
+if [ "${NIRVANA_POLKIT_AGENT:-1}" != 0 ]; then
+  for c in "$here/../libexec/nirvana-polkit-agent" "$here/nirvana-polkit-agent" "$here/../build/nirvana-polkit-agent" \
+           /usr/libexec/nirvana-polkit-agent; do
+    [ -x "$c" ] && { AGENT=$c; break; }
+  done
+fi
 IFS_OLD=$IFS; IFS=:
 for d in $dirs; do
   IFS=$IFS_OLD
@@ -60,7 +70,11 @@ for d in $dirs; do
     if [ -n "$try" ] && ! command -v "$try" >/dev/null 2>&1; then continue; fi
     cmd=$(key "$f" Exec | sed -e 's/%[fFuUdDnNickvm]//g' -e 's/%%/%/g')
     [ -n "$cmd" ] || continue
-    case "$cmd" in *polkit*) polkit_started=1 ;; esac
+    case "$cmd" in
+      *polkit*|*policykit*|*PolicyKit*)
+        [ -n "$AGENT" ] && continue   # Nirvana Desktop's own agent instead
+        polkit_started=1 ;;
+    esac
     if [ -n "$DRY" ]; then echo "$name: $cmd"; else (eval "exec $cmd" >/dev/null 2>&1 &); fi
   done
   IFS=:
@@ -68,7 +82,9 @@ done
 IFS=$IFS_OLD
 
 # polkit agent (the administrator password window)
-if [ -z "$polkit_started" ]; then
+if [ -n "$AGENT" ]; then
+  if [ -n "$DRY" ]; then echo "polkit: $AGENT"; else ("$AGENT" >/dev/null 2>&1 &); fi
+elif [ -z "$polkit_started" ]; then
   for a in lxpolkit \
            /usr/lib/*/polkit-mate/polkit-mate-authentication-agent-1 \
            /usr/libexec/polkit-mate-authentication-agent-1 \

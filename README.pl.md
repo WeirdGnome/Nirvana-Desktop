@@ -28,13 +28,15 @@ Napisane w C++ i FLTK 1.4.
 | `nirvana-shell`      | Nirvana Shell - emulator terminala          | działa |
 | `nirvana-paula`      | dźwięk                                  | planowany   |
 | `nirvana-dm-greeter` | Nirvana-DM – ekran logowania (greeter LightDM) | działa |
+| `nirvana-portal`     | okno wyboru plików Nirvany dla innych programów (xdg-desktop-portal) | działa |
+| `nirvana-polkit-agent` | okno hasła polkit (pkexec, dyski, aktualizacje) | działa |
 | `nirvana-guru`       | okno błędów                             | planowany   |
 
 ## Instalacja na Devuanie 6 „Excalibur” (Debian 13)
 
 Rozpakuj źródła i uruchom instalator:
 
-    tar xzf nirvana-desktop-0.0.24.tar.gz && cd nirvana-desktop
+    tar xzf nirvana-desktop-0.0.25.tar.gz && cd nirvana-desktop
     sudo ./install.sh                 # albo: sudo ./install.sh --login-screen
 
 Instalator:
@@ -696,6 +698,30 @@ uruchomiła, a zdjęcie czyta jako dane (PNG do 1 MB), nigdy jako ścieżkę. Po
 hasłem; administratorzy przy komputerze nie są pytani.
 
 ![Użytkownik](docs/img/user.png)
+
+## Okno wyboru plików i okno hasła
+
+**Okno wyboru plików.** Otwórz, Zapisz i Wybierz folder wyglądają jak reszta Nirvany: miejsca po
+lewej (katalog domowy, foldery użytkownika, Aplikacje, system plików, podłączone dyski), rozwijana
+lista folderów aż do korzenia, lista z ikonami, rozmiarem i datą, filtr typów, *Nowy folder* i
+*Pokaż ukryte pliki*. Wpisanie `/` lub `~` na liście przechodzi do folderu po ścieżce.
+Używają go panele sterowania, a przez **xdg-desktop-portal** także inne programy: `nirvana-portal`
+to backend portalu (`share/xdg-desktop-portal/portals/nirvana.portal`, wybrany w
+`nirvana-portals.conf`), więc Firefox, przeglądarki na Chromium, programy GTK 3/4 i Qt oraz
+Flatpaki dostają to okno zamiast okna GTK. Sesja ustawia w tym celu `GTK_USE_PORTAL=1`,
+`GDK_DEBUG=portals` i (gdy puste) `QT_QPA_PLATFORMTHEME=xdgdesktopportal`;
+`NIRVANA_PORTAL_DIALOGS=0` to wyłącza. Programy, które rysują własne okno bez pytania portalu
+(starsze programy GTK 2, część AppImage), zostają przy swoim.
+
+![Okno wyboru plików](docs/img/filedialog.png)
+
+**Okno hasła.** Gdy program prosi o uprawnienia administratora (`pkexec`, dyski, sieć,
+aktualizacje, drukarki), `nirvana-polkit-agent` pokazuje prośbę, program i konto, a hasło
+przekazuje własnemu pomocnikowi polkit (PAM) – sam go nie przechowuje. Złe hasło można wpisać
+ponownie; Esc anuluje. Sesja uruchamia go zamiast lxpolkit czy innego agenta
+(`NIRVANA_POLKIT_AGENT=0`: tamten agent).
+
+![Okno hasła](docs/img/polkit-agent.png)
 
 ## Aktualizacje oprogramowania
 

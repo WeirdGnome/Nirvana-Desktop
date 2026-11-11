@@ -20,12 +20,20 @@ export XDG_CURRENT_DESKTOP=Nirvana
 export XDG_SESSION_DESKTOP=Nirvana
 export XDG_SESSION_TYPE=x11
 export DESKTOP_SESSION=nirvana
+# File dialogs through xdg-desktop-portal, that is the Nirvana file dialog (nirvana-portal):
+# GTK 3 (GTK_USE_PORTAL, also Firefox), GTK 4 (GDK_DEBUG=portals), Qt (xdgdesktopportal theme).
+# Chromium-based browsers ask the portal by themselves. NIRVANA_PORTAL_DIALOGS=0 leaves them alone.
+if [ "${NIRVANA_PORTAL_DIALOGS:-1}" != 0 ]; then
+  export GTK_USE_PORTAL=1
+  case ",${GDK_DEBUG:-}," in *,portals,*) ;; *) export GDK_DEBUG="${GDK_DEBUG:+$GDK_DEBUG,}portals" ;; esac
+  [ -z "${QT_QPA_PLATFORMTHEME:-}" ] && export QT_QPA_PLATFORMTHEME=xdgdesktopportal
+fi
 # Services started by D-Bus (xdg-desktop-portal for Flatpaks, the secrets
 # agent...) get the bus environment, not the session's - pass them the display
 # and desktop name, otherwise the portal does not start and programs wait for it.
 if command -v dbus-update-activation-environment >/dev/null 2>&1; then
   dbus-update-activation-environment DISPLAY XAUTHORITY XDG_CURRENT_DESKTOP XDG_SESSION_DESKTOP \
-    XDG_SESSION_TYPE DESKTOP_SESSION XDG_RUNTIME_DIR 2>/dev/null
+    XDG_SESSION_TYPE DESKTOP_SESSION XDG_RUNTIME_DIR LANG LANGUAGE LC_ALL LC_MESSAGES 2>/dev/null
 fi
 [ -f "$HOME/.Xresources" ] && command -v xrdb >/dev/null 2>&1 && xrdb -merge "$HOME/.Xresources"
 

@@ -489,13 +489,17 @@ std::string credits_text() {
   item(std::string("libvterm — Paul Evans (MIT): ") + _("the terminal emulation in Nirvana Shell"));
   item(std::string("Xlib, libXext, libXss — ") + _("the X.Org Foundation and the X Window System authors") + " (MIT/X11)");
   item(std::string("libdbus — freedesktop.org (AFL-2.1 / GPL-2.0)"));
+  item(std::string("GLib / GIO — the GNOME project (LGPL-2.1): Nirvana-DM, nirvana-portal, nirvana-polkit-agent"));
+  item(std::string("liblightdm-gobject — Robert Ancell and the LightDM team (LGPL-3.0)"));
+  item(std::string("libpolkit-agent-1 — David Zeuthen and the polkit team (LGPL-2.0)"));
+  item(std::string("libcups — Michael Sweet, OpenPrinting (Apache-2.0)"));
   head(_("Color schemes"));
   item("Redmond97 SE — Sliver X (GPL-3.0)");
   item("Redmond97 — matthewmx86 (GPL-3.0)");
   head(_("Programs Nirvana Desktop works with"));
   item("NetworkManager, UDisks2, polkit, elogind, D-Bus");
   item("PipeWire, PulseAudio, ALSA");
-  item("squashfs-tools (unsquashfs), bubblewrap, xdg-desktop-portal");
+  item("squashfs-tools (unsquashfs), bubblewrap, xdg-desktop-portal, LightDM, CUPS");
   head(_("Standards"));
   item(std::string("freedesktop.org: XDG Base Directory, Desktop Entry, Icon Theme, ") + _("Trash, autostart"));
   item("ICCCM, EWMH, XEmbed");

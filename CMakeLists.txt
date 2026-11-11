@@ -56,6 +56,7 @@ add_custom_target(nirvana-translations ALL DEPENDS ${NIRVANA_MO})
 # --- libplatinum: look and window chrome shared by all components ----------
 add_library(nirvana-platinum STATIC
   platinum/platinum.cxx
+  platinum/filedialog.cxx
   platinum/pwindow.cxx
   platinum/anim.cxx
   platinum/theme.cxx
@@ -175,6 +176,31 @@ else()
   message(WARNING "liblightdm-gobject not found - Nirvana-DM is not built (Devuan: liblightdm-gobject-dev)")
 endif()
 
+# --- nirvana-portal: the Nirvana file dialog for other programs (xdg-desktop-portal) --------
+pkg_check_modules(GIO IMPORTED_TARGET gio-2.0)
+if(GIO_FOUND)
+  add_executable(nirvana-portal portal/nirvana-portal.cxx)
+  target_link_libraries(nirvana-portal PRIVATE nirvana-platinum fltk::images PkgConfig::GIO)
+  install(TARGETS nirvana-portal RUNTIME DESTINATION libexec COMPONENT nirvana)
+  configure_file(portal/org.freedesktop.impl.portal.desktop.nirvana.service.in
+                 org.freedesktop.impl.portal.desktop.nirvana.service @ONLY)
+  install(FILES ${CMAKE_CURRENT_BINARY_DIR}/org.freedesktop.impl.portal.desktop.nirvana.service
+          DESTINATION share/dbus-1/services COMPONENT nirvana)
+  install(FILES portal/nirvana.portal DESTINATION share/xdg-desktop-portal/portals COMPONENT nirvana)
+else()
+  message(WARNING "gio-2.0 not found - nirvana-portal is not built (Devuan: libglib2.0-dev)")
+endif()
+
+# --- nirvana-polkit-agent: the password window of polkit ----------------------------------
+pkg_check_modules(POLKITAGENT IMPORTED_TARGET polkit-agent-1)
+if(POLKITAGENT_FOUND)
+  add_executable(nirvana-polkit-agent polkit/nirvana-polkit-agent.cxx)
+  target_link_libraries(nirvana-polkit-agent PRIVATE nirvana-platinum PkgConfig::POLKITAGENT)
+  install(TARGETS nirvana-polkit-agent RUNTIME DESTINATION libexec COMPONENT nirvana)
+else()
+  message(WARNING "polkit-agent-1 not found - nirvana-polkit-agent is not built (Devuan: libpolkit-agent-1-dev)")
+endif()
+
 # Everything in the "nirvana" component - the .deb package does not take FLTK files
 # (FetchContent adds its own install rules for headers and libraries).
 install(TARGETS nirvana-denise nirvana-insight nirvana-alice nirvana-shell RUNTIME DESTINATION bin COMPONENT nirvana)
@@ -208,7 +234,7 @@ set(CPACK_DEBIAN_PACKAGE_PRIORITY optional)
 set(CPACK_DEBIAN_PACKAGE_SHLIBDEPS ON)
 set(CPACK_DEBIAN_PACKAGE_DEPENDS "dbus-bin | dbus")
 set(CPACK_DEBIAN_PACKAGE_RECOMMENDS
-  "xserver-xorg, xinit, fonts-dejavu-core, libpam-elogind | elogind, polkitd, pkexec, lxpolkit, \
+  "xserver-xorg, xinit, fonts-dejavu-core, libpam-elogind | elogind, polkitd, pkexec, \
 udisks2, network-manager, pulseaudio-utils, alsa-utils, squashfs-tools, bubblewrap, xsecurelock, xdg-utils, \
 xdg-desktop-portal, xdg-desktop-portal-gtk, libgl1-mesa-dri")
 set(CPACK_DEBIAN_PACKAGE_SUGGESTS

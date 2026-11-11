@@ -5,6 +5,7 @@
 // in range with connecting, hidden networks and forgetting. Everything through
 // NetworkManager (nirvana-net); outside changes show up live.
 #include "net.h"
+#include "filedialog.h"
 #include "framewin.h"
 #include "platinum.h"
 
@@ -458,11 +459,9 @@ void show_vpn() {
 }
 
 void vpn_import_dialog() {
-  localize_file_chooser();
-  const char *f = fl_file_chooser(_("Import VPN Configuration"), "Konfiguracje VPN (*.{conf,ovpn,pcf})\tWszystkie pliki (*)",
-                                  getenv("HOME"), 0);
-  if (!f) return;
-  std::string file = f;
+  std::string file = choose_file(_("Import VPN Configuration"),
+                                {{_("VPN configurations"), {"*.conf", "*.ovpn", "*.pcf"}}});
+  if (file.empty()) return;
   message(_("Importing…"));
   net::vpn_import(file, [](bool ok, const std::string &m) {
     message(ok ? fmt(_("Added VPN connection “%1”."), m) : m, !ok);

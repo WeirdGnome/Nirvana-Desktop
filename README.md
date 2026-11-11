@@ -29,13 +29,15 @@ on the desktop. Written in C++ and FLTK 1.4.
 | `nirvana-shell`     | Nirvana Shell - terminal emulator       | works |
 | `nirvana-paula`     | sound                                   | planned     |
 | `nirvana-dm-greeter` | Nirvana-DM - the login screen (a LightDM greeter) | works |
+| `nirvana-portal`     | the Nirvana file dialog for other programs (xdg-desktop-portal) | works |
+| `nirvana-polkit-agent` | the password window of polkit (pkexec, disks, updates) | works |
 | `nirvana-guru`      | error window                            | planned     |
 
 ## Installing on Devuan 6 "Excalibur" (Debian 13)
 
 Unpack the sources and run the installer:
 
-    tar xzf nirvana-desktop-0.0.24.tar.gz && cd nirvana-desktop
+    tar xzf nirvana-desktop-0.0.25.tar.gz && cd nirvana-desktop
     sudo ./install.sh                 # or: sudo ./install.sh --login-screen
 
 The installer:
@@ -699,6 +701,30 @@ and reads the picture as data (a PNG up to 1 MB), never as a path. You confirm w
 password; administrators at the computer are not asked.
 
 ![User](docs/img/user.png)
+
+## File dialog and password window
+
+**The file dialog.** Open, Save and Choose Folder look like the rest of Nirvana Desktop: the
+places on the left (home, the user folders, Applications, the file system, mounted disks), the
+folder popup with the folders up to the root, the list with icons, size and date, the type filter,
+*New Folder* and *Show hidden files*. Typing `/` or `~` in the list goes to a folder by path.
+The control panels use it, and so do other programs through **xdg-desktop-portal**:
+`nirvana-portal` is a portal backend (`share/xdg-desktop-portal/portals/nirvana.portal`,
+chosen in `nirvana-portals.conf`), so Firefox, Chromium-based browsers, GTK 3/4 and Qt programs
+and Flatpaks get this dialog instead of the GTK one. The session sets `GTK_USE_PORTAL=1`,
+`GDK_DEBUG=portals` and (when empty) `QT_QPA_PLATFORMTHEME=xdgdesktopportal` for that;
+`NIRVANA_PORTAL_DIALOGS=0` turns it off. Programs that draw their own dialog without asking the
+portal (older GTK 2 programs, some AppImages) keep theirs.
+
+![The file dialog](docs/img/filedialog.png)
+
+**The password window.** When a program asks for administrator rights (`pkexec`, disks, network,
+updates, printers), `nirvana-polkit-agent` shows the request, the program and the account, and
+passes the password to polkit's own helper (PAM) - it never keeps it. A wrong password can be typed
+again; Esc cancels. The session starts it instead of lxpolkit or another agent
+(`NIRVANA_POLKIT_AGENT=0`: the other agent).
+
+![The password window](docs/img/polkit-agent.png)
 
 ## Software updates
 

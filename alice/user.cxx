@@ -8,6 +8,7 @@
 // /var/lib/AccountsService/icons - the login screen runs as another user and usually cannot
 // look into a home folder. The full name and automatic login go through the same helper; the
 // password is changed by the system program passwd, as when typing it in a terminal.
+#include "filedialog.h"
 #include "framewin.h"
 #include "platinum.h"
 
@@ -327,11 +328,9 @@ void set_pending(Fl_RGB_Image *img) {
 }
 
 void choose_file() {
-  localize_file_chooser();
-  std::string start = g_home + "/";
-  if (!access((g_home + "/Pictures").c_str(), R_OK)) start = g_home + "/Pictures/";
-  const char *f = fl_file_chooser(_("Choose Picture"), _("Images (*.{png,jpg,jpeg,gif,bmp,svg,svgz,xpm})"), start.c_str());
-  if (!f) return;
+  std::string chosen = plat::choose_file(_("Choose Picture"), {{_("Images"), {"*.png", "*.jpg", "*.jpeg", "*.gif", "*.bmp", "*.svg", "*.svgz", "*.xpm"}}}, pictures_dir());
+  if (chosen.empty()) return;
+  const char *f = chosen.c_str();
   Fl_Shared_Image *img = Fl_Shared_Image::get(f);
   if (!img || img->w() <= 0) {
     if (img) img->release();

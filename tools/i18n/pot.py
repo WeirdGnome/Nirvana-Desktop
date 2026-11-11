@@ -10,7 +10,7 @@ from literals import literals
 
 root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 os.chdir(root)
-src = sorted(f for d in ("alice", "audio", "denise", "dm", "insight", "net", "platinum", "power", "print", "shell")
+src = sorted(f for d in ("alice", "audio", "denise", "dm", "insight", "net", "platinum", "polkit", "portal", "power", "print", "shell")
              for f in glob.glob(d + "/*.cxx"))
 pot = "po/nirvana.pot"
 subprocess.run(["xgettext", "--from-code=UTF-8", "--language=C++", "-k_", "-kN_", "-ktr", "-ktrn:2,3",
