@@ -168,6 +168,10 @@ public:
   }
 
   void draw() override {
+    // Only a field or a button changed (typing): just those are drawn again. Painting the
+    // background and the login window under them would cover the letters already typed,
+    // because a text field then only draws the new letters.
+    if (!(damage() & ~FL_DAMAGE_CHILD)) { draw_children(); return; }
     if (bg) bg->draw(0, 0);
     else { fl_color(DESK_A); fl_rectf(0, 0, w(), h()); }
     fl_draw_box(MENUBAR_BOX, 0, 0, 30, MENUBAR_H, GRAY);   // the logo before the menus
@@ -234,7 +238,8 @@ void clock_tick(void *) {
     c.weekday = c.date = true;
     g_screen->clock_text = clock_text(c, time(nullptr), false);
     g_screen->clock->label(g_screen->clock_text.c_str());
-    g_screen->clock->redraw();
+    auto *cw = g_screen->clock;   // no box of its own: the menu bar under it is drawn too
+    g_screen->damage(FL_DAMAGE_ALL, cw->x(), cw->y(), cw->w(), cw->h());
   }
   Fl::repeat_timeout(10.0, clock_tick);
 }
