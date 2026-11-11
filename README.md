@@ -39,7 +39,7 @@ on the desktop. Written in C++ and FLTK 1.4.
 
 Unpack the sources and run the installer:
 
-    tar xzf nirvana-desktop-0.0.34.tar.gz && cd nirvana-desktop
+    tar xzf nirvana-desktop-0.0.35.tar.gz && cd nirvana-desktop
     sudo ./install.sh                 # or: sudo ./install.sh --login-screen
 
 The installer:
@@ -269,8 +269,14 @@ An application is a group of windows with the same `WM_CLASS`. AppImages started
 appear under their own name and icon (e.g. "Clock" instead of "XClock"); the mapping is
 remembered in `~/.config/nirvana/app-classes`.
 
-**Alt+Tab** (Insight): hold Alt and press Tab to go through the applications starting with the
-most recently used; Shift goes back, Escape cancels, releasing Alt chooses.
+**Alt+Tab** (Insight): hold Alt and press Tab - a panel with a preview of every window appears,
+the most recently used first, the previous one already chosen. Tab (and the arrows) move on,
+Shift+Tab goes back, a click or releasing Alt chooses, Escape cancels. A minimized window
+(striped preview) comes back from its desktop icon. There is no compositor, so each preview is
+taken while its window is on top (a moment after it gets the focus, then every 3 s); a window
+never active yet shows its initial.
+
+![Alt+Tab](docs/img/alt-tab.png)
 
 It works on the EWMH standard (`_NET_CLIENT_LIST`, `_NET_ACTIVE_WINDOW`, `WM_CHANGE_STATE`,
 `_NET_CLOSE_WINDOW`), so also under GNOME, KDE or Openbox. Under another window manager the
