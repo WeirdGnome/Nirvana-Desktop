@@ -127,7 +127,13 @@ step "Installing the nirvana package and the programs it uses"
 # udisks2, polkit, xsecurelock...) are installed by default, missing ones skipped
 # --reinstall: also when the same version is already installed (rebuilt package);
 # --allow-downgrades: the package from this folder wins even over a newer number
-DEBIAN_FRONTEND=noninteractive apt-get install -y --reinstall --allow-downgrades "$DEB"
+# apt reads local packages as the "_apt" user, who cannot enter a home folder
+# (otherwise: "N: Download is performed unsandboxed as root") - copy it out first
+APT_DIR=$(mktemp -d /tmp/nirvana-install.XXXXXX)
+chmod 755 "$APT_DIR"
+cp "$DEB" "$APT_DIR/" && chmod 644 "$APT_DIR/$(basename "$DEB")"
+DEBIAN_FRONTEND=noninteractive apt-get install -y --reinstall --allow-downgrades "$APT_DIR/$(basename "$DEB")"
+rm -rf "$APT_DIR"
 
 if [ -z "$NO_X" ] && ! command -v Xorg >/dev/null 2>&1; then
   step "X server"

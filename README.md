@@ -33,7 +33,7 @@ of **Mac OS 9 (Platinum)** with a touch of the **Amiga**. Written in C++ and FLT
 
 Unpack the sources and run the installer:
 
-    tar xzf nirvana-desktop-0.0.7.tar.gz && cd nirvana-desktop
+    tar xzf nirvana-desktop-0.0.8.tar.gz && cd nirvana-desktop
     sudo ./install.sh                 # or: sudo ./install.sh --login-screen
 
 The installer:
@@ -120,7 +120,8 @@ A Chicago-style system font can be set with `NIRVANA_SYSTEM_FONT`
   always red, yellow and green, whatever the color scheme
 - **Workbench-style iconification:** the window disappears and its icon appears on the
   desktop (in the left column, below the disks) – the program's picture from `_NET_WM_ICON`
-  and the window title. Double-clicking the icon brings the window back. "Minimize" inside
+  and the window title on a yellow label, so minimized windows stand out from disks and
+  files. Double-clicking the icon brings the window back. "Minimize" inside
   the program itself (Brave, Firefox…) works the same way; "Hide" from the application menu
   hides windows without icons. Icons survive Reset Nirvana.
 - right and bottom frame edges and the bottom-right corner: resizing

@@ -32,7 +32,7 @@ Lekkie środowisko graficzne dla Linuksa (baza: minimalny Devuan) w duchu
 
 Rozpakuj źródła i uruchom instalator:
 
-    tar xzf nirvana-desktop-0.0.7.tar.gz && cd nirvana-desktop
+    tar xzf nirvana-desktop-0.0.8.tar.gz && cd nirvana-desktop
     sudo ./install.sh                 # albo: sudo ./install.sh --login-screen
 
 Instalator:
@@ -120,8 +120,8 @@ Czcionkę systemową w stylu Chicago można podać przez `NIRVANA_SYSTEM_FONT`
 - przyciski: zamknij (z lewej, uprzejmie przez `WM_DELETE_WINDOW`), ikonizuj i zoom (z prawej),
   zawsze czerwony, żółty i zielony, niezależnie od schematu kolorów
 - **ikonizacja jak w Workbenchu:** okno znika, a na biurku (w lewej kolumnie, pod
-  dyskami) pojawia się jego ikona – obrazek programu z `_NET_WM_ICON` i tytuł okna.
-  Dwuklik w ikonę przywraca okno. Tak samo działa „minimalizuj” w samym programie
+  dyskami) pojawia się jego ikona – obrazek programu z `_NET_WM_ICON` i tytuł okna na żółtym
+  tle, więc zminimalizowane okna odróżniają się od dysków i plików. Dwuklik w ikonę przywraca okno. Tak samo działa „minimalizuj” w samym programie
   (Brave, Firefox…); „Ukryj” z menu aplikacji chowa okna bez ikon. Ikony przetrwają
   Resetuj Nirvanę.
 - prawa i dolna krawędź ramki oraz prawy dolny róg: zmiana rozmiaru

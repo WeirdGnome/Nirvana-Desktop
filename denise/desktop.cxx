@@ -1726,9 +1726,12 @@ void Desktop::draw() {
     std::string nm = ellipsize(ic.name, 76);
     int tw = (int)fl_width(nm.c_str());
     int tx = ic.x + 40 - tw / 2, ty = ic.y + 36;
-    fl_color(sel ? ICON_SEL : CONTENT);
+    // minimized windows have a yellow label (the color of the minimize button),
+    // so they stand out from files, disks and folders whatever the scheme
+    bool minimized = ic.win != 0;
+    fl_color(sel ? ICON_SEL : minimized ? fl_rgb_color(0xF2, 0xB5, 0x26) : CONTENT);
     fl_rectf(tx - 2, ty, tw + 4, fl_height());
-    fl_color(sel ? ICON_SEL_TEXT : CONTENT_TEXT);
+    fl_color(sel ? ICON_SEL_TEXT : minimized ? FL_BLACK : CONTENT_TEXT);
     fl_draw(nm.c_str(), tx, ty + fl_height() - fl_descent());
   }
   draw_dock();
