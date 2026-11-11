@@ -23,7 +23,8 @@ Napisane w C++ i FLTK 1.4.
 | `nirvana-denise`     | Rambler: menedżer plików + biurko        | prototyp    |
 | `nirvana-insight`      | menedżer okien X11 (Xorg/XLibre), ramki Platinum | działa |
 | `nirvana-gary`       | przełącznik aplikacji (na razie w procesie Ramblera) | działa |
-| `nirvana-alice`      | panele sterowania: Wygląd, Sieć, Zasilanie | działa |
+| `nirvana-alice`      | panele sterowania: Wygląd, Sieć, Zasilanie, Shader | działa |
+| `nirvana-shader`     | pełnoekranowe efekty GLSL (mały kompozytor) | działa |
 | `nirvana-shell`      | Nirvana Shell - emulator terminala          | działa |
 | `nirvana-paula`      | dźwięk                                  | planowany   |
 | `nirvana-kickstart`  | logowanie i start sesji                 | planowany   |
@@ -33,7 +34,7 @@ Napisane w C++ i FLTK 1.4.
 
 Rozpakuj źródła i uruchom instalator:
 
-    tar xzf nirvana-desktop-0.0.12.tar.gz && cd nirvana-desktop
+    tar xzf nirvana-desktop-0.0.13.tar.gz && cd nirvana-desktop
     sudo ./install.sh                 # albo: sudo ./install.sh --login-screen
 
 Instalator:
@@ -79,7 +80,8 @@ Zależności (Devuan/Debian):
         squashfs-tools bubblewrap libdbus-1-dev udisks2 policykit-1 \
         network-manager network-manager-openvpn \  # sieć i VPN
         libxss-dev pulseaudio-utils alsa-utils \ # aplety dźwięku i zasilania
-        gettext                                   # tłumaczenia (msgfmt)
+        gettext \                                 # tłumaczenia (msgfmt)
+        libgl-dev libxcomposite-dev libxdamage-dev # nirvana-shader (efekty pełnoekranowe)
 
 Opcjonalnie: `power-profiles-daemon` (profile zasilania), `xsecurelock`, `i3lock`
 albo `slock` (blokada ekranu). Na Rocky: `libXScrnSaver-devel pulseaudio-utils`.
@@ -603,6 +605,41 @@ Panel **Zasilanie** (logo → Panele sterowania) ustawia dla sesji Nirvana Deskt
 - usypianie po bezczynności, osobno na baterii i z zasilacza,
 - reakcję na 3% baterii; przy 10% pojawia się ostrzeżenie.
 
+
+## Shader: efekty pełnoekranowe
+
+**Preferencje → Shader** nakłada efekt na cały pulpit. Wybór z listy działa od razu, jest
+zapamiętywany i uruchamiany razem z sesją. 17 wbudowanych efektów: Monitor CRT, Linie
+kineskopu, Monitor bursztynowy, Zielony fosfor, Skala szarości, Sepia, Światło nocne, Kaseta VHS
+(animowany), Ziarno filmu (animowany), Duże piksele, 64 kolory (z ditheringiem), Raster
+drukarski, LCD, Kamera termowizyjna, Senna poświata, Pod wodą (animowany) i Odwrócone kolory.
+
+![Efekt Monitor CRT](docs/img/shader-crt.png)
+![Wszystkie efekty](docs/img/shaders.png)
+
+`nirvana-shader` to mały kompozytor: okna są przekierowane poza ekran (Composite), składane
+przez XRender w jeden obraz i rysowane przez shader fragmentów w OpenGL
+(`GLX_EXT_texture_from_pixmap`, a bez niego przez kopię). Okna czyta przez obrazy okien
+(window pictures), a nie przez tekstury przypięte do każdego okna, więc zmiana rozmiaru,
+zamknięcie czy zwinięcie okna nie zostawia mu nieaktualnej pixmapy; błędy X są zapisywane w
+logu, a nie kończą programu; a gdy program się zakończy w jakikolwiek sposób, serwer X
+z powrotem pokazuje okna bezpośrednio. Podczas jego pracy animacje okien używają metody
+z kształtowanym oknem zamiast XOR. Mysz działa normalnie (nakładka jest przezroczysta dla wejścia).
+
+    nirvana-shader crt          # uruchom z efektem (albo przełącz działający)
+    nirvana-shader --list       # dostępne shadery
+    nirvana-shader --stop
+
+Własne shadery: shadery fragmentów GLSL 1.20 w `~/.local/share/nirvana/shaders/NAZWA.frag`.
+Przed plikiem jest wstęp z `u_resolution`, `u_time` (shader, który go używa, jest animowany,
+30 klatek na sekundę), `v_texcoord` (0..1, początek w lewym dolnym rogu) i `vec4 screen(vec2 uv)`;
+wynik idzie do `gl_FragColor`. Pierwsza linia komentarza to opis w panelu.
+
+    // Niebieski odcień.
+    void main() { gl_FragColor = vec4(screen(v_texcoord).rgb * vec3(0.8, 0.9, 1.2), 1.0); }
+
+Inny kompozytor (picom, compton) nie może działać w tym samym czasie. Bez akceleracji grafiki
+(np. w maszynie wirtualnej, llvmpipe) efekty animowane mocno obciążają procesor.
 
 ## Języki
 

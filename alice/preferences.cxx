@@ -37,7 +37,7 @@ void open_panel(const char *name) {
 
 class PanelIcon : public Fl_Button {
 public:
-  enum Kind { Appearance, Network, Power } kind;
+  enum Kind { Appearance, Network, Power, Shader } kind;
   PanelIcon(int X, int Y, Kind k, const char *l) : Fl_Button(X, Y, 96, 74, l), kind(k) {
     box(FL_NO_BOX);
     labelsize(SIZE_SMALL + 1);
@@ -60,6 +60,21 @@ public:
       case Power:
         draw_battery(ix - 2, iy + 6, 70, true, TEXT, 1.6);
         break;
+      case Shader: {   // a tube monitor with scanlines over a rainbow
+        fl_draw_box(UP_BOX, ix, iy, 32, 26, GRAY);
+        const unsigned band[] = {0xE5483F, 0xF29A26, 0xF2C230, 0x3DB54A, 0x3A7BD5, 0x8A4FC8};
+        for (int i = 0; i < 6; i++) {
+          fl_color(fl_rgb_color(band[i] >> 16, band[i] >> 8 & 255, band[i] & 255));
+          fl_rectf(ix + 3, iy + 3 + i * 3, 26, 3);
+        }
+        fl_color(fl_rgb_color(20, 20, 30));
+        for (int yy = iy + 4; yy < iy + 21; yy += 2) fl_xyline(ix + 3, yy, ix + 28);
+        fl_color(DARK);
+        fl_rect(ix + 3, iy + 3, 26, 18);
+        fl_rect(ix, iy, 32, 26);
+        fl_rectf(ix + 10, iy + 27, 12, 3);
+        break;
+      }
     }
     fl_font(FONT_SMALL, SIZE_SMALL + 1);
     int tw = (int)fl_width(label());
@@ -74,13 +89,14 @@ public:
 }  // namespace
 
 int panel_preferences() {
-  const int W = 340, H = 196;
+  const int W = 446, H = 196;
   auto *win = new FrameWindow(W, H, _("Preferences"));
   win->xclass("nirvana-preferences");
   struct P { PanelIcon::Kind k; const char *label, *arg; } panels[] = {
       {PanelIcon::Appearance, _("Appearance"), "appearance"},
       {PanelIcon::Network, _("Network"), "network"},
       {PanelIcon::Power, _("Power"), "power"},
+      {PanelIcon::Shader, _("Shader"), "shader"},
   };
   int x = 14;
   for (auto &p : panels) {

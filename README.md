@@ -24,7 +24,8 @@ on the desktop. Written in C++ and FLTK 1.4.
 | `nirvana-denise`    | Rambler: file manager + desktop         | prototype   |
 | `nirvana-insight`   | X11 window manager (Xorg/XLibre), Platinum frames | works |
 | `nirvana-gary`      | application switcher (for now inside the Rambler process) | works |
-| `nirvana-alice`     | control panels: Appearance, Network, Power | works |
+| `nirvana-alice`     | control panels: Appearance, Network, Power, Shader | works |
+| `nirvana-shader`    | full-screen GLSL effects (a small compositor) | works |
 | `nirvana-shell`     | Nirvana Shell - terminal emulator       | works |
 | `nirvana-paula`     | sound                                   | planned     |
 | `nirvana-kickstart` | login and session start                 | planned     |
@@ -34,7 +35,7 @@ on the desktop. Written in C++ and FLTK 1.4.
 
 Unpack the sources and run the installer:
 
-    tar xzf nirvana-desktop-0.0.12.tar.gz && cd nirvana-desktop
+    tar xzf nirvana-desktop-0.0.13.tar.gz && cd nirvana-desktop
     sudo ./install.sh                 # or: sudo ./install.sh --login-screen
 
 The installer:
@@ -78,7 +79,8 @@ Dependencies (Devuan/Debian):
         squashfs-tools bubblewrap libdbus-1-dev udisks2 polkitd \
         network-manager network-manager-openvpn \  # network and VPN
         libxss-dev pulseaudio-utils alsa-utils \  # sound and power applets
-        gettext                                   # translations (msgfmt)
+        gettext \                                 # translations (msgfmt)
+        libgl-dev libxcomposite-dev libxdamage-dev # nirvana-shader (full-screen effects)
 
 Optional: `power-profiles-daemon` (power profiles), `xsecurelock`, `i3lock`
 or `slock` (screen lock). On Rocky: `libXScrnSaver-devel pulseaudio-utils`.
@@ -603,6 +605,41 @@ The **Power** panel (logo → Preferences…) sets for the Nirvana Desktop sessi
 - sleeping after inactivity, separately on battery and on the power adapter,
 - the reaction to 3% battery; a warning appears at 10%.
 
+
+## Shader: full-screen effects
+
+**Preferences → Shader** puts an effect over the whole desktop. Choosing it in the list applies it
+at once; the choice is remembered and started with the session. 17 built-in effects:
+CRT monitor, Scanlines, Amber monitor, Green phosphor, Grayscale, Sepia, Night light, VHS tape
+(animated), Film grain (animated), Large pixels, 64 colors (dithered), Halftone, LCD, Thermal
+camera, Dreamy glow, Underwater (animated) and Inverted colors.
+
+![The CRT monitor effect](docs/img/shader-crt.png)
+![All the effects](docs/img/shaders.png)
+
+`nirvana-shader` is a small compositor: the windows are redirected off screen (Composite),
+composed with XRender into one picture and drawn through a fragment shader with OpenGL
+(`GLX_EXT_texture_from_pixmap`, otherwise a copy). It reads the windows through window
+pictures instead of binding a texture to each window, so resizing, closing or iconifying windows
+cannot leave it with a stale pixmap; X errors are logged, not fatal; and if it ends in any way,
+the X server shows the windows directly again. While it runs, the window animations use the
+shaped-window method instead of XOR. Mouse input is not affected (the overlay is transparent to
+input).
+
+    nirvana-shader crt          # start with an effect (or switch the running one)
+    nirvana-shader --list       # the available shaders
+    nirvana-shader --stop
+
+Your own shaders: GLSL 1.20 fragment shaders in `~/.local/share/nirvana/shaders/NAME.frag`.
+Before the file comes a prelude with `u_resolution`, `u_time` (a shader that uses it is animated,
+30 frames per second), `v_texcoord` (0..1, origin bottom left) and `vec4 screen(vec2 uv)`; the
+result goes to `gl_FragColor`. The first comment line is the description in the panel.
+
+    // Blue tint.
+    void main() { gl_FragColor = vec4(screen(v_texcoord).rgb * vec3(0.8, 0.9, 1.2), 1.0); }
+
+Another compositor (picom, compton) cannot run at the same time. Without graphics acceleration
+(e.g. in a virtual machine, llvmpipe) animated effects use a lot of CPU.
 
 ## Languages
 

@@ -102,7 +102,7 @@ add_executable(nirvana-insight insight/main.cxx)
 target_link_libraries(nirvana-insight PRIVATE nirvana-platinum X11::X11)
 
 # --- alice: control panels ---------------------------------------------------
-add_executable(nirvana-alice alice/main.cxx alice/appearance.cxx alice/network.cxx alice/power.cxx alice/preferences.cxx)
+add_executable(nirvana-alice alice/main.cxx alice/appearance.cxx alice/network.cxx alice/power.cxx alice/preferences.cxx alice/shader.cxx)
 target_link_libraries(nirvana-alice PRIVATE nirvana-platinum nirvana-net nirvana-power)
 
 # --- Nirvana Shell: terminal emulator (system libvterm or the bundled one) ---
@@ -118,6 +118,18 @@ else()
 endif()
 add_executable(nirvana-shell shell/main.cxx)
 target_link_libraries(nirvana-shell PRIVATE nirvana-platinum ${NIRVANA_VTERM} util)
+
+# --- nirvana-shader: full-screen GLSL effects (a small compositor) -------------
+pkg_check_modules(SHADERDEPS IMPORTED_TARGET gl xcomposite xdamage xfixes xrender xext)
+if(SHADERDEPS_FOUND)
+  add_executable(nirvana-shader shader/nirvana-shader.cxx)
+  target_link_libraries(nirvana-shader PRIVATE PkgConfig::SHADERDEPS X11::X11)
+  install(TARGETS nirvana-shader RUNTIME DESTINATION bin COMPONENT nirvana)
+else()
+  message(WARNING "OpenGL/XComposite/XDamage development files not found - nirvana-shader is not built "
+                  "(Devuan: libgl-dev libxcomposite-dev libxdamage-dev libxfixes-dev libxrender-dev)")
+endif()
+install(DIRECTORY shaders/ DESTINATION share/nirvana/shaders COMPONENT nirvana)
 
 # Everything in the "nirvana" component - the .deb package does not take FLTK files
 # (FetchContent adds its own install rules for headers and libraries).
@@ -154,7 +166,7 @@ set(CPACK_DEBIAN_PACKAGE_DEPENDS "dbus-bin | dbus")
 set(CPACK_DEBIAN_PACKAGE_RECOMMENDS
   "xserver-xorg, xinit, fonts-dejavu-core, libpam-elogind | elogind, polkitd, lxpolkit, \
 udisks2, network-manager, pulseaudio-utils, alsa-utils, squashfs-tools, bubblewrap, xsecurelock, xdg-utils, \
-xdg-desktop-portal, xdg-desktop-portal-gtk")
+xdg-desktop-portal, xdg-desktop-portal-gtk, libgl1-mesa-dri")
 set(CPACK_DEBIAN_PACKAGE_SUGGESTS
   "lightdm, network-manager-openvpn, network-manager-vpnc, wireguard-tools, power-profiles-daemon, pipewire-pulse")
 include(CPack)

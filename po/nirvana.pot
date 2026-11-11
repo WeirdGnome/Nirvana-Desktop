@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Nirvana Desktop 0.1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-11 14:31+0000\n"
+"POT-Creation-Date: 2026-11-11 14:49+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -66,7 +66,7 @@ msgstr ""
 msgid "custom"
 msgstr ""
 
-#: alice/appearance.cxx:233 alice/preferences.cxx:81 denise/gary.cxx:117
+#: alice/appearance.cxx:233 alice/preferences.cxx:96 denise/gary.cxx:117
 msgid "Appearance"
 msgstr ""
 
@@ -192,12 +192,12 @@ msgstr ""
 msgid "Apply"
 msgstr ""
 
-#: alice/appearance.cxx:412 alice/power.cxx:129 denise/about.cxx:606
-#: denise/desktop.cxx:1598 platinum/platinum.cxx:208
+#: alice/appearance.cxx:412 alice/power.cxx:129 alice/shader.cxx:262
+#: denise/about.cxx:606 denise/desktop.cxx:1598 platinum/platinum.cxx:208
 msgid "OK"
 msgstr ""
 
-#: alice/main.cxx:26
+#: alice/main.cxx:28
 msgid "No such scheme: %1"
 msgstr ""
 
@@ -464,7 +464,7 @@ msgstr ""
 msgid "disconnected"
 msgstr ""
 
-#: alice/network.cxx:626 alice/preferences.cxx:82 denise/desktop.cxx:2127
+#: alice/network.cxx:626 alice/preferences.cxx:97 denise/desktop.cxx:2127
 #: denise/desktop.cxx:2168 denise/desktop.cxx:2199 denise/gary.cxx:118
 #: net/net.cxx:326
 msgid "Network"
@@ -622,7 +622,7 @@ msgstr ""
 msgid "2 hours"
 msgstr ""
 
-#: alice/power.cxx:79 alice/preferences.cxx:83 denise/applets.cxx:592
+#: alice/power.cxx:79 alice/preferences.cxx:98 denise/applets.cxx:592
 #: denise/gary.cxx:120
 msgid "Power"
 msgstr ""
@@ -691,22 +691,203 @@ msgid ""
 "these settings apply to the Nirvana Desktop session."
 msgstr ""
 
-#: alice/preferences.cxx:78 denise/desktop.cxx:694 denise/gary.cxx:121
+#: alice/preferences.cxx:93 denise/desktop.cxx:694 denise/gary.cxx:121
 msgid "Preferences"
 msgstr ""
 
-#: alice/preferences.cxx:95
+#: alice/preferences.cxx:99 alice/shader.cxx:223
+msgid "Shader"
+msgstr ""
+
+#: alice/preferences.cxx:111
 msgid "Language:"
 msgstr ""
 
-#: alice/preferences.cxx:99
+#: alice/preferences.cxx:115
 msgid "Automatic (system language)"
 msgstr ""
 
-#: alice/preferences.cxx:110
+#: alice/preferences.cxx:126
 msgid ""
 "The new language takes effect after restarting Nirvana Desktop or after "
 "Special > Reset Nirvana."
+msgstr ""
+
+#: alice/shader.cxx:37
+msgid "CRT monitor"
+msgstr ""
+
+#: alice/shader.cxx:37
+msgid "Curved glass, scanlines, a phosphor mask and dark corners."
+msgstr ""
+
+#: alice/shader.cxx:38
+msgid "Scanlines"
+msgstr ""
+
+#: alice/shader.cxx:38
+msgid "Only the dark lines of a tube screen; the picture stays flat and sharp."
+msgstr ""
+
+#: alice/shader.cxx:39
+msgid "Amber monitor"
+msgstr ""
+
+#: alice/shader.cxx:39
+msgid "A monochrome amber screen with a slight glow."
+msgstr ""
+
+#: alice/shader.cxx:40 shell/main.cxx:72
+msgid "Green phosphor"
+msgstr ""
+
+#: alice/shader.cxx:40
+msgid "A monochrome green terminal screen."
+msgstr ""
+
+#: alice/shader.cxx:41
+msgid "Grayscale"
+msgstr ""
+
+#: alice/shader.cxx:41
+msgid "No colors at all."
+msgstr ""
+
+#: alice/shader.cxx:42
+msgid "Sepia"
+msgstr ""
+
+#: alice/shader.cxx:42
+msgid "The brown tint of an old photograph."
+msgstr ""
+
+#: alice/shader.cxx:43
+msgid "Night light"
+msgstr ""
+
+#: alice/shader.cxx:43
+msgid "Warmer colors with less blue light, for the evening."
+msgstr ""
+
+#: alice/shader.cxx:44
+msgid "VHS tape"
+msgstr ""
+
+#: alice/shader.cxx:44
+msgid ""
+"Color bleeding, a shaky picture, noise and a rolling tracking band. Animated."
+msgstr ""
+
+#: alice/shader.cxx:45
+msgid "Film grain"
+msgstr ""
+
+#: alice/shader.cxx:45
+msgid "Moving grain and a gentle flicker, like an old projector. Animated."
+msgstr ""
+
+#: alice/shader.cxx:46
+msgid "Large pixels"
+msgstr ""
+
+#: alice/shader.cxx:46
+msgid "The screen in 4×4 blocks."
+msgstr ""
+
+#: alice/shader.cxx:47
+msgid "64 colors"
+msgstr ""
+
+#: alice/shader.cxx:47
+msgid ""
+"Four levels per color channel with ordered dithering, like an old graphics "
+"card."
+msgstr ""
+
+#: alice/shader.cxx:48
+msgid "Halftone"
+msgstr ""
+
+#: alice/shader.cxx:48
+msgid ""
+"Newspaper print: black dots on paper, larger where the picture is darker."
+msgstr ""
+
+#: alice/shader.cxx:49
+msgid "LCD"
+msgstr ""
+
+#: alice/shader.cxx:49
+msgid "A coarse liquid crystal panel with visible red, green and blue stripes."
+msgstr ""
+
+#: alice/shader.cxx:50
+msgid "Thermal camera"
+msgstr ""
+
+#: alice/shader.cxx:50
+msgid "Brightness shown as heat: dark blue, violet, red, orange, white."
+msgstr ""
+
+#: alice/shader.cxx:51
+msgid "Dreamy glow"
+msgstr ""
+
+#: alice/shader.cxx:51
+msgid "A soft bloom around bright areas and a little extra color."
+msgstr ""
+
+#: alice/shader.cxx:52
+msgid "Underwater"
+msgstr ""
+
+#: alice/shader.cxx:52
+msgid ""
+"A gently waving picture with a blue-green tint and moving light. Animated."
+msgstr ""
+
+#: alice/shader.cxx:53
+msgid "Inverted colors"
+msgstr ""
+
+#: alice/shader.cxx:53
+msgid "Light text on a dark background and the other way round."
+msgstr ""
+
+#: alice/shader.cxx:132
+msgid "None (off)"
+msgstr ""
+
+#: alice/shader.cxx:132
+msgid "The desktop as it is, without any effect."
+msgstr ""
+
+#: alice/shader.cxx:192
+msgid ""
+"Another compositor is running (e.g. picom), so the effect cannot be shown. "
+"The choice is saved for the next session."
+msgstr ""
+
+#: alice/shader.cxx:204
+msgid "nirvana-shader is not installed (it needs OpenGL)."
+msgstr ""
+
+#: alice/shader.cxx:209
+msgid ""
+"Effects use OpenGL. Without graphics acceleration animated effects can be "
+"slow."
+msgstr ""
+
+#: alice/shader.cxx:225
+msgid "Full-screen effect"
+msgstr ""
+
+#: alice/shader.cxx:244
+msgid "Description"
+msgstr ""
+
+#: alice/shader.cxx:255
+msgid "Your own shaders (GLSL fragment shaders, *.frag) go to"
 msgstr ""
 
 #: audio/audio.cxx:199
@@ -2282,10 +2463,6 @@ msgstr ""
 
 #: shell/main.cxx:71
 msgid "Dark"
-msgstr ""
-
-#: shell/main.cxx:72
-msgid "Green phosphor"
 msgstr ""
 
 #: shell/main.cxx:73

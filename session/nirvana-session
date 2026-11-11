@@ -35,6 +35,9 @@ INSIGHT=$!
 # give insight a moment to take over the screen
 sleep 0.5
 
+# the full-screen effect chosen in Preferences > Shader (nothing when none is chosen)
+[ -x "$BIN/nirvana-shader" ] && "$BIN/nirvana-shader" --session &
+
 # XDG autostart: PipeWire/PulseAudio, polkit agent... (on Devuan without
 # systemd this is the only place these session services are started from)
 [ -x "$BIN/nirvana-autostart" ] && "$BIN/nirvana-autostart"

@@ -3,7 +3,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Nirvana Desktop 0.1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-11 14:31+0000\n"
+"POT-Creation-Date: 2026-11-11 14:49+0000\n"
 "PO-Revision-Date: 2026-11-09 13:00+0000\n"
 "Last-Translator: Nirvana Desktop\n"
 "Language-Team: Polish\n"
@@ -62,7 +62,7 @@ msgstr "Źródło: %1"
 msgid "custom"
 msgstr "własny"
 
-#: alice/appearance.cxx:233 alice/preferences.cxx:81 denise/gary.cxx:117
+#: alice/appearance.cxx:233 alice/preferences.cxx:96 denise/gary.cxx:117
 msgid "Appearance"
 msgstr "Wygląd"
 
@@ -192,12 +192,12 @@ msgstr "Anuluj"
 msgid "Apply"
 msgstr "Zastosuj"
 
-#: alice/appearance.cxx:412 alice/power.cxx:129 denise/about.cxx:606
-#: denise/desktop.cxx:1598 platinum/platinum.cxx:208
+#: alice/appearance.cxx:412 alice/power.cxx:129 alice/shader.cxx:262
+#: denise/about.cxx:606 denise/desktop.cxx:1598 platinum/platinum.cxx:208
 msgid "OK"
 msgstr "OK"
 
-#: alice/main.cxx:26
+#: alice/main.cxx:28
 msgid "No such scheme: %1"
 msgstr "Nie ma schematu: %1"
 
@@ -472,7 +472,7 @@ msgstr "brak połączeń"
 msgid "disconnected"
 msgstr "rozłączono"
 
-#: alice/network.cxx:626 alice/preferences.cxx:82 denise/desktop.cxx:2127
+#: alice/network.cxx:626 alice/preferences.cxx:97 denise/desktop.cxx:2127
 #: denise/desktop.cxx:2168 denise/desktop.cxx:2199 denise/gary.cxx:118
 #: net/net.cxx:326
 msgid "Network"
@@ -632,7 +632,7 @@ msgstr "1 godzina"
 msgid "2 hours"
 msgstr "2 godziny"
 
-#: alice/power.cxx:79 alice/preferences.cxx:83 denise/applets.cxx:592
+#: alice/power.cxx:79 alice/preferences.cxx:98 denise/applets.cxx:592
 #: denise/gary.cxx:120
 msgid "Power"
 msgstr "Zasilanie"
@@ -706,25 +706,222 @@ msgstr ""
 "W sesji GNOME/KDE ekranem i usypianiem zarządza tamto środowisko - te "
 "ustawienia działają w sesji Nirvana Desktop."
 
-#: alice/preferences.cxx:78 denise/desktop.cxx:694 denise/gary.cxx:121
+#: alice/preferences.cxx:93 denise/desktop.cxx:694 denise/gary.cxx:121
 msgid "Preferences"
 msgstr "Preferencje"
 
-#: alice/preferences.cxx:95
+#: alice/preferences.cxx:99 alice/shader.cxx:223
+msgid "Shader"
+msgstr "Shader"
+
+#: alice/preferences.cxx:111
 msgid "Language:"
 msgstr "Język:"
 
-#: alice/preferences.cxx:99
+#: alice/preferences.cxx:115
 msgid "Automatic (system language)"
 msgstr "Automatycznie (jak w systemie)"
 
-#: alice/preferences.cxx:110
+#: alice/preferences.cxx:126
 msgid ""
 "The new language takes effect after restarting Nirvana Desktop or after "
 "Special > Reset Nirvana."
 msgstr ""
 "Nowy język zobaczysz po ponownym uruchomieniu Nirvana Desktop albo po "
 "Narzędzia > Resetuj Nirvanę."
+
+#: alice/shader.cxx:37
+msgid "CRT monitor"
+msgstr "Monitor CRT"
+
+#: alice/shader.cxx:37
+msgid "Curved glass, scanlines, a phosphor mask and dark corners."
+msgstr "Wypukłe szkło, linie kineskopu, maska luminoforu i ciemne rogi."
+
+#: alice/shader.cxx:38
+msgid "Scanlines"
+msgstr "Linie kineskopu"
+
+#: alice/shader.cxx:38
+msgid "Only the dark lines of a tube screen; the picture stays flat and sharp."
+msgstr "Tylko ciemne linie kineskopu; obraz zostaje płaski i ostry."
+
+#: alice/shader.cxx:39
+msgid "Amber monitor"
+msgstr "Monitor bursztynowy"
+
+#: alice/shader.cxx:39
+msgid "A monochrome amber screen with a slight glow."
+msgstr "Monochromatyczny bursztynowy ekran z lekką poświatą."
+
+#: alice/shader.cxx:40 shell/main.cxx:72
+msgid "Green phosphor"
+msgstr "Zielony fosfor"
+
+#: alice/shader.cxx:40
+msgid "A monochrome green terminal screen."
+msgstr "Monochromatyczny zielony ekran terminala."
+
+#: alice/shader.cxx:41
+msgid "Grayscale"
+msgstr "Skala szarości"
+
+#: alice/shader.cxx:41
+msgid "No colors at all."
+msgstr "Zupełnie bez kolorów."
+
+#: alice/shader.cxx:42
+msgid "Sepia"
+msgstr "Sepia"
+
+#: alice/shader.cxx:42
+msgid "The brown tint of an old photograph."
+msgstr "Brązowy odcień starej fotografii."
+
+#: alice/shader.cxx:43
+msgid "Night light"
+msgstr "Światło nocne"
+
+#: alice/shader.cxx:43
+msgid "Warmer colors with less blue light, for the evening."
+msgstr "Cieplejsze kolory z mniejszą ilością niebieskiego światła, na wieczór."
+
+#: alice/shader.cxx:44
+msgid "VHS tape"
+msgstr "Kaseta VHS"
+
+#: alice/shader.cxx:44
+msgid ""
+"Color bleeding, a shaky picture, noise and a rolling tracking band. Animated."
+msgstr ""
+"Rozmyte kolory, drżący obraz, szum i przesuwający się pas zakłóceń. "
+"Animowany."
+
+#: alice/shader.cxx:45
+msgid "Film grain"
+msgstr "Ziarno filmu"
+
+#: alice/shader.cxx:45
+msgid "Moving grain and a gentle flicker, like an old projector. Animated."
+msgstr ""
+"Ruchome ziarno i delikatne migotanie, jak ze starego projektora. Animowany."
+
+#: alice/shader.cxx:46
+msgid "Large pixels"
+msgstr "Duże piksele"
+
+#: alice/shader.cxx:46
+msgid "The screen in 4×4 blocks."
+msgstr "Ekran w blokach 4×4."
+
+#: alice/shader.cxx:47
+msgid "64 colors"
+msgstr "64 kolory"
+
+#: alice/shader.cxx:47
+msgid ""
+"Four levels per color channel with ordered dithering, like an old graphics "
+"card."
+msgstr ""
+"Cztery poziomy na kanał koloru z ditheringiem, jak na starej karcie "
+"graficznej."
+
+#: alice/shader.cxx:48
+msgid "Halftone"
+msgstr "Raster drukarski"
+
+#: alice/shader.cxx:48
+msgid ""
+"Newspaper print: black dots on paper, larger where the picture is darker."
+msgstr ""
+"Druk gazetowy: czarne kropki na papierze, większe tam, gdzie obraz jest "
+"ciemniejszy."
+
+#: alice/shader.cxx:49
+msgid "LCD"
+msgstr "LCD"
+
+#: alice/shader.cxx:49
+msgid "A coarse liquid crystal panel with visible red, green and blue stripes."
+msgstr ""
+"Gruboziarnisty panel ciekłokrystaliczny z widocznymi czerwonymi, zielonymi i "
+"niebieskimi paskami."
+
+#: alice/shader.cxx:50
+msgid "Thermal camera"
+msgstr "Kamera termowizyjna"
+
+#: alice/shader.cxx:50
+msgid "Brightness shown as heat: dark blue, violet, red, orange, white."
+msgstr ""
+"Jasność pokazana jako ciepło: granat, fiolet, czerwień, pomarańcz, biel."
+
+#: alice/shader.cxx:51
+msgid "Dreamy glow"
+msgstr "Senna poświata"
+
+#: alice/shader.cxx:51
+msgid "A soft bloom around bright areas and a little extra color."
+msgstr "Miękka poświata wokół jasnych miejsc i trochę mocniejsze kolory."
+
+#: alice/shader.cxx:52
+msgid "Underwater"
+msgstr "Pod wodą"
+
+#: alice/shader.cxx:52
+msgid ""
+"A gently waving picture with a blue-green tint and moving light. Animated."
+msgstr ""
+"Łagodnie falujący obraz w niebiesko-zielonym odcieniu z ruchomym światłem. "
+"Animowany."
+
+#: alice/shader.cxx:53
+msgid "Inverted colors"
+msgstr "Odwrócone kolory"
+
+#: alice/shader.cxx:53
+msgid "Light text on a dark background and the other way round."
+msgstr "Jasny tekst na ciemnym tle i na odwrót."
+
+#: alice/shader.cxx:132
+msgid "None (off)"
+msgstr "Brak (wyłączony)"
+
+#: alice/shader.cxx:132
+msgid "The desktop as it is, without any effect."
+msgstr "Pulpit taki, jaki jest, bez efektów."
+
+#: alice/shader.cxx:192
+msgid ""
+"Another compositor is running (e.g. picom), so the effect cannot be shown. "
+"The choice is saved for the next session."
+msgstr ""
+"Działa inny kompozytor (np. picom), więc efektu nie da się pokazać. Wybór "
+"zostanie użyty w następnej sesji."
+
+#: alice/shader.cxx:204
+msgid "nirvana-shader is not installed (it needs OpenGL)."
+msgstr "nirvana-shader nie jest zainstalowany (wymaga OpenGL)."
+
+#: alice/shader.cxx:209
+msgid ""
+"Effects use OpenGL. Without graphics acceleration animated effects can be "
+"slow."
+msgstr ""
+"Efekty używają OpenGL. Bez akceleracji grafiki efekty animowane mogą działać "
+"wolno."
+
+#: alice/shader.cxx:225
+msgid "Full-screen effect"
+msgstr "Efekt pełnoekranowy"
+
+#: alice/shader.cxx:244
+msgid "Description"
+msgstr "Opis"
+
+#: alice/shader.cxx:255
+msgid "Your own shaders (GLSL fragment shaders, *.frag) go to"
+msgstr "Własne shadery (shadery fragmentów GLSL, *.frag) umieść w"
 
 #: audio/audio.cxx:199
 msgid "Sound card (ALSA)"
@@ -2353,10 +2550,6 @@ msgstr "Klasyczny (jasny)"
 #: shell/main.cxx:71
 msgid "Dark"
 msgstr "Ciemny"
-
-#: shell/main.cxx:72
-msgid "Green phosphor"
-msgstr "Zielony fosfor"
 
 #: shell/main.cxx:73
 msgid "Amber"

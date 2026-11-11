@@ -81,7 +81,8 @@ available() { apt-cache show "$1" >/dev/null 2>&1; }
 BUILD_DEPS="build-essential cmake git pkg-config gettext dpkg-dev file
   libx11-dev libxext-dev libxft-dev libxinerama-dev libxcursor-dev libxfixes-dev
   libxrender-dev libxss-dev libfontconfig-dev libdbus-1-dev
-  libpng-dev libjpeg-dev zlib1g-dev"
+  libpng-dev libjpeg-dev zlib1g-dev
+  libgl-dev libxcomposite-dev libxdamage-dev"
 
 if [ "$ME" = 0 ]; then
   step "Updating the package lists"

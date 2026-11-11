@@ -177,7 +177,8 @@ void zoom_rects(Rect from, Rect to) {
   fl_open_display();
   Display *d = fl_x11_display();
   if (!d) return;                  // FLTK with the Wayland backend - animations not supported yet
-  static Mode mode = detect_mode(d);
+  // checked every time: a compositor (nirvana-shader) can start or end during the session
+  Mode mode = detect_mode(d);
   if (mode == Mode::Off) return;
 
   from = px(from);   // we draw with Xlib, in pixels
