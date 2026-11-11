@@ -1,0 +1,95 @@
+#!/bin/sh
+# Nirvana Desktop - account settings of the user who calls it. Runs as root through
+# pkexec (polkit action org.nirvana-desktop.user) for Preferences > User.
+#
+#   nirvana-user-helper name "Full Name"     the full name (the first field of GECOS)
+#   nirvana-user-helper picture < face.png   the picture of the login screen (PNG, max 1 MB)
+#   nirvana-user-helper picture-remove
+#   nirvana-user-helper autologin on|off     LightDM logs this user in without a password
+#                                            (administrators only)
+#
+# It only ever changes the account of the user who started pkexec (PKEXEC_UID), never
+# another one, and it reads the picture from standard input - never a path - so it cannot be
+# used to copy files that the user may not read.
+set -u
+PATH=/usr/sbin:/usr/bin:/sbin:/bin
+export PATH
+umask 022
+[ "$(id -u)" = 0 ] || { echo "must run as root"; exit 1; }
+uid="${PKEXEC_UID:-}"
+printf '%s' "$uid" | grep -Eq '^[0-9]+$' || { echo "run through pkexec"; exit 1; }
+[ "$uid" -ge 1000 ] 2>/dev/null || { echo "not for system accounts"; exit 1; }
+user=$(getent passwd "$uid" | cut -d: -f1)
+[ -n "$user" ] || { echo "unknown user $uid"; exit 1; }
+printf '%s' "$user" | grep -Eq '^[A-Za-z0-9_][A-Za-z0-9_.-]*\$?$' || { echo "unusual user name"; exit 1; }
+
+AS=/var/lib/AccountsService
+ICON="$AS/icons/$user"
+CONF="$AS/users/$user"
+
+set_icon_line() {   # $1: the Icon= value, or empty to remove it
+  mkdir -p "$AS/users"
+  chmod 700 "$AS/users" 2>/dev/null
+  if [ -f "$CONF" ]; then
+    sed -i '/^Icon=/d' "$CONF"
+  else
+    printf '[User]\n' > "$CONF"
+  fi
+  if [ -n "$1" ]; then
+    grep -q '^\[User\]' "$CONF" || printf '[User]\n' >> "$CONF"
+    sed -i "/^\[User\]/a Icon=$1" "$CONF"
+  fi
+  chmod 600 "$CONF"
+}
+
+case "${1:-}" in
+name)
+  n="${2-}"
+  [ "$(printf '%s' "$n" | wc -l)" = 0 ] || { echo "the name must be one line"; exit 2; }
+  case "$n" in *[:,=\\]*) echo "the name cannot contain : , = or \\"; exit 2 ;; esac
+  [ "$(printf '%s' "$n" | wc -c)" -le 120 ] || { echo "the name is too long"; exit 2; }
+  chfn -f "$n" "$user" >/dev/null || exit 1
+  exit 0
+  ;;
+picture)
+  tmp=$(mktemp) || exit 1
+  head -c 1048577 > "$tmp"
+  size=$(wc -c < "$tmp")
+  if [ "$size" -gt 1048576 ] || [ "$size" -lt 60 ]; then rm -f "$tmp"; echo "the picture must be a PNG up to 1 MB"; exit 2; fi
+  # the PNG signature: 89 50 4E 47 0D 0A 1A 0A
+  if [ "$(head -c 8 "$tmp" | od -An -tx1 | tr -d ' \n')" != 89504e470d0a1a0a ]; then rm -f "$tmp"; echo "the picture is not a PNG"; exit 2; fi
+  mkdir -p "$AS/icons"
+  chmod 755 "$AS" "$AS/icons" 2>/dev/null
+  mv -f "$tmp" "$ICON" && chown root:root "$ICON" && chmod 644 "$ICON" || exit 1
+  set_icon_line "$ICON"
+  exit 0
+  ;;
+picture-remove)
+  rm -f "$ICON"
+  [ -f "$CONF" ] && set_icon_line ""
+  exit 0
+  ;;
+autologin)
+  admin=
+  for g in sudo wheel admin; do id -nG "$user" | tr ' ' '\n' | grep -qx "$g" && admin=1; done
+  [ -n "$admin" ] || { echo "only administrators can change automatic login"; exit 3; }
+  f=/etc/lightdm/lightdm.conf.d/60-nirvana-autologin.conf
+  case "${2:-}" in
+  on)
+    mkdir -p /etc/lightdm/lightdm.conf.d
+    printf '# Preferences > User of Nirvana Desktop\n[Seat:*]\nautologin-user=%s\nautologin-user-timeout=0\n' "$user" > "$f"
+    # the PAM configuration of some systems lets only this group log in without a password
+    getent group autologin >/dev/null 2>&1 && usermod -aG autologin "$user"
+    exit 0 ;;
+  off)
+    # only remove it when it logs in this user (another administrator may have set it for someone else)
+    if [ -f "$f" ] && grep -qx "autologin-user=$user" "$f"; then rm -f "$f"; fi
+    exit 0 ;;
+  *) echo "usage: autologin on|off"; exit 2 ;;
+  esac
+  ;;
+*)
+  echo "usage: nirvana-user-helper name NAME | picture < file.png | picture-remove | autologin on|off"
+  exit 2
+  ;;
+esac

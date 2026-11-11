@@ -13,6 +13,7 @@
 
 #include <FL/Fl.H>
 #include <FL/Fl_Double_Window.H>
+#include <FL/Fl_RGB_Image.H>
 #include <FL/fl_draw.H>
 #include <FL/platform.H>
 
@@ -23,6 +24,7 @@
 #include <X11/keysym.h>
 
 #include <algorithm>
+#include <cstdint>
 #include <cstdio>
 #include <cstring>
 #include <unistd.h>
@@ -143,6 +145,8 @@ static Client *g_active = nullptr;
 static void focus(Client *c);
 static void unmanage(Client *c, bool destroyed);
 static void iconify_client(Client *c);
+static void preview_soon(void *);
+static void forget_preview(Window w);
 
 // ---------------------------------------------------------------------------
 // Xlib helpers
@@ -563,6 +567,8 @@ static void focus(Client *c) {
   XChangeProperty(dpy, root, A_NET_ACTIVE, XA_WINDOW, 32, PropModeReplace, (unsigned char *)&w, 1);
   c->frame->redraw();
   if (desktop_win) XLowerWindow(dpy, desktop_win);
+  Fl::remove_timeout(preview_soon);
+  Fl::add_timeout(0.6, preview_soon);
 }
 
 static void manage(Window w, bool existing) {
@@ -670,6 +676,7 @@ static void unmanage(Client *c, bool destroyed) {
     XRemoveFromSaveSet(dpy, c->win);
     set_wm_state(c->win, WithdrawnState);
   }
+  forget_preview(c->win);
   clients.erase(c->win);
   client_order.erase(std::remove(client_order.begin(), client_order.end(), c->win), client_order.end());
   publish_client_list();
@@ -693,53 +700,189 @@ static Client *client_of(Window w) {
 }
 
 // ---------------------------------------------------------------------------
-// Alt+Tab: switching applications 
+// Alt+Tab: the window switcher with previews
 // ---------------------------------------------------------------------------
-static bool cycling = false;
-static std::vector<Client *> cycle_list;
-static int cycle_idx = 0;
+// Without a compositor a window that is covered cannot be photographed, so each window's
+// preview is taken while it is the active one (on top): shortly after it gets the focus and
+// then every few seconds. Minimized windows keep their last preview.
+static const int TW = 200, TH = 130;   // the preview size (FLTK units)
 
-// Raises all windows of the application and gives the focus to the chosen one.
-static void bring_app_forward(Client *c) {
-  std::vector<Client *> same;
-  for (auto &[w, o] : clients)
-    if (o != c && o->cls == c->cls && !o->dialog) same.push_back(o);
-  std::sort(same.begin(), same.end(), [](Client *a, Client *b) { return a->mru < b->mru; });
-  for (Client *o : same) {
-    if (o->hidden) show_client(o);
-    XRaiseWindow(dpy, fl_xid(o->frame));
-  }
-  focus(c);
+static Fl_RGB_Image *grab_preview(Client *c) {
+  if (!c || c->hidden || !c->frame->shown()) return nullptr;
+  Window xw = fl_xid(c->frame);
+  XWindowAttributes wa;
+  if (!XGetWindowAttributes(dpy, xw, &wa) || wa.map_state != IsViewable || wa.width < 8 || wa.height < 8) return nullptr;
+  auto old = XSetErrorHandler(ignore_errors);
+  XImage *im = XGetImage(dpy, xw, 0, 0, wa.width, wa.height, AllPlanes, ZPixmap);
+  XSync(dpy, False);
+  XSetErrorHandler(old);
+  if (!im) return nullptr;
+  double k = std::min((double)px(TW) / wa.width, (double)px(TH) / wa.height);
+  int w = std::max(1, (int)(wa.width * k)), h = std::max(1, (int)(wa.height * k));
+  auto *buf = new uchar[w * h * 3];
+  bool fast = im->bits_per_pixel == 32 && im->red_mask == 0xff0000 && im->green_mask == 0xff00 && im->blue_mask == 0xff;
+  // each preview pixel: the average of a few source pixels (smoother than nearest)
+  for (int y = 0; y < h; y++)
+    for (int x = 0; x < w; x++) {
+      int x0 = (int)(x / k), y0 = (int)(y / k), x1 = std::min(wa.width - 1, (int)((x + 1) / k)),
+          y1 = std::min(wa.height - 1, (int)((y + 1) / k));
+      int sx = std::max(1, (x1 - x0) / 3), sy = std::max(1, (y1 - y0) / 3);
+      unsigned r = 0, g = 0, b = 0, n = 0;
+      for (int yy = y0; yy <= y1; yy += sy)
+        for (int xx = x0; xx <= x1; xx += sx) {
+          unsigned long p = fast ? *(uint32_t *)(im->data + yy * im->bytes_per_line + xx * 4) : XGetPixel(im, xx, yy);
+          r += (p >> 16) & 255; g += (p >> 8) & 255; b += p & 255; n++;
+        }
+      uchar *o = buf + (y * w + x) * 3;
+      o[0] = (uchar)(r / n); o[1] = (uchar)(g / n); o[2] = (uchar)(b / n);
+    }
+  XDestroyImage(im);
+  auto *img = new Fl_RGB_Image(buf, w, h, 3);
+  img->alloc_array = 1;
+  img->scale(un(w), un(h), 0, 1);   // drawn in FLTK units, the pixels kept
+  return img;
 }
 
-static void alt_tab(bool backwards) {
+static std::map<Window, Fl_RGB_Image *> g_previews;
+
+static void take_preview(Client *c) {
+  if (Fl_RGB_Image *img = grab_preview(c)) {
+    delete g_previews[c->win];
+    g_previews[c->win] = img;
+  }
+}
+
+static void forget_preview(Window w) {
+  auto it = g_previews.find(w);
+  if (it != g_previews.end()) { delete it->second; g_previews.erase(it); }
+}
+
+static bool cycling = false;
+static std::vector<Window> cycle_list;   // windows, the most recently used first
+static int cycle_idx = 0;
+
+static void preview_tick(void *) {
+  if (g_active && clients.count(g_active->win) && !cycling) take_preview(g_active);
+  Fl::repeat_timeout(3.0, preview_tick);
+}
+
+// a moment after the focus changed - the window has drawn itself on top by then
+static void preview_soon(void *) {
+  if (g_active && clients.count(g_active->win)) take_preview(g_active);
+}
+
+class Switcher : public Fl_Double_Window {
+public:
+  static const int CW = TW + 24, CH = TH + 44;
+  int cols = 1;
+  Switcher() : Fl_Double_Window(0, 0, 10, 10, "insight-switcher") {
+    border(0);
+    end();
+    set_override();
+  }
+  void layout() {
+    int n = (int)cycle_list.size();
+    cols = std::max(1, std::min(n, (screen_w - 60) / CW));
+    int rows = (n + cols - 1) / cols;
+    int W = cols * CW + 24, H = rows * CH + 24;
+    resize((screen_w - W) / 2, std::max(MENUBAR_H + 10, (screen_h - H) / 2), W, H);
+  }
+  int cell_at(int ex, int ey) const {
+    int c = (ex - 12) / CW, r = (ey - 12) / CH;
+    if (ex < 12 || ey < 12 || c >= cols) return -1;
+    int i = r * cols + c;
+    return i < (int)cycle_list.size() ? i : -1;
+  }
+  void draw() override {
+    fl_draw_box(UP_BOX, 0, 0, w(), h(), GRAY);
+    fl_color(DARK);
+    fl_rect(0, 0, w(), h());
+    for (int i = 0; i < (int)cycle_list.size(); i++) {
+      Client *c = client_of(cycle_list[i]);
+      if (!c) continue;
+      int cx = 12 + (i % cols) * CW, cy = 12 + (i / cols) * CH;
+      bool sel = i == cycle_idx;
+      if (sel) {
+        fl_color(SEL);
+        fl_rectf(cx + 2, cy + 2, CW - 4, CH - 4);
+      }
+      int px0 = cx + 12, py0 = cy + 10;
+      auto it = g_previews.find(c->win);
+      if (it != g_previews.end()) {
+        Fl_RGB_Image *img = it->second;
+        int ix = px0 + (TW - img->w()) / 2, iy = py0 + (TH - img->h()) / 2;
+        img->draw(ix, iy);
+        if (c->iconic || c->hidden) {   // minimized: a light veil over the preview
+          fl_color(fl_color_average(GRAY, FL_WHITE, 0.5f));
+          for (int yy = iy; yy < iy + img->h(); yy += 2) fl_xyline(ix, yy, ix + img->w() - 1);
+        }
+        fl_color(DARK);
+        fl_rect(ix - 1, iy - 1, img->w() + 2, img->h() + 2);
+      } else {   // no preview yet: an empty little window with the program's initial
+        fl_draw_box(WELL_BOX, px0 + 30, py0 + 14, TW - 60, TH - 28, CONTENT);
+        draw_titlebar(px0 + 30, py0 + 14, TW - 60, "", true, 0, 0);
+        std::string ini = c->cls.empty() ? (c->title.empty() ? "?" : c->title.substr(0, 1)) : c->cls.substr(0, 1);
+        fl_font(FONT_SYSTEM, 36);
+        fl_color(MID);
+        fl_draw(ini.c_str(), px0 + 30, py0 + 14 + TITLE_H, TW - 60, TH - 28 - TITLE_H, FL_ALIGN_CENTER);
+      }
+      std::string t = c->title.empty() ? c->cls : c->title;
+      fl_font(sel ? FONT_SYSTEM : FONT_SMALL, SIZE_SMALL + 1);
+      t = ellipsize(t, CW - 16);
+      fl_color(sel ? SEL_TEXT : TEXT);
+      fl_draw(t.c_str(), cx + 8, cy + TH + 16, CW - 16, 20, FL_ALIGN_CENTER, nullptr, 0);
+    }
+  }
+  int handle(int e) override;
+};
+static Switcher *g_switcher = nullptr;
+
+static void alt_tab_end(bool choose);
+
+int Switcher::handle(int e) {
+  if (e == FL_PUSH) {
+    int i = cell_at(Fl::event_x(), Fl::event_y());
+    if (i >= 0) { cycle_idx = i; alt_tab_end(true); }
+    return 1;
+  }
+  if (e == FL_MOVE) {
+    int i = cell_at(Fl::event_x(), Fl::event_y());
+    if (i >= 0 && i != cycle_idx) { cycle_idx = i; redraw(); }
+    return 1;
+  }
+  return Fl_Double_Window::handle(e);
+}
+
+static void alt_tab(int step) {
   if (!cycling) {
-    // applications from the most recently used; each represented by its newest window
     std::vector<Client *> all;
     for (auto &[w, c] : clients) if (!c->dialog) all.push_back(c);
+    if (all.size() < 2) return;
     std::sort(all.begin(), all.end(), [](Client *a, Client *b) { return a->mru > b->mru; });
     cycle_list.clear();
-    for (Client *c : all) {
-      bool seen = false;
-      for (Client *o : cycle_list) if (o->cls == c->cls) seen = true;
-      if (!seen) cycle_list.push_back(c);
-    }
-    if (cycle_list.size() < 2) return;
+    for (Client *c : all) cycle_list.push_back(c->win);
+    if (g_active) take_preview(g_active);   // the window on top now: a fresh picture
     cycling = true;
     cycle_idx = 0;
     // keyboard to us, to notice Alt being released
     XGrabKeyboard(dpy, root, True, GrabModeAsync, GrabModeAsync, CurrentTime);
+    if (!g_switcher) g_switcher = new Switcher;
+    g_switcher->layout();
+    g_switcher->show();
+    XRaiseWindow(dpy, fl_xid(g_switcher));
   }
   int n = (int)cycle_list.size();
-  cycle_idx = (cycle_idx + (backwards ? -1 : 1) + n) % n;
-  Client *c = cycle_list[cycle_idx];
-  if (clients.count(c->win)) bring_app_forward(c);
+  cycle_idx = ((cycle_idx + step) % n + n) % n;
+  g_switcher->redraw();
 }
 
-static void alt_tab_end() {
+static void alt_tab_end(bool choose) {
   if (!cycling) return;
   cycling = false;
   XUngrabKeyboard(dpy, CurrentTime);
+  if (g_switcher) g_switcher->hide();
+  if (choose && cycle_idx >= 0 && cycle_idx < (int)cycle_list.size())
+    if (Client *c = client_of(cycle_list[cycle_idx])) focus(c);   // also brings back a minimized one
 }
 
 // The Appearance panel changed the scheme: new palette, root window background, frames.
@@ -763,16 +906,24 @@ static int x_handler(void *event, void *) {
   case KeyPress: {
     KeySym ks = XLookupKeysym(&e->xkey, 0);
     if (ks == XK_Tab && (e->xkey.state & Mod1Mask)) {
-      alt_tab(e->xkey.state & ShiftMask);
+      alt_tab(e->xkey.state & ShiftMask ? -1 : 1);
       return 1;
     }
-    if (cycling && ks == XK_Escape) { alt_tab_end(); return 1; }
-    return cycling ? 1 : 0;
+    if (cycling) {
+      if (ks == XK_Escape) alt_tab_end(false);
+      else if (ks == XK_Right) alt_tab(1);
+      else if (ks == XK_Left) alt_tab(-1);
+      else if (ks == XK_Down) alt_tab(g_switcher ? g_switcher->cols : 1);
+      else if (ks == XK_Up) alt_tab(g_switcher ? -g_switcher->cols : -1);
+      else if (ks == XK_Return) alt_tab_end(true);
+      return 1;
+    }
+    return 0;
   }
   case KeyRelease: {
     KeySym ks = XLookupKeysym(&e->xkey, 0);
     if (cycling && (ks == XK_Alt_L || ks == XK_Alt_R || ks == XK_Meta_L || ks == XK_Meta_R)) {
-      alt_tab_end();
+      alt_tab_end(true);
       return 1;
     }
     return cycling ? 1 : 0;
@@ -1027,6 +1178,7 @@ int main(int argc, char **argv) {
   set_root_background();   // the scheme's desktop color before Rambler comes up
 
   Fl::add_system_handler(x_handler, nullptr);
+  Fl::add_timeout(3.0, preview_tick);
 
   // Alt+Tab and Alt+Shift+Tab - also with NumLock and CapsLock on
   KeyCode tab = XKeysymToKeycode(dpy, XK_Tab);

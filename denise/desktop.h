@@ -14,6 +14,7 @@
 #include <FL/Fl_Tiled_Image.H>
 #include <functional>
 #include <memory>
+#include <set>
 #include <string>
 #include <vector>
 
@@ -126,6 +127,8 @@ public:
   void close_active();
   void move_to_trash();
   void empty_trash();
+  void force_quit();          // like xkill: a skull cursor, click a window, its program is closed
+  void force_quit_pick();
   void refresh_all();
   void appearance_changed();      // the Appearance panel changed the scheme (_NIRVANA_APPEARANCE)
   void open_appearance();         // start the Appearance panel (nirvana-alice)
@@ -275,6 +278,9 @@ private:
   bool desk_target_ = false;      // a command from the desktop context menu
   void open_appimage(const std::string &path);
   void run_app(const std::string &path);
+  void ask_missing_libs(const std::string &path, const std::vector<std::string> &missing);
+  void install_libs(const std::string &path, const std::vector<std::string> &missing);
+  std::set<std::string> libs_ok_;   // applications started even though libraries are missing
   std::string apps_dir() const;
   bool in_apps(const std::string &path) const;
   std::string app_destination(const std::string &path) const;
@@ -300,6 +306,7 @@ private:
   } drag_;
   int icon_drop_ = -1;            // the desktop icon highlighted as the drop target
   std::vector<std::string> clipboard_;   // paths copied with Icons > Copy
+  void guru(const std::string &text);   // an error window: "Guru Meditation"
   void dialog(const std::string &title, const std::string &text,
               std::vector<std::pair<std::string, std::function<void()>>> buttons);
   static void dialog_cb(Fl_Widget *b, void *idx);
@@ -313,7 +320,7 @@ private:
   Fl_Widget *app_menu_ = nullptr;   // gary: the application menu in the top right corner
   int active_app_index(const std::vector<gary::App> &apps);
   Fl_Widget *extras_;
-  Fl_Widget *vol_w_ = nullptr, *pow_w_ = nullptr, *upd_w_ = nullptr, *tray_w_ = nullptr, *mem_w_ = nullptr;
+  Fl_Widget *vol_w_ = nullptr, *pow_w_ = nullptr, *upd_w_ = nullptr, *prn_w_ = nullptr, *tray_w_ = nullptr, *mem_w_ = nullptr;
   bool tray_pending_ = false;
 public:
   void layout_bar();        // placing the applets and the tray in the menu bar

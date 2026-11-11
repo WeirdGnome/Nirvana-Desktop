@@ -56,6 +56,7 @@ add_custom_target(nirvana-translations ALL DEPENDS ${NIRVANA_MO})
 # --- libplatinum: look and window chrome shared by all components ----------
 add_library(nirvana-platinum STATIC
   platinum/platinum.cxx
+  platinum/filedialog.cxx
   platinum/pwindow.cxx
   platinum/anim.cxx
   platinum/theme.cxx
@@ -79,6 +80,30 @@ pkg_check_modules(XSS REQUIRED IMPORTED_TARGET xscrnsaver)
 add_library(nirvana-audio STATIC audio/audio.cxx)
 target_include_directories(nirvana-audio PUBLIC audio)
 target_link_libraries(nirvana-audio PUBLIC nirvana-i18n fltk::fltk)
+# --- printing (CUPS) - optional: without libcups there is no printer applet and panel ---
+# (pkg-config first; when cups.pc lacks its own dependencies, the header and the library)
+pkg_check_modules(CUPS IMPORTED_TARGET cups)
+if(CUPS_FOUND)
+  set(NIRVANA_CUPS PkgConfig::CUPS)
+else()
+  find_path(CUPS_HEADER cups/cups.h)
+  find_library(CUPS_LIBRARY cups)
+  if(CUPS_HEADER AND CUPS_LIBRARY)
+    set(CUPS_FOUND TRUE)
+    set(NIRVANA_CUPS ${CUPS_LIBRARY})
+  endif()
+endif()
+if(CUPS_FOUND)
+  add_library(nirvana-print STATIC print/print.cxx)
+  target_include_directories(nirvana-print PUBLIC print)
+  target_link_libraries(nirvana-print PUBLIC nirvana-i18n ${NIRVANA_CUPS})
+  target_compile_definitions(nirvana-print PUBLIC NIRVANA_PRINT=1)
+  set(NIRVANA_PRINT_LIB nirvana-print)
+else()
+  message(WARNING "libcups development files not found - no printer applet (Devuan: libcups2-dev)")
+  set(NIRVANA_PRINT_LIB "")
+endif()
+
 add_library(nirvana-power STATIC power/power.cxx)
 target_include_directories(nirvana-power PUBLIC power)
 target_link_libraries(nirvana-power PUBLIC nirvana-i18n fltk::fltk PkgConfig::DBUS PkgConfig::XSS X11::Xext X11::X11)
@@ -96,17 +121,18 @@ add_executable(nirvana-denise
   denise/menus.cxx
   denise/updates.cxx
   denise/clock.cxx
+  denise/printer.cxx
   denise/about.cxx
   denise/tray.cxx)
-target_link_libraries(nirvana-denise PRIVATE nirvana-platinum nirvana-net nirvana-audio nirvana-power fltk::images PkgConfig::DBUS)
+target_link_libraries(nirvana-denise PRIVATE nirvana-platinum nirvana-net nirvana-audio nirvana-power ${NIRVANA_PRINT_LIB} fltk::images PkgConfig::DBUS)
 
 # --- insight: X11 window manager ---------------------------------------------
 add_executable(nirvana-insight insight/main.cxx)
 target_link_libraries(nirvana-insight PRIVATE nirvana-platinum X11::X11)
 
 # --- alice: control panels ---------------------------------------------------
-add_executable(nirvana-alice alice/main.cxx alice/appearance.cxx alice/network.cxx alice/power.cxx alice/preferences.cxx alice/shader.cxx alice/datetime.cxx alice/desktop.cxx)
-target_link_libraries(nirvana-alice PRIVATE nirvana-platinum nirvana-net nirvana-power)
+add_executable(nirvana-alice alice/main.cxx alice/appearance.cxx alice/network.cxx alice/power.cxx alice/preferences.cxx alice/shader.cxx alice/datetime.cxx alice/desktop.cxx alice/printers.cxx alice/user.cxx alice/saver.cxx)
+target_link_libraries(nirvana-alice PRIVATE nirvana-platinum nirvana-net nirvana-power ${NIRVANA_PRINT_LIB})
 
 # --- Nirvana Shell: terminal emulator (system libvterm or the bundled one) ---
 pkg_check_modules(VTERM IMPORTED_TARGET vterm>=0.3)
@@ -134,9 +160,67 @@ else()
 endif()
 install(DIRECTORY shaders/ DESTINATION share/nirvana/shaders COMPONENT nirvana)
 # system updates: the check (as the user) and the helper (root, through pkexec/polkit)
-install(PROGRAMS update/nirvana-update-check update/nirvana-update-helper update/nirvana-power-helper update/nirvana-time-helper DESTINATION libexec COMPONENT nirvana)
+install(PROGRAMS update/nirvana-update-check update/nirvana-update-helper update/nirvana-power-helper update/nirvana-time-helper update/nirvana-print-helper update/nirvana-user-helper update/nirvana-libs-helper update/nirvana-pkexec DESTINATION libexec COMPONENT nirvana)
 install(FILES update/org.nirvana-desktop.policy DESTINATION share/polkit-1/actions COMPONENT nirvana)
 install(FILES update/50-nirvana.rules DESTINATION share/polkit-1/rules.d COMPONENT nirvana)
+
+# --- Nirvana-DM: the login screen (a LightDM greeter) - optional --------------
+pkg_check_modules(LIGHTDM IMPORTED_TARGET liblightdm-gobject-1 gobject-2.0 glib-2.0)
+if(LIGHTDM_FOUND)
+  add_executable(nirvana-dm-greeter dm/nirvana-dm-greeter.cxx)
+  target_link_libraries(nirvana-dm-greeter PRIVATE nirvana-platinum fltk::images PkgConfig::LIGHTDM)
+  install(TARGETS nirvana-dm-greeter RUNTIME DESTINATION sbin COMPONENT nirvana)
+  install(FILES dm/nirvana-dm.desktop DESTINATION share/xgreeters COMPONENT nirvana)
+  install(FILES dm/50-nirvana-dm.conf DESTINATION share/lightdm/lightdm.conf.d COMPONENT nirvana)
+else()
+  message(WARNING "liblightdm-gobject not found - Nirvana-DM is not built (Devuan: liblightdm-gobject-dev)")
+endif()
+
+# --- nirvana-portal: the Nirvana file dialog for other programs (xdg-desktop-portal) --------
+pkg_check_modules(GIO IMPORTED_TARGET gio-2.0)
+if(GIO_FOUND)
+  add_executable(nirvana-portal portal/nirvana-portal.cxx)
+  target_link_libraries(nirvana-portal PRIVATE nirvana-platinum fltk::images PkgConfig::GIO)
+  install(TARGETS nirvana-portal RUNTIME DESTINATION libexec COMPONENT nirvana)
+  configure_file(portal/org.freedesktop.impl.portal.desktop.nirvana.service.in
+                 org.freedesktop.impl.portal.desktop.nirvana.service @ONLY)
+  install(FILES ${CMAKE_CURRENT_BINARY_DIR}/org.freedesktop.impl.portal.desktop.nirvana.service
+          DESTINATION share/dbus-1/services COMPONENT nirvana)
+  install(FILES portal/nirvana.portal DESTINATION share/xdg-desktop-portal/portals COMPONENT nirvana)
+else()
+  message(WARNING "gio-2.0 not found - nirvana-portal is not built (Devuan: libglib2.0-dev)")
+endif()
+
+# --- nirvana-polkit-agent: the password window of polkit ----------------------------------
+pkg_check_modules(POLKITAGENT IMPORTED_TARGET polkit-agent-1)
+if(POLKITAGENT_FOUND)
+  add_executable(nirvana-polkit-agent polkit/nirvana-polkit-agent.cxx)
+  target_link_libraries(nirvana-polkit-agent PRIVATE nirvana-platinum PkgConfig::POLKITAGENT)
+  install(TARGETS nirvana-polkit-agent RUNTIME DESTINATION libexec COMPONENT nirvana)
+else()
+  message(WARNING "polkit-agent-1 not found - nirvana-polkit-agent is not built (Devuan: libpolkit-agent-1-dev)")
+endif()
+
+# --- the screen savers and nirvana-lock (screen saver + lock, PAM) ------------------------
+add_library(nirvana-savers STATIC savers/savers.cxx)
+target_include_directories(nirvana-savers PUBLIC savers)
+target_link_libraries(nirvana-savers PUBLIC nirvana-platinum)
+target_link_libraries(nirvana-alice PRIVATE nirvana-savers)
+find_path(PAM_INCLUDE_DIR security/pam_appl.h)
+find_library(PAM_LIBRARY pam)
+if(PAM_INCLUDE_DIR AND PAM_LIBRARY)
+  add_executable(nirvana-lock lock/nirvana-lock.cxx)
+  target_include_directories(nirvana-lock PRIVATE ${PAM_INCLUDE_DIR})
+  target_link_libraries(nirvana-lock PRIVATE nirvana-savers nirvana-power nirvana-platinum fltk::images ${PAM_LIBRARY})
+  install(TARGETS nirvana-lock RUNTIME DESTINATION bin COMPONENT nirvana)
+  install(FILES lock/nirvana-lock.pam DESTINATION /etc/pam.d RENAME nirvana-lock COMPONENT nirvana)
+else()
+  message(WARNING "PAM not found - nirvana-lock is not built (Devuan: libpam0g-dev)")
+endif()
+
+# tools: the logo sheet (cmake --build . --target logo-sheet), not installed
+add_executable(logo-sheet EXCLUDE_FROM_ALL tools/logo-sheet.cxx)
+target_link_libraries(logo-sheet PRIVATE nirvana-platinum)
 
 # Everything in the "nirvana" component - the .deb package does not take FLTK files
 # (FetchContent adds its own install rules for headers and libraries).
@@ -153,6 +237,7 @@ install(FILES LICENSE DESTINATION share/nirvana COMPONENT nirvana)   # shown in 
 # Library dependencies come from dpkg-shlibdeps; the rest (programs Nirvana Desktop
 # uses at run time) is listed by hand. apt installs Recommends by default and
 # simply skips Recommends that are missing from the repositories.
+# The libxcb-* / libxkbcommon-x11 libraries: Qt 6 programs in AppImages count on them.
 set(CPACK_GENERATOR DEB)
 set(CPACK_PACKAGE_NAME nirvana)
 set(CPACK_PACKAGE_VENDOR "Nirvana Desktop")
@@ -171,9 +256,11 @@ set(CPACK_DEBIAN_PACKAGE_PRIORITY optional)
 set(CPACK_DEBIAN_PACKAGE_SHLIBDEPS ON)
 set(CPACK_DEBIAN_PACKAGE_DEPENDS "dbus-bin | dbus")
 set(CPACK_DEBIAN_PACKAGE_RECOMMENDS
-  "xserver-xorg, xinit, fonts-dejavu-core, libpam-elogind | elogind, polkitd, pkexec, lxpolkit, \
-udisks2, network-manager, pulseaudio-utils, alsa-utils, squashfs-tools, bubblewrap, xsecurelock, xdg-utils, \
-xdg-desktop-portal, xdg-desktop-portal-gtk, libgl1-mesa-dri")
+  "xserver-xorg, xinit, fonts-dejavu-core, libpam-elogind | elogind, polkitd, pkexec, \
+udisks2, network-manager, pulseaudio-utils, alsa-utils, squashfs-tools, bubblewrap, xdg-utils, \
+xdg-desktop-portal, xdg-desktop-portal-gtk, libgl1-mesa-dri, \
+libxcb-cursor0, libxcb-icccm4, libxcb-keysyms1, libxcb-image0, libxcb-render-util0, libxkbcommon-x11-0, \
+libxcb-xkb1, libxcb-shape0, libxcb-randr0, libxcb-xinerama0")
 set(CPACK_DEBIAN_PACKAGE_SUGGESTS
-  "lightdm, network-manager-openvpn, network-manager-vpnc, wireguard-tools, power-profiles-daemon, pipewire-pulse")
+  "lightdm, network-manager-openvpn, network-manager-vpnc, wireguard-tools, power-profiles-daemon, pipewire-pulse, cups")
 include(CPack)

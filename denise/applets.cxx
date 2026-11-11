@@ -444,7 +444,7 @@ static void confirm(const char *title, const char *text, const char *yes, std::f
   else f();
 }
 static void report(const std::string &err) {
-  if (!err.empty() && g_host.dialog) g_host.dialog(_("Power"), err, {{"OK", nullptr}});
+  if (!err.empty() && g_host.dialog) g_host.dialog(plat::GURU_TITLE, err, {{"OK", nullptr}});
 }
 
 void PowerApplet::act(Fl_Widget *, void *d) {
@@ -561,7 +561,8 @@ static int x_events(void *event, void *) {
   if (g_ss_event >= 0 && e->type == g_ss_event) {
     // the X screensaver started: lock (like xss-lock), unless a projection is running
     auto *se = (XScreenSaverNotifyEvent *)e;
-    if (se->state == ScreenSaverOn && g_host.nirvana_session && g_idle.lock_on_blank && !power::projection())
+    if (se->state == ScreenSaverOn && g_host.nirvana_session && g_idle.lock_on_blank && !power::projection() &&
+        power::nirvana_lock().empty())   // with nirvana-lock the X blanking is off (saver_tick)
       power::lock_screen();
     return 0;
   }
@@ -612,6 +613,22 @@ int power_width() {
   return wdt + 8;
 }
 
+// Every 2 s: idle long enough - Nirvana's screen saver (nirvana-lock --saver; it locks by itself
+// when the settings say so). Not in presentation mode.
+static int g_saver_idle = 0;
+static void saver_tick(void *) {
+  static std::string lock = power::nirvana_lock();
+  if (g_host.nirvana_session && !lock.empty() && g_idle.blank_min > 0 && !power::projection()) {
+    int idle = power::idle_seconds();
+    if (idle < g_saver_idle) g_saver_idle = 0;   // there was activity since the saver started
+    if (!g_saver_idle && idle >= g_idle.blank_min * 60) {
+      g_saver_idle = idle;
+      if (!power::saver_running()) power::start_saver();
+    }
+  }
+  Fl::repeat_timeout(2.0, saver_tick);
+}
+
 void init(const Host &host) {
   g_host = host;
   if (host.nirvana_session) power::restore_profile();   // kernel profiles are forgotten at a restart
@@ -627,6 +644,7 @@ void init(const Host &host) {
   g_power = power::query();
   if (g_host.relayout) g_host.relayout();   // the battery icon has its width now
   Fl::add_timeout(20.0, power_tick);
+  Fl::add_timeout(2.0, saver_tick);
   audio::watch([] { if (g_vol) g_vol->refresh(false); });
 }
 

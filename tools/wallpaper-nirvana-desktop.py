@@ -112,64 +112,50 @@ img += ribbons * (yy < HORIZON)[..., None]
 # 5. The logo and the "Nirvana Desktop" title (a separate RGBA layer - needed for the reflection)
 brand = Image.new("RGBA", (W, H), (0, 0, 0, 0))
 bd = ImageDraw.Draw(brand)
-L = int(230 * S)                                   # size of the chip (logo)
+L = int(330 * S)                                   # size of the chip (logo)
 f_nirvana, f_desk = font("InterDisplay-Bold.otf", 190), font("InterDisplay-ExtraLight.otf", 190)
-gap = int(56 * S)
+gap = int(30 * S)
 w_nirvana = bd.textlength("Nirvana", font=f_nirvana)
 w_desk = bd.textlength(" Desktop", font=f_desk)
 total = L + gap + w_nirvana + w_desk
 x0 = int((W - total) / 2)
-y0 = HORIZON - L - int(40 * S)                     # stands just above the "floor"
+y0 = HORIZON - int(L * 56 / 64) - int(40 * S)      # the pins stand just above the "floor"
 
-# 5a. The chip: pins, a glossy body, a white N, a golden pin 1 mark
+# 5a. The logo: a chip seen from the side - a golden rim, a green board with golden traces,
+#     pins under the lower edges and a silver N with a violet shadow (the same as draw_logo)
 chip = Image.new("RGBA", (L, L), (0, 0, 0, 0))
 cd = ImageDraw.Draw(chip)
-pin_w, pin_h = int(L * 0.075), int(L * 0.11)
-for i in range(5):
-    px = int(L * 0.14 + i * (L * 0.72 - pin_w) / 4)
-    for py in (0, L - pin_h):
-        cd.rounded_rectangle([px, py, px + pin_w, py + pin_h], radius=int(pin_w * 0.25), fill=(196, 202, 214, 255))
-        cd.rectangle([px + 2, py + 2, px + pin_w // 2, py + pin_h - 2], fill=(240, 244, 250, 255))
-body = [int(L * 0.04), int(L * 0.09), int(L * 0.96), int(L * 0.91)]
-r = int(L * 0.09)
-grad = Image.new("RGBA", (L, L))
-ga = np.zeros((L, L, 4), np.uint8)
-gy = np.linspace(0, 1, L)[:, None]
-ga[..., 0] = (120 - 60 * gy).astype(np.uint8)
-ga[..., 1] = (92 - 52 * gy).astype(np.uint8)
-ga[..., 2] = (210 - 70 * gy).astype(np.uint8)
-ga[..., 3] = 255
-grad = Image.fromarray(ga, "RGBA")
-m = Image.new("L", (L, L), 0)
-ImageDraw.Draw(m).rounded_rectangle(body, radius=r, fill=255)
-chip.paste(grad, (0, 0), m)
-cd.rounded_rectangle(body, radius=r, outline=(20, 12, 50, 255), width=max(2, int(L * 0.018)))
-# the letter N: two vertical strokes and a diagonal (with a shadow)
-lw = int(L * 0.10)
-lx, rx, ty_, by_ = int(L * 0.34), int(L * 0.66) - int(L * 0.10), int(L * 0.25), int(L * 0.72)
-def letter_n(d, o, fill):
-    d.rectangle([lx + o, ty_ + o, lx + lw + o, by_ + o], fill=fill)
-    d.rectangle([rx + o, ty_ + o, rx + lw + o, by_ + o], fill=fill)
-    d.polygon([(lx + o, ty_ + o), (lx + lw + o, ty_ + o), (rx + lw + o, by_ + o), (rx + o, by_ + o)], fill=fill)
-letter_n(cd, 4, (30, 18, 70, 160))
-letter_n(cd, 0, (255, 255, 255, 255))
-# golden mark
-pr = int(L * 0.055)
-cd.ellipse([int(L * 0.12), int(L * 0.16), int(L * 0.12) + 2 * pr, int(L * 0.16) + 2 * pr], fill=(246, 196, 70, 255))
-# glass sheen on the upper half of the body
-gloss = Image.new("L", (L, L), 0)
-gd = ImageDraw.Draw(gloss)
-gd.rounded_rectangle([body[0] + 6, body[1] + 6, body[2] - 6, int(L * 0.48)], radius=r, fill=88)
-gloss = gloss.filter(ImageFilter.GaussianBlur(L * 0.01))
-gloss_np = np.asarray(gloss, np.float32) * np.linspace(1, 0.25, L)[:, None]
-white = Image.new("RGBA", (L, L), (255, 255, 255, 0))
-white.putalpha(Image.fromarray(np.clip(gloss_np, 0, 255).astype(np.uint8)))
-chip = Image.alpha_composite(chip, white)
+u = L / 64.0
+P = lambda pts: [(px * u, py * u) for px, py in pts]
+for side in (0, 1):                                     # the pins
+    for i in range(9):
+        t = (i + 0.7) / 9.4
+        px, py = (32 + 26 * t, 48 - 16 * t) if side else (6 + 26 * t, 32 + 16 * t)
+        cd.rectangle([px * u, py * u, (px + 1.7) * u, (py + 6) * u], fill=(95, 89, 76, 255))
+        cd.rectangle([px * u, py * u, (px + 1.0) * u, (py + 5.2) * u], fill=(222, 214, 192, 255))
+cd.polygon(P([(4, 32), (32, 15), (60, 32), (32, 50)]), fill=(122, 90, 18, 255))
+cd.polygon(P([(5, 31), (32, 14), (59, 31), (32, 48)]), fill=(232, 185, 58, 255))
+cd.line(P([(6, 31), (32, 15), (58, 31)]), fill=(255, 227, 138, 255), width=max(2, int(u * 0.8)))
+cd.polygon(P([(10, 31), (32, 17.5), (54, 31), (32, 44.5)]), fill=(46, 138, 78, 255))
+for a, b, c, d in ((32, 19, 32, 24), (24, 24, 28, 27), (40, 24, 36, 27), (16, 31, 22, 31),
+                   (42, 31, 48, 31), (24, 38, 28, 35), (40, 38, 36, 35), (32, 43, 32, 39)):
+    cd.line(P([(a, b), (c, d)]), fill=(214, 178, 74, 255), width=max(2, int(u * 0.6)))
+    cd.ellipse([a * u - u * 0.7, b * u - u * 0.7, a * u + u * 0.7, b * u + u * 0.7], fill=(214, 178, 74, 255))
+f_n = font("InterDisplay-Bold.otf", 21 * u / S)
+cx, cy = 32 * u, 31 * u
+cd.text((cx + 1.4 * u, cy + 1.4 * u), "N", font=f_n, fill=(90, 42, 136, 255), anchor="mm")
+cd.text((cx, cy), "N", font=f_n, fill=(242, 238, 226, 255), anchor="mm")
+def spark(px, py, r, col):
+    cd.polygon(P([(px - r, py), (px, py - r * 0.22), (px + r, py), (px, py + r * 0.22)]), fill=col)
+    cd.polygon(P([(px, py - r), (px + r * 0.22, py), (px, py + r), (px - r * 0.22, py)]), fill=col)
+spark(52, 10, 6, (255, 212, 90, 255))
+spark(12, 14, 3.5, (127, 240, 224, 255))
+spark(58, 22, 3, (255, 212, 90, 255))
 brand.alpha_composite(chip, (x0, y0))
 
 # 5b. The title: "Nirvana" bold and white, "Desktop" thin and light blue
 tx = x0 + L + gap
-ty = y0 + L // 2
+ty = y0 + int(L * 31 / 64)
 bd.text((tx, ty), "Nirvana", font=f_nirvana, fill=(255, 255, 255, 255), anchor="lm")
 bd.text((tx + w_nirvana, ty), " Desktop", font=f_desk, fill=(150, 200, 255, 255), anchor="lm")
 # a letter-spaced subtitle below the title
@@ -196,7 +182,7 @@ img += hl[..., None] * np.array([90, 150, 255.]) * 1.2
 
 # 7. Composition: background + logo/title + their reflection on the floor
 out = Image.fromarray(np.clip(img, 0, 255).astype(np.uint8), "RGB").convert("RGBA")
-bottom = y0 + L
+bottom = y0 + int(L * 57 / 64)
 mirror = brand.crop((0, y0, W, bottom)).transpose(Image.FLIP_TOP_BOTTOM)
 ma = np.asarray(mirror, np.float32)
 fadev = np.linspace(0.32, 0, ma.shape[0])[:, None] ** 1.3

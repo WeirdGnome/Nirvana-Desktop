@@ -1,5 +1,7 @@
 # Nirvana Desktop
 
+<img src="docs/img/logo.png" alt="Nirvana Desktop logo" width="160" align="right">
+
 *[Polska wersja: README.pl.md](README.pl.md)*
 
 A lightweight desktop environment for Linux (based on a minimal Devuan) in the spirit
@@ -24,18 +26,20 @@ on the desktop. Written in C++ and FLTK 1.4.
 | `nirvana-denise`    | Rambler: file manager + desktop         | prototype   |
 | `nirvana-insight`   | X11 window manager (Xorg/XLibre), Platinum frames | works |
 | `nirvana-gary`      | application switcher (for now inside the Rambler process) | works |
-| `nirvana-alice`     | control panels: Appearance, Network, Power, Date & Time, Shader | works |
+| `nirvana-alice`     | control panels: User, Appearance, Network, Power, Date & Time, Printers, Shader | works |
 | `nirvana-shader`    | full-screen GLSL effects (a small compositor) | works |
 | `nirvana-shell`     | Nirvana Shell - terminal emulator       | works |
 | `nirvana-paula`     | sound                                   | planned     |
-| `nirvana-kickstart` | login and session start                 | planned     |
+| `nirvana-dm-greeter` | Nirvana-DM - the login screen (a LightDM greeter) | works |
+| `nirvana-portal`     | the Nirvana file dialog for other programs (xdg-desktop-portal) | works |
+| `nirvana-polkit-agent` | the password window of polkit (pkexec, disks, updates) | works |
 | `nirvana-guru`      | error window                            | planned     |
 
 ## Installing on Devuan 6 "Excalibur" (Debian 13)
 
 Unpack the sources and run the installer:
 
-    tar xzf nirvana-desktop-0.0.21.tar.gz && cd nirvana-desktop
+    tar xzf nirvana-desktop-0.0.37.tar.gz && cd nirvana-desktop
     sudo ./install.sh                 # or: sudo ./install.sh --login-screen
 
 The installer:
@@ -44,7 +48,7 @@ The installer:
 2. builds Nirvana Desktop (the first time it downloads FLTK 1.4 from GitHub – internet needed),
 3. creates the package `build-deb/nirvana_<version>_amd64.deb` and installs it with apt –
    together with the programs Nirvana Desktop uses: NetworkManager, udisks2, polkit
-   with the `lxpolkit` agent, PulseAudio/PipeWire, bubblewrap, xsecurelock…
+   PulseAudio/PipeWire, bubblewrap, xdg-desktop-portal…
 4. adds the X server if it is missing and offers PipeWire if there is no sound.
 
 The version number is in the `VERSION` file and goes up with every released package. Running
@@ -80,10 +84,13 @@ Dependencies (Devuan/Debian):
         network-manager network-manager-openvpn \  # network and VPN
         libxss-dev pulseaudio-utils alsa-utils \  # sound and power applets
         gettext \                                 # translations (msgfmt)
-        libgl-dev libxcomposite-dev libxdamage-dev # nirvana-shader (full-screen effects)
+        libgl-dev libxcomposite-dev libxdamage-dev \ # nirvana-shader (full-screen effects)
+        libcups2-dev                              # printers (optional)
+        liblightdm-gobject-dev libglib2.0-dev     # Nirvana-DM, file dialog portal (optional)
+        libpolkit-agent-1-dev libpam0g-dev        # password window, screen lock (optional)
 
-Optional: `power-profiles-daemon` (power profiles), `xsecurelock`, `i3lock`
-or `slock` (screen lock). On Rocky: `libXScrnSaver-devel pulseaudio-utils`.
+Optional: `power-profiles-daemon` (power profiles). Without PAM another screen locker
+(`xsecurelock`, `i3lock`, `slock`) is used. On Rocky: `libXScrnSaver-devel pulseaudio-utils`.
 
 If FLTK 1.4 is not installed, CMake downloads and builds version 1.4.4 itself:
 
@@ -186,6 +193,16 @@ Another system font (for example a free bitmap-style one) can be set with `NIRVA
   folders are `Gry`, `Grafika`… – existing folders are kept when the language changes.
 
   ![Two versions of a game side by side](docs/img/games.png)
+- **The right processor**: an AppImage built for another processor (e.g. ARM64 on an x86-64
+  computer) is not installed or started - the error window says which version to download.
+- **Missing system libraries**: before starting, Rambler reads the ELF headers of the
+  application (AppRun, `usr/bin`, the Qt X11 plugin `libqxcb.so` and the libraries they pull in)
+  and checks which libraries are neither inside the AppImage nor in the system. Qt 6 programs
+  often need `libxcb-cursor0`, `libxcb-icccm4`, `libxkbcommon-x11-0`… - Qt then only says
+  "could not load the Qt platform plugin xcb" (and the hint about xcb-cursor0 is printed even
+  when something else is missing). Rambler names the libraries and offers **Install** (the
+  packages through `nirvana-libs-helper`, only libraries from its fixed list) or **Run Anyway**.
+  From a terminal: `nirvana-denise --missing-libs FILE.AppImage`.
 - **Running in a sandbox** (bubblewrap): the whole system is read-only, writing is only
   possible in Nirvana HD, other users, `/root`, `/mnt` and `/media` are invisible, with its
   own `/tmp` and its own process namespace; the application itself is read-only.
@@ -252,8 +269,14 @@ An application is a group of windows with the same `WM_CLASS`. AppImages started
 appear under their own name and icon (e.g. "Clock" instead of "XClock"); the mapping is
 remembered in `~/.config/nirvana/app-classes`.
 
-**Alt+Tab** (Insight): hold Alt and press Tab to go through the applications starting with the
-most recently used; Shift goes back, Escape cancels, releasing Alt chooses.
+**Alt+Tab** (Insight): hold Alt and press Tab - a panel with a preview of every window appears,
+the most recently used first, the previous one already chosen. Tab (and the arrows) move on,
+Shift+Tab goes back, a click or releasing Alt chooses, Escape cancels. A minimized window
+(striped preview) comes back from its desktop icon. There is no compositor, so each preview is
+taken while its window is on top (a moment after it gets the focus, then every 3 s); a window
+never active yet shows its initial.
+
+![Alt+Tab](docs/img/alt-tab.png)
 
 It works on the EWMH standard (`_NET_CLIENT_LIST`, `_NET_ACTIVE_WINDOW`, `WM_CHANGE_STATE`,
 `_NET_CLOSE_WINDOW`), so also under GNOME, KDE or Openbox. Under another window manager the
@@ -317,7 +340,8 @@ below 10 GB with one decimal). The last value is the memory of Nirvana Desktop i
 as PSS – shared libraries split between the processes, so it is the real cost. Not included:
 what the X server keeps for Nirvana's windows (pixmaps, glyphs) and the services the session
 starts (the session D-Bus, PipeWire, the polkit agent). With `nirvana-shader` running on a
-computer without a GPU, most of it is the OpenGL software renderer (llvmpipe). The values refresh
+computer without a GPU, most of it is the OpenGL software renderer (llvmpipe), so the shader's
+part is shown separately: `99MB used by Nirvana (shader 81MB)`. The values refresh
 every 3 seconds; the tooltip shows the free amounts and the memory of each Nirvana program. On a narrow screen the
 text gets shorter.
 
@@ -334,7 +358,7 @@ text gets shorter.
 the administrator password (pkexec – only reading the file runs as root), and as a last resort
 shows the log of the session (`~/.xsession-errors`).
 | **System** | Lock Screen, Sleep, Hibernate, Log Out `Ctrl+Q`, Restart, Shut Down |
-| **Special** | Format Disk, Empty Trash |
+| **Special** | Format Disk, Empty Trash, Force Quit a Window… `Ctrl+Alt+K` (like xkill: a skull cursor, click the window of a program that hangs, confirm; the right button or Esc cancels; Nirvana's own windows are protected) |
 
 **About This Computer** shows the system in the manner of neofetch: a large logo with the
 color swatches on the left and `user@host` with the parameters on the right – OS, host, kernel,
@@ -629,6 +653,127 @@ are not asked for a password. Without systemd the zone is set by `/etc/localtime
 
 ![Date & Time](docs/img/datetime.png)
 
+## Printers
+
+A printer icon appears in the menu bar when CUPS has a printer or a print job. A blue badge
+shows the number of jobs, red when the default printer has stopped (out of paper, a jam, an
+open cover…). The small window shows each printer with its state, the jobs with a **×** to
+cancel each one, **Cancel All My Jobs**, **Print Test Page** and **Printer Settings…**.
+
+**Preferences → Printers**:
+
+- the printers with their description, driver, connection, state and waiting jobs; **Set as
+  Default** (for you, `lpoptions`), **Print Test Page**, **Pause/Resume**, **Remove**,
+- **Add Printer…**: *Search* lists what CUPS finds (USB, network, IPP/AirPrint); an address can
+  be typed too (`ipp://192.168.1.20/ipp/print`, `socket://…`). Network printers that speak IPP
+  get **driverless** printing (IPP Everywhere) at the top of the list; otherwise the drivers of
+  the manufacturer are offered,
+- **missing drivers**: when there is no driver for the manufacturer, the window says so and
+  **Install Drivers…** offers the right packages (HPLIP for HP, brlaser for Brother, ESC/P-R
+  for Epson, Gutenprint, SpliX, foo2zjs, Foomatic, the manufacturer PPDs, cups-filters) – the
+  package names are chosen for apt, dnf, pacman or zypper; the list of drivers fills in at once,
+- **no CUPS at all**: the panel offers to install (or start) the printing system.
+
+Adding, removing, pausing and installing go through `/usr/libexec/nirvana-print-helper` with
+pkexec (only checked names, addresses of known kinds and drivers CUPS itself offers);
+administrators at the computer are not asked for a password. Reading the state, cancelling your
+own jobs, the test page and your default printer need no rights.
+
+![The printer applet](docs/img/printers-applet.png)
+![Preferences > Printers](docs/img/printers.png)
+
+## Nirvana-DM: the login screen
+
+`--login-screen` of `install.sh` installs LightDM with **Nirvana-DM** (and the package itself
+makes LightDM use it: `/usr/share/lightdm/lightdm.conf.d/50-nirvana-dm.conf`). A simple screen
+in the style of the 1990s: the desktop background, a menu bar with the logo and the clock, and a
+window in the middle with the users (their `~/.face` picture or a figure; a green dot for those
+already logged in, *Other…* for typing a name), the password and the session.
+
+- **Theme** – any color scheme, **Background** – the patterns and the Nirvana wallpapers,
+  **Language** – the language of the screen; the choice applies at once and is saved in the home
+  folder of the login screen (`/var/lib/lightdm/.config/nirvana`), so **it stays after a restart**,
+- **Special** – Sleep, Restart, Shut Down (when the system allows them),
+- the last user is chosen again next time, the session follows the user's last one.
+
+LightDM does the security-sensitive part (the X server, PAM, the session, elogind); Nirvana-DM
+is only the screen in front of it. `nirvana-dm-greeter --test` shows a preview in a window.
+Back to another greeter: `greeter-session=…` in `/etc/lightdm/lightdm.conf.d/`.
+
+![Nirvana-DM](docs/img/nirvana-dm.png)
+
+### User (Preferences)
+
+**Preferences → User** holds the basic settings of your account:
+
+- **Picture** – a picture file (cut to a square) or one of eight built-in pictures; Nirvana-DM
+  shows it next to your name. It is saved as `~/.face` and copied to
+  `/var/lib/AccountsService/icons`, because the login screen cannot look into a closed home folder,
+- **Full name** – shown on the login screen instead of the login name,
+- **Change Password…** – the current and the new password; the system program `passwd` checks
+  and saves it (with its rules for length and strength),
+- **Log in automatically** – LightDM starts your desktop without the login screen
+  (administrators only),
+- the login name, the account type, the home folder, the shell and the groups.
+
+The picture, the name and automatic login go through `nirvana-user-helper` (pkexec, polkit
+action `org.nirvana-desktop.user`): it only ever changes the account of the person who runs it,
+and reads the picture as data (a PNG up to 1 MB), never as a path. You confirm with your own
+password; administrators at the computer are not asked.
+
+![User](docs/img/user.png)
+
+## Screen saver and screen lock
+
+**Preferences → Screen Saver** chooses the saver - Black Screen, Starfield, Bouncing Lines,
+Nirvana Logo, Pipes, Plasma, Clock, Snow, Fireworks, Game of Life, Maze (carved and then
+walked through), Spirograph, Flying Chips, Aquarium, Fire, Bubbles or Random - with a preview in a little monitor, when it
+starts, whether it **locks** the screen (at once or after it ran a few minutes) and when the
+monitor goes to sleep. *Test* shows it full screen, *Lock Now* locks. The ideas come from the
+savers of the 1990s and xscreensaver; the code is new.
+
+`nirvana-lock` does both: Rambler starts `nirvana-lock --saver` when the computer is idle (not in
+presentation mode), and System → Lock Screen, sleeping and `nirvana-lock` from a terminal lock at
+once. It covers all screens and grabs the keyboard and mouse; a key or a mouse movement brings
+the password window (the desktop background, your picture and name, *Switch User…* with
+LightDM). The password is checked by PAM (`/etc/pam.d/nirvana-lock`) in a separate process, so
+a wrong password does not freeze the screen. Building needs `libpam0g-dev`;
+`NIRVANA_LOCKER=command` uses another locker.
+
+![Screen Saver](docs/img/screensaver.png)
+
+![More savers](docs/img/savers.png)
+
+![The lock](docs/img/lock.png)
+
+## File dialog and password window
+
+**The file dialog.** Open, Save and Choose Folder look like the rest of Nirvana Desktop: the
+places on the left (home, the user folders, Applications, the file system, mounted disks), the
+folder popup with the folders up to the root, the list with icons, size and date, the type filter,
+*New Folder* and *Show hidden files*. Typing `/` or `~` in the list goes to a folder by path.
+The control panels use it, and so do other programs through **xdg-desktop-portal**:
+`nirvana-portal` is a portal backend (`share/xdg-desktop-portal/portals/nirvana.portal`,
+chosen in `nirvana-portals.conf`), so Firefox, Chromium-based browsers, GTK 3/4 and Qt programs
+and Flatpaks get this dialog instead of the GTK one. The session sets `GTK_USE_PORTAL=1`,
+`GDK_DEBUG=portals` and (when empty) `QT_QPA_PLATFORMTHEME=xdgdesktopportal` for that;
+`NIRVANA_PORTAL_DIALOGS=0` turns it off. Programs that draw their own dialog without asking the
+portal (older GTK 2 programs, some AppImages) keep theirs.
+
+![The file dialog](docs/img/filedialog.png)
+
+**The password window.** When a program asks for administrator rights (`pkexec`, disks, network,
+updates, printers), `nirvana-polkit-agent` shows the request, the program and the account, and
+passes the password to polkit's own helper (PAM) - it never keeps it. A wrong password can be typed
+again; Esc cancels. The session starts it instead of lxpolkit or another agent
+(`NIRVANA_POLKIT_AGENT=0`: the other agent). Nirvana's own tools (updates, date, printers, user,
+libraries) go through `nirvana-pkexec`, which starts the password window for that one call - so
+they work even when the session is not known to elogind (e.g. `startx` without `libpam-elogind`),
+where no session agent can register and plain pkexec fails with "Error creating textual
+authentication agent".
+
+![The password window](docs/img/polkit-agent.png)
+
 ## Software updates
 
 An icon with a parcel in the menu bar looks for system updates a minute after login and then every
@@ -643,7 +788,6 @@ progress.
 | pacman (Arch) | `checkupdates` (pacman-contrib) | `pacman -Syu` |
 | zypper (openSUSE) | `zypper list-updates` | `zypper update` |
 | apk (Alpine), xbps (Void) | the local lists | `apk upgrade`, `xbps-install -Syu` |
-| Flatpak | `flatpak remote-ls --updates` | `flatpak update --system` |
 
 Checking never needs root: on apt the package lists are downloaded into the user's cache, so the
 system's lists are not touched (the idea of `checkupdates`). Installing runs
@@ -722,6 +866,15 @@ result goes to `gl_FragColor`. The first comment line is the description in the 
 
 Another compositor (picom, compton) cannot run at the same time. Without graphics acceleration
 (e.g. in a virtual machine, llvmpipe) animated effects use a lot of CPU.
+
+## Error windows
+
+Errors (a file that cannot be opened, a disk, the Trash, copying, an AppImage for another
+processor…) come in a window titled **Guru Meditation**: red text in a black box with a blinking
+red frame and a guru number made from the message (`#00000010.6718A071`) - a nod to the error
+screens of the 1980s home computers. Questions and notices keep the ordinary window.
+
+![Guru Meditation](docs/img/guru.png)
 
 ## Languages
 

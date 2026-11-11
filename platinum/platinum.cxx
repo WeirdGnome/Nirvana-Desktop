@@ -11,6 +11,7 @@
 #include <FL/Fl_Image_Surface.H>
 #include <FL/Fl_RGB_Image.H>
 #include <algorithm>
+#include <unistd.h>
 #include <cmath>
 #include <cstdlib>
 #include <utility>
@@ -88,7 +89,7 @@ static void well_box(int x, int y, int w, int h, Fl_Color c) {
 }
 
 static void menubar_box(int x, int y, int w, int h, Fl_Color c) {
-  if (title_style() == TitleStyle::Glossy && h > 4) {
+  if (title_style() == TitleStyle::Glossy && h > 4 && h <= 32) {   // (not the tall pull-down menus, they use this box too)
     // glass, like the title bars: a shine on the upper half, then the bar color with a little
     // light coming back at the bottom (depends only on y, so all the pieces of the bar match)
     uchar r, g, b;
@@ -810,30 +811,150 @@ void draw_icon(Icon icon, int x, int y, bool sel) {
 
 // The Nirvana Desktop logo: a DIP chip (a nod to the custom chips of old home computers) with the letter "N".
 // Drawn for 32 px; larger sizes scale the strokes and get more pins.
+std::string guru_number(const std::string &m) {
+  unsigned h = 2166136261u;   // FNV-1a
+  for (unsigned char c : m) h = (h ^ c) * 16777619u;
+  char b[32];
+  snprintf(b, sizeof b, "#%08X.%08X", (unsigned)(m.size() % 16 + 1), h);
+  return b;
+}
+
+std::string pkexec_command() {
+  char buf[4096];
+  ssize_t n = readlink("/proc/self/exe", buf, sizeof buf - 1);
+  std::string e = n > 0 ? std::string(buf, (size_t)n) : "";
+  e = e.substr(0, e.rfind('/'));
+  for (const std::string &c : {e + "/../libexec/nirvana-pkexec", e + "/../update/nirvana-pkexec",
+                               std::string("/usr/libexec/nirvana-pkexec"), std::string("/usr/local/libexec/nirvana-pkexec")})
+    if (!access(c.c_str(), X_OK)) return c;
+  return "pkexec";
+}
+
+void guru_alert(const std::string &m) {
+  fl_message_title(GURU_TITLE);
+  fl_alert("%s\n\n%s %s", m.c_str(), GURU_TITLE, guru_number(m).c_str());
+}
+
+// The Nirvana Desktop logo: a chip seen from the side (a golden rim, a green board with
+// traces, pins), the silver N on it, rays of light and sparkles on a night-blue screen in a
+// light frame. Drawn at any size; small sizes leave out the details. Fixed colors (not the scheme).
 void draw_logo(int x, int y, int s) {
-  double k = std::max(1.0, s / 32.0);
-  auto u = [&](double v) { return std::max(1, (int)(v * k + 0.5)); };
-  Fl_Color body = rgb(0x4B3590);
-  fl_color(rgb(0x777777));   // the logo has fixed colors, independent of the scheme
-  int pins = s >= 64 ? 8 : 4, pw = u(2);
-  for (int i = 0; i < pins; i++) {
-    int px = x + u(3) + i * (s - 2 * u(3)) / (pins - 1) - (i ? pw / 2 : 0);
-    if (i == pins - 1) px = x + s - u(3) - pw + 1;
-    if (pins == 4) px = x + 3 + i * (s - 6) / 3;   // the 32 px original
-    fl_rectf(px, y, pw, u(2));
-    fl_rectf(px, y + s - u(2), pw, u(2));
+  const double u = s / 64.0;
+  auto X = [&](double v) { return x + v * u; };
+  auto Y = [&](double v) { return y + v * u; };
+  auto quad = [&](double x1, double y1, double x2, double y2, double x3, double y3, double x4, double y4) {
+    fl_begin_polygon();
+    fl_vertex(X(x1), Y(y1)); fl_vertex(X(x2), Y(y2)); fl_vertex(X(x3), Y(y3)); fl_vertex(X(x4), Y(y4));
+    fl_end_polygon();
+  };
+  auto tri = [&](double x1, double y1, double x2, double y2, double x3, double y3) {
+    fl_begin_polygon();
+    fl_vertex(X(x1), Y(y1)); fl_vertex(X(x2), Y(y2)); fl_vertex(X(x3), Y(y3));
+    fl_end_polygon();
+  };
+  bool big = s >= 32, huge = s >= 96;
+  // 1. the frame and the night-blue screen
+  double m = big ? 4 : 0;   // the frame width
+  if (big) {
+    fl_color(rgb(0xB4AE9E)); fl_rectf(x, y, s, s);
+    fl_color(rgb(0xE6E1D3)); fl_xyline(x, y, x + s - 1); fl_yxline(x, y, y + s - 1);
+    fl_color(rgb(0x5C574D)); fl_xyline(x, y + s - 1, x + s - 1); fl_yxline(x + s - 1, y, y + s - 1);
   }
-  fl_color(body);
-  fl_rectf(x + u(1), y + u(2), s - 2 * u(1), s - 2 * u(2));
-  fl_color(FL_BLACK);
-  for (int i = 0; i < u(1); i++) fl_rect(x + u(1) + i, y + u(2) + i, s - 2 * u(1) - 2 * i, s - 2 * u(2) - 2 * i);
-  fl_color(FL_WHITE);
-  int nw = u(7), sw = u(2), nx = x + s / 2 - u(3), ny = y + u(4), nh = s - 2 * u(4);
-  fl_rectf(nx, ny, sw, nh);                 // N: two strokes and a diagonal
-  fl_rectf(nx + nw - sw, ny, sw, nh);
-  for (int j = 0; j < nh; j++) fl_rectf(nx + sw / 2 + j * (nw - sw - 1) / std::max(1, nh - 1), ny + j, sw, 1);
-  fl_color(rgb(0xF0C040));
-  fl_pie(x + u(2), y + u(3), u(3), u(3), 0, 360);   // pin 1 mark
+  int sx = (int)X(m), sy = (int)Y(m), sw = s - 2 * (int)(m * u), sh = sw;
+  for (int i = 0; i < sh; i++) {
+    fl_color(fl_color_average(rgb(0x2A1D58), rgb(0x16285E), sh > 1 ? (float)i / (sh - 1) : 0));
+    fl_xyline(sx, sy + i, sx + sw - 1);
+  }
+  fl_push_clip(sx, sy, sw, sh);
+  // 2. rays of light from behind the chip
+  if (big) {
+    const unsigned ray[] = {0x2E56A8, 0x1F8C9C, 0x4B3C9E, 0x2B6CC0, 0x21A5A8, 0x5A3AA0};
+    const double ang[] = {200, 228, 250, 285, 310, 330, 20, 48, 75, 110, 135, 160};
+    for (int i = 0; i < 12; i++) {
+      double a = ang[i] * M_PI / 180, w = (i % 3 == 0 ? 7 : 4) * M_PI / 180;
+      fl_color(fl_color_average(rgb(ray[i % 6]), rgb(0x1E2258), 0.6f));
+      tri(32, 32, 32 + 60 * cos(a - w), 32 + 60 * sin(a - w), 32 + 60 * cos(a + w), 32 + 60 * sin(a + w));
+    }
+    if (huge) {   // a bright streak across the top right
+      fl_color(rgb(0x58D2D8));
+      quad(40, 4, 46, 4, 30, 34, 27, 34);
+    }
+  }
+  // 3. the pins under the two lower edges
+  if (s >= 20) {
+    int n = s >= 64 ? 9 : s >= 40 ? 6 : 4;
+    for (int side = 0; side < 2; side++)
+      for (int i = 0; i < n; i++) {
+        double t = (i + 0.7) / (n + 0.4);
+        double px = side ? 32 + 26 * t : 6 + 26 * t, py = side ? 48 - 16 * t : 32 + 16 * t;
+        fl_color(rgb(0x5F594C));
+        fl_rectf((int)X(px), (int)Y(py), std::max(1, (int)(1.6 * u)), std::max(2, (int)(6 * u)));
+        fl_color(rgb(0xD8D1BC));
+        fl_rectf((int)X(px), (int)Y(py), std::max(1, (int)(1.0 * u)), std::max(2, (int)(5 * u)));
+      }
+  }
+  // 4. the chip: the golden rim, a darker edge and the green board
+  fl_color(rgb(0x7A5A12));
+  quad(4, 32, 32, 15, 60, 32, 32, 50);
+  fl_color(rgb(0xE8B93A));
+  quad(5, 31, 32, 14, 59, 31, 32, 48);
+  fl_color(rgb(0xFFE38A));
+  if (big) { fl_line(X(6), Y(31), X(32), Y(15)); fl_line(X(32), Y(15), X(58), Y(31)); }
+  fl_color(rgb(0x2E8A4E));
+  quad(10, 31, 32, 17.5, 54, 31, 32, 44.5);
+  if (s >= 48) {   // golden traces on the board
+    fl_color(rgb(0xD6B24A));
+    fl_line_style(FL_SOLID, std::max(1, (int)(0.6 * u)));
+    const double tr[][4] = {{32, 19, 32, 24}, {24, 24, 28, 27}, {40, 24, 36, 27}, {16, 31, 22, 31},
+                            {42, 31, 48, 31}, {24, 38, 28, 35}, {40, 38, 36, 35}, {32, 43, 32, 39}};
+    for (auto &t : tr) fl_line(X(t[0]), Y(t[1]), X(t[2]), Y(t[3]));
+    fl_line_style(0);
+    for (auto &t : tr) fl_rectf((int)X(t[0]) - (int)u / 2, (int)Y(t[1]) - (int)u / 2, std::max(1, (int)u), std::max(1, (int)u));
+  }
+  // 5. the letters: silver with a violet shadow
+  auto text = [&](const char *t, double cx, double cy, double size, Fl_Color face) {
+    fl_font(FL_HELVETICA_BOLD, std::max(6, (int)(size * u)));
+    int tw = (int)fl_width(t), th = fl_height(), d = fl_descent();
+    int tx = (int)X(cx) - tw / 2, ty = (int)Y(cy) + th / 2 - d;
+    int sh2 = std::max(1, (int)(1.2 * u));
+    fl_color(rgb(0x5A2A88));
+    fl_draw(t, tx + sh2, ty + sh2);
+    fl_color(rgb(0x2A1840));
+    fl_draw(t, tx + 1, ty);
+    fl_color(face);
+    fl_draw(t, tx, ty);
+  };
+  if (huge) {
+    text("NIRVANA", 32, 29.5, 9.6, rgb(0xEEE8D8));
+    // the ribbon with DESKTOP
+    fl_color(rgb(0xBDB6A2));
+    quad(18, 36.5, 46, 36.5, 46, 41.5, 18, 41.5);
+    tri(18, 36.5, 15, 39, 18, 41.5);
+    tri(46, 36.5, 49, 39, 46, 41.5);
+    fl_color(rgb(0x3A3446));
+    fl_font(FL_HELVETICA_BOLD, std::max(6, (int)(3.6 * u)));
+    fl_draw("DESKTOP", (int)X(18), (int)Y(36.5), (int)(28 * u), (int)(5 * u), FL_ALIGN_CENTER, nullptr, 0);
+  } else {
+    text("N", 32, 31.5, s >= 32 ? 21 : 26, rgb(0xF2EEE2));
+  }
+  // 6. sparkles
+  if (big) {
+    auto spark = [&](double cx, double cy, double r, unsigned c) {
+      fl_color(rgb(c));
+      quad(cx - r, cy, cx, cy - r * 0.22, cx + r, cy, cx, cy + r * 0.22);
+      quad(cx, cy - r, cx + r * 0.22, cy, cx, cy + r, cx - r * 0.22, cy);
+    };
+    spark(50, 11, 5, 0xFFD45A);
+    spark(13, 13, 3, 0x7FF0E0);
+    spark(56, 22, 2.6, 0xFFD45A);
+    spark(41, 7, 2, 0xD98CFF);
+    if (huge) { spark(20, 8, 2.2, 0xFFD45A); spark(54, 44, 2.4, 0x7FF0E0); spark(9, 50, 2, 0xD98CFF); }
+  }
+  fl_pop_clip();
+  if (big) {   // the inner edge of the frame
+    fl_color(rgb(0x2A2833));
+    fl_rect(sx - 1, sy - 1, sw + 2, sh + 2);
+  }
 }
 
 // ---------------------------------------------------------------------------

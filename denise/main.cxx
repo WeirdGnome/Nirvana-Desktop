@@ -8,6 +8,7 @@
 // the panels of another desktop (e.g. the GNOME top bar);
 // without --size it fills the whole work area.
 // The same: the variable NIRVANA_CENTER=1
+// nirvana-denise --missing-libs FILE.AppImage   lists the system libraries the application lacks
 #include <FL/Fl.H>
 #include <FL/platform.H>
 #include <X11/Xatom.h>
@@ -34,6 +35,17 @@ int main(int argc, char **argv) {
   int W = 0, H = 0;
   bool center = getenv("NIRVANA_CENTER") && !strcmp(getenv("NIRVANA_CENTER"), "1");
 
+  // nirvana-denise --missing-libs FILE.AppImage: the system libraries the application lacks
+  if (argc > 2 && !strcmp(argv[1], "--missing-libs")) {
+    std::string path = std::filesystem::absolute(argv[2]).string();
+    if (!appimage::is_installed(path, home)) {
+      std::string err = appimage::install(path, home);
+      if (!err.empty()) { fprintf(stderr, "%s\n", err.c_str()); return 1; }
+    }
+    auto miss = appimage::missing_libs(path, home);
+    for (auto &m : miss) printf("%s\n", m.c_str());
+    return miss.empty() ? 0 : 3;
+  }
   for (int i = 1; i < argc; i++) {
     if (!strcmp(argv[i], "--home") && i + 1 < argc) home = argv[++i];
     else if (!strcmp(argv[i], "--size") && i + 1 < argc) sscanf(argv[++i], "%dx%d", &W, &H);

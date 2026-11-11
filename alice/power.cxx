@@ -15,6 +15,8 @@
 #include <FL/Fl_Choice.H>
 
 #include <algorithm>
+#include <csignal>
+#include <unistd.h>
 #include <string>
 
 using namespace plat;
@@ -22,11 +24,9 @@ using namespace plat;
 namespace {
 
 FrameWindow *g_win;
-Fl_Choice *g_blank, *g_bat, *g_ac, *g_crit;
-Fl_Check_Button *g_lock;
+Fl_Choice *g_bat, *g_ac, *g_crit;
 power::IdleSettings g_s;
 
-const int BLANK[] = {1, 2, 5, 10, 15, 30, 60, 0};
 const int SLEEP[] = {5, 10, 15, 20, 30, 45, 60, 120, 0};
 
 Fl_Choice *minutes_choice(int X, int Y, int W, const char *l, const int *vals, int n, int cur) {
@@ -61,8 +61,13 @@ Fl_Box *note(int X, int Y, int W, int H, const char *t) {
 }
 
 void save() {
-  g_s.blank_min = BLANK[g_blank->value()];
-  g_s.lock_on_blank = g_lock->value();
+  // the saver settings stay as they are (the Screen Saver panel) - only re-read, another panel may have changed them
+  auto cur = power::read_idle();
+  g_s.blank_min = cur.blank_min;
+  g_s.lock_on_blank = cur.lock_on_blank;
+  g_s.saver = cur.saver;
+  g_s.lock_delay_min = cur.lock_delay_min;
+  g_s.monitor_off_min = cur.monitor_off_min;
   g_s.sleep_battery_min = SLEEP[g_bat->value()];
   g_s.sleep_ac_min = SLEEP[g_ac->value()];
   g_s.critical_action = g_crit->value();
@@ -73,6 +78,7 @@ void save() {
 }  // namespace
 
 int panel_power() {
+  signal(SIGCHLD, SIG_IGN);
   g_s = power::read_idle();
   power::State st = power::query();
   const int W = 500, H = 380;
@@ -81,17 +87,27 @@ int panel_power() {
   int y = 10;
   heading(15, y, _("Screen"));
   y += 26;
-  g_blank = minutes_choice(230, y, 150, _("Turn off screen when idle for:"), BLANK, 8, g_s.blank_min);
-  y += 30;
-  g_lock = new Fl_Check_Button(226, y, 260, 22, _("Lock screen when it turns off"));
-  g_lock->labelsize(SIZE_SMALL + 1);
-  g_lock->value(g_s.lock_on_blank);
-  y += 22;
-  std::string l = power::locker();
-  std::string lt = l.empty() ? _("No screen locker - install xsecurelock, i3lock or slock.")
-                             : fmt(_("Screen locker: %1."), l.substr(0, l.find(' ')));
-  note(230, y, W - 245, 30, lt.c_str());
-  y += 36;
+  {
+    std::string st = g_s.blank_min ? fmt(_("The screen saver starts after %1 min%2."), std::to_string(g_s.blank_min),
+                                          g_s.lock_on_blank ? std::string(_(", then the screen locks")) : std::string())
+                                   : std::string(_("The screen saver is off."));
+    note(30, y + 2, W - 200, 30, st.c_str());
+    auto *b = new Fl_Button(W - 160, y, 145, 24, _("Screen Saver…"));
+    b->box(BUTTON_BOX);
+    b->down_box(BUTTON_DOWN);
+    b->labelsize(SIZE_SMALL + 1);
+    b->callback([](Fl_Widget *, void *) {
+      if (fork() == 0) {
+        char exe[4096];
+        ssize_t n = readlink("/proc/self/exe", exe, sizeof exe - 1);
+        exe[n > 0 ? n : 0] = 0;
+        setsid();
+        execl(exe, "nirvana-alice", "saver", (char *)nullptr);
+        _exit(127);
+      }
+    });
+  }
+  y += 40;
 
   heading(15, y, _("Computer Sleep"));
   y += 26;

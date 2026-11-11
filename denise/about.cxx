@@ -489,13 +489,18 @@ std::string credits_text() {
   item(std::string("libvterm — Paul Evans (MIT): ") + _("the terminal emulation in Nirvana Shell"));
   item(std::string("Xlib, libXext, libXss — ") + _("the X.Org Foundation and the X Window System authors") + " (MIT/X11)");
   item(std::string("libdbus — freedesktop.org (AFL-2.1 / GPL-2.0)"));
+  item(std::string("GLib / GIO — the GNOME project (LGPL-2.1): Nirvana-DM, nirvana-portal, nirvana-polkit-agent"));
+  item(std::string("liblightdm-gobject — Robert Ancell and the LightDM team (LGPL-3.0)"));
+  item(std::string("libpolkit-agent-1 — David Zeuthen and the polkit team (LGPL-2.0)"));
+  item(std::string("libcups — Michael Sweet, OpenPrinting (Apache-2.0)"));
+  item(std::string("Linux-PAM — Andrew G. Morgan, Thorsten Kukuk and the Linux-PAM team (BSD-3-Clause / GPL): nirvana-lock"));
   head(_("Color schemes"));
   item("Redmond97 SE — Sliver X (GPL-3.0)");
   item("Redmond97 — matthewmx86 (GPL-3.0)");
   head(_("Programs Nirvana Desktop works with"));
   item("NetworkManager, UDisks2, polkit, elogind, D-Bus");
   item("PipeWire, PulseAudio, ALSA");
-  item("squashfs-tools (unsquashfs), bubblewrap, xdg-desktop-portal");
+  item("squashfs-tools (unsquashfs), bubblewrap, xdg-desktop-portal, LightDM, CUPS");
   head(_("Standards"));
   item(std::string("freedesktop.org: XDG Base Directory, Desktop Entry, Icon Theme, ") + _("Trash, autostart"));
   item("ICCCM, EWMH, XEmbed");
@@ -503,6 +508,7 @@ std::string credits_text() {
   item(std::string("AppImage — Simon Peter ") + _("and the AppImage team"));
   head(_("Inspirations"));
   item(_("the desktops of the late 1980s and the 1990s: bevelled gray windows, a menu bar at the top, icons on the desktop"));
+  item(std::string("xscreensaver — Jamie Zawinski ") + _("and its many authors: the idea of the screen savers (written anew, no code taken)"));
   item(std::string("neofetch — Dylan Araps: ") + _("the layout of “About This Computer”"));
   item(std::string("Devuan, Debian — ") + _("the system underneath"));
   head(_("Made with"));

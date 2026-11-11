@@ -58,6 +58,9 @@ std::string reboot();
 
 // Screen lock with an external program (xsecurelock, i3lock, slock, xscreensaver...).
 std::string locker();          // the command, or "" when there is none
+std::string nirvana_lock();    // the path of nirvana-lock (Nirvana's own saver and lock), or ""
+bool saver_running();          // nirvana-lock is on the screen
+bool start_saver();            // nirvana-lock --saver (when idle)
 bool lock_screen();
 
 // --- projection mode ----------------------------------------------------------------
@@ -72,6 +75,10 @@ struct IdleSettings {
   int sleep_battery_min = 15;  // sleep on battery (0 = never)
   int sleep_ac_min = 0;        // sleep on AC power
   int critical_action = 1;     // at 3% battery: 0 nothing, 1 hibernate (or sleep), 2 sleep
+  // the screen saver (nirvana-lock): blank_min is when it starts
+  std::string saver = "stars"; // savers::list() id
+  int lock_delay_min = 0;      // lock after the saver ran N min (0 = at once); needs lock_on_blank
+  int monitor_off_min = 10;    // the monitor goes to sleep N min after the saver started (0 = never)
 };
 IdleSettings read_idle();
 bool write_idle(const IdleSettings &s);

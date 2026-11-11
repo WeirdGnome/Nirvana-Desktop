@@ -191,6 +191,13 @@ void draw_icon(Icon icon, int x, int y, bool selected);   // in the style from t
 bool draw_icon_retro(Icon icon, int x, int y, bool selected);
 int icon_style();   // 0 = Retro, 1 = Platinum (key for the icon caches)
 void draw_logo(int x, int y, int size);
+// Error windows have this title (a nod to the error screens of 1980s home computers).
+constexpr const char *GURU_TITLE = "Guru Meditation";
+// "#00000004.4B3A91C0": a guru number made from the message, for the error windows
+std::string guru_number(const std::string &message);
+void guru_alert(const std::string &message);
+// "nirvana-pkexec" (pkexec that brings its own password window) or plain "pkexec"
+std::string pkexec_command();   // fl_alert with the guru title
 // An icon rendered to an RGBA image (e.g. a window icon for _NET_WM_ICON); delete it.
 Fl_RGB_Image *icon_image(Icon icon, int size);
 

@@ -16,6 +16,7 @@
 #include <filesystem>
 #include <fstream>
 #include <functional>
+#include <map>
 #include <regex>
 #include <set>
 #include <vector>
@@ -500,7 +501,60 @@ static fs::path find_appdir(const fs::path &tmp) {
   return {};
 }
 
+// --- the processor the application is made for ---------------------------------------
+static std::string machine_name(int m) {
+  switch (m) {
+    case EM_X86_64: return "x86-64 (amd64)";
+    case EM_386: return "x86 (i386, 32-bit)";
+    case EM_AARCH64: return "ARM64 (aarch64)";
+    case EM_ARM: return "ARM (armhf, 32-bit)";
+    case EM_RISCV: return "RISC-V";
+    case EM_PPC64: return "PowerPC 64";
+    case EM_S390: return "s390x";
+#ifdef EM_LOONGARCH
+    case EM_LOONGARCH: return "LoongArch";
+#endif
+  }
+  return "#" + std::to_string(m);
+}
+
+static int host_machine() {
+#if defined(__x86_64__)
+  return EM_X86_64;
+#elif defined(__i386__)
+  return EM_386;
+#elif defined(__aarch64__)
+  return EM_AARCH64;
+#elif defined(__arm__)
+  return EM_ARM;
+#elif defined(__riscv)
+  return EM_RISCV;
+#elif defined(__powerpc64__)
+  return EM_PPC64;
+#else
+  return 0;
+#endif
+}
+
+std::string arch_problem(const std::string &path) {
+  // the runtime at the start of the AppImage is built for the same processor as the application
+  int fd = open(path.c_str(), O_RDONLY | O_CLOEXEC);
+  if (fd < 0) return "";
+  unsigned char h[20] = {};
+  ssize_t n = read(fd, h, sizeof h);
+  close(fd);
+  if (n < 20 || memcmp(h, ELFMAG, SELFMAG)) return _("This file is not an AppImage (it is not a Linux program).");
+  int m = h[EI_DATA] == ELFDATA2MSB ? (h[18] << 8 | h[19]) : (h[18] | h[19] << 8);
+  int host = host_machine();
+  if (!host || m == host) return "";
+  // a 32-bit x86 program on a 64-bit x86 computer can run with the i386 libraries
+  if (m == EM_386 && host == EM_X86_64) return "";
+  return plat::fmt(_("This application is made for %1 processors, but this computer has %2.\n"
+                     "Download the AppImage for %2 from the author's page."), machine_name(m), machine_name(host));
+}
+
 std::string install(const std::string &path, const std::string &home) {
+  if (std::string a = arch_problem(path); !a.empty()) return a;
   fs::path dir = install_dir(path, home), tmp = dir.string() + ".tmp";
   std::error_code ec;
   fs::create_directories(dir.parent_path(), ec);
@@ -543,6 +597,130 @@ std::string install(const std::string &path, const std::string &home) {
   fs::remove_all(dir, ec);
   fs::rename(tmp, dir, ec);
   return ec ? plat::fmt(_("Could not save the application: %1"), ec.message()) : "";
+}
+
+
+// ---------------------------------------------------------------------------
+// Missing system libraries - read from the ELF files, nothing is run
+// ---------------------------------------------------------------------------
+
+// DT_NEEDED of a 64-bit little-endian ELF file (empty for anything else)
+static std::vector<std::string> elf_needed(const std::string &path) {
+  std::vector<std::string> out;
+  int fd = open(path.c_str(), O_RDONLY | O_CLOEXEC);
+  if (fd < 0) return out;
+  Elf64_Ehdr eh;
+  auto rd = [&](void *b, size_t n, off_t off) { return pread(fd, b, n, off) == (ssize_t)n; };
+  if (!rd(&eh, sizeof eh, 0) || memcmp(eh.e_ident, ELFMAG, SELFMAG) || eh.e_ident[EI_CLASS] != ELFCLASS64 ||
+      eh.e_ident[EI_DATA] != ELFDATA2LSB || eh.e_phentsize != sizeof(Elf64_Phdr) || eh.e_phnum > 512) {
+    close(fd);
+    return out;
+  }
+  std::vector<Elf64_Phdr> ph(eh.e_phnum);
+  if (!rd(ph.data(), ph.size() * sizeof(Elf64_Phdr), (off_t)eh.e_phoff)) { close(fd); return out; }
+  auto to_off = [&](uint64_t vaddr) -> int64_t {
+    for (auto &p : ph)
+      if (p.p_type == PT_LOAD && vaddr >= p.p_vaddr && vaddr < p.p_vaddr + p.p_filesz) return (int64_t)(vaddr - p.p_vaddr + p.p_offset);
+    return -1;
+  };
+  for (auto &p : ph) {
+    if (p.p_type != PT_DYNAMIC || p.p_filesz > (1 << 20)) continue;
+    std::vector<Elf64_Dyn> dyn(p.p_filesz / sizeof(Elf64_Dyn));
+    if (!rd(dyn.data(), dyn.size() * sizeof(Elf64_Dyn), (off_t)p.p_offset)) break;
+    uint64_t strtab = 0, strsz = 0;
+    std::vector<uint64_t> needed;
+    for (auto &d : dyn) {
+      if (d.d_tag == DT_NULL) break;
+      if (d.d_tag == DT_STRTAB) strtab = d.d_un.d_ptr;
+      if (d.d_tag == DT_STRSZ) strsz = d.d_un.d_val;
+      if (d.d_tag == DT_NEEDED) needed.push_back(d.d_un.d_val);
+    }
+    int64_t so = to_off(strtab);
+    if (so < 0 || strsz == 0 || strsz > (16 << 20)) break;
+    std::string tab(strsz, '\0');
+    if (!rd(&tab[0], strsz, (off_t)so)) break;
+    for (uint64_t n : needed)
+      if (n < strsz) out.push_back(std::string(tab.c_str() + n));
+    break;
+  }
+  close(fd);
+  return out;
+}
+
+static bool is_elf(const fs::path &p) {
+  char m[4] = {};
+  std::ifstream in(p, std::ios::binary);
+  return in.read(m, 4) && !memcmp(m, ELFMAG, SELFMAG);
+}
+
+// the libraries of the system: ld.so.cache (ldconfig -p) and the usual folders
+static std::set<std::string> g_sys_libs;
+static bool g_sys_done = false;
+void forget_system_libs() { g_sys_libs.clear(); g_sys_done = false; }
+
+static const std::set<std::string> &system_libs() {
+  auto &libs = g_sys_libs;
+  if (g_sys_done) return libs;
+  g_sys_done = true;
+  for (const char *lc : {"/sbin/ldconfig", "/usr/sbin/ldconfig"}) {
+    if (access(lc, X_OK)) continue;
+    std::string out = run_capture({lc, "-p"});
+    size_t pos = 0;
+    while (pos < out.size()) {
+      size_t nl = out.find('\n', pos);
+      std::string l = out.substr(pos, nl == std::string::npos ? std::string::npos : nl - pos);
+      pos = nl == std::string::npos ? out.size() : nl + 1;
+      size_t a = l.find_first_not_of(" \t");
+      if (a == std::string::npos) continue;
+      size_t b = l.find(' ', a);
+      if (l.find("x86-64") == std::string::npos && l.find("64bit") == std::string::npos && l.find("AArch64") == std::string::npos) continue;
+      libs.insert(l.substr(a, b - a));
+    }
+    break;
+  }
+  std::error_code ec;
+  for (const char *d : {"/lib/x86_64-linux-gnu", "/usr/lib/x86_64-linux-gnu", "/lib64", "/usr/lib64", "/lib", "/usr/lib",
+                        "/usr/local/lib", "/lib/aarch64-linux-gnu", "/usr/lib/aarch64-linux-gnu"})
+    for (auto &e : fs::directory_iterator(d, ec)) libs.insert(e.path().filename().string());
+  return libs;
+}
+
+std::vector<std::string> missing_libs(const std::string &path, const std::string &home) {
+  fs::path dir = install_dir(path, home);
+  std::error_code ec;
+  if (!fs::is_directory(dir, ec)) return {};
+  // the libraries the application brings: every .so in the folder (by name)
+  std::map<std::string, fs::path> bundled;
+  std::vector<fs::path> start;
+  int seen = 0;
+  for (auto it = fs::recursive_directory_iterator(dir, fs::directory_options::skip_permission_denied, ec);
+       it != fs::recursive_directory_iterator() && seen < 20000; it.increment(ec), seen++) {
+    if (ec) break;
+    if (!it->is_regular_file(ec)) continue;
+    std::string n = it->path().filename().string();
+    fs::path rel = it->path().lexically_relative(dir);
+    if (n.find(".so") != std::string::npos) bundled.emplace(n, it->path());
+    // where the application starts: AppRun, usr/bin, the X11 plugin of Qt
+    bool start_here = rel == "AppRun" || (rel.parent_path() == "usr/bin") || (rel.parent_path() == "bin") ||
+                      n == "libqxcb.so" || (rel.parent_path().empty() && !n.empty() && n.find('.') == std::string::npos);
+    if (start_here && is_elf(it->path())) start.push_back(it->path());
+  }
+  const auto &sys = system_libs();
+  std::set<std::string> missing, done_files;
+  std::vector<fs::path> todo = start;
+  while (!todo.empty() && done_files.size() < 2000) {
+    fs::path f = todo.back();
+    todo.pop_back();
+    if (!done_files.insert(f.string()).second) continue;
+    for (auto &need : elf_needed(f.string())) {
+      auto b = bundled.find(need);
+      if (b != bundled.end()) { todo.push_back(b->second); continue; }
+      if (sys.count(need)) continue;
+      if (need.rfind("ld-linux", 0) == 0) continue;
+      missing.insert(need);
+    }
+  }
+  return {missing.begin(), missing.end()};
 }
 
 bool sandbox_available() {

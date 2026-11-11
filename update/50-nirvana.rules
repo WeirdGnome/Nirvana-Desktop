@@ -1,9 +1,11 @@
 // Nirvana Desktop: administrators (groups sudo, wheel, admin) sitting at the computer
-// install system updates and change the time zone, date and time without typing their
+// install system updates, change the time zone, date and time, manage printers and change their own account without typing their
 // password - as with the system tools of other desktops. The helpers behind these actions
 // accept only fixed, checked requests.
 polkit.addRule(function(action, subject) {
-  if ((action.id == "org.nirvana-desktop.update" || action.id == "org.nirvana-desktop.time") &&
+  if ((action.id == "org.nirvana-desktop.update" || action.id == "org.nirvana-desktop.time" ||
+       action.id == "org.nirvana-desktop.print" || action.id == "org.nirvana-desktop.user" ||
+       action.id == "org.nirvana-desktop.libs") &&
       subject.local && subject.active &&
       (subject.isInGroup("sudo") || subject.isInGroup("wheel") || subject.isInGroup("admin"))) {
     return polkit.Result.YES;

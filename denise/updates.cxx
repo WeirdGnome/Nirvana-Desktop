@@ -1,7 +1,7 @@
 // Nirvana Desktop - the system updates applet in the menu bar
 //
 // Looks for updates without root rights (nirvana-update-check: apt, dnf, pacman,
-// zypper, apk, xbps and flatpak), shows their number on the icon and installs them
+// zypper, apk and xbps; Flatpak applications are not touched), shows their number on the icon and installs them
 // with a progress bar (pkexec nirvana-update-helper - administrators at the computer
 // need no password thanks to the polkit rule installed with Nirvana Desktop).
 // Checks a minute after the start and then every 6 hours, or on demand.
@@ -181,8 +181,7 @@ void progress_line(const std::string &l) {
   if (!l.compare(0, 5, "STEP ")) {
     g_step = l.substr(5);
     g_action = g_step == "refresh" ? _("Refreshing the package lists…")
-             : g_step == "upgrade" ? _("Installing updates…")
-             : g_step == "flatpak" ? _("Updating Flatpak applications…") : g_step;
+             : g_step == "upgrade" ? _("Installing updates…") : g_step;
     g_progress = g_step == "refresh" ? 0 : g_step == "upgrade" ? 10 : g_progress;
     changed();
     return;
@@ -257,7 +256,7 @@ void install() {
     changed();
   };
   // as root through polkit; installed: /usr/libexec/nirvana-update-helper (see the policy file)
-  if (!g_job.start({"pkexec", helper, "upgrade"})) {
+  if (!g_job.start({plat::pkexec_command(), helper, "upgrade"})) {
     g_state = State::Failed;
     g_error = _("pkexec is missing - install polkit.");
   }
@@ -545,7 +544,7 @@ int updates_width() {
 bool updates_supported() {
   const char *path = getenv("PATH");
   std::string dirs = path ? path : "/usr/bin:/bin";
-  for (const char *p : {"apt-get", "dnf", "pacman", "zypper", "apk", "xbps-install", "flatpak"}) {
+  for (const char *p : {"apt-get", "dnf", "pacman", "zypper", "apk", "xbps-install"}) {
     size_t a = 0;
     while (a <= dirs.size()) {
       size_t b = dirs.find(':', a);

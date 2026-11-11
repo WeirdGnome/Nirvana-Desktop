@@ -1,5 +1,7 @@
 # Nirvana Desktop
 
+<img src="docs/img/logo.png" alt="Logo Nirvana Desktop" width="160" align="right">
+
 *[English version: README.md](README.md)*
 
 Lekkie środowisko graficzne dla Linuksa (baza: minimalny Devuan) w duchu
@@ -23,18 +25,20 @@ Napisane w C++ i FLTK 1.4.
 | `nirvana-denise`     | Rambler: menedżer plików + biurko        | prototyp    |
 | `nirvana-insight`      | menedżer okien X11 (Xorg/XLibre), ramki Platinum | działa |
 | `nirvana-gary`       | przełącznik aplikacji (na razie w procesie Ramblera) | działa |
-| `nirvana-alice`      | panele sterowania: Wygląd, Sieć, Zasilanie, Data i czas, Shader | działa |
+| `nirvana-alice`      | panele sterowania: Użytkownik, Wygląd, Sieć, Zasilanie, Data i czas, Drukarki, Shader | działa |
 | `nirvana-shader`     | pełnoekranowe efekty GLSL (mały kompozytor) | działa |
 | `nirvana-shell`      | Nirvana Shell - emulator terminala          | działa |
 | `nirvana-paula`      | dźwięk                                  | planowany   |
-| `nirvana-kickstart`  | logowanie i start sesji                 | planowany   |
+| `nirvana-dm-greeter` | Nirvana-DM – ekran logowania (greeter LightDM) | działa |
+| `nirvana-portal`     | okno wyboru plików Nirvany dla innych programów (xdg-desktop-portal) | działa |
+| `nirvana-polkit-agent` | okno hasła polkit (pkexec, dyski, aktualizacje) | działa |
 | `nirvana-guru`       | okno błędów                             | planowany   |
 
 ## Instalacja na Devuanie 6 „Excalibur” (Debian 13)
 
 Rozpakuj źródła i uruchom instalator:
 
-    tar xzf nirvana-desktop-0.0.21.tar.gz && cd nirvana-desktop
+    tar xzf nirvana-desktop-0.0.37.tar.gz && cd nirvana-desktop
     sudo ./install.sh                 # albo: sudo ./install.sh --login-screen
 
 Instalator:
@@ -43,7 +47,7 @@ Instalator:
 2. buduje Nirvana Desktop (za pierwszym razem pobiera FLTK 1.4 z GitHuba – potrzebny internet),
 3. tworzy paczkę `build-deb/nirvana_<wersja>_amd64.deb` i instaluje ją przez apt –
    razem z programami, z których Nirvana Desktop korzysta: NetworkManager, udisks2, polkit
-   z agentem `lxpolkit`, PulseAudio/PipeWire, bubblewrap, xsecurelock…
+   PulseAudio/PipeWire, bubblewrap, xdg-desktop-portal…
 4. dokłada serwer X, jeśli go nie ma, i proponuje PipeWire, jeśli nie ma dźwięku.
 
 Numer wersji jest w pliku `VERSION` i rośnie z każdą wydaną paczką. Instalator z nowszej paczki
@@ -81,10 +85,13 @@ Zależności (Devuan/Debian):
         network-manager network-manager-openvpn \  # sieć i VPN
         libxss-dev pulseaudio-utils alsa-utils \ # aplety dźwięku i zasilania
         gettext \                                 # tłumaczenia (msgfmt)
-        libgl-dev libxcomposite-dev libxdamage-dev # nirvana-shader (efekty pełnoekranowe)
+        libgl-dev libxcomposite-dev libxdamage-dev \ # nirvana-shader (efekty pełnoekranowe)
+        libcups2-dev                              # drukarki (opcjonalnie)
+        liblightdm-gobject-dev libglib2.0-dev     # Nirvana-DM, portal okna plików (opcjonalnie)
+        libpolkit-agent-1-dev libpam0g-dev        # okno hasła, blokada ekranu (opcjonalnie)
 
-Opcjonalnie: `power-profiles-daemon` (profile zasilania), `xsecurelock`, `i3lock`
-albo `slock` (blokada ekranu). Na Rocky: `libXScrnSaver-devel pulseaudio-utils`.
+Opcjonalnie: `power-profiles-daemon` (profile zasilania). Bez PAM używany jest inny program
+blokady (`xsecurelock`, `i3lock`, `slock`). Na Rocky: `libXScrnSaver-devel pulseaudio-utils`.
 
 Jeśli FLTK 1.4 nie jest zainstalowany, CMake sam pobierze i zbuduje wersję 1.4.4:
 
@@ -181,6 +188,16 @@ Inną czcionkę systemową (np. wolną, w stylu bitmapowym) można podać przez 
   zainstalowana, pyta, czy ją zastąpić albo uruchomić.
 
   ![Dwie wersje gry obok siebie](docs/img/games.png)
+- **Właściwy procesor**: AppImage zbudowany na inny procesor (np. ARM64 na komputerze x86-64)
+  nie zostanie zainstalowany ani uruchomiony – okno błędu podpowiada, którą wersję pobrać.
+- **Brakujące biblioteki systemowe**: przed startem Rambler czyta nagłówki ELF aplikacji
+  (AppRun, `usr/bin`, wtyczkę X11 Qt `libqxcb.so` i biblioteki, które ciągną) i sprawdza, których
+  bibliotek nie ma ani w AppImage, ani w systemie. Programy Qt 6 często potrzebują
+  `libxcb-cursor0`, `libxcb-icccm4`, `libxkbcommon-x11-0`… – Qt mówi wtedy tylko „could not load
+  the Qt platform plugin xcb” (a podpowiedź o xcb-cursor0 wypisuje nawet wtedy, gdy brakuje czegoś
+  innego). Rambler wymienia biblioteki i proponuje **Zainstaluj** (pakiety przez
+  `nirvana-libs-helper`, tylko biblioteki z jego stałej listy) albo **Uruchom mimo to**.
+  Z terminala: `nirvana-denise --missing-libs PLIK.AppImage`.
 - **Uruchamianie w piaskownicy** (bubblewrap): cały system tylko do odczytu, zapis
   wyłącznie w Nirvana HD, inni użytkownicy, `/root`, `/mnt` i `/media` niewidoczne,
   własny `/tmp` i własna przestrzeń procesów; sama aplikacja jest tylko do odczytu.
@@ -250,8 +267,14 @@ Aplikacja to grupa okien o tej samej klasie `WM_CLASS`. AppImage uruchomione z R
 pojawiają się pod swoją nazwą i ikoną (np. „Clock” zamiast „XClock”); przypisanie jest
 zapamiętywane w `~/.config/nirvana/app-classes`.
 
-**Alt+Tab** (Insight): przytrzymaj Alt i naciskaj Tab, żeby przechodzić po aplikacjach
-od ostatnio używanej; Shift cofa, Escape przerywa, puszczenie Alt wybiera.
+**Alt+Tab** (Insight): przytrzymaj Alt i naciśnij Tab – pojawia się panel z podglądem każdego
+okna, od ostatnio używanego, z już wybranym poprzednim. Tab (i strzałki) przesuwają dalej,
+Shift+Tab cofa, kliknięcie albo puszczenie Alt wybiera, Escape przerywa. Zminimalizowane okno
+(podgląd w paski) wraca z ikony na biurku. Nie ma kompozytora, więc podgląd okna robi się, gdy
+jest ono na wierzchu (chwilę po dostaniu fokusu, potem co 3 s); okno jeszcze nieaktywne pokazuje
+swoją literę.
+
+![Alt+Tab](docs/img/alt-tab.png)
 
 Działa na standardzie EWMH (`_NET_CLIENT_LIST`, `_NET_ACTIVE_WINDOW`, `WM_CHANGE_STATE`,
 `_NET_CLOSE_WINDOW`), więc także pod GNOME, KDE czy Openboksem. Pod obcym menedżerem
@@ -316,7 +339,8 @@ terminale, panele, shader), liczone jako PSS – biblioteki współdzielone są 
 procesy, więc to rzeczywisty koszt. Nie wlicza się tu to, co serwer X trzyma dla okien Nirvany
 (pixmapy, glify), ani usług uruchamianych przez sesję (sesyjny D-Bus, PipeWire, agent polkit).
 Gdy działa `nirvana-shader` na komputerze bez karty graficznej, większość zajmuje programowy
-renderer OpenGL (llvmpipe). Wartości odświeżają się co 3 sekundy; podpowiedź pokazuje
+renderer OpenGL (llvmpipe), dlatego część shadera jest pokazana osobno:
+`99MB zajęte przez Nirvanę (shader 81MB)`. Wartości odświeżają się co 3 sekundy; podpowiedź pokazuje
 ilości wolne i pamięć każdego programu Nirvany. Na wąskim ekranie napis się skraca.
 
 ![Pasek menu](docs/img/menubar.png)
@@ -332,7 +356,7 @@ ilości wolne i pamięć każdego programu Nirvany. Na wąskim ekranie napis si�
 dostępny, prosi o hasło administratora (pkexec – jako root działa tylko odczyt pliku), a w
 ostateczności pokazuje dziennik sesji (`~/.xsession-errors`).
 | **System** | Zablokuj ekran, Uśpij, Hibernuj, Wyloguj `Ctrl+Q`, Uruchom ponownie, Wyłącz |
-| **Narzędzia** | Formatuj dysk, Opróżnij kosz |
+| **Narzędzia** | Formatuj dysk, Opróżnij kosz, Zabij okno… `Ctrl+Alt+K` (jak xkill: kursor z czaszką, klik w okno zawieszonego programu, potwierdzenie; prawy przycisk albo Esc przerywa; okna samej Nirvany są chronione) |
 
 **O systemie** pokazuje system na wzór neofetch: po lewej duże logo z próbkami kolorów,
 po prawej `użytkownik@komputer` i parametry – system, komputer, jądro, czas pracy, pakiety
@@ -625,6 +649,127 @@ komputerze nie są pytani o hasło. Bez systemd strefę ustawia `/etc/localtime`
 
 ![Data i czas](docs/img/datetime.png)
 
+## Drukarki
+
+Ikona drukarki pojawia się na pasku menu, gdy CUPS ma drukarkę albo zadanie drukowania.
+Niebieski znaczek pokazuje liczbę zadań, czerwony – gdy domyślna drukarka stanęła (brak papieru,
+zacięcie, otwarta pokrywa…). Okienko pokazuje każdą drukarkę z jej stanem, zadania z **×** do
+anulowania każdego z nich, **Anuluj wszystkie moje zadania**, **Drukuj stronę testową**
+i **Ustawienia drukarek…**.
+
+**Preferencje → Drukarki**:
+
+- drukarki z opisem, sterownikiem, połączeniem, stanem i zadaniami w kolejce; **Ustaw jako
+  domyślną** (dla Ciebie, `lpoptions`), **Drukuj stronę testową**, **Pauza/Wznów**, **Usuń**,
+- **Dodaj drukarkę…**: *Szukaj* pokazuje to, co znajdzie CUPS (USB, sieć, IPP/AirPrint); adres
+  można też wpisać (`ipp://192.168.1.20/ipp/print`, `socket://…`). Drukarki sieciowe mówiące IPP
+  dostają drukowanie **bez sterownika** (IPP Everywhere) na górze listy; w przeciwnym razie
+  proponowane są sterowniki producenta,
+- **brakujące sterowniki**: gdy dla producenta nie ma sterownika, okno to mówi, a **Zainstaluj
+  sterowniki…** proponuje właściwe pakiety (HPLIP dla HP, brlaser dla Brothera, ESC/P-R dla
+  Epsona, Gutenprint, SpliX, foo2zjs, Foomatic, pliki PPD producentów, cups-filters) – nazwy
+  pakietów są dobierane dla apt, dnf, pacmana albo zyppera; lista sterowników od razu się
+  uzupełnia,
+- **brak CUPS**: panel proponuje zainstalowanie (albo uruchomienie) systemu drukowania.
+
+Dodawanie, usuwanie, wstrzymywanie i instalacja idą przez `/usr/libexec/nirvana-print-helper`
+z pkexec (tylko sprawdzone nazwy, adresy znanych rodzajów i sterowniki oferowane przez sam
+CUPS); administratorzy przy komputerze nie są pytani o hasło. Odczyt stanu, anulowanie własnych
+zadań, strona testowa i własna domyślna drukarka nie wymagają uprawnień.
+
+![Aplet drukarki](docs/img/printers-applet.png)
+![Preferencje > Drukarki](docs/img/printers.png)
+
+## Nirvana-DM: ekran logowania
+
+`--login-screen` w `install.sh` instaluje LightDM z **Nirvana-DM** (a sama paczka ustawia go
+w LightDM: `/usr/share/lightdm/lightdm.conf.d/50-nirvana-dm.conf`). Prosty ekran w stylu lat 90.:
+tło pulpitu, pasek menu z logo i zegarem oraz okno pośrodku z użytkownikami (ich obrazek
+`~/.face` albo sylwetka; zielona kropka przy już zalogowanych, *Inny…* do wpisania nazwy),
+hasłem i sesją.
+
+- **Motyw** – dowolny schemat kolorów, **Tło** – wzory i tapety Nirvany, **Język** – język
+  ekranu; wybór działa od razu i jest zapisywany w katalogu domowym ekranu logowania
+  (`/var/lib/lightdm/.config/nirvana`), więc **zostaje po restarcie**,
+- **Narzędzia** – Uśpij, Uruchom ponownie, Wyłącz (gdy system na to pozwala),
+- ostatni użytkownik jest wybierany ponownie, a sesja to jego ostatnia sesja.
+
+LightDM robi część wrażliwą na bezpieczeństwo (serwer X, PAM, sesja, elogind); Nirvana-DM to
+tylko ekran przed nim. `nirvana-dm-greeter --test` pokazuje podgląd w oknie. Powrót do innego
+greetera: `greeter-session=…` w `/etc/lightdm/lightdm.conf.d/`.
+
+![Nirvana-DM](docs/img/nirvana-dm.png)
+
+### Użytkownik (Preferencje)
+
+**Preferencje → Użytkownik** zbiera podstawowe ustawienia konta:
+
+- **Zdjęcie** – plik z obrazem (przycięty do kwadratu) albo jeden z ośmiu wbudowanych obrazków;
+  Nirvana-DM pokazuje je przy Twojej nazwie. Zapisuje się jako `~/.face` i kopia trafia do
+  `/var/lib/AccountsService/icons`, bo ekran logowania nie zajrzy do zamkniętego katalogu domowego,
+- **Imię i nazwisko** – widoczne na ekranie logowania zamiast loginu,
+- **Zmień hasło…** – obecne i nowe hasło; sprawdza i zapisuje je systemowy `passwd` (z jego
+  zasadami długości i siły),
+- **Loguj automatycznie** – LightDM uruchamia pulpit bez ekranu logowania (tylko administratorzy),
+- login, typ konta, katalog domowy, powłoka i grupy.
+
+Zdjęcie, imię i nazwisko oraz automatyczne logowanie przechodzą przez `nirvana-user-helper`
+(pkexec, akcja polkit `org.nirvana-desktop.user`): zmienia on wyłącznie konto osoby, która go
+uruchomiła, a zdjęcie czyta jako dane (PNG do 1 MB), nigdy jako ścieżkę. Potwierdzasz własnym
+hasłem; administratorzy przy komputerze nie są pytani.
+
+![Użytkownik](docs/img/user.png)
+
+## Wygaszacz i blokada ekranu
+
+**Preferencje → Wygaszacz ekranu** wybiera wygaszacz – Czarny ekran, Gwiazdy, Odbijające się
+linie, Logo Nirvany, Rury, Plazma, Zegar, Śnieg, Fajerwerki, Gra w życie, Labirynt (drążony,
+a potem przechodzony), Spirograf, Latające chipy, Akwarium, Ogień, Bańki albo Losowy – z podglądem w małym monitorze,
+czas włączenia, czy **blokuje** ekran (od razu albo gdy działa już kilka minut) i kiedy usypia
+monitor. *Wypróbuj* pokazuje go na całym ekranie, *Zablokuj teraz* blokuje. Pomysły pochodzą z
+wygaszaczy lat 90. i xscreensaver; kod jest napisany od nowa.
+
+`nirvana-lock` robi jedno i drugie: Rambler uruchamia `nirvana-lock --saver`, gdy komputer jest
+bezczynny (nie w trybie prezentacji), a System → Zablokuj ekran, usypianie i `nirvana-lock` z
+terminala blokują od razu. Okno zakrywa wszystkie ekrany i przejmuje klawiaturę i mysz; klawisz
+albo ruch myszy pokazuje okno hasła (tło pulpitu, Twoje zdjęcie i imię, *Zmień użytkownika…* z
+LightDM). Hasło sprawdza PAM (`/etc/pam.d/nirvana-lock`) w osobnym procesie, więc złe hasło nie
+zamraża ekranu. Do budowania potrzebny jest `libpam0g-dev`; `NIRVANA_LOCKER=polecenie` używa
+innego programu blokady.
+
+![Wygaszacz ekranu](docs/img/screensaver.png)
+
+![Więcej wygaszaczy](docs/img/savers.png)
+
+![Blokada](docs/img/lock.png)
+
+## Okno wyboru plików i okno hasła
+
+**Okno wyboru plików.** Otwórz, Zapisz i Wybierz folder wyglądają jak reszta Nirvany: miejsca po
+lewej (katalog domowy, foldery użytkownika, Aplikacje, system plików, podłączone dyski), rozwijana
+lista folderów aż do korzenia, lista z ikonami, rozmiarem i datą, filtr typów, *Nowy folder* i
+*Pokaż ukryte pliki*. Wpisanie `/` lub `~` na liście przechodzi do folderu po ścieżce.
+Używają go panele sterowania, a przez **xdg-desktop-portal** także inne programy: `nirvana-portal`
+to backend portalu (`share/xdg-desktop-portal/portals/nirvana.portal`, wybrany w
+`nirvana-portals.conf`), więc Firefox, przeglądarki na Chromium, programy GTK 3/4 i Qt oraz
+Flatpaki dostają to okno zamiast okna GTK. Sesja ustawia w tym celu `GTK_USE_PORTAL=1`,
+`GDK_DEBUG=portals` i (gdy puste) `QT_QPA_PLATFORMTHEME=xdgdesktopportal`;
+`NIRVANA_PORTAL_DIALOGS=0` to wyłącza. Programy, które rysują własne okno bez pytania portalu
+(starsze programy GTK 2, część AppImage), zostają przy swoim.
+
+![Okno wyboru plików](docs/img/filedialog.png)
+
+**Okno hasła.** Gdy program prosi o uprawnienia administratora (`pkexec`, dyski, sieć,
+aktualizacje, drukarki), `nirvana-polkit-agent` pokazuje prośbę, program i konto, a hasło
+przekazuje własnemu pomocnikowi polkit (PAM) – sam go nie przechowuje. Złe hasło można wpisać
+ponownie; Esc anuluje. Sesja uruchamia go zamiast lxpolkit czy innego agenta
+(`NIRVANA_POLKIT_AGENT=0`: tamten agent). Własne narzędzia Nirvany (aktualizacje, data, drukarki,
+użytkownik, biblioteki) idą przez `nirvana-pkexec`, który uruchamia okno hasła dla tego jednego
+wywołania – działają więc także wtedy, gdy elogind nie zna sesji (np. `startx` bez
+`libpam-elogind`), a zwykły pkexec kończy się błędem „Error creating textual authentication agent”.
+
+![Okno hasła](docs/img/polkit-agent.png)
+
 ## Aktualizacje oprogramowania
 
 Ikona z paczką na pasku menu szuka aktualizacji systemu minutę po zalogowaniu, a potem co
@@ -639,7 +784,6 @@ pokazują postęp.
 | pacman (Arch) | `checkupdates` (pacman-contrib) | `pacman -Syu` |
 | zypper (openSUSE) | `zypper list-updates` | `zypper update` |
 | apk (Alpine), xbps (Void) | lokalne listy | `apk upgrade`, `xbps-install -Syu` |
-| Flatpak | `flatpak remote-ls --updates` | `flatpak update --system` |
 
 Sprawdzanie nigdy nie wymaga roota: przy apt listy pakietów są pobierane do pamięci podręcznej
 użytkownika, więc listy systemu zostają nietknięte (pomysł z `checkupdates`). Instalacja uruchamia
@@ -719,6 +863,15 @@ wynik idzie do `gl_FragColor`. Pierwsza linia komentarza to opis w panelu.
 
 Inny kompozytor (picom, compton) nie może działać w tym samym czasie. Bez akceleracji grafiki
 (np. w maszynie wirtualnej, llvmpipe) efekty animowane mocno obciążają procesor.
+
+## Okna błędów
+
+Błędy (plik, którego nie da się otworzyć, dysk, Kosz, kopiowanie, AppImage na inny procesor…)
+pokazują się w oknie o tytule **Guru Meditation**: czerwony tekst w czarnym polu z migającą
+czerwoną ramką i numer guru wyliczony z komunikatu (`#00000010.6718A071`) – ukłon w stronę ekranów
+błędów komputerów domowych lat 80. Pytania i powiadomienia zostają w zwykłym oknie.
+
+![Guru Meditation](docs/img/guru.png)
 
 ## Języki
 

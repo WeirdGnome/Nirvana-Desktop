@@ -43,8 +43,4 @@ elif have xbps-install; then
   step upgrade
   xbps-install -Syu || rc=$?
 fi
-if have flatpak; then
-  step flatpak
-  flatpak update -y --noninteractive --system || true
-fi
 exit $rc

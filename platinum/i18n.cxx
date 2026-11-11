@@ -302,10 +302,20 @@ static std::string system_language() {
   return "";
 }
 
+static bool g_i18n_done = false;
+
+// Another language at run time (the login manager): forget the catalog and load again.
+void reload_i18n() {
+  g_i18n_done = false;
+  g_active = false;
+  g_tr.clear();
+  g_trp.clear();
+  init_i18n();
+}
+
 void init_i18n() {
-  static bool done = false;
-  if (done) return;
-  done = true;
+  if (g_i18n_done) return;
+  g_i18n_done = true;
   migrate_old_config();
   std::string want = language_setting();
   if (want.empty() || want == "auto") want = system_language();   // pl_PL.UTF-8 -> pl
