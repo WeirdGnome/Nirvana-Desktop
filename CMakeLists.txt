@@ -154,7 +154,7 @@ set(CPACK_DEBIAN_PACKAGE_CONFLICTS "lisaos")
 set(CPACK_DEBIAN_PACKAGE_REPLACES "lisaos")
 set(CPACK_DEBIAN_PACKAGE_PROVIDES "lisaos")
 set(CPACK_DEBIAN_PACKAGE_RECOMMENDS
-  "xserver-xorg, xinit, fonts-dejavu-core, libpam-elogind | elogind, polkitd, pkexec, lxpolkit, \
+  "xserver-xorg, xinit, fonts-dejavu-core, libpam-elogind | elogind, polkitd, lxpolkit, \
 udisks2, network-manager, pulseaudio-utils, alsa-utils, squashfs-tools, bubblewrap, xsecurelock, xdg-utils, \
 xdg-desktop-portal, xdg-desktop-portal-gtk")
 set(CPACK_DEBIAN_PACKAGE_SUGGESTS

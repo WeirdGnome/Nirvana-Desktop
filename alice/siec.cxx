@@ -54,7 +54,7 @@ const char *const VPN_ID = "#vpn";       // pseudo-urządzenie "VPN" na liście 
 
 void message(const std::string &m, bool error = false) {
   g_msg->copy_label(m.c_str());
-  g_msg->labelcolor(error ? ROOT_TINT : TEXT);
+  g_msg->labelcolor(error ? ALERT : TEXT);
   g_msg->redraw_label();
   g_win->redraw();
 }
@@ -208,7 +208,7 @@ bool ask_wifi(bool hidden, const std::string &ssid, const std::string &err, Wifi
   if (!err.empty()) {
     auto *e = new Fl_Box(64, y, W - 80, 18);
     e->copy_label(err.c_str());
-    e->labelcolor(ROOT_TINT);
+    e->labelcolor(ALERT);
     e->labelsize(SIZE_SMALL);
     e->labelfont(FONT_SYSTEM);
     e->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
@@ -375,7 +375,7 @@ bool ask_vpn(const net::Vpn &v, const std::string &err, std::string &user, std::
   if (!err.empty()) {
     auto *e = new Fl_Box(64, y, W - 80, 18);
     e->copy_label(err.c_str());
-    e->labelcolor(ROOT_TINT);
+    e->labelcolor(ALERT);
     e->labelsize(SIZE_SMALL);
     e->labelfont(FONT_SYSTEM);
     e->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);

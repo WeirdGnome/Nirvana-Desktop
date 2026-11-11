@@ -71,7 +71,6 @@ chyba że schemat poda je wprost (`jasny`, `cien_sredni`, `cien`).
   Udostępniane: gniazdo X11, `XAUTHORITY`, PulseAudio/PipeWire i szyna sesji D-Bus.
   Uwaga: dostęp do serwera X oznacza, że aplikacja może podglądać inne okna -
   to ograniczenie X11 (do rozważenia: osobny serwer Xephyr lub rozszerzenie XACE).
-- Tryb root: `pkexec nirvana-denise --root`, osobny proces, wyraźne oznaczenie.
 
 ## Nazewnictwo
 

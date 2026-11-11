@@ -37,7 +37,7 @@ namespace fs = std::filesystem;
 using namespace plat;
 
 // ---------------------------------------------------------------------------
-// Uruchamianie programów (AppImage, xdg-open, pkexec)
+// Uruchamianie programów (AppImage, xdg-open)
 // ---------------------------------------------------------------------------
 void rambler_spawn(const std::vector<std::string> &args);
 static void spawn(const std::vector<std::string> &args) { rambler_spawn(args); }
@@ -60,7 +60,7 @@ std::string rambler_exe(const char *name) {
 }
 
 // ---------------------------------------------------------------------------
-// Prawa strona paska menu: plakietka ROOT i zegar
+// Prawa strona paska menu: zegar
 // ---------------------------------------------------------------------------
 class MenuExtras : public Fl_Widget {
 public:
@@ -70,9 +70,7 @@ public:
   // szerokość dopasowana do treści - aplety stoją ciasno przy prawej krawędzi
   static int needed_width() {
     fl_font(FONT_SYSTEM, SIZE_SYSTEM);
-    int w = (int)fl_width("00:00") + 18;
-    if (root_mode()) w += (int)fl_width("ROOT") + 18;
-    return w;
+    return (int)fl_width("00:00") + 18;
   }
   static void tick(void *d) {
     ((Fl_Widget *)d)->redraw();
@@ -89,15 +87,6 @@ public:
     int cx = x() + w() - 9 - (int)fl_width(buf);
     fl_color(TEXT);
     fl_draw(buf, cx, y() + 14);
-    if (root_mode()) {
-      const char *r = "ROOT";
-      int rw = (int)fl_width(r) + 10;
-      cx -= rw + 8;
-      fl_color(ROOT_TINT);
-      fl_rounded_rectf(cx, y() + 3, rw, h() - 7, 3);
-      fl_color(FL_WHITE);
-      fl_draw(r, cx + 5, y() + 14);
-    }
   }
 };
 
@@ -456,9 +445,9 @@ static const std::vector<MenuDef> &window_menu_defs() {
 }
 
 // ---------------------------------------------------------------------------
-Desktop::Desktop(int W, int H, const std::string &home, bool root)
+Desktop::Desktop(int W, int H, const std::string &home)
     : Fl_Double_Window(0, 0, W, H, "Nirvana Desktop"),
-      home_(home), root_path_(root ? "/" : home), root_(root), spatial_(home) {
+      home_(home), root_path_(home), spatial_(home) {
   fl_open_display();
   // Okna innych programów potrafią zniknąć, zanim odczytamy ich właściwości
   // (lista aplikacji gary) - BadWindow to wtedy nie błąd, tylko wyścig.
@@ -504,13 +493,9 @@ Desktop::Desktop(int W, int H, const std::string &home, bool root)
     {P_("System/Shut Down…"), 0, &Desktop::system_shutdown, 0},
     // --- Narzędzia ---
     {P_("Special/Format Disk…"), 0, &Desktop::format_disk, 0},
-    {P_("Special/Empty Trash…"), 0, &Desktop::empty_trash, FL_MENU_DIVIDER},
-    {P_("Special/Root Mode…"), 0, &Desktop::ask_root, 0},
-    {P_("Special/Leave Root Mode"), 0, &Desktop::quit, 0},
+    {P_("Special/Empty Trash…"), 0, &Desktop::empty_trash, 0},
   };
   for (auto &it : items) {
-    bool root_item = it.m == &Desktop::ask_root || it.m == &Desktop::quit;
-    if (root_item && (it.m == &Desktop::quit) != root) continue;
     menu_->add(plat::tr_path(it.path).c_str(), it.shortcut, global_menu_cb, (void *)&it, it.flags);
   }
   logo_item_ = (Fl_Menu_Item *)menu_->find_item("logo");
@@ -553,8 +538,8 @@ Desktop::Desktop(int W, int H, const std::string &home, bool root)
     ((Desktop *)w)->quit();
   });
 
-  // ukryte pliki: zapamiętany wybór (Okno > Pokaż ukryte pliki), w trybie root zawsze
-  show_hidden_ = root_;
+  // ukryte pliki: zapamiętany wybór (Okno > Pokaż ukryte pliki)
+  show_hidden_ = false;
   {
     const char *x = getenv("XDG_CONFIG_HOME");
     std::ifstream in((x && *x ? std::string(x) : home_ + "/.config") + "/nirvana/rambler.conf");
@@ -692,7 +677,6 @@ void Desktop::layout_icons() {
     iy += ROW;
   };
   place({"Nirvana HD", home_, Icon::Home, 0, 0});
-  if (root_) place({"System", "/", Icon::Home, 0, 0});
   // dyski i płyty pod dyskiem Nirvana HD, jak w Mac OS
   for (int i = 0; i < (int)vols_.size(); i++) {
     DeskIcon d{vols_[i].name, vols_[i].mountpoint, vols_[i].icon, 0, 0};
@@ -832,7 +816,6 @@ int Desktop::icon_at(int ex, int ey) const {
 }
 
 bool Desktop::allowed(const std::string &path) const {
-  if (root_) return true;
   std::error_code ec;
   std::string c = fs::weakly_canonical(path, ec).string();
   std::string h = fs::weakly_canonical(home_, ec).string();
@@ -1285,7 +1268,7 @@ void Desktop::close(NWin *w) {
 void Desktop::open_folder(const std::string &path, bool animate, bool new_window) {
   if (!allowed(path)) {
     dialog(_("Access Denied"),
-           _("This folder is outside Nirvana HD.\nSwitch to root mode to open it."),
+           _("This folder is outside Nirvana HD."),
            {{"OK", nullptr}});
     return;
   }
@@ -1455,7 +1438,7 @@ void Desktop::navigate(NWin *w, const std::string &target, Nav how) {
   if (!allowed(path)) {
     update_nav(w);
     dialog(_("Access Denied"),
-           _("This folder is outside Nirvana HD.\nSwitch to root mode to open it."),
+           _("This folder is outside Nirvana HD."),
            {{"OK", nullptr}});
     return;
   }
@@ -1969,21 +1952,6 @@ void Desktop::empty_trash() {
                for (auto &x : fs::directory_iterator(dir, ec2)) fs::remove_all(x.path(), ec2);
              }
              refresh_all();
-           }}});
-}
-
-void Desktop::ask_root() {
-  dialog(_("Root Mode"),
-         _("Root mode gives full access to the file system\n"
-           "and advanced settings. It requires the administrator password."),
-         {{_("Cancel"), nullptr},
-          {_("Switch"), [this] {
-             if (access("/usr/bin/pkexec", X_OK) == 0) {
-               spawn({"pkexec", "env", std::string("DISPLAY=") + (getenv("DISPLAY") ? getenv("DISPLAY") : ":0"),
-                      self_exe(), "--root", "--home", home_});
-             } else {
-               dialog(_("Root Mode"), _("pkexec was not found (polkit package)."), {{"OK", nullptr}});
-             }
            }}});
 }
 
@@ -2595,7 +2563,7 @@ public:
       std::string s = std::to_string(n_);
       fl_font(FONT_SYSTEM, 10);
       int bw = (int)fl_width(s.c_str()) + 8;
-      fl_color(ROOT_TINT);
+      fl_color(ALERT);
       fl_rounded_rectf(w() - bw - 1, 1, bw, 13, 6);
       fl_color(FL_WHITE);
       fl_draw(s.c_str(), w() - bw + 3, 11);
@@ -2954,7 +2922,7 @@ void Desktop::ask_secret(const std::string &title, Icon icon, const std::string 
     err->copy_label(msg.c_str());
     err->labelfont(FONT_SYSTEM);
     err->labelsize(SIZE_SMALL);
-    err->labelcolor(ROOT_TINT);
+    err->labelcolor(ALERT);
     err->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
     iy += 20;
   }

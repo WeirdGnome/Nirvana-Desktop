@@ -887,7 +887,7 @@ int main(int argc, char **argv) {
   fl_open_display();
   dpy = fl_display;
   root = DefaultRootWindow(dpy);
-  plat::init(false);   // ustawia też skalę interfejsu
+  plat::init();   // ustawia też skalę interfejsu
   screen_w = un(DisplayWidth(dpy, DefaultScreen(dpy)));
   screen_h = un(DisplayHeight(dpy, DefaultScreen(dpy)));
 

@@ -83,7 +83,7 @@ private:
 
 class Desktop : public Fl_Double_Window {
 public:
-  Desktop(int W, int H, const std::string &home, bool root);
+  Desktop(int W, int H, const std::string &home);
 
   // Folder w oknie menedżera plików: domyślnie w ostatnio używanym oknie
   // (jedno okno, które nawiguje), new_window - zawsze w nowym oknie.
@@ -124,7 +124,6 @@ public:
   void close_active();
   void move_to_trash();
   void empty_trash();
-  void ask_root();
   void refresh_all();
   void appearance_changed();      // panel Wygląd zmienił schemat (_NIRVANA_WYGLAD)
   void open_appearance();         // uruchom panel Wygląd (nirvana-alice)
@@ -296,7 +295,6 @@ private:
   static void dialog_cb(Fl_Widget *b, void *idx);
 
   std::string home_, root_path_;
-  bool root_;
   Spatial spatial_;
   std::vector<NWin *> wins_;      // kolejność: ostatnio aktywne na końcu
   std::vector<DeskIcon> icons_;

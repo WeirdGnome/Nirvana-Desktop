@@ -983,7 +983,7 @@ void new_window(const std::string &dir) { new Term(dir, {}); }
 int main(int argc, char **argv) {
   setlocale(LC_ALL, "");
   signal(SIGCHLD, [](int) { while (waitpid(-1, nullptr, WNOHANG) > 0) {} });
-  plat::init(false);
+  plat::init();
   Fl::visual(FL_DOUBLE | FL_RGB);
   load_settings();
   set_fonts();

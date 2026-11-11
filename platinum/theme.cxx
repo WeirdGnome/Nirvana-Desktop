@@ -34,7 +34,7 @@ Fl_Color CONTENT_TEXT  = FL_FREE_COLOR + 0, SEL_TEXT     = FL_FREE_COLOR + 1,
          HILITE        = FL_FREE_COLOR + 8, STRIPE       = FL_FREE_COLOR + 9,
          TITLE_TEXT    = FL_FREE_COLOR + 10, TITLE_I_TEXT = FL_FREE_COLOR + 11,
          DESK_A        = FL_FREE_COLOR + 12, DESK_B       = FL_FREE_COLOR + 13,
-         ROOT_TINT     = FL_FREE_COLOR + 14;
+         ALERT         = FL_FREE_COLOR + 14;
 
 const char *const PATTERNS[] = {"gladki", "kropki", "groszki", "krata", "kratka", "szachownica",
                                 "ukosne", "paski_poziome", "paski_pionowe", "cegly", "raster", "romby",
@@ -322,14 +322,14 @@ void apply(const Scheme &s, const Appearance &a) {
   Fl::background((face >> 16) & 0xFF, (face >> 8) & 0xFF, face & 0xFF);
   Fl::background2((s.content >> 16) & 0xFF, (s.content >> 8) & 0xFF, s.content & 0xFF);
   Fl::foreground((s.text >> 16) & 0xFF, (s.text >> 8) & 0xFF, s.text & 0xFF);
-  unsigned sel = root_mode() ? 0xA03028 : s.sel;
+  unsigned sel = s.sel;
   set(FL_SELECTION_COLOR, sel);
 
   set(CONTENT_TEXT, s.content_text);
-  set(SEL_TEXT, root_mode() ? 0xFFFFFF : s.sel_text);
-  set(ICON_SEL, root_mode() ? sel : s.icon_sel >= 0 ? (unsigned)s.icon_sel : sel);
-  set(ICON_SEL_TEXT, root_mode() || s.icon_sel < 0 ? (root_mode() ? 0xFFFFFF : s.sel_text)
-                                                   : (lum((unsigned)s.icon_sel) > 0.5 ? 0x000000 : 0xFFFFFF));
+  set(SEL_TEXT, s.sel_text);
+  set(ICON_SEL, s.icon_sel >= 0 ? (unsigned)s.icon_sel : sel);
+  set(ICON_SEL_TEXT, s.icon_sel < 0 ? s.sel_text : (lum((unsigned)s.icon_sel) > 0.5 ? 0x000000 : 0xFFFFFF));
+  set(ALERT, 0xC0392B);
   set(LIGHT, s.light >= 0 ? (unsigned)s.light : mix(face, 0xFFFFFF, light_face ? 1.0 : 0.22));
   set(MID, s.mid >= 0 ? (unsigned)s.mid : mix(face, 0x000000, 0.23));
   set(SHADOW, s.shadow >= 0 ? (unsigned)s.shadow : mix(face, 0x000000, 0.46));
@@ -352,7 +352,6 @@ void apply(const Scheme &s, const Appearance &a) {
                 : mix(s.sel, face, 0.15);
   set(DESK_A, desk);
   set(DESK_B, lum(desk) > 0.6 ? mix(desk, 0x000000, 0.08) : mix(desk, 0xFFFFFF, 0.09));
-  set(ROOT_TINT, 0xC0392B);
 }
 
 void reload_appearance() {

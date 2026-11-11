@@ -36,7 +36,7 @@ extern Fl_Color TITLE_TEXT;    // tytuł aktywnego okna
 extern Fl_Color TITLE_I_TEXT;  // tytuł nieaktywnego okna
 extern Fl_Color DESK_A;        // kolor biurka
 extern Fl_Color DESK_B;        // drugi ton wzoru biurka
-extern Fl_Color ROOT_TINT;     // akcent trybu root
+extern Fl_Color ALERT;         // czerwień ostrzeżeń
 
 // ---- Schematy kolorów i ustawienia wyglądu --------------------------------
 // Schemat to plik klucz=wartość w katalogu "schematy" (np. platinum.conf,
@@ -139,8 +139,7 @@ constexpr int SIZE_SMALL  = 11;
 
 // Inicjalizacja: box types, czcionki, wygląd z ~/.config/nirvana/wyglad.conf.
 // root=true włącza akcent trybu administratora.
-void init(bool root = false);
-bool root_mode();
+void init();
 
 // ---- Ikony (32x32, rysowane wektorowo) ------------------------------------
 enum class Icon { Folder, OpenFolder, Document, Application, Home, Trash, TrashFull, Image, Music,

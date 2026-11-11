@@ -543,4 +543,5 @@ T = {
     '%1 used memory of %2': '%1 zajętej pamięci z %2',
     'memory %1/%2   disk %3/%4': 'pamięć %1/%2   dysk %3/%4',
     'memory %1/%2': 'pamięć %1/%2',
+    'This folder is outside Nirvana HD.': 'Ten folder znajduje się poza Nirvana HD.',
 }

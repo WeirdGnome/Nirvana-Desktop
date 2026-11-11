@@ -17,7 +17,7 @@ int panel_zasilanie();
 int panel_ustawienia();
 
 int main(int argc, char **argv) {
-  plat::init(false);
+  plat::init();
   Fl::visual(FL_RGB);
   const char *which = argc > 1 ? argv[1] : "wyglad";
   if (!strcmp(which, "schemat") && argc > 2) {

@@ -7,8 +7,6 @@ Lekkie środowisko graficzne dla Linuksa (baza: minimalny Devuan) w duchu
 
 - **Tryb prosty**: użytkownik widzi tylko swój dysk Nirvana HD (czyli `$HOME`), jak w Androidzie.
   Aplikacje to pliki AppImage leżące w `~/Aplikacje`; instalacja = przeciągnięcie pliku.
-- **Tryb root**: pełny system plików i ustawienia zaawansowane, uruchamiany przez
-  `pkexec`, wyraźnie oznaczony (czerwony chip w logo, plakietka ROOT).
 - **Rambler, menedżer plików** (komponent `nirvana-denise`): jedno okno, w którym przechodzi się
   między folderami (wstecz, dalej, folder nadrzędny, pole położenia), z własnym menu Okno i Ikony.
 
@@ -29,13 +27,13 @@ Lekkie środowisko graficzne dla Linuksa (baza: minimalny Devuan) w duchu
 | `nirvana-shell`      | Nirvana Shell - emulator terminala          | działa |
 | `nirvana-paula`      | dźwięk                                  | planowany   |
 | `nirvana-kickstart`  | logowanie i start sesji                 | planowany   |
-| `nirvana-guru`       | okno błędów, tryb root                  | planowany   |
+| `nirvana-guru`       | okno błędów                             | planowany   |
 
 ## Instalacja na Devuanie 6 „Excalibur” (Debian 13)
 
 Rozpakuj źródła i uruchom instalator:
 
-    tar xzf nirvana-0.0.4.tar.gz && cd nirvana
+    tar xzf nirvana-0.0.5.tar.gz && cd nirvana
     sudo ./install.sh                 # albo: sudo ./install.sh --login-screen
 
 Instalator:
@@ -113,7 +111,7 @@ czyli z ominięciem pasków pulpitu, więc górny pasek GNOME nie zasłania pask
 Bez `--size` biurko wypełnia cały obszar roboczy. Pozycje okien folderów są zapisywane
 względem biurka, więc przesuwają się razem z nim.
 
-Opcje Ramblera: `--root`, `--home KATALOG`, `--size 1024x768`, `--center`.
+Opcje Ramblera: `--home KATALOG`, `--size 1024x768`, `--center`.
 Czcionkę systemową w stylu Chicago można podać przez `NIRVANA_SYSTEM_FONT`
 (np. wolny font ChicagoFLF).
 
@@ -298,7 +296,7 @@ ilości wolne. Na wąskim ekranie napis się skraca.
 |------|---------|
 | **Nirvana** (logo i napis) | O systemie, Preferencje (okno z panelami), Wykonaj polecenie `Ctrl+E`, Nirvana Shell `Ctrl+T`, Otwórz dziennik, Resetuj Nirvanę |
 | **System** | Zablokuj ekran, Uśpij, Hibernuj, Wyloguj `Ctrl+Q`, Uruchom ponownie, Wyłącz |
-| **Narzędzia** | Formatuj dysk, Opróżnij kosz, Tryb root |
+| **Narzędzia** | Formatuj dysk, Opróżnij kosz |
 
 W każdym oknie menedżera plików:
 

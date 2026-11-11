@@ -51,7 +51,7 @@ public:
       case Appearance: {   // monitor z paletą kolorów
         fl_draw_box(UP_BOX, ix, iy, 32, 26, GRAY);
         fl_color(DESK_A); fl_rectf(ix + 3, iy + 3, 26, 18);
-        const Fl_Color c[] = {SEL, HILITE, ROOT_TINT, LIGHT};
+        const Fl_Color c[] = {SEL, HILITE, ALERT, LIGHT};
         for (int i = 0; i < 4; i++) { fl_color(c[i]); fl_rectf(ix + 5 + i * 6, iy + 12, 5, 6); }
         fl_color(DARK); fl_rect(ix, iy, 32, 26);
         fl_rectf(ix + 10, iy + 27, 12, 3);

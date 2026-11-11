@@ -7,8 +7,6 @@ of **Mac OS 9 (Platinum)** with a touch of the **Amiga**. Written in C++ and FLT
 
 - **Simple mode**: the user only sees their own Nirvana HD disk (that is `$HOME`), as on Android.
   Applications are AppImage files in `~/Applications`; installing means dragging a file.
-- **Root mode**: the full file system and advanced settings, started through
-  `pkexec` and clearly marked (red chip in the logo, ROOT badge).
 - **Rambler, a file manager** (component `nirvana-denise`): a single window that browses folders
   (back, forward, parent folder, location field), with its own Window and Icons menus.
 - **English by default**, Polish when the system locale is Polish (see [Languages](#languages)).
@@ -30,13 +28,13 @@ of **Mac OS 9 (Platinum)** with a touch of the **Amiga**. Written in C++ and FLT
 | `nirvana-shell`     | Nirvana Shell - terminal emulator       | works |
 | `nirvana-paula`     | sound                                   | planned     |
 | `nirvana-kickstart` | login and session start                 | planned     |
-| `nirvana-guru`      | error window, root mode                 | planned     |
+| `nirvana-guru`      | error window                            | planned     |
 
 ## Installing on Devuan 6 "Excalibur" (Debian 13)
 
 Unpack the sources and run the installer:
 
-    tar xzf nirvana-0.0.4.tar.gz && cd nirvana
+    tar xzf nirvana-0.0.5.tar.gz && cd nirvana
     sudo ./install.sh                 # or: sudo ./install.sh --login-screen
 
 The installer:
@@ -77,7 +75,7 @@ Dependencies (Devuan/Debian):
 
     sudo apt install build-essential cmake git libx11-dev libxft-dev \
         libxinerama-dev libxcursor-dev libxfixes-dev libxrender-dev \
-        squashfs-tools bubblewrap libdbus-1-dev udisks2 polkitd pkexec \
+        squashfs-tools bubblewrap libdbus-1-dev udisks2 polkitd \
         network-manager network-manager-openvpn \  # network and VPN
         libxss-dev pulseaudio-utils alsa-utils \  # sound and power applets
         gettext                                   # translations (msgfmt)
@@ -112,7 +110,7 @@ area, i.e. avoiding the desktop panels, so the GNOME top bar does not cover the 
 Desktop menu bar. Without `--size` the desktop fills the whole work area. Folder window
 positions are saved relative to the desktop, so they move together with it.
 
-Rambler options: `--root`, `--home DIR`, `--size 1024x768`, `--center`.
+Rambler options: `--home DIR`, `--size 1024x768`, `--center`.
 A Chicago-style system font can be set with `NIRVANA_SYSTEM_FONT`
 (e.g. the free ChicagoFLF font).
 
@@ -296,7 +294,7 @@ text gets shorter.
 |------|---------|
 | **Nirvana** (logo and name) | About This Computer, Preferences (window with panels), Execute Command `Ctrl+E`, Nirvana Shell `Ctrl+T`, Open System Log, Reset Nirvana |
 | **System** | Lock Screen, Sleep, Hibernate, Log Out `Ctrl+Q`, Restart, Shut Down |
-| **Special** | Format Disk, Empty Trash, Root Mode |
+| **Special** | Format Disk, Empty Trash |
 
 In every file manager window:
 

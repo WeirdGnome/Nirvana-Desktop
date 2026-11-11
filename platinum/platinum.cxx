@@ -20,8 +20,6 @@ Fl_Boxtype UP_BOX, DOWN_BOX, BUTTON_BOX, BUTTON_DOWN, WELL_BOX, MENUBAR_BOX,
 Fl_Font FONT_SYSTEM = FL_HELVETICA_BOLD;
 Fl_Font FONT_SMALL  = FL_HELVETICA;
 
-static bool g_root = false;
-bool root_mode() { return g_root; }
 
 static inline Fl_Color rgb(unsigned v) {
   return fl_rgb_color((v >> 16) & 0xFF, (v >> 8) & 0xFF, v & 0xFF);
@@ -175,9 +173,8 @@ static void apply_scale() {
   for (int i = 0; i < Fl::screen_count(); i++) Fl::screen_scale(i, g_scale);
 }
 
-void init(bool root) {
+void init() {
   init_i18n();   // przed pierwszym tekstem interfejsu
-  g_root = root;
   Fl::scheme("none");
   reload_appearance();   // schemat kolorów z ~/.config/nirvana/wyglad.conf
   apply_scale();
@@ -595,7 +592,7 @@ void draw_icon(Icon icon, int x, int y, bool sel) {
 
 // Logo Nirvana Desktop: chip DIP (ukłon w stronę układów Amigi) z literą "N".
 void draw_logo(int x, int y, int s) {
-  Fl_Color body = g_root ? ROOT_TINT : rgb(0x4B3590);
+  Fl_Color body = rgb(0x4B3590);
   fl_color(rgb(0x777777));   // logo ma stałe kolory, niezależne od schematu
   for (int i = 0; i < 4; i++) {
     int px = x + 3 + i * (s - 6) / 3;

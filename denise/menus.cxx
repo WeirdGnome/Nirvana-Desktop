@@ -5,7 +5,7 @@
 //                Nirvana Shell, przerysuj/uaktualnij wszystko, uśpij, restart, zakończ)
 //   Okno       - aktywne okno folderu (nowy folder, rodzic, widok, sortowanie, ukryte)
 //   Ikony      - zaznaczone ikony (otwórz, kopiuj, informacje, zamroź, dok)
-//   Narzędzia  - formatowanie dysku, kosz, tryb root, reset środowiska
+//   Narzędzia  - formatowanie dysku, kosz
 #include "desktop.h"
 
 #include "appimage.h"
@@ -632,7 +632,7 @@ void Desktop::get_info() {
       y += 28;
     }
   }
-  bool owner_ok = have_st && (st.st_uid == getuid() || root_);
+  bool owner_ok = have_st && st.st_uid == getuid();
   if (!owner_ok) { if (ro) ro->deactivate(); if (ex) ex->deactivate(); }
   end_form(win, W, H, ox, oy, {{_("Cancel"), nullptr}, {"OK", [this, path, ro, ex, comment, args, have_st, st] {
     std::string err;
@@ -729,7 +729,7 @@ void Desktop::format_dialog(int vi) {
   NWin *win = begin_form(_("Format Disk"), W, H, &e,
                          plat::fmt(_("Formatting “%1” (%2)."), v.name, vol::human_size(v.size)), ox, oy);
   auto *warn = new Fl_Box(ox + 64, oy + 40, W - 80, 18, _("All data on this disk will be erased!"));
-  warn->labelcolor(ROOT_TINT);
+  warn->labelcolor(ALERT);
   warn->labelfont(FONT_SYSTEM);
   warn->labelsize(SIZE_SMALL + 1);
   warn->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);

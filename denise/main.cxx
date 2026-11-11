@@ -2,7 +2,6 @@
 //
 // Użycie:
 //   nirvana-denise                 tryb prosty: widać tylko $HOME
-//   nirvana-denise --root          tryb root: cały system plików (uruchamiany przez pkexec)
 //   nirvana-denise --home DIR      inny katalog domowy (np. do testów)
 //   nirvana-denise --size 1024x768 rozmiar biurka (domyślnie cały ekran)
 //   nirvana-denise --center        biurko na środku obszaru roboczego, czyli z ominięciem
@@ -29,18 +28,16 @@
 #include "platinum.h"
 
 int main(int argc, char **argv) {
-  bool root = false;
   std::string home = getenv("HOME") ? getenv("HOME") : "/";
   int W = 0, H = 0;
   bool center = getenv("NIRVANA_CENTER") && !strcmp(getenv("NIRVANA_CENTER"), "1");
 
   for (int i = 1; i < argc; i++) {
-    if (!strcmp(argv[i], "--root")) root = true;
-    else if (!strcmp(argv[i], "--home") && i + 1 < argc) home = argv[++i];
+    if (!strcmp(argv[i], "--home") && i + 1 < argc) home = argv[++i];
     else if (!strcmp(argv[i], "--size") && i + 1 < argc) sscanf(argv[++i], "%dx%d", &W, &H);
     else if (!strcmp(argv[i], "--center") || !strcmp(argv[i], "--srodek")) center = true;
     else if (!strcmp(argv[i], "--help")) {
-      printf("nirvana-denise [--root] [--home DIR] [--size WxH] [--center]\n"
+      printf("nirvana-denise [--home DIR] [--size WxH] [--center]\n"
              "  --center  desktop centred in the work area (e.g. under the GNOME panel);\n"
              "            without --size it fills the whole work area (also: NIRVANA_CENTER=1)\n");
       return 0;
@@ -48,7 +45,7 @@ int main(int argc, char **argv) {
   }
   while (home.size() > 1 && home.back() == '/') home.pop_back();
 
-  plat::init(root);
+  plat::init();
   FolderView::set_home(home);
   {
     std::error_code ec;   // folder na aplikacje zawsze istnieje
@@ -69,7 +66,7 @@ int main(int argc, char **argv) {
   }
 
   Desktop::set_argv(argc, argv);   // Narzędzia > Resetuj Nirvanę uruchamia Ramblera od nowa
-  Desktop desk(W, H, home, root);
+  Desktop desk(W, H, home);
   gary::init(home);
   desk.position(X, Y);
   desk.border(0);
