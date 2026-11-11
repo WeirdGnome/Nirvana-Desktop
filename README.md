@@ -36,7 +36,7 @@ of **Mac OS 9 (Platinum)** with a touch of the **Amiga**. Written in C++ and FLT
 
 Unpack the sources and run the installer:
 
-    tar xzf nirvana-0.0.3.tar.gz && cd nirvana
+    tar xzf nirvana-0.0.4.tar.gz && cd nirvana
     sudo ./install.sh                 # or: sudo ./install.sh --login-screen
 
 The installer:

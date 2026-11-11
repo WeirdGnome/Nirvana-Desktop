@@ -667,7 +667,9 @@ static Fl_Image *iconic_image(Window w, const std::string &home) {
         Entry e;
         e.icon_file = a.icon_file;
         e.icon = Icon::Application;
-        if (Fl_Image *img = entry_icon_image(e, 32, false)) return img;
+        // tylko prawdziwy obrazek z pliku - zastępcza ikona (16 px) znaczy, że pliku nie ma
+        Fl_Image *img = entry_icon_image(e, 32, false);
+        if (img && img->w() == 32) return img;
       }
   (void)home;
   // _NET_WM_ICON od programu; gdy go nie ma - ikona z pliku .desktop i motywu

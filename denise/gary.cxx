@@ -55,6 +55,8 @@ void init(const std::string &home) {
   std::error_code ec;
   fs::create_directories(dir, ec);
   g_file = (dir / "aplikacje.klasy").string();
+  bool stale = false;
+  {
   std::ifstream in(g_file);
   std::string line;
   while (std::getline(in, line)) {
@@ -62,9 +64,14 @@ void init(const std::string &home) {
     std::string cls, name, icon;
     if (std::getline(ss, cls, '\t') && std::getline(ss, name, '\t')) {
       std::getline(ss, icon, '\t');
+      // po zmianie nazwy LisaOS -> Nirvana pamięć podręczna ikon jest w innym miejscu
+      if (auto p = icon.find("/lisaos/"); p != std::string::npos) { icon.replace(p, 8, "/nirvana/"); stale = true; }
+      if (!icon.empty() && !fs::exists(icon, ec)) { icon.clear(); stale = true; }   // ikona zniknęła
       g_known[cls] = {name, icon};
     }
   }
+  }
+  if (stale) save_known();
 }
 
 void note_launch(const std::string &name, const std::string &icon_file) {

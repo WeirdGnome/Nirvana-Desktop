@@ -35,7 +35,7 @@ Lekkie środowisko graficzne dla Linuksa (baza: minimalny Devuan) w duchu
 
 Rozpakuj źródła i uruchom instalator:
 
-    tar xzf nirvana-0.0.3.tar.gz && cd nirvana
+    tar xzf nirvana-0.0.4.tar.gz && cd nirvana
     sudo ./install.sh                 # albo: sudo ./install.sh --login-screen
 
 Instalator:
