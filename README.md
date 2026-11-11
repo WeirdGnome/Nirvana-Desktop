@@ -39,7 +39,7 @@ on the desktop. Written in C++ and FLTK 1.4.
 
 Unpack the sources and run the installer:
 
-    tar xzf nirvana-desktop-0.0.36.tar.gz && cd nirvana-desktop
+    tar xzf nirvana-desktop-0.0.37.tar.gz && cd nirvana-desktop
     sudo ./install.sh                 # or: sudo ./install.sh --login-screen
 
 The installer:
@@ -358,7 +358,7 @@ text gets shorter.
 the administrator password (pkexec – only reading the file runs as root), and as a last resort
 shows the log of the session (`~/.xsession-errors`).
 | **System** | Lock Screen, Sleep, Hibernate, Log Out `Ctrl+Q`, Restart, Shut Down |
-| **Special** | Format Disk, Empty Trash |
+| **Special** | Format Disk, Empty Trash, Force Quit a Window… `Ctrl+Alt+K` (like xkill: a skull cursor, click the window of a program that hangs, confirm; the right button or Esc cancels; Nirvana's own windows are protected) |
 
 **About This Computer** shows the system in the manner of neofetch: a large logo with the
 color swatches on the left and `user@host` with the parameters on the right – OS, host, kernel,

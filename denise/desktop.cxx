@@ -534,7 +534,8 @@ Desktop::Desktop(int W, int H, const std::string &home)
     {P_("System/Shut Down…"), 0, &Desktop::system_shutdown, 0},
     // --- Special ---
     {P_("Special/Format Disk…"), 0, &Desktop::format_disk, 0},
-    {P_("Special/Empty Trash…"), 0, &Desktop::empty_trash, 0},
+    {P_("Special/Empty Trash…"), 0, &Desktop::empty_trash, FL_MENU_DIVIDER},
+    {P_("Special/Force Quit a Window…"), FL_COMMAND + FL_ALT + 'k', &Desktop::force_quit, 0},
   };
   for (auto &it : items) {
     menu_->add(plat::tr_path(it.path).c_str(), it.shortcut, global_menu_cb, (void *)&it, it.flags);

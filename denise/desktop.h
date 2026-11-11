@@ -127,6 +127,8 @@ public:
   void close_active();
   void move_to_trash();
   void empty_trash();
+  void force_quit();          // like xkill: a skull cursor, click a window, its program is closed
+  void force_quit_pick();
   void refresh_all();
   void appearance_changed();      // the Appearance panel changed the scheme (_NIRVANA_APPEARANCE)
   void open_appearance();         // start the Appearance panel (nirvana-alice)

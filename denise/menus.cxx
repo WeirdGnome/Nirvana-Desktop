@@ -27,6 +27,7 @@
 
 #include <X11/Xatom.h>
 #include <X11/Xlib.h>
+#include <X11/cursorfont.h>
 
 #include <cerrno>
 #include <chrono>
@@ -396,6 +397,96 @@ void Desktop::set_as_wallpaper() {
 // Menu Nirvana
 // ---------------------------------------------------------------------------
 void Desktop::open_preferences() { rambler_spawn({rambler_exe("nirvana-alice"), "preferences"}); }
+
+// --- Force Quit (like xkill) ------------------------------------------------------------
+// The program of a window that does not respond is cut off from the X server (XKillClient):
+// with the skull cursor click its window; the right button or Escape cancels.
+static Window client_of_toplevel(Display *d, Window w, int depth = 0) {
+  static Atom wm_state = XInternAtom(d, "WM_STATE", False);
+  Atom type; int fmt; unsigned long n, after; unsigned char *data = nullptr;
+  if (XGetWindowProperty(d, w, wm_state, 0, 0, False, AnyPropertyType, &type, &fmt, &n, &after, &data) == Success) {
+    if (data) XFree(data);
+    if (type != None) return w;
+  }
+  if (depth > 4) return None;
+  Window r, p, *kids = nullptr;
+  unsigned nk = 0;
+  Window found = None;
+  if (XQueryTree(d, w, &r, &p, &kids, &nk)) {
+    for (int i = (int)nk - 1; i >= 0 && !found; i--) found = client_of_toplevel(d, kids[i], depth + 1);
+    if (kids) XFree(kids);
+  }
+  return found;
+}
+
+void Desktop::force_quit() {
+  // after the menu has closed
+  Fl::add_timeout(0.15, [](void *d) { ((Desktop *)d)->force_quit_pick(); }, this);
+}
+
+void Desktop::force_quit_pick() {
+  Display *d = fl_display;
+  Window root = DefaultRootWindow(d);
+  Cursor skull = XCreateFontCursor(d, XC_pirate);
+  if (XGrabPointer(d, root, False, ButtonPressMask | ButtonReleaseMask, GrabModeSync, GrabModeAsync, root, skull,
+                   CurrentTime) != GrabSuccess) {
+    XFreeCursor(d, skull);
+    guru(_("The mouse is held by another program - try again in a moment."));
+    return;
+  }
+  XGrabKeyboard(d, root, False, GrabModeAsync, GrabModeAsync, CurrentTime);
+  Window target = None;
+  bool cancel = false, pressed = false;
+  for (;;) {
+    XAllowEvents(d, SyncPointer, CurrentTime);
+    XEvent ev;
+    XMaskEvent(d, ButtonPressMask | ButtonReleaseMask | KeyPressMask, &ev);
+    if (ev.type == KeyPress) {
+      if (XLookupKeysym(&ev.xkey, 0) == XK_Escape) { cancel = true; break; }
+      continue;
+    }
+    if (ev.type == ButtonPress && !pressed) {
+      pressed = true;
+      if (ev.xbutton.button != Button1) cancel = true;
+      else target = ev.xbutton.subwindow;
+    } else if (ev.type == ButtonRelease && pressed) break;
+  }
+  XUngrabPointer(d, CurrentTime);
+  XUngrabKeyboard(d, CurrentTime);
+  XFreeCursor(d, skull);
+  XFlush(d);
+  if (cancel || target == None) return;
+  Window client = client_of_toplevel(d, target);
+  if (client == None) { guru(_("There is no program window there.")); return; }
+  // Nirvana's own windows (the desktop, the folders, the menu bar) are not closed this way
+  for (Fl_Window *w = Fl::first_window(); w; w = Fl::next_window(w))
+    if (w->shown() && (fl_xid(w) == client || fl_xid(w) == target)) {
+      guru(_("This is part of Nirvana Desktop - it cannot be force quit."));
+      return;
+    }
+  if (client == fl_xid(this)) return;
+  std::string title;
+  {
+    Atom utf8 = XInternAtom(d, "UTF8_STRING", False), name = XInternAtom(d, "_NET_WM_NAME", False);
+    Atom type; int fmt; unsigned long n, after; unsigned char *data = nullptr;
+    if (XGetWindowProperty(d, client, name, 0, 256, False, utf8, &type, &fmt, &n, &after, &data) == Success && data) {
+      title.assign((char *)data, n);
+      XFree(data);
+    }
+    if (title.empty()) {
+      char *t = nullptr;
+      if (XFetchName(d, client, &t) && t) { title = t; XFree(t); }
+    }
+  }
+  if (title.empty()) title = _("this window");
+  dialog(_("Force Quit"),
+         plat::fmt(_("Force quit “%1”?\nThe program is closed at once, and what was not saved in it is lost."), title),
+         {{_("Cancel"), nullptr},
+          {_("Force Quit"), [client] {
+             XKillClient(fl_display, client);
+             XFlush(fl_display);
+           }}});
+}
 
 void Desktop::execute_command() {
   static std::string last;

@@ -38,7 +38,7 @@ Napisane w C++ i FLTK 1.4.
 
 Rozpakuj źródła i uruchom instalator:
 
-    tar xzf nirvana-desktop-0.0.36.tar.gz && cd nirvana-desktop
+    tar xzf nirvana-desktop-0.0.37.tar.gz && cd nirvana-desktop
     sudo ./install.sh                 # albo: sudo ./install.sh --login-screen
 
 Instalator:
@@ -356,7 +356,7 @@ ilości wolne i pamięć każdego programu Nirvany. Na wąskim ekranie napis si�
 dostępny, prosi o hasło administratora (pkexec – jako root działa tylko odczyt pliku), a w
 ostateczności pokazuje dziennik sesji (`~/.xsession-errors`).
 | **System** | Zablokuj ekran, Uśpij, Hibernuj, Wyloguj `Ctrl+Q`, Uruchom ponownie, Wyłącz |
-| **Narzędzia** | Formatuj dysk, Opróżnij kosz |
+| **Narzędzia** | Formatuj dysk, Opróżnij kosz, Zabij okno… `Ctrl+Alt+K` (jak xkill: kursor z czaszką, klik w okno zawieszonego programu, potwierdzenie; prawy przycisk albo Esc przerywa; okna samej Nirvany są chronione) |
 
 **O systemie** pokazuje system na wzór neofetch: po lewej duże logo z próbkami kolorów,
 po prawej `użytkownik@komputer` i parametry – system, komputer, jądro, czas pracy, pakiety

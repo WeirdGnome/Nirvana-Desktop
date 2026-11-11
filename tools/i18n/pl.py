@@ -1035,4 +1035,11 @@ T = {
     'Aquarium': 'Akwarium',
     'Fire': 'Ogień',
     'Bubbles': 'Bańki',
+    'The mouse is held by another program - try again in a moment.': 'Mysz jest zajęta przez inny program – spróbuj za chwilę.',
+    'There is no program window there.': 'Tam nie ma okna programu.',
+    'This is part of Nirvana Desktop - it cannot be force quit.': 'To część Nirvana Desktop – nie można jej wymusić zamknięcia.',
+    'this window': 'to okno',
+    'Force Quit': 'Wymuś zamknięcie',
+    'Force quit “%1”?\nThe program is closed at once, and what was not saved in it is lost.': 'Wymusić zamknięcie „%1”?\nProgram zostanie zamknięty od razu, a to, czego w nim nie zapisano, przepadnie.',
+    'Force Quit a Window…': 'Zabij okno…',
 }
