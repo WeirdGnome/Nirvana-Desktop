@@ -116,7 +116,7 @@ dpkg-deb -f "$DEB" Depends | sed 's/^/  Depends: /'
 
 if [ -n "$PACKAGE_ONLY" ]; then
   echo
-  echo "To install the package:  sudo apt install $DEB"
+  echo "To install the package:  sudo apt install --reinstall $DEB"
   exit 0
 fi
 
@@ -124,7 +124,8 @@ fi
 step "Installing the nirvana package and the programs it uses"
 # apt with a local file resolves dependencies; Recommends (NetworkManager,
 # udisks2, polkit, xsecurelock...) are installed by default, missing ones skipped
-DEBIAN_FRONTEND=noninteractive apt-get install -y "$DEB"
+# --reinstall: also when the same version is already installed (rebuilt package)
+DEBIAN_FRONTEND=noninteractive apt-get install -y --reinstall "$DEB"
 
 # formerly LisaOS: apt removed the old "lisaos" package (Conflicts); settings in ~
 # move on the first start; here we fix the login screen and ~/.xinitrc

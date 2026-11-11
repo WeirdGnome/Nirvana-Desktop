@@ -140,6 +140,10 @@ the Rambler desktop and file manager, an application switcher, control panels (A
 and the Nirvana Shell terminal. English and Polish interface.")
 set(CPACK_PACKAGING_INSTALL_PREFIX /usr)
 set(CPACK_INSTALL_CMAKE_PROJECTS "${CMAKE_BINARY_DIR};NirvanaDesktop;nirvana;/")
+# Każda budowa ma własną wersję (0.1.0+RRRRMMDDGGMM), żeby apt zawsze
+# podmienił zainstalowany pakiet nowszym - przy tej samej wersji nic by nie zrobił.
+string(TIMESTAMP NIRVANA_STAMP "%Y%m%d%H%M" UTC)
+set(CPACK_DEBIAN_PACKAGE_VERSION "${PROJECT_VERSION}+${NIRVANA_STAMP}")
 set(CPACK_DEBIAN_FILE_NAME DEB-DEFAULT)
 set(CPACK_DEBIAN_PACKAGE_SECTION x11)
 set(CPACK_DEBIAN_PACKAGE_PRIORITY optional)
