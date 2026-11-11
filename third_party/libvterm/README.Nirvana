@@ -1,4 +1,0 @@
-libvterm 0.3.3 (MIT, Paul "LeoNerd" Evans) - from the mirror https://github.com/neovim/libvterm
-Bundled so that Nirvana Shell builds without extra packages. If the system has the
-libvterm package (pkg-config vterm), CMake uses the system one.
-The src/encoding/*.inc files are generated from *.tbl (tbl2inc_c.pl).
