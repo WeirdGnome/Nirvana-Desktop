@@ -1,3 +1,0 @@
-# Nirvana Desktop - the screen lock (nirvana-lock) checks the password like a login does
-@include common-auth
-@include common-account
