@@ -32,9 +32,10 @@ struct State {
   // screen brightness
   std::string backlight;       // e.g. intel_backlight; empty - none
   int brightness = -1;         // percent
-  // power profiles (power-profiles-daemon)
+  // power profiles: power-profiles-daemon, otherwise the kernel (platform profile, EPP, governor)
   std::vector<std::string> profiles;   // power-saver, balanced, performance
   std::string profile;
+  bool kernel_profiles = false;        // without power-profiles-daemon (set through nirvana-power-helper)
   // logind
   bool logind = false;
   bool can_suspend = false, can_hibernate = false, can_poweroff = false, can_reboot = false;
@@ -47,6 +48,7 @@ const char *profile_name(const std::string &p);
 bool set_brightness(const State &s, int percent);
 void step_brightness(int delta);
 bool set_profile(const std::string &p);
+void restore_profile();   // at the session start: the profile chosen last time (kernel profiles only)
 
 // System actions; they return an error message or "".
 std::string suspend();

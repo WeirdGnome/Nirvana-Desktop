@@ -3,7 +3,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Nirvana Desktop 0.1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-11 14:49+0000\n"
+"POT-Creation-Date: 2026-11-11 15:04+0000\n"
 "PO-Revision-Date: 2026-11-09 13:00+0000\n"
 "Last-Translator: Nirvana Desktop\n"
 "Language-Team: Polish\n"
@@ -180,11 +180,11 @@ msgstr "Animacje okien"
 
 #: alice/appearance.cxx:410 alice/network.cxx:244 alice/network.cxx:341
 #: alice/network.cxx:389 alice/network.cxx:493 alice/network.cxx:744
-#: alice/power.cxx:127 denise/applets.cxx:588 denise/desktop.cxx:1619
-#: denise/desktop.cxx:1653 denise/desktop.cxx:2004 denise/desktop.cxx:2558
-#: denise/desktop.cxx:3001 denise/menus.cxx:417 denise/menus.cxx:736
-#: denise/menus.cxx:845 denise/menus.cxx:850 platinum/platinum.cxx:209
-#: platinum/platinum.cxx:988 shell/main.cxx:615
+#: alice/power.cxx:127 denise/applets.cxx:442 denise/desktop.cxx:1621
+#: denise/desktop.cxx:1655 denise/desktop.cxx:2006 denise/desktop.cxx:2560
+#: denise/desktop.cxx:3003 denise/menus.cxx:417 denise/menus.cxx:736
+#: denise/menus.cxx:845 denise/menus.cxx:850 denise/updates.cxx:273
+#: platinum/platinum.cxx:209 platinum/platinum.cxx:988 shell/main.cxx:615
 msgid "Cancel"
 msgstr "Anuluj"
 
@@ -193,7 +193,7 @@ msgid "Apply"
 msgstr "Zastosuj"
 
 #: alice/appearance.cxx:412 alice/power.cxx:129 alice/shader.cxx:262
-#: denise/about.cxx:606 denise/desktop.cxx:1598 platinum/platinum.cxx:208
+#: denise/about.cxx:606 denise/desktop.cxx:1600 platinum/platinum.cxx:208
 msgid "OK"
 msgstr "OK"
 
@@ -217,8 +217,8 @@ msgstr "łączenie…"
 msgid "Other Wi-Fi Network"
 msgstr "Inna sieć Wi-Fi"
 
-#: alice/network.cxx:194 denise/desktop.cxx:2210 denise/desktop.cxx:2221
-#: denise/desktop.cxx:2228
+#: alice/network.cxx:194 denise/desktop.cxx:2212 denise/desktop.cxx:2223
+#: denise/desktop.cxx:2230
 msgid "Wi-Fi Network"
 msgstr "Sieć Wi-Fi"
 
@@ -226,7 +226,7 @@ msgstr "Sieć Wi-Fi"
 msgid "Connect to a network that does not broadcast its name."
 msgstr "Połącz z siecią, która nie rozgłasza nazwy."
 
-#: alice/network.cxx:201 denise/desktop.cxx:2229
+#: alice/network.cxx:201 denise/desktop.cxx:2231
 msgid ""
 "The network “%1” is secured.\n"
 "Enter the password to connect."
@@ -256,8 +256,8 @@ msgstr "Pokaż hasło"
 
 #: alice/network.cxx:245 alice/network.cxx:390 alice/network.cxx:427
 #: alice/network.cxx:561 alice/network.cxx:651 alice/network.cxx:702
-#: alice/network.cxx:728 denise/desktop.cxx:2114 denise/desktop.cxx:2188
-#: denise/desktop.cxx:2229
+#: alice/network.cxx:728 denise/desktop.cxx:2116 denise/desktop.cxx:2190
+#: denise/desktop.cxx:2231
 msgid "Connect"
 msgstr "Połącz"
 
@@ -265,13 +265,13 @@ msgstr "Połącz"
 msgid "Enterprise networks (802.1X) are not supported yet - use nmtui."
 msgstr "Sieci firmowe (802.1X) nie są jeszcze obsługiwane - użyj nmtui."
 
-#: alice/network.cxx:278 alice/network.cxx:410 denise/desktop.cxx:2180
-#: denise/desktop.cxx:2217 denise/desktop.cxx:3032 denise/volumes.cxx:317
+#: alice/network.cxx:278 alice/network.cxx:410 denise/desktop.cxx:2182
+#: denise/desktop.cxx:2219 denise/desktop.cxx:3034 denise/volumes.cxx:317
 #: net/net.cxx:93
 msgid "Wrong password."
 msgstr "Nieprawidłowe hasło."
 
-#: alice/network.cxx:279 denise/desktop.cxx:2218 net/net.cxx:683
+#: alice/network.cxx:279 denise/desktop.cxx:2220 net/net.cxx:683
 #: net/net.cxx:809
 msgid "Could not connect. Check the password."
 msgstr "Nie udało się połączyć. Sprawdź hasło."
@@ -344,7 +344,7 @@ msgstr "Łączenie z VPN „%1”…"
 msgid "Connected to VPN “%1”."
 msgstr "Połączono z VPN „%1”."
 
-#: alice/network.cxx:427 alice/network.cxx:561 denise/desktop.cxx:2111
+#: alice/network.cxx:427 alice/network.cxx:561 denise/desktop.cxx:2113
 msgid "Disconnect"
 msgstr "Rozłącz"
 
@@ -408,7 +408,7 @@ msgstr "Włączanie hotspotu…"
 msgid "Hotspot is on."
 msgstr "Hotspot włączony."
 
-#: alice/network.cxx:525 denise/desktop.cxx:2097
+#: alice/network.cxx:525 denise/desktop.cxx:2099
 msgid "Network unavailable"
 msgstr "Sieć niedostępna"
 
@@ -456,7 +456,7 @@ msgstr "Kabel sieciowy jest odłączony."
 msgid "Disconnected."
 msgstr "Rozłączono."
 
-#: alice/network.cxx:593 denise/desktop.cxx:2141
+#: alice/network.cxx:593 denise/desktop.cxx:2143
 msgid "Looking for networks…"
 msgstr "Szukam sieci…"
 
@@ -472,8 +472,8 @@ msgstr "brak połączeń"
 msgid "disconnected"
 msgstr "rozłączono"
 
-#: alice/network.cxx:626 alice/preferences.cxx:97 denise/desktop.cxx:2127
-#: denise/desktop.cxx:2168 denise/desktop.cxx:2199 denise/gary.cxx:118
+#: alice/network.cxx:626 alice/preferences.cxx:97 denise/desktop.cxx:2129
+#: denise/desktop.cxx:2170 denise/desktop.cxx:2201 denise/gary.cxx:118
 #: net/net.cxx:326
 msgid "Network"
 msgstr "Sieć"
@@ -543,7 +543,7 @@ msgstr "Sieci w zasięgu:"
 msgid "Choose a network from the list."
 msgstr "Wybierz sieć z listy."
 
-#: alice/network.cxx:707 denise/desktop.cxx:2149
+#: alice/network.cxx:707 denise/desktop.cxx:2151
 msgid "Other Network…"
 msgstr "Inna sieć…"
 
@@ -592,7 +592,7 @@ msgstr "Usunąć połączenie VPN „%s”?"
 msgid "VPN connection deleted."
 msgstr "Usunięto połączenie VPN."
 
-#: alice/network.cxx:753 denise/desktop.cxx:2164
+#: alice/network.cxx:753 denise/desktop.cxx:2166
 msgid "Airplane Mode"
 msgstr "Tryb samolotowy"
 
@@ -616,7 +616,7 @@ msgstr "Tryb samolotowy wyłączony."
 msgid "Close"
 msgstr "Zamknij"
 
-#: alice/power.cxx:36 power/power.cxx:271
+#: alice/power.cxx:36 power/power.cxx:325
 msgid "%1 min"
 msgstr "%1 min"
 
@@ -632,7 +632,7 @@ msgstr "1 godzina"
 msgid "2 hours"
 msgstr "2 godziny"
 
-#: alice/power.cxx:79 alice/preferences.cxx:98 denise/applets.cxx:592
+#: alice/power.cxx:79 alice/preferences.cxx:98 denise/applets.cxx:446
 #: denise/gary.cxx:120
 msgid "Power"
 msgstr "Zasilanie"
@@ -670,7 +670,7 @@ msgstr "Na baterii po bezczynności:"
 msgid "On power adapter, when idle for:"
 msgstr "Z zasilacza po bezczynności:"
 
-#: alice/power.cxx:103 denise/about.cxx:447 denise/applets.cxx:738
+#: alice/power.cxx:103 denise/about.cxx:447 denise/applets.cxx:592
 msgid "Battery"
 msgstr "Bateria"
 
@@ -706,7 +706,7 @@ msgstr ""
 "W sesji GNOME/KDE ekranem i usypianiem zarządza tamto środowisko - te "
 "ustawienia działają w sesji Nirvana Desktop."
 
-#: alice/preferences.cxx:93 denise/desktop.cxx:694 denise/gary.cxx:121
+#: alice/preferences.cxx:93 denise/desktop.cxx:696 denise/gary.cxx:121
 msgid "Preferences"
 msgstr "Preferencje"
 
@@ -1296,103 +1296,103 @@ msgstr ""
 msgid "Could not save the application: %1"
 msgstr "Nie udało się zapisać aplikacji: %1"
 
-#: denise/applets.cxx:304
+#: denise/applets.cxx:135
 msgid "Sound"
 msgstr "Dźwięk"
 
-#: denise/applets.cxx:313
+#: denise/applets.cxx:144
 msgid "Volume"
 msgstr "Głośność"
 
-#: denise/applets.cxx:313
+#: denise/applets.cxx:144
 msgid "Microphone"
 msgstr "Mikrofon"
 
-#: denise/applets.cxx:316
+#: denise/applets.cxx:147
 msgid "No sound output."
 msgstr "Brak wyjścia dźwięku."
 
-#: denise/applets.cxx:316
+#: denise/applets.cxx:147
 msgid "No microphone."
 msgstr "Brak mikrofonu."
 
-#: denise/applets.cxx:321
+#: denise/applets.cxx:152
 msgid "Mute"
 msgstr "Wycisz"
 
-#: denise/applets.cxx:342
+#: denise/applets.cxx:173
 msgid "Output:"
 msgstr "Wyjście:"
 
-#: denise/applets.cxx:342
+#: denise/applets.cxx:173
 msgid "Input:"
 msgstr "Wejście:"
 
-#: denise/applets.cxx:386 denise/desktop.cxx:692 denise/desktop.cxx:856
+#: denise/applets.cxx:217 denise/desktop.cxx:694 denise/desktop.cxx:858
 msgid "Applications"
 msgstr "Aplikacje"
 
-#: denise/applets.cxx:395
+#: denise/applets.cxx:226
 msgid "This application is audible"
 msgstr "Słychać tę aplikację"
 
-#: denise/applets.cxx:505 denise/applets.cxx:579
+#: denise/applets.cxx:354 denise/applets.cxx:433
 msgid "Battery: %1"
 msgstr "Bateria: %1"
 
-#: denise/applets.cxx:505 denise/applets.cxx:579 power/power.cxx:266
+#: denise/applets.cxx:354 denise/applets.cxx:433 power/power.cxx:320
 msgid "AC power"
 msgstr "Zasilanie sieciowe"
 
-#: denise/applets.cxx:523
+#: denise/applets.cxx:372
 msgid "Profile:"
 msgstr "Profil:"
 
-#: denise/applets.cxx:538
+#: denise/applets.cxx:392
 msgid "Presentation Mode"
 msgstr "Tryb projekcji"
 
-#: denise/applets.cxx:545
+#: denise/applets.cxx:399
 msgid "The screen will not turn off or lock, and the computer will not sleep."
 msgstr "Ekran nie wygaśnie ani się nie zablokuje, a komputer nie uśnie."
 
-#: denise/applets.cxx:552
+#: denise/applets.cxx:406
 msgid "Power Settings…"
 msgstr "Ustawienia zasilania…"
 
-#: denise/applets.cxx:601
+#: denise/applets.cxx:455
 msgid "Presentation mode is on - turn it off to put the computer to sleep."
 msgstr "Tryb projekcji jest włączony - wyłącz go, żeby uśpić komputer."
 
-#: denise/applets.cxx:606
+#: denise/applets.cxx:460
 msgid "Presentation mode is on - turn it off to hibernate the computer."
 msgstr "Tryb projekcji jest włączony - wyłącz go, żeby hibernować komputer."
 
-#: denise/applets.cxx:610
+#: denise/applets.cxx:464
 msgid "Log Out"
 msgstr "Wyloguj"
 
-#: denise/applets.cxx:610
+#: denise/applets.cxx:464
 msgid "End the session? Open programs will be closed."
 msgstr "Zakończyć sesję? Otwarte programy zostaną zamknięte."
 
-#: denise/applets.cxx:615
+#: denise/applets.cxx:469
 msgid "Restart"
 msgstr "Uruchom ponownie"
 
-#: denise/applets.cxx:615
+#: denise/applets.cxx:469
 msgid "Restart the computer?"
 msgstr "Uruchomić komputer ponownie?"
 
-#: denise/applets.cxx:621
+#: denise/applets.cxx:475
 msgid "Shut Down"
 msgstr "Wyłącz"
 
-#: denise/applets.cxx:621
+#: denise/applets.cxx:475
 msgid "Shut down the computer?"
 msgstr "Wyłączyć komputer?"
 
-#: denise/applets.cxx:738
+#: denise/applets.cxx:592
 msgid "The battery is almost empty (%1%). Plug in the power adapter."
 msgstr "Bateria jest prawie wyczerpana (%1%). Podłącz zasilacz."
 
@@ -1424,59 +1424,59 @@ msgstr "Dysk (%1): wolne %2 z %3"
 msgid "Applications - current: %1"
 msgstr "Aplikacje - teraz: %1"
 
-#: denise/desktop.cxx:714 denise/desktop.cxx:855 denise/desktop.cxx:1993
-#: denise/desktop.cxx:2001 denise/desktop.cxx:2769 denise/desktop.cxx:2873
+#: denise/desktop.cxx:716 denise/desktop.cxx:857 denise/desktop.cxx:1995
+#: denise/desktop.cxx:2003 denise/desktop.cxx:2771 denise/desktop.cxx:2875
 msgid "Trash"
 msgstr "Kosz"
 
-#: denise/desktop.cxx:1289 denise/desktop.cxx:1463 denise/desktop.cxx:2533
+#: denise/desktop.cxx:1291 denise/desktop.cxx:1465 denise/desktop.cxx:2535
 msgid "Access Denied"
 msgstr "Brak dostępu"
 
-#: denise/desktop.cxx:1290 denise/desktop.cxx:1464
+#: denise/desktop.cxx:1292 denise/desktop.cxx:1466
 msgid "This folder is outside Nirvana HD."
 msgstr "Ten folder znajduje się poza Nirvana HD."
 
-#: denise/desktop.cxx:1373
+#: denise/desktop.cxx:1375
 msgid "Rename"
 msgstr "Zmiana nazwy"
 
-#: denise/desktop.cxx:1420
+#: denise/desktop.cxx:1422
 msgid "Back"
 msgstr "Wstecz"
 
-#: denise/desktop.cxx:1421
+#: denise/desktop.cxx:1423
 msgid "Forward"
 msgstr "Dalej"
 
-#: denise/desktop.cxx:1422
+#: denise/desktop.cxx:1424
 msgid "Open Parent"
 msgstr "Otwórz katalog nadrzędny"
 
-#: denise/desktop.cxx:1472 denise/desktop.cxx:3021 denise/menus.cxx:254
+#: denise/desktop.cxx:1474 denise/desktop.cxx:3023 denise/menus.cxx:254
 #: denise/menus.cxx:256 denise/menus.cxx:260 denise/menus.cxx:330
 msgid "Open"
 msgstr "Otwórz"
 
-#: denise/desktop.cxx:1472
+#: denise/desktop.cxx:1474
 msgid "The folder “%1” could not be found."
 msgstr "Nie znaleziono folderu „%1”."
 
 #. TRANSLATORS: %s = the program's exit code (keep %s)
-#: denise/desktop.cxx:1556 denise/menus.cxx:428
+#: denise/desktop.cxx:1558 denise/menus.cxx:428
 #, c-format
 msgid "[exit code %s] Press Enter to close…"
 msgstr "[kod wyjścia %s] Enter zamyka okno…"
 
-#: denise/desktop.cxx:1598 denise/desktop.cxx:1616 denise/desktop.cxx:1631
+#: denise/desktop.cxx:1600 denise/desktop.cxx:1618 denise/desktop.cxx:1633
 msgid "Installation"
 msgstr "Instalacja"
 
-#: denise/desktop.cxx:1598
+#: denise/desktop.cxx:1600
 msgid "Could not move the file:"
 msgstr "Nie udało się przenieść pliku:"
 
-#: denise/desktop.cxx:1617
+#: denise/desktop.cxx:1619
 msgid ""
 "“%1” is already installed in %2.\n"
 "Other versions of this program can be installed alongside it."
@@ -1484,56 +1484,56 @@ msgstr ""
 "„%1” jest już zainstalowany w folderze %2.\n"
 "Inne wersje tego programu mogą być zainstalowane obok."
 
-#: denise/desktop.cxx:1620 denise/desktop.cxx:2559
+#: denise/desktop.cxx:1622 denise/desktop.cxx:2561
 msgid "Replace"
 msgstr "Zastąp"
 
-#: denise/desktop.cxx:1621
+#: denise/desktop.cxx:1623
 msgid "Run"
 msgstr "Uruchom"
 
-#: denise/desktop.cxx:1631
+#: denise/desktop.cxx:1633
 msgid "Install the application “%1”?"
 msgstr "Zainstalować aplikację „%1”?"
 
-#: denise/desktop.cxx:1632
+#: denise/desktop.cxx:1634
 msgid "Category:"
 msgstr "Kategoria:"
 
-#: denise/desktop.cxx:1648
+#: denise/desktop.cxx:1650
 msgid "The application will run in a sandbox: it will only see Nirvana HD."
 msgstr "Aplikacja będzie działać w piaskownicy: zobaczy tylko Nirvana HD."
 
-#: denise/desktop.cxx:1649
+#: denise/desktop.cxx:1651
 msgid ""
 "Note: bubblewrap is missing - the application will run without a sandbox."
 msgstr "Uwaga: brak bubblewrap - aplikacja będzie działać bez piaskownicy."
 
-#: denise/desktop.cxx:1654
+#: denise/desktop.cxx:1656 denise/updates.cxx:273
 msgid "Install"
 msgstr "Zainstaluj"
 
-#: denise/desktop.cxx:1670
+#: denise/desktop.cxx:1672
 msgid "Cannot Open"
 msgstr "Nie można uruchomić"
 
-#: denise/desktop.cxx:1933
+#: denise/desktop.cxx:1935
 msgid "untitled folder"
 msgstr "bez nazwy"
 
-#: denise/desktop.cxx:1993 denise/desktop.cxx:2769 denise/desktop.cxx:2873
+#: denise/desktop.cxx:1995 denise/desktop.cxx:2771 denise/desktop.cxx:2875
 msgid "Could not move to the Trash:"
 msgstr "Nie udało się przenieść do kosza:"
 
-#: denise/desktop.cxx:2001
+#: denise/desktop.cxx:2003
 msgid "The Trash is empty."
 msgstr "Kosz jest pusty."
 
-#: denise/desktop.cxx:2002
+#: denise/desktop.cxx:2004
 msgid "Empty Trash"
 msgstr "Opróżnij kosz"
 
-#: denise/desktop.cxx:2003
+#: denise/desktop.cxx:2005
 msgid ""
 "The Trash contains %1.\n"
 "Delete them permanently?"
@@ -1541,55 +1541,55 @@ msgstr ""
 "Kosz zawiera %1.\n"
 "Czy na pewno usunąć je na zawsze?"
 
-#: denise/desktop.cxx:2005
+#: denise/desktop.cxx:2007
 msgid "Empty"
 msgstr "Opróżnij"
 
-#: denise/desktop.cxx:2098 denise/desktop.cxx:2171
+#: denise/desktop.cxx:2100 denise/desktop.cxx:2173
 msgid "Network Settings…"
 msgstr "Ustawienia sieci…"
 
-#: denise/desktop.cxx:2106
+#: denise/desktop.cxx:2108
 msgid "%1 (%2): %3"
 msgstr "%1 (%2): %3"
 
-#: denise/desktop.cxx:2117
+#: denise/desktop.cxx:2119
 msgid "Cable unplugged"
 msgstr "Kabel odłączony"
 
-#: denise/desktop.cxx:2121
+#: denise/desktop.cxx:2123
 msgid "Wi-Fi: hotspot “%1”"
 msgstr "Wi-Fi: hotspot „%1”"
 
-#: denise/desktop.cxx:2122
+#: denise/desktop.cxx:2124
 msgid "Wi-Fi: On"
 msgstr "Wi-Fi: włączone"
 
-#: denise/desktop.cxx:2122
+#: denise/desktop.cxx:2124
 msgid "Wi-Fi: Off"
 msgstr "Wi-Fi: wyłączone"
 
-#: denise/desktop.cxx:2123
+#: denise/desktop.cxx:2125
 msgid "Turn Wi-Fi Off"
 msgstr "Wyłącz Wi-Fi"
 
-#: denise/desktop.cxx:2123
+#: denise/desktop.cxx:2125
 msgid "Turn Wi-Fi On"
 msgstr "Włącz Wi-Fi"
 
-#: denise/desktop.cxx:2145
+#: denise/desktop.cxx:2147
 msgid "Turn Hotspot Off"
 msgstr "Wyłącz hotspot"
 
-#: denise/desktop.cxx:2145
+#: denise/desktop.cxx:2147
 msgid "Disconnect from “%1”"
 msgstr "Rozłącz z „%1”"
 
-#: denise/desktop.cxx:2159
+#: denise/desktop.cxx:2161
 msgid "(connecting…)"
 msgstr "(łączenie…)"
 
-#: denise/desktop.cxx:2187
+#: denise/desktop.cxx:2189
 msgid ""
 "VPN connection “%1” (%2).\n"
 "Enter the password."
@@ -1597,7 +1597,7 @@ msgstr ""
 "Połączenie VPN „%1” (%2).\n"
 "Podaj hasło."
 
-#: denise/desktop.cxx:2210
+#: denise/desktop.cxx:2212
 msgid ""
 "Enterprise networks (WPA Enterprise, 802.1X) are not supported yet.\n"
 "Set them up with nmtui or nm-connection-editor."
@@ -1605,63 +1605,63 @@ msgstr ""
 "Sieci firmowe (WPA Enterprise, 802.1X) nie są jeszcze obsługiwane.\n"
 "Skonfiguruj je narzędziem nmtui albo nm-connection-editor."
 
-#: denise/desktop.cxx:2395
+#: denise/desktop.cxx:2397
 msgid "Hide %1"
 msgstr "Ukryj %1"
 
-#: denise/desktop.cxx:2399
+#: denise/desktop.cxx:2401
 msgid "Hide Others"
 msgstr "Ukryj inne"
 
-#: denise/desktop.cxx:2404
+#: denise/desktop.cxx:2406
 msgid "Show All"
 msgstr "Pokaż wszystkie"
 
-#: denise/desktop.cxx:2413
+#: denise/desktop.cxx:2415
 msgid "Quit %1"
 msgstr "Zakończ %1"
 
-#: denise/desktop.cxx:2479
+#: denise/desktop.cxx:2481
 msgid "A name cannot contain “/”."
 msgstr "Nazwa nie może zawierać znaku „/”."
 
-#: denise/desktop.cxx:2480
+#: denise/desktop.cxx:2482
 msgid "That name is reserved."
 msgstr "Taka nazwa jest zarezerwowana."
 
-#: denise/desktop.cxx:2483
+#: denise/desktop.cxx:2485
 msgid "An item named “%1” already exists."
 msgstr "Element o nazwie „%1” już istnieje."
 
-#: denise/desktop.cxx:2485
+#: denise/desktop.cxx:2487
 msgid "Could not rename:"
 msgstr "Nie udało się zmienić nazwy:"
 
-#: denise/desktop.cxx:2533
+#: denise/desktop.cxx:2535
 msgid "The destination folder is outside Nirvana HD."
 msgstr "Folder docelowy jest poza Nirvana HD."
 
-#: denise/desktop.cxx:2540
+#: denise/desktop.cxx:2542
 msgid "Cannot Move"
 msgstr "Nie można przenieść"
 
-#: denise/desktop.cxx:2540
+#: denise/desktop.cxx:2542
 msgid "The folder “%1” cannot be moved into itself."
 msgstr "Folderu „%1” nie można umieścić w nim samym."
 
-#: denise/desktop.cxx:2554
+#: denise/desktop.cxx:2556
 msgid "an item “%1”"
 msgstr "element „%1”"
 
-#: denise/desktop.cxx:2556 denise/desktop.cxx:2599
+#: denise/desktop.cxx:2558 denise/desktop.cxx:2601
 msgid "Copying"
 msgstr "Kopiowanie"
 
-#: denise/desktop.cxx:2556 denise/desktop.cxx:2599
+#: denise/desktop.cxx:2558 denise/desktop.cxx:2601
 msgid "Move"
 msgstr "Przenoszenie"
 
-#: denise/desktop.cxx:2557
+#: denise/desktop.cxx:2559
 msgid ""
 "The folder “%1” already contains %2.\n"
 "Replace?"
@@ -1669,23 +1669,23 @@ msgstr ""
 "W folderze „%1” jest już %2.\n"
 "Zastąpić?"
 
-#: denise/desktop.cxx:2599
+#: denise/desktop.cxx:2601
 msgid "There were errors:"
 msgstr "Wystąpiły błędy:"
 
-#: denise/desktop.cxx:2728 denise/desktop.cxx:3020 denise/desktop.cxx:3033
+#: denise/desktop.cxx:2730 denise/desktop.cxx:3022 denise/desktop.cxx:3035
 msgid "Encrypted Disk"
 msgstr "Dysk zaszyfrowany"
 
-#: denise/desktop.cxx:2728
+#: denise/desktop.cxx:2730
 msgid "Open the disk “%1” and enter its password first."
 msgstr "Najpierw otwórz dysk „%1” i podaj hasło."
 
-#: denise/desktop.cxx:2733 denise/desktop.cxx:2947
+#: denise/desktop.cxx:2735 denise/desktop.cxx:2949
 msgid "Disk"
 msgstr "Dysk"
 
-#: denise/desktop.cxx:3021
+#: denise/desktop.cxx:3023
 msgid ""
 "The disk “%1” is encrypted.\n"
 "Enter the password to open it."
@@ -1693,7 +1693,7 @@ msgstr ""
 "Dysk „%1” jest zaszyfrowany.\n"
 "Podaj hasło, aby go otworzyć."
 
-#: denise/desktop.cxx:3052
+#: denise/desktop.cxx:3054
 msgid "Ejecting"
 msgstr "Wysuwanie"
 
@@ -2037,6 +2037,123 @@ msgstr "Dysk zniknął."
 #: denise/menus.cxx:861
 msgid "The disk “%1” is ready."
 msgstr "Dysk „%1” jest gotowy."
+
+#: denise/updates.cxx:145
+msgid "nirvana-update-check is missing."
+msgstr "Brak programu nirvana-update-check."
+
+#: denise/updates.cxx:168
+msgid "Cannot start the check."
+msgstr "Nie można uruchomić sprawdzania."
+
+#: denise/updates.cxx:183
+msgid "Refreshing the package lists…"
+msgstr "Odświeżanie list pakietów…"
+
+#: denise/updates.cxx:184 denise/updates.cxx:347
+msgid "Installing updates…"
+msgstr "Instalowanie aktualizacji…"
+
+#: denise/updates.cxx:185
+msgid "Updating Flatpak applications…"
+msgstr "Aktualizowanie aplikacji Flatpak…"
+
+#: denise/updates.cxx:234
+msgid "nirvana-update-helper is missing."
+msgstr "Brak programu nirvana-update-helper."
+
+#: denise/updates.cxx:240
+msgid "Waiting for permission…"
+msgstr "Czekanie na zgodę…"
+
+#: denise/updates.cxx:255
+msgid "Installing was cancelled or not permitted."
+msgstr "Instalowanie anulowano albo nie zezwolono na nie."
+
+#: denise/updates.cxx:256
+msgid "The package manager ended with error %1."
+msgstr "Menedżer pakietów zakończył się błędem %1."
+
+#: denise/updates.cxx:262
+msgid "pkexec is missing - install polkit."
+msgstr "Brak pkexec – zainstaluj polkit."
+
+#: denise/updates.cxx:269
+msgid "Install %1 update?"
+msgid_plural "Install %1 updates?"
+msgstr[0] "Zainstalować %1 aktualizację?"
+msgstr[1] "Zainstalować %1 aktualizacje?"
+msgstr[2] "Zainstalować %1 aktualizacji?"
+
+#: denise/updates.cxx:271
+msgid ""
+"You can keep working meanwhile. Programs that are running may need a restart "
+"afterwards."
+msgstr ""
+"W tym czasie możesz dalej pracować. Uruchomione programy mogą potem wymagać "
+"ponownego uruchomienia."
+
+#: denise/updates.cxx:273 denise/updates.cxx:350
+msgid "Software Update"
+msgstr "Aktualizacja oprogramowania"
+
+#: denise/updates.cxx:340
+msgid "Checking for updates…"
+msgstr "Szukanie aktualizacji…"
+
+#: denise/updates.cxx:341
+msgid "The system is up to date"
+msgstr "System jest aktualny"
+
+#: denise/updates.cxx:343
+msgid "%1 update available"
+msgid_plural "%1 updates available"
+msgstr[0] "Dostępna %1 aktualizacja"
+msgstr[1] "Dostępne %1 aktualizacje"
+msgstr[2] "Dostępnych %1 aktualizacji"
+
+#: denise/updates.cxx:346
+msgid "Installing updates… %1%"
+msgstr "Instalowanie aktualizacji… %1%"
+
+#: denise/updates.cxx:348
+msgid "Updates installed"
+msgstr "Aktualizacje zainstalowane"
+
+#: denise/updates.cxx:349
+msgid "Updating failed"
+msgstr "Aktualizacja nie powiodła się"
+
+#: denise/updates.cxx:427
+msgid "Restart the computer to finish the update."
+msgstr "Uruchom komputer ponownie, aby dokończyć aktualizację."
+
+#: denise/updates.cxx:428
+msgid "Last checked at %1 (%2)"
+msgstr "Ostatnio sprawdzono o %1 (%2)"
+
+#: denise/updates.cxx:437
+msgid "Note: "
+msgstr "Uwaga: "
+
+#: denise/updates.cxx:457
+msgid "…and %1 more"
+msgid_plural "…and %1 more"
+msgstr[0] "…i jeszcze %1"
+msgstr[1] "…i jeszcze %1"
+msgstr[2] "…i jeszcze %1"
+
+#: denise/updates.cxx:473
+msgid "Install Updates…"
+msgstr "Zainstaluj aktualizacje…"
+
+#: denise/updates.cxx:474
+msgid "Check for Updates"
+msgstr "Sprawdź aktualizacje"
+
+#: denise/updates.cxx:475
+msgid "Show Log"
+msgstr "Pokaż dziennik"
 
 #: denise/volumes.cxx:152
 msgid "Disc"
@@ -2499,47 +2616,47 @@ msgstr "Wstrzymane przez inny program albo tryb projekcji."
 msgid "The logind/elogind service is missing."
 msgstr "Brak usługi logind/elogind."
 
-#: power/power.cxx:271
+#: power/power.cxx:325
 msgid "%1 h %2 min"
 msgstr "%1 h %2 min"
 
-#: power/power.cxx:273
+#: power/power.cxx:327
 msgid "%1, charging"
 msgstr "%1, ładowanie"
 
-#: power/power.cxx:273
+#: power/power.cxx:327
 msgid "%1, charging (full in about %2)"
 msgstr "%1, ładowanie (pełna za ok. %2)"
 
-#: power/power.cxx:274
+#: power/power.cxx:328
 msgid "%1, on power adapter"
 msgstr "%1, zasilacz"
 
-#: power/power.cxx:275
+#: power/power.cxx:329
 msgid "%1, about %2 left"
 msgstr "%1, zostało ok. %2"
 
-#: power/power.cxx:279
+#: power/power.cxx:333
 msgid "Power saver"
 msgstr "Oszczędzanie energii"
 
-#: power/power.cxx:280
+#: power/power.cxx:334
 msgid "Balanced"
 msgstr "Zrównoważony"
 
-#: power/power.cxx:281
+#: power/power.cxx:335
 msgid "Performance"
 msgstr "Wydajność"
 
-#: power/power.cxx:375
+#: power/power.cxx:452
 msgid "screen blanking"
 msgstr "wygaszanie ekranu"
 
-#: power/power.cxx:394
+#: power/power.cxx:471
 msgid "sleep (logind)"
 msgstr "usypianie (logind)"
 
-#: power/power.cxx:418
+#: power/power.cxx:495
 msgid "desktop screen saver"
 msgstr "wygaszacz pulpitu"
 
@@ -2708,24 +2825,24 @@ msgstr "Uruchom ponownie…"
 msgid "Shut Down…"
 msgstr "Wyłącz…"
 
-#: denise/desktop.cxx:2422 denise/desktop.cxx:2428 denise/desktop.cxx:2440
-#: denise/desktop.cxx:2441 denise/desktop.cxx:2442
+#: denise/desktop.cxx:2424 denise/desktop.cxx:2430 denise/desktop.cxx:2442
+#: denise/desktop.cxx:2443 denise/desktop.cxx:2444
 msgid "Rambler Windows"
 msgstr "Okna Ramblera"
 
-#: denise/desktop.cxx:2422
+#: denise/desktop.cxx:2424
 msgid "No open windows"
 msgstr "Brak otwartych okien"
 
-#: denise/desktop.cxx:2440
+#: denise/desktop.cxx:2442
 msgid "Collapse All"
 msgstr "Zwiń wszystkie"
 
-#: denise/desktop.cxx:2441
+#: denise/desktop.cxx:2443
 msgid "Expand All"
 msgstr "Rozwiń wszystkie"
 
-#: denise/desktop.cxx:2442
+#: denise/desktop.cxx:2444
 msgid "Close All"
 msgstr "Zamknij wszystkie"
 

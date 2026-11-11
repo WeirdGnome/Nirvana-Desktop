@@ -35,7 +35,7 @@ on the desktop. Written in C++ and FLTK 1.4.
 
 Unpack the sources and run the installer:
 
-    tar xzf nirvana-desktop-0.0.13.tar.gz && cd nirvana-desktop
+    tar xzf nirvana-desktop-0.0.14.tar.gz && cd nirvana-desktop
     sudo ./install.sh                 # or: sudo ./install.sh --login-screen
 
 The installer:
@@ -577,13 +577,43 @@ Works with PulseAudio and PipeWire (`pactl`). Without a sound server it uses pla
 (`amixer`: Master and Capture).
 
 
+## Software updates
+
+An icon with a parcel in the menu bar looks for system updates a minute after login and then every
+6 hours, and shows their number in a red badge. The small window lists them and has **Install
+Updates…**, **Check for Updates** and **Show Log**; while installing, the icon and the window show the
+progress.
+
+| Package manager | Checking (no root) | Installing |
+|---|---|---|
+| apt (Devuan, Debian, Ubuntu) | lists downloaded into `~/.cache/nirvana/apt` | `apt-get dist-upgrade` with progress |
+| dnf (Fedora, Rocky) | `dnf check-update` | `dnf upgrade` |
+| pacman (Arch) | `checkupdates` (pacman-contrib) | `pacman -Syu` |
+| zypper (openSUSE) | `zypper list-updates` | `zypper update` |
+| apk (Alpine), xbps (Void) | the local lists | `apk upgrade`, `xbps-install -Syu` |
+| Flatpak | `flatpak remote-ls --updates` | `flatpak update --system` |
+
+Checking never needs root: on apt the package lists are downloaded into the user's cache, so the
+system's lists are not touched (the idea of `checkupdates`). Installing runs
+`/usr/libexec/nirvana-update-helper` through pkexec. It does only the fixed upgrade, with no
+arguments passed on; the polkit rule installed with Nirvana Desktop lets administrators (the
+`sudo`, `wheel` or `admin` group) sitting at the computer do it **without a password**. Other
+users are asked for the administrator password. The log of the last installation is in
+`~/.cache/nirvana/update.log`.
+
 ## Power and presentation mode
 
-A battery icon (or a plug on a desktop computer) in the menu bar. The small window shows:
+A battery icon (or a plug on a desktop computer) in the menu bar. Next to the battery: a lightning
+bolt while charging, a down arrow while running on the battery (red below 10%), a small plug when
+the adapter is connected and the battery is full. The small window shows:
 
 - the battery state with the time until empty or full,
 - a screen brightness slider (through logind, without root),
-- the power profile, if `power-profiles-daemon` is running,
+- the power profile (power saver, balanced, performance): through `power-profiles-daemon`, and
+  without it (e.g. Devuan without systemd) straight through the kernel – the ACPI platform profile,
+  otherwise the CPU energy preference (EPP), otherwise the cpufreq governor. That is set by
+  `nirvana-power-helper` through pkexec; polkit allows it to the user at the computer without a
+  password, and the choice is restored at the next login,
 - a link to the Power panel.
 
 Lock Screen, Sleep, Hibernate, Log Out, Restart and Shut Down are in the **System** menu.

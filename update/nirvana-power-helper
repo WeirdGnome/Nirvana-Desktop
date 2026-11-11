@@ -1,0 +1,63 @@
+#!/bin/sh
+# Nirvana Desktop - sets the power profile through the kernel when there is no
+# power-profiles-daemon (e.g. Devuan without systemd). Runs as root through pkexec
+# (polkit action org.nirvana-desktop.power-profile - allowed to the active local user
+# without a password, like power-profiles-daemon does).
+#
+#   nirvana-power-helper profile power-saver|balanced|performance
+#
+# In this order, whatever the computer offers:
+#   1. ACPI platform profile  /sys/firmware/acpi/platform_profile (laptop firmware: fans, limits)
+#   2. CPU energy preference  cpufreq/energy_performance_preference (EPP, Intel/AMD pstate)
+#   3. cpufreq governor       cpufreq/scaling_governor
+set -u
+PATH=/usr/sbin:/usr/bin:/sbin:/bin
+export PATH
+[ "$(id -u)" = 0 ] || { echo "must run as root"; exit 1; }
+[ "${1:-}" = profile ] || { echo "usage: nirvana-power-helper profile power-saver|balanced|performance"; exit 2; }
+want="${2:-}"
+case "$want" in power-saver|balanced|performance) ;; *) echo "unknown profile: $want"; exit 2 ;; esac
+
+# the first of the candidates that is in the list of choices
+pick() { choices=" $1 "; shift; for c in "$@"; do case "$choices" in *" $c "*) echo "$c"; return 0 ;; esac; done; return 1; }
+
+ok=1
+pp=/sys/firmware/acpi/platform_profile
+if [ -w "$pp" ] && [ -r "${pp}_choices" ]; then
+  ch="$(cat "${pp}_choices")"
+  case "$want" in
+    power-saver) v="$(pick "$ch" low-power quiet cool)" ;;
+    balanced) v="$(pick "$ch" balanced)" ;;
+    performance) v="$(pick "$ch" performance balanced-performance)" ;;
+  esac
+  [ -n "${v:-}" ] && echo "$v" > "$pp" && ok=0
+fi
+
+cpu=/sys/devices/system/cpu/cpu0/cpufreq
+if [ -r "$cpu/energy_performance_available_preferences" ]; then
+  ch="$(cat "$cpu/energy_performance_available_preferences")"
+  case "$want" in
+    power-saver) v="$(pick "$ch" power balance_power)" ;;
+    balanced) v="$(pick "$ch" balance_performance default)" ;;
+    performance) v="$(pick "$ch" performance)" ;;
+  esac
+  if [ -n "${v:-}" ]; then
+    for f in /sys/devices/system/cpu/cpu[0-9]*/cpufreq; do
+      # EPP cannot be changed while the "performance" governor is in use
+      [ "$(cat "$f/scaling_governor" 2>/dev/null)" = performance ] && echo powersave > "$f/scaling_governor" 2>/dev/null
+      echo "$v" > "$f/energy_performance_preference" 2>/dev/null && ok=0
+    done
+  fi
+elif [ -r "$cpu/scaling_available_governors" ]; then
+  ch="$(cat "$cpu/scaling_available_governors")"
+  case "$want" in
+    power-saver) v="$(pick "$ch" powersave conservative)" ;;
+    balanced) v="$(pick "$ch" schedutil ondemand conservative)" ;;
+    performance) v="$(pick "$ch" performance)" ;;
+  esac
+  if [ -n "${v:-}" ]; then
+    for f in /sys/devices/system/cpu/cpu[0-9]*/cpufreq; do echo "$v" > "$f/scaling_governor" 2>/dev/null && ok=0; done
+  fi
+fi
+[ $ok = 0 ] || echo "this computer offers no way to change the power profile"
+exit $ok

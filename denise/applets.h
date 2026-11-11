@@ -29,7 +29,11 @@ struct Host {
 
 Fl_Widget *make_volume(int X, int Y, int W, int H);
 Fl_Widget *make_power(int X, int Y, int W, int H);
+// System updates (updates.cxx): the number of updates on the icon, installing with progress.
+Fl_Widget *make_updates(int X, int Y, int W, int H);
+bool updates_supported();   // a known package manager (or flatpak) is installed
 void init(const Host &host);   // multimedia keys, idleness, refreshing
+const Host &current_host();
 
 // System menu commands (menu bar): lock, sleep, hibernate, log out,
 // restart, shut down - with confirmation and a projection mode check.

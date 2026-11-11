@@ -311,7 +311,7 @@ private:
   Fl_Widget *app_menu_ = nullptr;   // gary: the application menu in the top right corner
   int active_app_index(const std::vector<gary::App> &apps);
   Fl_Widget *extras_;
-  Fl_Widget *vol_w_ = nullptr, *pow_w_ = nullptr, *tray_w_ = nullptr, *mem_w_ = nullptr;
+  Fl_Widget *vol_w_ = nullptr, *pow_w_ = nullptr, *upd_w_ = nullptr, *tray_w_ = nullptr, *mem_w_ = nullptr;
   bool tray_pending_ = false;
 public:
   void layout_bar();        // placing the applets and the tray in the menu bar

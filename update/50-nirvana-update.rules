@@ -1,0 +1,9 @@
+// Nirvana Desktop: administrators (groups sudo, wheel, admin) sitting at the computer
+// install system updates without typing their password - as with the update tools of
+// other desktops. The helper runs only the fixed upgrade of the package manager.
+polkit.addRule(function(action, subject) {
+  if (action.id == "org.nirvana-desktop.update" && subject.local && subject.active &&
+      (subject.isInGroup("sudo") || subject.isInGroup("wheel") || subject.isInGroup("admin"))) {
+    return polkit.Result.YES;
+  }
+});

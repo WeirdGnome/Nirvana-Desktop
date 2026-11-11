@@ -34,7 +34,7 @@ Napisane w C++ i FLTK 1.4.
 
 Rozpakuj źródła i uruchom instalator:
 
-    tar xzf nirvana-desktop-0.0.13.tar.gz && cd nirvana-desktop
+    tar xzf nirvana-desktop-0.0.14.tar.gz && cd nirvana-desktop
     sudo ./install.sh                 # albo: sudo ./install.sh --login-screen
 
 Instalator:
@@ -576,13 +576,43 @@ Działa z PulseAudio i PipeWire (`pactl`). Bez serwera dźwięku używa czystej 
 (`amixer`: Master i Capture).
 
 
+## Aktualizacje oprogramowania
+
+Ikona z paczką na pasku menu szuka aktualizacji systemu minutę po zalogowaniu, a potem co
+6 godzin, i pokazuje ich liczbę na czerwonym znaczku. Okienko wymienia je i ma **Zainstaluj
+aktualizacje…**, **Sprawdź aktualizacje** i **Pokaż dziennik**; podczas instalacji ikona i okienko
+pokazują postęp.
+
+| Menedżer pakietów | Sprawdzanie (bez roota) | Instalacja |
+|---|---|---|
+| apt (Devuan, Debian, Ubuntu) | listy pobierane do `~/.cache/nirvana/apt` | `apt-get dist-upgrade` z postępem |
+| dnf (Fedora, Rocky) | `dnf check-update` | `dnf upgrade` |
+| pacman (Arch) | `checkupdates` (pacman-contrib) | `pacman -Syu` |
+| zypper (openSUSE) | `zypper list-updates` | `zypper update` |
+| apk (Alpine), xbps (Void) | lokalne listy | `apk upgrade`, `xbps-install -Syu` |
+| Flatpak | `flatpak remote-ls --updates` | `flatpak update --system` |
+
+Sprawdzanie nigdy nie wymaga roota: przy apt listy pakietów są pobierane do pamięci podręcznej
+użytkownika, więc listy systemu zostają nietknięte (pomysł z `checkupdates`). Instalacja uruchamia
+`/usr/libexec/nirvana-update-helper` przez pkexec. Robi on tylko stałą aktualizację, bez
+przekazywania żadnych argumentów; reguła polkit instalowana z Nirvana Desktop pozwala
+administratorom (grupa `sudo`, `wheel` albo `admin`) siedzącym przy komputerze robić to **bez
+hasła**. Inni użytkownicy są pytani o hasło administratora. Dziennik ostatniej instalacji jest
+w `~/.cache/nirvana/update.log`.
+
 ## Zasilanie i tryb projekcji
 
-Ikona baterii (albo wtyczki w komputerze stacjonarnym) na pasku menu. W okienku:
+Ikona baterii (albo wtyczki w komputerze stacjonarnym) na pasku menu. Obok baterii: błyskawica
+podczas ładowania, strzałka w dół przy pracy na baterii (czerwona poniżej 10%), mała wtyczka, gdy
+zasilacz jest podłączony, a bateria pełna. W okienku:
 
 - stan baterii z czasem do rozładowania lub naładowania,
 - suwak jasności ekranu (przez logind, bez roota),
-- profil zasilania, jeśli działa `power-profiles-daemon`,
+- profil zasilania (oszczędzanie energii, zrównoważony, wydajność): przez `power-profiles-daemon`,
+  a bez niego (np. Devuan bez systemd) prosto przez jądro – profil platformy ACPI, w przeciwnym
+  razie preferencja energetyczna procesora (EPP), a w ostateczności governor cpufreq. Ustawia go
+  `nirvana-power-helper` przez pkexec; polkit pozwala na to użytkownikowi przy komputerze bez
+  hasła, a wybór jest przywracany przy następnym logowaniu,
 - odnośnik do panelu Zasilanie.
 
 Zablokuj ekran, Uśpij, Hibernuj, Wyloguj, Uruchom ponownie i Wyłącz są w menu **System**.

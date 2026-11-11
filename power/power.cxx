@@ -166,6 +166,59 @@ static std::string login_action(const char *method) {
   return "";
 }
 
+// --- power profiles without power-profiles-daemon --------------------------------------
+// The kernel offers them in one of three ways (nirvana-power-helper sets them the same way):
+// the ACPI platform profile, the CPU energy preference (EPP) or the cpufreq governor.
+static bool has_word(const std::string &list, const char *w) {
+  return (" " + list + " ").find(std::string(" ") + w + " ") != std::string::npos;
+}
+
+static void kernel_profiles(State &s) {
+  const char *fake = getenv("NIRVANA_SYSFS");   // for testing: a fake /sys
+  const std::string sys = fake && *fake ? fake : "/sys";
+  const std::string pp = sys + "/firmware/acpi/platform_profile", cpu = sys + "/devices/system/cpu/cpu0/cpufreq";
+  std::string cur, saver, perf, bal;
+  std::string ch = read_file(pp + "_choices");
+  if (!ch.empty()) {
+    cur = read_file(pp);
+    bool s1 = has_word(ch, "low-power") || has_word(ch, "quiet") || has_word(ch, "cool");
+    if (s1) s.profiles.push_back("power-saver");
+    if (has_word(ch, "balanced")) s.profiles.push_back("balanced");
+    if (has_word(ch, "performance") || has_word(ch, "balanced-performance")) s.profiles.push_back("performance");
+    s.profile = cur == "low-power" || cur == "quiet" || cur == "cool" ? "power-saver"
+              : cur == "performance" || cur == "balanced-performance" ? "performance" : "balanced";
+  } else if (!(ch = read_file(cpu + "/energy_performance_available_preferences")).empty()) {
+    cur = read_file(cpu + "/energy_performance_preference");
+    if (has_word(ch, "power") || has_word(ch, "balance_power")) s.profiles.push_back("power-saver");
+    if (has_word(ch, "balance_performance") || has_word(ch, "default")) s.profiles.push_back("balanced");
+    if (has_word(ch, "performance")) s.profiles.push_back("performance");
+    s.profile = cur == "power" || cur == "balance_power" ? "power-saver" : cur == "performance" ? "performance" : "balanced";
+  } else if (!(ch = read_file(cpu + "/scaling_available_governors")).empty()) {
+    cur = read_file(cpu + "/scaling_governor");
+    if (has_word(ch, "powersave") || has_word(ch, "conservative")) s.profiles.push_back("power-saver");
+    if (has_word(ch, "schedutil") || has_word(ch, "ondemand")) s.profiles.push_back("balanced");
+    if (has_word(ch, "performance")) s.profiles.push_back("performance");
+    s.profile = cur == "performance" ? "performance" : cur == "powersave" || cur == "conservative" ? "power-saver" : "balanced";
+  }
+  if (s.profiles.size() < 2) { s.profiles.clear(); s.profile.clear(); return; }   // nothing to choose from
+  s.kernel_profiles = true;
+}
+
+static std::string exe_dir() {
+  char buf[4096];
+  ssize_t n = readlink("/proc/self/exe", buf, sizeof buf - 1);
+  if (n <= 0) return "";
+  buf[n] = 0;
+  std::string p = buf;
+  return p.substr(0, p.rfind('/'));
+}
+
+static std::string profile_file() {
+  const char *x = getenv("XDG_CONFIG_HOME");
+  const char *h = getenv("HOME");
+  return (x && *x ? std::string(x) : std::string(h ? h : "/") + "/.config") + "/nirvana/power-profile";
+}
+
 // --- stan -----------------------------------------------------------------------------
 State query() {
   State s;
@@ -246,6 +299,7 @@ State query() {
       }
     }
   }
+  if (s.profiles.empty()) kernel_profiles(s);
   // logind
   if (DBusConnection *c = bus(DBUS_BUS_SYSTEM)) {
     std::string susp = login_can(c, "CanSuspend");
@@ -322,7 +376,30 @@ void step_brightness(int delta) {
   if (s.brightness >= 0) set_brightness(s, s.brightness + delta);
 }
 
-bool set_profile(const std::string &p) { return run({"powerprofilesctl", "set", p}) == 0; }
+bool set_profile(const std::string &p) {
+  if (have("powerprofilesctl")) return run({"powerprofilesctl", "set", p}) == 0;
+  // through the kernel: as root with pkexec (polkit lets the active user do it without a password)
+  std::string helper;
+  std::string e = exe_dir();
+  for (const std::string &c : {e + "/../libexec/nirvana-power-helper", e + "/../update/nirvana-power-helper",
+                               std::string("/usr/libexec/nirvana-power-helper")})
+    if (!access(c.c_str(), R_OK)) { helper = c; break; }
+  if (helper.empty() || !have("pkexec")) return false;
+  bool ok = run({"pkexec", helper, "profile", p}) == 0;
+  if (ok) std::ofstream(profile_file()) << p << "\n";   // the kernel forgets it at a restart
+  return ok;
+}
+
+void restore_profile() {
+  if (have("powerprofilesctl")) return;   // power-profiles-daemon remembers it itself
+  std::string want = read_file(profile_file());
+  if (want.empty()) return;
+  State s;
+  kernel_profiles(s);
+  if (s.kernel_profiles && s.profile != want &&
+      std::find(s.profiles.begin(), s.profiles.end(), want) != s.profiles.end())
+    set_profile(want);
+}
 
 // --- actions ----------------------------------------------------------------------------
 std::string suspend() { return login_action("Suspend"); }

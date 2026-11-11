@@ -513,7 +513,8 @@ Desktop::Desktop(int W, int H, const std::string &home)
     nm->summary = [this] { return net::summary(net_); };
   }
   vol_w_ = applets::make_volume(0, 0, 26, MENUBAR_H);
-  pow_w_ = applets::make_power(0, 0, 42, MENUBAR_H);
+  pow_w_ = applets::make_power(0, 0, 54, MENUBAR_H);
+  if (applets::updates_supported()) upd_w_ = applets::make_updates(0, 0, 30, MENUBAR_H);
   tray_w_ = tray::make(0, 0, MENUBAR_H);
   {
     // width of the menu titles - computed the same way as in Fl_Menu_Bar::draw()
@@ -598,7 +599,8 @@ void Desktop::layout_bar() {
   put(extras_, extras_->w());
   put(net_menu_, 26);
   put(vol_w_, 26);
-  put(pow_w_, 42);
+  put(pow_w_, 54);
+  put(upd_w_, 30);
   int tw = tray::width();
   if (tray_w_) { put(tray_w_, tw); if (tw) tray_w_->show(); else tray_w_->hide(); }
   int mx = menu_->w();

@@ -93,6 +93,7 @@ add_executable(nirvana-denise
   denise/volumes.cxx
   denise/applets.cxx
   denise/menus.cxx
+  denise/updates.cxx
   denise/about.cxx
   denise/tray.cxx)
 target_link_libraries(nirvana-denise PRIVATE nirvana-platinum nirvana-net nirvana-audio nirvana-power fltk::images PkgConfig::DBUS)
@@ -130,6 +131,10 @@ else()
                   "(Devuan: libgl-dev libxcomposite-dev libxdamage-dev libxfixes-dev libxrender-dev)")
 endif()
 install(DIRECTORY shaders/ DESTINATION share/nirvana/shaders COMPONENT nirvana)
+# system updates: the check (as the user) and the helper (root, through pkexec/polkit)
+install(PROGRAMS update/nirvana-update-check update/nirvana-update-helper update/nirvana-power-helper DESTINATION libexec COMPONENT nirvana)
+install(FILES update/org.nirvana-desktop.policy DESTINATION share/polkit-1/actions COMPONENT nirvana)
+install(FILES update/50-nirvana-update.rules DESTINATION share/polkit-1/rules.d COMPONENT nirvana)
 
 # Everything in the "nirvana" component - the .deb package does not take FLTK files
 # (FetchContent adds its own install rules for headers and libraries).
@@ -164,7 +169,7 @@ set(CPACK_DEBIAN_PACKAGE_PRIORITY optional)
 set(CPACK_DEBIAN_PACKAGE_SHLIBDEPS ON)
 set(CPACK_DEBIAN_PACKAGE_DEPENDS "dbus-bin | dbus")
 set(CPACK_DEBIAN_PACKAGE_RECOMMENDS
-  "xserver-xorg, xinit, fonts-dejavu-core, libpam-elogind | elogind, polkitd, lxpolkit, \
+  "xserver-xorg, xinit, fonts-dejavu-core, libpam-elogind | elogind, polkitd, pkexec, lxpolkit, \
 udisks2, network-manager, pulseaudio-utils, alsa-utils, squashfs-tools, bubblewrap, xsecurelock, xdg-utils, \
 xdg-desktop-portal, xdg-desktop-portal-gtk, libgl1-mesa-dri")
 set(CPACK_DEBIAN_PACKAGE_SUGGESTS
