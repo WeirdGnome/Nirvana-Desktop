@@ -36,7 +36,7 @@ Napisane w C++ i FLTK 1.4.
 
 Rozpakuj źródła i uruchom instalator:
 
-    tar xzf nirvana-desktop-0.0.29.tar.gz && cd nirvana-desktop
+    tar xzf nirvana-desktop-0.0.30.tar.gz && cd nirvana-desktop
     sudo ./install.sh                 # albo: sudo ./install.sh --login-screen
 
 Instalator:
@@ -45,7 +45,7 @@ Instalator:
 2. buduje Nirvana Desktop (za pierwszym razem pobiera FLTK 1.4 z GitHuba – potrzebny internet),
 3. tworzy paczkę `build-deb/nirvana_<wersja>_amd64.deb` i instaluje ją przez apt –
    razem z programami, z których Nirvana Desktop korzysta: NetworkManager, udisks2, polkit
-   z agentem `lxpolkit`, PulseAudio/PipeWire, bubblewrap, xsecurelock…
+   PulseAudio/PipeWire, bubblewrap, xdg-desktop-portal…
 4. dokłada serwer X, jeśli go nie ma, i proponuje PipeWire, jeśli nie ma dźwięku.
 
 Numer wersji jest w pliku `VERSION` i rośnie z każdą wydaną paczką. Instalator z nowszej paczki
@@ -85,9 +85,11 @@ Zależności (Devuan/Debian):
         gettext \                                 # tłumaczenia (msgfmt)
         libgl-dev libxcomposite-dev libxdamage-dev \ # nirvana-shader (efekty pełnoekranowe)
         libcups2-dev                              # drukarki (opcjonalnie)
+        liblightdm-gobject-dev libglib2.0-dev     # Nirvana-DM, portal okna plików (opcjonalnie)
+        libpolkit-agent-1-dev libpam0g-dev        # okno hasła, blokada ekranu (opcjonalnie)
 
-Opcjonalnie: `power-profiles-daemon` (profile zasilania), `xsecurelock`, `i3lock`
-albo `slock` (blokada ekranu). Na Rocky: `libXScrnSaver-devel pulseaudio-utils`.
+Opcjonalnie: `power-profiles-daemon` (profile zasilania). Bez PAM używany jest inny program
+blokady (`xsecurelock`, `i3lock`, `slock`). Na Rocky: `libXScrnSaver-devel pulseaudio-utils`.
 
 Jeśli FLTK 1.4 nie jest zainstalowany, CMake sam pobierze i zbuduje wersję 1.4.4:
 
@@ -706,6 +708,26 @@ uruchomiła, a zdjęcie czyta jako dane (PNG do 1 MB), nigdy jako ścieżkę. Po
 hasłem; administratorzy przy komputerze nie są pytani.
 
 ![Użytkownik](docs/img/user.png)
+
+## Wygaszacz i blokada ekranu
+
+**Preferencje → Wygaszacz ekranu** wybiera wygaszacz – Czarny ekran, Gwiazdy, Odbijające się
+linie, Logo Nirvany, Rury, Plazma, Zegar, Śnieg albo Losowy – z podglądem w małym monitorze,
+czas włączenia, czy **blokuje** ekran (od razu albo gdy działa już kilka minut) i kiedy usypia
+monitor. *Wypróbuj* pokazuje go na całym ekranie, *Zablokuj teraz* blokuje. Pomysły pochodzą z
+wygaszaczy lat 90. i xscreensaver; kod jest napisany od nowa.
+
+`nirvana-lock` robi jedno i drugie: Rambler uruchamia `nirvana-lock --saver`, gdy komputer jest
+bezczynny (nie w trybie prezentacji), a System → Zablokuj ekran, usypianie i `nirvana-lock` z
+terminala blokują od razu. Okno zakrywa wszystkie ekrany i przejmuje klawiaturę i mysz; klawisz
+albo ruch myszy pokazuje okno hasła (tło pulpitu, Twoje zdjęcie i imię, *Zmień użytkownika…* z
+LightDM). Hasło sprawdza PAM (`/etc/pam.d/nirvana-lock`) w osobnym procesie, więc złe hasło nie
+zamraża ekranu. Do budowania potrzebny jest `libpam0g-dev`; `NIRVANA_LOCKER=polecenie` używa
+innego programu blokady.
+
+![Wygaszacz ekranu](docs/img/screensaver.png)
+
+![Blokada](docs/img/lock.png)
 
 ## Okno wyboru plików i okno hasła
 

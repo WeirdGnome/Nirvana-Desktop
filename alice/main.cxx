@@ -6,6 +6,7 @@
 //   nirvana-alice printers             Printers panel (CUPS)
 //   nirvana-alice desktop              Desktop panel (room for windows)
 //   nirvana-alice datetime             Date & Time panel (clock, timers, time zone)
+//   nirvana-alice saver                Screen Saver panel (saver, lock, monitor sleep)
 //   nirvana-alice user                 User panel (picture, name, password, automatic login)
 //   nirvana-alice shader               Shader panel (full-screen effects)
 //   nirvana-alice preferences           Preferences: a window with the icons of all panels
@@ -26,6 +27,7 @@ int panel_datetime();
 int panel_desktop();
 int panel_printers();
 int panel_user();
+int panel_saver();
 
 int main(int argc, char **argv) {
   plat::init();
@@ -48,5 +50,6 @@ int main(int argc, char **argv) {
   if (!strcmp(which, "desktop")) return panel_desktop();
   if (!strcmp(which, "printers")) return panel_printers();
   if (!strcmp(which, "user")) return panel_user();
+  if (!strcmp(which, "saver")) return panel_saver();
   return panel_appearance();
 }

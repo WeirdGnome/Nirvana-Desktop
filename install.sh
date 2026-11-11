@@ -83,7 +83,7 @@ BUILD_DEPS="build-essential cmake git pkg-config gettext dpkg-dev file
   libxrender-dev libxss-dev libfontconfig-dev libdbus-1-dev
   libpng-dev libjpeg-dev zlib1g-dev
   libgl-dev libxcomposite-dev libxdamage-dev libcups2-dev liblightdm-gobject-dev
-  libglib2.0-dev libpolkit-agent-1-dev"
+  libglib2.0-dev libpolkit-agent-1-dev libpam0g-dev"
 
 if [ "$ME" = 0 ]; then
   step "Updating the package lists"

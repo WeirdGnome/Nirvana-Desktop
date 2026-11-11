@@ -37,7 +37,7 @@ on the desktop. Written in C++ and FLTK 1.4.
 
 Unpack the sources and run the installer:
 
-    tar xzf nirvana-desktop-0.0.29.tar.gz && cd nirvana-desktop
+    tar xzf nirvana-desktop-0.0.30.tar.gz && cd nirvana-desktop
     sudo ./install.sh                 # or: sudo ./install.sh --login-screen
 
 The installer:
@@ -46,7 +46,7 @@ The installer:
 2. builds Nirvana Desktop (the first time it downloads FLTK 1.4 from GitHub – internet needed),
 3. creates the package `build-deb/nirvana_<version>_amd64.deb` and installs it with apt –
    together with the programs Nirvana Desktop uses: NetworkManager, udisks2, polkit
-   with the `lxpolkit` agent, PulseAudio/PipeWire, bubblewrap, xsecurelock…
+   PulseAudio/PipeWire, bubblewrap, xdg-desktop-portal…
 4. adds the X server if it is missing and offers PipeWire if there is no sound.
 
 The version number is in the `VERSION` file and goes up with every released package. Running
@@ -84,9 +84,11 @@ Dependencies (Devuan/Debian):
         gettext \                                 # translations (msgfmt)
         libgl-dev libxcomposite-dev libxdamage-dev \ # nirvana-shader (full-screen effects)
         libcups2-dev                              # printers (optional)
+        liblightdm-gobject-dev libglib2.0-dev     # Nirvana-DM, file dialog portal (optional)
+        libpolkit-agent-1-dev libpam0g-dev        # password window, screen lock (optional)
 
-Optional: `power-profiles-daemon` (power profiles), `xsecurelock`, `i3lock`
-or `slock` (screen lock). On Rocky: `libXScrnSaver-devel pulseaudio-utils`.
+Optional: `power-profiles-daemon` (power profiles). Without PAM another screen locker
+(`xsecurelock`, `i3lock`, `slock`) is used. On Rocky: `libXScrnSaver-devel pulseaudio-utils`.
 
 If FLTK 1.4 is not installed, CMake downloads and builds version 1.4.4 itself:
 
@@ -709,6 +711,26 @@ and reads the picture as data (a PNG up to 1 MB), never as a path. You confirm w
 password; administrators at the computer are not asked.
 
 ![User](docs/img/user.png)
+
+## Screen saver and screen lock
+
+**Preferences → Screen Saver** chooses the saver - Black Screen, Starfield, Bouncing Lines,
+Nirvana Logo, Pipes, Plasma, Clock, Snow or Random - with a preview in a little monitor, when it
+starts, whether it **locks** the screen (at once or after it ran a few minutes) and when the
+monitor goes to sleep. *Test* shows it full screen, *Lock Now* locks. The ideas come from the
+savers of the 1990s and xscreensaver; the code is new.
+
+`nirvana-lock` does both: Rambler starts `nirvana-lock --saver` when the computer is idle (not in
+presentation mode), and System → Lock Screen, sleeping and `nirvana-lock` from a terminal lock at
+once. It covers all screens and grabs the keyboard and mouse; a key or a mouse movement brings
+the password window (the desktop background, your picture and name, *Switch User…* with
+LightDM). The password is checked by PAM (`/etc/pam.d/nirvana-lock`) in a separate process, so
+a wrong password does not freeze the screen. Building needs `libpam0g-dev`;
+`NIRVANA_LOCKER=command` uses another locker.
+
+![Screen Saver](docs/img/screensaver.png)
+
+![The lock](docs/img/lock.png)
 
 ## File dialog and password window
 

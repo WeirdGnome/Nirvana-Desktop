@@ -37,7 +37,7 @@ void open_panel(const char *name) {
 
 class PanelIcon : public Fl_Button {
 public:
-  enum Kind { Appearance, Desktop, Network, Power, Shader, DateTime, Printers, User } kind;
+  enum Kind { Appearance, Desktop, Network, Power, Shader, DateTime, Printers, User, Saver } kind;
   PanelIcon(int X, int Y, Kind k, const char *l) : Fl_Button(X, Y, 96, 74, l), kind(k) {
     box(FL_NO_BOX);
     labelsize(SIZE_SMALL + 1);
@@ -78,6 +78,17 @@ public:
         fl_color(fl_rgb_color(0xFF, 0xFF, 0xFF)); fl_rectf(ix + 7, iy + 17, 18, 10);
         fl_color(DARK); fl_rect(ix + 7, iy + 17, 18, 10);
         for (int i = 0; i < 3; i++) fl_xyline(ix + 10, iy + 20 + i * 2, ix + 21);
+        break;
+      }
+      case Saver: {   // a monitor with stars on a night screen
+        fl_draw_box(UP_BOX, ix, iy, 32, 26, GRAY);
+        fl_color(fl_rgb_color(0x10, 0x14, 0x30)); fl_rectf(ix + 3, iy + 3, 26, 18);
+        fl_color(fl_rgb_color(0xFF, 0xFF, 0xFF));
+        const int st[][2] = {{6, 6}, {12, 14}, {20, 8}, {25, 16}, {16, 5}, {8, 17}, {22, 12}};
+        for (auto &p : st) fl_point(ix + p[0], iy + p[1]);
+        fl_color(fl_rgb_color(0xF2, 0xC2, 0x30)); fl_pie(ix + 17, iy + 5, 7, 7, 0, 360);
+        fl_color(DARK); fl_rect(ix + 3, iy + 3, 26, 18); fl_rect(ix, iy, 32, 26);
+        fl_rectf(ix + 10, iy + 27, 12, 3);
         break;
       }
       case User: {   // a portrait in a frame
@@ -138,7 +149,7 @@ public:
 int panel_preferences() {
   // at most 5 icons in a row, then a new row
   const int PER_ROW = 5, CELL_W = 106, CELL_H = 84;
-  const int N = 8;   // the number of panels below
+  const int N = 9;   // the number of panels below
   const int rows = (N + PER_ROW - 1) / PER_ROW;
   const int W = 14 * 2 + PER_ROW * CELL_W - 10, icons_h = 20 + rows * CELL_H;
   const int H = icons_h + 90;
@@ -150,6 +161,7 @@ int panel_preferences() {
       {PanelIcon::Desktop, _("Desktop"), "desktop"},
       {PanelIcon::Network, _("Network"), "network"},
       {PanelIcon::Power, _("Power"), "power"},
+      {PanelIcon::Saver, _("Screen Saver"), "saver"},
       {PanelIcon::DateTime, _("Date & Time"), "datetime"},
       {PanelIcon::Printers, _("Printers"), "printers"},
       {PanelIcon::Shader, _("Shader"), "shader"},

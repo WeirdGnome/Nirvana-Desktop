@@ -493,6 +493,7 @@ std::string credits_text() {
   item(std::string("liblightdm-gobject — Robert Ancell and the LightDM team (LGPL-3.0)"));
   item(std::string("libpolkit-agent-1 — David Zeuthen and the polkit team (LGPL-2.0)"));
   item(std::string("libcups — Michael Sweet, OpenPrinting (Apache-2.0)"));
+  item(std::string("Linux-PAM — Andrew G. Morgan, Thorsten Kukuk and the Linux-PAM team (BSD-3-Clause / GPL): nirvana-lock"));
   head(_("Color schemes"));
   item("Redmond97 SE — Sliver X (GPL-3.0)");
   item("Redmond97 — matthewmx86 (GPL-3.0)");
@@ -507,6 +508,7 @@ std::string credits_text() {
   item(std::string("AppImage — Simon Peter ") + _("and the AppImage team"));
   head(_("Inspirations"));
   item(_("the desktops of the late 1980s and the 1990s: bevelled gray windows, a menu bar at the top, icons on the desktop"));
+  item(std::string("xscreensaver — Jamie Zawinski ") + _("and its many authors: the idea of the screen savers (written anew, no code taken)"));
   item(std::string("neofetch — Dylan Araps: ") + _("the layout of “About This Computer”"));
   item(std::string("Devuan, Debian — ") + _("the system underneath"));
   head(_("Made with"));

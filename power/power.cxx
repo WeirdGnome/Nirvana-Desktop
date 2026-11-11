@@ -407,8 +407,43 @@ std::string hibernate() { return login_action("Hibernate"); }
 std::string poweroff() { return login_action("PowerOff"); }
 std::string reboot() { return login_action("Reboot"); }
 
+std::string nirvana_lock() {
+  char buf[4096];
+  ssize_t n = readlink("/proc/self/exe", buf, sizeof buf - 1);
+  if (n > 0) {
+    std::string d(buf, (size_t)n);
+    d = d.substr(0, d.rfind('/'));
+    if (!access((d + "/nirvana-lock").c_str(), X_OK)) return d + "/nirvana-lock";
+  }
+  const char *path = getenv("PATH");
+  std::string p = path ? path : "/usr/bin:/bin";
+  size_t a = 0;
+  while (a <= p.size()) {
+    size_t b = p.find(':', a);
+    if (b == std::string::npos) b = p.size();
+    std::string c = p.substr(a, b - a) + "/nirvana-lock";
+    if (!access(c.c_str(), X_OK)) return c;
+    a = b + 1;
+  }
+  return "";
+}
+
+bool saver_running() {
+  fl_open_display();
+  return XGetSelectionOwner(fl_display, XInternAtom(fl_display, "_NIRVANA_LOCK", False)) != None;
+}
+
+bool start_saver() {
+  std::string l = nirvana_lock();
+  if (l.empty()) return false;
+  detach({l, "--saver"});
+  return true;
+}
+
 std::string locker() {
   if (const char *e = getenv("NIRVANA_LOCKER")) return e;
+  std::string own = nirvana_lock();
+  if (!own.empty()) return own;
   if (have("xsecurelock")) return "xsecurelock";
   if (have("i3lock")) return "i3lock -c 5E6FA8";
   if (have("slock")) return "slock";
@@ -544,6 +579,9 @@ IdleSettings read_idle() {
     else if (k == "sleep_battery_minutes") s.sleep_battery_min = std::clamp(v, 0, 600);
     else if (k == "sleep_ac_minutes") s.sleep_ac_min = std::clamp(v, 0, 600);
     else if (k == "critical_action") s.critical_action = std::clamp(v, 0, 2);
+    else if (k == "saver") s.saver = line.substr(eq + 1);
+    else if (k == "lock_delay_minutes") s.lock_delay_min = std::clamp(v, 0, 240);
+    else if (k == "monitor_off_minutes") s.monitor_off_min = std::clamp(v, 0, 240);
   }
   return s;
 }
@@ -557,7 +595,8 @@ bool write_idle(const IdleSettings &s) {
   out << "# Nirvana Desktop - power settings (minutes, 0 = never)\n"
       << "blank_minutes=" << s.blank_min << "\nlock_on_blank=" << (s.lock_on_blank ? 1 : 0)
       << "\nsleep_battery_minutes=" << s.sleep_battery_min << "\nsleep_ac_minutes=" << s.sleep_ac_min
-      << "\ncritical_action=" << s.critical_action << "\n";
+      << "\ncritical_action=" << s.critical_action << "\nsaver=" << s.saver
+      << "\nlock_delay_minutes=" << s.lock_delay_min << "\nmonitor_off_minutes=" << s.monitor_off_min << "\n";
   return (bool)out;
 }
 
@@ -565,12 +604,15 @@ void apply_idle(const IdleSettings &s) {
   fl_open_display();
   Display *dpy = fl_display;
   int t = s.blank_min * 60;
-  XSetScreenSaver(dpy, t, 0, PreferBlanking, AllowExposures);
+  // with nirvana-lock the saver is Nirvana's (started by Rambler when idle) - the X blanking is off
+  bool own = !nirvana_lock().empty();
+  XSetScreenSaver(dpy, own ? 0 : t, 0, PreferBlanking, AllowExposures);
   int ev, er;
   if (DPMSQueryExtension(dpy, &ev, &er) && DPMSCapable(dpy)) {
-    if (t > 0) {
-      // first blanking (a black screen), after another minute the monitor goes to sleep
-      DPMSSetTimeouts(dpy, t + 60, t + 60, t + 60);
+    int off = own ? (s.monitor_off_min > 0 ? t + s.monitor_off_min * 60 : 0) : t + 60;
+    if (t > 0 && off > 0) {
+      // the saver (or the black screen), later the monitor goes to sleep
+      DPMSSetTimeouts(dpy, off, off, off);
       if (!g_proj) DPMSEnable(dpy);
     } else {
       DPMSDisable(dpy);

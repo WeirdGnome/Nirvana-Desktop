@@ -131,7 +131,7 @@ add_executable(nirvana-insight insight/main.cxx)
 target_link_libraries(nirvana-insight PRIVATE nirvana-platinum X11::X11)
 
 # --- alice: control panels ---------------------------------------------------
-add_executable(nirvana-alice alice/main.cxx alice/appearance.cxx alice/network.cxx alice/power.cxx alice/preferences.cxx alice/shader.cxx alice/datetime.cxx alice/desktop.cxx alice/printers.cxx alice/user.cxx)
+add_executable(nirvana-alice alice/main.cxx alice/appearance.cxx alice/network.cxx alice/power.cxx alice/preferences.cxx alice/shader.cxx alice/datetime.cxx alice/desktop.cxx alice/printers.cxx alice/user.cxx alice/saver.cxx)
 target_link_libraries(nirvana-alice PRIVATE nirvana-platinum nirvana-net nirvana-power ${NIRVANA_PRINT_LIB})
 
 # --- Nirvana Shell: terminal emulator (system libvterm or the bundled one) ---
@@ -201,6 +201,23 @@ else()
   message(WARNING "polkit-agent-1 not found - nirvana-polkit-agent is not built (Devuan: libpolkit-agent-1-dev)")
 endif()
 
+# --- the screen savers and nirvana-lock (screen saver + lock, PAM) ------------------------
+add_library(nirvana-savers STATIC savers/savers.cxx)
+target_include_directories(nirvana-savers PUBLIC savers)
+target_link_libraries(nirvana-savers PUBLIC nirvana-platinum)
+target_link_libraries(nirvana-alice PRIVATE nirvana-savers)
+find_path(PAM_INCLUDE_DIR security/pam_appl.h)
+find_library(PAM_LIBRARY pam)
+if(PAM_INCLUDE_DIR AND PAM_LIBRARY)
+  add_executable(nirvana-lock lock/nirvana-lock.cxx)
+  target_include_directories(nirvana-lock PRIVATE ${PAM_INCLUDE_DIR})
+  target_link_libraries(nirvana-lock PRIVATE nirvana-savers nirvana-power nirvana-platinum fltk::images ${PAM_LIBRARY})
+  install(TARGETS nirvana-lock RUNTIME DESTINATION bin COMPONENT nirvana)
+  install(FILES lock/nirvana-lock.pam DESTINATION /etc/pam.d RENAME nirvana-lock COMPONENT nirvana)
+else()
+  message(WARNING "PAM not found - nirvana-lock is not built (Devuan: libpam0g-dev)")
+endif()
+
 # Everything in the "nirvana" component - the .deb package does not take FLTK files
 # (FetchContent adds its own install rules for headers and libraries).
 install(TARGETS nirvana-denise nirvana-insight nirvana-alice nirvana-shell RUNTIME DESTINATION bin COMPONENT nirvana)
@@ -236,7 +253,7 @@ set(CPACK_DEBIAN_PACKAGE_SHLIBDEPS ON)
 set(CPACK_DEBIAN_PACKAGE_DEPENDS "dbus-bin | dbus")
 set(CPACK_DEBIAN_PACKAGE_RECOMMENDS
   "xserver-xorg, xinit, fonts-dejavu-core, libpam-elogind | elogind, polkitd, pkexec, \
-udisks2, network-manager, pulseaudio-utils, alsa-utils, squashfs-tools, bubblewrap, xsecurelock, xdg-utils, \
+udisks2, network-manager, pulseaudio-utils, alsa-utils, squashfs-tools, bubblewrap, xdg-utils, \
 xdg-desktop-portal, xdg-desktop-portal-gtk, libgl1-mesa-dri, \
 libxcb-cursor0, libxcb-icccm4, libxcb-keysyms1, libxcb-image0, libxcb-render-util0, libxkbcommon-x11-0, \
 libxcb-xkb1, libxcb-shape0, libxcb-randr0, libxcb-xinerama0")

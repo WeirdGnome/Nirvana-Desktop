@@ -3,7 +3,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Nirvana Desktop 0.1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-11 20:15+0000\n"
+"POT-Creation-Date: 2026-11-11 20:37+0000\n"
 "PO-Revision-Date: 2026-11-09 13:00+0000\n"
 "Last-Translator: Nirvana Desktop\n"
 "Language-Team: Polish\n"
@@ -22,8 +22,8 @@ msgstr "Okno"
 msgid "Icons"
 msgstr "Ikony"
 
-#: alice/appearance.cxx:92 dm/nirvana-dm-greeter.cxx:429
-#: dm/nirvana-dm-greeter.cxx:430 dm/nirvana-dm-greeter.cxx:431
+#: alice/appearance.cxx:92 dm/nirvana-dm-greeter.cxx:434
+#: dm/nirvana-dm-greeter.cxx:435 dm/nirvana-dm-greeter.cxx:436
 msgid "Special"
 msgstr "Narzędzia"
 
@@ -63,7 +63,7 @@ msgstr "Źródło: %1"
 msgid "custom"
 msgstr "własny"
 
-#: alice/appearance.cxx:234 alice/preferences.cxx:149 denise/gary.cxx:117
+#: alice/appearance.cxx:234 alice/preferences.cxx:160 denise/gary.cxx:117
 msgid "Appearance"
 msgstr "Wygląd"
 
@@ -181,28 +181,28 @@ msgstr "Animacje okien"
 
 #: alice/appearance.cxx:410 alice/datetime.cxx:385 alice/network.cxx:245
 #: alice/network.cxx:342 alice/network.cxx:390 alice/network.cxx:492
-#: alice/network.cxx:743 alice/power.cxx:127 alice/printers.cxx:163
-#: alice/printers.cxx:319 alice/user.cxx:543 alice/user.cxx:701
-#: denise/applets.cxx:443 denise/desktop.cxx:1673 denise/desktop.cxx:1707
-#: denise/desktop.cxx:1807 denise/desktop.cxx:2170 denise/desktop.cxx:2724
-#: denise/desktop.cxx:3160 denise/desktop.cxx:3172 denise/menus.cxx:417
-#: denise/menus.cxx:736 denise/menus.cxx:845 denise/menus.cxx:850
-#: denise/updates.cxx:273 platinum/filedialog.cxx:341
+#: alice/network.cxx:743 alice/power.cxx:143 alice/printers.cxx:163
+#: alice/printers.cxx:319 alice/saver.cxx:186 alice/user.cxx:543
+#: alice/user.cxx:701 denise/applets.cxx:443 denise/desktop.cxx:1673
+#: denise/desktop.cxx:1707 denise/desktop.cxx:1807 denise/desktop.cxx:2170
+#: denise/desktop.cxx:2724 denise/desktop.cxx:3160 denise/desktop.cxx:3172
+#: denise/menus.cxx:417 denise/menus.cxx:736 denise/menus.cxx:845
+#: denise/menus.cxx:850 denise/updates.cxx:273 platinum/filedialog.cxx:341
 #: platinum/filedialog.cxx:575 platinum/platinum.cxx:228
 #: platinum/platinum.cxx:1024 polkit/nirvana-polkit-agent.cxx:158
 #: shell/main.cxx:615
 msgid "Cancel"
 msgstr "Anuluj"
 
-#: alice/appearance.cxx:411 alice/datetime.cxx:386 alice/power.cxx:128
-#: alice/user.cxx:702
+#: alice/appearance.cxx:411 alice/datetime.cxx:386 alice/power.cxx:144
+#: alice/saver.cxx:187 alice/user.cxx:702
 msgid "Apply"
 msgstr "Zastosuj"
 
 #: alice/appearance.cxx:412 alice/datetime.cxx:387 alice/desktop.cxx:103
-#: alice/power.cxx:129 alice/printers.cxx:442 alice/shader.cxx:262
-#: alice/user.cxx:703 denise/about.cxx:611 denise/clock.cxx:174
-#: denise/desktop.cxx:1652 platinum/platinum.cxx:227
+#: alice/power.cxx:145 alice/printers.cxx:442 alice/saver.cxx:188
+#: alice/shader.cxx:262 alice/user.cxx:703 denise/about.cxx:613
+#: denise/clock.cxx:174 denise/desktop.cxx:1652 platinum/platinum.cxx:227
 msgid "OK"
 msgstr "OK"
 
@@ -242,7 +242,7 @@ msgstr ""
 msgid "In the menu bar: %1"
 msgstr "Na pasku menu: %1"
 
-#: alice/datetime.cxx:278 alice/preferences.cxx:153
+#: alice/datetime.cxx:278 alice/preferences.cxx:165
 msgid "Date & Time"
 msgstr "Data i czas"
 
@@ -358,7 +358,7 @@ msgstr ""
 "Strefa czasowa i data wymagają uprawnień administratora; administratorzy "
 "przy komputerze nie są pytani o hasło."
 
-#: alice/desktop.cxx:83 alice/preferences.cxx:150 platinum/filedialog.cxx:408
+#: alice/desktop.cxx:83 alice/preferences.cxx:161 platinum/filedialog.cxx:408
 msgid "Desktop"
 msgstr "Pulpit"
 
@@ -397,7 +397,7 @@ msgstr "Podgląd powiększonego okna."
 msgid "The change applies at once, also to windows zoomed from now on."
 msgstr "Zmiana działa od razu, także dla okien powiększanych od teraz."
 
-#: alice/main.cxx:36
+#: alice/main.cxx:38
 msgid "No such scheme: %1"
 msgstr "Nie ma schematu: %1"
 
@@ -446,8 +446,8 @@ msgstr "Zabezpieczenia:"
 msgid "WPA\\/WPA2 Personal|WPA3 Personal|None"
 msgstr "WPA\\/WPA2 Personal|WPA3 Personal|Brak"
 
-#: alice/network.cxx:230 alice/network.cxx:388 dm/nirvana-dm-greeter.cxx:497
-#: polkit/nirvana-polkit-agent.cxx:149
+#: alice/network.cxx:230 alice/network.cxx:388 dm/nirvana-dm-greeter.cxx:502
+#: lock/nirvana-lock.cxx:150 polkit/nirvana-polkit-agent.cxx:149
 msgid "Password:"
 msgstr "Hasło:"
 
@@ -678,7 +678,7 @@ msgstr "brak połączeń"
 msgid "disconnected"
 msgstr "rozłączono"
 
-#: alice/network.cxx:625 alice/preferences.cxx:151 denise/desktop.cxx:2293
+#: alice/network.cxx:625 alice/preferences.cxx:162 denise/desktop.cxx:2293
 #: denise/desktop.cxx:2334 denise/desktop.cxx:2365 denise/gary.cxx:118
 #: net/net.cxx:326
 msgid "Network"
@@ -822,15 +822,15 @@ msgstr "Tryb samolotowy wyłączony."
 msgid "Close"
 msgstr "Zamknij"
 
-#: alice/power.cxx:36 power/power.cxx:325
+#: alice/power.cxx:36 alice/saver.cxx:90 power/power.cxx:325
 msgid "%1 min"
 msgstr "%1 min"
 
-#: alice/power.cxx:36
+#: alice/power.cxx:36 alice/saver.cxx:163 alice/saver.cxx:173
 msgid "Never"
 msgstr "Nigdy"
 
-#: alice/power.cxx:37
+#: alice/power.cxx:37 alice/saver.cxx:91
 msgid "1 hour"
 msgstr "1 godzina"
 
@@ -838,65 +838,64 @@ msgstr "1 godzina"
 msgid "2 hours"
 msgstr "2 godziny"
 
-#: alice/power.cxx:79 alice/preferences.cxx:152 denise/applets.cxx:447
+#: alice/power.cxx:85 alice/preferences.cxx:163 denise/applets.cxx:447
 #: denise/gary.cxx:120
 msgid "Power"
 msgstr "Zasilanie"
 
-#: alice/power.cxx:82
+#: alice/power.cxx:88
 msgid "Screen"
 msgstr "Ekran"
 
-#: alice/power.cxx:84
-msgid "Turn off screen when idle for:"
-msgstr "Wygaś ekran po bezczynności:"
-
-#: alice/power.cxx:86
-msgid "Lock screen when it turns off"
-msgstr "Blokuj ekran przy wygaszeniu"
-
 #: alice/power.cxx:91
-msgid "No screen locker - install xsecurelock, i3lock or slock."
-msgstr ""
-"Brak programu blokady ekranu - zainstaluj xsecurelock, i3lock albo slock."
+msgid "The screen saver starts after %1 min%2."
+msgstr "Wygaszacz ekranu włącza się po %1 min%2."
 
 #: alice/power.cxx:92
-msgid "Screen locker: %1."
-msgstr "Program blokady: %1."
+msgid ", then the screen locks"
+msgstr ", potem ekran się blokuje"
 
-#: alice/power.cxx:96
+#: alice/power.cxx:93
+msgid "The screen saver is off."
+msgstr "Wygaszacz ekranu jest wyłączony."
+
+#: alice/power.cxx:95
+msgid "Screen Saver…"
+msgstr "Wygaszacz ekranu…"
+
+#: alice/power.cxx:112
 msgid "Computer Sleep"
 msgstr "Usypianie komputera"
 
-#: alice/power.cxx:98
+#: alice/power.cxx:114
 msgid "On battery, when idle for:"
 msgstr "Na baterii po bezczynności:"
 
-#: alice/power.cxx:100
+#: alice/power.cxx:116
 msgid "On power adapter, when idle for:"
 msgstr "Z zasilacza po bezczynności:"
 
-#: alice/power.cxx:103 denise/about.cxx:448 denise/applets.cxx:593
+#: alice/power.cxx:119 denise/about.cxx:448 denise/applets.cxx:594
 msgid "Battery"
 msgstr "Bateria"
 
-#: alice/power.cxx:105
+#: alice/power.cxx:121
 msgid "At 3% battery:"
 msgstr "Przy 3% baterii:"
 
-#: alice/power.cxx:106
+#: alice/power.cxx:122
 msgid "Do nothing|Hibernate|Sleep"
 msgstr "Nic nie rób|Hibernuj|Uśpij"
 
-#: alice/power.cxx:111
+#: alice/power.cxx:127
 msgid "Now: %1. A warning appears at 10%."
 msgstr "Teraz: %1. Przy 10% pojawi się ostrzeżenie."
 
-#: alice/power.cxx:112
+#: alice/power.cxx:128
 msgid "This computer has no battery."
 msgstr "Ten komputer nie ma baterii."
 
-#: alice/power.cxx:116
+#: alice/power.cxx:132
 msgid ""
 "Presentation mode (battery menu in the menu bar) suspends screen blanking, "
 "locking and sleep."
@@ -904,7 +903,7 @@ msgstr ""
 "Tryb projekcji (menu baterii na pasku menu) wstrzymuje wygaszanie, blokadę i "
 "usypianie."
 
-#: alice/power.cxx:118
+#: alice/power.cxx:134
 msgid ""
 "In a GNOME/KDE session the screen and sleep are managed by that desktop - "
 "these settings apply to the Nirvana Desktop session."
@@ -912,32 +911,36 @@ msgstr ""
 "W sesji GNOME/KDE ekranem i usypianiem zarządza tamto środowisko - te "
 "ustawienia działają w sesji Nirvana Desktop."
 
-#: alice/preferences.cxx:145 denise/desktop.cxx:731 denise/gary.cxx:121
+#: alice/preferences.cxx:156 denise/desktop.cxx:731 denise/gary.cxx:121
 msgid "Preferences"
 msgstr "Preferencje"
 
-#: alice/preferences.cxx:148 alice/user.cxx:624
+#: alice/preferences.cxx:159 alice/user.cxx:624
 msgid "User"
 msgstr "Użytkownik"
 
-#: alice/preferences.cxx:154 alice/printers.cxx:374 alice/printers.cxx:399
+#: alice/preferences.cxx:164 alice/saver.cxx:145
+msgid "Screen Saver"
+msgstr "Wygaszacz ekranu"
+
+#: alice/preferences.cxx:166 alice/printers.cxx:374 alice/printers.cxx:399
 #: denise/printer.cxx:199
 msgid "Printers"
 msgstr "Drukarki"
 
-#: alice/preferences.cxx:155 alice/shader.cxx:223
+#: alice/preferences.cxx:167 alice/shader.cxx:223
 msgid "Shader"
 msgstr "Shader"
 
-#: alice/preferences.cxx:167
+#: alice/preferences.cxx:179
 msgid "Language:"
 msgstr "Język:"
 
-#: alice/preferences.cxx:171
+#: alice/preferences.cxx:183
 msgid "Automatic (system language)"
 msgstr "Automatycznie (jak w systemie)"
 
-#: alice/preferences.cxx:182
+#: alice/preferences.cxx:194
 msgid ""
 "The new language takes effect after restarting Nirvana Desktop or after "
 "Special > Reset Nirvana."
@@ -1102,7 +1105,7 @@ msgstr ""
 msgid "2. The driver"
 msgstr "2. Sterownik"
 
-#: alice/printers.cxx:316 denise/menus.cxx:835 dm/nirvana-dm-greeter.cxx:489
+#: alice/printers.cxx:316 denise/menus.cxx:835 dm/nirvana-dm-greeter.cxx:494
 #: platinum/filedialog.cxx:323
 msgid "Name:"
 msgstr "Nazwa:"
@@ -1194,6 +1197,47 @@ msgstr "Usunięto drukarkę %1."
 #: alice/printers.cxx:439
 msgid "Add Printer…"
 msgstr "Dodaj drukarkę…"
+
+#: alice/saver.cxx:163
+msgid "Start after:"
+msgstr "Włącz po:"
+
+#: alice/saver.cxx:165
+msgid "Lock the screen with the saver"
+msgstr "Blokuj ekran razem z wygaszaczem"
+
+#: alice/saver.cxx:170
+msgid "Ask for the password after:"
+msgstr "Pytaj o hasło po:"
+
+#: alice/saver.cxx:170
+msgid "At once"
+msgstr "Od razu"
+
+#: alice/saver.cxx:173
+msgid "Monitor to sleep after:"
+msgstr "Uśpij monitor po:"
+
+#: alice/saver.cxx:180
+msgid ""
+"nirvana-lock is missing (built without PAM) - the screen only goes black."
+msgstr "Brakuje nirvana-lock (zbudowano bez PAM) – ekran tylko gaśnie."
+
+#: alice/saver.cxx:181
+msgid ""
+"The monitor time counts from the start of the saver. Presentation mode "
+"(battery menu) stops the saver."
+msgstr ""
+"Czas monitora liczy się od włączenia wygaszacza. Tryb prezentacji (menu "
+"baterii) wstrzymuje wygaszacz."
+
+#: alice/saver.cxx:184
+msgid "Test"
+msgstr "Wypróbuj"
+
+#: alice/saver.cxx:185
+msgid "Lock Now"
+msgstr "Zablokuj teraz"
 
 #: alice/shader.cxx:37
 msgid "CRT monitor"
@@ -1713,7 +1757,7 @@ msgstr "Motyw okien"
 msgid "%1 (title bar: %2)"
 msgstr "%1 (pasek tytułu: %2)"
 
-#: denise/about.cxx:436 dm/nirvana-dm-greeter.cxx:397
+#: denise/about.cxx:436 dm/nirvana-dm-greeter.cxx:402
 msgid "Theme"
 msgstr "Motyw"
 
@@ -1833,31 +1877,31 @@ msgstr "emulacja terminala w Nirvana Shell"
 msgid "the X.Org Foundation and the X Window System authors"
 msgstr "X.Org Foundation i autorzy X Window System"
 
-#: denise/about.cxx:496
+#: denise/about.cxx:497
 msgid "Color schemes"
 msgstr "Schematy kolorów"
 
-#: denise/about.cxx:499
+#: denise/about.cxx:500
 msgid "Programs Nirvana Desktop works with"
 msgstr "Programy, z którymi współpracuje Nirvana Desktop"
 
-#: denise/about.cxx:503
+#: denise/about.cxx:504
 msgid "Standards"
 msgstr "Standardy"
 
-#: denise/about.cxx:504
+#: denise/about.cxx:505
 msgid "Trash, autostart"
 msgstr "Kosz, autostart"
 
-#: denise/about.cxx:507
+#: denise/about.cxx:508
 msgid "and the AppImage team"
 msgstr "i zespół AppImage"
 
-#: denise/about.cxx:508
+#: denise/about.cxx:509
 msgid "Inspirations"
 msgstr "Inspiracje"
 
-#: denise/about.cxx:509
+#: denise/about.cxx:510
 msgid ""
 "the desktops of the late 1980s and the 1990s: bevelled gray windows, a menu "
 "bar at the top, icons on the desktop"
@@ -1865,35 +1909,43 @@ msgstr ""
 "pulpity końca lat 80. i lat 90.: szare okna z fazowaniem, pasek menu u góry, "
 "ikony na biurku"
 
-#: denise/about.cxx:510
+#: denise/about.cxx:511
+msgid ""
+"and its many authors: the idea of the screen savers (written anew, no code "
+"taken)"
+msgstr ""
+"i jego wielu autorów: pomysł wygaszaczy ekranu (napisanych od nowa, bez "
+"przejętego kodu)"
+
+#: denise/about.cxx:512
 msgid "the layout of “About This Computer”"
 msgstr "układ okna „O systemie”"
 
-#: denise/about.cxx:511
+#: denise/about.cxx:513
 msgid "the system underneath"
 msgstr "system pod spodem"
 
-#: denise/about.cxx:512
+#: denise/about.cxx:514
 msgid "Made with"
 msgstr "Stworzone z pomocą"
 
-#: denise/about.cxx:513
+#: denise/about.cxx:515
 msgid "co-author of the code"
 msgstr "współautor kodu"
 
-#: denise/about.cxx:556
+#: denise/about.cxx:558
 msgid "About This Computer"
 msgstr "O systemie"
 
-#: denise/about.cxx:560
+#: denise/about.cxx:562
 msgid "System Info"
 msgstr "System"
 
-#: denise/about.cxx:560
+#: denise/about.cxx:562
 msgid "Licence"
 msgstr "Licencja"
 
-#: denise/about.cxx:560
+#: denise/about.cxx:562
 msgid "Acknowledgements"
 msgstr "Podziękowania"
 
@@ -2062,7 +2114,7 @@ msgstr "Wyłącz"
 msgid "Shut down the computer?"
 msgstr "Wyłączyć komputer?"
 
-#: denise/applets.cxx:593
+#: denise/applets.cxx:594
 msgid "The battery is almost empty (%1%). Plug in the power adapter."
 msgstr "Bateria jest prawie wyczerpana (%1%). Podłącz zasilacz."
 
@@ -3091,82 +3143,106 @@ msgstr "Nie udało się sformatować „%1”:"
 msgid "Other…"
 msgstr "Inny…"
 
-#: dm/nirvana-dm-greeter.cxx:179
+#: dm/nirvana-dm-greeter.cxx:183
 msgid "Welcome to %1"
 msgstr "Witaj na komputerze %1"
 
-#: dm/nirvana-dm-greeter.cxx:265 dm/nirvana-dm-greeter.cxx:280
-#: dm/nirvana-dm-greeter.cxx:288
+#: dm/nirvana-dm-greeter.cxx:270 dm/nirvana-dm-greeter.cxx:285
+#: dm/nirvana-dm-greeter.cxx:293
 msgid "Logging in is not possible now."
 msgstr "Logowanie nie jest teraz możliwe."
 
-#: dm/nirvana-dm-greeter.cxx:272
+#: dm/nirvana-dm-greeter.cxx:277
 msgid "This is a preview - nobody is logged in."
 msgstr "To podgląd – nikt nie zostanie zalogowany."
 
-#: dm/nirvana-dm-greeter.cxx:276
+#: dm/nirvana-dm-greeter.cxx:281
 msgid "Choose a user or type a name."
 msgstr "Wybierz użytkownika albo wpisz nazwę."
 
-#: dm/nirvana-dm-greeter.cxx:286
+#: dm/nirvana-dm-greeter.cxx:291
 msgid "Logging in…"
 msgstr "Logowanie…"
 
-#: dm/nirvana-dm-greeter.cxx:315
+#: dm/nirvana-dm-greeter.cxx:320
 msgid "Starting the session…"
 msgstr "Uruchamianie sesji…"
 
-#: dm/nirvana-dm-greeter.cxx:317
+#: dm/nirvana-dm-greeter.cxx:322
 msgid "The session could not start: %1"
 msgstr "Nie udało się uruchomić sesji: %1"
 
-#: dm/nirvana-dm-greeter.cxx:323
+#: dm/nirvana-dm-greeter.cxx:328
 msgid "The password is not right. Try again."
 msgstr "Hasło jest niepoprawne. Spróbuj ponownie."
 
-#: dm/nirvana-dm-greeter.cxx:374
+#: dm/nirvana-dm-greeter.cxx:379
 msgid "This is a preview - nothing happens."
 msgstr "To podgląd – nic się nie stanie."
 
-#: dm/nirvana-dm-greeter.cxx:378
+#: dm/nirvana-dm-greeter.cxx:383
 msgid "Not possible now."
 msgstr "Teraz to niemożliwe."
 
-#: dm/nirvana-dm-greeter.cxx:404 dm/nirvana-dm-greeter.cxx:415
+#: dm/nirvana-dm-greeter.cxx:409 dm/nirvana-dm-greeter.cxx:420
 msgid "Background"
 msgstr "Tło"
 
-#: dm/nirvana-dm-greeter.cxx:424
+#: dm/nirvana-dm-greeter.cxx:429
 msgid "Language"
 msgstr "Język"
 
-#: dm/nirvana-dm-greeter.cxx:429
+#: dm/nirvana-dm-greeter.cxx:434
 msgid "Sleep"
 msgstr "Uśpij"
 
-#: dm/nirvana-dm-greeter.cxx:430
+#: dm/nirvana-dm-greeter.cxx:435
 msgid "Restart…"
 msgstr "Uruchom ponownie…"
 
-#: dm/nirvana-dm-greeter.cxx:431
+#: dm/nirvana-dm-greeter.cxx:436
 msgid "Shut Down…"
 msgstr "Wyłącz…"
 
-#: dm/nirvana-dm-greeter.cxx:501
+#: dm/nirvana-dm-greeter.cxx:506
 msgid "Session:"
 msgstr "Sesja:"
 
-#: dm/nirvana-dm-greeter.cxx:517
+#: dm/nirvana-dm-greeter.cxx:522
 msgid "Log In"
 msgstr "Zaloguj"
 
-#: dm/nirvana-dm-greeter.cxx:608
+#: dm/nirvana-dm-greeter.cxx:613
 msgid "Preview: nobody is logged in from here."
 msgstr "Podgląd: stąd nikt nie zostanie zalogowany."
 
 #: insight/main.cxx:172
 msgid "untitled"
 msgstr "bez tytułu"
+
+#: lock/nirvana-lock.cxx:162
+msgid "Unlock"
+msgstr "Odblokuj"
+
+#: lock/nirvana-lock.cxx:171
+msgid "Switch User…"
+msgstr "Zmień użytkownika…"
+
+#: lock/nirvana-lock.cxx:222 polkit/nirvana-polkit-agent.cxx:234
+msgid "Checking…"
+msgstr "Sprawdzanie…"
+
+#: lock/nirvana-lock.cxx:242 polkit/nirvana-polkit-agent.cxx:222
+msgid "That password is not right - try again."
+msgstr "To hasło jest nieprawidłowe – spróbuj ponownie."
+
+#: lock/nirvana-lock.cxx:313
+msgid "This Computer Is Locked"
+msgstr "Komputer jest zablokowany"
+
+#: lock/nirvana-lock.cxx:319
+msgid "Locked at %1. Type your password to come back."
+msgstr "Zablokowano o %1. Wpisz hasło, aby wrócić."
 
 #: net/net.cxx:94
 msgid "This network is not in range."
@@ -3841,14 +3917,6 @@ msgstr "Uwierzytelnij jako %1."
 msgid "Authenticate"
 msgstr "Uwierzytelnij"
 
-#: polkit/nirvana-polkit-agent.cxx:222
-msgid "That password is not right - try again."
-msgstr "To hasło jest nieprawidłowe – spróbuj ponownie."
-
-#: polkit/nirvana-polkit-agent.cxx:234
-msgid "Checking…"
-msgstr "Sprawdzanie…"
-
 #: power/power.cxx:152
 msgid "No system D-Bus."
 msgstr "Brak magistrali systemowej D-Bus."
@@ -3893,15 +3961,15 @@ msgstr "Zrównoważony"
 msgid "Performance"
 msgstr "Wydajność"
 
-#: power/power.cxx:452
+#: power/power.cxx:487
 msgid "screen blanking"
 msgstr "wygaszanie ekranu"
 
-#: power/power.cxx:471
+#: power/power.cxx:506
 msgid "sleep (logind)"
 msgstr "usypianie (logind)"
 
-#: power/power.cxx:495
+#: power/power.cxx:530
 msgid "desktop screen saver"
 msgstr "wygaszacz pulpitu"
 
@@ -4005,6 +4073,42 @@ msgstr "Foomatic – duża baza starszych sterowników"
 #: print/print.cxx:252
 msgid "Manufacturer PPDs – Kyocera, Ricoh, Lexmark, Sharp…"
 msgstr "Pliki PPD producentów – Kyocera, Ricoh, Lexmark, Sharp…"
+
+#: savers/savers.cxx:335
+msgid "Black Screen"
+msgstr "Czarny ekran"
+
+#: savers/savers.cxx:335
+msgid "Starfield"
+msgstr "Gwiazdy"
+
+#: savers/savers.cxx:335
+msgid "Bouncing Lines"
+msgstr "Odbijające się linie"
+
+#: savers/savers.cxx:336
+msgid "Nirvana Logo"
+msgstr "Logo Nirvany"
+
+#: savers/savers.cxx:336
+msgid "Pipes"
+msgstr "Rury"
+
+#: savers/savers.cxx:336
+msgid "Plasma"
+msgstr "Plazma"
+
+#: savers/savers.cxx:337
+msgid "Clock"
+msgstr "Zegar"
+
+#: savers/savers.cxx:337
+msgid "Snow"
+msgstr "Śnieg"
+
+#: savers/savers.cxx:337
+msgid "Random"
+msgstr "Losowy"
 
 #: shell/main.cxx:70
 msgid "Classic (light)"
