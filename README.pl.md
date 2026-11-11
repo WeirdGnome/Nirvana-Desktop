@@ -23,7 +23,7 @@ Napisane w C++ i FLTK 1.4.
 | `nirvana-denise`     | Rambler: menedżer plików + biurko        | prototyp    |
 | `nirvana-insight`      | menedżer okien X11 (Xorg/XLibre), ramki Platinum | działa |
 | `nirvana-gary`       | przełącznik aplikacji (na razie w procesie Ramblera) | działa |
-| `nirvana-alice`      | panele sterowania: Wygląd, Sieć, Zasilanie, Shader | działa |
+| `nirvana-alice`      | panele sterowania: Wygląd, Sieć, Zasilanie, Data i czas, Shader | działa |
 | `nirvana-shader`     | pełnoekranowe efekty GLSL (mały kompozytor) | działa |
 | `nirvana-shell`      | Nirvana Shell - emulator terminala          | działa |
 | `nirvana-paula`      | dźwięk                                  | planowany   |
@@ -34,7 +34,7 @@ Napisane w C++ i FLTK 1.4.
 
 Rozpakuj źródła i uruchom instalator:
 
-    tar xzf nirvana-desktop-0.0.14.tar.gz && cd nirvana-desktop
+    tar xzf nirvana-desktop-0.0.15.tar.gz && cd nirvana-desktop
     sudo ./install.sh                 # albo: sudo ./install.sh --login-screen
 
 Instalator:
@@ -575,6 +575,42 @@ tamto środowisko.
 Działa z PulseAudio i PipeWire (`pactl`). Bez serwera dźwięku używa czystej ALSA
 (`amixer`: Master i Capture).
 
+
+## Zegar, kalendarz, pomodoro, minutnik i stoper
+
+Zegar na prawym końcu paska menu pokazuje godzinę, a jeśli wybrano, także sekundy, datę i dzień
+tygodnia (format 12- lub 24-godzinny). Kliknięcie otwiera:
+
+- godzinę z sekundami i pełną datę,
+- **kalendarz miesiąca** – strzałki albo kółko myszy zmieniają miesiąc, kliknięcie w tytuł wraca
+  do dzisiaj; weekendy są przygaszone, dzisiejszy dzień podświetlony,
+- trzy narzędzia, każde w swojej karcie:
+  - **Pomodoro**: praca i przerwy (25/5 min, długa 15-minutowa przerwa po 4 rundach – wszystko
+    można zmienić), Start/Pauza, Pomiń, Zeruj; czerwony pomidor dla pracy, zielony dla przerwy,
+  - **Minutnik**: gotowe czasy 1–60 minut, +1 min, Start/Pauza, Zeruj,
+  - **Stoper** z dziesiątymi częściami sekundy i okrążeniami.
+
+Działające (albo wstrzymane) narzędzie pokazuje swój czas na pasku menu obok zegara, więc jest
+widoczne także przy zamkniętym okienku. Gdy czas minie, gra dźwięk (motyw dźwiękowy freedesktop
+przez `paplay`/`pw-play`, a bez nich dzwonek) i pojawia się okno – przy pomodoro z przyciskiem
+następnej fazy (albo następna faza rusza sama, jeśli tak ustawiono).
+
+![Zegar z kalendarzem i pomodoro](docs/img/clock.png)
+
+### Data i czas (Preferencje)
+
+- zegar na pasku menu: 24-godzinny, sekundy, data, dzień tygodnia – z podglądem na żywo,
+- pomodoro: długość pracy i przerw, liczba rund, samoczynny start następnej fazy, dźwięk,
+- **strefa czasowa**: region i miasto z bazy tz; ustawiana dla całego systemu,
+- **data i godzina** ręcznie oraz informacja, czy działa czas z sieci (systemd-timesyncd przez
+  `timedatectl`, w przeciwnym razie działający chrony, ntpsec albo openntpd).
+
+Ustawienia systemu idą przez `/usr/libexec/nirvana-time-helper` z pkexec (przyjmuje tylko
+istniejącą strefę i datę w stałym formacie); tak jak przy aktualizacjach administratorzy przy
+komputerze nie są pytani o hasło. Bez systemd strefę ustawia `/etc/localtime` i `/etc/timezone`
+(Devuan), a godzinę `date` + `hwclock`.
+
+![Data i czas](docs/img/datetime.png)
 
 ## Aktualizacje oprogramowania
 

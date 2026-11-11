@@ -7,6 +7,7 @@
 #include "i18n.h"
 
 #include <FL/Enumerations.H>
+#include <ctime>
 #include <string>
 #include <vector>
 
@@ -53,6 +54,28 @@ struct Scheme {
   int icon_sel = -1, accent = -1, desk = -1;   // -1: computed from the others
   int light = -1, mid = -1, shadow = -1;       // -1: computed from the window color
 };
+
+// The clock in the menu bar and its timers (~/.config/nirvana/clock.conf, Preferences > Date & Time)
+struct ClockSettings {
+  bool h24 = true;          // 24-hour clock (otherwise 3:07 PM)
+  bool seconds = false;
+  bool date = false;        // "11 Nov" before the time
+  bool weekday = false;     // "Wed" before the time
+  int work = 25, short_break = 5, long_break = 15, rounds = 4;   // pomodoro, minutes
+  bool sound = true;        // a sound when a timer ends
+  bool auto_next = false;   // pomodoro: start the next phase without asking
+};
+ClockSettings read_clock();
+bool write_clock(const ClockSettings &c);
+std::string clock_file();
+// Names for dates in the interface language (0 = January / Sunday as in struct tm)
+std::string month_name(int m);          // "January"
+std::string month_in_date(int m);       // "November" ("listopada" in Polish)
+std::string month_short(int m);         // "Jan"
+std::string weekday_name(int d);        // "Wednesday"
+std::string weekday_short(int d);       // "Wed"
+std::string weekday_letters(int d);     // "We" (calendar header)
+std::string clock_text(const ClockSettings &c, time_t t, bool with_seconds);   // "Wed 11 Nov 15:07"
 
 struct Appearance {                 // ~/.config/nirvana/wyglad.conf
   std::string scheme = "redmond97-se/in-tenebris";   // In Tenebris by default

@@ -60,6 +60,7 @@ add_library(nirvana-platinum STATIC
   platinum/anim.cxx
   platinum/theme.cxx
   platinum/wallpaper.cxx
+  platinum/clockconf.cxx
   platinum/icons_retro.cxx
   platinum/framewin.cxx)
 find_package(X11 REQUIRED)
@@ -94,6 +95,7 @@ add_executable(nirvana-denise
   denise/applets.cxx
   denise/menus.cxx
   denise/updates.cxx
+  denise/clock.cxx
   denise/about.cxx
   denise/tray.cxx)
 target_link_libraries(nirvana-denise PRIVATE nirvana-platinum nirvana-net nirvana-audio nirvana-power fltk::images PkgConfig::DBUS)
@@ -103,7 +105,7 @@ add_executable(nirvana-insight insight/main.cxx)
 target_link_libraries(nirvana-insight PRIVATE nirvana-platinum X11::X11)
 
 # --- alice: control panels ---------------------------------------------------
-add_executable(nirvana-alice alice/main.cxx alice/appearance.cxx alice/network.cxx alice/power.cxx alice/preferences.cxx alice/shader.cxx)
+add_executable(nirvana-alice alice/main.cxx alice/appearance.cxx alice/network.cxx alice/power.cxx alice/preferences.cxx alice/shader.cxx alice/datetime.cxx)
 target_link_libraries(nirvana-alice PRIVATE nirvana-platinum nirvana-net nirvana-power)
 
 # --- Nirvana Shell: terminal emulator (system libvterm or the bundled one) ---
@@ -132,9 +134,9 @@ else()
 endif()
 install(DIRECTORY shaders/ DESTINATION share/nirvana/shaders COMPONENT nirvana)
 # system updates: the check (as the user) and the helper (root, through pkexec/polkit)
-install(PROGRAMS update/nirvana-update-check update/nirvana-update-helper update/nirvana-power-helper DESTINATION libexec COMPONENT nirvana)
+install(PROGRAMS update/nirvana-update-check update/nirvana-update-helper update/nirvana-power-helper update/nirvana-time-helper DESTINATION libexec COMPONENT nirvana)
 install(FILES update/org.nirvana-desktop.policy DESTINATION share/polkit-1/actions COMPONENT nirvana)
-install(FILES update/50-nirvana-update.rules DESTINATION share/polkit-1/rules.d COMPONENT nirvana)
+install(FILES update/50-nirvana.rules DESTINATION share/polkit-1/rules.d COMPONENT nirvana)
 
 # Everything in the "nirvana" component - the .deb package does not take FLTK files
 # (FetchContent adds its own install rules for headers and libraries).

@@ -24,7 +24,7 @@ on the desktop. Written in C++ and FLTK 1.4.
 | `nirvana-denise`    | Rambler: file manager + desktop         | prototype   |
 | `nirvana-insight`   | X11 window manager (Xorg/XLibre), Platinum frames | works |
 | `nirvana-gary`      | application switcher (for now inside the Rambler process) | works |
-| `nirvana-alice`     | control panels: Appearance, Network, Power, Shader | works |
+| `nirvana-alice`     | control panels: Appearance, Network, Power, Date & Time, Shader | works |
 | `nirvana-shader`    | full-screen GLSL effects (a small compositor) | works |
 | `nirvana-shell`     | Nirvana Shell - terminal emulator       | works |
 | `nirvana-paula`     | sound                                   | planned     |
@@ -35,7 +35,7 @@ on the desktop. Written in C++ and FLTK 1.4.
 
 Unpack the sources and run the installer:
 
-    tar xzf nirvana-desktop-0.0.14.tar.gz && cd nirvana-desktop
+    tar xzf nirvana-desktop-0.0.15.tar.gz && cd nirvana-desktop
     sudo ./install.sh                 # or: sudo ./install.sh --login-screen
 
 The installer:
@@ -576,6 +576,43 @@ desktop handles them.
 Works with PulseAudio and PipeWire (`pactl`). Without a sound server it uses plain ALSA
 (`amixer`: Master and Capture).
 
+
+## Clock, calendar, pomodoro, timer and stopwatch
+
+The clock at the right end of the menu bar shows the time and, if chosen, the seconds, the date
+and the day of the week (12- or 24-hour). A click opens:
+
+- the time with seconds and the full date,
+- a **month calendar** – the arrows or the mouse wheel change the month, a click on the title
+  goes back to today; weekends are dimmed, today is highlighted,
+- three tools, each in its own tab:
+  - **Pomodoro**: work and breaks (25/5 min, a long 15 min break after 4 rounds – all can be
+    changed), Start/Pause, Skip, Reset; a red tomato for work, a green one for a break,
+  - **Timer**: presets of 1–60 minutes, +1 min, Start/Pause, Reset,
+  - **Stopwatch** with tenths of a second and laps.
+
+A running (or paused) tool shows its time in the menu bar next to the clock, so it stays in
+sight with the window closed. When time is up a sound plays (the freedesktop sound theme through
+`paplay`/`pw-play`, otherwise the bell) and a window says so – for the pomodoro with a button
+for the next phase (or the next phase starts by itself, if so set).
+
+![The clock with the calendar and the pomodoro](docs/img/clock.png)
+
+### Date & Time (Preferences)
+
+- the clock in the menu bar: 24-hour, seconds, date, day of the week – with a live preview,
+- pomodoro: the lengths of work and breaks, the number of rounds, starting the next phase by
+  itself, the sound,
+- **time zone**: a region and a city from the tz database; set for the whole system,
+- **date and time** by hand, and whether network time is working (systemd-timesyncd through
+  `timedatectl`, otherwise a running chrony, ntpsec or openntpd).
+
+The system settings go through `/usr/libexec/nirvana-time-helper` with pkexec (it accepts only a
+zone that exists and a date in a fixed format); like the updates, administrators at the computer
+are not asked for a password. Without systemd the zone is set by `/etc/localtime` and
+`/etc/timezone` (Devuan) and the time with `date` + `hwclock`.
+
+![Date & Time](docs/img/datetime.png)
 
 ## Software updates
 

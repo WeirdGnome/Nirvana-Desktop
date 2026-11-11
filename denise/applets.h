@@ -24,6 +24,7 @@ struct Host {
   std::function<void()> logout;              // end of the session
   std::function<void()> before_shutdown;     // saving the window state before shutting down
   std::function<void()> open_power_panel;    // the Power panel (nirvana-alice)
+  std::function<void(const char *)> open_panel;   // any panel of nirvana-alice ("datetime"...)
   bool nirvana_session = true;                // under Insight: Nirvana Desktop handles idleness
 };
 
@@ -31,7 +32,10 @@ Fl_Widget *make_volume(int X, int Y, int W, int H);
 Fl_Widget *make_power(int X, int Y, int W, int H);
 // System updates (updates.cxx): the number of updates on the icon, installing with progress.
 Fl_Widget *make_updates(int X, int Y, int W, int H);
-bool updates_supported();   // a known package manager (or flatpak) is installed
+bool updates_supported();
+// The clock (clock.cxx): time, calendar, pomodoro, timer, stopwatch. Its width follows
+// the content; relayout is called when it changes.
+Fl_Widget *make_clock(int H, std::function<void()> relayout);   // a known package manager (or flatpak) is installed
 void init(const Host &host);   // multimedia keys, idleness, refreshing
 const Host &current_host();
 

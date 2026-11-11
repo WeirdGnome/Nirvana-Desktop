@@ -61,37 +61,6 @@ std::string rambler_exe(const char *name) {
 }
 
 // ---------------------------------------------------------------------------
-// Right side of the menu bar: the clock
-// ---------------------------------------------------------------------------
-class MenuExtras : public Fl_Widget {
-public:
-  MenuExtras(int X, int Y, int W, int H) : Fl_Widget(X, Y, W, H) {
-    Fl::add_timeout(1.0, tick, this);
-  }
-  // width fitted to the content - the applets sit tightly against the right edge
-  static int needed_width() {
-    fl_font(FONT_SYSTEM, SIZE_SYSTEM);
-    return (int)fl_width("00:00") + 18;
-  }
-  static void tick(void *d) {
-    ((Fl_Widget *)d)->redraw();
-    Fl::repeat_timeout(15.0, tick, d);
-  }
-  void draw() override {
-    fl_push_clip(x(), y(), w(), h());
-    draw_box(MENUBAR_BOX, GRAY);
-    fl_pop_clip();
-    fl_font(FONT_SYSTEM, SIZE_SYSTEM);
-    char buf[16];
-    time_t t = time(nullptr);
-    strftime(buf, sizeof buf, "%H:%M", localtime(&t));
-    int cx = x() + w() - 9 - (int)fl_width(buf);
-    fl_color(TEXT);
-    fl_draw(buf, cx, y() + 14);
-  }
-};
-
-// ---------------------------------------------------------------------------
 // Middle of the bar: memory and disk usage, like the screen title bars of old
 // home computers that showed the free memory.
 // ---------------------------------------------------------------------------
@@ -504,7 +473,7 @@ Desktop::Desktop(int W, int H, const std::string &home)
   // Right side, from the edge: gary, clock, network, volume, power, tray -
   // tightly, without gaps. The menu bar ends after the last title; between it and
   // the applets there is the memory and disk usage. layout_bar() computes the positions.
-  extras_ = new MenuExtras(0, 0, MenuExtras::needed_width(), MENUBAR_H);
+  extras_ = applets::make_clock(MENUBAR_H, [this] { layout_bar(); });
   if (net::installed()) {
     auto *nm = new NetMenu(0, 0, 26, MENUBAR_H);
     net_menu_ = nm;
@@ -577,6 +546,7 @@ Desktop::Desktop(int W, int H, const std::string &home)
     };
     h.before_shutdown = [this] { for (auto *w : wins_) if (w->pane) remember(w, true); };
     h.open_power_panel = [this] { spawn({alice_exe(), "power"}); };
+    h.open_panel = [this](const char *p) { spawn({alice_exe(), p}); };
     h.nirvana_session = !csd_mode;
     applets::init(h);
   }
