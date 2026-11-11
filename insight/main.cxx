@@ -467,7 +467,12 @@ static void set_iconic(Client *c, bool on) {
   publish_iconic();
 }
 
+static bool icon_rect(Window w, Rect &r);
+
 static void show_client(Client *c) {
+  // back from the desktop icon: the outlines fly from the icon to the window
+  Rect icon;
+  if (c->iconic && c->hidden && icon_rect(c->win, icon)) zoom_rects(icon, c->frame->geom());
   set_iconic(c, false);
   if (!c->hidden) return;
   c->hidden = false;
@@ -491,6 +496,47 @@ static void hide_client(Client *c) {
   }
 }
 
+// The icon of a minimized window on the desktop: Rambler puts its place in
+// _NIRVANA_ICON_RECT on the window (x, y, w, h in the same units as the frames).
+static bool icon_rect(Window w, Rect &r) {
+  static Atom a = XInternAtom(dpy, "_NIRVANA_ICON_RECT", False);
+  Atom type; int fmt; unsigned long n = 0, after; unsigned char *data = nullptr;
+  bool ok = false;
+  if (XGetWindowProperty(dpy, w, a, 0, 4, False, XA_CARDINAL, &type, &fmt, &n, &after, &data) == Success && data &&
+      fmt == 32 && n == 4) {
+    long *v = (long *)data;
+    r = {(int)v[0], (int)v[1], (int)v[2], (int)v[3]};
+    ok = r.w > 0 && r.h > 0;
+  }
+  if (data) XFree(data);
+  return ok;
+}
+
+// Minimizing: the outlines fly from the window to its new icon. The icon appears only after
+// Rambler has laid out the desktop again - we wait for its _NIRVANA_ICON_RECT (at most
+// 0.4 s; without Rambler the window just shrinks into its middle).
+struct PendingIconify { Window win = 0; Rect from; };
+static PendingIconify g_pending;
+
+static Atom A_ICON_RECT;
+
+static void iconify_fallback(void *) {
+  if (!g_pending.win) return;
+  Rect r = g_pending.from;
+  g_pending.win = 0;
+  zoom_rects(r, center_of(r));
+}
+
+static void iconify_animate(Window w) {
+  if (g_pending.win != w) return;
+  Fl::remove_timeout(iconify_fallback);
+  Rect to;
+  Rect from = g_pending.from;
+  g_pending.win = 0;
+  if (icon_rect(w, to)) zoom_rects(from, to);
+  else zoom_rects(from, center_of(from));
+}
+
 // The title bar button, a double click on the bar or "minimize" in the program:
 // the window disappears and its icon appears on the desktop.
 static void iconify_client(Client *c) {
@@ -498,7 +544,10 @@ static void iconify_client(Client *c) {
   Rect r = c->frame->geom();
   set_iconic(c, true);
   hide_client(c);
-  if (!c->own_anim) zoom_rects(r, center_of(r));
+  if (g_pending.win) iconify_fallback(nullptr);   // the previous one still waiting
+  g_pending.win = c->win;
+  g_pending.from = r;
+  Fl::add_timeout(0.4, iconify_fallback);
 }
 
 static void focus(Client *c) {
@@ -795,6 +844,8 @@ static int x_handler(void *event, void *) {
       if (e->xproperty.atom == XA_WM_NAME || e->xproperty.atom == A_NET_WM_NAME) {
         c->title = get_title(c->win);
         c->frame->redraw();
+      } else if (g_pending.win == c->win && e->xproperty.atom == A_ICON_RECT) {
+        iconify_animate(c->win);   // Rambler has placed the icon of the window just minimized
       }
       return 1;
     }
@@ -953,6 +1004,7 @@ int main(int argc, char **argv) {
   A_NET_FRAME_EXTENTS = XInternAtom(dpy, "_NET_FRAME_EXTENTS", False);
   A_NET_REQUEST_FRAME_EXTENTS = XInternAtom(dpy, "_NET_REQUEST_FRAME_EXTENTS", False);
   A_NIRVANA_DOCK = XInternAtom(dpy, "_NIRVANA_DOCK", False);
+  A_ICON_RECT = XInternAtom(dpy, "_NIRVANA_ICON_RECT", False);
   A_WM_CHANGE_STATE = XInternAtom(dpy, "WM_CHANGE_STATE", False);
 
   // Minimal EWMH: who the window manager is and what it supports.

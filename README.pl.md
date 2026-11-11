@@ -34,7 +34,7 @@ Napisane w C++ i FLTK 1.4.
 
 Rozpakuj źródła i uruchom instalator:
 
-    tar xzf nirvana-desktop-0.0.17.tar.gz && cd nirvana-desktop
+    tar xzf nirvana-desktop-0.0.18.tar.gz && cd nirvana-desktop
     sudo ./install.sh                 # albo: sudo ./install.sh --login-screen
 
 Instalator:
@@ -124,7 +124,7 @@ Inną czcionkę systemową (np. wolną, w stylu bitmapowym) można podać przez 
   (w stylu gadżetów okien starych komputerów domowych), widoczne także w oknach nieaktywnych
 - **ikonizacja na biurko:** okno znika, a na biurku (w lewej kolumnie, pod
   dyskami) pojawia się jego ikona – obrazek programu z `_NET_WM_ICON` i tytuł okna na żółtym
-  tle, więc zminimalizowane okna odróżniają się od dysków i plików. Dwuklik w ikonę przywraca okno. Tak samo działa „minimalizuj” w samym programie
+  tle, więc zminimalizowane okna odróżniają się od dysków i plików. Kontury przelatują z okna do jego ikony, a przy przywracaniu dwuklikiem z ikony z powrotem do okna. Tak samo działa „minimalizuj” w samym programie
   (np. w przeglądarce); „Ukryj” z menu aplikacji chowa okna bez ikon. Ikony przetrwają
   Resetuj Nirvanę.
 - **okna bez dekoracji** (`_MOTIF_WM_HINTS` bez dekoracji – odtwarzacze ze skórkami, np. qmmp

@@ -746,6 +746,15 @@ void Desktop::layout_icons() {
   }
   icons_.push_back({_("Trash"), trash_dir(), trash_full() ? Icon::TrashFull : Icon::Trash, 0, trash_y});
   icon_cols_ = cols;
+  // where each minimized window's icon is (_NIRVANA_ICON_RECT on the window, in the same
+  // units as the frames): Insight flies the outlines to it and back
+  if (shown() && fl_display)
+    for (auto &d : icons_)
+      if (d.win) {
+        long r[4] = {x_root() + d.x + 24, y_root() + d.y, 32, 32};
+        XChangeProperty(fl_display, d.win, XInternAtom(fl_display, "_NIRVANA_ICON_RECT", False), XA_CARDINAL, 32,
+                        PropModeReplace, (unsigned char *)r, 4);
+      }
   // dock: icons left out on the desktop (Leave Out), as a strip in the bottom
   // left corner. The icon position as for the others: the picture at (x + 24, y).
   dock_shown_ = 0;

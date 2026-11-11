@@ -35,7 +35,7 @@ on the desktop. Written in C++ and FLTK 1.4.
 
 Unpack the sources and run the installer:
 
-    tar xzf nirvana-desktop-0.0.17.tar.gz && cd nirvana-desktop
+    tar xzf nirvana-desktop-0.0.18.tar.gz && cd nirvana-desktop
     sudo ./install.sh                 # or: sudo ./install.sh --login-screen
 
 The installer:
@@ -124,7 +124,8 @@ Another system font (for example a free bitmap-style one) can be set with `NIRVA
 - **Iconification to the desktop:** the window disappears and its icon appears on the
   desktop (in the left column, below the disks) – the program's picture from `_NET_WM_ICON`
   and the window title on a yellow label, so minimized windows stand out from disks and
-  files. Double-clicking the icon brings the window back. "Minimize" inside
+  files. The outlines fly from the window into its icon, and back when a double click on the
+  icon brings the window back. "Minimize" inside
   the program itself (e.g. a web browser) works the same way; "Hide" from the application menu
   hides windows without icons. Icons survive Reset Nirvana.
 - **undecorated windows** (`_MOTIF_WM_HINTS` without decorations – skinned players such as
