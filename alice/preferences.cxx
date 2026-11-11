@@ -37,7 +37,7 @@ void open_panel(const char *name) {
 
 class PanelIcon : public Fl_Button {
 public:
-  enum Kind { Appearance, Network, Power, Shader, DateTime } kind;
+  enum Kind { Appearance, Desktop, Network, Power, Shader, DateTime } kind;
   PanelIcon(int X, int Y, Kind k, const char *l) : Fl_Button(X, Y, 96, 74, l), kind(k) {
     box(FL_NO_BOX);
     labelsize(SIZE_SMALL + 1);
@@ -60,6 +60,15 @@ public:
       case Power:
         draw_battery(ix - 2, iy + 6, 70, true, TEXT, 1.6);
         break;
+      case Desktop: {   // a little screen: icon column and a window
+        fl_color(DESK_A); fl_rectf(ix, iy + 2, 32, 24);
+        fl_color(LIGHT);
+        for (int i = 0; i < 3; i++) fl_rectf(ix + 2, iy + 5 + i * 7, 5, 4);
+        fl_color(GRAY); fl_rectf(ix + 10, iy + 6, 19, 16);
+        fl_color(SEL); fl_rectf(ix + 10, iy + 6, 19, 3);
+        fl_color(DARK); fl_rect(ix + 10, iy + 6, 19, 16); fl_rect(ix, iy + 2, 32, 24);
+        break;
+      }
       case DateTime: {   // a clock face with a calendar page
         fl_color(fl_rgb_color(0xF4, 0xF4, 0xF0));
         fl_rectf(ix + 2, iy + 4, 20, 22);
@@ -107,11 +116,12 @@ public:
 }  // namespace
 
 int panel_preferences() {
-  const int W = 552, H = 196;
+  const int W = 658, H = 196;
   auto *win = new FrameWindow(W, H, _("Preferences"));
   win->xclass("nirvana-preferences");
   struct P { PanelIcon::Kind k; const char *label, *arg; } panels[] = {
       {PanelIcon::Appearance, _("Appearance"), "appearance"},
+      {PanelIcon::Desktop, _("Desktop"), "desktop"},
       {PanelIcon::Network, _("Network"), "network"},
       {PanelIcon::Power, _("Power"), "power"},
       {PanelIcon::DateTime, _("Date & Time"), "datetime"},

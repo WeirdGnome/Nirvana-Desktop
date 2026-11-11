@@ -3,6 +3,7 @@
 //   nirvana-alice [appearance]          Appearance panel (default)
 //   nirvana-alice network [--hidden]    Network panel (--hidden: open the "Other network" window)
 //   nirvana-alice power                 Power panel
+//   nirvana-alice desktop              Desktop panel (room for windows)
 //   nirvana-alice datetime             Date & Time panel (clock, timers, time zone)
 //   nirvana-alice shader               Shader panel (full-screen effects)
 //   nirvana-alice preferences           Preferences: a window with the icons of all panels
@@ -20,6 +21,7 @@ int panel_power();
 int panel_preferences();
 int panel_shader();
 int panel_datetime();
+int panel_desktop();
 
 int main(int argc, char **argv) {
   plat::init();
@@ -39,5 +41,6 @@ int main(int argc, char **argv) {
   if (!strcmp(which, "preferences")) return panel_preferences();
   if (!strcmp(which, "shader")) return panel_shader();
   if (!strcmp(which, "datetime")) return panel_datetime();
+  if (!strcmp(which, "desktop")) return panel_desktop();
   return panel_appearance();
 }

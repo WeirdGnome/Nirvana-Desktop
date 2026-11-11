@@ -775,20 +775,27 @@ static constexpr int MIN_W = 220, MIN_H = 170;   // smallest folder window
 static Atom atom(const char *name) { return XInternAtom(fl_display, name, False); }
 
 plat::Rect Desktop::folder_area() const {
-  const int GAP = 6;
-  int L = icon_cols_ * 90 + 6 + FRAME, T = MENUBAR_H + TITLE_H + GAP;   // icon columns on the left
+  // Preferences > Desktop: without the margins windows may cover the icon column, and
+  // there are no gaps; without the dock room they reach the bottom edge.
+  const int GAP = desk_set_.icon_margin ? 6 : 0;
+  int L = (desk_set_.icon_margin ? icon_cols_ * 90 + 6 : 0) + FRAME, T = MENUBAR_H + TITLE_H + GAP;
   int R = w() - FRAME - GAP;
-  int B = h() - FRAME - GAP - DOCK_TILE;   // room for the dock (also when empty or collapsed)
+  int B = h() - FRAME - GAP - (desk_set_.dock_room ? DOCK_TILE : 0);   // room for the dock (also when empty or collapsed)
   return {L, T, std::max(MIN_W, R - L), std::max(MIN_H, B - T)};
 }
 
 // Insight (the window manager) takes the zoom rectangle for Rambler windows from here:
 // _NIRVANA_WINDOW_AREA on the root window = x, y, width, height of the frame on screen.
+void Desktop::desktop_settings_changed() {
+  desk_set_ = plat::read_desktop();
+  publish_folder_area();
+}
+
 void Desktop::publish_folder_area() {
   if (!shown() || !fl_display) return;
   // _NIRVANA_DOCK: height of the dock - Insight keeps the windows of all programs above it
   static long last_dock = -1;
-  long dock = DOCK_TILE;   // fixed room for the dock - windows do not jump when an icon is added
+  long dock = desk_set_.dock_room ? DOCK_TILE : 0;   // fixed room - windows do not jump when an icon is added
   if (dock != last_dock) {
     last_dock = dock;
     XChangeProperty(fl_display, DefaultRootWindow(fl_display), atom("_NIRVANA_DOCK"), XA_CARDINAL, 32,
@@ -933,6 +940,7 @@ static int x_watch(void *event, void *) {
     else if (e->xproperty.atom == atom("_NIRVANA_ICONS")) g_desk->iconic_changed();
     else if (e->xproperty.atom == atom("_NET_CLIENT_LIST")) g_desk->clients_changed();
     else if (e->xproperty.atom == atom(APPEARANCE_ATOM)) g_desk->appearance_changed();
+    else if (e->xproperty.atom == atom(DESKTOP_ATOM)) g_desk->desktop_settings_changed();   // Preferences > Desktop
   }
   return 0;
 }

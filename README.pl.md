@@ -34,7 +34,7 @@ Napisane w C++ i FLTK 1.4.
 
 Rozpakuj źródła i uruchom instalator:
 
-    tar xzf nirvana-desktop-0.0.16.tar.gz && cd nirvana-desktop
+    tar xzf nirvana-desktop-0.0.17.tar.gz && cd nirvana-desktop
     sudo ./install.sh                 # albo: sudo ./install.sh --login-screen
 
 Instalator:
@@ -284,6 +284,9 @@ okno biurka nie przyjmuje fokusu, żeby klik w pasek menu nie zmieniał aktywnej
   zostawiają wolną kolumnę ikon przy lewej krawędzi (Nirvana HD, dyski, ikony okien,
   Kosz nad dokiem) oraz pasek doku na dole. Zoom innych programów też.
   Za duże zapamiętane okna są przy otwarciu zmniejszane do tego obszaru.
+  **Preferencje → Pulpit** pozwalają to wyłączyć: bez *Nie zasłaniaj ikon na pulpicie* okna zajmują
+  cały ekran pod paskiem menu (bez kolumny ikon i odstępów), bez *Okna nad dokiem* sięgają dolnej
+  krawędzi. Zmiana działa od razu (`~/.config/nirvana/desktop.conf`).
 - **Zaznaczanie**: klik, Shift/Ctrl+klik dodaje lub odejmuje, ramka zaznaczania myszą, `Ctrl+A`.
 - **Zmiana nazwy**: `F2` albo klik w nazwę już zaznaczonego elementu.
   Zmiana nazwy folderu aktualizuje jego otwarte okna i zapamiętane pozycje.
@@ -310,7 +313,10 @@ i zajęte miejsce na dysku z katalogiem domowym, każde z całości, np.
 (poniżej 1 GB w MB, poniżej 10 GB z jednym miejscem po przecinku). Ostatnia wartość to pamięć
 samego Nirvana Desktop: wszystkie procesy `nirvana-*` użytkownika (menedżer okien, biurko,
 terminale, panele, shader), liczone jako PSS – biblioteki współdzielone są dzielone między
-procesy, więc to rzeczywisty koszt. Wartości odświeżają się co 3 sekundy; podpowiedź pokazuje
+procesy, więc to rzeczywisty koszt. Nie wlicza się tu to, co serwer X trzyma dla okien Nirvany
+(pixmapy, glify), ani usług uruchamianych przez sesję (sesyjny D-Bus, PipeWire, agent polkit).
+Gdy działa `nirvana-shader` na komputerze bez karty graficznej, większość zajmuje programowy
+renderer OpenGL (llvmpipe). Wartości odświeżają się co 3 sekundy; podpowiedź pokazuje
 ilości wolne i pamięć każdego programu Nirvany. Na wąskim ekranie napis się skraca.
 
 ![Pasek menu](docs/img/menubar.png)

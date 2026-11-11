@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Nirvana Desktop 0.1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-11 15:19+0000\n"
+"POT-Creation-Date: 2026-11-11 15:29+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -66,7 +66,7 @@ msgstr ""
 msgid "custom"
 msgstr ""
 
-#: alice/appearance.cxx:233 alice/preferences.cxx:114 denise/gary.cxx:117
+#: alice/appearance.cxx:233 alice/preferences.cxx:123 denise/gary.cxx:117
 msgid "Appearance"
 msgstr ""
 
@@ -181,8 +181,8 @@ msgstr ""
 #: alice/appearance.cxx:410 alice/datetime.cxx:385 alice/network.cxx:244
 #: alice/network.cxx:341 alice/network.cxx:389 alice/network.cxx:493
 #: alice/network.cxx:744 alice/power.cxx:127 denise/applets.cxx:443
-#: denise/desktop.cxx:1652 denise/desktop.cxx:1686 denise/desktop.cxx:2037
-#: denise/desktop.cxx:2591 denise/desktop.cxx:3034 denise/menus.cxx:417
+#: denise/desktop.cxx:1660 denise/desktop.cxx:1694 denise/desktop.cxx:2045
+#: denise/desktop.cxx:2599 denise/desktop.cxx:3042 denise/menus.cxx:417
 #: denise/menus.cxx:736 denise/menus.cxx:845 denise/menus.cxx:850
 #: denise/updates.cxx:273 platinum/platinum.cxx:209 platinum/platinum.cxx:988
 #: shell/main.cxx:615
@@ -193,9 +193,9 @@ msgstr ""
 msgid "Apply"
 msgstr ""
 
-#: alice/appearance.cxx:412 alice/datetime.cxx:387 alice/power.cxx:129
-#: alice/shader.cxx:262 denise/about.cxx:606 denise/clock.cxx:174
-#: denise/desktop.cxx:1631 platinum/platinum.cxx:208
+#: alice/appearance.cxx:412 alice/datetime.cxx:387 alice/desktop.cxx:103
+#: alice/power.cxx:129 alice/shader.cxx:262 denise/about.cxx:606
+#: denise/clock.cxx:174 denise/desktop.cxx:1639 platinum/platinum.cxx:208
 msgid "OK"
 msgstr ""
 
@@ -233,7 +233,7 @@ msgstr ""
 msgid "In the menu bar: %1"
 msgstr ""
 
-#: alice/datetime.cxx:278 alice/preferences.cxx:117
+#: alice/datetime.cxx:278 alice/preferences.cxx:127
 msgid "Date & Time"
 msgstr ""
 
@@ -347,7 +347,42 @@ msgid ""
 "computer are not asked for a password."
 msgstr ""
 
-#: alice/main.cxx:30
+#: alice/desktop.cxx:83 alice/preferences.cxx:124
+msgid "Desktop"
+msgstr ""
+
+#: alice/desktop.cxx:85
+msgid "Room for Windows"
+msgstr ""
+
+#: alice/desktop.cxx:88
+msgid "Keep the desktop icons free"
+msgstr ""
+
+#: alice/desktop.cxx:93
+msgid ""
+"Zoomed and new windows leave the column of icons at the left edge free and "
+"keep small gaps at the edges. Off: windows use the whole screen below the "
+"menu bar."
+msgstr ""
+
+#: alice/desktop.cxx:95
+msgid "Keep windows above the dock"
+msgstr ""
+
+#: alice/desktop.cxx:99
+msgid "Off: zoomed windows reach the bottom edge and may cover the dock."
+msgstr ""
+
+#: alice/desktop.cxx:101
+msgid "Preview of a zoomed window."
+msgstr ""
+
+#: alice/desktop.cxx:102
+msgid "The change applies at once, also to windows zoomed from now on."
+msgstr ""
+
+#: alice/main.cxx:32
 msgid "No such scheme: %1"
 msgstr ""
 
@@ -367,8 +402,8 @@ msgstr ""
 msgid "Other Wi-Fi Network"
 msgstr ""
 
-#: alice/network.cxx:194 denise/desktop.cxx:2243 denise/desktop.cxx:2254
-#: denise/desktop.cxx:2261
+#: alice/network.cxx:194 denise/desktop.cxx:2251 denise/desktop.cxx:2262
+#: denise/desktop.cxx:2269
 msgid "Wi-Fi Network"
 msgstr ""
 
@@ -376,7 +411,7 @@ msgstr ""
 msgid "Connect to a network that does not broadcast its name."
 msgstr ""
 
-#: alice/network.cxx:201 denise/desktop.cxx:2262
+#: alice/network.cxx:201 denise/desktop.cxx:2270
 msgid ""
 "The network “%1” is secured.\n"
 "Enter the password to connect."
@@ -404,8 +439,8 @@ msgstr ""
 
 #: alice/network.cxx:245 alice/network.cxx:390 alice/network.cxx:427
 #: alice/network.cxx:561 alice/network.cxx:651 alice/network.cxx:702
-#: alice/network.cxx:728 denise/desktop.cxx:2147 denise/desktop.cxx:2221
-#: denise/desktop.cxx:2262
+#: alice/network.cxx:728 denise/desktop.cxx:2155 denise/desktop.cxx:2229
+#: denise/desktop.cxx:2270
 msgid "Connect"
 msgstr ""
 
@@ -413,13 +448,13 @@ msgstr ""
 msgid "Enterprise networks (802.1X) are not supported yet - use nmtui."
 msgstr ""
 
-#: alice/network.cxx:278 alice/network.cxx:410 denise/desktop.cxx:2213
-#: denise/desktop.cxx:2250 denise/desktop.cxx:3065 denise/volumes.cxx:317
+#: alice/network.cxx:278 alice/network.cxx:410 denise/desktop.cxx:2221
+#: denise/desktop.cxx:2258 denise/desktop.cxx:3073 denise/volumes.cxx:317
 #: net/net.cxx:93
 msgid "Wrong password."
 msgstr ""
 
-#: alice/network.cxx:279 denise/desktop.cxx:2251 net/net.cxx:683
+#: alice/network.cxx:279 denise/desktop.cxx:2259 net/net.cxx:683
 #: net/net.cxx:809
 msgid "Could not connect. Check the password."
 msgstr ""
@@ -492,7 +527,7 @@ msgstr ""
 msgid "Connected to VPN “%1”."
 msgstr ""
 
-#: alice/network.cxx:427 alice/network.cxx:561 denise/desktop.cxx:2144
+#: alice/network.cxx:427 alice/network.cxx:561 denise/desktop.cxx:2152
 msgid "Disconnect"
 msgstr ""
 
@@ -552,7 +587,7 @@ msgstr ""
 msgid "Hotspot is on."
 msgstr ""
 
-#: alice/network.cxx:525 denise/desktop.cxx:2130
+#: alice/network.cxx:525 denise/desktop.cxx:2138
 msgid "Network unavailable"
 msgstr ""
 
@@ -598,7 +633,7 @@ msgstr ""
 msgid "Disconnected."
 msgstr ""
 
-#: alice/network.cxx:593 denise/desktop.cxx:2174
+#: alice/network.cxx:593 denise/desktop.cxx:2182
 msgid "Looking for networks…"
 msgstr ""
 
@@ -614,8 +649,8 @@ msgstr ""
 msgid "disconnected"
 msgstr ""
 
-#: alice/network.cxx:626 alice/preferences.cxx:115 denise/desktop.cxx:2160
-#: denise/desktop.cxx:2201 denise/desktop.cxx:2232 denise/gary.cxx:118
+#: alice/network.cxx:626 alice/preferences.cxx:125 denise/desktop.cxx:2168
+#: denise/desktop.cxx:2209 denise/desktop.cxx:2240 denise/gary.cxx:118
 #: net/net.cxx:326
 msgid "Network"
 msgstr ""
@@ -683,7 +718,7 @@ msgstr ""
 msgid "Choose a network from the list."
 msgstr ""
 
-#: alice/network.cxx:707 denise/desktop.cxx:2182
+#: alice/network.cxx:707 denise/desktop.cxx:2190
 msgid "Other Network…"
 msgstr ""
 
@@ -732,7 +767,7 @@ msgstr ""
 msgid "VPN connection deleted."
 msgstr ""
 
-#: alice/network.cxx:753 denise/desktop.cxx:2197
+#: alice/network.cxx:753 denise/desktop.cxx:2205
 msgid "Airplane Mode"
 msgstr ""
 
@@ -772,7 +807,7 @@ msgstr ""
 msgid "2 hours"
 msgstr ""
 
-#: alice/power.cxx:79 alice/preferences.cxx:116 denise/applets.cxx:447
+#: alice/power.cxx:79 alice/preferences.cxx:126 denise/applets.cxx:447
 #: denise/gary.cxx:120
 msgid "Power"
 msgstr ""
@@ -841,23 +876,23 @@ msgid ""
 "these settings apply to the Nirvana Desktop session."
 msgstr ""
 
-#: alice/preferences.cxx:111 denise/desktop.cxx:727 denise/gary.cxx:121
+#: alice/preferences.cxx:120 denise/desktop.cxx:727 denise/gary.cxx:121
 msgid "Preferences"
 msgstr ""
 
-#: alice/preferences.cxx:118 alice/shader.cxx:223
+#: alice/preferences.cxx:128 alice/shader.cxx:223
 msgid "Shader"
 msgstr ""
 
-#: alice/preferences.cxx:130
+#: alice/preferences.cxx:140
 msgid "Language:"
 msgstr ""
 
-#: alice/preferences.cxx:134
+#: alice/preferences.cxx:144
 msgid "Automatic (system language)"
 msgstr ""
 
-#: alice/preferences.cxx:145
+#: alice/preferences.cxx:155
 msgid ""
 "The new language takes effect after restarting Nirvana Desktop or after "
 "Special > Reset Nirvana."
@@ -1424,7 +1459,7 @@ msgstr ""
 msgid "Input:"
 msgstr ""
 
-#: denise/applets.cxx:217 denise/desktop.cxx:725 denise/desktop.cxx:889
+#: denise/applets.cxx:217 denise/desktop.cxx:725 denise/desktop.cxx:896
 msgid "Applications"
 msgstr ""
 
@@ -1647,264 +1682,264 @@ msgstr ""
 msgid "Applications - current: %1"
 msgstr ""
 
-#: denise/desktop.cxx:747 denise/desktop.cxx:888 denise/desktop.cxx:2026
-#: denise/desktop.cxx:2034 denise/desktop.cxx:2802 denise/desktop.cxx:2906
+#: denise/desktop.cxx:747 denise/desktop.cxx:895 denise/desktop.cxx:2034
+#: denise/desktop.cxx:2042 denise/desktop.cxx:2810 denise/desktop.cxx:2914
 msgid "Trash"
 msgstr ""
 
-#: denise/desktop.cxx:1322 denise/desktop.cxx:1496 denise/desktop.cxx:2566
+#: denise/desktop.cxx:1330 denise/desktop.cxx:1504 denise/desktop.cxx:2574
 msgid "Access Denied"
 msgstr ""
 
-#: denise/desktop.cxx:1323 denise/desktop.cxx:1497
+#: denise/desktop.cxx:1331 denise/desktop.cxx:1505
 msgid "This folder is outside Nirvana HD."
 msgstr ""
 
-#: denise/desktop.cxx:1406
+#: denise/desktop.cxx:1414
 msgid "Rename"
 msgstr ""
 
-#: denise/desktop.cxx:1453
+#: denise/desktop.cxx:1461
 msgid "Back"
 msgstr ""
 
-#: denise/desktop.cxx:1454
+#: denise/desktop.cxx:1462
 msgid "Forward"
 msgstr ""
 
-#: denise/desktop.cxx:1455
+#: denise/desktop.cxx:1463
 msgid "Open Parent"
 msgstr ""
 
-#: denise/desktop.cxx:1505 denise/desktop.cxx:3054 denise/menus.cxx:254
+#: denise/desktop.cxx:1513 denise/desktop.cxx:3062 denise/menus.cxx:254
 #: denise/menus.cxx:256 denise/menus.cxx:260 denise/menus.cxx:330
 msgid "Open"
 msgstr ""
 
-#: denise/desktop.cxx:1505
+#: denise/desktop.cxx:1513
 msgid "The folder “%1” could not be found."
 msgstr ""
 
 #. TRANSLATORS: %s = the program's exit code (keep %s)
-#: denise/desktop.cxx:1589 denise/menus.cxx:428
+#: denise/desktop.cxx:1597 denise/menus.cxx:428
 #, c-format
 msgid "[exit code %s] Press Enter to close…"
 msgstr ""
 
-#: denise/desktop.cxx:1631 denise/desktop.cxx:1649 denise/desktop.cxx:1664
+#: denise/desktop.cxx:1639 denise/desktop.cxx:1657 denise/desktop.cxx:1672
 msgid "Installation"
 msgstr ""
 
-#: denise/desktop.cxx:1631
+#: denise/desktop.cxx:1639
 msgid "Could not move the file:"
 msgstr ""
 
-#: denise/desktop.cxx:1650
+#: denise/desktop.cxx:1658
 msgid ""
 "“%1” is already installed in %2.\n"
 "Other versions of this program can be installed alongside it."
 msgstr ""
 
-#: denise/desktop.cxx:1653 denise/desktop.cxx:2592
+#: denise/desktop.cxx:1661 denise/desktop.cxx:2600
 msgid "Replace"
 msgstr ""
 
-#: denise/desktop.cxx:1654
+#: denise/desktop.cxx:1662
 msgid "Run"
 msgstr ""
 
-#: denise/desktop.cxx:1664
+#: denise/desktop.cxx:1672
 msgid "Install the application “%1”?"
 msgstr ""
 
-#: denise/desktop.cxx:1665
+#: denise/desktop.cxx:1673
 msgid "Category:"
 msgstr ""
 
-#: denise/desktop.cxx:1681
+#: denise/desktop.cxx:1689
 msgid "The application will run in a sandbox: it will only see Nirvana HD."
 msgstr ""
 
-#: denise/desktop.cxx:1682
+#: denise/desktop.cxx:1690
 msgid ""
 "Note: bubblewrap is missing - the application will run without a sandbox."
 msgstr ""
 
-#: denise/desktop.cxx:1687 denise/updates.cxx:273
+#: denise/desktop.cxx:1695 denise/updates.cxx:273
 msgid "Install"
 msgstr ""
 
-#: denise/desktop.cxx:1703
+#: denise/desktop.cxx:1711
 msgid "Cannot Open"
 msgstr ""
 
-#: denise/desktop.cxx:1966
+#: denise/desktop.cxx:1974
 msgid "untitled folder"
 msgstr ""
 
-#: denise/desktop.cxx:2026 denise/desktop.cxx:2802 denise/desktop.cxx:2906
+#: denise/desktop.cxx:2034 denise/desktop.cxx:2810 denise/desktop.cxx:2914
 msgid "Could not move to the Trash:"
 msgstr ""
 
-#: denise/desktop.cxx:2034
+#: denise/desktop.cxx:2042
 msgid "The Trash is empty."
 msgstr ""
 
-#: denise/desktop.cxx:2035
+#: denise/desktop.cxx:2043
 msgid "Empty Trash"
 msgstr ""
 
-#: denise/desktop.cxx:2036
+#: denise/desktop.cxx:2044
 msgid ""
 "The Trash contains %1.\n"
 "Delete them permanently?"
 msgstr ""
 
-#: denise/desktop.cxx:2038
+#: denise/desktop.cxx:2046
 msgid "Empty"
 msgstr ""
 
-#: denise/desktop.cxx:2131 denise/desktop.cxx:2204
+#: denise/desktop.cxx:2139 denise/desktop.cxx:2212
 msgid "Network Settings…"
 msgstr ""
 
-#: denise/desktop.cxx:2139
+#: denise/desktop.cxx:2147
 msgid "%1 (%2): %3"
 msgstr ""
 
-#: denise/desktop.cxx:2150
+#: denise/desktop.cxx:2158
 msgid "Cable unplugged"
 msgstr ""
 
-#: denise/desktop.cxx:2154
+#: denise/desktop.cxx:2162
 msgid "Wi-Fi: hotspot “%1”"
 msgstr ""
 
-#: denise/desktop.cxx:2155
+#: denise/desktop.cxx:2163
 msgid "Wi-Fi: On"
 msgstr ""
 
-#: denise/desktop.cxx:2155
+#: denise/desktop.cxx:2163
 msgid "Wi-Fi: Off"
 msgstr ""
 
-#: denise/desktop.cxx:2156
+#: denise/desktop.cxx:2164
 msgid "Turn Wi-Fi Off"
 msgstr ""
 
-#: denise/desktop.cxx:2156
+#: denise/desktop.cxx:2164
 msgid "Turn Wi-Fi On"
 msgstr ""
 
-#: denise/desktop.cxx:2178
+#: denise/desktop.cxx:2186
 msgid "Turn Hotspot Off"
 msgstr ""
 
-#: denise/desktop.cxx:2178
+#: denise/desktop.cxx:2186
 msgid "Disconnect from “%1”"
 msgstr ""
 
-#: denise/desktop.cxx:2192
+#: denise/desktop.cxx:2200
 msgid "(connecting…)"
 msgstr ""
 
-#: denise/desktop.cxx:2220
+#: denise/desktop.cxx:2228
 msgid ""
 "VPN connection “%1” (%2).\n"
 "Enter the password."
 msgstr ""
 
-#: denise/desktop.cxx:2243
+#: denise/desktop.cxx:2251
 msgid ""
 "Enterprise networks (WPA Enterprise, 802.1X) are not supported yet.\n"
 "Set them up with nmtui or nm-connection-editor."
 msgstr ""
 
-#: denise/desktop.cxx:2428
+#: denise/desktop.cxx:2436
 msgid "Hide %1"
 msgstr ""
 
-#: denise/desktop.cxx:2432
+#: denise/desktop.cxx:2440
 msgid "Hide Others"
 msgstr ""
 
-#: denise/desktop.cxx:2437
+#: denise/desktop.cxx:2445
 msgid "Show All"
 msgstr ""
 
-#: denise/desktop.cxx:2446
+#: denise/desktop.cxx:2454
 msgid "Quit %1"
 msgstr ""
 
-#: denise/desktop.cxx:2512
+#: denise/desktop.cxx:2520
 msgid "A name cannot contain “/”."
 msgstr ""
 
-#: denise/desktop.cxx:2513
+#: denise/desktop.cxx:2521
 msgid "That name is reserved."
 msgstr ""
 
-#: denise/desktop.cxx:2516
+#: denise/desktop.cxx:2524
 msgid "An item named “%1” already exists."
 msgstr ""
 
-#: denise/desktop.cxx:2518
+#: denise/desktop.cxx:2526
 msgid "Could not rename:"
 msgstr ""
 
-#: denise/desktop.cxx:2566
+#: denise/desktop.cxx:2574
 msgid "The destination folder is outside Nirvana HD."
 msgstr ""
 
-#: denise/desktop.cxx:2573
+#: denise/desktop.cxx:2581
 msgid "Cannot Move"
 msgstr ""
 
-#: denise/desktop.cxx:2573
+#: denise/desktop.cxx:2581
 msgid "The folder “%1” cannot be moved into itself."
 msgstr ""
 
-#: denise/desktop.cxx:2587
+#: denise/desktop.cxx:2595
 msgid "an item “%1”"
 msgstr ""
 
-#: denise/desktop.cxx:2589 denise/desktop.cxx:2632
+#: denise/desktop.cxx:2597 denise/desktop.cxx:2640
 msgid "Copying"
 msgstr ""
 
-#: denise/desktop.cxx:2589 denise/desktop.cxx:2632
+#: denise/desktop.cxx:2597 denise/desktop.cxx:2640
 msgid "Move"
 msgstr ""
 
-#: denise/desktop.cxx:2590
+#: denise/desktop.cxx:2598
 msgid ""
 "The folder “%1” already contains %2.\n"
 "Replace?"
 msgstr ""
 
-#: denise/desktop.cxx:2632
+#: denise/desktop.cxx:2640
 msgid "There were errors:"
 msgstr ""
 
-#: denise/desktop.cxx:2761 denise/desktop.cxx:3053 denise/desktop.cxx:3066
+#: denise/desktop.cxx:2769 denise/desktop.cxx:3061 denise/desktop.cxx:3074
 msgid "Encrypted Disk"
 msgstr ""
 
-#: denise/desktop.cxx:2761
+#: denise/desktop.cxx:2769
 msgid "Open the disk “%1” and enter its password first."
 msgstr ""
 
-#: denise/desktop.cxx:2766 denise/desktop.cxx:2980
+#: denise/desktop.cxx:2774 denise/desktop.cxx:2988
 msgid "Disk"
 msgstr ""
 
-#: denise/desktop.cxx:3054
+#: denise/desktop.cxx:3062
 msgid ""
 "The disk “%1” is encrypted.\n"
 "Enter the password to open it."
 msgstr ""
 
-#: denise/desktop.cxx:3085
+#: denise/desktop.cxx:3093
 msgid "Ejecting"
 msgstr ""
 
@@ -2543,236 +2578,236 @@ msgstr ""
 msgid "Could not turn the hotspot on (the adapter may not support AP mode)."
 msgstr ""
 
-#: platinum/clockconf.cxx:55
+#: platinum/clockconf.cxx:62
 msgid "January"
 msgstr ""
 
-#: platinum/clockconf.cxx:55
+#: platinum/clockconf.cxx:62
 msgid "February"
 msgstr ""
 
-#: platinum/clockconf.cxx:55
+#: platinum/clockconf.cxx:62
 msgid "March"
 msgstr ""
 
-#: platinum/clockconf.cxx:55
+#: platinum/clockconf.cxx:62
 msgid "April"
 msgstr ""
 
-#: platinum/clockconf.cxx:55
+#: platinum/clockconf.cxx:62
 msgid "May (month)"
 msgstr ""
 
-#: platinum/clockconf.cxx:56
+#: platinum/clockconf.cxx:63
 msgid "June"
 msgstr ""
 
-#: platinum/clockconf.cxx:56
+#: platinum/clockconf.cxx:63
 msgid "July"
 msgstr ""
 
-#: platinum/clockconf.cxx:56
+#: platinum/clockconf.cxx:63
 msgid "August"
 msgstr ""
 
-#: platinum/clockconf.cxx:56
+#: platinum/clockconf.cxx:63
 msgid "September"
 msgstr ""
 
-#: platinum/clockconf.cxx:56
+#: platinum/clockconf.cxx:63
 msgid "October"
 msgstr ""
 
-#: platinum/clockconf.cxx:57
+#: platinum/clockconf.cxx:64
 msgid "November"
 msgstr ""
 
-#: platinum/clockconf.cxx:57
+#: platinum/clockconf.cxx:64
 msgid "December"
 msgstr ""
 
-#: platinum/clockconf.cxx:64
+#: platinum/clockconf.cxx:71
 msgid "January (in a date)"
 msgstr ""
 
-#: platinum/clockconf.cxx:64
+#: platinum/clockconf.cxx:71
 msgid "February (in a date)"
 msgstr ""
 
-#: platinum/clockconf.cxx:64
+#: platinum/clockconf.cxx:71
 msgid "March (in a date)"
 msgstr ""
 
-#: platinum/clockconf.cxx:65
+#: platinum/clockconf.cxx:72
 msgid "April (in a date)"
 msgstr ""
 
-#: platinum/clockconf.cxx:65
+#: platinum/clockconf.cxx:72
 msgid "May (in a date)"
 msgstr ""
 
-#: platinum/clockconf.cxx:65
+#: platinum/clockconf.cxx:72
 msgid "June (in a date)"
 msgstr ""
 
-#: platinum/clockconf.cxx:66
+#: platinum/clockconf.cxx:73
 msgid "July (in a date)"
 msgstr ""
 
-#: platinum/clockconf.cxx:66
+#: platinum/clockconf.cxx:73
 msgid "August (in a date)"
 msgstr ""
 
-#: platinum/clockconf.cxx:66
+#: platinum/clockconf.cxx:73
 msgid "September (in a date)"
 msgstr ""
 
-#: platinum/clockconf.cxx:67
+#: platinum/clockconf.cxx:74
 msgid "October (in a date)"
 msgstr ""
 
-#: platinum/clockconf.cxx:67
+#: platinum/clockconf.cxx:74
 msgid "November (in a date)"
 msgstr ""
 
-#: platinum/clockconf.cxx:67
+#: platinum/clockconf.cxx:74
 msgid "December (in a date)"
 msgstr ""
 
-#: platinum/clockconf.cxx:74 platinum/i18n.cxx:372
+#: platinum/clockconf.cxx:81 platinum/i18n.cxx:372
 msgid "Jan"
 msgstr ""
 
-#: platinum/clockconf.cxx:74 platinum/i18n.cxx:372
+#: platinum/clockconf.cxx:81 platinum/i18n.cxx:372
 msgid "Feb"
 msgstr ""
 
-#: platinum/clockconf.cxx:74 platinum/i18n.cxx:372
+#: platinum/clockconf.cxx:81 platinum/i18n.cxx:372
 msgid "Mar"
 msgstr ""
 
-#: platinum/clockconf.cxx:74 platinum/i18n.cxx:372
+#: platinum/clockconf.cxx:81 platinum/i18n.cxx:372
 msgid "Apr"
 msgstr ""
 
-#: platinum/clockconf.cxx:74 platinum/i18n.cxx:372
+#: platinum/clockconf.cxx:81 platinum/i18n.cxx:372
 msgid "May"
 msgstr ""
 
-#: platinum/clockconf.cxx:74 platinum/i18n.cxx:372
+#: platinum/clockconf.cxx:81 platinum/i18n.cxx:372
 msgid "Jun"
 msgstr ""
 
-#: platinum/clockconf.cxx:75 platinum/i18n.cxx:373
+#: platinum/clockconf.cxx:82 platinum/i18n.cxx:373
 msgid "Jul"
 msgstr ""
 
-#: platinum/clockconf.cxx:75 platinum/i18n.cxx:373
+#: platinum/clockconf.cxx:82 platinum/i18n.cxx:373
 msgid "Aug"
 msgstr ""
 
-#: platinum/clockconf.cxx:75 platinum/i18n.cxx:373
+#: platinum/clockconf.cxx:82 platinum/i18n.cxx:373
 msgid "Sep"
 msgstr ""
 
-#: platinum/clockconf.cxx:75 platinum/i18n.cxx:373
+#: platinum/clockconf.cxx:82 platinum/i18n.cxx:373
 msgid "Oct"
 msgstr ""
 
-#: platinum/clockconf.cxx:75 platinum/i18n.cxx:373
+#: platinum/clockconf.cxx:82 platinum/i18n.cxx:373
 msgid "Nov"
 msgstr ""
 
-#: platinum/clockconf.cxx:75 platinum/i18n.cxx:373
+#: platinum/clockconf.cxx:82 platinum/i18n.cxx:373
 msgid "Dec"
 msgstr ""
 
-#: platinum/clockconf.cxx:79
+#: platinum/clockconf.cxx:86
 msgid "Sunday"
 msgstr ""
 
-#: platinum/clockconf.cxx:79
+#: platinum/clockconf.cxx:86
 msgid "Monday"
 msgstr ""
 
-#: platinum/clockconf.cxx:79
+#: platinum/clockconf.cxx:86
 msgid "Tuesday"
 msgstr ""
 
-#: platinum/clockconf.cxx:79
+#: platinum/clockconf.cxx:86
 msgid "Wednesday"
 msgstr ""
 
-#: platinum/clockconf.cxx:79
+#: platinum/clockconf.cxx:86
 msgid "Thursday"
 msgstr ""
 
-#: platinum/clockconf.cxx:80
+#: platinum/clockconf.cxx:87
 msgid "Friday"
 msgstr ""
 
-#: platinum/clockconf.cxx:80
+#: platinum/clockconf.cxx:87
 msgid "Saturday"
 msgstr ""
 
-#: platinum/clockconf.cxx:84
+#: platinum/clockconf.cxx:91
 msgid "Sun"
 msgstr ""
 
-#: platinum/clockconf.cxx:84
+#: platinum/clockconf.cxx:91
 msgid "Mon"
 msgstr ""
 
-#: platinum/clockconf.cxx:84
+#: platinum/clockconf.cxx:91
 msgid "Tue"
 msgstr ""
 
-#: platinum/clockconf.cxx:84
+#: platinum/clockconf.cxx:91
 msgid "Wed"
 msgstr ""
 
-#: platinum/clockconf.cxx:84
+#: platinum/clockconf.cxx:91
 msgid "Thu"
 msgstr ""
 
-#: platinum/clockconf.cxx:84
+#: platinum/clockconf.cxx:91
 msgid "Fri"
 msgstr ""
 
-#: platinum/clockconf.cxx:84
+#: platinum/clockconf.cxx:91
 msgid "Sat"
 msgstr ""
 
-#: platinum/clockconf.cxx:88
+#: platinum/clockconf.cxx:95
 msgid "Su"
 msgstr ""
 
-#: platinum/clockconf.cxx:88
+#: platinum/clockconf.cxx:95
 msgid "Mo"
 msgstr ""
 
-#: platinum/clockconf.cxx:88
+#: platinum/clockconf.cxx:95
 msgid "Tu"
 msgstr ""
 
-#: platinum/clockconf.cxx:88
+#: platinum/clockconf.cxx:95
 msgid "We"
 msgstr ""
 
-#: platinum/clockconf.cxx:88
+#: platinum/clockconf.cxx:95
 msgid "Th"
 msgstr ""
 
-#: platinum/clockconf.cxx:88
+#: platinum/clockconf.cxx:95
 msgid "Fr"
 msgstr ""
 
-#: platinum/clockconf.cxx:88
+#: platinum/clockconf.cxx:95
 msgid "Sa"
 msgstr ""
 
 #. TRANSLATORS: a short date in the menu bar: %1 day, %2 month (abbreviated)
-#: platinum/clockconf.cxx:108
+#: platinum/clockconf.cxx:115
 msgid "%2 %1"
 msgstr ""
 
@@ -3194,24 +3229,24 @@ msgstr ""
 msgid "Shut Down…"
 msgstr ""
 
-#: denise/desktop.cxx:2455 denise/desktop.cxx:2461 denise/desktop.cxx:2473
-#: denise/desktop.cxx:2474 denise/desktop.cxx:2475
+#: denise/desktop.cxx:2463 denise/desktop.cxx:2469 denise/desktop.cxx:2481
+#: denise/desktop.cxx:2482 denise/desktop.cxx:2483
 msgid "Rambler Windows"
 msgstr ""
 
-#: denise/desktop.cxx:2455
+#: denise/desktop.cxx:2463
 msgid "No open windows"
 msgstr ""
 
-#: denise/desktop.cxx:2473
+#: denise/desktop.cxx:2481
 msgid "Collapse All"
 msgstr ""
 
-#: denise/desktop.cxx:2474
+#: denise/desktop.cxx:2482
 msgid "Expand All"
 msgstr ""
 
-#: denise/desktop.cxx:2475
+#: denise/desktop.cxx:2483
 msgid "Close All"
 msgstr ""
 

@@ -107,6 +107,8 @@ public:
 
   // Window environment (detected at startup)
   bool csd_mode = false;          // the window manager is not Insight: we draw the frames ourselves
+  plat::DesktopSettings desk_set_ = plat::read_desktop();   // margins for windows (Preferences > Desktop)
+  void desktop_settings_changed();
   bool wm_present = false;        // any EWMH-compliant window manager
   bool wm_moveresize = false;     // the WM supports _NET_WM_MOVERESIZE (moves for us)
   NWin *manual_active = nullptr;  // the active window when there is no window manager

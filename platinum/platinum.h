@@ -55,6 +55,16 @@ struct Scheme {
   int light = -1, mid = -1, shadow = -1;       // -1: computed from the window color
 };
 
+// The desktop (~/.config/nirvana/desktop.conf, Preferences > Desktop)
+struct DesktopSettings {
+  bool icon_margin = true;   // zoomed and new windows leave the column of desktop icons free, with gaps
+  bool dock_room = true;     // windows stay above the dock
+};
+DesktopSettings read_desktop();
+bool write_desktop(const DesktopSettings &d);
+void notify_desktop_changed();   // Rambler and Insight follow at once (_NIRVANA_DESKTOP)
+constexpr const char *DESKTOP_ATOM = "_NIRVANA_DESKTOP";
+
 // The clock in the menu bar and its timers (~/.config/nirvana/clock.conf, Preferences > Date & Time)
 struct ClockSettings {
   bool h24 = true;          // 24-hour clock (otherwise 3:07 PM)

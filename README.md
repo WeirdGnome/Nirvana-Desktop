@@ -35,7 +35,7 @@ on the desktop. Written in C++ and FLTK 1.4.
 
 Unpack the sources and run the installer:
 
-    tar xzf nirvana-desktop-0.0.16.tar.gz && cd nirvana-desktop
+    tar xzf nirvana-desktop-0.0.17.tar.gz && cd nirvana-desktop
     sudo ./install.sh                 # or: sudo ./install.sh --login-screen
 
 The installer:
@@ -284,6 +284,9 @@ desktop window does not take focus, so clicking the menu bar does not change the
   column of icons at the left edge free (Nirvana HD, disks, window icons, the Trash above
   the dock) as well as the dock at the bottom. Zooming other programs does the same.
   Remembered windows that are too large are shrunk to this area when they open.
+  **Preferences → Desktop** turns this off: without *Keep the desktop icons free* windows use the
+  whole screen below the menu bar (no icon column, no gaps), without *Keep windows above the dock*
+  they reach the bottom edge. The change applies at once (`~/.config/nirvana/desktop.conf`).
 - **Selecting**: click, Shift/Ctrl+click adds or removes, rubber-band selection with the mouse, `Ctrl+A`.
 - **Renaming**: `F2` or a click on the name of an item that is already selected.
   Renaming a folder updates its open windows and remembered positions.
@@ -310,7 +313,10 @@ memory and the used space on the disk holding the home folder, each out of the t
 `512MB used memory of 16GB     40GB used disk of 512GB     38MB used by Nirvana` (below 1 GB in MB,
 below 10 GB with one decimal). The last value is the memory of Nirvana Desktop itself: all
 `nirvana-*` processes of the user (window manager, desktop, terminals, panels, shader), counted
-as PSS – shared libraries split between the processes, so it is the real cost. The values refresh
+as PSS – shared libraries split between the processes, so it is the real cost. Not included:
+what the X server keeps for Nirvana's windows (pixmaps, glyphs) and the services the session
+starts (the session D-Bus, PipeWire, the polkit agent). With `nirvana-shader` running on a
+computer without a GPU, most of it is the OpenGL software renderer (llvmpipe). The values refresh
 every 3 seconds; the tooltip shows the free amounts and the memory of each Nirvana program. On a narrow screen the
 text gets shorter.
 

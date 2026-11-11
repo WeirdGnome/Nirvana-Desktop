@@ -1,6 +1,13 @@
 // Nirvana Desktop - libplatinum: clock settings (~/.config/nirvana/clock.conf) and date names
 #include "platinum.h"
 
+#include <FL/Fl.H>
+#include <FL/platform.H>
+#if defined(FLTK_USE_X11)
+#include <X11/Xatom.h>
+#include <X11/Xlib.h>
+#endif
+
 #include <algorithm>
 #include <cstdlib>
 #include <ctime>
@@ -107,6 +114,50 @@ std::string clock_text(const ClockSettings &c, time_t t, bool with_seconds) {
   // TRANSLATORS: a short date in the menu bar: %1 day, %2 month (abbreviated)
   if (c.date) r += fmt(_("%2 %1"), std::to_string(tm.tm_mday), month_short(tm.tm_mon)) + " ";
   return r + hm;
+}
+
+// ---------------------------------------------------------------------------
+// Desktop settings
+// ---------------------------------------------------------------------------
+static std::string desktop_file() {
+  const char *x = getenv("XDG_CONFIG_HOME");
+  const char *h = getenv("HOME");
+  return (x && *x ? std::string(x) : std::string(h ? h : "/") + "/.config") + "/nirvana/desktop.conf";
+}
+
+DesktopSettings read_desktop() {
+  DesktopSettings d;
+  std::ifstream in(desktop_file());
+  std::string line;
+  while (std::getline(in, line)) {
+    if (line.rfind("icon_margin=", 0) == 0) d.icon_margin = line.substr(12) != "0";
+    else if (line.rfind("dock_room=", 0) == 0) d.dock_room = line.substr(10) != "0";
+  }
+  return d;
+}
+
+bool write_desktop(const DesktopSettings &d) {
+  std::string f = desktop_file();
+  std::string dir = f.substr(0, f.rfind('/'));
+  mkdir(dir.substr(0, dir.rfind('/')).c_str(), 0755);
+  mkdir(dir.c_str(), 0755);
+  std::ofstream out(f);
+  out << "# Nirvana Desktop - the desktop (Preferences > Desktop)\n"
+      << "icon_margin=" << d.icon_margin << "\ndock_room=" << d.dock_room << "\n";
+  return (bool)out;
+}
+
+void notify_desktop_changed() {
+#if defined(FLTK_USE_X11)
+  fl_open_display();
+  Display *dpy = fl_x11_display();
+  if (!dpy) return;
+  Atom at = XInternAtom(dpy, DESKTOP_ATOM, False);
+  long v = (long)time(nullptr) ^ (long)clock();
+  XChangeProperty(dpy, RootWindow(dpy, DefaultScreen(dpy)), at, XA_CARDINAL, 32, PropModeReplace,
+                  (unsigned char *)&v, 1);
+  XFlush(dpy);
+#endif
 }
 
 }  // namespace plat

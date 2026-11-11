@@ -794,4 +794,12 @@ T = {
     '%1 used by Nirvana': '%1 zajęte przez Nirvanę',
     'Nirvana %1': 'Nirvana %1',
     'Nirvana Desktop: %1': 'Nirvana Desktop: %1',
+    'Desktop': 'Pulpit',
+    'Room for Windows': 'Miejsce dla okien',
+    'Keep the desktop icons free': 'Nie zasłaniaj ikon na pulpicie',
+    'Zoomed and new windows leave the column of icons at the left edge free and keep small gaps at the edges. Off: windows use the whole screen below the menu bar.': 'Powiększone i nowe okna zostawiają wolną kolumnę ikon przy lewej krawędzi i małe odstępy od krawędzi. Wyłączone: okna zajmują cały ekran pod paskiem menu.',
+    'Keep windows above the dock': 'Okna nad dokiem',
+    'Off: zoomed windows reach the bottom edge and may cover the dock.': 'Wyłączone: powiększone okna sięgają dolnej krawędzi i mogą zasłonić dok.',
+    'Preview of a zoomed window.': 'Podgląd powiększonego okna.',
+    'The change applies at once, also to windows zoomed from now on.': 'Zmiana działa od razu, także dla okien powiększanych od teraz.',
 }
