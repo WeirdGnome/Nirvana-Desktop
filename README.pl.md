@@ -34,7 +34,7 @@ Napisane w C++ i FLTK 1.4.
 
 Rozpakuj źródła i uruchom instalator:
 
-    tar xzf nirvana-desktop-0.0.20.tar.gz && cd nirvana-desktop
+    tar xzf nirvana-desktop-0.0.21.tar.gz && cd nirvana-desktop
     sudo ./install.sh                 # albo: sudo ./install.sh --login-screen
 
 Instalator:
@@ -400,7 +400,8 @@ przestawia cały system: Rambler i Insight przeładowują paletę bez restartu.
   [Redmond97 SE](https://codeberg.org/Sliver_X/Redmond97-SE) (GPL-3.0).
 - **Wygląd domyślny**: schemat *In Tenebris*, wzór *Cegiełki* i ikony Platinum.
 - **Pasek tytułu**: jak w schemacie, prążki Platinum, jednolity kolor, gradient albo szkło (połysk
-  w górnej połowie i ciemniejszy środek, jak na błyszczących pulpitach z lat 2000).
+  w górnej połowie i ciemniejszy środek, jak na błyszczących pulpitach z lat 2000); przy szkle także
+  górna belka menu i paski menu w oknach folderów są szklane.
 - **Tło biurka**: *Wzór*, *Jednolity kolor* albo *Gradient*.
   - Kolory wybiera się z dwóch próbek. Drugi kolor gradientu domyślnie jest ciemniejszą
     (albo, na ciemnym tle, jaśniejszą) wersją pierwszego. *Ze schematu* wraca do kolorów

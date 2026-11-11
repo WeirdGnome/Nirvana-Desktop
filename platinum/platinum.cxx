@@ -88,6 +88,25 @@ static void well_box(int x, int y, int w, int h, Fl_Color c) {
 }
 
 static void menubar_box(int x, int y, int w, int h, Fl_Color c) {
+  if (title_style() == TitleStyle::Glossy && h > 4) {
+    // glass, like the title bars: a shine on the upper half, then the bar color with a little
+    // light coming back at the bottom (depends only on y, so all the pieces of the bar match)
+    uchar r, g, b;
+    Fl::get_color(c, r, g, b);
+    for (int i = 0; i < h - 2; i++) {
+      double t = (double)i / (h - 3);
+      // + toward white, - toward black: bright shine on top, a darker band below the middle
+      double k = t < 0.5 ? 0.85 - 0.9 * t : -0.14 + 0.2 * (t - 0.5) * 2;
+      auto ch = [&](uchar v) { return (uchar)(k >= 0 ? v + (255 - v) * k : v * (1 + k)); };
+      fl_color(fl_rgb_color(ch(r), ch(g), ch(b)));
+      fl_xyline(x, y + i, x + w - 1);
+    }
+    fl_color(MID);
+    fl_xyline(x, y + h - 2, x + w - 1);
+    fl_color(DARK);
+    fl_xyline(x, y + h - 1, x + w - 1);
+    return;
+  }
   fl_color(c);
   fl_rectf(x, y, w, h);
   fl_color(LIGHT);

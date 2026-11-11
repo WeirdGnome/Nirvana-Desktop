@@ -35,7 +35,7 @@ on the desktop. Written in C++ and FLTK 1.4.
 
 Unpack the sources and run the installer:
 
-    tar xzf nirvana-desktop-0.0.20.tar.gz && cd nirvana-desktop
+    tar xzf nirvana-desktop-0.0.21.tar.gz && cd nirvana-desktop
     sudo ./install.sh                 # or: sudo ./install.sh --login-screen
 
 The installer:
@@ -404,7 +404,8 @@ the whole system: Rambler and Insight reload the palette without a restart.
   [Redmond97 SE](https://codeberg.org/Sliver_X/Redmond97-SE) (GPL-3.0).
 - **Default look**: the *In Tenebris* scheme, the *Bricks* pattern and Platinum icons.
 - **Title bar**: as in the scheme, Platinum stripes, solid colour, gradient or glass (a shine on
-  the upper half, the darker middle, as on the glossy desktops of the 2000s).
+  the upper half, the darker middle, as on the glossy desktops of the 2000s); with glass the menu
+  bar at the top and the bars of the folder windows are glass too.
 - **Desktop background**: *Pattern*, *Solid color* or *Gradient*.
   - Colours are picked from two swatches. The second gradient colour is by default a darker
     (or, on a dark background, lighter) version of the first one. *From scheme* returns to the
