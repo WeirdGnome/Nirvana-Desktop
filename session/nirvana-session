@@ -1,0 +1,44 @@
+#!/bin/sh
+# Nirvana Desktop - graphical session start
+# Starts the window manager (insight), the XDG autostart programs, then the desktop
+# and file manager (Rambler). Quitting Rambler (Nirvana > Quit…) ends the session.
+#
+# Usage:  startx /usr/bin/nirvana-session      (or "exec nirvana-session" in ~/.xinitrc)
+#     or from the login screen (file /usr/share/xsessions/nirvana.desktop)
+
+BIN="$(dirname "$(readlink -f "$0")")"
+# when run from the source tree the binaries are in build/
+[ -x "$BIN/nirvana-insight" ] || BIN="$BIN/../build"
+
+# Without systemd nobody starts the session bus (startx, slim) - do it ourselves.
+# The system tray, applets and panels need the session D-Bus.
+if [ -z "$DBUS_SESSION_BUS_ADDRESS" ] && [ -z "$NIRVANA_DBUS" ] && command -v dbus-run-session >/dev/null 2>&1; then
+  NIRVANA_DBUS=1 exec dbus-run-session -- "$0" "$@"
+fi
+
+export XDG_CURRENT_DESKTOP=Nirvana
+export XDG_SESSION_DESKTOP=Nirvana
+export XDG_SESSION_TYPE=x11
+export DESKTOP_SESSION=nirvana
+# Services started by D-Bus (xdg-desktop-portal for Flatpaks, the secrets
+# agent...) get the bus environment, not the session's - pass them the display
+# and desktop name, otherwise the portal does not start and programs wait for it.
+if command -v dbus-update-activation-environment >/dev/null 2>&1; then
+  dbus-update-activation-environment DISPLAY XAUTHORITY XDG_CURRENT_DESKTOP XDG_SESSION_DESKTOP \
+    XDG_SESSION_TYPE DESKTOP_SESSION XDG_RUNTIME_DIR 2>/dev/null
+fi
+[ -f "$HOME/.Xresources" ] && command -v xrdb >/dev/null 2>&1 && xrdb -merge "$HOME/.Xresources"
+
+"$BIN/nirvana-insight" &
+INSIGHT=$!
+
+# give insight a moment to take over the screen
+sleep 0.5
+
+# XDG autostart: PipeWire/PulseAudio, polkit agent... (on Devuan without
+# systemd this is the only place these session services are started from)
+[ -x "$BIN/nirvana-autostart" ] && "$BIN/nirvana-autostart"
+
+"$BIN/nirvana-denise" "$@"
+kill $INSIGHT 2>/dev/null
+# autostarted programs end together with the session bus / X server

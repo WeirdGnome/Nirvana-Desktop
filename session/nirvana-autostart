@@ -1,0 +1,83 @@
+#!/bin/sh
+# Nirvana Desktop - session autostart following the XDG Autostart Specification
+#
+# Starts the .desktop files from ~/.config/autostart and the $XDG_CONFIG_DIRS
+# directories (by default /etc/xdg/autostart). A user file with the same name replaces
+# the system one (Hidden=true disables the entry). Honours OnlyShowIn/NotShowIn
+# (desktop name: Nirvana) and TryExec. Field codes %f %u %U... are dropped.
+# nm-applet is skipped (Nirvana Desktop has its own network menu; NIRVANA_NM_APPLET=1 enables it).
+# Finally, if no autostart entry provided a polkit agent, it starts the first one
+# found - without it mounting disks and root mode cannot ask for a password.
+#
+#   nirvana-autostart [-n]      -n: only print what would be started
+
+DRY=
+[ "$1" = "-n" ] && DRY=1
+DESK="${XDG_CURRENT_DESKTOP:-Nirvana}"
+SEEN=" "
+
+dirs="${XDG_CONFIG_HOME:-$HOME/.config}/autostart"
+IFS_OLD=$IFS; IFS=:
+for d in ${XDG_CONFIG_DIRS:-/etc/xdg}; do dirs="$dirs:$d/autostart"; done
+IFS=$IFS_OLD
+
+# value of a key in the [Desktop Entry] section
+key() {
+  awk -v k="$2" '
+    /^\[/ { s = ($0 == "[Desktop Entry]"); next }
+    s && index($0, k "=") == 1 { print substr($0, length(k) + 2); exit }' "$1"
+}
+
+# does the list "A;B;C;" contain any of the desktops in $DESK (separated by ":")
+in_list() {
+  list=";$1;"
+  IFS_OLD=$IFS; IFS=:
+  for x in $DESK; do
+    case "$list" in *";$x;"*) IFS=$IFS_OLD; return 0 ;; esac
+  done
+  IFS=$IFS_OLD
+  return 1
+}
+
+polkit_started=
+IFS_OLD=$IFS; IFS=:
+for d in $dirs; do
+  IFS=$IFS_OLD
+  [ -d "$d" ] || { IFS=:; continue; }
+  for f in "$d"/*.desktop; do
+    [ -f "$f" ] || continue
+    name=$(basename "$f")
+    case "$SEEN" in *" $name "*) continue ;; esac   # the first one wins (user)
+    SEEN="$SEEN$name "
+    # Nirvana Desktop has its own network menu in the menu bar - nm-applet would be a second one
+    [ "$name" = "nm-applet.desktop" ] && [ -z "$NIRVANA_NM_APPLET" ] && continue
+    [ "$(key "$f" Hidden)" = "true" ] && continue
+    [ "$(key "$f" Type)" = "Application" ] || [ -z "$(key "$f" Type)" ] || continue
+    only=$(key "$f" OnlyShowIn); not=$(key "$f" NotShowIn)
+    if [ -n "$only" ]; then in_list "$only" || continue; fi
+    if [ -n "$not" ]; then in_list "$not" && continue; fi
+    try=$(key "$f" TryExec)
+    if [ -n "$try" ] && ! command -v "$try" >/dev/null 2>&1; then continue; fi
+    cmd=$(key "$f" Exec | sed -e 's/%[fFuUdDnNickvm]//g' -e 's/%%/%/g')
+    [ -n "$cmd" ] || continue
+    case "$cmd" in *polkit*) polkit_started=1 ;; esac
+    if [ -n "$DRY" ]; then echo "$name: $cmd"; else (eval "exec $cmd" >/dev/null 2>&1 &); fi
+  done
+  IFS=:
+done
+IFS=$IFS_OLD
+
+# polkit agent (the administrator password window)
+if [ -z "$polkit_started" ]; then
+  for a in lxpolkit \
+           /usr/lib/*/polkit-mate/polkit-mate-authentication-agent-1 \
+           /usr/libexec/polkit-mate-authentication-agent-1 \
+           /usr/lib/policykit-1-gnome/polkit-gnome-authentication-agent-1 \
+           /usr/libexec/polkit-gnome-authentication-agent-1 \
+           lxqt-policykit-agent /usr/lib/*/libexec/polkit-kde-authentication-agent-1; do
+    p=$(command -v "$a" 2>/dev/null) || continue
+    [ -x "$p" ] || continue
+    if [ -n "$DRY" ]; then echo "polkit: $p"; else ("$p" >/dev/null 2>&1 &); fi
+    break
+  done
+fi
