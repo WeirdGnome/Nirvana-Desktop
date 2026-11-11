@@ -170,7 +170,7 @@ void draw_depth_gadget(int x, int y, bool pressed);              // 18x14
 // ---- Window chrome -------------------------------------------------------------
 constexpr int TITLE_H = 20;   // title bar height
 constexpr int FRAME   = 5;    // frame thickness
-constexpr int BOX     = 11;   // size of the title bar buttons
+constexpr int BOX     = 13;   // size of the title bar buttons
 constexpr int MENUBAR_H = 20; // height of the global menu bar
 constexpr int SCROLL_W  = 15; // width of the scrollbars
 void draw_titlebar(int x, int y, int w, const char *title, bool active,

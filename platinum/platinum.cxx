@@ -685,39 +685,54 @@ void draw_logo(int x, int y, int s) {
 // ---------------------------------------------------------------------------
 // Window chrome
 // ---------------------------------------------------------------------------
-// Title bar buttons in fixed colors, whatever the scheme: red closes, yellow
-// minimizes (iconifies), green maximizes (zoom). Platinum square shape with a bevel.
-static unsigned mix_rgb(unsigned a, unsigned b, double t) {
-  auto ch = [&](int sh) { return (unsigned)(((a >> sh) & 0xFF) * (1 - t) + ((b >> sh) & 0xFF) * t + 0.5) << sh; };
-  return ch(16) | ch(8) | ch(0);
+// Title bar buttons in the scheme colors, drawn boldly so they stand out on any
+// bar (an echo of the Amiga gadgets, in Platinum proportions): a contrasting
+// rim, a deep bevel and solid glyphs filled with the accent color. The colors
+// follow the scheme, but are pushed apart when it is too low-contrast (dark
+// schemes). Inactive windows keep the buttons, only the glyph fill turns gray.
+static double luma(Fl_Color c) {
+  uchar r, g, b;
+  Fl::get_color(c, r, g, b);
+  return (0.299 * r + 0.587 * g + 0.114 * b) / 255.0;
 }
 
-static void title_button(int x, int y, int kind, bool pressed) {
-  static const unsigned face[] = {0, 0xE5483F, 0x3DB54A, 0xF2B526};   // 1 close, 2 zoom, 3 iconify
-  static const unsigned dark[] = {0, 0x8E1F19, 0x1F6E28, 0x9A6B00};
-  unsigned f = face[kind], d = dark[kind];
-  if (pressed) f = mix_rgb(f, 0x000000, 0.25);
-  auto rgb = [](unsigned v) { return fl_rgb_color(v >> 16, (v >> 8) & 0xFF, v & 0xFF); };
-  fl_color(rgb(d));
-  fl_rect(x, y, BOX, BOX);
-  fl_color(rgb(f));
-  fl_rectf(x + 1, y + 1, BOX - 2, BOX - 2);
-  if (!pressed) {   // light upper-left edge, darker lower-right edge
-    fl_color(rgb(mix_rgb(f, 0xFFFFFF, 0.55)));
-    fl_xyline(x + 1, y + 1, x + BOX - 3);
-    fl_yxline(x + 1, y + 2, y + BOX - 3);
-    fl_color(rgb(mix_rgb(f, 0x000000, 0.2)));
-    fl_xyline(x + 2, y + BOX - 2, x + BOX - 2);
-    fl_yxline(x + BOX - 2, y + 2, y + BOX - 3);
-  }
-  fl_color(rgb(d));
-  if (kind == 2) {                        // zoom: a small square in the corner
-    fl_rect(x + 3, y + 3, 5, 5);
-  } else if (kind == 3) {                 // iconify: a horizontal line
-    fl_xyline(x + 3, y + 5, x + BOX - 4);
-  } else if (kind == 1 && pressed) {      // close: a cross while pressed
-    fl_line(x + 3, y + 3, x + BOX - 4, y + BOX - 4);
-    fl_line(x + 3, y + BOX - 4, x + BOX - 4, y + 3);
+static void title_button(int x, int y, int kind, bool pressed, bool active) {
+  const int B = BOX;
+  Fl_Color face = GRAY;
+  bool dark = luma(face) < 0.4;
+  // the rim and the ink of the glyphs must stand out from the face
+  Fl_Color rim = dark ? fl_color_average(TEXT, face, 0.8) : DARK;
+  Fl_Color ink = dark ? fl_color_average(FL_WHITE, TEXT, 0.4) : DARK;
+  Fl_Color hi = dark ? fl_color_average(FL_WHITE, face, 0.35) : LIGHT;
+  Fl_Color lo = dark ? fl_color_average(FL_BLACK, face, 0.6) : SHADOW;
+  Fl_Color fill = active ? HILITE : fl_color_average(face, ink, 0.5);
+  if (active && std::fabs(luma(fill) - luma(face)) < (dark ? 0.25 : 0.1))
+    fill = fl_color_average(dark ? SEL : HILITE, dark ? FL_WHITE : FL_BLACK, dark ? 0.5 : 0.65);
+  if (active && dark && std::fabs(luma(fill) - luma(face)) < 0.25)
+    fill = fl_color_average(fill, FL_WHITE, 0.4);
+
+  fl_color(rim);
+  fl_rect(x, y, B, B);
+  fl_color(pressed ? fl_color_average(face, lo, 0.5) : face);
+  fl_rectf(x + 1, y + 1, B - 2, B - 2);
+  bevel(x + 1, y + 1, B - 2, B - 2, pressed ? lo : hi, pressed ? hi : lo);
+  int o = pressed ? 1 : 0;   // a pressed glyph sinks by a pixel
+  auto glyph = [&](int gx, int gy, int gw, int gh) {
+    fl_color(fill);
+    fl_rectf(gx + o, gy + o, gw, gh);
+    fl_color(ink);
+    fl_rect(gx + o, gy + o, gw, gh);
+  };
+  if (kind == 1) {                        // close: a solid block in the middle
+    glyph(x + 3, y + 3, B - 6, B - 6);
+  } else if (kind == 2) {                 // zoom: a large frame with a solid corner
+    fl_color(ink);
+    fl_rect(x + 3 + o, y + 3 + o, B - 6, B - 6);
+    glyph(x + 3, y + 3, B / 2 - 1, B / 2 - 1);
+  } else if (kind == 3) {                 // iconify: the window dropped to a bar at the bottom
+    fl_color(ink);
+    fl_xyline(x + 3 + o, y + 3 + o, x + B - 4 + o);   // the trace of the window above
+    glyph(x + 3, y + B - 7, B - 6, 4);
   }
 }
 
@@ -750,9 +765,9 @@ void draw_titlebar(int x, int y, int w, const char *title, bool active, int pres
       }
     }
     if (boxes) {   // the buttons also in inactive windows
-      title_button(close_x, by, 1, pressed == 1);
-      title_button(shade_x, by, 3, pressed == 3);
-      if (boxes != 2) title_button(zoom_x, by, 2, pressed == 2);
+      title_button(close_x, by, 1, pressed == 1, active);
+      title_button(shade_x, by, 3, pressed == 3, active);
+      if (boxes != 2) title_button(zoom_x, by, 2, pressed == 2, active);
     }
   } else {
     // Stripes: a dark line above a light one, interrupted at the title and the buttons.
@@ -770,11 +785,11 @@ void draw_titlebar(int x, int y, int w, const char *title, bool active, int pres
       stripe(close_x + BOX + 5, tx - 8);
       stripe(tx + tw + 8, shade_x - 6);
       stripe(x + 3, close_x - 4);
-      title_button(close_x, by, 1, pressed == 1);
-      title_button(shade_x, by, 3, pressed == 3);
+      title_button(close_x, by, 1, pressed == 1, active);
+      title_button(shade_x, by, 3, pressed == 3, active);
       if (boxes != 2) {
         stripe(zoom_x + BOX + 4, x + w - 4);
-        title_button(zoom_x, by, 2, pressed == 2);
+        title_button(zoom_x, by, 2, pressed == 2, active);
       } else {
         stripe(shade_x + BOX + 4, x + w - 4);
       }
