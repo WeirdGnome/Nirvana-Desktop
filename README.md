@@ -39,7 +39,7 @@ on the desktop. Written in C++ and FLTK 1.4.
 
 Unpack the sources and run the installer:
 
-    tar xzf nirvana-desktop-0.0.35.tar.gz && cd nirvana-desktop
+    tar xzf nirvana-desktop-0.0.36.tar.gz && cd nirvana-desktop
     sudo ./install.sh                 # or: sudo ./install.sh --login-screen
 
 The installer:
@@ -766,7 +766,11 @@ portal (older GTK 2 programs, some AppImages) keep theirs.
 updates, printers), `nirvana-polkit-agent` shows the request, the program and the account, and
 passes the password to polkit's own helper (PAM) - it never keeps it. A wrong password can be typed
 again; Esc cancels. The session starts it instead of lxpolkit or another agent
-(`NIRVANA_POLKIT_AGENT=0`: the other agent).
+(`NIRVANA_POLKIT_AGENT=0`: the other agent). Nirvana's own tools (updates, date, printers, user,
+libraries) go through `nirvana-pkexec`, which starts the password window for that one call - so
+they work even when the session is not known to elogind (e.g. `startx` without `libpam-elogind`),
+where no session agent can register and plain pkexec fails with "Error creating textual
+authentication agent".
 
 ![The password window](docs/img/polkit-agent.png)
 

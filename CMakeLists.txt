@@ -160,7 +160,7 @@ else()
 endif()
 install(DIRECTORY shaders/ DESTINATION share/nirvana/shaders COMPONENT nirvana)
 # system updates: the check (as the user) and the helper (root, through pkexec/polkit)
-install(PROGRAMS update/nirvana-update-check update/nirvana-update-helper update/nirvana-power-helper update/nirvana-time-helper update/nirvana-print-helper update/nirvana-user-helper update/nirvana-libs-helper DESTINATION libexec COMPONENT nirvana)
+install(PROGRAMS update/nirvana-update-check update/nirvana-update-helper update/nirvana-power-helper update/nirvana-time-helper update/nirvana-print-helper update/nirvana-user-helper update/nirvana-libs-helper update/nirvana-pkexec DESTINATION libexec COMPONENT nirvana)
 install(FILES update/org.nirvana-desktop.policy DESTINATION share/polkit-1/actions COMPONENT nirvana)
 install(FILES update/50-nirvana.rules DESTINATION share/polkit-1/rules.d COMPONENT nirvana)
 

@@ -6,7 +6,8 @@
 // this program only passes it on and never keeps it.
 //
 //   nirvana-polkit-agent                 the agent of this session (nirvana-autostart starts it)
-//   nirvana-polkit-agent --process PID   only for one process and its children (tests)
+//   nirvana-polkit-agent --process PID [--ready FILE]   only for that process (nirvana-pkexec):
+//                                        FILE is written once it is registered; it ends with the process
 #define POLKIT_AGENT_I_KNOW_API_IS_SUBJECT_TO_CHANGE 1
 #include "framewin.h"
 #include "platinum.h"
@@ -19,6 +20,8 @@
 #include <FL/fl_draw.H>
 #include <polkitagent/polkitagent.h>
 
+#include <cerrno>
+#include <csignal>
 #include <cstdio>
 #include <cstring>
 #include <deque>
@@ -104,7 +107,7 @@ public:
   Fl_Button *cancel, *ok;
   std::string title_s, text_s, prog_s, status_s, who_s;
 
-  AuthWindow(Request *r) : FrameWindow(470, 238, _("Authentication"), true) {
+  AuthWindow(Request *r) : FrameWindow(470, 262, _("Authentication"), true) {
     xclass("nirvana-polkit-agent");
     new LockIcon(14, 14);
     bool self = r->identities.size() == 1 && POLKIT_IS_UNIX_USER(r->identities[0]) &&
@@ -114,16 +117,16 @@ public:
     title->labelsize(SIZE_SYSTEM + 1);
     title->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
     text_s = r->message.empty() ? std::string(_("A program wants to do something that needs your permission.")) : r->message;
-    text = new Fl_Box(84, 34, 372, 36, text_s.c_str());
+    text = new Fl_Box(84, 34, 372, 50, text_s.c_str());
     text->labelsize(SIZE_SMALL + 1);
     text->align(FL_ALIGN_LEFT | FL_ALIGN_TOP | FL_ALIGN_INSIDE | FL_ALIGN_WRAP);
     prog_s = r->program.empty() ? r->action : fmt(_("Program: %1"), r->program);
-    prog = new Fl_Box(84, 72, 372, 30, prog_s.c_str());
+    prog = new Fl_Box(84, 86, 372, 30, prog_s.c_str());
     prog->labelsize(SIZE_SMALL);
     prog->labelcolor(fl_color_average(TEXT, GRAY, 0.6f));
     prog->align(FL_ALIGN_LEFT | FL_ALIGN_TOP | FL_ALIGN_INSIDE | FL_ALIGN_WRAP | FL_ALIGN_CLIP);
     prog->tooltip(r->action.c_str());
-    int y = 108;
+    int y = 124;
     if (r->identities.size() > 1) {
       who = new Fl_Choice(200, y, 256, 22, _("Authenticate as:"));
       who->labelsize(SIZE_SMALL + 1);
@@ -155,8 +158,8 @@ public:
     status->labelfont(FONT_SYSTEM);
     status->labelcolor(ALERT);
     status->align(FL_ALIGN_LEFT | FL_ALIGN_TOP | FL_ALIGN_INSIDE | FL_ALIGN_WRAP);
-    cancel = new Fl_Button(470 - 222, 238 - 36, 100, 24, _("Cancel"));
-    ok = new Fl_Button(470 - 114, 238 - 36, 100, 24, _("Authenticate"));
+    cancel = new Fl_Button(470 - 222, 262 - 36, 100, 24, _("Cancel"));
+    ok = new Fl_Button(470 - 114, 262 - 36, 100, 24, _("Authenticate"));
     for (auto *b : {cancel, ok}) {
       b->box(BUTTON_BOX);
       b->down_box(BUTTON_DOWN);
@@ -348,8 +351,13 @@ int main(int argc, char **argv) {
   Fl::visual(FL_RGB);
   GError *err = nullptr;
   PolkitSubject *subject = nullptr;
+  static pid_t watched = 0;
+  const char *ready = nullptr;
+  for (int i = 1; i + 1 < argc; i++)
+    if (!strcmp(argv[i], "--ready")) ready = argv[i + 1];
   if (argc > 2 && !strcmp(argv[1], "--process")) {
-    subject = polkit_unix_process_new_for_owner(atoi(argv[2]), 0, getuid());
+    watched = atoi(argv[2]);
+    subject = polkit_unix_process_new_for_owner(watched, 0, getuid());
   } else {
     subject = polkit_unix_session_new_for_process_sync(getpid(), nullptr, &err);
     if (!subject) {
@@ -365,6 +373,13 @@ int main(int argc, char **argv) {
     fprintf(stderr, "nirvana-polkit-agent: %s\n", err ? err->message : "could not register");
     return 1;
   }
+  if (ready) {   // nirvana-pkexec waits for this before it runs pkexec
+    if (FILE *f = fopen(ready, "w")) { fputs("ready\n", f); fclose(f); }
+  }
   Fl::add_timeout(0.02, glib_pump);
-  for (;;) Fl::wait(1.0);
+  for (;;) {
+    Fl::wait(1.0);
+    // an agent for one process ends with it (nirvana-pkexec)
+    if (watched && kill(watched, 0) != 0 && errno == ESRCH && !g_cur && g_queue.empty()) return 0;
+  }
 }

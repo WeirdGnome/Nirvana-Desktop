@@ -62,6 +62,7 @@ uid_t g_uid;
 Fl_RGB_Image *g_face = nullptr;      // the current one (96x96) or null: a figure
 Fl_RGB_Image *g_pending = nullptr;   // a new one
 bool g_remove = false;               // Apply removes the picture
+int g_login_retry = 0;               // the login screen copy failed: 1 = send ~/.face again, 2 = remove it
 
 void message(const std::string &m) {
   static std::string t;
@@ -103,10 +104,11 @@ int run_helper(const std::vector<std::string> &args, std::string *out, const std
     dup2(p[1], 2);
     close(p[0]);
     close(p[1]);
-    std::vector<char *> a = {(char *)"pkexec", (char *)h.c_str()};
+    static std::string pk = plat::pkexec_command();
+    std::vector<char *> a = {(char *)pk.c_str(), (char *)h.c_str()};
     for (auto &s : args) a.push_back((char *)s.c_str());
     a.push_back(nullptr);
-    execvp("pkexec", a.data());
+    execvp(a[0], a.data());
     _exit(127);
   }
   close(p[1]);
@@ -401,8 +403,7 @@ bool apply() {   // true: everything was saved
       chmod(face.c_str(), 0644);
       delete g_face;
       g_face = (Fl_RGB_Image *)g_pending->copy();
-      if (run_helper({"picture"}, &out, face) == 0) done.push_back(_("the picture"));
-      else failed.push_back(fmt(_("the login screen picture (%1)"), out.empty() ? _("not allowed") : out));
+      g_login_retry = 1;
     } else {
       unlink(tmp.c_str());
       failed.push_back(fmt(_("the picture (%1)"), strerror(errno)));
@@ -414,7 +415,12 @@ bool apply() {   // true: everything was saved
     delete g_face;
     g_face = nullptr;
     g_remove = false;
-    if (run_helper({"picture-remove"}, &out) == 0) done.push_back(_("the picture"));
+    g_login_retry = 2;
+  }
+  // the copy for the login screen (kept to be tried again on the next Apply when it failed)
+  if (g_login_retry) {
+    int rc = g_login_retry == 1 ? run_helper({"picture"}, &out, face) : run_helper({"picture-remove"}, &out);
+    if (rc == 0) { done.push_back(_("the picture")); g_login_retry = 0; }
     else failed.push_back(fmt(_("the login screen picture (%1)"), out.empty() ? _("not allowed") : out));
   }
   // the full name

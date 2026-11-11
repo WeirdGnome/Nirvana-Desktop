@@ -1828,7 +1828,7 @@ void Desktop::install_libs(const std::string &path, const std::vector<std::strin
   for (auto *w : wins_) w->cursor(FL_CURSOR_WAIT);
   cursor(FL_CURSOR_WAIT);
   Fl::flush();
-  std::vector<std::string> a = {"pkexec", h, "install"};
+  std::vector<std::string> a = {plat::pkexec_command(), h, "install"};
   a.insert(a.end(), missing.begin(), missing.end());
   int rc = run_with_output(a, &out);
   for (auto *w : wins_) w->cursor(FL_CURSOR_DEFAULT);

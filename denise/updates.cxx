@@ -256,7 +256,7 @@ void install() {
     changed();
   };
   // as root through polkit; installed: /usr/libexec/nirvana-update-helper (see the policy file)
-  if (!g_job.start({"pkexec", helper, "upgrade"})) {
+  if (!g_job.start({plat::pkexec_command(), helper, "upgrade"})) {
     g_state = State::Failed;
     g_error = _("pkexec is missing - install polkit.");
   }

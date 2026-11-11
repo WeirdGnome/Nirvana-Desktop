@@ -385,7 +385,10 @@ bool set_profile(const std::string &p) {
                                std::string("/usr/libexec/nirvana-power-helper")})
     if (!access(c.c_str(), R_OK)) { helper = c; break; }
   if (helper.empty() || !have("pkexec")) return false;
-  bool ok = run({"pkexec", helper, "profile", p}) == 0;
+  std::string pk = "pkexec";
+  for (const char *c : {"/usr/libexec/nirvana-pkexec", "/usr/local/libexec/nirvana-pkexec"})
+    if (!access(c, X_OK)) { pk = c; break; }
+  bool ok = run({pk, helper, "profile", p}) == 0;
   if (ok) std::ofstream(profile_file()) << p << "\n";   // the kernel forgets it at a restart
   return ok;
 }

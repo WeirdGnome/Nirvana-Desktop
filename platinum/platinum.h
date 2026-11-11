@@ -195,7 +195,9 @@ void draw_logo(int x, int y, int size);
 constexpr const char *GURU_TITLE = "Guru Meditation";
 // "#00000004.4B3A91C0": a guru number made from the message, for the error windows
 std::string guru_number(const std::string &message);
-void guru_alert(const std::string &message);   // fl_alert with the guru title
+void guru_alert(const std::string &message);
+// "nirvana-pkexec" (pkexec that brings its own password window) or plain "pkexec"
+std::string pkexec_command();   // fl_alert with the guru title
 // An icon rendered to an RGBA image (e.g. a window icon for _NET_WM_ICON); delete it.
 Fl_RGB_Image *icon_image(Icon icon, int size);
 

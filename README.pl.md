@@ -38,7 +38,7 @@ Napisane w C++ i FLTK 1.4.
 
 Rozpakuj źródła i uruchom instalator:
 
-    tar xzf nirvana-desktop-0.0.35.tar.gz && cd nirvana-desktop
+    tar xzf nirvana-desktop-0.0.36.tar.gz && cd nirvana-desktop
     sudo ./install.sh                 # albo: sudo ./install.sh --login-screen
 
 Instalator:
@@ -763,7 +763,10 @@ Flatpaki dostają to okno zamiast okna GTK. Sesja ustawia w tym celu `GTK_USE_PO
 aktualizacje, drukarki), `nirvana-polkit-agent` pokazuje prośbę, program i konto, a hasło
 przekazuje własnemu pomocnikowi polkit (PAM) – sam go nie przechowuje. Złe hasło można wpisać
 ponownie; Esc anuluje. Sesja uruchamia go zamiast lxpolkit czy innego agenta
-(`NIRVANA_POLKIT_AGENT=0`: tamten agent).
+(`NIRVANA_POLKIT_AGENT=0`: tamten agent). Własne narzędzia Nirvany (aktualizacje, data, drukarki,
+użytkownik, biblioteki) idą przez `nirvana-pkexec`, który uruchamia okno hasła dla tego jednego
+wywołania – działają więc także wtedy, gdy elogind nie zna sesji (np. `startx` bez
+`libpam-elogind`), a zwykły pkexec kończy się błędem „Error creating textual authentication agent”.
 
 ![Okno hasła](docs/img/polkit-agent.png)
 

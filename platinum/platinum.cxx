@@ -11,6 +11,7 @@
 #include <FL/Fl_Image_Surface.H>
 #include <FL/Fl_RGB_Image.H>
 #include <algorithm>
+#include <unistd.h>
 #include <cmath>
 #include <cstdlib>
 #include <utility>
@@ -816,6 +817,17 @@ std::string guru_number(const std::string &m) {
   char b[32];
   snprintf(b, sizeof b, "#%08X.%08X", (unsigned)(m.size() % 16 + 1), h);
   return b;
+}
+
+std::string pkexec_command() {
+  char buf[4096];
+  ssize_t n = readlink("/proc/self/exe", buf, sizeof buf - 1);
+  std::string e = n > 0 ? std::string(buf, (size_t)n) : "";
+  e = e.substr(0, e.rfind('/'));
+  for (const std::string &c : {e + "/../libexec/nirvana-pkexec", e + "/../update/nirvana-pkexec",
+                               std::string("/usr/libexec/nirvana-pkexec"), std::string("/usr/local/libexec/nirvana-pkexec")})
+    if (!access(c.c_str(), X_OK)) return c;
+  return "pkexec";
 }
 
 void guru_alert(const std::string &m) {

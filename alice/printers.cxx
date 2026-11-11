@@ -53,10 +53,11 @@ int run_helper(const std::vector<std::string> &args, std::string *out) {
     dup2(p[1], 2);
     close(p[0]);
     close(p[1]);
-    std::vector<char *> a = {(char *)"pkexec", (char *)h.c_str()};
+    static std::string pk = plat::pkexec_command();
+    std::vector<char *> a = {(char *)pk.c_str(), (char *)h.c_str()};
     for (auto &s : args) a.push_back((char *)s.c_str());
     a.push_back(nullptr);
-    execvp("pkexec", a.data());
+    execvp(a[0], a.data());
     _exit(127);
   }
   close(p[1]);
