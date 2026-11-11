@@ -64,6 +64,11 @@ bool is_installed(const std::string &path, const std::string &home);
 // Extracts the application (blocks for the time of the extraction). Returns an error description or "".
 std::string install(const std::string &path, const std::string &home);
 
+// System libraries (sonames) that the application needs, does not bring, and the system lacks
+// (read from the ELF headers of AppRun, usr/bin and the Qt X11 plugin; nothing is run).
+std::vector<std::string> missing_libs(const std::string &path, const std::string &home);
+void forget_system_libs();   // after installing libraries
+
 // Does bubblewrap work on this system (checked once).
 bool sandbox_available();
 

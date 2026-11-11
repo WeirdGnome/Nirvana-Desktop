@@ -37,7 +37,7 @@ on the desktop. Written in C++ and FLTK 1.4.
 
 Unpack the sources and run the installer:
 
-    tar xzf nirvana-desktop-0.0.26.tar.gz && cd nirvana-desktop
+    tar xzf nirvana-desktop-0.0.27.tar.gz && cd nirvana-desktop
     sudo ./install.sh                 # or: sudo ./install.sh --login-screen
 
 The installer:
@@ -189,6 +189,14 @@ Another system font (for example a free bitmap-style one) can be set with `NIRVA
   folders are `Gry`, `Grafika`… – existing folders are kept when the language changes.
 
   ![Two versions of a game side by side](docs/img/games.png)
+- **Missing system libraries**: before starting, Rambler reads the ELF headers of the
+  application (AppRun, `usr/bin`, the Qt X11 plugin `libqxcb.so` and the libraries they pull in)
+  and checks which libraries are neither inside the AppImage nor in the system. Qt 6 programs
+  often need `libxcb-cursor0`, `libxcb-icccm4`, `libxkbcommon-x11-0`… - Qt then only says
+  "could not load the Qt platform plugin xcb" (and the hint about xcb-cursor0 is printed even
+  when something else is missing). Rambler names the libraries and offers **Install** (the
+  packages through `nirvana-libs-helper`, only libraries from its fixed list) or **Run Anyway**.
+  From a terminal: `nirvana-denise --missing-libs FILE.AppImage`.
 - **Running in a sandbox** (bubblewrap): the whole system is read-only, writing is only
   possible in Nirvana HD, other users, `/root`, `/mnt` and `/media` are invisible, with its
   own `/tmp` and its own process namespace; the application itself is read-only.

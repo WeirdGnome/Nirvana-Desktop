@@ -14,6 +14,7 @@
 #include <FL/Fl_Tiled_Image.H>
 #include <functional>
 #include <memory>
+#include <set>
 #include <string>
 #include <vector>
 
@@ -275,6 +276,9 @@ private:
   bool desk_target_ = false;      // a command from the desktop context menu
   void open_appimage(const std::string &path);
   void run_app(const std::string &path);
+  void ask_missing_libs(const std::string &path, const std::vector<std::string> &missing);
+  void install_libs(const std::string &path, const std::vector<std::string> &missing);
+  std::set<std::string> libs_ok_;   // applications started even though libraries are missing
   std::string apps_dir() const;
   bool in_apps(const std::string &path) const;
   std::string app_destination(const std::string &path) const;

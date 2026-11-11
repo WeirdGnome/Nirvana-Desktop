@@ -36,7 +36,7 @@ Napisane w C++ i FLTK 1.4.
 
 Rozpakuj źródła i uruchom instalator:
 
-    tar xzf nirvana-desktop-0.0.26.tar.gz && cd nirvana-desktop
+    tar xzf nirvana-desktop-0.0.27.tar.gz && cd nirvana-desktop
     sudo ./install.sh                 # albo: sudo ./install.sh --login-screen
 
 Instalator:
@@ -184,6 +184,14 @@ Inną czcionkę systemową (np. wolną, w stylu bitmapowym) można podać przez 
   zainstalowana, pyta, czy ją zastąpić albo uruchomić.
 
   ![Dwie wersje gry obok siebie](docs/img/games.png)
+- **Brakujące biblioteki systemowe**: przed startem Rambler czyta nagłówki ELF aplikacji
+  (AppRun, `usr/bin`, wtyczkę X11 Qt `libqxcb.so` i biblioteki, które ciągną) i sprawdza, których
+  bibliotek nie ma ani w AppImage, ani w systemie. Programy Qt 6 często potrzebują
+  `libxcb-cursor0`, `libxcb-icccm4`, `libxkbcommon-x11-0`… – Qt mówi wtedy tylko „could not load
+  the Qt platform plugin xcb” (a podpowiedź o xcb-cursor0 wypisuje nawet wtedy, gdy brakuje czegoś
+  innego). Rambler wymienia biblioteki i proponuje **Zainstaluj** (pakiety przez
+  `nirvana-libs-helper`, tylko biblioteki z jego stałej listy) albo **Uruchom mimo to**.
+  Z terminala: `nirvana-denise --missing-libs PLIK.AppImage`.
 - **Uruchamianie w piaskownicy** (bubblewrap): cały system tylko do odczytu, zapis
   wyłącznie w Nirvana HD, inni użytkownicy, `/root`, `/mnt` i `/media` niewidoczne,
   własny `/tmp` i własna przestrzeń procesów; sama aplikacja jest tylko do odczytu.

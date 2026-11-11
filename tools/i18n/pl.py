@@ -987,4 +987,12 @@ T = {
     'Authenticate': 'Uwierzytelnij',
     'That password is not right - try again.': 'To hasło jest nieprawidłowe – spróbuj ponownie.',
     'Checking…': 'Sprawdzanie…',
+    '“%1” needs system libraries that are missing:\n%2': '„%1” potrzebuje bibliotek systemowych, których brakuje:\n%2',
+    'Nirvana Desktop does not know which packages provide them; without them the application may not start.': 'Nirvana nie wie, które pakiety je zawierają; bez nich aplikacja może się nie uruchomić.',
+    'They can be installed now (%1).': 'Można je teraz zainstalować (%1).',
+    'Run Anyway': 'Uruchom mimo to',
+    'Missing Libraries': 'Brakujące biblioteki',
+    'nirvana-libs-helper is missing.': 'Brakuje nirvana-libs-helper.',
+    'The libraries were not installed.': 'Biblioteki nie zostały zainstalowane.',
+    'The libraries were not installed:\n%1': 'Biblioteki nie zostały zainstalowane:\n%1',
 }

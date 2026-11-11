@@ -22,6 +22,7 @@
 #include <X11/Xlib.h>
 
 #include <algorithm>
+#include <cerrno>
 #include <chrono>
 #include <csignal>
 #include <cstring>
@@ -32,6 +33,7 @@
 #include <filesystem>
 #include <fstream>
 #include <sys/stat.h>
+#include <sys/wait.h>
 #include <sys/statvfs.h>
 #include <unistd.h>
 #include <sys/inotify.h>
@@ -1724,10 +1726,113 @@ void Desktop::run_app(const std::string &path) {
     }
     refresh_all();   // the icon of some AppImages (e.g. DwarFS) is only available after extraction
   }
+  // Qt and other programs in AppImages often count on system libraries (xcb-cursor, xkbcommon-x11...)
+  if (!libs_ok_.count(path)) {
+    auto miss = appimage::missing_libs(path, home_);
+    if (!miss.empty()) { ask_missing_libs(path, miss); return; }
+    libs_ok_.insert(path);
+  }
   // gary: the first new window is this application - it gets the name and icon from the AppImage
   gary::note_launch(appimage::label(path, home_),
                     appimage::icon(path, home_));
   appimage::launch(path, home_, split_args(tooltypes(path)));   // arguments from the Information window
+}
+
+// --- system libraries an application needs ---------------------------------------------
+static std::string libs_helper() {
+  char buf[4096];
+  ssize_t n = readlink("/proc/self/exe", buf, sizeof buf - 1);
+  std::string e = n > 0 ? std::string(buf, (size_t)n) : "";
+  e = e.substr(0, e.rfind('/'));
+  for (const std::string &c : {e + "/../libexec/nirvana-libs-helper", e + "/../update/nirvana-libs-helper",
+                               std::string("/usr/libexec/nirvana-libs-helper")})
+    if (!access(c.c_str(), R_OK)) return c;
+  return "";
+}
+
+// runs a program, the window stays alive; the output (stdout + stderr) goes to *out
+static int run_with_output(const std::vector<std::string> &args, std::string *out) {
+  int p[2];
+  if (pipe(p)) return 127;
+  pid_t pid = fork();
+  if (pid == 0) {
+    dup2(p[1], 1);
+    dup2(p[1], 2);
+    close(p[0]);
+    close(p[1]);
+    std::vector<char *> a;
+    for (auto &s : args) a.push_back((char *)s.c_str());
+    a.push_back(nullptr);
+    execvp(a[0], a.data());
+    _exit(127);
+  }
+  close(p[1]);
+  char buf[1024];
+  ssize_t n;
+  out->clear();
+  while ((n = read(p[0], buf, sizeof buf)) != 0) {
+    if (n > 0) out->append(buf, (size_t)n);
+    else if (errno != EINTR) break;
+    Fl::check();
+  }
+  close(p[0]);
+  int st = 0;
+  waitpid(pid, &st, 0);
+  return WIFEXITED(st) ? WEXITSTATUS(st) : 127;
+}
+
+void Desktop::ask_missing_libs(const std::string &path, const std::vector<std::string> &missing) {
+  std::string h = libs_helper(), out, list, pkgs;
+  for (auto &m : missing) list += (list.empty() ? "" : ", ") + m;
+  if (!h.empty()) {
+    std::vector<std::string> a = {"sh", h, "packages"};
+    a.insert(a.end(), missing.begin(), missing.end());
+    run_with_output(a, &out);
+    size_t pos = 0;
+    while (pos < out.size()) {
+      size_t nl = out.find('\n', pos);
+      std::string l = out.substr(pos, nl == std::string::npos ? std::string::npos : nl - pos);
+      pos = nl == std::string::npos ? out.size() : nl + 1;
+      size_t sp = l.find(' ');
+      if (sp == std::string::npos) continue;
+      std::string pk = l.substr(sp + 1);
+      if ((" " + pkgs + " ").find(" " + pk + " ") == std::string::npos) pkgs += (pkgs.empty() ? "" : " ") + pk;
+    }
+  }
+  std::string text = plat::fmt(_("“%1” needs system libraries that are missing:\n%2"), appimage::label(path, home_), list);
+  text += "\n\n";
+  text += pkgs.empty() ? std::string(_("Nirvana Desktop does not know which packages provide them; without them the application may not start."))
+                       : plat::fmt(_("They can be installed now (%1)."), pkgs);
+  std::vector<std::pair<std::string, std::function<void()>>> b = {
+      {_("Cancel"), nullptr},
+      {_("Run Anyway"), [this, path] { libs_ok_.insert(path); run_app(path); }}};
+  if (!pkgs.empty()) b.push_back({_("Install"), [this, path, missing] { install_libs(path, missing); }});
+  dialog(_("Missing Libraries"), text, b);
+}
+
+void Desktop::install_libs(const std::string &path, const std::vector<std::string> &missing) {
+  std::string h = libs_helper(), out;
+  if (h.empty()) { dialog(_("Missing Libraries"), _("nirvana-libs-helper is missing."), {{"OK", nullptr}}); return; }
+  for (auto *w : wins_) w->cursor(FL_CURSOR_WAIT);
+  cursor(FL_CURSOR_WAIT);
+  Fl::flush();
+  std::vector<std::string> a = {"pkexec", h, "install"};
+  a.insert(a.end(), missing.begin(), missing.end());
+  int rc = run_with_output(a, &out);
+  for (auto *w : wins_) w->cursor(FL_CURSOR_DEFAULT);
+  cursor(FL_CURSOR_DEFAULT);
+  appimage::forget_system_libs();
+  if (rc != 0) {
+    // the last lines of what apt said
+    std::string tail = out.size() > 600 ? out.substr(out.size() - 600) : out;
+    size_t nl = tail.find('\n');
+    if (out.size() > 600 && nl != std::string::npos) tail = tail.substr(nl + 1);
+    dialog(_("Missing Libraries"), rc == 126 || rc == 127 ? std::string(_("The libraries were not installed."))
+                                                          : plat::fmt(_("The libraries were not installed:\n%1"), tail),
+           {{"OK", nullptr}});
+    return;
+  }
+  run_app(path);   // checked again: what is still missing is shown once more
 }
 
 void Desktop::start_tray() {

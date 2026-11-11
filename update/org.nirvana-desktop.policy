@@ -63,4 +63,16 @@
     </defaults>
     <annotate key="org.freedesktop.policykit.exec.path">/usr/libexec/nirvana-user-helper</annotate>
   </action>
+  <action id="org.nirvana-desktop.libs">
+    <description>Install system libraries that an application needs</description>
+    <description xml:lang="pl">Instalowanie bibliotek systemowych potrzebnych aplikacji</description>
+    <message>Authentication is required to install the libraries an application needs</message>
+    <message xml:lang="pl">Instalowanie bibliotek potrzebnych aplikacji wymaga uwierzytelnienia</message>
+    <defaults>
+      <allow_any>auth_admin</allow_any>
+      <allow_inactive>auth_admin</allow_inactive>
+      <allow_active>auth_admin_keep</allow_active>
+    </defaults>
+    <annotate key="org.freedesktop.policykit.exec.path">/usr/libexec/nirvana-libs-helper</annotate>
+  </action>
 </policyconfig>

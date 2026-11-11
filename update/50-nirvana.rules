@@ -4,7 +4,8 @@
 // accept only fixed, checked requests.
 polkit.addRule(function(action, subject) {
   if ((action.id == "org.nirvana-desktop.update" || action.id == "org.nirvana-desktop.time" ||
-       action.id == "org.nirvana-desktop.print" || action.id == "org.nirvana-desktop.user") &&
+       action.id == "org.nirvana-desktop.print" || action.id == "org.nirvana-desktop.user" ||
+       action.id == "org.nirvana-desktop.libs") &&
       subject.local && subject.active &&
       (subject.isInGroup("sudo") || subject.isInGroup("wheel") || subject.isInGroup("admin"))) {
     return polkit.Result.YES;
