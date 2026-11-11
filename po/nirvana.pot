@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Nirvana Desktop 0.1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-11 19:32+0000\n"
+"POT-Creation-Date: 2026-11-11 19:41+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -26,7 +26,8 @@ msgstr ""
 msgid "Icons"
 msgstr ""
 
-#: alice/appearance.cxx:91
+#: alice/appearance.cxx:91 dm/nirvana-dm-greeter.cxx:427
+#: dm/nirvana-dm-greeter.cxx:428 dm/nirvana-dm-greeter.cxx:429
 msgid "Special"
 msgstr ""
 
@@ -395,7 +396,7 @@ msgstr ""
 msgid "connected"
 msgstr ""
 
-#: alice/network.cxx:159 net/net.cxx:332
+#: alice/network.cxx:159 net/net.cxx:332 print/print.cxx:128
 msgid "connecting…"
 msgstr ""
 
@@ -430,7 +431,7 @@ msgstr ""
 msgid "WPA\\/WPA2 Personal|WPA3 Personal|None"
 msgstr ""
 
-#: alice/network.cxx:229 alice/network.cxx:387
+#: alice/network.cxx:229 alice/network.cxx:387 dm/nirvana-dm-greeter.cxx:495
 msgid "Password:"
 msgstr ""
 
@@ -1053,7 +1054,7 @@ msgstr ""
 msgid "2. The driver"
 msgstr ""
 
-#: alice/printers.cxx:316 denise/menus.cxx:835
+#: alice/printers.cxx:316 denise/menus.cxx:835 dm/nirvana-dm-greeter.cxx:487
 msgid "Name:"
 msgstr ""
 
@@ -1370,7 +1371,7 @@ msgstr ""
 msgid "discharging"
 msgstr ""
 
-#: denise/about.cxx:303
+#: denise/about.cxx:303 print/print.cxx:127
 msgid "offline"
 msgstr ""
 
@@ -1442,7 +1443,7 @@ msgstr ""
 msgid "%1 (title bar: %2)"
 msgstr ""
 
-#: denise/about.cxx:436
+#: denise/about.cxx:436 dm/nirvana-dm-greeter.cxx:395
 msgid "Theme"
 msgstr ""
 
@@ -1865,7 +1866,7 @@ msgstr ""
 msgid "%1 · round %2 of %3"
 msgstr ""
 
-#: denise/clock.cxx:500 denise/clock.cxx:503
+#: denise/clock.cxx:500 denise/clock.cxx:503 print/print.cxx:127
 msgid "paused"
 msgstr ""
 
@@ -2721,6 +2722,82 @@ msgstr ""
 msgid "Could not format “%1”:"
 msgstr ""
 
+#: dm/nirvana-dm-greeter.cxx:128
+msgid "Other…"
+msgstr ""
+
+#: dm/nirvana-dm-greeter.cxx:179
+msgid "Welcome to %1"
+msgstr ""
+
+#: dm/nirvana-dm-greeter.cxx:265 dm/nirvana-dm-greeter.cxx:286
+msgid "Logging in is not possible now."
+msgstr ""
+
+#: dm/nirvana-dm-greeter.cxx:272
+msgid "This is a preview - nobody is logged in."
+msgstr ""
+
+#: dm/nirvana-dm-greeter.cxx:276
+msgid "Choose a user or type a name."
+msgstr ""
+
+#: dm/nirvana-dm-greeter.cxx:284
+msgid "Logging in…"
+msgstr ""
+
+#: dm/nirvana-dm-greeter.cxx:313
+msgid "Starting the session…"
+msgstr ""
+
+#: dm/nirvana-dm-greeter.cxx:315
+msgid "The session could not start: %1"
+msgstr ""
+
+#: dm/nirvana-dm-greeter.cxx:321
+msgid "The password is not right. Try again."
+msgstr ""
+
+#: dm/nirvana-dm-greeter.cxx:372
+msgid "This is a preview - nothing happens."
+msgstr ""
+
+#: dm/nirvana-dm-greeter.cxx:376
+msgid "Not possible now."
+msgstr ""
+
+#: dm/nirvana-dm-greeter.cxx:402 dm/nirvana-dm-greeter.cxx:413
+msgid "Background"
+msgstr ""
+
+#: dm/nirvana-dm-greeter.cxx:422
+msgid "Language"
+msgstr ""
+
+#: dm/nirvana-dm-greeter.cxx:427
+msgid "Sleep"
+msgstr ""
+
+#: dm/nirvana-dm-greeter.cxx:428
+msgid "Restart…"
+msgstr ""
+
+#: dm/nirvana-dm-greeter.cxx:429
+msgid "Shut Down…"
+msgstr ""
+
+#: dm/nirvana-dm-greeter.cxx:499
+msgid "Session:"
+msgstr ""
+
+#: dm/nirvana-dm-greeter.cxx:515
+msgid "Log In"
+msgstr ""
+
+#: dm/nirvana-dm-greeter.cxx:598
+msgid "Preview: nobody is logged in from here."
+msgstr ""
+
 #: insight/main.cxx:172
 msgid "untitled"
 msgstr ""
@@ -2937,51 +3014,51 @@ msgstr ""
 msgid "December (in a date)"
 msgstr ""
 
-#: platinum/clockconf.cxx:81 platinum/i18n.cxx:372
+#: platinum/clockconf.cxx:81 platinum/i18n.cxx:382
 msgid "Jan"
 msgstr ""
 
-#: platinum/clockconf.cxx:81 platinum/i18n.cxx:372
+#: platinum/clockconf.cxx:81 platinum/i18n.cxx:382
 msgid "Feb"
 msgstr ""
 
-#: platinum/clockconf.cxx:81 platinum/i18n.cxx:372
+#: platinum/clockconf.cxx:81 platinum/i18n.cxx:382
 msgid "Mar"
 msgstr ""
 
-#: platinum/clockconf.cxx:81 platinum/i18n.cxx:372
+#: platinum/clockconf.cxx:81 platinum/i18n.cxx:382
 msgid "Apr"
 msgstr ""
 
-#: platinum/clockconf.cxx:81 platinum/i18n.cxx:372
+#: platinum/clockconf.cxx:81 platinum/i18n.cxx:382
 msgid "May"
 msgstr ""
 
-#: platinum/clockconf.cxx:81 platinum/i18n.cxx:372
+#: platinum/clockconf.cxx:81 platinum/i18n.cxx:382
 msgid "Jun"
 msgstr ""
 
-#: platinum/clockconf.cxx:82 platinum/i18n.cxx:373
+#: platinum/clockconf.cxx:82 platinum/i18n.cxx:383
 msgid "Jul"
 msgstr ""
 
-#: platinum/clockconf.cxx:82 platinum/i18n.cxx:373
+#: platinum/clockconf.cxx:82 platinum/i18n.cxx:383
 msgid "Aug"
 msgstr ""
 
-#: platinum/clockconf.cxx:82 platinum/i18n.cxx:373
+#: platinum/clockconf.cxx:82 platinum/i18n.cxx:383
 msgid "Sep"
 msgstr ""
 
-#: platinum/clockconf.cxx:82 platinum/i18n.cxx:373
+#: platinum/clockconf.cxx:82 platinum/i18n.cxx:383
 msgid "Oct"
 msgstr ""
 
-#: platinum/clockconf.cxx:82 platinum/i18n.cxx:373
+#: platinum/clockconf.cxx:82 platinum/i18n.cxx:383
 msgid "Nov"
 msgstr ""
 
-#: platinum/clockconf.cxx:82 platinum/i18n.cxx:373
+#: platinum/clockconf.cxx:82 platinum/i18n.cxx:383
 msgid "Dec"
 msgstr ""
 
@@ -3075,7 +3152,7 @@ msgid "%2 %1"
 msgstr ""
 
 #. TRANSLATORS: date: %1 day, %2 month (abbreviated), %3 year, %4 time - the order may change
-#: platinum/i18n.cxx:380
+#: platinum/i18n.cxx:390
 msgid "%2 %1, %3, %4"
 msgstr ""
 
@@ -3337,6 +3414,106 @@ msgstr ""
 msgid "desktop screen saver"
 msgstr ""
 
+#: print/print.cxx:119
+msgid "Printing"
+msgstr ""
+
+#: print/print.cxx:119
+msgid "Stopped"
+msgstr ""
+
+#: print/print.cxx:119
+msgid "Idle"
+msgstr ""
+
+#: print/print.cxx:120
+msgid "Not accepting jobs"
+msgstr ""
+
+#: print/print.cxx:123
+msgid "out of paper"
+msgstr ""
+
+#: print/print.cxx:123
+msgid "paper jam"
+msgstr ""
+
+#: print/print.cxx:124
+msgid "out of toner"
+msgstr ""
+
+#: print/print.cxx:124
+msgid "toner low"
+msgstr ""
+
+#: print/print.cxx:125
+msgid "out of ink"
+msgstr ""
+
+#: print/print.cxx:125
+msgid "ink low"
+msgstr ""
+
+#: print/print.cxx:126
+msgid "a door is open"
+msgstr ""
+
+#: print/print.cxx:126
+msgid "the cover is open"
+msgstr ""
+
+#: print/print.cxx:128
+msgid "the driver is missing"
+msgstr ""
+
+#: print/print.cxx:157 print/print.cxx:165
+msgid "Test page"
+msgstr ""
+
+#: print/print.cxx:163
+msgid "Nirvana Desktop - printer test page"
+msgstr ""
+
+#: print/print.cxx:164
+msgid "If you can read this, the printer works."
+msgstr ""
+
+#: print/print.cxx:244
+msgid "Driverless printing and PDF (cups-filters)"
+msgstr ""
+
+#: print/print.cxx:245
+msgid "Gutenprint – many inkjet and photo printers (Canon, Epson…)"
+msgstr ""
+
+#: print/print.cxx:246
+msgid "HPLIP – HP printers and multifunction devices"
+msgstr ""
+
+#: print/print.cxx:247
+msgid "Brother lasers (brlaser)"
+msgstr ""
+
+#: print/print.cxx:248
+msgid "Epson inkjets (ESC/P-R)"
+msgstr ""
+
+#: print/print.cxx:249
+msgid "Samsung and Xerox SPL lasers (SpliX)"
+msgstr ""
+
+#: print/print.cxx:250
+msgid "ZjStream lasers – HP, Minolta, Oki… (foo2zjs)"
+msgstr ""
+
+#: print/print.cxx:251
+msgid "Foomatic – a large database of older drivers"
+msgstr ""
+
+#: print/print.cxx:252
+msgid "Manufacturer PPDs – Kyocera, Ricoh, Lexmark, Sharp…"
+msgstr ""
+
 #: shell/main.cxx:70
 msgid "Classic (light)"
 msgstr ""
@@ -3480,24 +3657,12 @@ msgstr ""
 msgid "Lock Screen"
 msgstr ""
 
-#: denise/desktop.cxx:518 denise/menus.cxx:162
-msgid "Sleep"
-msgstr ""
-
 #: denise/desktop.cxx:519 denise/menus.cxx:163
 msgid "Hibernate"
 msgstr ""
 
 #: denise/desktop.cxx:520
 msgid "Log Out…"
-msgstr ""
-
-#: denise/desktop.cxx:521 denise/menus.cxx:164
-msgid "Restart…"
-msgstr ""
-
-#: denise/desktop.cxx:522 denise/menus.cxx:165
-msgid "Shut Down…"
 msgstr ""
 
 #: denise/desktop.cxx:2474 denise/desktop.cxx:2480 denise/desktop.cxx:2492

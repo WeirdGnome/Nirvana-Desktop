@@ -163,6 +163,18 @@ install(PROGRAMS update/nirvana-update-check update/nirvana-update-helper update
 install(FILES update/org.nirvana-desktop.policy DESTINATION share/polkit-1/actions COMPONENT nirvana)
 install(FILES update/50-nirvana.rules DESTINATION share/polkit-1/rules.d COMPONENT nirvana)
 
+# --- Nirvana-DM: the login screen (a LightDM greeter) - optional --------------
+pkg_check_modules(LIGHTDM IMPORTED_TARGET liblightdm-gobject-1 gobject-2.0 glib-2.0)
+if(LIGHTDM_FOUND)
+  add_executable(nirvana-dm-greeter dm/nirvana-dm-greeter.cxx)
+  target_link_libraries(nirvana-dm-greeter PRIVATE nirvana-platinum fltk::images PkgConfig::LIGHTDM)
+  install(TARGETS nirvana-dm-greeter RUNTIME DESTINATION sbin COMPONENT nirvana)
+  install(FILES dm/nirvana-dm.desktop DESTINATION share/xgreeters COMPONENT nirvana)
+  install(FILES dm/50-nirvana-dm.conf DESTINATION share/lightdm/lightdm.conf.d COMPONENT nirvana)
+else()
+  message(WARNING "liblightdm-gobject not found - Nirvana-DM is not built (Devuan: liblightdm-gobject-dev)")
+endif()
+
 # Everything in the "nirvana" component - the .deb package does not take FLTK files
 # (FetchContent adds its own install rules for headers and libraries).
 install(TARGETS nirvana-denise nirvana-insight nirvana-alice nirvana-shell RUNTIME DESTINATION bin COMPONENT nirvana)

@@ -28,14 +28,14 @@ on the desktop. Written in C++ and FLTK 1.4.
 | `nirvana-shader`    | full-screen GLSL effects (a small compositor) | works |
 | `nirvana-shell`     | Nirvana Shell - terminal emulator       | works |
 | `nirvana-paula`     | sound                                   | planned     |
-| `nirvana-kickstart` | login and session start                 | planned     |
+| `nirvana-dm-greeter` | Nirvana-DM - the login screen (a LightDM greeter) | works |
 | `nirvana-guru`      | error window                            | planned     |
 
 ## Installing on Devuan 6 "Excalibur" (Debian 13)
 
 Unpack the sources and run the installer:
 
-    tar xzf nirvana-desktop-0.0.22.tar.gz && cd nirvana-desktop
+    tar xzf nirvana-desktop-0.0.23.tar.gz && cd nirvana-desktop
     sudo ./install.sh                 # or: sudo ./install.sh --login-screen
 
 The installer:
@@ -658,6 +658,26 @@ own jobs, the test page and your default printer need no rights.
 
 ![The printer applet](docs/img/printers-applet.png)
 ![Preferences > Printers](docs/img/printers.png)
+
+## Nirvana-DM: the login screen
+
+`--login-screen` of `install.sh` installs LightDM with **Nirvana-DM** (and the package itself
+makes LightDM use it: `/usr/share/lightdm/lightdm.conf.d/50-nirvana-dm.conf`). A simple screen
+in the style of the 1990s: the desktop background, a menu bar with the logo and the clock, and a
+window in the middle with the users (their `~/.face` picture or a figure; a green dot for those
+already logged in, *Other…* for typing a name), the password and the session.
+
+- **Theme** – any color scheme, **Background** – the patterns and the Nirvana wallpapers,
+  **Language** – the language of the screen; the choice applies at once and is saved in the home
+  folder of the login screen (`/var/lib/lightdm/.config/nirvana`), so **it stays after a restart**,
+- **Special** – Sleep, Restart, Shut Down (when the system allows them),
+- the last user is chosen again next time, the session follows the user's last one.
+
+LightDM does the security-sensitive part (the X server, PAM, the session, elogind); Nirvana-DM
+is only the screen in front of it. `nirvana-dm-greeter --test` shows a preview in a window.
+Back to another greeter: `greeter-session=…` in `/etc/lightdm/lightdm.conf.d/`.
+
+![Nirvana-DM](docs/img/nirvana-dm.png)
 
 ## Software updates
 

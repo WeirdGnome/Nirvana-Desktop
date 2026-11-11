@@ -23,6 +23,7 @@ namespace plat {
 // called by init_i18n().
 void migrate_old_config();
 void init_i18n();                       // called by plat::init(); can also be called on its own (Insight)
+void reload_i18n();                     // load the catalog again (after set_language_setting)
 const char *tr(const char *msgid);
 std::string trn(long n, const char *one, const char *other);
 std::string fmt(const std::string &pattern, const std::vector<std::string> &args);

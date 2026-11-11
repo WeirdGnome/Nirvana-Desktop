@@ -82,7 +82,7 @@ BUILD_DEPS="build-essential cmake git pkg-config gettext dpkg-dev file
   libx11-dev libxext-dev libxft-dev libxinerama-dev libxcursor-dev libxfixes-dev
   libxrender-dev libxss-dev libfontconfig-dev libdbus-1-dev
   libpng-dev libjpeg-dev zlib1g-dev
-  libgl-dev libxcomposite-dev libxdamage-dev libcups2-dev"
+  libgl-dev libxcomposite-dev libxdamage-dev libcups2-dev liblightdm-gobject-dev"
 
 if [ "$ME" = 0 ]; then
   step "Updating the package lists"
@@ -157,11 +157,17 @@ if [ -f /etc/network/interfaces ] && grep -Eq '^[[:space:]]*(auto|allow-hotplug|
 fi
 
 if [ -n "$LOGIN" ]; then
-  step "LightDM login screen"
-  DEBIAN_FRONTEND=noninteractive apt-get install -y lightdm lightdm-gtk-greeter
+  step "Nirvana-DM login screen (LightDM)"
+  DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends lightdm
   mkdir -p /etc/lightdm/lightdm.conf.d
-  printf '[Seat:*]\nuser-session=nirvana\n' > /etc/lightdm/lightdm.conf.d/50-nirvana.conf
-  echo "LightDM offers the Nirvana Desktop session (/etc/lightdm/lightdm.conf.d/50-nirvana.conf)."
+  if [ -x /usr/sbin/nirvana-dm-greeter ]; then
+    printf '[Seat:*]\ngreeter-session=nirvana-dm\nuser-session=nirvana\n' > /etc/lightdm/lightdm.conf.d/50-nirvana.conf
+    echo "LightDM shows Nirvana-DM and starts Nirvana Desktop (/etc/lightdm/lightdm.conf.d/50-nirvana.conf)."
+  else   # built without liblightdm-gobject-dev: another greeter
+    DEBIAN_FRONTEND=noninteractive apt-get install -y lightdm-gtk-greeter
+    printf '[Seat:*]\nuser-session=nirvana\n' > /etc/lightdm/lightdm.conf.d/50-nirvana.conf
+    echo "LightDM offers the Nirvana Desktop session (Nirvana-DM was not built)."
+  fi
 fi
 
 if [ -n "$XINITRC" ] && [ -n "$USER_NAME" ]; then

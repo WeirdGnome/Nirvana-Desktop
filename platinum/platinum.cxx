@@ -88,7 +88,7 @@ static void well_box(int x, int y, int w, int h, Fl_Color c) {
 }
 
 static void menubar_box(int x, int y, int w, int h, Fl_Color c) {
-  if (title_style() == TitleStyle::Glossy && h > 4) {
+  if (title_style() == TitleStyle::Glossy && h > 4 && h <= 32) {   // (not the tall pull-down menus, they use this box too)
     // glass, like the title bars: a shine on the upper half, then the bar color with a little
     // light coming back at the bottom (depends only on y, so all the pieces of the bar match)
     uchar r, g, b;

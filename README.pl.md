@@ -27,14 +27,14 @@ Napisane w C++ i FLTK 1.4.
 | `nirvana-shader`     | pełnoekranowe efekty GLSL (mały kompozytor) | działa |
 | `nirvana-shell`      | Nirvana Shell - emulator terminala          | działa |
 | `nirvana-paula`      | dźwięk                                  | planowany   |
-| `nirvana-kickstart`  | logowanie i start sesji                 | planowany   |
+| `nirvana-dm-greeter` | Nirvana-DM – ekran logowania (greeter LightDM) | działa |
 | `nirvana-guru`       | okno błędów                             | planowany   |
 
 ## Instalacja na Devuanie 6 „Excalibur” (Debian 13)
 
 Rozpakuj źródła i uruchom instalator:
 
-    tar xzf nirvana-desktop-0.0.22.tar.gz && cd nirvana-desktop
+    tar xzf nirvana-desktop-0.0.23.tar.gz && cd nirvana-desktop
     sudo ./install.sh                 # albo: sudo ./install.sh --login-screen
 
 Instalator:
@@ -656,6 +656,26 @@ zadań, strona testowa i własna domyślna drukarka nie wymagają uprawnień.
 
 ![Aplet drukarki](docs/img/printers-applet.png)
 ![Preferencje > Drukarki](docs/img/printers.png)
+
+## Nirvana-DM: ekran logowania
+
+`--login-screen` w `install.sh` instaluje LightDM z **Nirvana-DM** (a sama paczka ustawia go
+w LightDM: `/usr/share/lightdm/lightdm.conf.d/50-nirvana-dm.conf`). Prosty ekran w stylu lat 90.:
+tło pulpitu, pasek menu z logo i zegarem oraz okno pośrodku z użytkownikami (ich obrazek
+`~/.face` albo sylwetka; zielona kropka przy już zalogowanych, *Inny…* do wpisania nazwy),
+hasłem i sesją.
+
+- **Motyw** – dowolny schemat kolorów, **Tło** – wzory i tapety Nirvany, **Język** – język
+  ekranu; wybór działa od razu i jest zapisywany w katalogu domowym ekranu logowania
+  (`/var/lib/lightdm/.config/nirvana`), więc **zostaje po restarcie**,
+- **Narzędzia** – Uśpij, Uruchom ponownie, Wyłącz (gdy system na to pozwala),
+- ostatni użytkownik jest wybierany ponownie, a sesja to jego ostatnia sesja.
+
+LightDM robi część wrażliwą na bezpieczeństwo (serwer X, PAM, sesja, elogind); Nirvana-DM to
+tylko ekran przed nim. `nirvana-dm-greeter --test` pokazuje podgląd w oknie. Powrót do innego
+greetera: `greeter-session=…` w `/etc/lightdm/lightdm.conf.d/`.
+
+![Nirvana-DM](docs/img/nirvana-dm.png)
 
 ## Aktualizacje oprogramowania
 
