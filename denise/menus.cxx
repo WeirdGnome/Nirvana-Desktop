@@ -379,14 +379,14 @@ void Desktop::set_as_wallpaper() {
   std::vector<std::string> t = targets();
   if (t.size() != 1 || !is_image_file(t[0])) return;
   if (!image_loadable(t[0])) {
-    dialog(_("Wallpaper"), plat::fmt(_("Could not open the image “%1”.\nThe file may be damaged or in an unsupported format."),
+    dialog(GURU_TITLE, plat::fmt(_("Could not open the image “%1”.\nThe file may be damaged or in an unsupported format."),
                                fs::path(t[0]).filename().string()), {{"OK", nullptr}});
     return;
   }
   Appearance a = read_appearance();
   a.wallpaper = t[0];
   if (!write_appearance(a)) {
-    dialog(_("Wallpaper"), _("Could not save the appearance settings."), {{"OK", nullptr}});
+    dialog(GURU_TITLE, _("Could not save the appearance settings."), {{"OK", nullptr}});
     return;
   }
   notify_appearance_changed();
@@ -745,7 +745,7 @@ void Desktop::get_info() {
     if (comment && comment->active()) xattr_set(path, "user.xdg.comment", comment->value());
     if (args) set_tooltypes(path, args->value());
     refresh_all();
-    if (!err.empty()) dialog(_("Info"), err, {{"OK", nullptr}});
+    if (!err.empty()) dialog(GURU_TITLE, err, {{"OK", nullptr}});
   }}});
 }
 

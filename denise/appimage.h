@@ -61,6 +61,9 @@ std::string migrate_apps_dir(const std::string &home);
 std::string install_dir(const std::string &path, const std::string &home);
 bool is_installed(const std::string &path, const std::string &home);
 
+// "" when the AppImage can run on this processor, otherwise a description for the user.
+std::string arch_problem(const std::string &path);
+
 // Extracts the application (blocks for the time of the extraction). Returns an error description or "".
 std::string install(const std::string &path, const std::string &home);
 

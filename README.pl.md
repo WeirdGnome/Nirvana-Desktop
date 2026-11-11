@@ -1,5 +1,7 @@
 # Nirvana Desktop
 
+<img src="docs/img/logo.png" alt="Logo Nirvana Desktop" width="160" align="right">
+
 *[English version: README.md](README.md)*
 
 Lekkie środowisko graficzne dla Linuksa (baza: minimalny Devuan) w duchu
@@ -36,7 +38,7 @@ Napisane w C++ i FLTK 1.4.
 
 Rozpakuj źródła i uruchom instalator:
 
-    tar xzf nirvana-desktop-0.0.31.tar.gz && cd nirvana-desktop
+    tar xzf nirvana-desktop-0.0.32.tar.gz && cd nirvana-desktop
     sudo ./install.sh                 # albo: sudo ./install.sh --login-screen
 
 Instalator:
@@ -186,6 +188,8 @@ Inną czcionkę systemową (np. wolną, w stylu bitmapowym) można podać przez 
   zainstalowana, pyta, czy ją zastąpić albo uruchomić.
 
   ![Dwie wersje gry obok siebie](docs/img/games.png)
+- **Właściwy procesor**: AppImage zbudowany na inny procesor (np. ARM64 na komputerze x86-64)
+  nie zostanie zainstalowany ani uruchomiony – okno błędu podpowiada, którą wersję pobrać.
 - **Brakujące biblioteki systemowe**: przed startem Rambler czyta nagłówki ELF aplikacji
   (AppRun, `usr/bin`, wtyczkę X11 Qt `libqxcb.so` i biblioteki, które ciągną) i sprawdza, których
   bibliotek nie ma ani w AppImage, ani w systemie. Programy Qt 6 często potrzebują
@@ -846,6 +850,15 @@ wynik idzie do `gl_FragColor`. Pierwsza linia komentarza to opis w panelu.
 
 Inny kompozytor (picom, compton) nie może działać w tym samym czasie. Bez akceleracji grafiki
 (np. w maszynie wirtualnej, llvmpipe) efekty animowane mocno obciążają procesor.
+
+## Okna błędów
+
+Błędy (plik, którego nie da się otworzyć, dysk, Kosz, kopiowanie, AppImage na inny procesor…)
+pokazują się w oknie o tytule **Guru Meditation**: czerwony tekst w czarnym polu z migającą
+czerwoną ramką i numer guru wyliczony z komunikatu (`#00000010.6718A071`) – ukłon w stronę ekranów
+błędów komputerów domowych lat 80. Pytania i powiadomienia zostają w zwykłym oknie.
+
+![Guru Meditation](docs/img/guru.png)
 
 ## Języki
 

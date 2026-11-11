@@ -343,7 +343,7 @@ int panel_appearance() {
       }
       if (!image_loadable(f)) {
         fl_message_title(_("Wallpaper"));
-        fl_alert("%s", _("Could not open this image.\nThe file may be damaged or in an unsupported format."));
+        guru_alert(_("Could not open this image.\nThe file may be damaged or in an unsupported format."));
         auto it = std::find(g_walls.begin(), g_walls.end(), g_cur.wallpaper);
         g_wall->value(it == g_walls.end() ? 0 : (int)(it - g_walls.begin()));
         return;

@@ -1340,7 +1340,7 @@ void Desktop::close(NWin *w) {
 
 void Desktop::open_folder(const std::string &path, bool animate, bool new_window) {
   if (!allowed(path)) {
-    dialog(_("Access Denied"),
+    dialog(GURU_TITLE,
            _("This folder is outside Nirvana HD."),
            {{"OK", nullptr}});
     return;
@@ -1424,7 +1424,7 @@ void Desktop::open_folder(const std::string &path, bool animate, bool new_window
     drop_uris(uris, dest.empty() ? win->path : dest);
   };
   win->pane->on_rename_commit = [this](const std::string &o, const std::string &n) { return rename_path(o, n); };
-  win->pane->on_error = [this](const std::string &m) { dialog(_("Rename"), m, {{"OK", nullptr}}); };
+  win->pane->on_error = [this](const std::string &m) { dialog(GURU_TITLE, m, {{"OK", nullptr}}); };
   if (known_pos && s.list) win->pane->set_mode(FolderView::List);
   wins_.push_back(win);
   update_nav(win);
@@ -1514,7 +1514,7 @@ void Desktop::navigate(NWin *w, const std::string &target, Nav how) {
   if (path == w->path) { update_nav(w); return; }
   if (!allowed(path)) {
     update_nav(w);
-    dialog(_("Access Denied"),
+    dialog(GURU_TITLE,
            _("This folder is outside Nirvana HD."),
            {{"OK", nullptr}});
     return;
@@ -1523,7 +1523,7 @@ void Desktop::navigate(NWin *w, const std::string &target, Nav how) {
   if (path == trash_dir()) fs::create_directories(path, ec);
   if (!fs::is_directory(path, ec)) {
     update_nav(w);
-    dialog(_("Open"), plat::fmt(_("The folder “%1” could not be found."), path), {{"OK", nullptr}});
+    dialog(GURU_TITLE, plat::fmt(_("The folder “%1” could not be found."), path), {{"OK", nullptr}});
     return;
   }
   remember(w, false);   // the previous folder is no longer open
@@ -1633,6 +1633,7 @@ std::string Desktop::app_destination(const std::string &path) const {
 static std::string menu_escape(const std::string &s);
 
 void Desktop::open_appimage(const std::string &path) {
+  if (std::string a = appimage::arch_problem(path); !a.empty()) { guru(a); return; }
   if (in_apps(path)) { run_app(path); return; }
   std::string name = appimage::label(path, home_);
   std::string fname = fs::path(path).filename().string();
@@ -1649,7 +1650,7 @@ void Desktop::open_appimage(const std::string &path) {
       if (!ec) fs::remove(path, ec);
     }
     if (ec) {
-      dialog(_("Installation"), _("Could not move the file:") + std::string("\n") + ec.message(), {{_("OK"), nullptr}});
+      dialog(GURU_TITLE, _("Could not move the file:") + std::string("\n") + ec.message(), {{_("OK"), nullptr}});
       return;
     }
     chmod(dest.c_str(), 0755);
@@ -1713,6 +1714,7 @@ void Desktop::open_appimage(const std::string &path) {
 }
 
 void Desktop::run_app(const std::string &path) {
+  if (std::string a = appimage::arch_problem(path); !a.empty()) { guru(a); return; }
   if (!appimage::is_installed(path, home_)) {
     for (auto *w : wins_) w->cursor(FL_CURSOR_WAIT);
     cursor(FL_CURSOR_WAIT);
@@ -1721,7 +1723,7 @@ void Desktop::run_app(const std::string &path) {
     for (auto *w : wins_) w->cursor(FL_CURSOR_DEFAULT);
     cursor(FL_CURSOR_DEFAULT);
     if (!err.empty()) {
-      dialog(_("Cannot Open"), err, {{"OK", nullptr}});
+      dialog(GURU_TITLE, err, {{"OK", nullptr}});
       return;
     }
     refresh_all();   // the icon of some AppImages (e.g. DwarFS) is only available after extraction
@@ -1812,7 +1814,7 @@ void Desktop::ask_missing_libs(const std::string &path, const std::vector<std::s
 
 void Desktop::install_libs(const std::string &path, const std::vector<std::string> &missing) {
   std::string h = libs_helper(), out;
-  if (h.empty()) { dialog(_("Missing Libraries"), _("nirvana-libs-helper is missing."), {{"OK", nullptr}}); return; }
+  if (h.empty()) { guru(_("nirvana-libs-helper is missing.")); return; }
   for (auto *w : wins_) w->cursor(FL_CURSOR_WAIT);
   cursor(FL_CURSOR_WAIT);
   Fl::flush();
@@ -1827,7 +1829,7 @@ void Desktop::install_libs(const std::string &path, const std::vector<std::strin
     std::string tail = out.size() > 600 ? out.substr(out.size() - 600) : out;
     size_t nl = tail.find('\n');
     if (out.size() > 600 && nl != std::string::npos) tail = tail.substr(nl + 1);
-    dialog(_("Missing Libraries"), rc == 126 || rc == 127 ? std::string(_("The libraries were not installed."))
+    dialog(GURU_TITLE, rc == 126 || rc == 127 ? std::string(_("The libraries were not installed."))
                                                           : plat::fmt(_("The libraries were not installed:\n%1"), tail),
            {{"OK", nullptr}});
     return;
@@ -2030,8 +2032,44 @@ void Desktop::dialog_cb(Fl_Widget *b, void *idx) {
   if (action) action();
 }
 
+void Desktop::guru(const std::string &text) { dialog(GURU_TITLE, text, {{"OK", nullptr}}); }
+
+// The message of an error window: red text in a black box with a blinking red frame,
+// and a guru number below - like the error screens of the 1980s home computers.
+namespace {
+struct GuruBox : Fl_Box {
+  bool on = true;
+  std::string code;
+  GuruBox(int X, int Y, int W, int H, const std::string &text) : Fl_Box(X, Y, W, H) {
+    copy_label(text.c_str());
+    code = std::string(GURU_TITLE) + " " + guru_number(text);
+    Fl::add_timeout(0.8, blink, this);
+  }
+  ~GuruBox() override { Fl::remove_timeout(blink, this); }
+  static void blink(void *d) {
+    auto *g = (GuruBox *)d;
+    g->on = !g->on;
+    g->redraw();
+    Fl::repeat_timeout(0.8, blink, d);
+  }
+  void draw() override {
+    Fl_Color red = fl_rgb_color(0xE0, 0x20, 0x10);
+    fl_color(FL_BLACK);
+    fl_rectf(x(), y(), w(), h());
+    fl_color(on ? red : FL_BLACK);
+    for (int i = 0; i < 4; i++) fl_rect(x() + 4 + i, y() + 4 + i, w() - 8 - 2 * i, h() - 8 - 2 * i);
+    fl_color(red);
+    fl_font(FONT_SYSTEM, SIZE_SYSTEM);
+    fl_draw(label(), x() + 18, y() + 16, w() - 36, h() - 52, FL_ALIGN_CENTER | FL_ALIGN_WRAP, nullptr, 0);
+    fl_font(FONT_SMALL, SIZE_SMALL + 1);
+    fl_draw(code.c_str(), x() + 18, y() + h() - 34, w() - 36, 18, FL_ALIGN_CENTER, nullptr, 0);
+  }
+};
+}  // namespace
+
 void Desktop::dialog(const std::string &title, const std::string &text,
                      std::vector<std::pair<std::string, std::function<void()>>> buttons) {
+  bool is_guru = title == GURU_TITLE;
   fl_font(FONT_SYSTEM, SIZE_SYSTEM);
   int tw = 0, th = 0;
   fl_measure(text.c_str(), tw, th, 0);
@@ -2051,6 +2089,7 @@ void Desktop::dialog(const std::string &title, const std::string &text,
   }
   fl_font(FONT_SYSTEM, SIZE_SYSTEM);
   int W = std::max({320, tw + 100, all_w + 24}), H = std::max(130, th + 80);
+  if (is_guru) { W = std::max({420, tw + 80, all_w + 24}); H = th + 120; }
   int X = (w() - W) / 2, Y = (h() - H) / 3;
 
   int ox = csd_mode ? FRAME : 0, oy = csd_mode ? TITLE_H : 0;
@@ -2061,12 +2100,16 @@ void Desktop::dialog(const std::string &title, const std::string &text,
     Logo(int X, int Y) : Fl_Widget(X, Y, 34, 34) {}
     void draw() override { draw_logo(x(), y(), 32); }
   };
-  new Logo(ox + 16, oy + 16);
-  auto *msg = new Fl_Box(ox + 64, oy + 14, W - 80, th + 8);
-  msg->copy_label(text.c_str());
-  msg->labelfont(FONT_SYSTEM);
-  msg->labelsize(SIZE_SYSTEM);
-  msg->align(FL_ALIGN_LEFT | FL_ALIGN_TOP | FL_ALIGN_INSIDE | FL_ALIGN_WRAP);
+  if (is_guru) {
+    new GuruBox(ox + 10, oy + 10, W - 20, H - 60, text);
+  } else {
+    new Logo(ox + 16, oy + 16);
+    auto *msg = new Fl_Box(ox + 64, oy + 14, W - 80, th + 8);
+    msg->copy_label(text.c_str());
+    msg->labelfont(FONT_SYSTEM);
+    msg->labelsize(SIZE_SYSTEM);
+    msg->align(FL_ALIGN_LEFT | FL_ALIGN_TOP | FL_ALIGN_INSIDE | FL_ALIGN_WRAP);
+  }
 
   int bx = ox + W - 16;
   for (int i = (int)buttons.size() - 1; i >= 0; i--) {
@@ -2156,7 +2199,7 @@ void Desktop::move_to_trash() {
     if (!trash_path(e.path, err)) errors += err + "\n";
   }
   refresh_all();
-  if (!errors.empty()) dialog(_("Trash"), _("Could not move to the Trash:") + std::string("\n") + errors, {{"OK", nullptr}});
+  if (!errors.empty()) dialog(GURU_TITLE, _("Could not move to the Trash:") + std::string("\n") + errors, {{"OK", nullptr}});
 }
 
 void Desktop::empty_trash() {
@@ -2696,14 +2739,14 @@ static std::string copy_name(const fs::path &dir, const std::string &name) {
 
 void Desktop::transfer(const std::vector<Entry> &items, const std::string &dest, bool copy, bool replace) {
   if (!allowed(dest)) {
-    dialog(_("Access Denied"), _("The destination folder is outside Nirvana HD."), {{"OK", nullptr}});
+    dialog(GURU_TITLE, _("The destination folder is outside Nirvana HD."), {{"OK", nullptr}});
     return;
   }
   std::error_code ec;
   // a folder into itself or into its own subfolder
   for (auto &e : items) {
     if (e.dir && (dest == e.path || dest.rfind(e.path + "/", 0) == 0)) {
-      dialog(_("Cannot Move"), plat::fmt(_("The folder “%1” cannot be moved into itself."), e.label),
+      dialog(GURU_TITLE, plat::fmt(_("The folder “%1” cannot be moved into itself."), e.label),
              {{"OK", nullptr}});
       return;
     }
@@ -2762,7 +2805,7 @@ void Desktop::transfer(const std::vector<Entry> &items, const std::string &dest,
   }
   refresh_all();
   if (!errors.empty())
-    dialog(copy ? _("Copying") : _("Move"), _("There were errors:") + std::string("\n") + errors, {{"OK", nullptr}});
+    dialog(GURU_TITLE, _("There were errors:") + std::string("\n") + errors, {{"OK", nullptr}});
 }
 
 // ---------------------------------------------------------------------------
@@ -2896,7 +2939,7 @@ void Desktop::drag_end(int xr, int yr, bool copy) {
           return;
         }
         std::string mp, err = vol::mount(vols_[vi], mp);
-        if (!err.empty()) { dialog(_("Disk"), err, {{"OK", nullptr}}); return; }
+        if (!err.empty()) { dialog(GURU_TITLE, err, {{"OK", nullptr}}); return; }
         rescan_volumes();
         dest = mp;
       }
@@ -2932,7 +2975,7 @@ void Desktop::drag_end(int xr, int yr, bool copy) {
       if (!trash_path(e.path, err)) errors += err + "\n";
     }
     refresh_all();
-    if (!errors.empty()) dialog(_("Trash"), _("Could not move to the Trash:") + std::string("\n") + errors, {{"OK", nullptr}});
+    if (!errors.empty()) dialog(GURU_TITLE, _("Could not move to the Trash:") + std::string("\n") + errors, {{"OK", nullptr}});
     return;
   }
   transfer(items, dest, copy, false);
@@ -3036,7 +3079,7 @@ void Desktop::drop_uris(const std::string &list, const std::string &dest) {
     std::string errors;
     for (auto &e : items) { std::string err; if (!trash_path(e.path, err)) errors += err + "\n"; }
     refresh_all();
-    if (!errors.empty()) dialog(_("Trash"), _("Could not move to the Trash:") + std::string("\n") + errors, {{"OK", nullptr}});
+    if (!errors.empty()) dialog(GURU_TITLE, _("Could not move to the Trash:") + std::string("\n") + errors, {{"OK", nullptr}});
     return;
   }
   // from another program: we copy (like dragging between disks)
@@ -3110,7 +3153,7 @@ void Desktop::open_volume(int vi) {
     Fl::flush();
     std::string err = vol::mount(v, mp);
     cursor(FL_CURSOR_DEFAULT);
-    if (!err.empty()) { dialog(_("Disk"), err, {{"OK", nullptr}}); return; }
+    if (!err.empty()) { dialog(GURU_TITLE, err, {{"OK", nullptr}}); return; }
     rescan_volumes();
   }
   if (!mp.empty()) open_folder(mp);
@@ -3220,7 +3263,7 @@ void Desktop::eject_volume(int vi) {
   std::string err = vol::eject(v);
   cursor(FL_CURSOR_DEFAULT);
   rescan_volumes();
-  if (!err.empty()) dialog(_("Ejecting"), err, {{"OK", nullptr}});
+  if (!err.empty()) dialog(GURU_TITLE, err, {{"OK", nullptr}});
 }
 
 void Desktop::eject_selected() {

@@ -444,7 +444,7 @@ static void confirm(const char *title, const char *text, const char *yes, std::f
   else f();
 }
 static void report(const std::string &err) {
-  if (!err.empty() && g_host.dialog) g_host.dialog(_("Power"), err, {{"OK", nullptr}});
+  if (!err.empty() && g_host.dialog) g_host.dialog(plat::GURU_TITLE, err, {{"OK", nullptr}});
 }
 
 void PowerApplet::act(Fl_Widget *, void *d) {

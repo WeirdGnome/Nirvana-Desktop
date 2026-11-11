@@ -1,5 +1,7 @@
 # Nirvana Desktop
 
+<img src="docs/img/logo.png" alt="Nirvana Desktop logo" width="160" align="right">
+
 *[Polska wersja: README.pl.md](README.pl.md)*
 
 A lightweight desktop environment for Linux (based on a minimal Devuan) in the spirit
@@ -37,7 +39,7 @@ on the desktop. Written in C++ and FLTK 1.4.
 
 Unpack the sources and run the installer:
 
-    tar xzf nirvana-desktop-0.0.31.tar.gz && cd nirvana-desktop
+    tar xzf nirvana-desktop-0.0.32.tar.gz && cd nirvana-desktop
     sudo ./install.sh                 # or: sudo ./install.sh --login-screen
 
 The installer:
@@ -191,6 +193,8 @@ Another system font (for example a free bitmap-style one) can be set with `NIRVA
   folders are `Gry`, `Grafika`… – existing folders are kept when the language changes.
 
   ![Two versions of a game side by side](docs/img/games.png)
+- **The right processor**: an AppImage built for another processor (e.g. ARM64 on an x86-64
+  computer) is not installed or started - the error window says which version to download.
 - **Missing system libraries**: before starting, Rambler reads the ELF headers of the
   application (AppRun, `usr/bin`, the Qt X11 plugin `libqxcb.so` and the libraries they pull in)
   and checks which libraries are neither inside the AppImage nor in the system. Qt 6 programs
@@ -848,6 +852,15 @@ result goes to `gl_FragColor`. The first comment line is the description in the 
 
 Another compositor (picom, compton) cannot run at the same time. Without graphics acceleration
 (e.g. in a virtual machine, llvmpipe) animated effects use a lot of CPU.
+
+## Error windows
+
+Errors (a file that cannot be opened, a disk, the Trash, copying, an AppImage for another
+processor…) come in a window titled **Guru Meditation**: red text in a black box with a blinking
+red frame and a guru number made from the message (`#00000010.6718A071`) - a nod to the error
+screens of the 1980s home computers. Questions and notices keep the ordinary window.
+
+![Guru Meditation](docs/img/guru.png)
 
 ## Languages
 

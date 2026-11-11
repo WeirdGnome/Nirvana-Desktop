@@ -501,7 +501,60 @@ static fs::path find_appdir(const fs::path &tmp) {
   return {};
 }
 
+// --- the processor the application is made for ---------------------------------------
+static std::string machine_name(int m) {
+  switch (m) {
+    case EM_X86_64: return "x86-64 (amd64)";
+    case EM_386: return "x86 (i386, 32-bit)";
+    case EM_AARCH64: return "ARM64 (aarch64)";
+    case EM_ARM: return "ARM (armhf, 32-bit)";
+    case EM_RISCV: return "RISC-V";
+    case EM_PPC64: return "PowerPC 64";
+    case EM_S390: return "s390x";
+#ifdef EM_LOONGARCH
+    case EM_LOONGARCH: return "LoongArch";
+#endif
+  }
+  return "#" + std::to_string(m);
+}
+
+static int host_machine() {
+#if defined(__x86_64__)
+  return EM_X86_64;
+#elif defined(__i386__)
+  return EM_386;
+#elif defined(__aarch64__)
+  return EM_AARCH64;
+#elif defined(__arm__)
+  return EM_ARM;
+#elif defined(__riscv)
+  return EM_RISCV;
+#elif defined(__powerpc64__)
+  return EM_PPC64;
+#else
+  return 0;
+#endif
+}
+
+std::string arch_problem(const std::string &path) {
+  // the runtime at the start of the AppImage is built for the same processor as the application
+  int fd = open(path.c_str(), O_RDONLY | O_CLOEXEC);
+  if (fd < 0) return "";
+  unsigned char h[20] = {};
+  ssize_t n = read(fd, h, sizeof h);
+  close(fd);
+  if (n < 20 || memcmp(h, ELFMAG, SELFMAG)) return _("This file is not an AppImage (it is not a Linux program).");
+  int m = h[EI_DATA] == ELFDATA2MSB ? (h[18] << 8 | h[19]) : (h[18] | h[19] << 8);
+  int host = host_machine();
+  if (!host || m == host) return "";
+  // a 32-bit x86 program on a 64-bit x86 computer can run with the i386 libraries
+  if (m == EM_386 && host == EM_X86_64) return "";
+  return plat::fmt(_("This application is made for %1 processors, but this computer has %2.\n"
+                     "Download the AppImage for %2 from the author's page."), machine_name(m), machine_name(host));
+}
+
 std::string install(const std::string &path, const std::string &home) {
+  if (std::string a = arch_problem(path); !a.empty()) return a;
   fs::path dir = install_dir(path, home), tmp = dir.string() + ".tmp";
   std::error_code ec;
   fs::create_directories(dir.parent_path(), ec);

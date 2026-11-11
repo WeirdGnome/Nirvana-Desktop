@@ -554,7 +554,7 @@ public:
     if (!n || !*n) return;
     std::string p = join(cur, n);
     if (mkdir(p.c_str(), 0755)) {
-      fl_alert("%s", fmt(_("The folder could not be created: %1"), strerror(errno)).c_str());
+      guru_alert(fmt(_("The folder could not be created: %1"), strerror(errno)));
       return;
     }
     go(p);
@@ -568,7 +568,7 @@ public:
       std::string p = normalize(n, cur);
       if (is_dir(p)) { go(p); name_in->value(""); return; }
       if (!is_dir(parent_of(p))) {
-        fl_alert("%s", fmt(_("The folder %1 does not exist."), parent_of(p)).c_str());
+        guru_alert(fmt(_("The folder %1 does not exist."), parent_of(p)));
         return;
       }
       if (!access(p.c_str(), F_OK)) {

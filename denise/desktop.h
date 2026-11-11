@@ -304,6 +304,7 @@ private:
   } drag_;
   int icon_drop_ = -1;            // the desktop icon highlighted as the drop target
   std::vector<std::string> clipboard_;   // paths copied with Icons > Copy
+  void guru(const std::string &text);   // an error window: "Guru Meditation"
   void dialog(const std::string &title, const std::string &text,
               std::vector<std::pair<std::string, std::function<void()>>> buttons);
   static void dialog_cb(Fl_Widget *b, void *idx);

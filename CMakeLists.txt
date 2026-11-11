@@ -218,6 +218,10 @@ else()
   message(WARNING "PAM not found - nirvana-lock is not built (Devuan: libpam0g-dev)")
 endif()
 
+# tools: the logo sheet (cmake --build . --target logo-sheet), not installed
+add_executable(logo-sheet EXCLUDE_FROM_ALL tools/logo-sheet.cxx)
+target_link_libraries(logo-sheet PRIVATE nirvana-platinum)
+
 # Everything in the "nirvana" component - the .deb package does not take FLTK files
 # (FetchContent adds its own install rules for headers and libraries).
 install(TARGETS nirvana-denise nirvana-insight nirvana-alice nirvana-shell RUNTIME DESTINATION bin COMPONENT nirvana)
