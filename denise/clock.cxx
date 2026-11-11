@@ -313,7 +313,7 @@ public:
 
   int needed_width() const {
     fl_font(FONT_SYSTEM, SIZE_SYSTEM);
-    int wdt = (int)fl_width(text().c_str()) + 18;
+    int wdt = (int)fl_width(text().c_str()) + 10;
     bool p;
     int k;
     std::string t = tool_text(&p, &k);
@@ -329,7 +329,7 @@ public:
     Fl_Color c = open ? SEL_TEXT : TEXT;
     fl_font(FONT_SYSTEM, SIZE_SYSTEM);
     std::string t = text();
-    int tx = x() + w() - 9 - (int)fl_width(t.c_str());
+    int tx = x() + w() - 6 - (int)fl_width(t.c_str());
     fl_color(c);
     fl_draw(t.c_str(), tx, y() + 14);
     bool paused;

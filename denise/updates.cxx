@@ -384,7 +384,7 @@ public:
       std::string n = g_updates.size() > 99 ? "99+" : std::to_string(g_updates.size());
       fl_font(FONT_SYSTEM, 9);
       int bw = std::max(11, (int)fl_width(n.c_str()) + 5), bh = 11;
-      int bx = x() + w() - bw - 1, by = y() + 1;
+      int bx = x() + 4 + 15 - 5, by = y() + 1;   // over the top right corner of the parcel
       fl_color(fl_rgb_color(0xE5, 0x48, 0x3F));
       fl_pie(bx, by, bh, bh, 90, 270);
       fl_pie(bx + bw - bh, by, bh, bh, 270, 450);
@@ -394,7 +394,7 @@ public:
     } else if (g_state == State::Failed) {
       fl_color(fl_rgb_color(0xE5, 0x48, 0x3F));
       fl_font(FONT_SYSTEM, 10);
-      fl_draw("!", x() + w() - 7, y() + 11);
+      fl_draw("!", x() + 4 + 15 + 1, y() + 11);
     }
     fl_pop_clip();
   }
@@ -504,6 +504,7 @@ public:
   void sync() {
     tooltip_text();
     redraw();
+    if (w() != updates_width() && current_host().relayout) current_host().relayout();
     if (pop && pop->shown()) {
       int oldw = pop->w();
       build();
@@ -526,6 +527,19 @@ static void tick(void *) {
     if (g_upd->bar) g_upd->bar->redraw();
   }
   Fl::repeat_timeout(0.15, tick);
+}
+
+int updates_width() {
+  int wdt = 4 + 15 + 4;
+  if (g_state == State::Available && !g_updates.empty()) {   // the badge sticks out on the right
+    std::string n = g_updates.size() > 99 ? "99+" : std::to_string(g_updates.size());
+    fl_font(FONT_SYSTEM, 9);
+    int bw = std::max(11, (int)fl_width(n.c_str()) + 5);
+    wdt = std::max(wdt, 4 + 15 - 5 + bw + 1);
+  } else if (g_state == State::Failed) {
+    wdt += 4;
+  }
+  return wdt;
 }
 
 bool updates_supported() {

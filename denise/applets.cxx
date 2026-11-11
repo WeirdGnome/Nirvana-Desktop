@@ -391,7 +391,7 @@ public:
     y += 10;
     auto *pj = check(10, y, W - 20, _("Presentation Mode"), power::projection(), [](bool on) {
       power::set_projection(on);
-      if (g_pow) g_pow->redraw();
+      if (g_pow) g_pow->sync();
     });
     pj->labelfont(FONT_SYSTEM);
     pj->labelsize(SIZE_SYSTEM);
@@ -428,6 +428,7 @@ public:
 
   void sync() {
     redraw();
+    if (w() != power_width() && g_host.relayout) g_host.relayout();
     if (!pop || !pop->shown()) return;
     if (bat_label) {
       std::string head = g_power.percent >= 0 ? plat::fmt(_("Battery: %1"), power::battery_text(g_power)) : std::string(_("AC power"));
@@ -604,6 +605,13 @@ static void power_tick(void *) {
 
 const Host &current_host() { return g_host; }
 
+int power_width() {
+  int wdt = g_power.percent >= 0 ? 23 : 14;
+  if (g_power.percent >= 0 && !g_power.charging) wdt += g_power.on_ac ? 9 : 8;
+  if (power::projection()) wdt += 14;
+  return wdt + 8;
+}
+
 void init(const Host &host) {
   g_host = host;
   if (host.nirvana_session) power::restore_profile();   // kernel profiles are forgotten at a restart
@@ -617,6 +625,7 @@ void init(const Host &host) {
   Fl::add_system_handler(x_events, nullptr);
   apply_settings();
   g_power = power::query();
+  if (g_host.relayout) g_host.relayout();   // the battery icon has its width now
   Fl::add_timeout(20.0, power_tick);
   audio::watch([] { if (g_vol) g_vol->refresh(false); });
 }

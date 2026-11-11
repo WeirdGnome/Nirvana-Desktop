@@ -24,12 +24,16 @@ struct Host {
   std::function<void()> logout;              // end of the session
   std::function<void()> before_shutdown;     // saving the window state before shutting down
   std::function<void()> open_power_panel;    // the Power panel (nirvana-alice)
-  std::function<void(const char *)> open_panel;   // any panel of nirvana-alice ("datetime"...)
+  std::function<void(const char *)> open_panel;
+  std::function<void()> relayout;            // an applet changed its width: lay the menu bar out again   // any panel of nirvana-alice ("datetime"...)
   bool nirvana_session = true;                // under Insight: Nirvana Desktop handles idleness
 };
 
 Fl_Widget *make_volume(int X, int Y, int W, int H);
 Fl_Widget *make_power(int X, int Y, int W, int H);
+// The widths the applets need now (icon + 4 px on each side, so all gaps are equal)
+int power_width();
+int updates_width();
 // System updates (updates.cxx): the number of updates on the icon, installing with progress.
 Fl_Widget *make_updates(int X, int Y, int W, int H);
 bool updates_supported();

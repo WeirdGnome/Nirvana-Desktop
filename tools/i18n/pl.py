@@ -791,4 +791,7 @@ T = {
     'Fr': 'Pt',
     'Sa': 'So',
     '%2 %1': '%1 %2',
+    '%1 used by Nirvana': '%1 zajęte przez Nirvanę',
+    'Nirvana %1': 'Nirvana %1',
+    'Nirvana Desktop: %1': 'Nirvana Desktop: %1',
 }

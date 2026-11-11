@@ -26,6 +26,9 @@
 #include <csignal>
 #include <cstring>
 #include <ctime>
+#include <dirent.h>
+#include <map>
+#include <vector>
 #include <filesystem>
 #include <fstream>
 #include <sys/stat.h>
@@ -89,6 +92,7 @@ public:
   }
 
   // Below 1 GB in MB, above in GB (up to 10 GB with one decimal): "512MB", "3.2GB", "16GB"
+  static std::string fmt1(double v) { char b[32]; snprintf(b, sizeof b, "%.1f", v); return b; }
   static std::string size_text(unsigned long long mb) {
     char b[32];
     if (mb < 1024) snprintf(b, sizeof b, "%lluMB", mb);
@@ -96,6 +100,51 @@ public:
     else snprintf(b, sizeof b, "%.0fGB", mb / 1024.0);
     if (plat::language() == "pl") for (char *c = b; *c; c++) if (*c == '.') *c = ',';
     return b;
+  }
+
+  // Memory used by Nirvana Desktop itself: all nirvana-* processes of this user (window
+  // manager, desktop, terminals, panels, shader). PSS - shared libraries counted in parts,
+  // so the sum is the real cost; RSS when PSS cannot be read.
+  static unsigned long long nirvana_kb(std::vector<std::pair<std::string, unsigned long long>> &parts) {
+    unsigned long long sum = 0;
+    std::map<std::string, unsigned long long> by_name;
+    uid_t me = getuid();
+    DIR *d = opendir("/proc");
+    if (!d) return 0;
+    while (dirent *e = readdir(d)) {
+      if (e->d_name[0] < '1' || e->d_name[0] > '9') continue;
+      std::string base = std::string("/proc/") + e->d_name;
+      struct stat st;
+      if (stat(base.c_str(), &st) || st.st_uid != me) continue;
+      char comm[64] = "";
+      if (FILE *f = fopen((base + "/comm").c_str(), "r")) {
+        if (!fgets(comm, sizeof comm, f)) comm[0] = 0;
+        fclose(f);
+      }
+      std::string name = comm;
+      while (!name.empty() && name.back() == '\n') name.pop_back();
+      if (name.rfind("nirvana-", 0) != 0) continue;
+      unsigned long long kb = 0, v;
+      if (FILE *f = fopen((base + "/smaps_rollup").c_str(), "r")) {
+        char line[128];
+        while (fgets(line, sizeof line, f))
+          if (sscanf(line, "Pss: %llu", &v) == 1) { kb = v; break; }
+        fclose(f);
+      }
+      if (!kb) {
+        if (FILE *f = fopen((base + "/statm").c_str(), "r")) {
+          unsigned long long size, res;
+          if (fscanf(f, "%llu %llu", &size, &res) == 2) kb = res * (unsigned long long)sysconf(_SC_PAGESIZE) / 1024;
+          fclose(f);
+        }
+      }
+      sum += kb;
+      by_name[name] += kb;
+    }
+    closedir(d);
+    parts.assign(by_name.begin(), by_name.end());
+    std::sort(parts.begin(), parts.end(), [](auto &a, auto &b) { return a.second > b.second; });
+    return sum;
   }
 
   void sample() {
@@ -126,8 +175,19 @@ public:
                                : plat::fmt(_("%1 used memory of %2"), mu, mt);
     std::string brief = disk_ok ? plat::fmt(_("memory %1/%2   disk %3/%4"), mu, mt, du, dt)
                                 : plat::fmt(_("memory %1/%2"), mu, mt);
+    std::vector<std::pair<std::string, unsigned long long>> parts;
+    unsigned long long nk = nirvana_kb(parts);
+    if (nk) {
+      std::string nm = size_text((nk + 512) / 1024);
+      full += "     " + plat::fmt(_("%1 used by Nirvana"), nm);
+      brief += "   " + plat::fmt(_("Nirvana %1"), nm);
+    }
     std::string tip = plat::fmt(_("Memory: %1 free of %2"), group(mem_kb / 1024) + " MB", group(mem_total / 1024) + " MB");
     if (disk_ok) tip += "\n" + plat::fmt(_("Disk (%1): %2 free of %3"), disk_, gb(disk_mb), gb(disk_total));
+    if (nk) {
+      tip += "\n" + plat::fmt(_("Nirvana Desktop: %1"), plat::decimal(fmt1((nk) / 1024.0)) + " MB");
+      for (auto &[n, kb] : parts) tip += "\n   " + n + "  " + plat::decimal(fmt1(kb / 1024.0)) + " MB";
+    }
     if (full != full_ || brief != brief_) { full_ = full; brief_ = brief; redraw(); }
     if (tip != tip_) { tip_ = tip; tooltip(tip_.c_str()); }
   }
@@ -547,6 +607,7 @@ Desktop::Desktop(int W, int H, const std::string &home)
     h.before_shutdown = [this] { for (auto *w : wins_) if (w->pane) remember(w, true); };
     h.open_power_panel = [this] { spawn({alice_exe(), "power"}); };
     h.open_panel = [this](const char *p) { spawn({alice_exe(), p}); };
+    h.relayout = [this] { layout_bar(); redraw(); };
     h.nirvana_session = !csd_mode;
     applets::init(h);
   }
@@ -567,10 +628,10 @@ void Desktop::layout_bar() {
     wd->resize(rx, 0, ww, MENUBAR_H);
   };
   put(extras_, extras_->w());
-  put(net_menu_, 26);
-  put(vol_w_, 26);
-  put(pow_w_, 54);
-  put(upd_w_, 30);
+  put(net_menu_, 24);
+  put(vol_w_, 24);
+  put(pow_w_, applets::power_width());
+  put(upd_w_, applets::updates_width());
   int tw = tray::width();
   if (tray_w_) { put(tray_w_, tw); if (tw) tray_w_->show(); else tray_w_->hide(); }
   int mx = menu_->w();

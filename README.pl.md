@@ -34,7 +34,7 @@ Napisane w C++ i FLTK 1.4.
 
 Rozpakuj źródła i uruchom instalator:
 
-    tar xzf nirvana-desktop-0.0.15.tar.gz && cd nirvana-desktop
+    tar xzf nirvana-desktop-0.0.16.tar.gz && cd nirvana-desktop
     sudo ./install.sh                 # albo: sudo ./install.sh --login-screen
 
 Instalator:
@@ -303,12 +303,15 @@ okno biurka nie przyjmuje fokusu, żeby klik w pasek menu nie zmieniał aktywnej
 
 ### Pasek menu
 
-Po prawej, ciasno przy krawędzi: zasilanie, głośność, sieć, zegar i przełącznik aplikacji
-(gadżet głębi). Na środku, jak na paskach ekranu starych komputerów domowych, widać zajętą pamięć
+Po prawej, ciasno przy krawędzi i z równymi odstępami (każda ikona ma po 4 px z obu stron i własną
+szerokość): aktualizacje, zasilanie, głośność, sieć, zegar i przełącznik aplikacji (gadżet głębi). Na środku, jak na paskach ekranu starych komputerów domowych, widać zajętą pamięć
 i zajęte miejsce na dysku z katalogiem domowym, każde z całości, np.
-`512MB zajętej pamięci z 16GB     40GB zajętego dysku z 512GB` (poniżej 1 GB w MB, poniżej 10 GB
-z jednym miejscem po przecinku). Wartości odświeżają się co 3 sekundy, a podpowiedź pokazuje
-ilości wolne. Na wąskim ekranie napis się skraca.
+`512MB zajętej pamięci z 16GB     40GB zajętego dysku z 512GB     38MB zajęte przez Nirvanę`
+(poniżej 1 GB w MB, poniżej 10 GB z jednym miejscem po przecinku). Ostatnia wartość to pamięć
+samego Nirvana Desktop: wszystkie procesy `nirvana-*` użytkownika (menedżer okien, biurko,
+terminale, panele, shader), liczone jako PSS – biblioteki współdzielone są dzielone między
+procesy, więc to rzeczywisty koszt. Wartości odświeżają się co 3 sekundy; podpowiedź pokazuje
+ilości wolne i pamięć każdego programu Nirvany. Na wąskim ekranie napis się skraca.
 
 ![Pasek menu](docs/img/menubar.png)
 

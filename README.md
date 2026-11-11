@@ -35,7 +35,7 @@ on the desktop. Written in C++ and FLTK 1.4.
 
 Unpack the sources and run the installer:
 
-    tar xzf nirvana-desktop-0.0.15.tar.gz && cd nirvana-desktop
+    tar xzf nirvana-desktop-0.0.16.tar.gz && cd nirvana-desktop
     sudo ./install.sh                 # or: sudo ./install.sh --login-screen
 
 The installer:
@@ -303,11 +303,15 @@ desktop window does not take focus, so clicking the menu bar does not change the
 
 ### Menu bar
 
-On the right, packed against the edge: power, volume, network, the clock and the application
-switcher (depth gadget). In the middle, like the screen title bars of old home computers, the used
+On the right, packed against the edge with equal gaps (each icon has 4 px on each side and its
+own width): updates, power, volume, network, the clock and the application switcher (depth
+gadget). In the middle, like the screen title bars of old home computers, the used
 memory and the used space on the disk holding the home folder, each out of the total, e.g.
-`512MB used memory of 16GB     40GB used disk of 512GB` (below 1 GB in MB, below 10 GB with one
-decimal). The values refresh every 3 seconds, and the tooltip shows the free amounts. On a narrow screen the
+`512MB used memory of 16GB     40GB used disk of 512GB     38MB used by Nirvana` (below 1 GB in MB,
+below 10 GB with one decimal). The last value is the memory of Nirvana Desktop itself: all
+`nirvana-*` processes of the user (window manager, desktop, terminals, panels, shader), counted
+as PSS – shared libraries split between the processes, so it is the real cost. The values refresh
+every 3 seconds; the tooltip shows the free amounts and the memory of each Nirvana program. On a narrow screen the
 text gets shorter.
 
 ![Menu bar](docs/img/menubar.png)
