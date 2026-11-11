@@ -3,7 +3,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Nirvana Desktop 0.1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-11 20:37+0000\n"
+"POT-Creation-Date: 2026-11-11 20:38+0000\n"
 "PO-Revision-Date: 2026-11-09 13:00+0000\n"
 "Last-Translator: Nirvana Desktop\n"
 "Language-Team: Polish\n"
@@ -11,8 +11,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=3; plural=(n==1 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 "
-"|| n%100>=20) ? 1 : 2);\n"
+"Plural-Forms: nplurals=3; plural=(n==1 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
 
 #: alice/appearance.cxx:92
 msgid "Window"
@@ -187,7 +186,7 @@ msgstr "Animacje okien"
 #: denise/desktop.cxx:1707 denise/desktop.cxx:1807 denise/desktop.cxx:2170
 #: denise/desktop.cxx:2724 denise/desktop.cxx:3160 denise/desktop.cxx:3172
 #: denise/menus.cxx:417 denise/menus.cxx:736 denise/menus.cxx:845
-#: denise/menus.cxx:850 denise/updates.cxx:273 platinum/filedialog.cxx:341
+#: denise/menus.cxx:850 denise/updates.cxx:272 platinum/filedialog.cxx:341
 #: platinum/filedialog.cxx:575 platinum/platinum.cxx:228
 #: platinum/platinum.cxx:1024 polkit/nirvana-polkit-agent.cxx:158
 #: shell/main.cxx:615
@@ -900,8 +899,8 @@ msgid ""
 "Presentation mode (battery menu in the menu bar) suspends screen blanking, "
 "locking and sleep."
 msgstr ""
-"Tryb projekcji (menu baterii na pasku menu) wstrzymuje wygaszanie, blokadę i "
-"usypianie."
+"Tryb projekcji (menu baterii na pasku menu) wstrzymuje wygaszanie, blokadę i"
+" usypianie."
 
 #: alice/power.cxx:134
 msgid ""
@@ -1022,7 +1021,7 @@ msgstr ""
 "sterownika; starsze potrzebują sterownika producenta."
 
 #: alice/printers.cxx:164 denise/desktop.cxx:1708 denise/desktop.cxx:1809
-#: denise/updates.cxx:273
+#: denise/updates.cxx:272
 msgid "Install"
 msgstr "Zainstaluj"
 
@@ -1032,8 +1031,8 @@ msgstr "Bez sterownika (IPP Everywhere / AirPrint) – zalecane"
 
 #: alice/printers.cxx:234
 msgid ""
-"No driver for %1 is installed. Install the drivers for this manufacturer and "
-"the list fills in."
+"No driver for %1 is installed. Install the drivers for this manufacturer and"
+" the list fills in."
 msgstr ""
 "Nie ma zainstalowanego sterownika dla %1. Zainstaluj sterowniki tego "
 "producenta, a lista się uzupełni."
@@ -1252,7 +1251,8 @@ msgid "Scanlines"
 msgstr "Linie kineskopu"
 
 #: alice/shader.cxx:38
-msgid "Only the dark lines of a tube screen; the picture stays flat and sharp."
+msgid ""
+"Only the dark lines of a tube screen; the picture stays flat and sharp."
 msgstr "Tylko ciemne linie kineskopu; obraz zostaje płaski i ostry."
 
 #: alice/shader.cxx:39
@@ -1293,7 +1293,8 @@ msgstr "Światło nocne"
 
 #: alice/shader.cxx:43
 msgid "Warmer colors with less blue light, for the evening."
-msgstr "Cieplejsze kolory z mniejszą ilością niebieskiego światła, na wieczór."
+msgstr ""
+"Cieplejsze kolory z mniejszą ilością niebieskiego światła, na wieczór."
 
 #: alice/shader.cxx:44
 msgid "VHS tape"
@@ -1301,7 +1302,8 @@ msgstr "Kaseta VHS"
 
 #: alice/shader.cxx:44
 msgid ""
-"Color bleeding, a shaky picture, noise and a rolling tracking band. Animated."
+"Color bleeding, a shaky picture, noise and a rolling tracking band. "
+"Animated."
 msgstr ""
 "Rozmyte kolory, drżący obraz, szum i przesuwający się pas zakłóceń. "
 "Animowany."
@@ -1351,10 +1353,11 @@ msgid "LCD"
 msgstr "LCD"
 
 #: alice/shader.cxx:49
-msgid "A coarse liquid crystal panel with visible red, green and blue stripes."
+msgid ""
+"A coarse liquid crystal panel with visible red, green and blue stripes."
 msgstr ""
-"Gruboziarnisty panel ciekłokrystaliczny z widocznymi czerwonymi, zielonymi i "
-"niebieskimi paskami."
+"Gruboziarnisty panel ciekłokrystaliczny z widocznymi czerwonymi, zielonymi i"
+" niebieskimi paskami."
 
 #: alice/shader.cxx:50
 msgid "Thermal camera"
@@ -1417,8 +1420,8 @@ msgid ""
 "Effects use OpenGL. Without graphics acceleration animated effects can be "
 "slow."
 msgstr ""
-"Efekty używają OpenGL. Bez akceleracji grafiki efekty animowane mogą działać "
-"wolno."
+"Efekty używają OpenGL. Bez akceleracji grafiki efekty animowane mogą działać"
+" wolno."
 
 #: alice/shader.cxx:225
 msgid "Full-screen effect"
@@ -1842,14 +1845,16 @@ msgid ""
 "The full text of the licence follows (only the English original is legally "
 "binding)."
 msgstr ""
-"Poniżej pełny tekst licencji (wiążący prawnie jest tylko oryginał angielski)."
+"Poniżej pełny tekst licencji (wiążący prawnie jest tylko oryginał "
+"angielski)."
 
 #: denise/about.cxx:476
 msgid ""
-"The licence file was not found. See https://www.gnu.org/licenses/gpl-3.0.html"
+"The licence file was not found. See "
+"https://www.gnu.org/licenses/gpl-3.0.html"
 msgstr ""
-"Nie znaleziono pliku licencji. Zobacz https://www.gnu.org/licenses/gpl-3.0."
-"html"
+"Nie znaleziono pliku licencji. Zobacz "
+"https://www.gnu.org/licenses/gpl-3.0.html"
 
 #: denise/about.cxx:485
 msgid ""
@@ -1906,8 +1911,8 @@ msgid ""
 "the desktops of the late 1980s and the 1990s: bevelled gray windows, a menu "
 "bar at the top, icons on the desktop"
 msgstr ""
-"pulpity końca lat 80. i lat 90.: szare okna z fazowaniem, pasek menu u góry, "
-"ikony na biurku"
+"pulpity końca lat 80. i lat 90.: szare okna z fazowaniem, pasek menu u góry,"
+" ikony na biurku"
 
 #: denise/about.cxx:511
 msgid ""
@@ -2373,8 +2378,8 @@ msgid ""
 "Nirvana Desktop does not know which packages provide them; without them the "
 "application may not start."
 msgstr ""
-"Nirvana nie wie, które pakiety je zawierają; bez nich aplikacja może się nie "
-"uruchomić."
+"Nirvana nie wie, które pakiety je zawierają; bez nich aplikacja może się nie"
+" uruchomić."
 
 #: denise/desktop.cxx:1805
 msgid "They can be installed now (%1)."
@@ -2676,8 +2681,8 @@ msgstr "Duplikuj"
 msgid "Copy"
 msgstr "Kopiuj"
 
-#: denise/menus.cxx:342 platinum/filedialog.cxx:298 platinum/filedialog.cxx:553
-#: platinum/platinum.cxx:1036
+#: denise/menus.cxx:342 platinum/filedialog.cxx:298
+#: platinum/filedialog.cxx:553 platinum/platinum.cxx:1036
 msgid "New Folder"
 msgstr "Nowy folder"
 
@@ -2900,8 +2905,8 @@ msgstr "Wszystkie dane na tym dysku zostaną usunięte!"
 
 #: denise/menus.cxx:842
 msgid ""
-"FAT32 (USB stick - works everywhere)|exFAT (large files, Windows and Mac)|"
-"ext4 (Linux)|NTFS (Windows)"
+"FAT32 (USB stick - works everywhere)|exFAT (large files, Windows and "
+"Mac)|ext4 (Linux)|NTFS (Windows)"
 msgstr ""
 "FAT32 (pendrive - działa wszędzie)|exFAT (duże pliki, Windows i Mac)|ext4 "
 "(Linux)|NTFS (Windows)"
@@ -2965,108 +2970,104 @@ msgstr "Nie można uruchomić sprawdzania."
 msgid "Refreshing the package lists…"
 msgstr "Odświeżanie list pakietów…"
 
-#: denise/updates.cxx:184 denise/updates.cxx:347
+#: denise/updates.cxx:184 denise/updates.cxx:346
 msgid "Installing updates…"
 msgstr "Instalowanie aktualizacji…"
 
-#: denise/updates.cxx:185
-msgid "Updating Flatpak applications…"
-msgstr "Aktualizowanie aplikacji Flatpak…"
-
-#: denise/updates.cxx:234
+#: denise/updates.cxx:233
 msgid "nirvana-update-helper is missing."
 msgstr "Brak programu nirvana-update-helper."
 
-#: denise/updates.cxx:240
+#: denise/updates.cxx:239
 msgid "Waiting for permission…"
 msgstr "Czekanie na zgodę…"
 
-#: denise/updates.cxx:255
+#: denise/updates.cxx:254
 msgid "Installing was cancelled or not permitted."
 msgstr "Instalowanie anulowano albo nie zezwolono na nie."
 
-#: denise/updates.cxx:256
+#: denise/updates.cxx:255
 msgid "The package manager ended with error %1."
 msgstr "Menedżer pakietów zakończył się błędem %1."
 
-#: denise/updates.cxx:262
+#: denise/updates.cxx:261
 msgid "pkexec is missing - install polkit."
 msgstr "Brak pkexec – zainstaluj polkit."
 
-#: denise/updates.cxx:269
+#: denise/updates.cxx:268
 msgid "Install %1 update?"
 msgid_plural "Install %1 updates?"
 msgstr[0] "Zainstalować %1 aktualizację?"
 msgstr[1] "Zainstalować %1 aktualizacje?"
 msgstr[2] "Zainstalować %1 aktualizacji?"
 
-#: denise/updates.cxx:271
+#: denise/updates.cxx:270
 msgid ""
-"You can keep working meanwhile. Programs that are running may need a restart "
-"afterwards."
+"You can keep working meanwhile. Programs that are running may need a restart"
+" afterwards."
 msgstr ""
 "W tym czasie możesz dalej pracować. Uruchomione programy mogą potem wymagać "
 "ponownego uruchomienia."
 
-#: denise/updates.cxx:273 denise/updates.cxx:350
+#: denise/updates.cxx:272 denise/updates.cxx:349
 msgid "Software Update"
 msgstr "Aktualizacja oprogramowania"
 
-#: denise/updates.cxx:340
+#: denise/updates.cxx:339
 msgid "Checking for updates…"
 msgstr "Szukanie aktualizacji…"
 
-#: denise/updates.cxx:341
+#: denise/updates.cxx:340
 msgid "The system is up to date"
 msgstr "System jest aktualny"
 
-#: denise/updates.cxx:343
+#: denise/updates.cxx:342
 msgid "%1 update available"
 msgid_plural "%1 updates available"
 msgstr[0] "Dostępna %1 aktualizacja"
 msgstr[1] "Dostępne %1 aktualizacje"
 msgstr[2] "Dostępnych %1 aktualizacji"
 
-#: denise/updates.cxx:346
+#: denise/updates.cxx:345
 msgid "Installing updates… %1%"
 msgstr "Instalowanie aktualizacji… %1%"
 
-#: denise/updates.cxx:348
+#: denise/updates.cxx:347
 msgid "Updates installed"
 msgstr "Aktualizacje zainstalowane"
 
-#: denise/updates.cxx:349
+#: denise/updates.cxx:348
 msgid "Updating failed"
 msgstr "Aktualizacja nie powiodła się"
 
-#: denise/updates.cxx:427
+#: denise/updates.cxx:426
 msgid "Restart the computer to finish the update."
 msgstr "Uruchom komputer ponownie, aby dokończyć aktualizację."
 
-#: denise/updates.cxx:428
+#: denise/updates.cxx:427
 msgid "Last checked at %1 (%2)"
 msgstr "Ostatnio sprawdzono o %1 (%2)"
 
-#: denise/updates.cxx:437
+#: denise/updates.cxx:436
 msgid "Note: "
 msgstr "Uwaga: "
 
-#: denise/updates.cxx:457
+#: denise/updates.cxx:456
 msgid "…and %1 more"
 msgid_plural "…and %1 more"
 msgstr[0] "…i jeszcze %1"
 msgstr[1] "…i jeszcze %1"
 msgstr[2] "…i jeszcze %1"
 
-#: denise/updates.cxx:473
+#: denise/updates.cxx:472
 msgid "Install Updates…"
 msgstr "Zainstaluj aktualizacje…"
 
-#: denise/updates.cxx:474
+#: denise/updates.cxx:473
 msgid "Check for Updates"
 msgstr "Sprawdź aktualizacje"
 
-#: denise/updates.cxx:475
+#: denise/updates.cxx:474
 msgid "Show Log"
 msgstr "Pokaż dziennik"
 
@@ -3314,11 +3315,11 @@ msgstr "Nie można odczytać pliku."
 
 #: net/net.cxx:436
 msgid ""
-"Unknown format. Supported: WireGuard (.conf), OpenVPN (.ovpn), Cisco VPNC (."
-"pcf)."
-msgstr ""
-"Nieznany format. Obsługiwane: WireGuard (.conf), OpenVPN (.ovpn), Cisco VPNC "
+"Unknown format. Supported: WireGuard (.conf), OpenVPN (.ovpn), Cisco VPNC "
 "(.pcf)."
+msgstr ""
+"Nieznany format. Obsługiwane: WireGuard (.conf), OpenVPN (.ovpn), Cisco VPNC"
+" (.pcf)."
 
 #: net/net.cxx:440
 msgid ""
@@ -3329,11 +3330,11 @@ msgstr ""
 
 #: net/net.cxx:449
 msgid ""
-"A WireGuard file name must be a short interface name (e.g. wg0.conf, office."
-"conf)."
+"A WireGuard file name must be a short interface name (e.g. wg0.conf, "
+"office.conf)."
 msgstr ""
-"Nazwa pliku WireGuard musi być krótką nazwą interfejsu (np. wg0.conf, firma."
-"conf)."
+"Nazwa pliku WireGuard musi być krótką nazwą interfejsu (np. wg0.conf, "
+"firma.conf)."
 
 #: net/net.cxx:483
 msgid "Cannot create a temporary file."

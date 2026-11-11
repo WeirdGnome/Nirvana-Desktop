@@ -37,7 +37,7 @@ on the desktop. Written in C++ and FLTK 1.4.
 
 Unpack the sources and run the installer:
 
-    tar xzf nirvana-desktop-0.0.30.tar.gz && cd nirvana-desktop
+    tar xzf nirvana-desktop-0.0.31.tar.gz && cd nirvana-desktop
     sudo ./install.sh                 # or: sudo ./install.sh --login-screen
 
 The installer:
@@ -770,7 +770,6 @@ progress.
 | pacman (Arch) | `checkupdates` (pacman-contrib) | `pacman -Syu` |
 | zypper (openSUSE) | `zypper list-updates` | `zypper update` |
 | apk (Alpine), xbps (Void) | the local lists | `apk upgrade`, `xbps-install -Syu` |
-| Flatpak | `flatpak remote-ls --updates` | `flatpak update --system` |
 
 Checking never needs root: on apt the package lists are downloaded into the user's cache, so the
 system's lists are not touched (the idea of `checkupdates`). Installing runs

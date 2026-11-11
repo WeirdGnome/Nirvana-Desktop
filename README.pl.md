@@ -36,7 +36,7 @@ Napisane w C++ i FLTK 1.4.
 
 Rozpakuj źródła i uruchom instalator:
 
-    tar xzf nirvana-desktop-0.0.30.tar.gz && cd nirvana-desktop
+    tar xzf nirvana-desktop-0.0.31.tar.gz && cd nirvana-desktop
     sudo ./install.sh                 # albo: sudo ./install.sh --login-screen
 
 Instalator:
@@ -767,7 +767,6 @@ pokazują postęp.
 | pacman (Arch) | `checkupdates` (pacman-contrib) | `pacman -Syu` |
 | zypper (openSUSE) | `zypper list-updates` | `zypper update` |
 | apk (Alpine), xbps (Void) | lokalne listy | `apk upgrade`, `xbps-install -Syu` |
-| Flatpak | `flatpak remote-ls --updates` | `flatpak update --system` |
 
 Sprawdzanie nigdy nie wymaga roota: przy apt listy pakietów są pobierane do pamięci podręcznej
 użytkownika, więc listy systemu zostają nietknięte (pomysł z `checkupdates`). Instalacja uruchamia

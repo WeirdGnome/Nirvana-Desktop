@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Nirvana Desktop 0.1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-11 20:37+0000\n"
+"POT-Creation-Date: 2026-11-11 20:38+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -187,7 +187,7 @@ msgstr ""
 #: denise/desktop.cxx:1707 denise/desktop.cxx:1807 denise/desktop.cxx:2170
 #: denise/desktop.cxx:2724 denise/desktop.cxx:3160 denise/desktop.cxx:3172
 #: denise/menus.cxx:417 denise/menus.cxx:736 denise/menus.cxx:845
-#: denise/menus.cxx:850 denise/updates.cxx:273 platinum/filedialog.cxx:341
+#: denise/menus.cxx:850 denise/updates.cxx:272 platinum/filedialog.cxx:341
 #: platinum/filedialog.cxx:575 platinum/platinum.cxx:228
 #: platinum/platinum.cxx:1024 polkit/nirvana-polkit-agent.cxx:158
 #: shell/main.cxx:615
@@ -996,7 +996,7 @@ msgid ""
 msgstr ""
 
 #: alice/printers.cxx:164 denise/desktop.cxx:1708 denise/desktop.cxx:1809
-#: denise/updates.cxx:273
+#: denise/updates.cxx:272
 msgid "Install"
 msgstr ""
 
@@ -2861,103 +2861,99 @@ msgstr ""
 msgid "Refreshing the package lists…"
 msgstr ""
 
-#: denise/updates.cxx:184 denise/updates.cxx:347
+#: denise/updates.cxx:184 denise/updates.cxx:346
 msgid "Installing updates…"
 msgstr ""
 
-#: denise/updates.cxx:185
-msgid "Updating Flatpak applications…"
-msgstr ""
-
-#: denise/updates.cxx:234
+#: denise/updates.cxx:233
 msgid "nirvana-update-helper is missing."
 msgstr ""
 
-#: denise/updates.cxx:240
+#: denise/updates.cxx:239
 msgid "Waiting for permission…"
 msgstr ""
 
-#: denise/updates.cxx:255
+#: denise/updates.cxx:254
 msgid "Installing was cancelled or not permitted."
 msgstr ""
 
-#: denise/updates.cxx:256
+#: denise/updates.cxx:255
 msgid "The package manager ended with error %1."
 msgstr ""
 
-#: denise/updates.cxx:262
+#: denise/updates.cxx:261
 msgid "pkexec is missing - install polkit."
 msgstr ""
 
-#: denise/updates.cxx:269
+#: denise/updates.cxx:268
 msgid "Install %1 update?"
 msgid_plural "Install %1 updates?"
 msgstr[0] ""
 msgstr[1] ""
 
-#: denise/updates.cxx:271
+#: denise/updates.cxx:270
 msgid ""
 "You can keep working meanwhile. Programs that are running may need a restart "
 "afterwards."
 msgstr ""
 
-#: denise/updates.cxx:273 denise/updates.cxx:350
+#: denise/updates.cxx:272 denise/updates.cxx:349
 msgid "Software Update"
 msgstr ""
 
-#: denise/updates.cxx:340
+#: denise/updates.cxx:339
 msgid "Checking for updates…"
 msgstr ""
 
-#: denise/updates.cxx:341
+#: denise/updates.cxx:340
 msgid "The system is up to date"
 msgstr ""
 
-#: denise/updates.cxx:343
+#: denise/updates.cxx:342
 msgid "%1 update available"
 msgid_plural "%1 updates available"
 msgstr[0] ""
 msgstr[1] ""
 
-#: denise/updates.cxx:346
+#: denise/updates.cxx:345
 msgid "Installing updates… %1%"
 msgstr ""
 
-#: denise/updates.cxx:348
+#: denise/updates.cxx:347
 msgid "Updates installed"
 msgstr ""
 
-#: denise/updates.cxx:349
+#: denise/updates.cxx:348
 msgid "Updating failed"
 msgstr ""
 
-#: denise/updates.cxx:427
+#: denise/updates.cxx:426
 msgid "Restart the computer to finish the update."
 msgstr ""
 
-#: denise/updates.cxx:428
+#: denise/updates.cxx:427
 msgid "Last checked at %1 (%2)"
 msgstr ""
 
-#: denise/updates.cxx:437
+#: denise/updates.cxx:436
 msgid "Note: "
 msgstr ""
 
-#: denise/updates.cxx:457
+#: denise/updates.cxx:456
 msgid "…and %1 more"
 msgid_plural "…and %1 more"
 msgstr[0] ""
 msgstr[1] ""
 
-#: denise/updates.cxx:473
+#: denise/updates.cxx:472
 msgid "Install Updates…"
 msgstr ""
 
-#: denise/updates.cxx:474
+#: denise/updates.cxx:473
 msgid "Check for Updates"
 msgstr ""
 
-#: denise/updates.cxx:475
+#: denise/updates.cxx:474
 msgid "Show Log"
 msgstr ""
 

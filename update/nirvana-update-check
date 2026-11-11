@@ -2,7 +2,7 @@
 # Nirvana Desktop - looks for system updates WITHOUT root rights (used by the updates
 # applet in the menu bar). One line per item, fields separated by a tab:
 #   BACKEND <name>            the package manager: apt, dnf, pacman, zypper, apk, xbps, none
-#   PKG <name> <version>      an available update (flatpak applications too)
+#   PKG <name> <version>      an available update (system packages only, no Flatpak)
 #   WARN <text>               the package lists could not be refreshed - the result may be old
 #
 # How the lists are refreshed without root:
@@ -11,7 +11,6 @@
 #   dnf     "dnf check-update" keeps its own cache for ordinary users
 #   pacman  checkupdates (pacman-contrib) - a temporary copy of the database
 #   zypper, apk, xbps   the last lists downloaded by the system (refreshing needs root)
-#   flatpak remote-ls --updates
 LC_ALL=C
 export LC_ALL
 T="$(printf '\t')"
@@ -69,8 +68,4 @@ else
   printf 'BACKEND%snone\n' "$T"
 fi
 
-if have flatpak; then
-  flatpak remote-ls --updates --columns=application,version 2>/dev/null |
-    awk -F'\t' -v t="$T" 'NF && $1 !~ /^Application/ { print "PKG" t $1 t ($2 == "" ? "Flatpak" : $2 " (Flatpak)") }'
-fi
 exit 0
