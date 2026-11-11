@@ -1,6 +1,0 @@
-[Desktop Entry]
-Name=Nirvana-DM
-Comment=The login screen of Nirvana Desktop
-Comment[pl]=Ekran logowania Nirvana Desktop
-Exec=nirvana-dm-greeter
-Type=Application
