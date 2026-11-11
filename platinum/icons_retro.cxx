@@ -284,7 +284,12 @@ bool draw_icon_retro(Icon icon, int x, int y, bool sel) {
   case Icon::Eject:       eject(x, y); break;
   case Icon::Network:     network(x, y); break;
   case Icon::Wifi:        wifi(x, y); break;
-  default: g_sel = false; return false;
+  default:
+    if (icon >= Icon::CatGames && icon <= Icon::CatOther) {   // a drawer with the category emblem
+      drawer(x, y, false);
+      draw_category_emblem((int)icon - (int)Icon::CatGames, x + 9, y + 11, sel, 0);
+      break;
+    } g_sel = false; return false;
   }
   g_sel = false;
   return true;

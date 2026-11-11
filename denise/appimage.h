@@ -47,6 +47,8 @@ const char *detect_category(const std::string &path, const std::string &home);
 // Category folder in the applications folder: "Games", "Internet"... in the interface language,
 // unless the folder already exists under another name (a language change does not split the applications).
 std::string category_dir_name(const std::string &home, const char *category);
+// Which category a folder in the applications folder is (index into categories()), -1 if none.
+int category_of_folder(const std::string &name);
 std::string category_folder(const std::string &path, const std::string &home);   // detected
 
 // The applications folder: ~/.nirvana-apps (hidden - applications are opened with the desktop icon).

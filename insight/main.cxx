@@ -92,8 +92,9 @@ static void publish_workarea() {
 }
 
 // _NET_FRAME_EXTENTS: frame thickness (left, right, top, bottom) in pixels
-static void set_frame_extents(Window w) {
+static void set_frame_extents(Window w, bool bare) {
   long ext[4] = {px(FRAME), px(FRAME), px(TITLE_H), px(FRAME)};
+  if (bare) ext[0] = ext[1] = ext[2] = ext[3] = 0;
   XChangeProperty(dpy, w, A_NET_FRAME_EXTENTS, XA_CARDINAL, 32, PropModeReplace, (unsigned char *)ext, 4);
 }
 
@@ -127,6 +128,12 @@ struct Client {
   bool iconic = false;            // iconified: hidden, and its icon is on the desktop
   unsigned long mru = 0;          // when it was last active (for Alt+Tab)
   std::string cls;                // WM_CLASS - the windows of one application share the class
+  // Undecorated (_MOTIF_WM_HINTS without decorations: skinned players such as qmmp or
+  // Audacious, client-side decorations): the frame has no border and no title bar -
+  // it only holds the window, which draws its own.
+  bool bare = false;
+  int fw() const { return bare ? 0 : FRAME; }     // frame width (left, right, bottom)
+  int th() const { return bare ? 0 : TITLE_H; }   // title bar height
 };
 
 static std::map<Window, Client *> clients;   // application window -> client
@@ -223,6 +230,21 @@ static void set_wm_state(Window w, long state) {
   XChangeProperty(dpy, w, A_WM_STATE, A_WM_STATE, 32, PropModeReplace, (unsigned char *)data, 2);
 }
 
+// _MOTIF_WM_HINTS: flags, functions, decorations, input mode, status. A window that
+// asks for no decorations (flag 2 set, decorations 0) gets a frame without chrome.
+static bool undecorated(Window w) {
+  static Atom A_MOTIF = XInternAtom(dpy, "_MOTIF_WM_HINTS", False);
+  Atom type; int fmt; unsigned long n = 0, after; unsigned char *data = nullptr;
+  bool bare = false;
+  if (XGetWindowProperty(dpy, w, A_MOTIF, 0, 5, False, AnyPropertyType, &type, &fmt, &n, &after, &data) == Success &&
+      data && fmt == 32 && n >= 3) {
+    long *h = (long *)data;
+    bare = (h[0] & 2) && h[2] == 0;
+  }
+  if (data) XFree(data);
+  return bare;
+}
+
 // ---------------------------------------------------------------------------
 // Window frame
 // ---------------------------------------------------------------------------
@@ -237,19 +259,20 @@ public:
   }
 
   // Client area inside the frame
-  int cw() const { return w() - 2 * FRAME; }
-  int ch() const { return (c->shaded ? c->full_h : h()) - TITLE_H - FRAME; }
+  int cw() const { return w() - 2 * c->fw(); }
+  int ch() const { return (c->shaded ? c->full_h : h()) - c->th() - c->fw(); }
 
   // After every change of the frame geometry we fit the application window
   // and send it a synthetic ConfigureNotify (required by ICCCM).
   void sync_client() {
     // the frame is in FLTK units, the application window in pixels (interface scale)
-    int pw = px(w() - FRAME) - px(FRAME), ph = px(TITLE_H + ch()) - px(TITLE_H);
-    XMoveResizeWindow(dpy, c->win, px(FRAME), px(TITLE_H), std::max(1, pw), std::max(1, ph));
+    int F = c->fw(), T = c->th();
+    int pw = px(w() - F) - px(F), ph = px(T + ch()) - px(T);
+    XMoveResizeWindow(dpy, c->win, px(F), px(T), std::max(1, pw), std::max(1, ph));
     XConfigureEvent ce{};
     ce.type = ConfigureNotify;
     ce.event = ce.window = c->win;
-    ce.x = px(x()) + px(FRAME); ce.y = px(y()) + px(TITLE_H);
+    ce.x = px(x()) + px(F); ce.y = px(y()) + px(T);
     ce.width = pw; ce.height = ph;
     ce.border_width = 0;
     ce.above = None;
@@ -264,6 +287,7 @@ public:
   }
 
   void draw() override {
+    if (c->bare) return;   // the window covers the whole frame and draws itself
     bool act = c == g_active;
     draw_frame(0, 0, w(), h(), act, c->shaded);
     draw_titlebar(0, 0, w(), c->title.c_str(), act, pressed_, !c->dialog);
@@ -291,6 +315,7 @@ public:
   Rect geom(int H = -1) const { return {x(), y(), w(), H < 0 ? h() : H}; }
 
   void toggle_shade() {
+    if (c->bare) return;   // no title bar to shade to
     Rect full = geom(c->shaded ? c->full_h : h()), bar = geom(TITLE_H);
     if (c->shaded) zoom_rects(bar, full); else zoom_rects(full, bar);
     if (!c->shaded) {
@@ -346,6 +371,7 @@ public:
     switch (e) {
     case FL_PUSH:
       ::focus(c);
+      if (c->bare) return 1;
       if (ey < TITLE_H) {
         if (int b = hit_button(ex, ey)) { drag_ = BTN; armed_ = pressed_ = b; redraw(); return 1; }
         if (Fl::event_clicks() && !c->dialog) { Fl::event_clicks(0); iconify_client(c); drag_ = NONE; return 1; }
@@ -517,6 +543,7 @@ static void manage(Window w, bool existing) {
   Window tf = 0;
   c->dialog = (XGetTransientForHint(dpy, w, &tf) && tf) ||
               has_atom(w, A_NET_WM_TYPE, A_NET_WM_TYPE_DIALOG) || cls == "Nirvana-Dialog";
+  c->bare = undecorated(w);
 
   int x = un(wa.x), y = un(wa.y);
   // StaticGravity (FLTK, many other programs): the given position refers to the
@@ -525,8 +552,8 @@ static void manage(Window w, bool existing) {
   long supplied;
   if (XGetWMNormalHints(dpy, w, &sh, &supplied) && (sh.flags & PWinGravity) &&
       sh.win_gravity == StaticGravity && (x || y)) {
-    x -= FRAME;
-    y -= TITLE_H;
+    x -= c->fw();
+    y -= c->th();
   }
   if (!existing && x == 0 && y == 0) {
     static int cascade = 0;
@@ -534,11 +561,11 @@ static void manage(Window w, bool existing) {
     y = MENUBAR_H + 30 + 26 * (cascade % 8);
     cascade++;
   }
-  int fw = un(wa.width) + 2 * FRAME, fh = un(wa.height) + TITLE_H + FRAME;
+  int fw = un(wa.width) + 2 * c->fw(), fh = un(wa.height) + c->th() + c->fw();
   // the window fits into the work area: below the menu bar and above the dock
   // (Chromium/Brave take the size of the whole screen on the first start)
   Rect area = work_area();
-  if (!c->dialog || fh > area.h) {
+  if ((!c->dialog && !c->bare) || fh > area.h) {
     fw = std::min(fw, area.w);
     fh = std::min(fh, area.h);
     x = std::clamp(x, area.x, std::max(area.x, area.x + area.w - fw));
@@ -560,7 +587,7 @@ static void manage(Window w, bool existing) {
   XSetWindowBorderWidth(dpy, w, 0);
   XSelectInput(dpy, w, PropertyChangeMask | StructureNotifyMask);
   if (wa.map_state == IsViewable) c->ignore_unmap++;   // reparenting will cause an UnmapNotify
-  XReparentWindow(dpy, w, fx, px(FRAME), px(TITLE_H));
+  XReparentWindow(dpy, w, fx, px(c->fw()), px(c->th()));
   // Resize requests of a window (e.g. the grow box of a Rambler window) must reach
   // us also after reparenting into the frame - otherwise the window grows or shrinks
   // while the frame keeps its old size.
@@ -569,7 +596,7 @@ static void manage(Window w, bool existing) {
     XGetWindowAttributes(dpy, fx, &fa);
     XSelectInput(dpy, fx, fa.your_event_mask | SubstructureRedirectMask);
   }
-  set_frame_extents(w);
+  set_frame_extents(w, c->bare);
   XMapWindow(dpy, w);
   set_wm_state(w, NormalState);
   // the program wants to start maximized (e.g. Brave remembered that state)
@@ -590,7 +617,7 @@ static void unmanage(Client *c, bool destroyed) {
   set_iconic(c, false);
   if (!destroyed) {
     XUngrabButton(dpy, AnyButton, AnyModifier, c->win);
-    XReparentWindow(dpy, c->win, root, px(c->frame->x() + FRAME), px(c->frame->y() + TITLE_H));
+    XReparentWindow(dpy, c->win, root, px(c->frame->x() + c->fw()), px(c->frame->y() + c->th()));
     XRemoveFromSaveSet(dpy, c->win);
     set_wm_state(c->win, WithdrawnState);
   }
@@ -716,15 +743,15 @@ static int x_handler(void *event, void *) {
       Frame *f = c->frame;
       int nx = f->x(), ny = f->y(), nw = f->w(), nh = f->h(), nh_shrink = 0;
       // the program's request is in pixels, the frame in FLTK units
-      if (r.value_mask & CWX) nx = un(r.x) - FRAME;
+      if (r.value_mask & CWX) nx = un(r.x) - c->fw();
       if (r.value_mask & CWY) {
-        ny = un(r.y) - TITLE_H;
+        ny = un(r.y) - c->th();
         // the window wants to stand under the menu bar: move it lower and shorten it by as much
         if (ny < MENUBAR_H && (r.value_mask & CWHeight)) nh_shrink = MENUBAR_H - ny;
         ny = std::max(MENUBAR_H, ny);
       }
-      if (r.value_mask & CWWidth) nw = un(r.width) + 2 * FRAME;
-      if (r.value_mask & CWHeight) nh = un(r.height) + TITLE_H + FRAME - nh_shrink;
+      if (r.value_mask & CWWidth) nw = un(r.width) + 2 * c->fw();
+      if (r.value_mask & CWHeight) nh = un(r.height) + c->th() + c->fw() - nh_shrink;
       Rect area = work_area();   // no larger than the work area, not above the menu bar
       nw = std::min(nw, area.w);
       if (!c->shaded) nh = std::min(nh, area.h);
@@ -841,7 +868,7 @@ static int x_handler(void *event, void *) {
     }
     if (e->xclient.message_type == A_NET_REQUEST_FRAME_EXTENTS) {
       // the program asks for the frame even before showing the window (GTK, Chromium)
-      set_frame_extents(e->xclient.window);
+      set_frame_extents(e->xclient.window, undecorated(e->xclient.window));
       return 1;
     }
     if (e->xclient.message_type == A_NET_ACTIVE) {

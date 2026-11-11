@@ -43,6 +43,22 @@ Icon icon_for(const std::string &name, bool dir) {
   return Icon::Document;
 }
 
+static std::string g_home;   // home folder (set by Rambler)
+
+Icon icon_for_path(const std::string &path, bool dir) {
+  fs::path p(path);
+  if (dir) {
+    const char *h = getenv("HOME");
+    std::string home = !g_home.empty() ? g_home : h ? h : "/";
+    std::error_code ec;
+    if (fs::equivalent(p.parent_path(), appimage::apps_dir(home), ec)) {
+      int cat = appimage::category_of_folder(p.filename().string());
+      if (cat >= 0) return (Icon)((int)Icon::CatGames + cat);
+    }
+  }
+  return icon_for(p.filename().string(), dir);
+}
+
 std::string kind_name(const Entry &e) {
   if (e.dir) return _("folder");
   switch (e.icon) {
@@ -72,7 +88,6 @@ static std::string human_size(uintmax_t b) {
 // ---------------------------------------------------------------------------
 // Icons
 // ---------------------------------------------------------------------------
-static std::string g_home;
 void FolderView::set_home(const std::string &home) { g_home = home; }
 
 // Icons from files (e.g. from an AppImage): normal and darkened, in the given size.
@@ -152,7 +167,7 @@ static Fl_Image *big_icon(Icon icon, bool sel) {
 }
 
 void warm_small_icons() {
-  for (int i = 0; i <= (int)Icon::Terminal; i++)
+  for (int i = 0; i <= (int)Icon::Last; i++)
     for (bool sel : {false, true}) { small_icon((Icon)i, sel); big_icon((Icon)i, sel); }
 }
 
@@ -218,7 +233,7 @@ void FolderView::load(const std::string &path, bool show_hidden) {
     e.path = de.path().string();
     std::error_code ec2;
     e.dir = de.is_directory(ec2);
-    e.icon = icon_for(name, e.dir);
+    e.icon = icon_for_path(e.path, e.dir);
     e.label = name;
     struct stat st;
     if (stat(e.path.c_str(), &st) == 0) {

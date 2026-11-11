@@ -610,6 +610,129 @@ void draw_lock(int x, int y, Fl_Color c) {
   fl_yxline(x + 5, y + 1, y + 3);
 }
 
+// ---------------------------------------------------------------------------
+// Category emblems: small 14x14 pictures with a black outline, drawn on a folder.
+// ---------------------------------------------------------------------------
+void draw_category_emblem(int cat, int x, int y, bool sel, int style) {
+  auto c = [&](unsigned v) {
+    Fl_Color k = rgb(v);
+    if (sel) k = style == 0 ? rgb(0xFFFFFF ^ v) : fl_color_average(k, FL_BLACK, 0.5f);
+    fl_color(k);
+  };
+  const unsigned K = 0x000000, W = 0xFFFFFF;
+  auto box = [&](int bx, int by, int bw, int bh, unsigned fill) {   // a filled box with an outline
+    c(K); fl_rectf(bx, by, bw, bh);
+    c(fill); fl_rectf(bx + 1, by + 1, bw - 2, bh - 2);
+  };
+  auto disc = [&](int dx, int dy, int d, unsigned fill) {
+    c(K); fl_pie(dx, dy, d, d, 0, 360);
+    c(fill); fl_pie(dx + 1, dy + 1, d - 2, d - 2, 0, 360);
+  };
+  switch (cat) {
+  case 0: {   // Games: a gamepad with a cross and two buttons
+    c(K);
+    fl_pie(x, y + 4, 7, 9, 0, 360); fl_pie(x + 7, y + 4, 7, 9, 0, 360); fl_rectf(x + 3, y + 3, 8, 7);
+    c(0x4A4A60);
+    fl_pie(x + 1, y + 5, 5, 7, 0, 360); fl_pie(x + 8, y + 5, 5, 7, 0, 360); fl_rectf(x + 3, y + 4, 8, 5);
+    c(W); fl_rectf(x + 2, y + 6, 5, 1); fl_rectf(x + 4, y + 4, 1, 5);
+    c(0xE5483F); fl_rectf(x + 10, y + 4, 2, 2);
+    c(0x3DB54A); fl_rectf(x + 8, y + 6, 2, 2);
+    break;
+  }
+  case 1: {   // Internet: a globe
+    disc(x, y, 14, 0x3A7BD5);
+    c(0x58C05A);
+    fl_polygon(x + 3, y + 3, x + 7, y + 2, x + 7, y + 6, x + 3, y + 7);
+    fl_polygon(x + 8, y + 7, x + 11, y + 6, x + 12, y + 10, x + 8, y + 12);
+    c(0xA9CCF5); fl_arc(x + 2, y + 2, 10, 10, 100, 170);
+    break;
+  }
+  case 2: {   // Office: a page with lines and a pencil
+    box(x + 1, y, 10, 14, W);
+    c(0x5A7FC8); for (int i = 0; i < 4; i++) fl_xyline(x + 3, y + 3 + i * 2, x + 8);
+    c(K); fl_line_style(FL_SOLID, 4); fl_line(x + 13, y + 5, x + 7, y + 11); fl_line_style(0);
+    c(0xF2C230); fl_line_style(FL_SOLID, 2); fl_line(x + 12, y + 6, x + 8, y + 10); fl_line_style(0);
+    c(K); fl_rectf(x + 6, y + 11, 2, 2);
+    break;
+  }
+  case 3: {   // Graphics: a palette with paint blobs
+    c(K); fl_pie(x, y + 1, 14, 12, 0, 360);
+    c(0xE6C690); fl_pie(x + 1, y + 2, 12, 10, 0, 360);
+    c(K); fl_pie(x + 3, y + 7, 4, 4, 0, 360);
+    c(0xE5483F); fl_rectf(x + 4, y + 3, 2, 2);
+    c(0xF2C230); fl_rectf(x + 7, y + 3, 2, 2);
+    c(0x3A7BD5); fl_rectf(x + 10, y + 5, 2, 2);
+    c(0x3DB54A); fl_rectf(x + 8, y + 8, 2, 2);
+    break;
+  }
+  case 4: {   // Multimedia: a film frame with a play button
+    box(x, y + 1, 14, 12, 0x2A2A30);
+    c(W);
+    for (int i = 0; i < 6; i++) { fl_point(x + 2 + i * 2, y + 2); fl_point(x + 2 + i * 2, y + 11); }
+    c(0xFFB020); fl_polygon(x + 5, y + 4, x + 5, y + 10, x + 10, y + 7);
+    break;
+  }
+  case 5: {   // Development: a window with </>
+    box(x, y + 1, 14, 12, 0x1E2A3A);
+    c(0x7E9DD0); fl_rectf(x + 1, y + 2, 12, 2);
+    c(0x5CE07A);
+    fl_line(x + 5, y + 6, x + 3, y + 8); fl_line(x + 3, y + 8, x + 5, y + 10);
+    fl_line(x + 9, y + 6, x + 11, y + 8); fl_line(x + 11, y + 8, x + 9, y + 10);
+    c(W); fl_line(x + 8, y + 5, x + 6, y + 11);
+    break;
+  }
+  case 6: {   // Education: a graduation cap with a tassel
+    c(K); fl_polygon(x - 1, y + 5, x + 7, y + 1, x + 15, y + 5, x + 7, y + 9);
+    c(0x34344A); fl_polygon(x + 1, y + 5, x + 7, y + 2, x + 13, y + 5, x + 7, y + 8);
+    box(x + 3, y + 7, 8, 5, 0x34344A);
+    c(0xF2C230); fl_line(x + 7, y + 5, x + 12, y + 6); fl_yxline(x + 12, y + 6, y + 11);
+    fl_rectf(x + 11, y + 11, 3, 2);
+    break;
+  }
+  case 7: {   // Science: a flask with a green liquid
+    auto poly = [](std::initializer_list<int> v) {
+      fl_begin_polygon();
+      for (auto p = v.begin(); p != v.end(); p += 2) fl_vertex(p[0], p[1]);
+      fl_end_polygon();
+    };
+    c(K); poly({x + 4, y, x + 10, y, x + 10, y + 5, x + 14, y + 14, x, y + 14, x + 4, y + 5});
+    c(0xE6F2FF); poly({x + 5, y + 1, x + 9, y + 1, x + 9, y + 6, x + 12, y + 13, x + 2, y + 13, x + 5, y + 6});
+    c(0x5CC85C); fl_polygon(x + 3, y + 9, x + 11, y + 9, x + 12, y + 13, x + 2, y + 13);
+    c(W); fl_point(x + 6, y + 11); fl_point(x + 9, y + 10);
+    break;
+  }
+  case 8: {   // System: a gear
+    c(K); fl_line_style(FL_SOLID, 4);
+    fl_line(x + 7, y, x + 7, y + 14); fl_line(x, y + 7, x + 14, y + 7);
+    fl_line(x + 2, y + 2, x + 12, y + 12); fl_line(x + 12, y + 2, x + 2, y + 12);
+    fl_line_style(0);
+    disc(x + 2, y + 2, 10, 0xA6A6B0);
+    c(0xA6A6B0); fl_line_style(FL_SOLID, 2);
+    fl_line(x + 7, y + 1, x + 7, y + 13); fl_line(x + 1, y + 7, x + 13, y + 7);
+    fl_line(x + 3, y + 3, x + 11, y + 11); fl_line(x + 11, y + 3, x + 3, y + 11);
+    fl_line_style(0);
+    disc(x + 5, y + 5, 4, 0x4A4A55);
+    break;
+  }
+  case 9: {   // Accessories: a calculator
+    box(x + 2, y, 10, 14, 0xC8C8C0);
+    box(x + 3, y + 1, 8, 4, 0x9CC09C);
+    for (int j = 0; j < 3; j++)
+      for (int i = 0; i < 3; i++) {
+        c(i == 2 && j == 2 ? 0xF29A26 : 0x55555F);
+        fl_rectf(x + 4 + i * 2 + i, y + 6 + j * 2 + j / 2, 2, 2);
+      }
+    break;
+  }
+  default: {   // Other: a cardboard box with tape
+    box(x + 1, y + 4, 12, 10, 0xC69858);
+    box(x, y + 2, 14, 4, 0xDDB070);
+    c(0xF0E2B6); fl_rectf(x + 6, y + 3, 2, 10);
+    break;
+  }
+  }
+}
+
 int icon_style() { return current_appearance().icons == "platinum" ? 1 : 0; }
 
 void draw_icon(Icon icon, int x, int y, bool sel) {
@@ -657,6 +780,12 @@ void draw_icon(Icon icon, int x, int y, bool sel) {
   case Icon::Preferences: preferences_icon(x, y, sel); break;
   case Icon::Applications: applications_icon(x, y, sel); break;
   case Icon::Terminal:    terminal_icon(x, y, sel); break;
+  default:
+    if (icon >= Icon::CatGames && icon <= Icon::CatOther) {   // a folder with the category emblem
+      folder(x, y, sel, false);
+      draw_category_emblem((int)icon - (int)Icon::CatGames, x + 9, y + 12, sel, 1);
+    }
+    break;
   }
 }
 

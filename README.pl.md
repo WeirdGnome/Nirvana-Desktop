@@ -33,7 +33,7 @@ Napisane w C++ i FLTK 1.4.
 
 Rozpakuj źródła i uruchom instalator:
 
-    tar xzf nirvana-desktop-0.0.11.tar.gz && cd nirvana-desktop
+    tar xzf nirvana-desktop-0.0.12.tar.gz && cd nirvana-desktop
     sudo ./install.sh                 # albo: sudo ./install.sh --login-screen
 
 Instalator:
@@ -125,6 +125,9 @@ Inną czcionkę systemową (np. wolną, w stylu bitmapowym) można podać przez 
   tle, więc zminimalizowane okna odróżniają się od dysków i plików. Dwuklik w ikonę przywraca okno. Tak samo działa „minimalizuj” w samym programie
   (np. w przeglądarce); „Ukryj” z menu aplikacji chowa okna bez ikon. Ikony przetrwają
   Resetuj Nirvanę.
+- **okna bez dekoracji** (`_MOTIF_WM_HINTS` bez dekoracji – odtwarzacze ze skórkami, np. qmmp
+  czy Audacious, programy z własnym paskiem tytułu) nie dostają ramki: rysują się i przesuwają
+  same, a Insight dba tylko o fokus, kolejność, ikonizację i obszar roboczy
 - prawa i dolna krawędź ramki oraz prawy dolny róg: zmiana rozmiaru
 - klik w okno aplikacji aktywuje je i wyciąga na wierzch; klik w biurko dezaktywuje okna,
   a klik w pasek menu nie zmienia aktywnego okna (menu działa na nie)
@@ -157,7 +160,11 @@ Inną czcionkę systemową (np. wolną, w stylu bitmapowym) można podać przez 
   podpowiedziana. Plik trafia do folderu tej kategorii, a jego zawartość jest rozpakowywana
   do `~/.local/share/nirvana/apps/`. Bez FUSE i bez wykonywania runtime'u AppImage.
 - **Foldery kategorii**: podpowiadana kategoria wynika z `Categories=` w pliku .desktop wewnątrz
-  AppImage. Folder powstaje przy pierwszej aplikacji danego rodzaju.
+  AppImage. Folder powstaje przy pierwszej aplikacji danego rodzaju. Każdy folder kategorii ma
+  własną ikonę – folder (albo szufladę) z emblematem: pad, globus, kartka z ołówkiem, paleta,
+  klatka filmu, `</>`, biret, kolba, zębatka, kalkulator i karton.
+
+  ![Ikony folderów kategorii: Retro, Retro zaznaczone, Platinum, Platinum zaznaczone](docs/img/category-icons.png)
 
   | Kategoria | Folder | Kategoria | Folder |
   |-----------|--------|-----------|--------|
@@ -308,6 +315,11 @@ ilości wolne. Na wąskim ekranie napis się skraca.
 | Menu | Pozycje |
 |------|---------|
 | **Nirvana** (logo i napis) | O systemie, Preferencje (okno z panelami), Wykonaj polecenie `Ctrl+E`, Nirvana Shell `Ctrl+T`, Otwórz dziennik, Resetuj Nirvanę |
+
+**Otwórz dziennik** pokazuje pierwszy dziennik, który da się przeczytać: `journalctl`,
+`/var/log/syslog` albo `/var/log/messages` (czytelne dla grupy `adm`), `dmesg`; gdy żaden nie jest
+dostępny, prosi o hasło administratora (pkexec – jako root działa tylko odczyt pliku), a w
+ostateczności pokazuje dziennik sesji (`~/.xsession-errors`).
 | **System** | Zablokuj ekran, Uśpij, Hibernuj, Wyloguj `Ctrl+Q`, Uruchom ponownie, Wyłącz |
 | **Narzędzia** | Formatuj dysk, Opróżnij kosz |
 

@@ -27,6 +27,8 @@ struct Entry {
 };
 
 plat::Icon icon_for(const std::string &name, bool dir);
+// As icon_for, but category folders in the applications folder get their own icons.
+plat::Icon icon_for_path(const std::string &path, bool dir);
 bool is_appimage(const std::string &name);
 std::string kind_name(const Entry &e);   // "folder", "application", "document"...
 // An item's icon at size 32 (icon view) or 16 (list) - also for dragging.

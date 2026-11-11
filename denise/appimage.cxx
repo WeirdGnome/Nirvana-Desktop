@@ -366,12 +366,13 @@ std::string label(const std::string &path, const std::string &home) {
 
 // Folder name: the one that already exists (English, translated, or Polish
 // from earlier versions when Polish was the default), otherwise translated.
+static const std::pair<const char *, const char *> legacy[] = {
+  {"Applications", "Aplikacje"}, {"Games", "Gry"}, {"Graphics", "Grafika"}, {"Office", "Biuro"},
+  {"Development", "Programowanie"}, {"Education", "Edukacja"}, {"Science", "Nauka"},
+  {"Accessories", "Akcesoria"}, {"Other", "Inne"},
+};
+
 static std::string folder_name(const std::string &parent, const char *en) {
-  static const std::pair<const char *, const char *> legacy[] = {
-    {"Applications", "Aplikacje"}, {"Games", "Gry"}, {"Graphics", "Grafika"}, {"Office", "Biuro"},
-    {"Development", "Programowanie"}, {"Education", "Edukacja"}, {"Science", "Nauka"},
-    {"Accessories", "Akcesoria"}, {"Other", "Inne"},
-  };
   std::error_code ec;
   auto exists = [&](const std::string &n) { return fs::is_directory(fs::path(parent) / n, ec); };
   if (exists(en)) return en;
@@ -442,6 +443,17 @@ const char *detect_category(const std::string &path, const std::string &home) {
 
 std::string category_dir_name(const std::string &home, const char *category) {
   return folder_name(apps_dir(home), category);
+}
+
+int category_of_folder(const std::string &name) {
+  const auto &cats = categories();
+  for (size_t i = 0; i < cats.size(); i++) {
+    const char *en = cats[i];
+    if (strcasecmp(name.c_str(), en) == 0 || strcasecmp(name.c_str(), _(en)) == 0) return (int)i;
+    for (auto &[e, pl] : legacy)
+      if (!strcmp(e, en) && strcasecmp(name.c_str(), pl) == 0) return (int)i;
+  }
+  return -1;
 }
 
 std::string category_folder(const std::string &path, const std::string &home) {

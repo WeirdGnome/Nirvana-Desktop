@@ -433,13 +433,33 @@ void Desktop::execute_command() {
 }
 
 void Desktop::open_log() {
-  // the system log: journalctl (systemd), otherwise the syslog file, otherwise dmesg
-  const char *script =
-      "if command -v journalctl >/dev/null 2>&1 && journalctl -n 1 >/dev/null 2>&1; then journalctl -b -e; "
-      "elif [ -r /var/log/syslog ]; then less +G /var/log/syslog; "
-      "elif [ -r /var/log/messages ]; then less +G /var/log/messages; "
-      "else dmesg 2>&1 | less +G; fi";
-  rambler_spawn({rambler_exe("nirvana-shell"), "--working-directory", home_, "-e", "sh", "-c", script});
+  // The system log, the first one that can be read:
+  //  1. journalctl (systemd),
+  //  2. /var/log/syslog or /var/log/messages (rsyslog; readable for the "adm" group),
+  //  3. dmesg (blocked for ordinary users when kernel.dmesg_restrict = 1),
+  //  4. the same files through pkexec (asks for the administrator password; only "cat"
+  //     runs as root, the viewer runs as the user),
+  //  5. at least the log of this session (~/.xsession-errors).
+  std::string script =
+      "if command -v journalctl >/dev/null 2>&1 && journalctl -n 1 >/dev/null 2>&1; then exec journalctl -b -e; fi\n"
+      "for f in /var/log/syslog /var/log/messages; do [ -r \"$f\" ] && exec less +G \"$f\"; done\n"
+      "if dmesg >/dev/null 2>&1; then dmesg | less +G; exit; fi\n"
+      "f=/var/log/syslog; [ -e $f ] || f=/var/log/messages\n"
+      "if [ -e $f ] && command -v pkexec >/dev/null 2>&1; then\n"
+      "  printf '%s\\n\\n' \"$1\"\n"
+      "  if pkexec cat \"$f\" > \"$HOME/.cache/nirvana-syslog.$$\" 2>/dev/null; then\n"
+      "    less +G \"$HOME/.cache/nirvana-syslog.$$\"; rm -f \"$HOME/.cache/nirvana-syslog.$$\"; exit; fi\n"
+      "  rm -f \"$HOME/.cache/nirvana-syslog.$$\"\n"
+      "fi\n"
+      "if [ -r \"$HOME/.xsession-errors\" ]; then\n"
+      "  { printf '%s\\n\\n' \"$2\"; cat \"$HOME/.xsession-errors\"; } | less +G\n"
+      "else printf '%s\\n' \"$3\"; read x; fi\n";
+  mkdir((home_ + "/.cache").c_str(), 0755);
+  rambler_spawn({rambler_exe("nirvana-shell"), "--working-directory", home_, "-e", "sh", "-c", script, "sh",
+                 _("The system log is readable only by the administrator. Enter the password to view it."),
+                 _("The system log is not available without administrator rights (tip: add yourself to the "
+                   "\"adm\" group). Below is the log of this session."),
+                 _("No log is available. Press Enter to close…")});
 }
 
 // System menu - the same commands as formerly in the power applet
@@ -616,7 +636,7 @@ void Desktop::get_info() {
   e.name = fs::path(path).filename().string();
   std::error_code ec;
   e.dir = fs::is_directory(path, ec);
-  e.icon = icon_for(e.name, e.dir);
+  e.icon = icon_for_path(path, e.dir);
   e.label = e.name;
   if (NWin *a = active_folder())
     for (auto &x : a->pane->view()->selection()) if (x.path == path) e = x;

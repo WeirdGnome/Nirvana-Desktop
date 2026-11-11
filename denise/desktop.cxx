@@ -2782,7 +2782,7 @@ static Entry entry_for(const std::string &path) {
   std::error_code ec;
   e.dir = fs::is_directory(path, ec);
   e.label = e.name;
-  e.icon = icon_for(e.name, e.dir);
+  e.icon = icon_for_path(path, e.dir);
   if (!e.dir && is_appimage(e.name)) {   // name and icon from inside the AppImage, as in windows
     const char *h = getenv("HOME");
     e.label = appimage::label(path, h ? h : "/");

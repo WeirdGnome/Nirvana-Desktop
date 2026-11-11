@@ -6,7 +6,7 @@
 #include <cstdio>
 using namespace plat;
 int main(int, char **argv) {
-  init(false);
+  init();
   const int N = 16, CW = 44;
   Fl_Image_Surface surf(N * CW + 8, 3 * 44 + 8);
   Fl_Surface_Device::push_current(&surf);

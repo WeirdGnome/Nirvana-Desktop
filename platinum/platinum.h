@@ -145,7 +145,15 @@ void init();
 
 // ---- Icons (32x32, vector drawn) ------------------------------------------
 enum class Icon { Folder, OpenFolder, Document, Application, Home, Trash, TrashFull, Image, Music,
-                  HardDisk, Removable, Optical, Encrypted, Eject, Network, Wifi, Preferences, Applications, Terminal };
+                  HardDisk, Removable, Optical, Encrypted, Eject, Network, Wifi, Preferences, Applications, Terminal,
+                  // category folders in the Applications folder (a folder with an emblem),
+                  // in the order of appimage::categories()
+                  CatGames, CatInternet, CatOffice, CatGraphics, CatMultimedia, CatDevelopment,
+                  CatEducation, CatScience, CatSystem, CatAccessories, CatOther,
+                  Last = CatOther };
+// The emblem of a category folder (0 = Games … 10 = Other) in a 14x14 box at x, y.
+// style 1 (Platinum) darkens a selected emblem, style 0 (Retro) inverts its colors.
+void draw_category_emblem(int category, int x, int y, bool selected, int style);
 void draw_icon(Icon icon, int x, int y, bool selected);   // in the style from the appearance settings
 bool draw_icon_retro(Icon icon, int x, int y, bool selected);
 int icon_style();   // 0 = Retro, 1 = Platinum (key for the icon caches)

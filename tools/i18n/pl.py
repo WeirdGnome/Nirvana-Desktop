@@ -610,4 +610,7 @@ T = {
     'Raster': 'Raster',
     'the desktops of the late 1980s and the 1990s: bevelled gray windows, a menu bar at the top, icons on the desktop': 'pulpity końca lat 80. i lat 90.: szare okna z fazowaniem, pasek menu u góry, ikony na biurku',
     'version %1': 'wersja %1',
+    'The system log is readable only by the administrator. Enter the password to view it.': 'Dziennik systemowy może czytać tylko administrator. Podaj hasło, żeby go zobaczyć.',
+    'The system log is not available without administrator rights (tip: add yourself to the "adm" group). Below is the log of this session.': 'Dziennik systemowy nie jest dostępny bez uprawnień administratora (wskazówka: dodaj się do grupy „adm”). Poniżej dziennik tej sesji.',
+    'No log is available. Press Enter to close…': 'Żaden dziennik nie jest dostępny. Naciśnij Enter, aby zamknąć…',
 }

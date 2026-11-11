@@ -34,7 +34,7 @@ on the desktop. Written in C++ and FLTK 1.4.
 
 Unpack the sources and run the installer:
 
-    tar xzf nirvana-desktop-0.0.11.tar.gz && cd nirvana-desktop
+    tar xzf nirvana-desktop-0.0.12.tar.gz && cd nirvana-desktop
     sudo ./install.sh                 # or: sudo ./install.sh --login-screen
 
 The installer:
@@ -125,6 +125,9 @@ Another system font (for example a free bitmap-style one) can be set with `NIRVA
   files. Double-clicking the icon brings the window back. "Minimize" inside
   the program itself (e.g. a web browser) works the same way; "Hide" from the application menu
   hides windows without icons. Icons survive Reset Nirvana.
+- **undecorated windows** (`_MOTIF_WM_HINTS` without decorations – skinned players such as
+  qmmp or Audacious, programs with their own title bar) get no frame: they draw and move
+  themselves, Insight only handles focus, stacking, iconification and the work area
 - right and bottom frame edges and the bottom-right corner: resizing
 - clicking an application window activates it and raises it; clicking the desktop deactivates
   windows, and clicking the menu bar does not change the active window (the menu acts on it)
@@ -159,7 +162,12 @@ Another system font (for example a free bitmap-style one) can be set with `NIRVA
   contents are extracted to `~/.local/share/nirvana/apps/`. No FUSE, and the AppImage
   runtime is not executed.
 - **Category folders**: the suggested category follows `Categories=` from the .desktop file
-  inside the AppImage. A folder is created with the first application of its kind.
+  inside the AppImage. A folder is created with the first application of its kind. Each
+  category folder has its own icon – a folder (or drawer) with an emblem: a gamepad, a globe,
+  a page with a pencil, a palette, a film frame, `</>`, a graduation cap, a flask, a gear,
+  a calculator and a cardboard box.
+
+  ![Category folder icons: Retro, Retro selected, Platinum, Platinum selected](docs/img/category-icons.png)
 
   | Category | Folder | Category | Folder |
   |-----------|--------|-----------|--------|
@@ -307,6 +315,11 @@ text gets shorter.
 | Menu | Items |
 |------|---------|
 | **Nirvana** (logo and name) | About This Computer, Preferences (window with panels), Execute Command `Ctrl+E`, Nirvana Shell `Ctrl+T`, Open System Log, Reset Nirvana |
+
+**Open System Log** shows the first log it can read: `journalctl`, `/var/log/syslog` or
+`/var/log/messages` (readable for the `adm` group), `dmesg`; when none is readable it asks for
+the administrator password (pkexec – only reading the file runs as root), and as a last resort
+shows the log of the session (`~/.xsession-errors`).
 | **System** | Lock Screen, Sleep, Hibernate, Log Out `Ctrl+Q`, Restart, Shut Down |
 | **Special** | Format Disk, Empty Trash |
 
