@@ -17,6 +17,7 @@ set -eu
 cd "$(dirname "$(readlink -f "$0")")"
 SRC=$(pwd)
 BUILD="$SRC/build-deb"
+VERSION=$(head -n 1 "$SRC/VERSION" 2>/dev/null || echo "?")
 
 YES=; LOGIN=; XINITRC=; PACKAGE_ONLY=; UNINSTALL=; NO_X=
 for a in "$@"; do
@@ -65,7 +66,7 @@ command -v apt-get >/dev/null 2>&1 || die "this is not an apt-based system (Devu
 
 ID=; VERSION_CODENAME=; PRETTY_NAME=unknown
 [ -r /etc/os-release ] && . /etc/os-release
-echo "${B}Nirvana Desktop 0.1 - installer${R}"
+echo "${B}Nirvana Desktop $VERSION - installer${R}"
 echo "System: $PRETTY_NAME"
 if [ "$ID" != devuan ] || [ "$VERSION_CODENAME" != excalibur ]; then
   echo "This installer is made for Devuan 6 \"Excalibur\" (Debian 13)."
@@ -124,8 +125,9 @@ fi
 step "Installing the nirvana package and the programs it uses"
 # apt with a local file resolves dependencies; Recommends (NetworkManager,
 # udisks2, polkit, xsecurelock...) are installed by default, missing ones skipped
-# --reinstall: also when the same version is already installed (rebuilt package)
-DEBIAN_FRONTEND=noninteractive apt-get install -y --reinstall "$DEB"
+# --reinstall: also when the same version is already installed (rebuilt package);
+# --allow-downgrades: the package from this folder wins even over a newer number
+DEBIAN_FRONTEND=noninteractive apt-get install -y --reinstall --allow-downgrades "$DEB"
 
 # formerly LisaOS: apt removed the old "lisaos" package (Conflicts); settings in ~
 # move on the first start; here we fix the login screen and ~/.xinitrc

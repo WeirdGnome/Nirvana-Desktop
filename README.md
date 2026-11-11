@@ -24,10 +24,10 @@ of **Mac OS 9 (Platinum)** with a touch of the **Amiga**. Written in C++ and FLT
 |---------------------|----------------------------------------|-------------|
 | `nirvana-platinum`  | look library: colours, frames, icons, window chrome | prototype |
 | `nirvana-denise`    | Rambler: file manager + desktop         | prototype   |
-| `nirvana-insight`   | X11 window manager (Xorg/XLibre), Platinum frames | works (0.1) |
-| `nirvana-gary`      | application switcher (for now inside the Rambler process) | works (0.1) |
-| `nirvana-alice`     | control panels: Appearance, Network, Power | works (0.1) |
-| `nirvana-shell`     | Nirvana Shell - terminal emulator       | works (0.1) |
+| `nirvana-insight`   | X11 window manager (Xorg/XLibre), Platinum frames | works |
+| `nirvana-gary`      | application switcher (for now inside the Rambler process) | works |
+| `nirvana-alice`     | control panels: Appearance, Network, Power | works |
+| `nirvana-shell`     | Nirvana Shell - terminal emulator       | works |
 | `nirvana-paula`     | sound                                   | planned     |
 | `nirvana-kickstart` | login and session start                 | planned     |
 | `nirvana-guru`      | error window, root mode                 | planned     |
@@ -36,17 +36,20 @@ of **Mac OS 9 (Platinum)** with a touch of the **Amiga**. Written in C++ and FLT
 
 Unpack the sources and run the installer:
 
-    tar xzf nirvana-0.1.tar.gz && cd nirvana
+    tar xzf nirvana-0.0.3.tar.gz && cd nirvana
     sudo ./install.sh                 # or: sudo ./install.sh --login-screen
 
 The installer:
 
 1. installs the build tools and libraries (apt),
 2. builds Nirvana Desktop (the first time it downloads FLTK 1.4 from GitHub – internet needed),
-3. creates the package `build-deb/nirvana_0.1.0_amd64.deb` and installs it with apt –
+3. creates the package `build-deb/nirvana_<version>_amd64.deb` and installs it with apt –
    together with the programs Nirvana Desktop uses: NetworkManager, udisks2, polkit
    with the `lxpolkit` agent, PulseAudio/PipeWire, bubblewrap, xsecurelock…
 4. adds the X server if it is missing and offers PipeWire if there is no sound.
+
+The version number is in the `VERSION` file and goes up with every released package. Running
+the installer from a newer package replaces the installed version.
 
 Options:
 

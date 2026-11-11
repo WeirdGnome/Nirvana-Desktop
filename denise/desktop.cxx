@@ -1880,9 +1880,9 @@ void Desktop::about() {
   if (plat::language() == "pl") for (char *p = mem; *p; p++) if (*p == '.') *p = ',';
   std::string fltk = std::to_string(Fl::api_version() / 10000) + "." +
                      std::to_string(Fl::api_version() / 100 % 100) + "." + std::to_string(Fl::api_version() % 100);
-  std::string text = std::string("Nirvana Desktop 0.1 “Tempo”\n") + _("A desktop in the spirit of Mac OS 9 and the Amiga") + "\n\n" +
+  std::string text = std::string("Nirvana Desktop " NIRVANA_VERSION " “Tempo”\n") + _("A desktop in the spirit of Mac OS 9 and the Amiga") + "\n\n" +
                      plat::fmt(_("Built-in memory: %1 GB"), mem) + "\n" +
-                     plat::fmt(_("File manager: Rambler 0.1 · FLTK %1"), fltk);
+                     plat::fmt(_("File manager: Rambler %1 · FLTK %2"), NIRVANA_VERSION, fltk);
   dialog(_("About Nirvana Desktop"), text, {{_("OK"), nullptr}});
 }
 

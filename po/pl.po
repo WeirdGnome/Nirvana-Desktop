@@ -3,7 +3,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Nirvana Desktop 0.1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-11 12:19+0000\n"
+"POT-Creation-Date: 2026-11-11 12:29+0000\n"
 "PO-Revision-Date: 2026-11-09 13:00+0000\n"
 "Last-Translator: Nirvana Desktop\n"
 "Language-Team: Polish\n"
@@ -1036,8 +1036,8 @@ msgid "Built-in memory: %1 GB"
 msgstr "Pamięć wbudowana: %1 GB"
 
 #: denise/desktop.cxx:1885
-msgid "File manager: Rambler 0.1 · FLTK %1"
-msgstr "Menedżer plików: Rambler 0.1 · FLTK %1"
+msgid "File manager: Rambler %1 · FLTK %2"
+msgstr "Menedżer plików: Rambler %1 · FLTK %2"
 
 #: denise/desktop.cxx:1886
 msgid "About Nirvana Desktop"

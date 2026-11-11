@@ -1,5 +1,8 @@
 cmake_minimum_required(VERSION 3.16)
-project(NirvanaDesktop VERSION 0.1.0 LANGUAGES C CXX)
+# Wersja w pliku VERSION - podbijana przy każdym wydaniu paczki.
+file(STRINGS "${CMAKE_CURRENT_SOURCE_DIR}/VERSION" NIRVANA_VERSION LIMIT_COUNT 1)
+project(NirvanaDesktop VERSION ${NIRVANA_VERSION} LANGUAGES C CXX)
+add_compile_definitions(NIRVANA_VERSION="${NIRVANA_VERSION}")
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -140,10 +143,7 @@ the Rambler desktop and file manager, an application switcher, control panels (A
 and the Nirvana Shell terminal. English and Polish interface.")
 set(CPACK_PACKAGING_INSTALL_PREFIX /usr)
 set(CPACK_INSTALL_CMAKE_PROJECTS "${CMAKE_BINARY_DIR};NirvanaDesktop;nirvana;/")
-# Każda budowa ma własną wersję (0.1.0+RRRRMMDDGGMM), żeby apt zawsze
-# podmienił zainstalowany pakiet nowszym - przy tej samej wersji nic by nie zrobił.
-string(TIMESTAMP NIRVANA_STAMP "%Y%m%d%H%M" UTC)
-set(CPACK_DEBIAN_PACKAGE_VERSION "${PROJECT_VERSION}+${NIRVANA_STAMP}")
+set(CPACK_DEBIAN_PACKAGE_VERSION "${NIRVANA_VERSION}")
 set(CPACK_DEBIAN_FILE_NAME DEB-DEFAULT)
 set(CPACK_DEBIAN_PACKAGE_SECTION x11)
 set(CPACK_DEBIAN_PACKAGE_PRIORITY optional)

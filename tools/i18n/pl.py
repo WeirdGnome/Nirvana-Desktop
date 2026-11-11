@@ -236,7 +236,7 @@ T = {
     'Cannot Open': 'Nie można uruchomić',
     'A desktop in the spirit of Mac OS 9 and the Amiga': 'Środowisko w duchu Mac OS 9 i Amigi',
     'Built-in memory: %1 GB': 'Pamięć wbudowana: %1 GB',
-    'File manager: Rambler 0.1 · FLTK %1': 'Menedżer plików: Rambler 0.1 · FLTK %1',
+    'File manager: Rambler %1 · FLTK %2': 'Menedżer plików: Rambler %1 · FLTK %2',
     'About Nirvana Desktop': 'O Nirvana Desktop',
     'untitled folder': 'bez nazwy',
     'Could not move to the Trash:': 'Nie udało się przenieść do kosza:',

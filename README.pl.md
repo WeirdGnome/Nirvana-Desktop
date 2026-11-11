@@ -23,10 +23,10 @@ Lekkie środowisko graficzne dla Linuksa (baza: minimalny Devuan) w duchu
 |---------------------|----------------------------------------|-------------|
 | `nirvana-platinum`   | biblioteka wyglądu: kolory, ramki, ikony, chrome okien | prototyp |
 | `nirvana-denise`     | Rambler: menedżer plików + biurko        | prototyp    |
-| `nirvana-insight`      | menedżer okien X11 (Xorg/XLibre), ramki Platinum | działa (0.1) |
-| `nirvana-gary`       | przełącznik aplikacji (na razie w procesie Ramblera) | działa (0.1) |
-| `nirvana-alice`      | panele sterowania: Wygląd, Sieć, Zasilanie | działa (0.1) |
-| `nirvana-shell`      | Nirvana Shell - emulator terminala          | działa (0.1) |
+| `nirvana-insight`      | menedżer okien X11 (Xorg/XLibre), ramki Platinum | działa |
+| `nirvana-gary`       | przełącznik aplikacji (na razie w procesie Ramblera) | działa |
+| `nirvana-alice`      | panele sterowania: Wygląd, Sieć, Zasilanie | działa |
+| `nirvana-shell`      | Nirvana Shell - emulator terminala          | działa |
 | `nirvana-paula`      | dźwięk                                  | planowany   |
 | `nirvana-kickstart`  | logowanie i start sesji                 | planowany   |
 | `nirvana-guru`       | okno błędów, tryb root                  | planowany   |
@@ -35,17 +35,20 @@ Lekkie środowisko graficzne dla Linuksa (baza: minimalny Devuan) w duchu
 
 Rozpakuj źródła i uruchom instalator:
 
-    tar xzf nirvana-0.1.tar.gz && cd nirvana
+    tar xzf nirvana-0.0.3.tar.gz && cd nirvana
     sudo ./install.sh                 # albo: sudo ./install.sh --login-screen
 
 Instalator:
 
 1. doinstalowuje narzędzia i biblioteki do budowania (apt),
 2. buduje Nirvana Desktop (za pierwszym razem pobiera FLTK 1.4 z GitHuba – potrzebny internet),
-3. tworzy paczkę `build-deb/nirvana_0.1.0_amd64.deb` i instaluje ją przez apt –
+3. tworzy paczkę `build-deb/nirvana_<wersja>_amd64.deb` i instaluje ją przez apt –
    razem z programami, z których Nirvana Desktop korzysta: NetworkManager, udisks2, polkit
    z agentem `lxpolkit`, PulseAudio/PipeWire, bubblewrap, xsecurelock…
 4. dokłada serwer X, jeśli go nie ma, i proponuje PipeWire, jeśli nie ma dźwięku.
+
+Numer wersji jest w pliku `VERSION` i rośnie z każdą wydaną paczką. Instalator z nowszej paczki
+podmienia zainstalowaną wersję.
 
 Opcje:
 
