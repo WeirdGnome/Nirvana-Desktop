@@ -216,6 +216,7 @@ install(FILES LICENSE DESTINATION share/nirvana COMPONENT nirvana)   # shown in 
 # Library dependencies come from dpkg-shlibdeps; the rest (programs Nirvana Desktop
 # uses at run time) is listed by hand. apt installs Recommends by default and
 # simply skips Recommends that are missing from the repositories.
+# The libxcb-* / libxkbcommon-x11 libraries: Qt 6 programs in AppImages count on them.
 set(CPACK_GENERATOR DEB)
 set(CPACK_PACKAGE_NAME nirvana)
 set(CPACK_PACKAGE_VENDOR "Nirvana Desktop")
@@ -236,7 +237,9 @@ set(CPACK_DEBIAN_PACKAGE_DEPENDS "dbus-bin | dbus")
 set(CPACK_DEBIAN_PACKAGE_RECOMMENDS
   "xserver-xorg, xinit, fonts-dejavu-core, libpam-elogind | elogind, polkitd, pkexec, \
 udisks2, network-manager, pulseaudio-utils, alsa-utils, squashfs-tools, bubblewrap, xsecurelock, xdg-utils, \
-xdg-desktop-portal, xdg-desktop-portal-gtk, libgl1-mesa-dri")
+xdg-desktop-portal, xdg-desktop-portal-gtk, libgl1-mesa-dri, \
+libxcb-cursor0, libxcb-icccm4, libxcb-keysyms1, libxcb-image0, libxcb-render-util0, libxkbcommon-x11-0, \
+libxcb-xkb1, libxcb-shape0, libxcb-randr0, libxcb-xinerama0")
 set(CPACK_DEBIAN_PACKAGE_SUGGESTS
   "lightdm, network-manager-openvpn, network-manager-vpnc, wireguard-tools, power-profiles-daemon, pipewire-pulse, cups")
 include(CPack)
