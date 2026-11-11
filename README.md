@@ -39,7 +39,7 @@ on the desktop. Written in C++ and FLTK 1.4.
 
 Unpack the sources and run the installer:
 
-    tar xzf nirvana-desktop-0.0.32.tar.gz && cd nirvana-desktop
+    tar xzf nirvana-desktop-0.0.33.tar.gz && cd nirvana-desktop
     sudo ./install.sh                 # or: sudo ./install.sh --login-screen
 
 The installer:
@@ -334,7 +334,8 @@ below 10 GB with one decimal). The last value is the memory of Nirvana Desktop i
 as PSS – shared libraries split between the processes, so it is the real cost. Not included:
 what the X server keeps for Nirvana's windows (pixmaps, glyphs) and the services the session
 starts (the session D-Bus, PipeWire, the polkit agent). With `nirvana-shader` running on a
-computer without a GPU, most of it is the OpenGL software renderer (llvmpipe). The values refresh
+computer without a GPU, most of it is the OpenGL software renderer (llvmpipe), so the shader's
+part is shown separately: `99MB used by Nirvana (shader 81MB)`. The values refresh
 every 3 seconds; the tooltip shows the free amounts and the memory of each Nirvana program. On a narrow screen the
 text gets shorter.
 

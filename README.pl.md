@@ -38,7 +38,7 @@ Napisane w C++ i FLTK 1.4.
 
 Rozpakuj źródła i uruchom instalator:
 
-    tar xzf nirvana-desktop-0.0.32.tar.gz && cd nirvana-desktop
+    tar xzf nirvana-desktop-0.0.33.tar.gz && cd nirvana-desktop
     sudo ./install.sh                 # albo: sudo ./install.sh --login-screen
 
 Instalator:
@@ -333,7 +333,8 @@ terminale, panele, shader), liczone jako PSS – biblioteki współdzielone są 
 procesy, więc to rzeczywisty koszt. Nie wlicza się tu to, co serwer X trzyma dla okien Nirvany
 (pixmapy, glify), ani usług uruchamianych przez sesję (sesyjny D-Bus, PipeWire, agent polkit).
 Gdy działa `nirvana-shader` na komputerze bez karty graficznej, większość zajmuje programowy
-renderer OpenGL (llvmpipe). Wartości odświeżają się co 3 sekundy; podpowiedź pokazuje
+renderer OpenGL (llvmpipe), dlatego część shadera jest pokazana osobno:
+`99MB zajęte przez Nirvanę (shader 81MB)`. Wartości odświeżają się co 3 sekundy; podpowiedź pokazuje
 ilości wolne i pamięć każdego programu Nirvany. Na wąskim ekranie napis się skraca.
 
 ![Pasek menu](docs/img/menubar.png)

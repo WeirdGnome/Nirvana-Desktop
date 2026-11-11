@@ -179,10 +179,20 @@ public:
                                 : plat::fmt(_("memory %1/%2"), mu, mt);
     std::vector<std::pair<std::string, unsigned long long>> parts;
     unsigned long long nk = nirvana_kb(parts);
+    // the shader (OpenGL, often with Mesa's software renderer) can cost more than the rest
+    // of Nirvana together - its part is shown separately
+    unsigned long long shader_kb = 0;
+    for (auto &[n, kb] : parts) if (n == "nirvana-shader") shader_kb = kb;
     if (nk) {
       std::string nm = size_text((nk + 512) / 1024);
-      full += "     " + plat::fmt(_("%1 used by Nirvana"), nm);
-      brief += "   " + plat::fmt(_("Nirvana %1"), nm);
+      if (shader_kb) {
+        std::string sm = size_text((shader_kb + 512) / 1024);
+        full += "     " + plat::fmt(_("%1 used by Nirvana (shader %2)"), nm, sm);
+        brief += "   " + plat::fmt(_("Nirvana %1 (shader %2)"), nm, sm);
+      } else {
+        full += "     " + plat::fmt(_("%1 used by Nirvana"), nm);
+        brief += "   " + plat::fmt(_("Nirvana %1"), nm);
+      }
     }
     std::string tip = plat::fmt(_("Memory: %1 free of %2"), group(mem_kb / 1024) + " MB", group(mem_total / 1024) + " MB");
     if (disk_ok) tip += "\n" + plat::fmt(_("Disk (%1): %2 free of %3"), disk_, gb(disk_mb), gb(disk_total));

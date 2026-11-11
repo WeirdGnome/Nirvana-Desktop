@@ -1025,4 +1025,6 @@ T = {
     'and its many authors: the idea of the screen savers (written anew, no code taken)': 'i jego wielu autorów: pomysł wygaszaczy ekranu (napisanych od nowa, bez przejętego kodu)',
     'This file is not an AppImage (it is not a Linux program).': 'Ten plik nie jest AppImage (to nie jest program dla Linuksa).',
     "This application is made for %1 processors, but this computer has %2.\nDownload the AppImage for %2 from the author's page.": 'Ta aplikacja jest zbudowana na procesory %1, a ten komputer ma %2.\nPobierz AppImage dla %2 ze strony autora.',
+    '%1 used by Nirvana (shader %2)': '%1 zajęte przez Nirvanę (shader %2)',
+    'Nirvana %1 (shader %2)': 'Nirvana %1 (shader %2)',
 }
