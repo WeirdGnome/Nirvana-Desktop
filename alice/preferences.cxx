@@ -116,7 +116,12 @@ public:
 }  // namespace
 
 int panel_preferences() {
-  const int W = 658, H = 196;
+  // at most 5 icons in a row, then a new row
+  const int PER_ROW = 5, CELL_W = 106, CELL_H = 84;
+  const int N = 6;   // the number of panels below
+  const int rows = (N + PER_ROW - 1) / PER_ROW;
+  const int W = 14 * 2 + PER_ROW * CELL_W - 10, icons_h = 20 + rows * CELL_H;
+  const int H = icons_h + 90;
   auto *win = new FrameWindow(W, H, _("Preferences"));
   win->xclass("nirvana-preferences");
   struct P { PanelIcon::Kind k; const char *label, *arg; } panels[] = {
@@ -127,17 +132,17 @@ int panel_preferences() {
       {PanelIcon::DateTime, _("Date & Time"), "datetime"},
       {PanelIcon::Shader, _("Shader"), "shader"},
   };
-  int x = 14;
-  for (auto &p : panels) {
-    auto *b = new PanelIcon(x, 20, p.k, p.label);
+  static_assert(sizeof(panels) / sizeof(panels[0]) == N, "N must match the panels");
+  for (int i = 0; i < N; i++) {
+    auto &p = panels[i];
+    auto *b = new PanelIcon(14 + (i % PER_ROW) * CELL_W, 20 + (i / PER_ROW) * CELL_H, p.k, p.label);
     b->callback([](Fl_Widget *, void *a) { open_panel((const char *)a); }, (void *)p.arg);
-    x += 106;
   }
 
   // Interface language - saved in ~/.config/nirvana/language, applies after a restart
   static std::vector<std::string> codes;
   codes = {""};
-  auto *lang = new Fl_Choice(110, 112, W - 124, 22, _("Language:"));
+  auto *lang = new Fl_Choice(110, icons_h + 8, W - 124, 22, _("Language:"));
   lang->labelfont(FONT_SYSTEM);
   lang->labelsize(SIZE_SYSTEM);
   lang->textsize(SIZE_SMALL + 1);
@@ -149,7 +154,7 @@ int panel_preferences() {
   std::string cur = language_setting();
   lang->value(0);
   for (size_t i = 0; i < codes.size(); i++) if (codes[i] == cur) lang->value((int)i);
-  auto *note = new Fl_Box(14, 140, W - 28, 44);
+  auto *note = new Fl_Box(14, icons_h + 36, W - 28, 44);
   note->labelsize(SIZE_SMALL);
   note->align(FL_ALIGN_INSIDE | FL_ALIGN_TOP_LEFT | FL_ALIGN_WRAP);
   note->label(_("The new language takes effect after restarting Nirvana Desktop or after Special > Reset Nirvana."));
