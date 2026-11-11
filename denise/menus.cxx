@@ -134,7 +134,7 @@ std::vector<std::string> Desktop::targets() {
   std::vector<std::string> v;
   if (NWin *a = active_folder())
     for (auto &e : a->pane->view()->selection()) v.push_back(e.path);
-  if (v.empty() && !active_folder() && icon_sel_ >= 0 && icon_sel_ < (int)icons_.size() && !icons_[icon_sel_].win)
+  if (v.empty() && !active_folder() && icon_sel_ >= 0 && icon_sel_ < (int)icons_.size() && !icons_[icon_sel_].no_drop())
     v.push_back(icons_[icon_sel_].path);
   return v;
 }
@@ -146,7 +146,7 @@ void Desktop::update_menu() { update_menu(menu_, nullptr); }
 void Desktop::update_menu(Fl_Menu_ *m, NWin *a) {
   if (!a) a = active_folder();
   bool win_sel = a && !a->pane->view()->selection().empty();
-  bool desk_sel = !a && icon_sel_ >= 0 && icon_sel_ < (int)icons_.size() && !icons_[icon_sel_].win;
+  bool desk_sel = !a && icon_sel_ >= 0 && icon_sel_ < (int)icons_.size() && !icons_[icon_sel_].no_drop();
   const DeskIcon *di = desk_sel ? &icons_[icon_sel_] : nullptr;
   bool vol_sel = di && di->vol >= 0;
   bool icons_mode = a && a->pane->view()->mode() == FolderView::Icons;
@@ -243,17 +243,22 @@ struct DeskMenu {
 
 static void build_desk_menu(Desktop *d, DeskMenu &dm, int i, bool has_win, bool has_vol, bool is_dock,
                             bool is_trash, bool can_eject, bool can_format, std::function<void()> restore,
-                            const std::string &home) {
+                            const std::string &home, bool prefs = false) {
   if (i < 0) {   // puste biurko
     dm.add(_("Open Nirvana HD"), 0, [d, home] { d->open_folder(home); });
     dm.add(_("Desktop Appearance…"), 0, [d] { d->open_appearance(); });
     return;
   }
   if (has_win) { dm.add(_("Restore"), FL_COMMAND + 'o', restore); return; }
+  if (prefs) { dm.add(_("Open"), FL_COMMAND + 'o', [d] { d->open_preferences(); }); return; }
+  if (is_dock) {   // kafelek doku: otwórz albo odepnij
+    dm.add(_("Open"), FL_COMMAND + 'o', [d] { d->open_selected(); });
+    dm.add(_("Unpin from Dock"), FL_COMMAND + 'k', [d] { d->dock_remove(); });
+    return;
+  }
   dm.add(_("Open"), FL_COMMAND + 'o', [d] { d->open_selected(); });
   dm.add(_("Information…"), FL_COMMAND + 'i', [d] { d->get_info(); });
   if (is_trash) { dm.divider(); dm.add(_("Empty Trash…"), 0, [d] { d->empty_trash(); }); }
-  if (is_dock) { dm.divider(); dm.add(_("Remove from Dock"), FL_COMMAND + 'k', [d] { d->dock_remove(); }); }
   if (has_vol) {
     dm.divider();
     dm.add(_("Eject"), FL_COMMAND + 'y', [d] { d->eject_selected(); }, can_eject ? 0 : FL_MENU_INACTIVE);
@@ -261,7 +266,26 @@ static void build_desk_menu(Desktop *d, DeskMenu &dm, int i, bool has_win, bool 
   }
 }
 
-void Desktop::desk_context_menu(int i) {
+// FLTK przewija menu, które wystaje poza obszar roboczy (u nas: w dok), i robi to
+// w środku obsługi zdarzeń - kliknięcie w tym momencie wywraca program (błąd FLTK
+// 1.4). Dlatego menu podręczne stawiamy tak, żeby całe mieściło się w obszarze.
+// X, Y - względem okna o położeniu (ox, oy) na ekranie.
+static void fit_popup(const Fl_Menu_Item *m, int &X, int &Y, int ox, int oy) {
+  int n = m->size() - 1, wide = 0;
+  fl_font(FONT_SYSTEM, SIZE_SYSTEM);
+  for (const Fl_Menu_Item *it = m; it && it->text; it = it->next())
+    wide = std::max(wide, (int)fl_width(it->text) + 90);
+  int ih = fl_height() + Fl::menu_linespacing() + 2;
+  int H = n * ih + 16;
+  int wx, wy, ww, wh;
+  Fl::screen_work_area(wx, wy, ww, wh, ox + X, oy + Y);
+  if (oy + Y + H > wy + wh) Y = wy + wh - H - oy;
+  if (oy + Y < wy) Y = wy - oy;
+  if (ox + X + wide > wx + ww) X = wx + ww - wide - ox;
+}
+
+void Desktop::desk_context_menu(int i, int X, int Y) {
+  if (i >= (int)icons_.size()) i = -1;   // ikony mogły się zmienić w międzyczasie
   icon_sel_ = i;
   redraw();
   DeskMenu dm;
@@ -271,14 +295,64 @@ void Desktop::desk_context_menu(int i) {
     bool vol = ic.vol >= 0;
     build_desk_menu(this, dm, i, win != 0, vol, ic.dock, ic.path == trash_dir() && !ic.dock,
                     vol && (vols_[ic.vol].removable || !vols_[ic.vol].mountpoint.empty()),
-                    vol && !vols_[ic.vol].optical, [win] { gary::activate(win); }, home_);
+                    vol && !vols_[ic.vol].optical, [win] { gary::activate(win); }, home_, ic.prefs);
   } else {
     build_desk_menu(this, dm, -1, false, false, false, false, false, false, nullptr, root_path_);
   }
-  const Fl_Menu_Item *m = dm.finish()->popup(Fl::event_x(), Fl::event_y(), nullptr, nullptr, menu_);
+  Fl_Menu_Item *items = dm.finish();
+  fit_popup(items, X, Y, x_root(), y_root());
+  const Fl_Menu_Item *m = items->popup(X, Y, nullptr, nullptr, ctx_style_);
   desk_target_ = true;
   dm.run(m);
   desk_target_ = false;
+}
+
+// Prawy przycisk w oknie folderu: polecenia dla zaznaczonych ikon albo dla okna.
+void Desktop::later(std::function<void()> f) {
+  static std::vector<std::function<void()>> queue;
+  queue.push_back(std::move(f));
+  Fl::add_timeout(0.0, [](void *) {
+    auto q = std::move(queue);
+    queue.clear();
+    for (auto &x : q) x();
+  });
+}
+
+void Desktop::folder_context_menu(NWin *w, int X, int Y) {
+  if (!known(w)) return;
+  auto sel = w->pane->view()->selection();
+  bool in_dock = false;
+  for (auto &e : sel)
+    if (std::find(dock_.begin(), dock_.end(), e.path) != dock_.end()) in_dock = true;
+  DeskMenu dm;
+  if (!sel.empty()) {
+    dm.add(_("Open"), FL_COMMAND + 'o', [this] { open_selected(); });
+    dm.divider();
+    if (in_dock) dm.add(_("Unpin from Dock"), FL_COMMAND + 'k', [this] { dock_remove(); });
+    else dm.add(_("Put on Dock"), FL_COMMAND + 'l', [this] { dock_add(); });
+    dm.divider();
+    dm.add(_("Information…"), FL_COMMAND + 'i', [this] { get_info(); });
+    dm.add(_("Rename…"), FL_F + 2, [this] { rename_selected(); }, sel.size() == 1 ? 0 : FL_MENU_INACTIVE);
+    dm.add(_("Duplicate"), FL_COMMAND + 'd', [this] { duplicate(); });
+    dm.add(_("Copy"), FL_COMMAND + 'c', [this] { copy_selected(); });
+    dm.divider();
+    dm.add(_("Delete"), FL_COMMAND + FL_BackSpace, [this] { move_to_trash(); });
+  } else {
+    dm.add(_("New Folder"), FL_COMMAND + 'n', [this] { new_folder(); });
+    dm.add(_("Paste"), FL_COMMAND + 'v', [this] { paste(); }, clipboard_.empty() ? FL_MENU_INACTIVE : 0);
+    dm.divider();
+    dm.add(_("Update"), FL_COMMAND + 'r', [this] { update_window(); });
+    dm.add(_("Select Contents"), FL_COMMAND + 'a', [this] { select_all(); });
+  }
+  // współrzędne okna folderu -> biurka (właścicielem menu jest przycisk na biurku)
+  Fl_Menu_Item *items = dm.finish();
+  X += w->x() - x();
+  Y += w->y() - y();
+  fit_popup(items, X, Y, x_root(), y_root());
+  const Fl_Menu_Item *m = items->popup(X, Y, nullptr, nullptr, ctx_style_);
+  menu_target = w;
+  dm.run(m);
+  if (menu_target == w) menu_target = nullptr;
 }
 
 bool Desktop::desk_shortcut() {
@@ -289,7 +363,7 @@ bool Desktop::desk_shortcut() {
   bool vol = ic.vol >= 0;
   build_desk_menu(this, dm, icon_sel_, win != 0, vol, ic.dock, ic.path == trash_dir() && !ic.dock,
                   vol && (vols_[ic.vol].removable || !vols_[ic.vol].mountpoint.empty()),
-                  vol && !vols_[ic.vol].optical, [win] { gary::activate(win); }, home_);
+                  vol && !vols_[ic.vol].optical, [win] { gary::activate(win); }, home_, ic.prefs);
   const Fl_Menu_Item *m = dm.finish()->test_shortcut();
   if (!m || !m->active()) return false;
   desk_target_ = true;

@@ -156,7 +156,13 @@ public:
   // --- menu Nirvana / Okno / Ikony / Narzędzia (menus.cxx) ---
   void update_menu();            // aktywne/nieaktywne pozycje przed otwarciem menu
   void update_menu(Fl_Menu_ *m, NWin *a);   // to samo dla wskazanego paska (okno folderu)
-  void desk_context_menu(int icon);         // menu podręczne ikon biurka (prawy przycisk)
+  // Menu podręczne (prawy przycisk) otwieramy po obsłużeniu kliknięcia, nie w jego
+  // trakcie - menu FLTK otwarte wprost z FL_PUSH potrafiło się wywrócić przy szybkim
+  // ponownym otwarciu. X, Y - położenie w oknie, w którym kliknięto.
+  void desk_context_menu(int icon, int X, int Y);
+  void folder_context_menu(NWin *w, int X, int Y);
+  static void later(std::function<void()> f);   // wykonaj po bieżącym zdarzeniu
+  Fl_Menu_Button *ctx_style_ = nullptr;           // ukryty przycisk: wygląd menu podręcznych
   bool desk_shortcut();                     // skróty ikon biurka (bez aktywnego okna)
   void open_preferences();
   void execute_command();
@@ -202,6 +208,8 @@ private:
     bool dock = false;   // ikona wyciągnięta na biurko (dok w lewym dolnym rogu)
     Entry entry;         // dla doku: plik/folder/aplikacja
     unsigned long win = 0;      // ikona zikonizowanego okna (Window); dwuklik je przywraca
+    bool prefs = false;         // ikona Preferencji (otwiera panel, nie folder)
+    bool no_drop() const { return win || prefs; }   // na tę ikonę nie upuszcza się plików
     Fl_Image *img = nullptr;    // jej obrazek (z _NET_WM_ICON albo AppImage)
   };
   int icon_cols_ = 1;   // kolumny ikon przy lewej krawędzi (dyski, okna, kosz)

@@ -152,7 +152,7 @@ static Fl_Image *big_icon(Icon icon, bool sel) {
 }
 
 void warm_small_icons() {
-  for (int i = 0; i <= (int)Icon::Wifi; i++)
+  for (int i = 0; i <= (int)Icon::Preferences; i++)
     for (bool sel : {false, true}) { small_icon((Icon)i, sel); big_icon((Icon)i, sel); }
 }
 
@@ -617,6 +617,15 @@ int FolderView::handle(int e) {
     int i = index_at(Fl::event_x(), Fl::event_y(), &on_label);
     press_x_ = Fl::event_x(); press_y_ = Fl::event_y();
     bool mod = Fl::event_state() & (FL_SHIFT | FL_CTRL | FL_META);
+    // prawy przycisk: menu podręczne dla klikniętego elementu (albo pustego miejsca)
+    if (Fl::event_button() == FL_RIGHT_MOUSE && on_context) {
+      if (i >= 0) { if (!sel_[i]) select_only(i); anchor_ = i; }
+      else std::fill(sel_.begin(), sel_.end(), 0);
+      state_ = IDLE;
+      redraw();
+      on_context();
+      return 1;
+    }
     if (i >= 0 && Fl::event_clicks() && on_open) {
       Fl::event_clicks(0);
       select_only(i);

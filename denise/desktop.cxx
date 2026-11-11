@@ -9,6 +9,7 @@
 #include <FL/Fl.H>
 #include <FL/Fl_Box.H>
 #include <FL/Fl_Button.H>
+#include <FL/Fl_Choice.H>
 #include <FL/Fl_Secret_Input.H>
 #include <FL/Fl_Tooltip.H>
 #include <FL/Fl_Menu_Button.H>
@@ -525,6 +526,15 @@ Desktop::Desktop(int W, int H, const std::string &home)
     mem_w_ = new MemInfo(mx, 0, 1, MENUBAR_H, W, home_);
   }
   layout_bar();
+  // Menu podręczne biurka i okien: ukryty przycisk menu jako "właściciel" (wygląd jak
+  // pasek menu). Nie pasek menu - FLTK obsługuje menu paska inaczej.
+  ctx_style_ = new Fl_Menu_Button(0, 0, 1, 1);
+  ctx_style_->textfont(FONT_SYSTEM);
+  ctx_style_->textsize(SIZE_SYSTEM);
+  ctx_style_->color(GRAY);
+  ctx_style_->down_box(FL_FLAT_BOX);
+  ctx_style_->selection_color(SEL);
+  ctx_style_->hide();
   auto *wm = new WindowsMenu(W - APP_W, 0, APP_W, MENUBAR_H);
   app_menu_ = wm;
   wm->selection_color(menu_->selection_color());
@@ -668,7 +678,9 @@ void Desktop::layout_icons() {
   // zikonizowane okna; Kosz na dole, nad dokiem. Gdy kolumna się zapełni,
   // następna stoi obok - okna folderów i zoom zostawiają wszystkie kolumny wolne.
   const int COL = 90, ROW = 70, top = MENUBAR_H + 14;
-  int trash_y = h() - 74 - (dock_.empty() ? 0 : DOCK_TILE + 4);
+  // Kosz stoi zawsze w tym samym miejscu, nad dokiem - także gdy dok jest pusty,
+  // więc dodanie czegoś do doku go nie przesuwa
+  int trash_y = h() - 74 - (DOCK_TILE + 4);
   int ix = 0, iy = top, cols = 1;
   auto place = [&](DeskIcon d) {
     if (iy + ROW > trash_y && iy > top) { ix += COL; iy = top; cols++; }
@@ -677,6 +689,13 @@ void Desktop::layout_icons() {
     iy += ROW;
   };
   place({"Nirvana HD", home_, Icon::Home, 0, 0});
+  // aplikacje (ukryty ~/.nirvana-apps) i panel Preferencji
+  place({_("Applications"), apps_dir(), Icon::Application, 0, 0});
+  {
+    DeskIcon p{_("Preferences"), "", Icon::Preferences, 0, 0};
+    p.prefs = true;
+    place(p);
+  }
   // dyski i płyty pod dyskiem Nirvana HD, jak w Mac OS
   for (int i = 0; i < (int)vols_.size(); i++) {
     DeskIcon d{vols_[i].name, vols_[i].mountpoint, vols_[i].icon, 0, 0};
@@ -727,7 +746,7 @@ plat::Rect Desktop::folder_area() const {
   const int GAP = 6;
   int L = icon_cols_ * 90 + 6 + FRAME, T = MENUBAR_H + TITLE_H + GAP;   // kolumny ikon z lewej
   int R = w() - FRAME - GAP;
-  int B = h() - FRAME - GAP - (dock_.empty() ? 0 : DOCK_TILE);   // dok (także zwinięty)
+  int B = h() - FRAME - GAP - DOCK_TILE;   // miejsce na dok (także pusty lub zwinięty)
   return {L, T, std::max(MIN_W, R - L), std::max(MIN_H, B - T)};
 }
 
@@ -737,7 +756,7 @@ void Desktop::publish_folder_area() {
   if (!shown() || !fl_display) return;
   // _NIRVANA_DOK: wysokość doku - Insight trzyma nad nim okna wszystkich programów
   static long last_dock = -1;
-  long dock = dock_.empty() ? 0 : DOCK_TILE;
+  long dock = DOCK_TILE;   // stałe miejsce na dok - okna nie skaczą po dodaniu ikony
   if (dock != last_dock) {
     last_dock = dock;
     XChangeProperty(fl_display, DefaultRootWindow(fl_display), atom("_NIRVANA_DOK"), XA_CARDINAL, 32,
@@ -835,6 +854,7 @@ std::string Desktop::title_for(const std::string &path) const {
   if (path == home_) return "Nirvana HD";
   if (path == "/") return "System";
   if (path == trash_dir()) return _("Trash");
+  if (path == apps_dir()) return _("Applications");
   for (auto &v : vols_) if (!v.mountpoint.empty() && v.mountpoint == path) return v.name;
   return fs::path(path).filename().string();
 }
@@ -1339,6 +1359,10 @@ void Desktop::open_folder(const std::string &path, bool animate, bool new_window
   win->size_range(MIN_W + ew, csd_mode ? TITLE_H : MIN_H);
   win->end();
   win->pane->view()->on_open = [this, win](const Entry &e) { open_entry(e, win); };
+  win->pane->view()->on_context = [this, win] {
+    int X = Fl::event_x(), Y = Fl::event_y();
+    later([this, win, X, Y] { if (known(win)) folder_context_menu(win, X, Y); });
+  };
   win->pane->view()->is_open = [this, win](const std::string &p) { NWin *o = find(p); return o && o != win; };
   win->pane->view()->on_drag_start = [this, win](const std::vector<Entry> &v) { drag_start(win, v); };
   win->pane->view()->on_drag_move = [this](int xr, int yr) { drag_move(xr, yr); };
@@ -1553,13 +1577,15 @@ std::string Desktop::app_destination(const std::string &path) const {
 
 // AppImage spoza folderu Aplikacje: zaproponuj instalację (jak sklep w telefonie,
 // tylko bez sklepu). Z folderu Aplikacje: uruchom, w razie potrzeby rozpakowując.
+static std::string menu_escape(const std::string &s);
+
 void Desktop::open_appimage(const std::string &path) {
   if (in_apps(path)) { run_app(path); return; }
   std::string name = appimage::label(path, home_);
-  fs::path dest = app_destination(path);
-  std::string folder = dest.parent_path().parent_path().filename().string() + "/" + dest.parent_path().filename().string();
+  std::string fname = fs::path(path).filename().string();
   std::error_code ec;
-  auto install = [this, path, dest] {
+  // przeniesienie do folderu kategorii i pierwsze uruchomienie
+  auto install_to = [this, path](const fs::path &dest) {
     std::error_code ec;
     fs::create_directories(dest.parent_path(), ec);
     if (fs::exists(dest, ec)) fs::remove(dest, ec);   // "Zastąp": ta sama wersja
@@ -1578,22 +1604,59 @@ void Desktop::open_appimage(const std::string &path) {
     refresh_all();
     run_app(dest.string());
   };
-  if (fs::exists(dest, ec)) {   // ta sama wersja już jest - inne wersje mogą stać obok
+  // ta sama wersja już jest w którejś kategorii - inne wersje mogą stać obok
+  fs::path existing;
+  for (auto it = fs::recursive_directory_iterator(apps_dir(), fs::directory_options::skip_permission_denied, ec);
+       it != fs::recursive_directory_iterator(); it.increment(ec)) {
+    if (ec) break;
+    if (it.depth() > 1) { it.disable_recursion_pending(); continue; }
+    if (it->path().filename() == fname) { existing = it->path(); break; }
+  }
+  if (!existing.empty()) {
+    std::string folder = existing.parent_path().filename().string();
     dialog(_("Installation"),
            plat::fmt(_("“%1” is already installed in %2.\n"
                        "Other versions of this program can be installed alongside it."), name, folder),
            {{_("Cancel"), nullptr},
-            {_("Replace"), install},
-            {_("Run"), [this, dest] { run_app(dest.string()); }}});
+            {_("Replace"), [install_to, existing] { install_to(existing); }},
+            {_("Run"), [this, existing] { run_app(existing.string()); }}});
     return;
   }
-  dialog(_("Installation"),
-         plat::fmt(_("Install the application “%1”?\nThe file will be moved to %2."), name, folder) +
-         "\n" +
-         (appimage::sandbox_available()
-              ? _("The application will run in a sandbox: it will only see Nirvana HD.")
-              : _("Note: bubblewrap is missing - the application will run without a sandbox.")),
-         {{_("Cancel"), nullptr}, {_("Install"), install}});
+  // Instalacja: użytkownik wybiera kategorię (podpowiedź z pliku .desktop w AppImage)
+  int W = 460, H = 196, ox, oy;
+  Entry ic;
+  ic.name = fname;
+  ic.path = path;
+  ic.icon = Icon::Application;
+  ic.icon_file = appimage::icon(path, home_);
+  NWin *win = begin_form(_("Installation"), W, H, &ic, plat::fmt(_("Install the application “%1”?"), name), ox, oy);
+  auto *ch = new Fl_Choice(ox + 150, oy + 58, W - 166, 22, _("Category:"));
+  ch->labelfont(FONT_SYSTEM);
+  ch->labelsize(SIZE_SYSTEM);
+  ch->textsize(SIZE_SMALL + 1);
+  ch->box(BUTTON_BOX);
+  ch->down_box(FL_FLAT_BOX);
+  ch->color(GRAY);
+  ch->selection_color(SEL);
+  const char *detected = appimage::detect_category(path, home_);
+  const auto &cats = appimage::categories();
+  for (size_t k = 0; k < cats.size(); k++) {
+    ch->add(menu_escape(_(cats[k])).c_str());
+    if (!strcmp(cats[k], detected)) ch->value((int)k);
+  }
+  auto *note = new Fl_Box(ox + 64, oy + 92, W - 80, 54);
+  note->copy_label((appimage::sandbox_available()
+                        ? _("The application will run in a sandbox: it will only see Nirvana HD.")
+                        : _("Note: bubblewrap is missing - the application will run without a sandbox.")));
+  note->labelsize(SIZE_SMALL + 1);
+  note->align(FL_ALIGN_LEFT | FL_ALIGN_TOP | FL_ALIGN_INSIDE | FL_ALIGN_WRAP);
+  end_form(win, W, H, ox, oy,
+           {{_("Cancel"), nullptr},
+            {_("Install"), [this, ch, fname, install_to] {
+               const auto &cats = appimage::categories();
+               int v = std::clamp(ch->value(), 0, (int)cats.size() - 1);
+               install_to(fs::path(apps_dir()) / appimage::category_dir_name(home_, cats[v]) / fname);
+             }}});
 }
 
 void Desktop::run_app(const std::string &path) {
@@ -1701,7 +1764,7 @@ int Desktop::handle(int e) {
     return 1;
   case FL_DND_DRAG: {
     int i = icon_at(Fl::event_x(), Fl::event_y());
-    if (i >= 0 && icons_[i].win) i = -1;
+    if (i >= 0 && icons_[i].no_drop()) i = -1;
     if (i != icon_drop_) { icon_drop_ = i; redraw(); }
     return 1;
   }
@@ -1724,7 +1787,8 @@ int Desktop::handle(int e) {
   if (e == FL_PUSH && Fl::event_y() >= MENUBAR_H && Fl::event_button() == FL_RIGHT_MOUSE) {
     int i = icon_at(Fl::event_x(), Fl::event_y());
     if (tip_icon_ >= 0) { tip_icon_ = -1; Fl_Tooltip::enter_area(this, 0, 0, 0, 0, nullptr); }
-    desk_context_menu(i);
+    int X = Fl::event_x(), Y = Fl::event_y();
+    later([this, i, X, Y] { desk_context_menu(i, X, Y); });
     return 1;
   }
   if (e == FL_PUSH && Fl::event_y() >= MENUBAR_H) {
@@ -1737,6 +1801,7 @@ int Desktop::handle(int e) {
       Fl::event_clicks(0);
       vdrag_icon_ = -1;
       if (icons_[i].win) gary::activate(icons_[i].win);   // ikona okna: przywróć je
+      else if (icons_[i].prefs) open_preferences();
       else if (icons_[i].vol >= 0) open_volume(icons_[i].vol);
       else open_folder(icons_[i].path);
     } else if (i < 0 && Fl::event_clicks() && Fl::event_button() == FL_LEFT_MOUSE) {
@@ -1887,6 +1952,7 @@ void Desktop::open_selected() {
     if (const Entry *e = a->pane->view()->selected()) open_entry(*e, a);
   } else if (icon_sel_ >= 0) {
     if (icons_[icon_sel_].win) gary::activate(icons_[icon_sel_].win);
+    else if (icons_[icon_sel_].prefs) open_preferences();
     else if (icons_[icon_sel_].vol >= 0) open_volume(icons_[icon_sel_].vol);
     else if (icons_[icon_sel_].dock) open_entry(icons_[icon_sel_].entry);
     else open_folder(icons_[icon_sel_].path);
@@ -2610,7 +2676,7 @@ Desktop::DropTarget Desktop::target_at(int xr, int yr) {
     return t;
   }
   if (is_under(child, fl_xid(this))) t.icon = icon_at(xr - x_root(), yr - y_root());
-  if (t.icon >= 0 && icons_[t.icon].win) t.icon = -1;   // na ikonę okna nie da się upuścić plików
+  if (t.icon >= 0 && icons_[t.icon].no_drop()) t.icon = -1;   // na ikonę okna nie da się upuścić plików
   return t;
 }
 

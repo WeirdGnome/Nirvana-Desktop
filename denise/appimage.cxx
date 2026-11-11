@@ -382,11 +382,47 @@ static std::string folder_name(const std::string &parent, const char *en) {
   return _(en);
 }
 
-std::string apps_dir(const std::string &home) { return home + "/" + folder_name(home, N_("Applications")); }
+std::string apps_dir(const std::string &home) { return home + "/.nirvana-apps"; }
 
-std::string category_folder(const std::string &path, const std::string &home) {
-  std::string parent = apps_dir(home);
-  // główne kategorie freedesktop.org -> foldery w ~/Aplikacje
+std::string migrate_apps_dir(const std::string &home) {
+  std::error_code ec;
+  fs::path dst = apps_dir(home);
+  for (const char *n : {"Applications", "Aplikacje"}) {
+    fs::path old = fs::path(home) / n;
+    if (!fs::is_directory(old, ec) || fs::is_symlink(old, ec)) continue;
+    if (!fs::exists(dst, ec)) {
+      fs::rename(old, dst, ec);
+      if (!ec) return old.string();
+      ec.clear();
+      continue;
+    }
+    // oba istnieją: przenosimy zawartość, bez nadpisywania
+    for (auto &de : fs::directory_iterator(old, ec)) {
+      fs::path to = dst / de.path().filename();
+      if (fs::exists(to, ec)) {
+        if (fs::is_directory(de.path(), ec) && fs::is_directory(to, ec))
+          for (auto &x : fs::directory_iterator(de.path(), ec))
+            if (!fs::exists(to / x.path().filename(), ec)) fs::rename(x.path(), to / x.path().filename(), ec);
+        continue;
+      }
+      fs::rename(de.path(), to, ec);
+    }
+    fs::remove(old, ec);   // tylko gdy pusty
+    return old.string();
+  }
+  return "";
+}
+
+const std::vector<const char *> &categories() {
+  static const std::vector<const char *> c = {
+    N_("Games"), N_("Internet"), N_("Office"), N_("Graphics"), N_("Multimedia"), N_("Development"),
+    N_("Education"), N_("Science"), N_("System"), N_("Accessories"), N_("Other"),
+  };
+  return c;
+}
+
+const char *detect_category(const std::string &path, const std::string &home) {
+  // główne kategorie freedesktop.org -> foldery w katalogu aplikacji
   static const std::pair<const char *, const char *> map[] = {
     {"Game", N_("Games")},          {"Graphics", N_("Graphics")},   {"AudioVideo", N_("Multimedia")},
     {"Audio", N_("Multimedia")},  {"Video", N_("Multimedia")},   {"Network", N_("Internet")},
@@ -400,9 +436,17 @@ std::string category_folder(const std::string &path, const std::string &home) {
     size_t sc = cats.find(';', pos);
     std::string c = cats.substr(pos, sc == std::string::npos ? std::string::npos : sc - pos);
     pos = sc == std::string::npos ? cats.size() : sc + 1;
-    for (auto &[k, v] : map) if (c == k) return folder_name(parent, v);
+    for (auto &[k, v] : map) if (c == k) return v;
   }
-  return folder_name(parent, N_("Other"));
+  return N_("Other");
+}
+
+std::string category_dir_name(const std::string &home, const char *category) {
+  return folder_name(apps_dir(home), category);
+}
+
+std::string category_folder(const std::string &path, const std::string &home) {
+  return category_dir_name(home, detect_category(path, home));
 }
 
 std::string install_dir(const std::string &path, const std::string &home) {

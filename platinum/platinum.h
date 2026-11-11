@@ -143,7 +143,7 @@ void init();
 
 // ---- Ikony (32x32, rysowane wektorowo) ------------------------------------
 enum class Icon { Folder, OpenFolder, Document, Application, Home, Trash, TrashFull, Image, Music,
-                  HardDisk, Removable, Optical, Encrypted, Eject, Network, Wifi };
+                  HardDisk, Removable, Optical, Encrypted, Eject, Network, Wifi, Preferences };
 void draw_icon(Icon icon, int x, int y, bool selected);   // w stylu z ustawień wyglądu
 bool draw_icon_workbench(Icon icon, int x, int y, bool selected);
 int icon_style();   // 0 = Workbench, 1 = Platinum (klucz dla pamięci podręcznych ikon)

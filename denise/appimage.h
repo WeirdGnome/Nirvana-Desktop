@@ -40,13 +40,20 @@ Meta meta(const std::string &path, const std::string &home);
 // Dzięki wersji kilka wydań tego samego programu da się rozróżnić obok siebie.
 std::string label(const std::string &path, const std::string &home);
 
-// Folder w ~/Aplikacje według kategorii: "Gry", "Grafika", "Internet"... albo "Inne".
-// Nazwa w języku interfejsu - chyba że folder już istnieje pod polską nazwą
-// (zmiana języka nie rozdziela zainstalowanych aplikacji na dwa foldery).
-std::string category_folder(const std::string &path, const std::string &home);
+// Kategorie aplikacji (angielskie nazwy, N_), w kolejności wyboru przy instalacji.
+const std::vector<const char *> &categories();
+// Kategoria wykryta z pliku .desktop w AppImage (jedna z categories(), "Other" gdy brak).
+const char *detect_category(const std::string &path, const std::string &home);
+// Folder kategorii w katalogu aplikacji: "Gry", "Internet"... w języku interfejsu,
+// chyba że folder już istnieje pod inną nazwą (zmiana języka nie dzieli aplikacji).
+std::string category_dir_name(const std::string &home, const char *category);
+std::string category_folder(const std::string &path, const std::string &home);   // wykryta
 
-// ~/Aplikacje (albo ~/Applications po angielsku - jak wyżej).
+// Katalog aplikacji: ~/.nirvana-apps (ukryty - aplikacje otwiera się ikoną na biurku).
 std::string apps_dir(const std::string &home);
+// Przenosi dawny ~/Aplikacje (~/Applications) do ~/.nirvana-apps. Zwraca starą ścieżkę
+// (do poprawienia zapamiętanych ścieżek, np. doku) albo "", gdy nic nie przeniesiono.
+std::string migrate_apps_dir(const std::string &home);
 
 // Katalog z rozpakowaną aplikacją (może jeszcze nie istnieć).
 std::string install_dir(const std::string &path, const std::string &home);

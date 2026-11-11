@@ -6,7 +6,8 @@ Lekkie środowisko graficzne dla Linuksa (baza: minimalny Devuan) w duchu
 **Mac OS 9 (Platinum)** z nutą **Amigi**. Napisane w C++ i FLTK 1.4.
 
 - **Tryb prosty**: użytkownik widzi tylko swój dysk Nirvana HD (czyli `$HOME`), jak w Androidzie.
-  Aplikacje to pliki AppImage leżące w `~/Aplikacje`; instalacja = przeciągnięcie pliku.
+  Aplikacje to pliki AppImage w ukrytym `~/.nirvana-apps`, otwieranym ikoną **Aplikacje**
+  na biurku; instalacja = otwarcie albo przeciągnięcie pliku.
 - **Rambler, menedżer plików** (komponent `nirvana-denise`): jedno okno, w którym przechodzi się
   między folderami (wstecz, dalej, folder nadrzędny, pole położenia), z własnym menu Okno i Ikony.
 
@@ -33,7 +34,7 @@ Lekkie środowisko graficzne dla Linuksa (baza: minimalny Devuan) w duchu
 
 Rozpakuj źródła i uruchom instalator:
 
-    tar xzf nirvana-0.0.5.tar.gz && cd nirvana
+    tar xzf nirvana-0.0.6.tar.gz && cd nirvana
     sudo ./install.sh                 # albo: sudo ./install.sh --login-screen
 
 Instalator:
@@ -145,12 +146,18 @@ Czcionkę systemową w stylu Chicago można podać przez `NIRVANA_SYSTEM_FONT`
   nie ma wersji, Rambler bierze ją z `X-AppImage-Version` w pliku .desktop. Dzięki temu kilka
   wersji tego samego programu da się rozróżnić i mieć zainstalowane jednocześnie.
   Ikony i dane z .desktop są zapamiętywane w `~/.cache/nirvana/ikony`.
-- **Instalacja**: otwarcie AppImage spoza folderu Aplikacje (np. z Pobranych) pyta,
-  czy zainstalować. Plik trafia do folderu swojej kategorii w `~/Aplikacje`, a jego zawartość
-  jest rozpakowywana do `~/.local/share/nirvana/aplikacje/`. Bez FUSE i bez wykonywania
-  runtime'u AppImage.
-- **Foldery kategorii** według `Categories=` z pliku .desktop wewnątrz AppImage. Folder
-  powstaje przy pierwszej aplikacji danego rodzaju.
+- **Gdzie są aplikacje**: w ukrytym folderze `~/.nirvana-apps`, żeby nie zaśmiecały Nirvana HD.
+  Otwiera go ikona **Aplikacje** na biurku. Prawy przycisk na aplikacji i **Połóż na doku**
+  trzyma ją pod ręką; prawy przycisk na kafelku doku daje **Otwórz** i **Odepnij z doku**.
+  Dawny folder `~/Aplikacje` (`~/Applications`) jest przenoszony tam automatycznie, razem
+  z wpisami doku i zapamiętanymi oknami.
+- **Instalacja**: otwarcie AppImage spoza folderu Aplikacje (np. z Pobranych) pyta, czy
+  zainstalować i **do jakiej kategorii** (Gry, Internet, Biuro, Grafika, Multimedia,
+  Programowanie, Edukacja, Nauka, System, Akcesoria, Inne). Kategoria z AppImage jest
+  podpowiedziana. Plik trafia do folderu tej kategorii, a jego zawartość jest rozpakowywana
+  do `~/.local/share/nirvana/aplikacje/`. Bez FUSE i bez wykonywania runtime'u AppImage.
+- **Foldery kategorii**: podpowiadana kategoria wynika z `Categories=` w pliku .desktop wewnątrz
+  AppImage. Folder powstaje przy pierwszej aplikacji danego rodzaju.
 
   | Kategoria | Folder | Kategoria | Folder |
   |-----------|--------|-----------|--------|
@@ -251,10 +258,17 @@ okno biurka nie przyjmuje fokusu, żeby klik w pasek menu nie zmieniał aktywnej
   `Ctrl+↑` folder nadrzędny. Po wyjściu w górę zaznaczony jest folder, z którego przyszliśmy.
 - **Więcej okien**: **Okno > Nowe okno** (`Ctrl+Shift+N`) albo `Ctrl` + dwuklik na folderze.
   Ikony biurka (Nirvana HD, dyski, Kosz) otwierają się w ostatnio używanym oknie.
-- **Ikony biurka** mają menu podręczne (prawy przycisk myszy): Otwórz, Informacje, Zdejmij
-  z doku, Wysuń, Formatuj dysk, Opróżnij kosz, Przywróć (ikony okien). `Ctrl+O`, `Ctrl+I`,
-  `Ctrl+K`, `Ctrl+Y` działają na zaznaczoną ikonę biurka. Na pustym biurku: Otwórz Nirvana HD,
-  Wygląd biurka.
+- **Ikony biurka** w lewej kolumnie: Nirvana HD, **Aplikacje**, **Preferencje**, dyski,
+  zikonizowane okna; **Kosz** stoi zawsze w tym samym miejscu na dole, nad dokiem – dodanie
+  czegoś do doku ani jego opróżnienie go nie przesuwa.
+- **Menu podręczne** (prawy przycisk myszy):
+  - ikony biurka: Otwórz, Informacje, Wysuń, Formatuj dysk, Opróżnij kosz, Przywróć (ikony
+    okien); `Ctrl+O`, `Ctrl+I`, `Ctrl+Y` działają na zaznaczoną ikonę biurka,
+  - kafelki doku: Otwórz, Odepnij z doku,
+  - ikony w oknie folderu: Otwórz, Połóż na doku / Odepnij z doku, Informacje, Zmień nazwę,
+    Duplikuj, Kopiuj, Usuń; puste miejsce w oknie: Nowy folder, Wklej, Uaktualnij, Zaznacz
+    zawartość,
+  - puste biurko: Otwórz Nirvana HD, Wygląd biurka.
 - **Otwieranie**: podwójne kliknięcie lub Enter. AppImage z innego folderu proponuje instalację.
 - **Dwuklik na pustym biurku** otwiera menedżer plików (okno Nirvana HD); gdy jest już
   otwarte, wysuwa je na wierzch.
@@ -336,6 +350,8 @@ Pozycje, które w danej chwili nic by nie zrobiły, są wyszarzone, np. Wysuń b
 - **Formatuj dysk**: zaznacz ikonę dysku na biurku i wybierz FAT32, exFAT, ext4 albo NTFS
   (UDisks2). Niesformatowane pendrive'y też pojawiają się na biurku.
 - **Resetuj Nirvanę** uruchamia Insighta i Ramblera od nowa. Okna programów zostają.
+- **Gdy Rambler się wywróci**, sesja uruchamia go ponownie zamiast wylogowywać (przyczyna trafia
+  do `~/.xsession-errors`). Dopiero pięć wywrotek w ciągu 30 sekund kończy sesję.
 
 ![Menu Nirvana](docs/img/menu-nirvana.png)
 ![Informacje o pliku](docs/img/informacje.png)
@@ -585,7 +601,7 @@ Język można też wybrać ręcznie; wybór trafia do `~/.config/nirvana/jezyk` 
 po ponownym uruchomieniu albo **Narzędzia → Resetuj Nirvanę**.
 
 Po polsku menu nazywają się *Okno*, *Ikony*, *Narzędzia*, liczby mają przecinek
-dziesiętny, a nowe foldery to `~/Aplikacje/Gry`… (po angielsku `~/Applications/Games`).
+dziesiętny, a nowe foldery kategorii to `Gry`, `Grafika`… (po angielsku `Games`, `Graphics`).
 Foldery, które już istnieją, zostają w użyciu bez względu na język, więc jego zmiana
 nie rozdziela zainstalowanych aplikacji.
 

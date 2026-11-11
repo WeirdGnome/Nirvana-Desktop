@@ -78,6 +78,7 @@ public:
   const Entry *entry(int i) const { return i >= 0 && i < count() ? &entries_[i] : nullptr; }
 
   std::function<void(const Entry &)> on_open;               // podwójne kliknięcie / Enter
+  std::function<void()> on_context;                         // prawy przycisk (menu podręczne)
   std::function<bool(const std::string &)> is_open;         // czy folder ma otwarte okno
   std::function<void(int index)> on_rename;                 // poproś o edycję nazwy
   // przeciąganie: start (zaznaczone elementy), ruch i koniec (współrzędne ekranu)

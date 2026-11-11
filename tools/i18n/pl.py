@@ -544,4 +544,7 @@ T = {
     'memory %1/%2   disk %3/%4': 'pamięć %1/%2   dysk %3/%4',
     'memory %1/%2': 'pamięć %1/%2',
     'This folder is outside Nirvana HD.': 'Ten folder znajduje się poza Nirvana HD.',
+    'Install the application “%1”?': 'Zainstalować aplikację „%1”?',
+    'Category:': 'Kategoria:',
+    'Unpin from Dock': 'Odepnij z doku',
 }

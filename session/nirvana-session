@@ -39,6 +39,20 @@ sleep 0.5
 # systemd this is the only place these session services are started from)
 [ -x "$BIN/nirvana-autostart" ] && "$BIN/nirvana-autostart"
 
-"$BIN/nirvana-denise" "$@"
+# The desktop (Rambler) ends the session only through Log Out (exit code 0).
+# If it crashes, it is started again instead of throwing the user out; if it
+# keeps crashing (5 times within 30 s), the session ends after all.
+fails=0
+since=$(date +%s)
+while :; do
+  "$BIN/nirvana-denise" "$@"
+  rc=$?
+  [ "$rc" -eq 0 ] && break
+  now=$(date +%s)
+  if [ $((now - since)) -lt 30 ]; then fails=$((fails + 1)); else fails=1; since=$now; fi
+  echo "nirvana-session: nirvana-denise exited with code $rc, restarting" >&2
+  [ "$fails" -ge 5 ] && break
+  sleep 1
+done
 kill $INSIGHT 2>/dev/null
 # autostarted programs end together with the session bus / X server

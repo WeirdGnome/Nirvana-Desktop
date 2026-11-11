@@ -389,6 +389,28 @@ static void network_icon(int x, int y, bool sel) {
   fl_rectf(x + 12, y + 28, 9, 4);
 }
 
+// Preferencje: okienko panelu sterowania z trzema suwakami
+static void preferences_icon(int x, int y, bool sel) {
+  col(0xD8D8D8, sel);
+  fl_rectf(x + 3, y + 4, 26, 24);
+  col(0x6A5AB8, sel);
+  fl_rectf(x + 3, y + 4, 26, 5);            // pasek tytułu
+  col(0xFFFFFF, sel);
+  fl_rectf(x + 5, y + 6, 2, 1);
+  for (int i = 0; i < 3; i++) {
+    int ly = y + 13 + i * 5, kx = x + 8 + (i == 0 ? 12 : i == 1 ? 4 : 9);
+    col(0x606060, sel);
+    fl_xyline(x + 7, ly, x + 25);           // rowek suwaka
+    col(0x3A78C8 + i * 0x301000, sel);
+    fl_rectf(kx, ly - 2, 5, 5);             // gałka
+    fl_color(DARK);
+    fl_rect(kx, ly - 2, 5, 5);
+  }
+  fl_color(DARK);
+  fl_rect(x + 3, y + 4, 26, 24);
+  fl_xyline(x + 3, y + 9, x + 28);
+}
+
 static void wifi_icon(int x, int y, bool sel) {
   Fl_Color c = sel ? fl_color_average(fl_rgb_color(0x30, 0x30, 0x30), FL_BLACK, 0.5f) : fl_rgb_color(0x30, 0x30, 0x30);
   fl_color(c);
@@ -587,6 +609,7 @@ void draw_icon(Icon icon, int x, int y, bool sel) {
   case Icon::Eject:       eject_icon(x, y, sel); break;
   case Icon::Network:     network_icon(x, y, sel); break;
   case Icon::Wifi:        wifi_icon(x, y, sel); break;
+  case Icon::Preferences: preferences_icon(x, y, sel); break;
   }
 }
 

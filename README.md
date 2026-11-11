@@ -6,7 +6,8 @@ A lightweight desktop environment for Linux (based on a minimal Devuan) in the s
 of **Mac OS 9 (Platinum)** with a touch of the **Amiga**. Written in C++ and FLTK 1.4.
 
 - **Simple mode**: the user only sees their own Nirvana HD disk (that is `$HOME`), as on Android.
-  Applications are AppImage files in `~/Applications`; installing means dragging a file.
+  Applications are AppImage files in the hidden `~/.nirvana-apps`, opened with the
+  **Applications** icon on the desktop; installing means opening or dragging a file.
 - **Rambler, a file manager** (component `nirvana-denise`): a single window that browses folders
   (back, forward, parent folder, location field), with its own Window and Icons menus.
 - **English by default**, Polish when the system locale is Polish (see [Languages](#languages)).
@@ -34,7 +35,7 @@ of **Mac OS 9 (Platinum)** with a touch of the **Amiga**. Written in C++ and FLT
 
 Unpack the sources and run the installer:
 
-    tar xzf nirvana-0.0.5.tar.gz && cd nirvana
+    tar xzf nirvana-0.0.6.tar.gz && cd nirvana
     sudo ./install.sh                 # or: sudo ./install.sh --login-screen
 
 The installer:
@@ -145,12 +146,19 @@ A Chicago-style system font can be set with `NIRVANA_SYSTEM_FONT`
   name has no version, Rambler takes it from `X-AppImage-Version` in the .desktop file. That way
   several versions of the same program can be told apart and installed side by side.
   Icons and .desktop data are cached in `~/.cache/nirvana/ikony`.
+- **Where applications live**: in the hidden folder `~/.nirvana-apps`, so they do not clutter
+  Nirvana HD. The **Applications** icon on the desktop opens it. Right-click an application
+  there and choose **Put on Dock** to keep it at hand; right-click a dock tile for **Open** and
+  **Unpin from Dock**. An old `~/Applications` (`~/Aplikacje`) folder is moved there
+  automatically, together with dock entries and remembered windows.
 - **Installation**: opening an AppImage from outside the Applications folder (e.g. from
-  Downloads) asks whether to install it. The file goes to its category folder in
-  `~/Applications`, and its contents are extracted to `~/.local/share/nirvana/aplikacje/`.
-  No FUSE, and the AppImage runtime is not executed.
-- **Category folders** follow `Categories=` from the .desktop file inside the AppImage. A folder
-  is created with the first application of its kind.
+  Downloads) asks whether to install it and **in which category** (Games, Internet, Office,
+  Graphics, Multimedia, Development, Education, Science, System, Accessories, Other). The
+  category from the AppImage is preselected. The file goes to that category folder, and its
+  contents are extracted to `~/.local/share/nirvana/aplikacje/`. No FUSE, and the AppImage
+  runtime is not executed.
+- **Category folders**: the suggested category follows `Categories=` from the .desktop file
+  inside the AppImage. A folder is created with the first application of its kind.
 
   | Category | Folder | Category | Folder |
   |-----------|--------|-----------|--------|
@@ -162,8 +170,8 @@ A Chicago-style system font can be set with `NIRVANA_SYSTEM_FONT`
 
   An AppImage without a category goes to the `Other` folder. An AppImage dragged straight into
   the Applications folder also goes to its category folder. Installing a version that is
-  already installed asks whether to replace it or run it. In Polish the folders are
-  `~/Aplikacje/Gry`, `Grafika`… – existing folders are kept when the language changes.
+  already installed asks whether to replace it or run it. In Polish the category
+  folders are `Gry`, `Grafika`… – existing folders are kept when the language changes.
 
   ![Two versions of a game side by side](docs/img/gry.png)
 - **Running in a sandbox** (bubblewrap): the whole system is read-only, writing is only
@@ -253,9 +261,16 @@ desktop window does not take focus, so clicking the menu bar does not change the
 - **Opening**: double-click or Enter. An AppImage from another folder offers installation.
 - **Double-clicking the empty desktop** opens the file manager (the Nirvana HD window); if it
   is already open, it is brought to the front.
-- **Desktop icons** have a context menu (right mouse button): Open, Information, Remove from Dock,
-  Eject, Format Disk, Empty Trash, Restore (window icons). `Ctrl+O`, `Ctrl+I`, `Ctrl+K`, `Ctrl+Y`
-  work on the selected desktop icon. On the empty desktop: Open Nirvana HD, Desktop Appearance.
+- **Desktop icons** in the left column: Nirvana HD, **Applications**, **Preferences**, disks,
+  iconified windows; the **Trash** always stays in the same place at the bottom, above the
+  dock – adding to or emptying the dock does not move it.
+- **Context menus** (right mouse button):
+  - desktop icons: Open, Information, Eject, Format Disk, Empty Trash, Restore (window icons);
+    `Ctrl+O`, `Ctrl+I`, `Ctrl+Y` work on the selected desktop icon,
+  - dock tiles: Open, Unpin from Dock,
+  - icons in a folder window: Open, Put on Dock / Unpin from Dock, Information, Rename,
+    Duplicate, Copy, Delete; empty space in a window: New Folder, Paste, Update, Select Contents,
+  - the empty desktop: Open Nirvana HD, Desktop Appearance.
 - **Folder windows do not cover the desktop**: when opened and when zoomed they leave the
   column of icons at the left edge free (Nirvana HD, disks, window icons, the Trash above
   the dock) as well as the dock at the bottom. Zooming other programs does the same.
@@ -336,6 +351,8 @@ restarting and shutting down, and refuses to sleep in presentation mode.
 - **Format Disk**: select a disk icon on the desktop and choose FAT32, exFAT, ext4 or NTFS
   (UDisks2). Unformatted USB sticks also appear on the desktop.
 - **Reset Nirvana** restarts Insight and Rambler. Program windows stay open.
+- **If Rambler crashes**, the session starts it again instead of logging you out (the
+  reason goes to `~/.xsession-errors`). Only five crashes within 30 seconds end the session.
 
 ![The Nirvana menu](docs/img/menu-nirvana.png)
 ![File information](docs/img/informacje.png)
@@ -583,7 +600,7 @@ also be chosen by hand; the choice goes to `~/.config/nirvana/jezyk` and applies
 restart or **Special → Reset Nirvana**.
 
 In Polish the menus are called *Okno*, *Ikony*, *Narzędzia*, numbers use a decimal comma,
-and new folders are `~/Aplikacje/Gry`… – folders that already exist stay in use whatever the
+and new category folders are `Gry`, `Grafika`… – folders that already exist stay in use whatever the
 language, so changing it does not split installed applications.
 
 A new language or corrections:

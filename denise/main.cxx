@@ -25,6 +25,8 @@
 #include "desktop.h"
 #include "appimage.h"
 #include "gary.h"
+#include <fstream>
+#include <sstream>
 #include "platinum.h"
 
 int main(int argc, char **argv) {
@@ -48,6 +50,30 @@ int main(int argc, char **argv) {
   plat::init();
   FolderView::set_home(home);
   {
+    // ~/Aplikacje -> ~/.nirvana-apps; zapamiętane ścieżki (dok, okna, ikony) idą za nim
+    std::string old = appimage::migrate_apps_dir(home);
+    if (!old.empty()) {
+      const char *x = getenv("XDG_CONFIG_HOME");
+      std::string cfg = (x && *x ? std::string(x) : home + "/.config") + "/nirvana/";
+      std::string neu = appimage::apps_dir(home);
+      for (const char *f : {"dok", "denise.okna", "ikony.pozycje"}) {
+        std::ifstream in(cfg + f);
+        if (!in) continue;
+        std::stringstream all;
+        all << in.rdbuf();
+        std::string t = all.str(), out;
+        size_t pos = 0, hit;
+        while ((hit = t.find(old, pos)) != std::string::npos) {
+          char next = hit + old.size() < t.size() ? t[hit + old.size()] : '\n';
+          out += t.substr(pos, hit - pos);
+          out += (next == '/' || next == '\n' || next == '\t') ? neu : old;
+          pos = hit + old.size();
+        }
+        out += t.substr(pos);
+        in.close();
+        std::ofstream(cfg + f) << out;
+      }
+    }
     std::error_code ec;   // folder na aplikacje zawsze istnieje
     std::filesystem::create_directories(appimage::apps_dir(home), ec);
   }
