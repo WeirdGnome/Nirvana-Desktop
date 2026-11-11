@@ -24,7 +24,7 @@ on the desktop. Written in C++ and FLTK 1.4.
 | `nirvana-denise`    | Rambler: file manager + desktop         | prototype   |
 | `nirvana-insight`   | X11 window manager (Xorg/XLibre), Platinum frames | works |
 | `nirvana-gary`      | application switcher (for now inside the Rambler process) | works |
-| `nirvana-alice`     | control panels: Appearance, Network, Power, Date & Time, Shader | works |
+| `nirvana-alice`     | control panels: User, Appearance, Network, Power, Date & Time, Printers, Shader | works |
 | `nirvana-shader`    | full-screen GLSL effects (a small compositor) | works |
 | `nirvana-shell`     | Nirvana Shell - terminal emulator       | works |
 | `nirvana-paula`     | sound                                   | planned     |
@@ -35,7 +35,7 @@ on the desktop. Written in C++ and FLTK 1.4.
 
 Unpack the sources and run the installer:
 
-    tar xzf nirvana-desktop-0.0.23.tar.gz && cd nirvana-desktop
+    tar xzf nirvana-desktop-0.0.24.tar.gz && cd nirvana-desktop
     sudo ./install.sh                 # or: sudo ./install.sh --login-screen
 
 The installer:
@@ -678,6 +678,27 @@ is only the screen in front of it. `nirvana-dm-greeter --test` shows a preview i
 Back to another greeter: `greeter-session=…` in `/etc/lightdm/lightdm.conf.d/`.
 
 ![Nirvana-DM](docs/img/nirvana-dm.png)
+
+### User (Preferences)
+
+**Preferences → User** holds the basic settings of your account:
+
+- **Picture** – a picture file (cut to a square) or one of eight built-in pictures; Nirvana-DM
+  shows it next to your name. It is saved as `~/.face` and copied to
+  `/var/lib/AccountsService/icons`, because the login screen cannot look into a closed home folder,
+- **Full name** – shown on the login screen instead of the login name,
+- **Change Password…** – the current and the new password; the system program `passwd` checks
+  and saves it (with its rules for length and strength),
+- **Log in automatically** – LightDM starts your desktop without the login screen
+  (administrators only),
+- the login name, the account type, the home folder, the shell and the groups.
+
+The picture, the name and automatic login go through `nirvana-user-helper` (pkexec, polkit
+action `org.nirvana-desktop.user`): it only ever changes the account of the person who runs it,
+and reads the picture as data (a PNG up to 1 MB), never as a path. You confirm with your own
+password; administrators at the computer are not asked.
+
+![User](docs/img/user.png)
 
 ## Software updates
 

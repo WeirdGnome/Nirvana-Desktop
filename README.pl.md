@@ -23,7 +23,7 @@ Napisane w C++ i FLTK 1.4.
 | `nirvana-denise`     | Rambler: menedżer plików + biurko        | prototyp    |
 | `nirvana-insight`      | menedżer okien X11 (Xorg/XLibre), ramki Platinum | działa |
 | `nirvana-gary`       | przełącznik aplikacji (na razie w procesie Ramblera) | działa |
-| `nirvana-alice`      | panele sterowania: Wygląd, Sieć, Zasilanie, Data i czas, Shader | działa |
+| `nirvana-alice`      | panele sterowania: Użytkownik, Wygląd, Sieć, Zasilanie, Data i czas, Drukarki, Shader | działa |
 | `nirvana-shader`     | pełnoekranowe efekty GLSL (mały kompozytor) | działa |
 | `nirvana-shell`      | Nirvana Shell - emulator terminala          | działa |
 | `nirvana-paula`      | dźwięk                                  | planowany   |
@@ -34,7 +34,7 @@ Napisane w C++ i FLTK 1.4.
 
 Rozpakuj źródła i uruchom instalator:
 
-    tar xzf nirvana-desktop-0.0.23.tar.gz && cd nirvana-desktop
+    tar xzf nirvana-desktop-0.0.24.tar.gz && cd nirvana-desktop
     sudo ./install.sh                 # albo: sudo ./install.sh --login-screen
 
 Instalator:
@@ -676,6 +676,26 @@ tylko ekran przed nim. `nirvana-dm-greeter --test` pokazuje podgląd w oknie. Po
 greetera: `greeter-session=…` w `/etc/lightdm/lightdm.conf.d/`.
 
 ![Nirvana-DM](docs/img/nirvana-dm.png)
+
+### Użytkownik (Preferencje)
+
+**Preferencje → Użytkownik** zbiera podstawowe ustawienia konta:
+
+- **Zdjęcie** – plik z obrazem (przycięty do kwadratu) albo jeden z ośmiu wbudowanych obrazków;
+  Nirvana-DM pokazuje je przy Twojej nazwie. Zapisuje się jako `~/.face` i kopia trafia do
+  `/var/lib/AccountsService/icons`, bo ekran logowania nie zajrzy do zamkniętego katalogu domowego,
+- **Imię i nazwisko** – widoczne na ekranie logowania zamiast loginu,
+- **Zmień hasło…** – obecne i nowe hasło; sprawdza i zapisuje je systemowy `passwd` (z jego
+  zasadami długości i siły),
+- **Loguj automatycznie** – LightDM uruchamia pulpit bez ekranu logowania (tylko administratorzy),
+- login, typ konta, katalog domowy, powłoka i grupy.
+
+Zdjęcie, imię i nazwisko oraz automatyczne logowanie przechodzą przez `nirvana-user-helper`
+(pkexec, akcja polkit `org.nirvana-desktop.user`): zmienia on wyłącznie konto osoby, która go
+uruchomiła, a zdjęcie czyta jako dane (PNG do 1 MB), nigdy jako ścieżkę. Potwierdzasz własnym
+hasłem; administratorzy przy komputerze nie są pytani.
+
+![Użytkownik](docs/img/user.png)
 
 ## Aktualizacje oprogramowania
 

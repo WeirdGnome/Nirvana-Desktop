@@ -130,7 +130,7 @@ add_executable(nirvana-insight insight/main.cxx)
 target_link_libraries(nirvana-insight PRIVATE nirvana-platinum X11::X11)
 
 # --- alice: control panels ---------------------------------------------------
-add_executable(nirvana-alice alice/main.cxx alice/appearance.cxx alice/network.cxx alice/power.cxx alice/preferences.cxx alice/shader.cxx alice/datetime.cxx alice/desktop.cxx alice/printers.cxx)
+add_executable(nirvana-alice alice/main.cxx alice/appearance.cxx alice/network.cxx alice/power.cxx alice/preferences.cxx alice/shader.cxx alice/datetime.cxx alice/desktop.cxx alice/printers.cxx alice/user.cxx)
 target_link_libraries(nirvana-alice PRIVATE nirvana-platinum nirvana-net nirvana-power ${NIRVANA_PRINT_LIB})
 
 # --- Nirvana Shell: terminal emulator (system libvterm or the bundled one) ---
@@ -159,7 +159,7 @@ else()
 endif()
 install(DIRECTORY shaders/ DESTINATION share/nirvana/shaders COMPONENT nirvana)
 # system updates: the check (as the user) and the helper (root, through pkexec/polkit)
-install(PROGRAMS update/nirvana-update-check update/nirvana-update-helper update/nirvana-power-helper update/nirvana-time-helper update/nirvana-print-helper DESTINATION libexec COMPONENT nirvana)
+install(PROGRAMS update/nirvana-update-check update/nirvana-update-helper update/nirvana-power-helper update/nirvana-time-helper update/nirvana-print-helper update/nirvana-user-helper DESTINATION libexec COMPONENT nirvana)
 install(FILES update/org.nirvana-desktop.policy DESTINATION share/polkit-1/actions COMPONENT nirvana)
 install(FILES update/50-nirvana.rules DESTINATION share/polkit-1/rules.d COMPONENT nirvana)
 

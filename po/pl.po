@@ -3,7 +3,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Nirvana Desktop 0.1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-11 19:41+0000\n"
+"POT-Creation-Date: 2026-11-11 19:53+0000\n"
 "PO-Revision-Date: 2026-11-09 13:00+0000\n"
 "Last-Translator: Nirvana Desktop\n"
 "Language-Team: Polish\n"
@@ -11,7 +11,8 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=3; plural=(n==1 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
+"Plural-Forms: nplurals=3; plural=(n==1 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 "
+"|| n%100>=20) ? 1 : 2);\n"
 
 #: alice/appearance.cxx:91
 msgid "Window"
@@ -21,8 +22,8 @@ msgstr "Okno"
 msgid "Icons"
 msgstr "Ikony"
 
-#: alice/appearance.cxx:91 dm/nirvana-dm-greeter.cxx:427
-#: dm/nirvana-dm-greeter.cxx:428 dm/nirvana-dm-greeter.cxx:429
+#: alice/appearance.cxx:91 dm/nirvana-dm-greeter.cxx:429
+#: dm/nirvana-dm-greeter.cxx:430 dm/nirvana-dm-greeter.cxx:431
 msgid "Special"
 msgstr "Narzędzia"
 
@@ -62,7 +63,7 @@ msgstr "Źródło: %1"
 msgid "custom"
 msgstr "własny"
 
-#: alice/appearance.cxx:233 alice/preferences.cxx:139 denise/gary.cxx:117
+#: alice/appearance.cxx:233 alice/preferences.cxx:149 denise/gary.cxx:117
 msgid "Appearance"
 msgstr "Wygląd"
 
@@ -130,7 +131,7 @@ msgstr "Inny plik…"
 msgid "Choose Wallpaper"
 msgstr "Wybierz tapetę"
 
-#: alice/appearance.cxx:337
+#: alice/appearance.cxx:337 alice/user.cxx:333
 msgid "Images (*.{png,jpg,jpeg,gif,bmp,svg,svgz,xpm})"
 msgstr "Obrazy (*.{png,jpg,jpeg,gif,bmp,svg,svgz,xpm})"
 
@@ -181,22 +182,24 @@ msgstr "Animacje okien"
 #: alice/appearance.cxx:410 alice/datetime.cxx:385 alice/network.cxx:244
 #: alice/network.cxx:341 alice/network.cxx:389 alice/network.cxx:493
 #: alice/network.cxx:744 alice/power.cxx:127 alice/printers.cxx:163
-#: alice/printers.cxx:319 denise/applets.cxx:443 denise/desktop.cxx:1671
-#: denise/desktop.cxx:1705 denise/desktop.cxx:2056 denise/desktop.cxx:2610
-#: denise/desktop.cxx:3053 denise/menus.cxx:417 denise/menus.cxx:736
-#: denise/menus.cxx:845 denise/menus.cxx:850 denise/updates.cxx:273
-#: platinum/platinum.cxx:228 platinum/platinum.cxx:1024 shell/main.cxx:615
+#: alice/printers.cxx:319 alice/user.cxx:544 alice/user.cxx:702
+#: denise/applets.cxx:443 denise/desktop.cxx:1671 denise/desktop.cxx:1705
+#: denise/desktop.cxx:2056 denise/desktop.cxx:2610 denise/desktop.cxx:3053
+#: denise/menus.cxx:417 denise/menus.cxx:736 denise/menus.cxx:845
+#: denise/menus.cxx:850 denise/updates.cxx:273 platinum/platinum.cxx:228
+#: platinum/platinum.cxx:1024 shell/main.cxx:615
 msgid "Cancel"
 msgstr "Anuluj"
 
 #: alice/appearance.cxx:411 alice/datetime.cxx:386 alice/power.cxx:128
+#: alice/user.cxx:703
 msgid "Apply"
 msgstr "Zastosuj"
 
 #: alice/appearance.cxx:412 alice/datetime.cxx:387 alice/desktop.cxx:103
 #: alice/power.cxx:129 alice/printers.cxx:442 alice/shader.cxx:262
-#: denise/about.cxx:607 denise/clock.cxx:174 denise/desktop.cxx:1650
-#: platinum/platinum.cxx:227
+#: alice/user.cxx:704 denise/about.cxx:607 denise/clock.cxx:174
+#: denise/desktop.cxx:1650 platinum/platinum.cxx:227
 msgid "OK"
 msgstr "OK"
 
@@ -236,7 +239,7 @@ msgstr ""
 msgid "In the menu bar: %1"
 msgstr "Na pasku menu: %1"
 
-#: alice/datetime.cxx:278 alice/preferences.cxx:143
+#: alice/datetime.cxx:278 alice/preferences.cxx:153
 msgid "Date & Time"
 msgstr "Data i czas"
 
@@ -352,7 +355,7 @@ msgstr ""
 "Strefa czasowa i data wymagają uprawnień administratora; administratorzy "
 "przy komputerze nie są pytani o hasło."
 
-#: alice/desktop.cxx:83 alice/preferences.cxx:140
+#: alice/desktop.cxx:83 alice/preferences.cxx:150
 msgid "Desktop"
 msgstr "Pulpit"
 
@@ -391,7 +394,7 @@ msgstr "Podgląd powiększonego okna."
 msgid "The change applies at once, also to windows zoomed from now on."
 msgstr "Zmiana działa od razu, także dla okien powiększanych od teraz."
 
-#: alice/main.cxx:34
+#: alice/main.cxx:36
 msgid "No such scheme: %1"
 msgstr "Nie ma schematu: %1"
 
@@ -440,7 +443,7 @@ msgstr "Zabezpieczenia:"
 msgid "WPA\\/WPA2 Personal|WPA3 Personal|None"
 msgstr "WPA\\/WPA2 Personal|WPA3 Personal|Brak"
 
-#: alice/network.cxx:229 alice/network.cxx:387 dm/nirvana-dm-greeter.cxx:495
+#: alice/network.cxx:229 alice/network.cxx:387 dm/nirvana-dm-greeter.cxx:497
 msgid "Password:"
 msgstr "Hasło:"
 
@@ -666,7 +669,7 @@ msgstr "brak połączeń"
 msgid "disconnected"
 msgstr "rozłączono"
 
-#: alice/network.cxx:626 alice/preferences.cxx:141 denise/desktop.cxx:2179
+#: alice/network.cxx:626 alice/preferences.cxx:151 denise/desktop.cxx:2179
 #: denise/desktop.cxx:2220 denise/desktop.cxx:2251 denise/gary.cxx:118
 #: net/net.cxx:326
 msgid "Network"
@@ -826,7 +829,7 @@ msgstr "1 godzina"
 msgid "2 hours"
 msgstr "2 godziny"
 
-#: alice/power.cxx:79 alice/preferences.cxx:142 denise/applets.cxx:447
+#: alice/power.cxx:79 alice/preferences.cxx:152 denise/applets.cxx:447
 #: denise/gary.cxx:120
 msgid "Power"
 msgstr "Zasilanie"
@@ -889,8 +892,8 @@ msgid ""
 "Presentation mode (battery menu in the menu bar) suspends screen blanking, "
 "locking and sleep."
 msgstr ""
-"Tryb projekcji (menu baterii na pasku menu) wstrzymuje wygaszanie, blokadę i"
-" usypianie."
+"Tryb projekcji (menu baterii na pasku menu) wstrzymuje wygaszanie, blokadę i "
+"usypianie."
 
 #: alice/power.cxx:118
 msgid ""
@@ -900,28 +903,32 @@ msgstr ""
 "W sesji GNOME/KDE ekranem i usypianiem zarządza tamto środowisko - te "
 "ustawienia działają w sesji Nirvana Desktop."
 
-#: alice/preferences.cxx:136 denise/desktop.cxx:729 denise/gary.cxx:121
+#: alice/preferences.cxx:145 denise/desktop.cxx:729 denise/gary.cxx:121
 msgid "Preferences"
 msgstr "Preferencje"
 
-#: alice/preferences.cxx:144 alice/printers.cxx:374 alice/printers.cxx:399
+#: alice/preferences.cxx:148 alice/user.cxx:625
+msgid "User"
+msgstr "Użytkownik"
+
+#: alice/preferences.cxx:154 alice/printers.cxx:374 alice/printers.cxx:399
 #: denise/printer.cxx:199
 msgid "Printers"
 msgstr "Drukarki"
 
-#: alice/preferences.cxx:145 alice/shader.cxx:223
+#: alice/preferences.cxx:155 alice/shader.cxx:223
 msgid "Shader"
 msgstr "Shader"
 
-#: alice/preferences.cxx:157
+#: alice/preferences.cxx:167
 msgid "Language:"
 msgstr "Język:"
 
-#: alice/preferences.cxx:161
+#: alice/preferences.cxx:171
 msgid "Automatic (system language)"
 msgstr "Automatycznie (jak w systemie)"
 
-#: alice/preferences.cxx:172
+#: alice/preferences.cxx:182
 msgid ""
 "The new language takes effect after restarting Nirvana Desktop or after "
 "Special > Reset Nirvana."
@@ -1012,8 +1019,8 @@ msgstr "Bez sterownika (IPP Everywhere / AirPrint) – zalecane"
 
 #: alice/printers.cxx:234
 msgid ""
-"No driver for %1 is installed. Install the drivers for this manufacturer and"
-" the list fills in."
+"No driver for %1 is installed. Install the drivers for this manufacturer and "
+"the list fills in."
 msgstr ""
 "Nie ma zainstalowanego sterownika dla %1. Zainstaluj sterowniki tego "
 "producenta, a lista się uzupełni."
@@ -1085,7 +1092,7 @@ msgstr ""
 msgid "2. The driver"
 msgstr "2. Sterownik"
 
-#: alice/printers.cxx:316 denise/menus.cxx:835 dm/nirvana-dm-greeter.cxx:487
+#: alice/printers.cxx:316 denise/menus.cxx:835 dm/nirvana-dm-greeter.cxx:489
 msgid "Name:"
 msgstr "Nazwa:"
 
@@ -1190,8 +1197,7 @@ msgid "Scanlines"
 msgstr "Linie kineskopu"
 
 #: alice/shader.cxx:38
-msgid ""
-"Only the dark lines of a tube screen; the picture stays flat and sharp."
+msgid "Only the dark lines of a tube screen; the picture stays flat and sharp."
 msgstr "Tylko ciemne linie kineskopu; obraz zostaje płaski i ostry."
 
 #: alice/shader.cxx:39
@@ -1232,8 +1238,7 @@ msgstr "Światło nocne"
 
 #: alice/shader.cxx:43
 msgid "Warmer colors with less blue light, for the evening."
-msgstr ""
-"Cieplejsze kolory z mniejszą ilością niebieskiego światła, na wieczór."
+msgstr "Cieplejsze kolory z mniejszą ilością niebieskiego światła, na wieczór."
 
 #: alice/shader.cxx:44
 msgid "VHS tape"
@@ -1241,8 +1246,7 @@ msgstr "Kaseta VHS"
 
 #: alice/shader.cxx:44
 msgid ""
-"Color bleeding, a shaky picture, noise and a rolling tracking band. "
-"Animated."
+"Color bleeding, a shaky picture, noise and a rolling tracking band. Animated."
 msgstr ""
 "Rozmyte kolory, drżący obraz, szum i przesuwający się pas zakłóceń. "
 "Animowany."
@@ -1292,11 +1296,10 @@ msgid "LCD"
 msgstr "LCD"
 
 #: alice/shader.cxx:49
-msgid ""
-"A coarse liquid crystal panel with visible red, green and blue stripes."
+msgid "A coarse liquid crystal panel with visible red, green and blue stripes."
 msgstr ""
-"Gruboziarnisty panel ciekłokrystaliczny z widocznymi czerwonymi, zielonymi i"
-" niebieskimi paskami."
+"Gruboziarnisty panel ciekłokrystaliczny z widocznymi czerwonymi, zielonymi i "
+"niebieskimi paskami."
 
 #: alice/shader.cxx:50
 msgid "Thermal camera"
@@ -1359,8 +1362,8 @@ msgid ""
 "Effects use OpenGL. Without graphics acceleration animated effects can be "
 "slow."
 msgstr ""
-"Efekty używają OpenGL. Bez akceleracji grafiki efekty animowane mogą działać"
-" wolno."
+"Efekty używają OpenGL. Bez akceleracji grafiki efekty animowane mogą działać "
+"wolno."
 
 #: alice/shader.cxx:225
 msgid "Full-screen effect"
@@ -1373,6 +1376,206 @@ msgstr "Opis"
 #: alice/shader.cxx:255
 msgid "Your own shaders (GLSL fragment shaders, *.frag) go to"
 msgstr "Własne shadery (shadery fragmentów GLSL, *.frag) umieść w"
+
+#: alice/user.cxx:92
+msgid "nirvana-user-helper is missing."
+msgstr "Brakuje nirvana-user-helper."
+
+#: alice/user.cxx:310
+msgid "Use this picture"
+msgstr "Użyj tego obrazka"
+
+#: alice/user.cxx:326
+msgid "Click Apply or OK to save the picture."
+msgstr "Kliknij Zastosuj lub OK, aby zapisać zdjęcie."
+
+#: alice/user.cxx:333
+msgid "Choose Picture"
+msgstr "Wybierz zdjęcie"
+
+#: alice/user.cxx:338
+msgid "This file is not a picture that can be opened."
+msgstr "Tego pliku nie da się otworzyć jako obrazu."
+
+#: alice/user.cxx:405 alice/user.cxx:418
+msgid "the picture"
+msgstr "zdjęcie"
+
+#: alice/user.cxx:406 alice/user.cxx:419
+msgid "the login screen picture (%1)"
+msgstr "zdjęcie na ekranie logowania (%1)"
+
+#: alice/user.cxx:406 alice/user.cxx:419 alice/user.cxx:428 alice/user.cxx:439
+msgid "not allowed"
+msgstr "brak zgody"
+
+#: alice/user.cxx:409
+msgid "the picture (%1)"
+msgstr "zdjęcie (%1)"
+
+#: alice/user.cxx:426
+msgid "the full name"
+msgstr "imię i nazwisko"
+
+#: alice/user.cxx:428
+msgid "the full name (%1)"
+msgstr "imię i nazwisko (%1)"
+
+#: alice/user.cxx:436
+msgid "automatic login"
+msgstr "automatyczne logowanie"
+
+#: alice/user.cxx:439
+msgid "automatic login (%1)"
+msgstr "automatyczne logowanie (%1)"
+
+#: alice/user.cxx:446
+msgid "Not changed: %1."
+msgstr "Nie zmieniono: %1."
+
+#: alice/user.cxx:451
+msgid "Saved: %1."
+msgstr "Zapisano: %1."
+
+#: alice/user.cxx:524
+msgid "the current password is not right"
+msgstr "obecne hasło jest nieprawidłowe"
+
+#: alice/user.cxx:525
+msgid "passwd did not accept it"
+msgstr "passwd go nie przyjął"
+
+#: alice/user.cxx:530
+msgid "Change Password"
+msgstr "Zmiana hasła"
+
+#: alice/user.cxx:537
+msgid "Current password:"
+msgstr "Obecne hasło:"
+
+#: alice/user.cxx:538
+msgid "New password:"
+msgstr "Nowe hasło:"
+
+#: alice/user.cxx:539
+msgid "Repeat new password:"
+msgstr "Powtórz nowe hasło:"
+
+#: alice/user.cxx:543
+msgid ""
+"Use at least 8 characters; a few unrelated words are easy to remember and "
+"hard to guess."
+msgstr ""
+"Użyj co najmniej 8 znaków; kilka niezwiązanych słów łatwo zapamiętać, a "
+"trudno odgadnąć."
+
+#: alice/user.cxx:545
+msgid "Change"
+msgstr "Zmień"
+
+#: alice/user.cxx:567
+msgid "The new passwords are not the same."
+msgstr "Nowe hasła się różnią."
+
+#: alice/user.cxx:569
+msgid "Type the new password."
+msgstr "Wpisz nowe hasło."
+
+#: alice/user.cxx:571
+msgid "Changing the password…"
+msgstr "Zmienianie hasła…"
+
+#: alice/user.cxx:577
+msgid "The password was changed."
+msgstr "Hasło zostało zmienione."
+
+#: alice/user.cxx:581
+msgid "The password was not changed: %1"
+msgstr "Hasło nie zostało zmienione: %1"
+
+#: alice/user.cxx:630
+msgid "Picture"
+msgstr "Zdjęcie"
+
+#: alice/user.cxx:634
+msgid "Choose Picture…"
+msgstr "Wybierz zdjęcie…"
+
+#: alice/user.cxx:636
+msgid "No Picture"
+msgstr "Bez zdjęcia"
+
+#: alice/user.cxx:641
+msgid "Click Apply or OK to remove the picture."
+msgstr "Kliknij Zastosuj lub OK, aby usunąć zdjęcie."
+
+#: alice/user.cxx:644
+msgid "The login screen shows this picture next to your name."
+msgstr "Ekran logowania pokazuje to zdjęcie przy Twojej nazwie."
+
+#: alice/user.cxx:652
+msgid "Account"
+msgstr "Konto"
+
+#: alice/user.cxx:654
+msgid "Login name:"
+msgstr "Login:"
+
+#: alice/user.cxx:655
+msgid "Account type:"
+msgstr "Typ konta:"
+
+#: alice/user.cxx:655
+msgid "Administrator"
+msgstr "Administrator"
+
+#: alice/user.cxx:655
+msgid "Standard user"
+msgstr "Zwykły użytkownik"
+
+#: alice/user.cxx:656
+msgid "Home folder:"
+msgstr "Katalog domowy:"
+
+#: alice/user.cxx:657
+msgid "Shell:"
+msgstr "Powłoka:"
+
+#: alice/user.cxx:658
+msgid "Groups:"
+msgstr "Grupy:"
+
+#: alice/user.cxx:661
+msgid "Full name:"
+msgstr "Imię i nazwisko:"
+
+#: alice/user.cxx:666
+msgid "Logging In"
+msgstr "Logowanie"
+
+#: alice/user.cxx:668
+msgid "Change Password…"
+msgstr "Zmień hasło…"
+
+#: alice/user.cxx:670
+msgid "Log in automatically, without the login screen"
+msgstr "Loguj automatycznie, bez ekranu logowania"
+
+#: alice/user.cxx:679
+msgid "Needs the Nirvana-DM login screen (LightDM)."
+msgstr "Wymaga ekranu logowania Nirvana-DM (LightDM)."
+
+#: alice/user.cxx:682
+msgid "Only an administrator can turn it on."
+msgstr "Może to włączyć tylko administrator."
+
+#: alice/user.cxx:684
+msgid "Anyone who switches the computer on gets your desktop."
+msgstr "Każdy, kto włączy komputer, dostanie Twój pulpit."
+
+#: alice/user.cxx:689
+msgid "Or pick one of these:"
+msgstr "Albo wybierz jeden z tych:"
 
 #: audio/audio.cxx:199
 msgid "Sound card (ALSA)"
@@ -1499,7 +1702,7 @@ msgstr "Motyw okien"
 msgid "%1 (title bar: %2)"
 msgstr "%1 (pasek tytułu: %2)"
 
-#: denise/about.cxx:436 dm/nirvana-dm-greeter.cxx:395
+#: denise/about.cxx:436 dm/nirvana-dm-greeter.cxx:397
 msgid "Theme"
 msgstr "Motyw"
 
@@ -1584,16 +1787,14 @@ msgid ""
 "The full text of the licence follows (only the English original is legally "
 "binding)."
 msgstr ""
-"Poniżej pełny tekst licencji (wiążący prawnie jest tylko oryginał "
-"angielski)."
+"Poniżej pełny tekst licencji (wiążący prawnie jest tylko oryginał angielski)."
 
 #: denise/about.cxx:476
 msgid ""
-"The licence file was not found. See "
-"https://www.gnu.org/licenses/gpl-3.0.html"
+"The licence file was not found. See https://www.gnu.org/licenses/gpl-3.0.html"
 msgstr ""
-"Nie znaleziono pliku licencji. Zobacz "
-"https://www.gnu.org/licenses/gpl-3.0.html"
+"Nie znaleziono pliku licencji. Zobacz https://www.gnu.org/licenses/gpl-3.0."
+"html"
 
 #: denise/about.cxx:485
 msgid ""
@@ -1650,8 +1851,8 @@ msgid ""
 "the desktops of the late 1980s and the 1990s: bevelled gray windows, a menu "
 "bar at the top, icons on the desktop"
 msgstr ""
-"pulpity końca lat 80. i lat 90.: szare okna z fazowaniem, pasek menu u góry,"
-" ikony na biurku"
+"pulpity końca lat 80. i lat 90.: szare okna z fazowaniem, pasek menu u góry, "
+"ikony na biurku"
 
 #: denise/about.cxx:506
 msgid "the layout of “About This Computer”"
@@ -2589,8 +2790,8 @@ msgstr "Wszystkie dane na tym dysku zostaną usunięte!"
 
 #: denise/menus.cxx:842
 msgid ""
-"FAT32 (USB stick - works everywhere)|exFAT (large files, Windows and "
-"Mac)|ext4 (Linux)|NTFS (Windows)"
+"FAT32 (USB stick - works everywhere)|exFAT (large files, Windows and Mac)|"
+"ext4 (Linux)|NTFS (Windows)"
 msgstr ""
 "FAT32 (pendrive - działa wszędzie)|exFAT (duże pliki, Windows i Mac)|ext4 "
 "(Linux)|NTFS (Windows)"
@@ -2691,8 +2892,8 @@ msgstr[2] "Zainstalować %1 aktualizacji?"
 
 #: denise/updates.cxx:271
 msgid ""
-"You can keep working meanwhile. Programs that are running may need a restart"
-" afterwards."
+"You can keep working meanwhile. Programs that are running may need a restart "
+"afterwards."
 msgstr ""
 "W tym czasie możesz dalej pracować. Uruchomione programy mogą potem wymagać "
 "ponownego uruchomienia."
@@ -2836,7 +3037,8 @@ msgstr "Inny…"
 msgid "Welcome to %1"
 msgstr "Witaj na komputerze %1"
 
-#: dm/nirvana-dm-greeter.cxx:265 dm/nirvana-dm-greeter.cxx:286
+#: dm/nirvana-dm-greeter.cxx:265 dm/nirvana-dm-greeter.cxx:280
+#: dm/nirvana-dm-greeter.cxx:288
 msgid "Logging in is not possible now."
 msgstr "Logowanie nie jest teraz możliwe."
 
@@ -2848,59 +3050,59 @@ msgstr "To podgląd – nikt nie zostanie zalogowany."
 msgid "Choose a user or type a name."
 msgstr "Wybierz użytkownika albo wpisz nazwę."
 
-#: dm/nirvana-dm-greeter.cxx:284
+#: dm/nirvana-dm-greeter.cxx:286
 msgid "Logging in…"
 msgstr "Logowanie…"
 
-#: dm/nirvana-dm-greeter.cxx:313
+#: dm/nirvana-dm-greeter.cxx:315
 msgid "Starting the session…"
 msgstr "Uruchamianie sesji…"
 
-#: dm/nirvana-dm-greeter.cxx:315
+#: dm/nirvana-dm-greeter.cxx:317
 msgid "The session could not start: %1"
 msgstr "Nie udało się uruchomić sesji: %1"
 
-#: dm/nirvana-dm-greeter.cxx:321
+#: dm/nirvana-dm-greeter.cxx:323
 msgid "The password is not right. Try again."
 msgstr "Hasło jest niepoprawne. Spróbuj ponownie."
 
-#: dm/nirvana-dm-greeter.cxx:372
+#: dm/nirvana-dm-greeter.cxx:374
 msgid "This is a preview - nothing happens."
 msgstr "To podgląd – nic się nie stanie."
 
-#: dm/nirvana-dm-greeter.cxx:376
+#: dm/nirvana-dm-greeter.cxx:378
 msgid "Not possible now."
 msgstr "Teraz to niemożliwe."
 
-#: dm/nirvana-dm-greeter.cxx:402 dm/nirvana-dm-greeter.cxx:413
+#: dm/nirvana-dm-greeter.cxx:404 dm/nirvana-dm-greeter.cxx:415
 msgid "Background"
 msgstr "Tło"
 
-#: dm/nirvana-dm-greeter.cxx:422
+#: dm/nirvana-dm-greeter.cxx:424
 msgid "Language"
 msgstr "Język"
 
-#: dm/nirvana-dm-greeter.cxx:427
+#: dm/nirvana-dm-greeter.cxx:429
 msgid "Sleep"
 msgstr "Uśpij"
 
-#: dm/nirvana-dm-greeter.cxx:428
+#: dm/nirvana-dm-greeter.cxx:430
 msgid "Restart…"
 msgstr "Uruchom ponownie…"
 
-#: dm/nirvana-dm-greeter.cxx:429
+#: dm/nirvana-dm-greeter.cxx:431
 msgid "Shut Down…"
 msgstr "Wyłącz…"
 
-#: dm/nirvana-dm-greeter.cxx:499
+#: dm/nirvana-dm-greeter.cxx:501
 msgid "Session:"
 msgstr "Sesja:"
 
-#: dm/nirvana-dm-greeter.cxx:515
+#: dm/nirvana-dm-greeter.cxx:517
 msgid "Log In"
 msgstr "Zaloguj"
 
-#: dm/nirvana-dm-greeter.cxx:598
+#: dm/nirvana-dm-greeter.cxx:608
 msgid "Preview: nobody is logged in from here."
 msgstr "Podgląd: stąd nikt nie zostanie zalogowany."
 
@@ -2978,11 +3180,11 @@ msgstr "Nie można odczytać pliku."
 
 #: net/net.cxx:436
 msgid ""
-"Unknown format. Supported: WireGuard (.conf), OpenVPN (.ovpn), Cisco VPNC "
-"(.pcf)."
+"Unknown format. Supported: WireGuard (.conf), OpenVPN (.ovpn), Cisco VPNC (."
+"pcf)."
 msgstr ""
-"Nieznany format. Obsługiwane: WireGuard (.conf), OpenVPN (.ovpn), Cisco VPNC"
-" (.pcf)."
+"Nieznany format. Obsługiwane: WireGuard (.conf), OpenVPN (.ovpn), Cisco VPNC "
+"(.pcf)."
 
 #: net/net.cxx:440
 msgid ""
@@ -2993,11 +3195,11 @@ msgstr ""
 
 #: net/net.cxx:449
 msgid ""
-"A WireGuard file name must be a short interface name (e.g. wg0.conf, "
-"office.conf)."
+"A WireGuard file name must be a short interface name (e.g. wg0.conf, office."
+"conf)."
 msgstr ""
-"Nazwa pliku WireGuard musi być krótką nazwą interfejsu (np. wg0.conf, "
-"firma.conf)."
+"Nazwa pliku WireGuard musi być krótką nazwą interfejsu (np. wg0.conf, firma."
+"conf)."
 
 #: net/net.cxx:483
 msgid "Cannot create a temporary file."

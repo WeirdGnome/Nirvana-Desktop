@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Nirvana Desktop 0.1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-11 19:41+0000\n"
+"POT-Creation-Date: 2026-11-11 19:53+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -26,8 +26,8 @@ msgstr ""
 msgid "Icons"
 msgstr ""
 
-#: alice/appearance.cxx:91 dm/nirvana-dm-greeter.cxx:427
-#: dm/nirvana-dm-greeter.cxx:428 dm/nirvana-dm-greeter.cxx:429
+#: alice/appearance.cxx:91 dm/nirvana-dm-greeter.cxx:429
+#: dm/nirvana-dm-greeter.cxx:430 dm/nirvana-dm-greeter.cxx:431
 msgid "Special"
 msgstr ""
 
@@ -67,7 +67,7 @@ msgstr ""
 msgid "custom"
 msgstr ""
 
-#: alice/appearance.cxx:233 alice/preferences.cxx:139 denise/gary.cxx:117
+#: alice/appearance.cxx:233 alice/preferences.cxx:149 denise/gary.cxx:117
 msgid "Appearance"
 msgstr ""
 
@@ -135,7 +135,7 @@ msgstr ""
 msgid "Choose Wallpaper"
 msgstr ""
 
-#: alice/appearance.cxx:337
+#: alice/appearance.cxx:337 alice/user.cxx:333
 msgid "Images (*.{png,jpg,jpeg,gif,bmp,svg,svgz,xpm})"
 msgstr ""
 
@@ -182,22 +182,24 @@ msgstr ""
 #: alice/appearance.cxx:410 alice/datetime.cxx:385 alice/network.cxx:244
 #: alice/network.cxx:341 alice/network.cxx:389 alice/network.cxx:493
 #: alice/network.cxx:744 alice/power.cxx:127 alice/printers.cxx:163
-#: alice/printers.cxx:319 denise/applets.cxx:443 denise/desktop.cxx:1671
-#: denise/desktop.cxx:1705 denise/desktop.cxx:2056 denise/desktop.cxx:2610
-#: denise/desktop.cxx:3053 denise/menus.cxx:417 denise/menus.cxx:736
-#: denise/menus.cxx:845 denise/menus.cxx:850 denise/updates.cxx:273
-#: platinum/platinum.cxx:228 platinum/platinum.cxx:1024 shell/main.cxx:615
+#: alice/printers.cxx:319 alice/user.cxx:544 alice/user.cxx:702
+#: denise/applets.cxx:443 denise/desktop.cxx:1671 denise/desktop.cxx:1705
+#: denise/desktop.cxx:2056 denise/desktop.cxx:2610 denise/desktop.cxx:3053
+#: denise/menus.cxx:417 denise/menus.cxx:736 denise/menus.cxx:845
+#: denise/menus.cxx:850 denise/updates.cxx:273 platinum/platinum.cxx:228
+#: platinum/platinum.cxx:1024 shell/main.cxx:615
 msgid "Cancel"
 msgstr ""
 
 #: alice/appearance.cxx:411 alice/datetime.cxx:386 alice/power.cxx:128
+#: alice/user.cxx:703
 msgid "Apply"
 msgstr ""
 
 #: alice/appearance.cxx:412 alice/datetime.cxx:387 alice/desktop.cxx:103
 #: alice/power.cxx:129 alice/printers.cxx:442 alice/shader.cxx:262
-#: denise/about.cxx:607 denise/clock.cxx:174 denise/desktop.cxx:1650
-#: platinum/platinum.cxx:227
+#: alice/user.cxx:704 denise/about.cxx:607 denise/clock.cxx:174
+#: denise/desktop.cxx:1650 platinum/platinum.cxx:227
 msgid "OK"
 msgstr ""
 
@@ -235,7 +237,7 @@ msgstr ""
 msgid "In the menu bar: %1"
 msgstr ""
 
-#: alice/datetime.cxx:278 alice/preferences.cxx:143
+#: alice/datetime.cxx:278 alice/preferences.cxx:153
 msgid "Date & Time"
 msgstr ""
 
@@ -349,7 +351,7 @@ msgid ""
 "computer are not asked for a password."
 msgstr ""
 
-#: alice/desktop.cxx:83 alice/preferences.cxx:140
+#: alice/desktop.cxx:83 alice/preferences.cxx:150
 msgid "Desktop"
 msgstr ""
 
@@ -384,7 +386,7 @@ msgstr ""
 msgid "The change applies at once, also to windows zoomed from now on."
 msgstr ""
 
-#: alice/main.cxx:34
+#: alice/main.cxx:36
 msgid "No such scheme: %1"
 msgstr ""
 
@@ -431,7 +433,7 @@ msgstr ""
 msgid "WPA\\/WPA2 Personal|WPA3 Personal|None"
 msgstr ""
 
-#: alice/network.cxx:229 alice/network.cxx:387 dm/nirvana-dm-greeter.cxx:495
+#: alice/network.cxx:229 alice/network.cxx:387 dm/nirvana-dm-greeter.cxx:497
 msgid "Password:"
 msgstr ""
 
@@ -651,7 +653,7 @@ msgstr ""
 msgid "disconnected"
 msgstr ""
 
-#: alice/network.cxx:626 alice/preferences.cxx:141 denise/desktop.cxx:2179
+#: alice/network.cxx:626 alice/preferences.cxx:151 denise/desktop.cxx:2179
 #: denise/desktop.cxx:2220 denise/desktop.cxx:2251 denise/gary.cxx:118
 #: net/net.cxx:326
 msgid "Network"
@@ -809,7 +811,7 @@ msgstr ""
 msgid "2 hours"
 msgstr ""
 
-#: alice/power.cxx:79 alice/preferences.cxx:142 denise/applets.cxx:447
+#: alice/power.cxx:79 alice/preferences.cxx:152 denise/applets.cxx:447
 #: denise/gary.cxx:120
 msgid "Power"
 msgstr ""
@@ -878,28 +880,32 @@ msgid ""
 "these settings apply to the Nirvana Desktop session."
 msgstr ""
 
-#: alice/preferences.cxx:136 denise/desktop.cxx:729 denise/gary.cxx:121
+#: alice/preferences.cxx:145 denise/desktop.cxx:729 denise/gary.cxx:121
 msgid "Preferences"
 msgstr ""
 
-#: alice/preferences.cxx:144 alice/printers.cxx:374 alice/printers.cxx:399
+#: alice/preferences.cxx:148 alice/user.cxx:625
+msgid "User"
+msgstr ""
+
+#: alice/preferences.cxx:154 alice/printers.cxx:374 alice/printers.cxx:399
 #: denise/printer.cxx:199
 msgid "Printers"
 msgstr ""
 
-#: alice/preferences.cxx:145 alice/shader.cxx:223
+#: alice/preferences.cxx:155 alice/shader.cxx:223
 msgid "Shader"
 msgstr ""
 
-#: alice/preferences.cxx:157
+#: alice/preferences.cxx:167
 msgid "Language:"
 msgstr ""
 
-#: alice/preferences.cxx:161
+#: alice/preferences.cxx:171
 msgid "Automatic (system language)"
 msgstr ""
 
-#: alice/preferences.cxx:172
+#: alice/preferences.cxx:182
 msgid ""
 "The new language takes effect after restarting Nirvana Desktop or after "
 "Special > Reset Nirvana."
@@ -1054,7 +1060,7 @@ msgstr ""
 msgid "2. The driver"
 msgstr ""
 
-#: alice/printers.cxx:316 denise/menus.cxx:835 dm/nirvana-dm-greeter.cxx:487
+#: alice/printers.cxx:316 denise/menus.cxx:835 dm/nirvana-dm-greeter.cxx:489
 msgid "Name:"
 msgstr ""
 
@@ -1321,6 +1327,204 @@ msgstr ""
 msgid "Your own shaders (GLSL fragment shaders, *.frag) go to"
 msgstr ""
 
+#: alice/user.cxx:92
+msgid "nirvana-user-helper is missing."
+msgstr ""
+
+#: alice/user.cxx:310
+msgid "Use this picture"
+msgstr ""
+
+#: alice/user.cxx:326
+msgid "Click Apply or OK to save the picture."
+msgstr ""
+
+#: alice/user.cxx:333
+msgid "Choose Picture"
+msgstr ""
+
+#: alice/user.cxx:338
+msgid "This file is not a picture that can be opened."
+msgstr ""
+
+#: alice/user.cxx:405 alice/user.cxx:418
+msgid "the picture"
+msgstr ""
+
+#: alice/user.cxx:406 alice/user.cxx:419
+msgid "the login screen picture (%1)"
+msgstr ""
+
+#: alice/user.cxx:406 alice/user.cxx:419 alice/user.cxx:428 alice/user.cxx:439
+msgid "not allowed"
+msgstr ""
+
+#: alice/user.cxx:409
+msgid "the picture (%1)"
+msgstr ""
+
+#: alice/user.cxx:426
+msgid "the full name"
+msgstr ""
+
+#: alice/user.cxx:428
+msgid "the full name (%1)"
+msgstr ""
+
+#: alice/user.cxx:436
+msgid "automatic login"
+msgstr ""
+
+#: alice/user.cxx:439
+msgid "automatic login (%1)"
+msgstr ""
+
+#: alice/user.cxx:446
+msgid "Not changed: %1."
+msgstr ""
+
+#: alice/user.cxx:451
+msgid "Saved: %1."
+msgstr ""
+
+#: alice/user.cxx:524
+msgid "the current password is not right"
+msgstr ""
+
+#: alice/user.cxx:525
+msgid "passwd did not accept it"
+msgstr ""
+
+#: alice/user.cxx:530
+msgid "Change Password"
+msgstr ""
+
+#: alice/user.cxx:537
+msgid "Current password:"
+msgstr ""
+
+#: alice/user.cxx:538
+msgid "New password:"
+msgstr ""
+
+#: alice/user.cxx:539
+msgid "Repeat new password:"
+msgstr ""
+
+#: alice/user.cxx:543
+msgid ""
+"Use at least 8 characters; a few unrelated words are easy to remember and "
+"hard to guess."
+msgstr ""
+
+#: alice/user.cxx:545
+msgid "Change"
+msgstr ""
+
+#: alice/user.cxx:567
+msgid "The new passwords are not the same."
+msgstr ""
+
+#: alice/user.cxx:569
+msgid "Type the new password."
+msgstr ""
+
+#: alice/user.cxx:571
+msgid "Changing the password…"
+msgstr ""
+
+#: alice/user.cxx:577
+msgid "The password was changed."
+msgstr ""
+
+#: alice/user.cxx:581
+msgid "The password was not changed: %1"
+msgstr ""
+
+#: alice/user.cxx:630
+msgid "Picture"
+msgstr ""
+
+#: alice/user.cxx:634
+msgid "Choose Picture…"
+msgstr ""
+
+#: alice/user.cxx:636
+msgid "No Picture"
+msgstr ""
+
+#: alice/user.cxx:641
+msgid "Click Apply or OK to remove the picture."
+msgstr ""
+
+#: alice/user.cxx:644
+msgid "The login screen shows this picture next to your name."
+msgstr ""
+
+#: alice/user.cxx:652
+msgid "Account"
+msgstr ""
+
+#: alice/user.cxx:654
+msgid "Login name:"
+msgstr ""
+
+#: alice/user.cxx:655
+msgid "Account type:"
+msgstr ""
+
+#: alice/user.cxx:655
+msgid "Administrator"
+msgstr ""
+
+#: alice/user.cxx:655
+msgid "Standard user"
+msgstr ""
+
+#: alice/user.cxx:656
+msgid "Home folder:"
+msgstr ""
+
+#: alice/user.cxx:657
+msgid "Shell:"
+msgstr ""
+
+#: alice/user.cxx:658
+msgid "Groups:"
+msgstr ""
+
+#: alice/user.cxx:661
+msgid "Full name:"
+msgstr ""
+
+#: alice/user.cxx:666
+msgid "Logging In"
+msgstr ""
+
+#: alice/user.cxx:668
+msgid "Change Password…"
+msgstr ""
+
+#: alice/user.cxx:670
+msgid "Log in automatically, without the login screen"
+msgstr ""
+
+#: alice/user.cxx:679
+msgid "Needs the Nirvana-DM login screen (LightDM)."
+msgstr ""
+
+#: alice/user.cxx:682
+msgid "Only an administrator can turn it on."
+msgstr ""
+
+#: alice/user.cxx:684
+msgid "Anyone who switches the computer on gets your desktop."
+msgstr ""
+
+#: alice/user.cxx:689
+msgid "Or pick one of these:"
+msgstr ""
+
 #: audio/audio.cxx:199
 msgid "Sound card (ALSA)"
 msgstr ""
@@ -1443,7 +1647,7 @@ msgstr ""
 msgid "%1 (title bar: %2)"
 msgstr ""
 
-#: denise/about.cxx:436 dm/nirvana-dm-greeter.cxx:395
+#: denise/about.cxx:436 dm/nirvana-dm-greeter.cxx:397
 msgid "Theme"
 msgstr ""
 
@@ -2730,7 +2934,8 @@ msgstr ""
 msgid "Welcome to %1"
 msgstr ""
 
-#: dm/nirvana-dm-greeter.cxx:265 dm/nirvana-dm-greeter.cxx:286
+#: dm/nirvana-dm-greeter.cxx:265 dm/nirvana-dm-greeter.cxx:280
+#: dm/nirvana-dm-greeter.cxx:288
 msgid "Logging in is not possible now."
 msgstr ""
 
@@ -2742,59 +2947,59 @@ msgstr ""
 msgid "Choose a user or type a name."
 msgstr ""
 
-#: dm/nirvana-dm-greeter.cxx:284
+#: dm/nirvana-dm-greeter.cxx:286
 msgid "Logging in…"
 msgstr ""
 
-#: dm/nirvana-dm-greeter.cxx:313
+#: dm/nirvana-dm-greeter.cxx:315
 msgid "Starting the session…"
 msgstr ""
 
-#: dm/nirvana-dm-greeter.cxx:315
+#: dm/nirvana-dm-greeter.cxx:317
 msgid "The session could not start: %1"
 msgstr ""
 
-#: dm/nirvana-dm-greeter.cxx:321
+#: dm/nirvana-dm-greeter.cxx:323
 msgid "The password is not right. Try again."
 msgstr ""
 
-#: dm/nirvana-dm-greeter.cxx:372
+#: dm/nirvana-dm-greeter.cxx:374
 msgid "This is a preview - nothing happens."
 msgstr ""
 
-#: dm/nirvana-dm-greeter.cxx:376
+#: dm/nirvana-dm-greeter.cxx:378
 msgid "Not possible now."
 msgstr ""
 
-#: dm/nirvana-dm-greeter.cxx:402 dm/nirvana-dm-greeter.cxx:413
+#: dm/nirvana-dm-greeter.cxx:404 dm/nirvana-dm-greeter.cxx:415
 msgid "Background"
 msgstr ""
 
-#: dm/nirvana-dm-greeter.cxx:422
+#: dm/nirvana-dm-greeter.cxx:424
 msgid "Language"
 msgstr ""
 
-#: dm/nirvana-dm-greeter.cxx:427
+#: dm/nirvana-dm-greeter.cxx:429
 msgid "Sleep"
 msgstr ""
 
-#: dm/nirvana-dm-greeter.cxx:428
+#: dm/nirvana-dm-greeter.cxx:430
 msgid "Restart…"
 msgstr ""
 
-#: dm/nirvana-dm-greeter.cxx:429
+#: dm/nirvana-dm-greeter.cxx:431
 msgid "Shut Down…"
 msgstr ""
 
-#: dm/nirvana-dm-greeter.cxx:499
+#: dm/nirvana-dm-greeter.cxx:501
 msgid "Session:"
 msgstr ""
 
-#: dm/nirvana-dm-greeter.cxx:515
+#: dm/nirvana-dm-greeter.cxx:517
 msgid "Log In"
 msgstr ""
 
-#: dm/nirvana-dm-greeter.cxx:598
+#: dm/nirvana-dm-greeter.cxx:608
 msgid "Preview: nobody is logged in from here."
 msgstr ""
 

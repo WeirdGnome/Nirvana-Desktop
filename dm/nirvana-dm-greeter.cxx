@@ -548,7 +548,9 @@ void build_ui() {
 void load_users_and_sessions() {
   if (g_test) {
     const char *u = getenv("USER");
-    g_users.push_back({u ? u : "user", "", "", "nirvana", false});
+    const char *home = getenv("HOME");
+    std::string face = home ? std::string(home) + "/.face" : "";
+    g_users.push_back({u ? u : "user", "", access(face.c_str(), R_OK) ? "" : face, "nirvana", false});
     g_sessions = {{"nirvana", "Nirvana Desktop"}, {"other", "Other Desktop"}};
     g_user = 0;
     return;
@@ -559,6 +561,12 @@ void load_users_and_sessions() {
     x.name = lightdm_user_get_name(u) ? lightdm_user_get_name(u) : "";
     x.display = lightdm_user_get_display_name(u) ? lightdm_user_get_display_name(u) : "";
     x.image = lightdm_user_get_image(u) ? lightdm_user_get_image(u) : "";
+    // a home folder is usually closed to the login screen: the copy that Preferences > User
+    // keeps in AccountsService (also without the accountsservice daemon)
+    if (x.image.empty() || access(x.image.c_str(), R_OK)) {
+      std::string as = "/var/lib/AccountsService/icons/" + x.name;
+      x.image = access(as.c_str(), R_OK) ? "" : as;
+    }
     x.session = lightdm_user_get_session(u) ? lightdm_user_get_session(u) : "";
     x.logged_in = lightdm_user_get_logged_in(u);
     g_users.push_back(x);

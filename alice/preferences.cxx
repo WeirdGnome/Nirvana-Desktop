@@ -37,7 +37,7 @@ void open_panel(const char *name) {
 
 class PanelIcon : public Fl_Button {
 public:
-  enum Kind { Appearance, Desktop, Network, Power, Shader, DateTime, Printers } kind;
+  enum Kind { Appearance, Desktop, Network, Power, Shader, DateTime, Printers, User } kind;
   PanelIcon(int X, int Y, Kind k, const char *l) : Fl_Button(X, Y, 96, 74, l), kind(k) {
     box(FL_NO_BOX);
     labelsize(SIZE_SMALL + 1);
@@ -78,6 +78,15 @@ public:
         fl_color(fl_rgb_color(0xFF, 0xFF, 0xFF)); fl_rectf(ix + 7, iy + 17, 18, 10);
         fl_color(DARK); fl_rect(ix + 7, iy + 17, 18, 10);
         for (int i = 0; i < 3; i++) fl_xyline(ix + 10, iy + 20 + i * 2, ix + 21);
+        break;
+      }
+      case User: {   // a portrait in a frame
+        fl_draw_box(UP_BOX, ix + 2, iy, 28, 30, GRAY);
+        fl_color(fl_rgb_color(0x8C, 0xC8, 0xF0)); fl_rectf(ix + 5, iy + 3, 22, 24);
+        fl_color(SEL);
+        fl_pie(ix + 11, iy + 6, 10, 10, 0, 360);
+        fl_pie(ix + 7, iy + 16, 18, 20, 0, 180);
+        fl_color(DARK); fl_rect(ix + 5, iy + 3, 22, 24); fl_rect(ix + 2, iy, 28, 30);
         break;
       }
       case DateTime: {   // a clock face with a calendar page
@@ -129,13 +138,14 @@ public:
 int panel_preferences() {
   // at most 5 icons in a row, then a new row
   const int PER_ROW = 5, CELL_W = 106, CELL_H = 84;
-  const int N = 7;   // the number of panels below
+  const int N = 8;   // the number of panels below
   const int rows = (N + PER_ROW - 1) / PER_ROW;
   const int W = 14 * 2 + PER_ROW * CELL_W - 10, icons_h = 20 + rows * CELL_H;
   const int H = icons_h + 90;
   auto *win = new FrameWindow(W, H, _("Preferences"));
   win->xclass("nirvana-preferences");
   struct P { PanelIcon::Kind k; const char *label, *arg; } panels[] = {
+      {PanelIcon::User, _("User"), "user"},
       {PanelIcon::Appearance, _("Appearance"), "appearance"},
       {PanelIcon::Desktop, _("Desktop"), "desktop"},
       {PanelIcon::Network, _("Network"), "network"},
