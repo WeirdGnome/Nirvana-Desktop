@@ -797,8 +797,13 @@ static int x_handler(void *event, void *) {
       char exe[4096];
       ssize_t n = readlink("/proc/self/exe", exe, sizeof exe - 1);
       exe[n > 0 ? n : 0] = 0;   // prawdziwa ścieżka - inaczej proces nazywałby się "exe"
+      // po aktualizacji pakietu działający plik jest usunięty: "/usr/bin/x (deleted)"
+      if (char *d = n > 0 ? strstr(exe, " (deleted)") : nullptr) *d = 0;
+      if (n > 0 && access(exe, X_OK) != 0) n = 0;
       XCloseDisplay(dpy);
-      execv(n > 0 ? exe : g_argv[0], g_argv);
+      if (n > 0) execv(exe, g_argv);
+      execvp("nirvana-insight", g_argv);   // PATH (np. po aktualizacji)
+      execv(g_argv[0], g_argv);
       _exit(1);
     }
     if (e->xclient.message_type == A_NET_WM_STATE) {
@@ -817,6 +822,12 @@ static int x_handler(void *event, void *) {
           a2 == A_NET_WM_STATE_MAX_H) {
         bool want = act == 2 ? !c->zoomed : act == 1;
         if (want != c->zoomed && !c->dialog) c->frame->toggle_zoom();
+      }
+      // _NET_WM_STATE_HIDDEN: część programów minimalizuje się w ten sposób
+      if (a1 == A_NET_WM_STATE_HIDDEN || a2 == A_NET_WM_STATE_HIDDEN) {
+        bool want = act == 2 ? !c->hidden : act == 1;
+        if (want && !c->hidden) iconify_client(c);
+        else if (!want && c->hidden) focus(c);
       }
       return 1;
     }

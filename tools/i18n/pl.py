@@ -531,4 +531,11 @@ T = {
     'Bigger': 'Większa',
     'Smaller': 'Mniejsza',
     'Normal Size': 'Normalna',
+    # menedżer plików w jednym oknie
+    'Back': 'Wstecz',
+    'Forward': 'Dalej',
+    'The folder “%1” could not be found.': 'Nie znaleziono folderu „%1”.',
+    'Open Nirvana HD': 'Otwórz Nirvana HD',
+    'Desktop Appearance…': 'Wygląd biurka…',
+    'Restore': 'Przywróć',
 }

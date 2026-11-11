@@ -148,6 +148,7 @@ public:
   FolderView *view() { return view_; }
   const std::string &path() const { return path_; }
   void set_path(const std::string &p) { path_ = p; watch(); }   // folder przeniesiony / przemianowany
+  void go(const std::string &p);   // pokaż inny folder w tym samym oknie (nawigacja)
   ~FolderPane() override;
   void set_mode(FolderView::Mode m);
   void set_hidden(bool h) { if (h != hidden_) { hidden_ = h; refresh(); } }

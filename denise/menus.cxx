@@ -139,18 +139,22 @@ std::vector<std::string> Desktop::targets() {
   return v;
 }
 
-void Desktop::update_menu() {
-  NWin *a = active_folder();
+void Desktop::update_menu() { update_menu(menu_, nullptr); }
+
+// Stan pozycji paska m. a - okno folderu, do którego należy pasek (nullptr:
+// globalny pasek biurka - wtedy aktywne okno albo zaznaczona ikona biurka).
+void Desktop::update_menu(Fl_Menu_ *m, NWin *a) {
+  if (!a) a = active_folder();
   bool win_sel = a && !a->pane->view()->selection().empty();
   bool desk_sel = !a && icon_sel_ >= 0 && icon_sel_ < (int)icons_.size() && !icons_[icon_sel_].win;
   const DeskIcon *di = desk_sel ? &icons_[icon_sel_] : nullptr;
   bool vol_sel = di && di->vol >= 0;
   bool icons_mode = a && a->pane->view()->mode() == FolderView::Icons;
-  auto act = [this](const char *path, bool on) {
-    if (auto *it = (Fl_Menu_Item *)menu_->find_item(plat::tr_path(path).c_str())) { if (on) it->activate(); else it->deactivate(); }
+  auto act = [m](const char *path, bool on) {
+    if (auto *it = (Fl_Menu_Item *)m->find_item(plat::tr_path(path).c_str())) { if (on) it->activate(); else it->deactivate(); }
   };
-  auto mark = [this](const char *path, bool on) {
-    if (auto *it = (Fl_Menu_Item *)menu_->find_item(plat::tr_path(path).c_str())) { if (on) it->set(); else it->clear(); }
+  auto mark = [m](const char *path, bool on) {
+    if (auto *it = (Fl_Menu_Item *)m->find_item(plat::tr_path(path).c_str())) { if (on) it->set(); else it->clear(); }
   };
   using applets::PowerAction;
   act(P_("System/Lock Screen"), applets::power_action_available(PowerAction::Lock));
@@ -158,14 +162,19 @@ void Desktop::update_menu() {
   act(P_("System/Hibernate"), applets::power_action_available(PowerAction::Hibernate));
   act(P_("System/Restart…"), applets::power_action_available(PowerAction::Restart));
   act(P_("System/Shut Down…"), applets::power_action_available(PowerAction::ShutDown));
+  act(P_("Special/Format Disk…"), vol_sel && !vols_[di->vol].optical);
+  if (m == menu_) return;   // Okno i Ikony są tylko w oknach folderów
+
   bool parent_ok = false;
   if (a) {
     std::string par = fs::path(a->path).parent_path().string();
-    parent_ok = par != a->path && allowed(par) && a->path != home_;
+    parent_ok = par != a->path && allowed(par) && a->path != root_path_;
   }
   act(P_("Window/Open Parent"), parent_ok);
+  act(P_("Window/Back"), a && !a->back_hist.empty());
+  act(P_("Window/Forward"), a && !a->fwd_hist.empty());
   for (const char *p : {P_("Window/Close"), P_("Window/Update"), P_("Window/Select Contents"), P_("Window/View as"),
-                        P_("Window/Sort"), P_("Window/Icon Size"), P_("Window/Nirvana Shell Here")})
+                        P_("Window/Sort"), P_("Window/Icon Size")})
     act(p, a != nullptr);
   act(P_("Window/Clean Up"), icons_mode);
   mark(P_("Window/Show Hidden Files"), show_hidden_);
@@ -181,28 +190,112 @@ void Desktop::update_menu() {
     mark(P_("Window/Icon Size/Normal"), v->icon_size() == 32);
     mark(P_("Window/Icon Size/Large"), v->icon_size() == 64);
   }
-  bool file_sel = win_sel;
-  act(P_("Icons/Open"), win_sel || desk_sel);
-  act(P_("Icons/Copy"), file_sel);
+  act(P_("Icons/Open"), win_sel);
+  act(P_("Icons/Copy"), win_sel);
   act(P_("Icons/Paste"), !clipboard_.empty());
-  act(P_("Icons/Duplicate"), file_sel);
-  act(P_("Icons/Rename…"), file_sel);
-  act(P_("Icons/Delete"), file_sel);
-  act(P_("Icons/Information…"), win_sel || desk_sel);
-  {
-    std::vector<std::string> t = targets();
-    act(P_("Icons/Set as Wallpaper"), t.size() == 1 && is_image_file(t[0]));
+  act(P_("Icons/Duplicate"), win_sel);
+  act(P_("Icons/Rename…"), win_sel);
+  act(P_("Icons/Delete"), win_sel);
+  act(P_("Icons/Information…"), win_sel);
+  bool one_image = false, in_dock = false;
+  if (a) {
+    auto sel = a->pane->view()->selection();
+    one_image = sel.size() == 1 && is_image_file(sel[0].path);
+    for (auto &e : sel)
+      if (std::find(dock_.begin(), dock_.end(), e.path) != dock_.end()) in_dock = true;
   }
+  act(P_("Icons/Set as Wallpaper"), one_image);
   act(P_("Icons/Snapshot"), icons_mode);
   act(P_("Icons/Unsnapshot"), icons_mode);
-  bool in_dock = di && di->dock;
-  if (a)
-    for (auto &e : a->pane->view()->selection())
-      if (std::find(dock_.begin(), dock_.end(), e.path) != dock_.end()) in_dock = true;
-  act(P_("Icons/Put on Dock"), file_sel);
+  act(P_("Icons/Put on Dock"), win_sel);
   act(P_("Icons/Remove from Dock"), in_dock);
-  act(P_("Icons/Eject"), vol_sel && (vols_[di->vol].removable || !vols_[di->vol].mountpoint.empty()));
-  act(P_("Special/Format Disk…"), vol_sel && !vols_[di->vol].optical);
+}
+
+// ---------------------------------------------------------------------------
+// Menu podręczne ikon biurka (prawy przycisk) - polecenia, które wcześniej
+// były w menu Ikony globalnego paska. Te same skróty działają, gdy fokus ma biurko.
+// ---------------------------------------------------------------------------
+namespace {
+struct DeskMenu {
+  std::vector<std::string> labels;
+  std::vector<std::function<void()>> acts;
+  std::vector<Fl_Menu_Item> items;
+  void add(const std::string &label, int shortcut, std::function<void()> f, int flags = 0) {
+    labels.push_back(label);
+    acts.push_back(std::move(f));
+    Fl_Menu_Item it{};
+    it.shortcut_ = shortcut;
+    it.user_data_ = (void *)(long)(acts.size() - 1);
+    it.flags = flags;
+    items.push_back(it);
+  }
+  void divider() { if (!items.empty()) items.back().flags |= FL_MENU_DIVIDER; }
+  Fl_Menu_Item *finish() {
+    for (size_t i = 0; i < items.size(); i++) items[i].text = labels[i].c_str();
+    items.push_back(Fl_Menu_Item{});   // koniec tablicy
+    return items.data();
+  }
+  void run(const Fl_Menu_Item *m) {
+    if (m) { auto f = acts[(long)m->user_data()]; if (f) f(); }
+  }
+};
+}   // namespace
+
+static void build_desk_menu(Desktop *d, DeskMenu &dm, int i, bool has_win, bool has_vol, bool is_dock,
+                            bool is_trash, bool can_eject, bool can_format, std::function<void()> restore,
+                            const std::string &home) {
+  if (i < 0) {   // puste biurko
+    dm.add(_("Open Nirvana HD"), 0, [d, home] { d->open_folder(home); });
+    dm.add(_("Desktop Appearance…"), 0, [d] { d->open_appearance(); });
+    return;
+  }
+  if (has_win) { dm.add(_("Restore"), FL_COMMAND + 'o', restore); return; }
+  dm.add(_("Open"), FL_COMMAND + 'o', [d] { d->open_selected(); });
+  dm.add(_("Information…"), FL_COMMAND + 'i', [d] { d->get_info(); });
+  if (is_trash) { dm.divider(); dm.add(_("Empty Trash…"), 0, [d] { d->empty_trash(); }); }
+  if (is_dock) { dm.divider(); dm.add(_("Remove from Dock"), FL_COMMAND + 'k', [d] { d->dock_remove(); }); }
+  if (has_vol) {
+    dm.divider();
+    dm.add(_("Eject"), FL_COMMAND + 'y', [d] { d->eject_selected(); }, can_eject ? 0 : FL_MENU_INACTIVE);
+    dm.add(_("Format Disk…"), 0, [d] { d->format_disk(); }, can_format ? 0 : FL_MENU_INACTIVE);
+  }
+}
+
+void Desktop::desk_context_menu(int i) {
+  icon_sel_ = i;
+  redraw();
+  DeskMenu dm;
+  if (i >= 0) {
+    const DeskIcon &ic = icons_[i];
+    unsigned long win = ic.win;
+    bool vol = ic.vol >= 0;
+    build_desk_menu(this, dm, i, win != 0, vol, ic.dock, ic.path == trash_dir() && !ic.dock,
+                    vol && (vols_[ic.vol].removable || !vols_[ic.vol].mountpoint.empty()),
+                    vol && !vols_[ic.vol].optical, [win] { gary::activate(win); }, home_);
+  } else {
+    build_desk_menu(this, dm, -1, false, false, false, false, false, false, nullptr, root_path_);
+  }
+  const Fl_Menu_Item *m = dm.finish()->popup(Fl::event_x(), Fl::event_y(), nullptr, nullptr, menu_);
+  desk_target_ = true;
+  dm.run(m);
+  desk_target_ = false;
+}
+
+bool Desktop::desk_shortcut() {
+  if (icon_sel_ < 0 || icon_sel_ >= (int)icons_.size()) return false;
+  const DeskIcon &ic = icons_[icon_sel_];
+  DeskMenu dm;
+  unsigned long win = ic.win;
+  bool vol = ic.vol >= 0;
+  build_desk_menu(this, dm, icon_sel_, win != 0, vol, ic.dock, ic.path == trash_dir() && !ic.dock,
+                  vol && (vols_[ic.vol].removable || !vols_[ic.vol].mountpoint.empty()),
+                  vol && !vols_[ic.vol].optical, [win] { gary::activate(win); }, home_);
+  const Fl_Menu_Item *m = dm.finish()->test_shortcut();
+  if (!m || !m->active()) return false;
+  desk_target_ = true;
+  dm.run(m);
+  desk_target_ = false;
+  return true;
 }
 
 // Ikony > Ustaw jako tapetę: zapis w ustawieniach wyglądu, biurko odświeża się
@@ -289,8 +382,8 @@ void Desktop::open_parent() {
   NWin *a = active_folder();
   if (!a) return;
   std::string par = fs::path(a->path).parent_path().string();
-  if (par == a->path || !allowed(par) || a->path == home_) return;
-  open_folder(par);
+  if (par == a->path || !allowed(par) || a->path == root_path_) return;
+  navigate(a, par);
 }
 
 void Desktop::update_window() {

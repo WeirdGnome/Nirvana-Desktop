@@ -196,6 +196,19 @@ public:
   }
 };
 
+// Pasek nawigacji okna folderu: wstecz, dalej, w górę i położenie.
+class NavBar : public Fl_Group {
+public:
+  NavBar(int X, int Y, int W, int H) : Fl_Group(X, Y, W, H) { box(FL_FLAT_BOX); color(GRAY); }
+  void draw() override {
+    Fl_Group::draw();
+    fl_color(LIGHT);
+    fl_xyline(x(), y(), x() + w() - 1);
+    fl_color(SHADOW);
+    fl_xyline(x(), y() + h() - 1, x() + w() - 1);
+  }
+};
+
 static const int APP_W = 34;   // szerokość przycisku aplikacji (gary) w prawym rogu
 
 class WindowsMenu : public Fl_Menu_Button {
@@ -366,6 +379,67 @@ static Fl_RGB_Image *make_logo_image() {
 }
 
 // ---------------------------------------------------------------------------
+// Pozycje menu: Fl_Callback nie przyjmie lambdy z przechwyceniem, więc w
+// user_data podajemy wskaźnik na stały opis pozycji (z metodą Desktop).
+// ---------------------------------------------------------------------------
+struct MenuDef { const char *path; int shortcut; void (Desktop::*m)(); int flags; };
+
+static void global_menu_cb(Fl_Widget *w, void *d) {
+  auto *self = (Desktop *)w->window();
+  auto *def = (const MenuDef *)d;
+  if (def->m) (self->*(def->m))();
+}
+
+// Menu Okno i Ikony w oknie menedżera plików - działają na to okno.
+static void window_menu_cb(Fl_Widget *w, void *d) {
+  auto *nw = (NWin *)w->window();
+  auto *def = (const MenuDef *)d;
+  Desktop *desk = nw->desk;
+  desk->menu_target = nw;
+  if (def->m) (desk->*(def->m))();
+  desk->menu_target = nullptr;
+}
+
+static const std::vector<MenuDef> &window_menu_defs() {
+  static const std::vector<MenuDef> defs = {
+    // --- Okno: to okno menedżera plików ---
+    {P_("Window/New Window"), FL_COMMAND + FL_SHIFT + 'n', &Desktop::new_window, 0},
+    {P_("Window/New Folder"), FL_COMMAND + 'n', &Desktop::new_folder, FL_MENU_DIVIDER},
+    {P_("Window/Back"), FL_ALT + FL_Left, &Desktop::go_back, 0},
+    {P_("Window/Forward"), FL_ALT + FL_Right, &Desktop::go_forward, 0},
+    {P_("Window/Open Parent"), FL_COMMAND + FL_Up, &Desktop::open_parent, FL_MENU_DIVIDER},
+    {P_("Window/Close"), FL_COMMAND + 'w', &Desktop::close_active, 0},
+    {P_("Window/Update"), FL_COMMAND + 'r', &Desktop::update_window, FL_MENU_DIVIDER},
+    {P_("Window/Select Contents"), FL_COMMAND + 'a', &Desktop::select_all, 0},
+    {P_("Window/Clean Up"), FL_COMMAND + '.', &Desktop::clean_up, FL_MENU_DIVIDER},
+    {P_("Window/Show Hidden Files"), FL_COMMAND + 'h', &Desktop::toggle_hidden, FL_MENU_TOGGLE},
+    {P_("Window/View as/Icons"), FL_COMMAND + '1', &Desktop::view_icons, FL_MENU_RADIO},
+    {P_("Window/View as/List"), FL_COMMAND + '2', &Desktop::view_list, FL_MENU_RADIO},
+    {P_("Window/Sort/by Name"), 0, &Desktop::sort_name, FL_MENU_RADIO},
+    {P_("Window/Sort/by Date"), 0, &Desktop::sort_date, FL_MENU_RADIO},
+    {P_("Window/Sort/by Size"), 0, &Desktop::sort_size, FL_MENU_RADIO},
+    {P_("Window/Sort/by Kind"), 0, &Desktop::sort_kind, FL_MENU_RADIO},
+    {P_("Window/Icon Size/Small"), 0, &Desktop::icons_small, FL_MENU_RADIO},
+    {P_("Window/Icon Size/Normal"), 0, &Desktop::icons_normal, FL_MENU_RADIO},
+    {P_("Window/Icon Size/Large"), 0, &Desktop::icons_large, FL_MENU_RADIO},
+    // --- Ikony: zaznaczone pliki i foldery w tym oknie ---
+    {P_("Icons/Open"), FL_COMMAND + 'o', &Desktop::open_selected, 0},
+    {P_("Icons/Copy"), FL_COMMAND + 'c', &Desktop::copy_selected, 0},
+    {P_("Icons/Paste"), FL_COMMAND + 'v', &Desktop::paste, 0},
+    {P_("Icons/Duplicate"), FL_COMMAND + 'd', &Desktop::duplicate, 0},
+    {P_("Icons/Rename…"), FL_F + 2, &Desktop::rename_selected, 0},
+    {P_("Icons/Delete"), FL_COMMAND + FL_BackSpace, &Desktop::move_to_trash, FL_MENU_DIVIDER},
+    {P_("Icons/Information…"), FL_COMMAND + 'i', &Desktop::get_info, 0},
+    {P_("Icons/Set as Wallpaper"), 0, &Desktop::set_as_wallpaper, FL_MENU_DIVIDER},
+    {P_("Icons/Snapshot"), FL_COMMAND + 's', &Desktop::snapshot, 0},
+    {P_("Icons/Unsnapshot"), 0, &Desktop::unsnapshot, FL_MENU_DIVIDER},
+    {P_("Icons/Put on Dock"), FL_COMMAND + 'l', &Desktop::dock_add, 0},
+    {P_("Icons/Remove from Dock"), FL_COMMAND + 'k', &Desktop::dock_remove, 0},
+  };
+  return defs;
+}
+
+// ---------------------------------------------------------------------------
 Desktop::Desktop(int W, int H, const std::string &home, bool root)
     : Fl_Double_Window(0, 0, W, H, "Nirvana Desktop"),
       home_(home), root_path_(root ? "/" : home), root_(root), spatial_(home) {
@@ -395,10 +469,9 @@ Desktop::Desktop(int W, int H, const std::string &home, bool root)
   menu_->down_box(FL_FLAT_BOX);
   menu_->selection_color(SEL);
 
-  // Fl_Callback nie przyjmie lambdy z przechwyceniem, więc wskaźniki do
-  // metod trzymamy w statycznej tablicy, a w user_data podajemy indeks.
-  struct Item { const char *path; int shortcut; void (Desktop::*m)(); int flags; };
-  std::vector<Item> items = {
+  // Globalny pasek: Nirvana, System, Specjalne. Menu Okno i Ikony ma każde
+  // okno menedżera plików (window_menu_defs).
+  static const std::vector<MenuDef> items = {
     // --- Nirvana: cały system ---
     {P_("logo/About This Computer…"), 0, &Desktop::about, FL_MENU_DIVIDER},
     {P_("logo/Preferences…"), 0, &Desktop::open_preferences, 0},
@@ -413,54 +486,16 @@ Desktop::Desktop(int W, int H, const std::string &home, bool root)
     {P_("System/Log Out…"), FL_COMMAND + 'q', &Desktop::system_logout, 0},
     {P_("System/Restart…"), 0, &Desktop::system_restart, 0},
     {P_("System/Shut Down…"), 0, &Desktop::system_shutdown, 0},
-    // --- Okno: aktywne okno folderu ---
-    {P_("Window/New Folder"), FL_COMMAND + 'n', &Desktop::new_folder, 0},
-    {P_("Window/Open Parent"), FL_COMMAND + FL_Up, &Desktop::open_parent, 0},
-    {P_("Window/Close"), FL_COMMAND + 'w', &Desktop::close_active, 0},
-    {P_("Window/Update"), FL_COMMAND + 'r', &Desktop::update_window, FL_MENU_DIVIDER},
-    {P_("Window/Select Contents"), FL_COMMAND + 'a', &Desktop::select_all, 0},
-    {P_("Window/Clean Up"), FL_COMMAND + '.', &Desktop::clean_up, FL_MENU_DIVIDER},
-    {P_("Window/Show Hidden Files"), FL_COMMAND + 'h', &Desktop::toggle_hidden, FL_MENU_TOGGLE},
-    {P_("Window/View as/Icons"), FL_COMMAND + '1', &Desktop::view_icons, FL_MENU_RADIO},
-    {P_("Window/View as/List"), FL_COMMAND + '2', &Desktop::view_list, FL_MENU_RADIO},
-    {P_("Window/Sort/by Name"), 0, &Desktop::sort_name, FL_MENU_RADIO},
-    {P_("Window/Sort/by Date"), 0, &Desktop::sort_date, FL_MENU_RADIO},
-    {P_("Window/Sort/by Size"), 0, &Desktop::sort_size, FL_MENU_RADIO},
-    {P_("Window/Sort/by Kind"), 0, &Desktop::sort_kind, FL_MENU_RADIO},
-    {P_("Window/Icon Size/Small"), 0, &Desktop::icons_small, FL_MENU_RADIO},
-    {P_("Window/Icon Size/Normal"), 0, &Desktop::icons_normal, FL_MENU_RADIO},
-    {P_("Window/Icon Size/Large"), 0, &Desktop::icons_large, FL_MENU_RADIO},
-    // --- Ikony: zaznaczone pliki, foldery i dyski ---
-    {P_("Icons/Open"), FL_COMMAND + 'o', &Desktop::open_selected, 0},
-    {P_("Icons/Copy"), FL_COMMAND + 'c', &Desktop::copy_selected, 0},
-    {P_("Icons/Paste"), FL_COMMAND + 'v', &Desktop::paste, 0},
-    {P_("Icons/Duplicate"), FL_COMMAND + 'd', &Desktop::duplicate, 0},
-    {P_("Icons/Rename…"), FL_F + 2, &Desktop::rename_selected, 0},
-    {P_("Icons/Delete"), FL_COMMAND + FL_BackSpace, &Desktop::move_to_trash, FL_MENU_DIVIDER},
-    {P_("Icons/Information…"), FL_COMMAND + 'i', &Desktop::get_info, 0},
-    {P_("Icons/Set as Wallpaper"), 0, &Desktop::set_as_wallpaper, FL_MENU_DIVIDER},
-    {P_("Icons/Snapshot"), FL_COMMAND + 's', &Desktop::snapshot, 0},
-    {P_("Icons/Unsnapshot"), 0, &Desktop::unsnapshot, FL_MENU_DIVIDER},
-    {P_("Icons/Put on Dock"), FL_COMMAND + 'l', &Desktop::dock_add, 0},
-    {P_("Icons/Remove from Dock"), FL_COMMAND + 'k', &Desktop::dock_remove, FL_MENU_DIVIDER},
-    {P_("Icons/Eject"), FL_COMMAND + 'y', &Desktop::eject_selected, 0},
     // --- Narzędzia ---
     {P_("Special/Format Disk…"), 0, &Desktop::format_disk, 0},
     {P_("Special/Empty Trash…"), 0, &Desktop::empty_trash, FL_MENU_DIVIDER},
-    {root ? P_("Special/Leave Root Mode") : P_("Special/Root Mode…"), 0,
-     root ? &Desktop::quit : &Desktop::ask_root, 0},
+    {P_("Special/Root Mode…"), 0, &Desktop::ask_root, 0},
+    {P_("Special/Leave Root Mode"), 0, &Desktop::quit, 0},
   };
-  static std::vector<void (Desktop::*)()> methods;
   for (auto &it : items) {
-    methods.push_back(it.m);
-    long idx = (long)methods.size() - 1;
-    menu_->add(plat::tr_path(it.path).c_str(), it.shortcut,
-               [](Fl_Widget *w, void *d) {
-                 auto *self = (Desktop *)w->window();
-                 auto m = methods[(long)d];
-                 if (m) (self->*m)();
-               },
-               (void *)idx, it.flags);
+    bool root_item = it.m == &Desktop::ask_root || it.m == &Desktop::quit;
+    if (root_item && (it.m == &Desktop::quit) != root) continue;
+    menu_->add(plat::tr_path(it.path).c_str(), it.shortcut, global_menu_cb, (void *)&it, it.flags);
   }
   logo_item_ = (Fl_Menu_Item *)menu_->find_item("logo");
   set_logo();
@@ -681,7 +716,7 @@ void Desktop::layout_icons() {
   publish_folder_area();
 }
 
-static constexpr int MIN_W = 200, MIN_H = 120;   // najmniejsze okno folderu
+static constexpr int MIN_W = 220, MIN_H = 170;   // najmniejsze okno folderu
 static Atom atom(const char *name) { return XInternAtom(fl_display, name, False); }
 
 plat::Rect Desktop::folder_area() const {
@@ -1111,6 +1146,18 @@ NWin::~NWin() { Fl::remove_timeout(remember_later, this); }
 
 int NWin::handle(int e) {
   if (csd && csd_handle(e)) return 1;
+  // FLTK rozsyła nieobsłużone skróty do wszystkich okien - menu Okno/Ikony
+  // działa tylko w oknie z fokusem klawiatury.
+  if (e == FL_SHORTCUT && menubar && Fl::focus() && Fl::focus()->top_window() != this) return 0;
+  // Alt/Ctrl + strzałka (wstecz, dalej, w górę) - inaczej Fl_Group przesunąłby
+  // nimi fokus między zawartością, przyciskami i polem położenia
+  if (e == FL_KEYBOARD && menubar && Fl::focus() != loc && (Fl::event_state() & (FL_ALT | FL_CTRL | FL_META))) {
+    int k = Fl::event_key();
+    if (k == FL_Left || k == FL_Right || k == FL_Up || k == FL_Down) {
+      if (menubar->handle(FL_SHORTCUT)) return 1;
+      return desk->shortcut();
+    }
+  }
   int r = Fl_Double_Window::handle(e);
   // Pasek menu żyje w oknie biurka, a fokus ma okno folderu - przekaż skrót.
   if (!r && e == FL_SHORTCUT && !dialog) r = desk->shortcut();
@@ -1140,6 +1187,8 @@ bool Desktop::known(NWin *w) const {
 }
 
 NWin *Desktop::active_folder() {
+  if (desk_target_) return nullptr;                    // menu podręczne biurka
+  if (menu_target && known(menu_target)) return menu_target;   // pasek menu okna
   Window a = net_active();
   for (auto *w : wins_) if (w->pane && w->shown() && fl_xid(w) == a) return w;
   return nullptr;
@@ -1161,12 +1210,10 @@ void Desktop::active_changed() {
       wins_.push_back(w);           // ostatnio aktywne na końcu listy
       if (icon_sel_ >= 0) { icon_sel_ = -1; redraw(); }
       redraw_frames();
-      sync_view_menu();
-      return;
+          return;
     }
   }
   redraw_frames();
-  sync_view_menu();
 }
 
 void Desktop::remember(NWin *w, bool open) {
@@ -1215,7 +1262,7 @@ void Desktop::close(NWin *w) {
   }
 }
 
-void Desktop::open_folder(const std::string &path, bool animate) {
+void Desktop::open_folder(const std::string &path, bool animate, bool new_window) {
   if (!allowed(path)) {
     dialog(_("Access Denied"),
            _("This folder is outside Nirvana HD.\nSwitch to root mode to open it."),
@@ -1224,13 +1271,27 @@ void Desktop::open_folder(const std::string &path, bool animate) {
   }
   std::error_code ec;
   if (path == trash_dir()) fs::create_directories(path, ec);
-  if (NWin *w = find(path)) {
+  if (NWin *w = new_window ? nullptr : find(path)) {
     // już otwarty: jak w Mac OS - kontury pokazują, gdzie jest jego okno
     Rect src;
     if (animate && source_rect(path, src)) zoom_rects(src, w->frame_rect());
     if (w->shaded()) w->set_shaded(false);
     w->activate_window();
     return;
+  }
+  // Menedżer plików działa w jednym oknie: folder pokazuje ostatnio używane
+  // okno (nowe okno - Okno > Nowe okno albo Ctrl + dwuklik).
+  if (!new_window) {
+    NWin *recent = nullptr;
+    for (auto *w : wins_) if (w->pane && w->shown()) recent = w;   // ostatnio aktywne na końcu
+    if (recent) {
+      Rect src;
+      if (recent->shaded()) recent->set_shaded(false);
+      if (animate && source_rect(path, src)) zoom_rects(src, recent->frame_rect());
+      navigate(recent, path);
+      recent->activate_window();
+      return;
+    }
   }
   // Pozycja dotyczy treści okna (bez ramki) - tak zapisuje ją FLTK.
   WinState s;
@@ -1265,14 +1326,17 @@ void Desktop::open_folder(const std::string &path, bool animate) {
   int ew = csd_mode ? 2 * FRAME : 0, eh = csd_mode ? TITLE_H + FRAME : 0;
   auto *win = new NWin(this, ax - ox, ay - oy, s.w + ew, s.h + eh, title_for(path).c_str(), false);
   win->path = path;
-  win->pane = new FolderPane(ox, oy, s.w, s.h, path, show_hidden_);
+  const int bars = NWin::MB_H + NWin::NAV_H;
+  // zawartość jako pierwsze dziecko: dostaje fokus klawiatury po otwarciu okna
+  win->pane = new FolderPane(ox, oy + bars, s.w, s.h - bars, path, show_hidden_);
   win->pane->view()->set_icon_size(s.icons);
+  build_folder_bars(win, ox, oy, s.w);
   win->resizable(win->pane);
   // przy własnej ramce zwinięte okno ma wysokość samego paska tytułu
   win->size_range(MIN_W + ew, csd_mode ? TITLE_H : MIN_H);
   win->end();
-  win->pane->view()->on_open = [this](const Entry &e) { open_entry(e); };
-  win->pane->view()->is_open = [this](const std::string &p) { return find(p) != nullptr; };
+  win->pane->view()->on_open = [this, win](const Entry &e) { open_entry(e, win); };
+  win->pane->view()->is_open = [this, win](const std::string &p) { NWin *o = find(p); return o && o != win; };
   win->pane->view()->on_drag_start = [this, win](const std::vector<Entry> &v) { drag_start(win, v); };
   win->pane->view()->on_drag_move = [this](int xr, int yr) { drag_move(xr, yr); };
   win->pane->view()->on_drag_end = [this](int xr, int yr, bool copy) { drag_end(xr, yr, copy); };
@@ -1283,15 +1347,179 @@ void Desktop::open_folder(const std::string &path, bool animate) {
   win->pane->on_error = [this](const std::string &m) { dialog(_("Rename"), m, {{"OK", nullptr}}); };
   if (known_pos && s.list) win->pane->set_mode(FolderView::List);
   wins_.push_back(win);
+  update_nav(win);
   win->show();
+  win->pane->view()->take_focus();
   if (known_pos && s.shaded) win->set_shaded(true);
   // ikona folderu w oknie nadrzędnym dostaje kreskowanie "otwarty"
   for (auto *o : wins_) if (o->pane && o != win) o->pane->view()->redraw();
   remember(win, true);
 }
 
-void Desktop::open_entry(const Entry &e) {
-  if (e.dir) { open_folder(e.path); return; }
+// Pasek menu okna (Okno, Ikony) i pasek nawigacji nad zawartością folderu.
+void Desktop::build_folder_bars(NWin *win, int X, int Y, int W) {
+  win->begin();
+  auto *mb = new NirvanaMenuBar(X, Y, W, NWin::MB_H);
+  mb->box(MENUBAR_BOX);
+  mb->color(GRAY);
+  mb->textfont(FONT_SYSTEM);
+  mb->textsize(SIZE_SYSTEM);
+  mb->down_box(FL_FLAT_BOX);
+  mb->selection_color(SEL);
+  for (auto &d : window_menu_defs())
+    mb->add(plat::tr_path(d.path).c_str(), d.shortcut, window_menu_cb, (void *)&d, d.flags);
+  mb->before_open = [this, win] { update_menu(win->menubar, win); };
+  win->menubar = mb;
+
+  auto *nav = new NavBar(X, Y + NWin::MB_H, W, NWin::NAV_H);
+  const int by = Y + NWin::MB_H + 3, bh = NWin::NAV_H - 6, bw = 26;
+  auto button = [&](int bx, const char *sym, const char *tip, void (Desktop::*m)()) {
+    auto *b = new Fl_Button(bx, by, bw, bh, sym);
+    b->box(BUTTON_BOX);
+    b->color(GRAY);
+    b->labelsize(10);
+    b->labelcolor(TEXT);
+    b->clear_visible_focus();
+    b->tooltip(tip);
+    static std::vector<void (Desktop::*)()> ms;
+    ms.push_back(m);
+    b->callback([](Fl_Widget *w, void *d) {
+      auto *nw = (NWin *)w->window();
+      nw->desk->menu_target = nw;
+      (nw->desk->*ms[(long)d])();
+      nw->desk->menu_target = nullptr;
+    }, (void *)(long)(ms.size() - 1));
+    return b;
+  };
+  win->back_b = button(X + 6, "@<", _("Back"), &Desktop::go_back);
+  win->fwd_b = button(X + 6 + bw + 2, "@>", _("Forward"), &Desktop::go_forward);
+  win->up_b = button(X + 6 + 2 * (bw + 2) + 6, "@8>", _("Open Parent"), &Desktop::open_parent);
+  int lx = X + 6 + 3 * (bw + 2) + 12;
+  auto *in = new Fl_Input(lx, by, std::max(40, X + W - 6 - lx), bh);
+  in->box(WELL_BOX);
+  in->textfont(FONT_SYSTEM);
+  in->textsize(SIZE_SMALL + 1);
+  in->when(FL_WHEN_ENTER_KEY_ALWAYS);
+  in->callback([](Fl_Widget *w, void *) {
+    auto *nw = (NWin *)w->window();
+    nw->desk->go_location(nw);
+  });
+  win->loc = in;
+  nav->resizable(in);
+  nav->end();
+  win->end();
+}
+
+// Ścieżka do pola położenia: katalog domowy jako "~".
+static std::string location_text(const std::string &path, const std::string &home) {
+  if (path == home) return "~";
+  if (path.rfind(home + "/", 0) == 0) return "~" + path.substr(home.size());
+  return path;
+}
+
+void Desktop::update_nav(NWin *w) {
+  if (!w || !w->loc) return;
+  w->loc->value(location_text(w->path, home_).c_str());
+  auto set = [](Fl_Widget *b, bool on) { if (on) b->activate(); else b->deactivate(); };
+  set(w->back_b, !w->back_hist.empty());
+  set(w->fwd_b, !w->fwd_hist.empty());
+  std::string par = fs::path(w->path).parent_path().string();
+  set(w->up_b, par != w->path && allowed(par) && w->path != root_path_);
+}
+
+void Desktop::navigate(NWin *w, const std::string &target, Nav how) {
+  if (!w || !w->pane || !known(w)) return;
+  std::string path = target;
+  while (path.size() > 1 && path.back() == '/') path.pop_back();
+  if (path == w->path) { update_nav(w); return; }
+  if (!allowed(path)) {
+    update_nav(w);
+    dialog(_("Access Denied"),
+           _("This folder is outside Nirvana HD.\nSwitch to root mode to open it."),
+           {{"OK", nullptr}});
+    return;
+  }
+  std::error_code ec;
+  if (path == trash_dir()) fs::create_directories(path, ec);
+  if (!fs::is_directory(path, ec)) {
+    update_nav(w);
+    dialog(_("Open"), plat::fmt(_("The folder “%1” could not be found."), path), {{"OK", nullptr}});
+    return;
+  }
+  remember(w, false);   // poprzedni folder nie jest już otwarty
+  if (how == Nav::Back && !w->back_hist.empty()) {
+    w->fwd_hist.push_back(w->path);
+    w->back_hist.pop_back();
+  } else if (how == Nav::Forward && !w->fwd_hist.empty()) {
+    w->back_hist.push_back(w->path);
+    w->fwd_hist.pop_back();
+  } else {
+    w->back_hist.push_back(w->path);
+    w->fwd_hist.clear();
+  }
+  if (w->back_hist.size() > 100) w->back_hist.erase(w->back_hist.begin());
+  std::string old = w->path;
+  w->path = path;
+  // widok zapamiętany dla nowego folderu (lista / ikony, rozmiar ikon)
+  WinState s;
+  bool known_pos = spatial_.get(path, s);
+  w->pane->view()->set_icon_size(known_pos ? s.icons : 32);
+  w->pane->set_mode(known_pos && s.list ? FolderView::List : FolderView::Icons);
+  w->pane->go(path);
+  // w górę: zaznacz folder, z którego przyszliśmy
+  if (fs::path(old).parent_path().string() == path) w->pane->view()->select_path(old);
+  w->copy_label(title_for(path).c_str());
+  update_nav(w);
+  remember(w, true);
+  for (auto *o : wins_) if (o->pane) o->pane->view()->redraw();
+  w->pane->view()->take_focus();
+}
+
+void Desktop::go_back() {
+  NWin *a = active_folder();
+  if (a && !a->back_hist.empty()) navigate(a, a->back_hist.back(), Nav::Back);
+}
+
+void Desktop::go_forward() {
+  NWin *a = active_folder();
+  if (a && !a->fwd_hist.empty()) navigate(a, a->fwd_hist.back(), Nav::Forward);
+}
+
+void Desktop::new_window() {
+  NWin *a = active_folder();
+  open_folder(a ? a->path : root_path_, true, true);
+}
+
+// Enter w polu położenia: ścieżka bezwzględna, "~/..." albo względna do folderu okna.
+// Plik: jego folder z zaznaczonym plikiem.
+void Desktop::go_location(NWin *w) {
+  std::string t = w->loc->value();
+  while (!t.empty() && isspace((unsigned char)t.back())) t.pop_back();
+  while (!t.empty() && isspace((unsigned char)t.front())) t.erase(0, 1);
+  if (t.empty()) { update_nav(w); return; }
+  if (t == "~") t = home_;
+  else if (t.rfind("~/", 0) == 0) t = home_ + t.substr(1);
+  else if (t[0] != '/') t = w->path + "/" + t;
+  std::error_code ec;
+  fs::path p = fs::weakly_canonical(fs::path(t), ec);
+  if (ec) p = fs::path(t).lexically_normal();
+  std::string ps = p.string();
+  if (fs::exists(p, ec) && !fs::is_directory(p, ec)) {
+    navigate(w, p.parent_path().string());
+    if (w->path == p.parent_path().string()) w->pane->view()->select_path(ps);
+    return;
+  }
+  navigate(w, ps);
+}
+
+void Desktop::open_entry(const Entry &e, NWin *from) {
+  if (e.dir) {
+    // Ctrl + dwuklik: folder w nowym oknie
+    bool new_win = (Fl::event_state() & FL_CTRL) != 0;
+    if (from && !new_win && known(from)) navigate(from, e.path);
+    else open_folder(e.path, true, new_win);
+    return;
+  }
   if (is_appimage(e.name)) { open_appimage(e.path); return; }
   // plik z flagą "Program" (Informacje): uruchom w Nirvana Shell z parametrami
   struct stat st;
@@ -1405,7 +1633,7 @@ void Desktop::restore() {
   int n = 0;
   for (auto &p : spatial_.open_paths()) {
     std::error_code ec;
-    if (fs::is_directory(p, ec) && allowed(p)) { open_folder(p, false); n++; }
+    if (fs::is_directory(p, ec) && allowed(p)) { open_folder(p, false, true); n++; }
   }
   if (!n) open_folder(root_path_, false);
 }
@@ -1488,6 +1716,13 @@ int Desktop::handle(int e) {
       return 1;
     }
     break;
+  }
+  if (e == FL_SHORTCUT && desk_shortcut()) return 1;   // skróty zaznaczonej ikony biurka
+  if (e == FL_PUSH && Fl::event_y() >= MENUBAR_H && Fl::event_button() == FL_RIGHT_MOUSE) {
+    int i = icon_at(Fl::event_x(), Fl::event_y());
+    if (tip_icon_ >= 0) { tip_icon_ = -1; Fl_Tooltip::enter_area(this, 0, 0, 0, 0, nullptr); }
+    desk_context_menu(i);
+    return 1;
   }
   if (e == FL_PUSH && Fl::event_y() >= MENUBAR_H) {
     int i = icon_at(Fl::event_x(), Fl::event_y());
@@ -1646,7 +1881,7 @@ void Desktop::new_folder() {
 
 void Desktop::open_selected() {
   if (NWin *a = active_folder()) {
-    if (const Entry *e = a->pane->view()->selected()) open_entry(*e);
+    if (const Entry *e = a->pane->view()->selected()) open_entry(*e, a);
   } else if (icon_sel_ >= 0) {
     if (icons_[icon_sel_].win) gary::activate(icons_[icon_sel_].win);
     else if (icons_[icon_sel_].vol >= 0) open_volume(icons_[icon_sel_].vol);
@@ -1656,6 +1891,7 @@ void Desktop::open_selected() {
 }
 
 void Desktop::close_active() {
+  if (menu_target && known(menu_target)) { close(menu_target); return; }
   Window a = net_active();
   for (auto *w : wins_)
     if (w->shown() && fl_xid(w) == a) { close(w); return; }
@@ -2188,23 +2424,10 @@ void Desktop::select_all() {
 
 void Desktop::view_icons() {
   if (NWin *a = active_folder()) { a->pane->set_mode(FolderView::Icons); remember(a, true); }
-  sync_view_menu();
 }
 
 void Desktop::view_list() {
   if (NWin *a = active_folder()) { a->pane->set_mode(FolderView::List); remember(a, true); }
-  sync_view_menu();
-}
-
-// Radio "jako ikony / jako lista" pokazuje tryb aktywnego okna.
-void Desktop::sync_view_menu() {
-  NWin *a = active_folder();
-  bool list = a && a->pane->view()->mode() == FolderView::List;
-  auto *icons = (Fl_Menu_Item *)menu_->find_item(plat::tr_path(P_("Window/View as/Icons")).c_str());
-  auto *lst = (Fl_Menu_Item *)menu_->find_item(plat::tr_path(P_("Window/View as/List")).c_str());
-  if (icons && lst) {
-    if (list) { icons->clear(); lst->set(); } else { icons->set(); lst->clear(); }
-  }
 }
 
 std::string Desktop::rename_path(const std::string &old, const std::string &name) {

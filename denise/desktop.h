@@ -6,7 +6,9 @@
 // Pasek menu działa na aktywne okno, które odczytujemy z _NET_ACTIVE_WINDOW.
 #pragma once
 
+#include <FL/Fl_Button.H>
 #include <FL/Fl_Double_Window.H>
+#include <FL/Fl_Input.H>
 #include <FL/Fl_Menu_Bar.H>
 #include <FL/Fl_Menu_Button.H>
 #include <FL/Fl_Tiled_Image.H>
@@ -36,6 +38,13 @@ public:
   Desktop *desk;
   FolderPane *pane = nullptr;                  // nullptr dla dialogów
   std::string path;
+  // Okno folderu: własny pasek menu (Okno, Ikony) i pasek nawigacji
+  // (wstecz, dalej, folder nadrzędny, położenie) nad zawartością.
+  Fl_Menu_Bar *menubar = nullptr;
+  Fl_Button *back_b = nullptr, *fwd_b = nullptr, *up_b = nullptr;
+  Fl_Input *loc = nullptr;
+  std::vector<std::string> back_hist, fwd_hist;   // historia przeglądania
+  static constexpr int MB_H = 20, NAV_H = 26;     // wysokości pasków
   std::vector<std::function<void()>> actions;  // akcje przycisków dialogu
   bool dialog;
   // Własna ramka Platinum (CSD), gdy menedżerem okien nie jest Insight -
@@ -76,7 +85,17 @@ class Desktop : public Fl_Double_Window {
 public:
   Desktop(int W, int H, const std::string &home, bool root);
 
-  void open_folder(const std::string &path, bool animate = true);
+  // Folder w oknie menedżera plików: domyślnie w ostatnio używanym oknie
+  // (jedno okno, które nawiguje), new_window - zawsze w nowym oknie.
+  void open_folder(const std::string &path, bool animate = true, bool new_window = false);
+  enum class Nav { Go, Back, Forward };
+  void navigate(NWin *w, const std::string &path, Nav how = Nav::Go);
+  void update_nav(NWin *w);       // przyciski i pole położenia
+  void go_back();
+  void go_forward();
+  void new_window();
+  void go_location(NWin *w);      // Enter w polu położenia
+  NWin *menu_target = nullptr;    // okno, z którego paska menu wybrano polecenie
   void restore();                 // otwórz okna zapamiętane z poprzedniej sesji
   void close(NWin *w);            // zamknięcie okna (przycisk ramki, Ctrl+W, dialog)
   void remember(NWin *w, bool open);
@@ -137,6 +156,9 @@ public:
   void close_all();
   // --- menu Nirvana / Okno / Ikony / Narzędzia (menus.cxx) ---
   void update_menu();            // aktywne/nieaktywne pozycje przed otwarciem menu
+  void update_menu(Fl_Menu_ *m, NWin *a);   // to samo dla wskazanego paska (okno folderu)
+  void desk_context_menu(int icon);         // menu podręczne ikon biurka (prawy przycisk)
+  bool desk_shortcut();                     // skróty ikon biurka (bez aktywnego okna)
   void open_preferences();
   void execute_command();
   void open_log();
@@ -239,7 +261,9 @@ private:
   std::string title_for(const std::string &path) const;
   std::string trash_dir() const;
   bool trash_full() const;
-  void open_entry(const Entry &e);
+  void open_entry(const Entry &e, NWin *from = nullptr);   // folder: nawigacja w oknie from
+  void build_folder_bars(NWin *win, int X, int Y, int W);
+  bool desk_target_ = false;      // polecenie z menu podręcznego biurka
   void open_appimage(const std::string &path);
   void run_app(const std::string &path);
   std::string apps_dir() const;
@@ -250,7 +274,6 @@ private:
   bool trash_path(const std::string &path, std::string &err);
   void transfer(const std::vector<Entry> &items, const std::string &dest, bool copy, bool replace);
   void path_moved(const std::string &from, const std::string &to);   // okna i pamięć pozycji
-  void sync_view_menu();
   // przeciąganie
   struct DropTarget { NWin *win = nullptr; int item = -2; int icon = -1; };
   DropTarget target_at(int xr, int yr);

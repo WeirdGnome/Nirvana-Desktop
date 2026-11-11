@@ -711,7 +711,9 @@ int FolderView::handle(int e) {
   }
   case FL_KEYBOARD: {
     int k = Fl::event_key(), n = count();
-    if (!n) return 0;
+    bool arrow = k == FL_Left || k == FL_Right || k == FL_Up || k == FL_Down;
+    // pusty folder: strzałki nie wyprowadzają fokusu z zawartości okna
+    if (!n) return arrow && !(Fl::event_state() & (FL_ALT | FL_CTRL | FL_META)) ? 1 : 0;
     if (k == FL_F + 2) {
       if (const Entry *s = selected()) if (on_rename) on_rename(index_of(s->path));
       return 1;
@@ -720,6 +722,8 @@ int FolderView::handle(int e) {
       if (const Entry *s = selected()) { Entry copy = *s; on_open(copy); }
       return 1;
     }
+    // Alt/Ctrl + strzałki to skróty okna (wstecz, dalej, folder nadrzędny)
+    if (Fl::event_state() & (FL_ALT | FL_CTRL | FL_META)) return 0;
     int s = anchor_ < 0 ? 0 : anchor_;
     int step = mode_ == Icons ? cols_ : 1;
     if (k == FL_Right && mode_ == Icons) s = std::min(n - 1, s + 1);
@@ -808,6 +812,16 @@ void FolderPane::refresh() {
   update_info();
   resize(x(), y(), w(), h());
   redraw();
+}
+
+void FolderPane::go(const std::string &p) {
+  cancel_rename();
+  Fl::remove_timeout(refresh_later, this);
+  path_ = p;
+  watch();
+  view_->select_paths({});
+  scroll_->scroll_to(0, 0);
+  refresh();
 }
 
 void FolderPane::set_icon_size(int s) {

@@ -9,7 +9,8 @@ of **Mac OS 9 (Platinum)** with a touch of the **Amiga**. Written in C++ and FLT
   Applications are AppImage files in `~/Applications`; installing means dragging a file.
 - **Root mode**: the full file system and advanced settings, started through
   `pkexec` and clearly marked (red chip in the logo, ROOT badge).
-- **Rambler, a spatial file manager** (component `nirvana-denise`): one folder = one window that remembers its position.
+- **Rambler, a file manager** (component `nirvana-denise`): a single window that browses folders
+  (back, forward, parent folder, location field), with its own Window and Icons menus.
 - **English by default**, Polish when the system locale is Polish (see [Languages](#languages)).
 
 > **Formerly LisaOS.** The installer removes the old `lisaos` package and fixes `~/.xinitrc`
@@ -204,8 +205,8 @@ below Nirvana HD, with an icon that matches the kind of medium:
 - **an encrypted disk (LUKS)** has a padlock icon; double-clicking asks for the password,
   unlocks and mounts it (wrong password: a message and another try),
 - **dragging a disk icon to the Trash ejects it** (the Trash turns into an eject symbol,
-  as in Mac OS): unmount, LUKS close, disc eject or USB disk power-off; **Icons > Eject**
-  (`Ctrl+Y`) does the same,
+  as in Mac OS): unmount, LUKS close, disc eject or USB disk power-off; **Eject** in the disk
+  icon's context menu (right mouse button, `Ctrl+Y`) does the same,
 - files dropped on a disk icon are **copied** to it (the disk mounts itself),
 - windows showing a disk close when the disk is ejected or removed,
 - sandboxed AppImage applications see the user's mounted media.
@@ -241,9 +242,19 @@ desktop window does not take focus, so clicking the menu bar does not change the
 
 ## Rambler: working with files
 
+- **One window**: opening a folder shows it in the same window. Above the contents there is
+  the window's own menu bar (**Window**, **Icons**) and a navigation bar: back, forward,
+  parent folder and the location field (`~` = home folder; type a path and press Enter –
+  a file path opens its folder with the file selected). Shortcuts: `Alt+←` back, `Alt+→`
+  forward, `Ctrl+↑` parent folder. Going up selects the folder you came from.
+- **More windows**: **Window > New Window** (`Ctrl+Shift+N`) or `Ctrl` + double-click on a folder.
+  Desktop icons (Nirvana HD, disks, Trash) open in the most recently used window.
 - **Opening**: double-click or Enter. An AppImage from another folder offers installation.
 - **Double-clicking the empty desktop** opens the file manager (the Nirvana HD window); if it
   is already open, it is brought to the front.
+- **Desktop icons** have a context menu (right mouse button): Open, Information, Remove from Dock,
+  Eject, Format Disk, Empty Trash, Restore (window icons). `Ctrl+O`, `Ctrl+I`, `Ctrl+K`, `Ctrl+Y`
+  work on the selected desktop icon. On the empty desktop: Open Nirvana HD, Desktop Appearance.
 - **Folder windows do not cover the desktop**: when opened and when zoomed they leave the
   column of icons at the left edge free (Nirvana HD, disks, window icons, the Trash above
   the dock) as well as the dock at the bottom. Zooming other programs does the same.
@@ -281,12 +292,18 @@ text gets shorter.
 |------|---------|
 | **Nirvana** (logo and name) | About This Computer, Preferences (window with panels), Execute Command `Ctrl+E`, Nirvana Shell `Ctrl+T`, Open System Log, Reset Nirvana |
 | **System** | Lock Screen, Sleep, Hibernate, Log Out `Ctrl+Q`, Restart, Shut Down |
-| **Window** | New Folder `Ctrl+N`, Open Parent `Ctrl+↑`, Close `Ctrl+W`, Update `Ctrl+R`, Select Contents `Ctrl+A`, Clean Up `Ctrl+.`, Show Hidden Files `Ctrl+H`, View as (icons/list), Sort, Icon Size (small/normal/large) |
-| **Icons** | Open `Ctrl+O`, Copy, Paste, Duplicate, Rename `F2`, Delete `Ctrl+Backspace`, Information `Ctrl+I`, Snapshot `Ctrl+S`, Unsnapshot, Put on Dock `Ctrl+L`, Remove from Dock `Ctrl+K`, Eject `Ctrl+Y` |
 | **Special** | Format Disk, Empty Trash, Root Mode |
 
+In every file manager window:
+
+| Menu | Items |
+|------|---------|
+| **Window** | New Window `Ctrl+Shift+N`, New Folder `Ctrl+N`, Back `Alt+←`, Forward `Alt+→`, Open Parent `Ctrl+↑`, Close `Ctrl+W`, Update `Ctrl+R`, Select Contents `Ctrl+A`, Clean Up `Ctrl+.`, Show Hidden Files `Ctrl+H`, View as (icons/list), Sort, Icon Size (small/normal/large) |
+| **Icons** | Open `Ctrl+O`, Copy, Paste, Duplicate, Rename `F2`, Delete `Ctrl+Backspace`, Information `Ctrl+I`, Set as Wallpaper, Snapshot `Ctrl+S`, Unsnapshot, Put on Dock `Ctrl+L`, Remove from Dock `Ctrl+K` |
+
 Items that would do nothing at the moment are greyed out, e.g. Eject without a selected disk,
-or Hibernate when the computer cannot hibernate. The System menu asks before logging out,
+Hibernate when the computer cannot hibernate,
+or Back at the start of the history. The System menu asks before logging out,
 restarting and shutting down, and refuses to sleep in presentation mode.
 
 - **Icons in windows** can be moved with the mouse within the window. The others stay where

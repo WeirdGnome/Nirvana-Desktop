@@ -9,7 +9,8 @@ Lekkie środowisko graficzne dla Linuksa (baza: minimalny Devuan) w duchu
   Aplikacje to pliki AppImage leżące w `~/Aplikacje`; instalacja = przeciągnięcie pliku.
 - **Tryb root**: pełny system plików i ustawienia zaawansowane, uruchamiany przez
   `pkexec`, wyraźnie oznaczony (czerwony chip w logo, plakietka ROOT).
-- **Rambler, przestrzenny menedżer plików** (komponent `nirvana-denise`): jeden folder = jedno okno, które pamięta swoje położenie.
+- **Rambler, menedżer plików** (komponent `nirvana-denise`): jedno okno, w którym przechodzi się
+  między folderami (wstecz, dalej, folder nadrzędny, pole położenia), z własnym menu Okno i Ikony.
 
 > **Dawniej LisaOS.** Instalator usuwa stary pakiet `lisaos` i poprawia `~/.xinitrc`
 > oraz ekran logowania; przy pierwszym starcie ustawienia, zainstalowane aplikacje
@@ -205,7 +206,8 @@ pojawia się na biurku pod Nirvana HD, z ikoną pasującą do rodzaju nośnika:
   odblokowuje i montuje (złe hasło: komunikat i ponowne pytanie),
 - **przeciągnięcie ikony dysku do kosza wysuwa go** (kosz zmienia się w symbol
   wysuwania, jak w Mac OS): odmontowanie, zamknięcie LUKS, wysunięcie płyty albo
-  wyłączenie dysku USB; to samo robi **Specjalne > Wysuń** (`Ctrl+E`),
+  wyłączenie dysku USB; to samo robi **Wysuń** w menu
+  podręcznym ikony dysku (prawy przycisk myszy, `Ctrl+Y`),
 - pliki upuszczone na ikonę dysku są **kopiowane** na niego (dysk montuje się sam),
 - okna z zawartością dysku zamykają się, gdy dysk zostanie wysunięty lub wyjęty,
 - aplikacje AppImage w piaskownicy widzą zamontowane nośniki użytkownika.
@@ -241,6 +243,17 @@ okno biurka nie przyjmuje fokusu, żeby klik w pasek menu nie zmieniał aktywnej
 
 ## Rambler: praca z plikami
 
+- **Jedno okno**: otwarty folder pojawia się w tym samym oknie. Nad zawartością jest własny
+  pasek menu okna (**Okno**, **Ikony**) i pasek nawigacji: wstecz, dalej, folder nadrzędny
+  i pole położenia (`~` = folder domowy; wpisz ścieżkę i naciśnij Enter – ścieżka pliku
+  otwiera jego folder z zaznaczonym plikiem). Skróty: `Alt+←` wstecz, `Alt+→` dalej,
+  `Ctrl+↑` folder nadrzędny. Po wyjściu w górę zaznaczony jest folder, z którego przyszliśmy.
+- **Więcej okien**: **Okno > Nowe okno** (`Ctrl+Shift+N`) albo `Ctrl` + dwuklik na folderze.
+  Ikony biurka (Nirvana HD, dyski, Kosz) otwierają się w ostatnio używanym oknie.
+- **Ikony biurka** mają menu podręczne (prawy przycisk myszy): Otwórz, Informacje, Zdejmij
+  z doku, Wysuń, Formatuj dysk, Opróżnij kosz, Przywróć (ikony okien). `Ctrl+O`, `Ctrl+I`,
+  `Ctrl+K`, `Ctrl+Y` działają na zaznaczoną ikonę biurka. Na pustym biurku: Otwórz Nirvana HD,
+  Wygląd biurka.
 - **Otwieranie**: podwójne kliknięcie lub Enter. AppImage z innego folderu proponuje instalację.
 - **Dwuklik na pustym biurku** otwiera menedżer plików (okno Nirvana HD); gdy jest już
   otwarte, wysuwa je na wierzch.
@@ -280,11 +293,16 @@ Po prawej, ciasno przy krawędzi: zasilanie, głośność, sieć, zegar i przeł
 |------|---------|
 | **Nirvana** (logo i napis) | O systemie, Preferencje (okno z panelami), Wykonaj polecenie `Ctrl+E`, Nirvana Shell `Ctrl+T`, Otwórz dziennik, Resetuj Nirvanę |
 | **System** | Zablokuj ekran, Uśpij, Hibernuj, Wyloguj `Ctrl+Q`, Uruchom ponownie, Wyłącz |
-| **Okno** | Nowy folder `Ctrl+N`, Otwórz katalog nadrzędny `Ctrl+↑`, Zamknij `Ctrl+W`, Uaktualnij `Ctrl+R`, Zaznacz zawartość `Ctrl+A`, Uporządkuj `Ctrl+.`, Pokaż ukryte pliki `Ctrl+H`, Pokaż jako (ikony/listę), Sortuj, Wielkość ikon (małe/normalne/duże) |
-| **Ikony** | Otwórz `Ctrl+O`, Kopiuj, Wklej, Duplikuj, Zmień nazwę `F2`, Usuń `Ctrl+Backspace`, Informacje `Ctrl+I`, Zamroź `Ctrl+S`, Odmroź, Połóż na doku `Ctrl+L`, Zdejmij z doku `Ctrl+K`, Wysuń `Ctrl+Y` |
 | **Narzędzia** | Formatuj dysk, Opróżnij kosz, Tryb root |
 
-Pozycje, które w danej chwili nic by nie zrobiły, są wyszarzone, np. Wysuń bez zaznaczonego dysku.
+W każdym oknie menedżera plików:
+
+| Menu | Pozycje |
+|------|---------|
+| **Okno** | Nowe okno `Ctrl+Shift+N`, Nowy folder `Ctrl+N`, Wstecz `Alt+←`, Dalej `Alt+→`, Otwórz katalog nadrzędny `Ctrl+↑`, Zamknij `Ctrl+W`, Uaktualnij `Ctrl+R`, Zaznacz zawartość `Ctrl+A`, Uporządkuj `Ctrl+.`, Pokaż ukryte pliki `Ctrl+H`, Pokaż jako (ikony/listę), Sortuj, Wielkość ikon (małe/normalne/duże) |
+| **Ikony** | Otwórz `Ctrl+O`, Kopiuj, Wklej, Duplikuj, Zmień nazwę `F2`, Usuń `Ctrl+Backspace`, Informacje `Ctrl+I`, Ustaw jako tapetę, Zamroź `Ctrl+S`, Odmroź, Połóż na doku `Ctrl+L`, Zdejmij z doku `Ctrl+K` |
+
+Pozycje, które w danej chwili nic by nie zrobiły, są wyszarzone, np. Wysuń bez zaznaczonego dysku albo Wstecz na początku historii.
 
 - **Ikony w oknach** można przestawiać myszą w obrębie okna. Pozostałe zostają na swoich
   miejscach.
