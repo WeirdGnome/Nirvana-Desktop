@@ -749,15 +749,15 @@ void draw_titlebar(int x, int y, int w, const char *title, bool active, int pres
         fl_yxline(fx + i, fy, fy + fh - 1);
       }
     }
-    if (boxes && active) {
+    if (boxes) {   // the buttons also in inactive windows
       title_button(close_x, by, 1, pressed == 1);
       title_button(shade_x, by, 3, pressed == 3);
       if (boxes != 2) title_button(zoom_x, by, 2, pressed == 2);
     }
-  } else if (active) {
+  } else {
     // Stripes: a dark line above a light one, interrupted at the title and the buttons.
     auto stripe = [&](int x0, int x1) {
-      if (x1 <= x0) return;
+      if (x1 <= x0 || !active) return;   // an inactive window has a plain bar, but keeps its buttons
       for (int yy = y + 4; yy <= y + TITLE_H - 6; yy += 2) {
         fl_color(STRIPE); fl_xyline(x0, yy, x1);
         fl_color(LIGHT); fl_xyline(x0, yy + 1, x1);
