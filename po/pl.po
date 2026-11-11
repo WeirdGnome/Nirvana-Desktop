@@ -3,7 +3,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Nirvana Desktop 0.1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-11 20:55+0000\n"
+"POT-Creation-Date: 2026-11-11 20:59+0000\n"
 "PO-Revision-Date: 2026-11-09 13:00+0000\n"
 "Last-Translator: Nirvana Desktop\n"
 "Language-Team: Polish\n"
@@ -4060,39 +4060,71 @@ msgstr "Foomatic – duża baza starszych sterowników"
 msgid "Manufacturer PPDs – Kyocera, Ricoh, Lexmark, Sharp…"
 msgstr "Pliki PPD producentów – Kyocera, Ricoh, Lexmark, Sharp…"
 
-#: savers/savers.cxx:335
+#: savers/savers.cxx:770
 msgid "Black Screen"
 msgstr "Czarny ekran"
 
-#: savers/savers.cxx:335
+#: savers/savers.cxx:770
 msgid "Starfield"
 msgstr "Gwiazdy"
 
-#: savers/savers.cxx:335
+#: savers/savers.cxx:770
 msgid "Bouncing Lines"
 msgstr "Odbijające się linie"
 
-#: savers/savers.cxx:336
+#: savers/savers.cxx:771
 msgid "Nirvana Logo"
 msgstr "Logo Nirvany"
 
-#: savers/savers.cxx:336
+#: savers/savers.cxx:771
 msgid "Pipes"
 msgstr "Rury"
 
-#: savers/savers.cxx:336
+#: savers/savers.cxx:771
 msgid "Plasma"
 msgstr "Plazma"
 
-#: savers/savers.cxx:337
+#: savers/savers.cxx:772
 msgid "Clock"
 msgstr "Zegar"
 
-#: savers/savers.cxx:337
+#: savers/savers.cxx:772
 msgid "Snow"
 msgstr "Śnieg"
 
-#: savers/savers.cxx:337
+#: savers/savers.cxx:772
+msgid "Fireworks"
+msgstr "Fajerwerki"
+
+#: savers/savers.cxx:773
+msgid "Game of Life"
+msgstr "Gra w życie"
+
+#: savers/savers.cxx:773
+msgid "Maze"
+msgstr "Labirynt"
+
+#: savers/savers.cxx:773
+msgid "Spirograph"
+msgstr "Spirograf"
+
+#: savers/savers.cxx:774
+msgid "Flying Chips"
+msgstr "Latające chipy"
+
+#: savers/savers.cxx:774
+msgid "Aquarium"
+msgstr "Akwarium"
+
+#: savers/savers.cxx:774
+msgid "Fire"
+msgstr "Ogień"
+
+#: savers/savers.cxx:775
+msgid "Bubbles"
+msgstr "Bańki"
+
+#: savers/savers.cxx:775
 msgid "Random"
 msgstr "Losowy"
 

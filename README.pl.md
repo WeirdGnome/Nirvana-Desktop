@@ -38,7 +38,7 @@ Napisane w C++ i FLTK 1.4.
 
 Rozpakuj źródła i uruchom instalator:
 
-    tar xzf nirvana-desktop-0.0.33.tar.gz && cd nirvana-desktop
+    tar xzf nirvana-desktop-0.0.34.tar.gz && cd nirvana-desktop
     sudo ./install.sh                 # albo: sudo ./install.sh --login-screen
 
 Instalator:
@@ -717,7 +717,8 @@ hasłem; administratorzy przy komputerze nie są pytani.
 ## Wygaszacz i blokada ekranu
 
 **Preferencje → Wygaszacz ekranu** wybiera wygaszacz – Czarny ekran, Gwiazdy, Odbijające się
-linie, Logo Nirvany, Rury, Plazma, Zegar, Śnieg albo Losowy – z podglądem w małym monitorze,
+linie, Logo Nirvany, Rury, Plazma, Zegar, Śnieg, Fajerwerki, Gra w życie, Labirynt (drążony,
+a potem przechodzony), Spirograf, Latające chipy, Akwarium, Ogień, Bańki albo Losowy – z podglądem w małym monitorze,
 czas włączenia, czy **blokuje** ekran (od razu albo gdy działa już kilka minut) i kiedy usypia
 monitor. *Wypróbuj* pokazuje go na całym ekranie, *Zablokuj teraz* blokuje. Pomysły pochodzą z
 wygaszaczy lat 90. i xscreensaver; kod jest napisany od nowa.
@@ -731,6 +732,8 @@ zamraża ekranu. Do budowania potrzebny jest `libpam0g-dev`; `NIRVANA_LOCKER=pol
 innego programu blokady.
 
 ![Wygaszacz ekranu](docs/img/screensaver.png)
+
+![Więcej wygaszaczy](docs/img/savers.png)
 
 ![Blokada](docs/img/lock.png)
 

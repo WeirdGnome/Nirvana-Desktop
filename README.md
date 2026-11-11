@@ -39,7 +39,7 @@ on the desktop. Written in C++ and FLTK 1.4.
 
 Unpack the sources and run the installer:
 
-    tar xzf nirvana-desktop-0.0.33.tar.gz && cd nirvana-desktop
+    tar xzf nirvana-desktop-0.0.34.tar.gz && cd nirvana-desktop
     sudo ./install.sh                 # or: sudo ./install.sh --login-screen
 
 The installer:
@@ -720,7 +720,8 @@ password; administrators at the computer are not asked.
 ## Screen saver and screen lock
 
 **Preferences → Screen Saver** chooses the saver - Black Screen, Starfield, Bouncing Lines,
-Nirvana Logo, Pipes, Plasma, Clock, Snow or Random - with a preview in a little monitor, when it
+Nirvana Logo, Pipes, Plasma, Clock, Snow, Fireworks, Game of Life, Maze (carved and then
+walked through), Spirograph, Flying Chips, Aquarium, Fire, Bubbles or Random - with a preview in a little monitor, when it
 starts, whether it **locks** the screen (at once or after it ran a few minutes) and when the
 monitor goes to sleep. *Test* shows it full screen, *Lock Now* locks. The ideas come from the
 savers of the 1990s and xscreensaver; the code is new.
@@ -734,6 +735,8 @@ a wrong password does not freeze the screen. Building needs `libpam0g-dev`;
 `NIRVANA_LOCKER=command` uses another locker.
 
 ![Screen Saver](docs/img/screensaver.png)
+
+![More savers](docs/img/savers.png)
 
 ![The lock](docs/img/lock.png)
 

@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Nirvana Desktop 0.1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-11 20:55+0000\n"
+"POT-Creation-Date: 2026-11-11 20:59+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -3936,39 +3936,71 @@ msgstr ""
 msgid "Manufacturer PPDs – Kyocera, Ricoh, Lexmark, Sharp…"
 msgstr ""
 
-#: savers/savers.cxx:335
+#: savers/savers.cxx:770
 msgid "Black Screen"
 msgstr ""
 
-#: savers/savers.cxx:335
+#: savers/savers.cxx:770
 msgid "Starfield"
 msgstr ""
 
-#: savers/savers.cxx:335
+#: savers/savers.cxx:770
 msgid "Bouncing Lines"
 msgstr ""
 
-#: savers/savers.cxx:336
+#: savers/savers.cxx:771
 msgid "Nirvana Logo"
 msgstr ""
 
-#: savers/savers.cxx:336
+#: savers/savers.cxx:771
 msgid "Pipes"
 msgstr ""
 
-#: savers/savers.cxx:336
+#: savers/savers.cxx:771
 msgid "Plasma"
 msgstr ""
 
-#: savers/savers.cxx:337
+#: savers/savers.cxx:772
 msgid "Clock"
 msgstr ""
 
-#: savers/savers.cxx:337
+#: savers/savers.cxx:772
 msgid "Snow"
 msgstr ""
 
-#: savers/savers.cxx:337
+#: savers/savers.cxx:772
+msgid "Fireworks"
+msgstr ""
+
+#: savers/savers.cxx:773
+msgid "Game of Life"
+msgstr ""
+
+#: savers/savers.cxx:773
+msgid "Maze"
+msgstr ""
+
+#: savers/savers.cxx:773
+msgid "Spirograph"
+msgstr ""
+
+#: savers/savers.cxx:774
+msgid "Flying Chips"
+msgstr ""
+
+#: savers/savers.cxx:774
+msgid "Aquarium"
+msgstr ""
+
+#: savers/savers.cxx:774
+msgid "Fire"
+msgstr ""
+
+#: savers/savers.cxx:775
+msgid "Bubbles"
+msgstr ""
+
+#: savers/savers.cxx:775
 msgid "Random"
 msgstr ""
 

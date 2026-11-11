@@ -1027,4 +1027,12 @@ T = {
     "This application is made for %1 processors, but this computer has %2.\nDownload the AppImage for %2 from the author's page.": 'Ta aplikacja jest zbudowana na procesory %1, a ten komputer ma %2.\nPobierz AppImage dla %2 ze strony autora.',
     '%1 used by Nirvana (shader %2)': '%1 zajęte przez Nirvanę (shader %2)',
     'Nirvana %1 (shader %2)': 'Nirvana %1 (shader %2)',
+    'Fireworks': 'Fajerwerki',
+    'Game of Life': 'Gra w życie',
+    'Maze': 'Labirynt',
+    'Spirograph': 'Spirograf',
+    'Flying Chips': 'Latające chipy',
+    'Aquarium': 'Akwarium',
+    'Fire': 'Ogień',
+    'Bubbles': 'Bańki',
 }
