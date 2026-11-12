@@ -75,6 +75,11 @@ add_library(nirvana-net STATIC net/net.cxx)
 target_include_directories(nirvana-net PUBLIC net)
 target_link_libraries(nirvana-net PUBLIC nirvana-i18n fltk::fltk PkgConfig::DBUS)
 
+# --- nirvana-bt: Bluetooth via BlueZ (bluetoothctl) --------------------------
+add_library(nirvana-bt STATIC bt/bt.cxx)
+target_include_directories(nirvana-bt PUBLIC bt)
+target_link_libraries(nirvana-bt PUBLIC nirvana-i18n fltk::fltk util)
+
 # --- nirvana-audio and nirvana-power: volume and power applets ---------------
 pkg_check_modules(XSS REQUIRED IMPORTED_TARGET xscrnsaver)
 add_library(nirvana-audio STATIC audio/audio.cxx)
@@ -123,16 +128,17 @@ add_executable(nirvana-denise
   denise/clock.cxx
   denise/printer.cxx
   denise/about.cxx
-  denise/tray.cxx)
-target_link_libraries(nirvana-denise PRIVATE nirvana-platinum nirvana-net nirvana-audio nirvana-power ${NIRVANA_PRINT_LIB} fltk::images PkgConfig::DBUS)
+  denise/tray.cxx
+  denise/bluetooth.cxx)
+target_link_libraries(nirvana-denise PRIVATE nirvana-platinum nirvana-net nirvana-bt nirvana-audio nirvana-power ${NIRVANA_PRINT_LIB} fltk::images PkgConfig::DBUS)
 
 # --- insight: X11 window manager ---------------------------------------------
 add_executable(nirvana-insight insight/main.cxx)
 target_link_libraries(nirvana-insight PRIVATE nirvana-platinum X11::X11)
 
 # --- alice: control panels ---------------------------------------------------
-add_executable(nirvana-alice alice/main.cxx alice/appearance.cxx alice/network.cxx alice/power.cxx alice/preferences.cxx alice/shader.cxx alice/datetime.cxx alice/desktop.cxx alice/printers.cxx alice/user.cxx alice/saver.cxx)
-target_link_libraries(nirvana-alice PRIVATE nirvana-platinum nirvana-net nirvana-power ${NIRVANA_PRINT_LIB})
+add_executable(nirvana-alice alice/main.cxx alice/appearance.cxx alice/network.cxx alice/power.cxx alice/preferences.cxx alice/shader.cxx alice/datetime.cxx alice/desktop.cxx alice/printers.cxx alice/user.cxx alice/saver.cxx alice/bluetooth.cxx)
+target_link_libraries(nirvana-alice PRIVATE nirvana-platinum nirvana-net nirvana-bt nirvana-power ${NIRVANA_PRINT_LIB})
 
 # --- Nirvana Shell: terminal emulator (system libvterm or the bundled one) ---
 pkg_check_modules(VTERM IMPORTED_TARGET vterm>=0.3)
@@ -257,7 +263,7 @@ set(CPACK_DEBIAN_PACKAGE_SHLIBDEPS ON)
 set(CPACK_DEBIAN_PACKAGE_DEPENDS "dbus-bin | dbus")
 set(CPACK_DEBIAN_PACKAGE_RECOMMENDS
   "xserver-xorg, xinit, fonts-dejavu-core, libpam-elogind | elogind, polkitd, pkexec, \
-udisks2, network-manager, pulseaudio-utils, alsa-utils, squashfs-tools, bubblewrap, xdg-utils, \
+udisks2, network-manager, bluez, rfkill, pulseaudio-utils, alsa-utils, squashfs-tools, bubblewrap, xdg-utils, \
 xdg-desktop-portal, xdg-desktop-portal-gtk, libgl1-mesa-dri, \
 libxcb-cursor0, libxcb-icccm4, libxcb-keysyms1, libxcb-image0, libxcb-render-util0, libxkbcommon-x11-0, \
 libxcb-xkb1, libxcb-shape0, libxcb-randr0, libxcb-xinerama0")

@@ -18,6 +18,8 @@ on the desktop. Written in C++ and FLTK 1.4.
 > **Settings from older versions** (Polish file names and keys until 0.0.6) are moved to the
 > current English ones on the first start of a newer version.
 
+What changed in each version: [CHANGELOG.md](CHANGELOG.md).
+
 ## Components
 
 | Package             | Role                                   | Status      |
@@ -39,7 +41,7 @@ on the desktop. Written in C++ and FLTK 1.4.
 
 Unpack the sources and run the installer:
 
-    tar xzf nirvana-desktop-0.0.38.tar.gz && cd nirvana-desktop
+    tar xzf nirvana-desktop-0.0.39.tar.gz && cd nirvana-desktop
     sudo ./install.sh                 # or: sudo ./install.sh --login-screen
 
 The installer:
@@ -559,6 +561,28 @@ the `network-manager` package (works without systemd, with elogind).
 
 Testing without a Wi-Fi adapter: `NIRVANA_NMCLI=tools/fake-nmcli.sh` fakes a `wlan0` adapter
 and a few networks (everything else is passed on to the real `nmcli`).
+
+## Bluetooth
+
+- **Applet in the menu bar** (next to the network): the rune is dimmed when Bluetooth is off,
+  a dot shows a connected device, it blinks while something is being switched. The menu:
+  turn Bluetooth on/off, the paired devices with a check mark at the connected ones (a click
+  connects or disconnects, the battery level in brackets), Add a Device…, Bluetooth Settings….
+  Without an adapter or without `bluez` the applet is hidden.
+- **Preferences > Bluetooth:** on/off, visible to other devices, the computer's name, a list of
+  devices (name, kind – headphones, keyboard, mouse, phone… – and state: connected with battery,
+  paired, nearby with signal strength), Search / Stop, Pair, Connect / Disconnect, Forget;
+  a double click pairs a new device or connects a paired one.
+- **Pairing** with the code check: "Does the device show 482913?" in a dialog, a PIN for older
+  devices, the code to type on a keyboard shown in the panel. After pairing the device is
+  trusted and connected at once.
+- Works through `bluetoothctl` (package `bluez`, recommended by the .deb): reads in
+  non-interactive mode, a background `bluetoothctl` reports changes, and the panel keeps an
+  interactive session with its own agent while it is open (searching stops when it closes).
+  A soft rfkill block is lifted when turning on (`rfkill`). Readable messages for typical
+  BlueZ errors (device off, codes did not match, no audio service – PipeWire/PulseAudio with
+  Bluetooth support is needed for headphones).
+- Testing without hardware: `NIRVANA_BLUETOOTHCTL=/path/to/a/fake/bluetoothctl`.
 
 ## Nirvana Shell (terminal)
 

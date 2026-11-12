@@ -41,6 +41,10 @@ bool updates_supported();
 Fl_Widget *make_printer(int X, int Y, int W, int H);
 int printer_width();
 void refresh_printers();
+// Bluetooth (bluetooth.cxx, BlueZ): hidden (width 0) without an adapter
+Fl_Widget *make_bluetooth(int X, int Y, int W, int H);
+int bluetooth_width();
+void refresh_bluetooth();
 // The clock (clock.cxx): time, calendar, pomodoro, timer, stopwatch. Its width follows
 // the content; relayout is called when it changes.
 Fl_Widget *make_clock(int H, std::function<void()> relayout);   // a known package manager (or flatpak) is installed

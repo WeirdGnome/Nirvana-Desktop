@@ -554,6 +554,7 @@ Desktop::Desktop(int W, int H, const std::string &home)
     nm->on_open = [this](NetMenu *m) { build_net_menu(m); };
     nm->summary = [this] { return net::summary(net_); };
   }
+  bt_w_ = applets::make_bluetooth(0, 0, 22, MENUBAR_H);
   vol_w_ = applets::make_volume(0, 0, 26, MENUBAR_H);
   pow_w_ = applets::make_power(0, 0, 54, MENUBAR_H);
   if (applets::updates_supported()) upd_w_ = applets::make_updates(0, 0, 30, MENUBAR_H);
@@ -643,6 +644,7 @@ void Desktop::layout_bar() {
   };
   put(extras_, extras_->w());
   put(net_menu_, 24);
+  put(bt_w_, applets::bluetooth_width());
   put(vol_w_, 24);
   put(pow_w_, applets::power_width());
   put(upd_w_, applets::updates_width());

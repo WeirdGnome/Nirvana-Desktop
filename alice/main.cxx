@@ -28,6 +28,7 @@ int panel_desktop();
 int panel_printers();
 int panel_user();
 int panel_saver();
+int panel_bluetooth(bool add);
 
 int main(int argc, char **argv) {
   plat::init();
@@ -51,5 +52,7 @@ int main(int argc, char **argv) {
   if (!strcmp(which, "printers")) return panel_printers();
   if (!strcmp(which, "user")) return panel_user();
   if (!strcmp(which, "saver")) return panel_saver();
+  if (!strcmp(which, "bluetooth")) return panel_bluetooth(false);
+  if (!strcmp(which, "bluetooth-add")) return panel_bluetooth(true);
   return panel_appearance();
 }

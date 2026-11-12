@@ -606,6 +606,18 @@ void draw_display(int x, int y, Fl_Color c) {
   fl_yxline(x + 5, y + 8, y + 9);
 }
 
+void draw_bluetooth(int x, int y, Fl_Color c) {
+  // the bind rune drawn with lines: a stem and two arrow heads on the right
+  fl_color(c);
+  fl_line_style(FL_SOLID, 1);
+  fl_yxline(x + 4, y, y + 12);
+  fl_yxline(x + 5, y, y + 12);
+  fl_line(x + 5, y, x + 8, y + 3);
+  fl_line(x + 8, y + 3, x + 1, y + 9);
+  fl_line(x + 5, y + 12, x + 8, y + 9);
+  fl_line(x + 8, y + 9, x + 1, y + 3);
+}
+
 void draw_depth_gadget(int x, int y, bool pressed) {
   Fl_Color line = pressed ? SEL_TEXT : TEXT;
   Fl_Color back = pressed ? SEL : GRAY;

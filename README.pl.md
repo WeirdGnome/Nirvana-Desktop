@@ -17,6 +17,8 @@ Napisane w C++ i FLTK 1.4.
 > **Ustawienia ze starszych wersji** (polskie nazwy plików i kluczy do 0.0.6) są przenoszone
 > na obecne, angielskie przy pierwszym starcie nowszej wersji.
 
+Co się zmieniło w każdej wersji: [CHANGELOG.pl.md](CHANGELOG.pl.md).
+
 ## Komponenty
 
 | Pakiet              | Rola                                   | Stan        |
@@ -38,7 +40,7 @@ Napisane w C++ i FLTK 1.4.
 
 Rozpakuj źródła i uruchom instalator:
 
-    tar xzf nirvana-desktop-0.0.38.tar.gz && cd nirvana-desktop
+    tar xzf nirvana-desktop-0.0.39.tar.gz && cd nirvana-desktop
     sudo ./install.sh                 # albo: sudo ./install.sh --login-screen
 
 Instalator:
@@ -556,6 +558,28 @@ Nirvana Desktop zarządza siecią przez NetworkManagera (`nmcli` i D-Bus). Na De
 
 Testy bez karty Wi-Fi: `NIRVANA_NMCLI=tools/fake-nmcli.sh` udaje kartę `wlan0` i kilka
 sieci (resztę przekazuje do prawdziwego `nmcli`).
+
+## Bluetooth
+
+- **Aplet na pasku menu** (obok sieci): runa jest przygaszona, gdy Bluetooth jest wyłączony,
+  kropka oznacza połączone urządzenie, miga podczas przełączania. Menu: włącz/wyłącz
+  Bluetooth, sparowane urządzenia z ptaszkiem przy połączonych (klik łączy albo rozłącza,
+  w nawiasie poziom baterii), Dodaj urządzenie…, Ustawienia Bluetooth…. Bez adaptera albo
+  bez `bluez` aplet jest ukryty.
+- **Preferencje > Bluetooth:** włącznik, widoczność dla innych urządzeń, nazwa komputera, lista
+  urządzeń (nazwa, rodzaj – słuchawki, klawiatura, mysz, telefon… – i stan: połączone z baterią,
+  sparowane, w pobliżu z siłą sygnału), Szukaj / Stop, Paruj, Połącz / Rozłącz, Zapomnij;
+  dwuklik paruje nowe urządzenie albo łączy sparowane.
+- **Parowanie** ze sprawdzeniem kodu: „Czy urządzenie pokazuje 482913?” w okienku, PIN dla
+  starszych urządzeń, kod do wpisania na klawiaturze pokazany w panelu. Po sparowaniu
+  urządzenie od razu dostaje zaufanie i się łączy.
+- Działa przez `bluetoothctl` (pakiet `bluez`, polecany przez paczkę .deb): odczyty w trybie
+  nieinteraktywnym, `bluetoothctl` w tle zgłasza zmiany, a panel, póki jest otwarty, trzyma
+  interaktywną sesję z własnym agentem (wyszukiwanie kończy się z zamknięciem panelu).
+  Miękka blokada rfkill jest zdejmowana przy włączaniu (`rfkill`). Czytelne komunikaty dla
+  typowych błędów BlueZ (urządzenie wyłączone, kody się nie zgadzały, brak usługi dźwięku –
+  do słuchawek potrzebny jest PipeWire/PulseAudio z obsługą Bluetooth).
+- Testy bez sprzętu: `NIRVANA_BLUETOOTHCTL=/ścieżka/do/atrapy/bluetoothctl`.
 
 ## Nirvana Shell (terminal)
 
