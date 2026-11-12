@@ -40,7 +40,7 @@ Co się zmieniło w każdej wersji: [CHANGELOG.pl.md](CHANGELOG.pl.md).
 
 Rozpakuj źródła i uruchom instalator:
 
-    tar xzf nirvana-desktop-0.0.59.tar.gz && cd nirvana-desktop
+    tar xzf nirvana-desktop-0.0.60.tar.gz && cd nirvana-desktop
     sudo ./install.sh                 # albo: sudo ./install.sh --login-screen
 
 Instalator:
@@ -176,7 +176,9 @@ Inną czcionkę systemową (np. wolną, w stylu bitmapowym) można podać przez 
   wersji tego samego programu da się rozróżnić i mieć zainstalowane jednocześnie.
   Ikony i dane z .desktop są zapamiętywane w `~/.cache/nirvana/icons`.
 - **Gdzie są aplikacje**: w ukrytym folderze `~/.nirvana-apps`, żeby nie zaśmiecały Nirvana HD.
-  Otwiera go ikona **Aplikacje** na biurku. Prawy przycisk na aplikacji i **Połóż na doku**
+  Otwiera go ikona **Aplikacje** na biurku – w zwykłym oknie Ramblera uproszczonego, z folderami
+  kategorii, także gdy okna folderów są ustawione na Ramblera zaawansowanego; w adresie widać
+  *Aplikacje*. Prawy przycisk na aplikacji i **Połóż na doku**
   trzyma ją pod ręką; prawy przycisk na kafelku doku daje **Otwórz** i **Odepnij z doku**.
   Dawny folder `~/Aplikacje` (`~/Applications`) jest przenoszony tam automatycznie, razem
   z wpisami doku i zapamiętanymi oknami.

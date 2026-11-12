@@ -1,6 +1,12 @@
 # Lista zmian
 Wszystkie ważniejsze zmiany w Nirvana Desktop, od najnowszych. English: [CHANGELOG.md](CHANGELOG.md).
 
+## 0.0.60 – 2026-11-12
+
+- **Dwuklik wszędzie, także w Preferencjach**: pojedyncze kliknięcie ikony panelu w oknie Preferencji tylko ją zaznacza, dwuklik (albo Enter) otwiera panel.
+- **Ikona Aplikacje otwiera zwykłe okno Ramblera uproszczonego** z folderami kategorii (Gry, Grafika…), również gdy okna folderów są ustawione na Ramblera zaawansowanego. Foldery kategorii otwierają się w tym samym oknie, ponowny dwuklik ikony wysuwa je na wierzch, a adres pokazuje *Aplikacje* zamiast *Nirvana HD/.nirvana-apps*.
+- Poprawiony podpis zaznaczonej ikony w Ramblerze – nie jest już ucinany od góry.
+
 ## 0.0.59 – 2026-11-12
 
 - **Lista plików jest domyślnym widokiem** w Ramblerze (w obu stylach). Foldery zapamiętane ze starym domyślnym widokiem (ikony) po aktualizacji jednorazowo pokazują się jako lista; folder przełączony potem na ikony je zachowa.

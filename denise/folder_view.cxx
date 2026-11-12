@@ -616,7 +616,7 @@ void FolderView::draw_icons() {
       } else {
         fl_color(CONTENT_TEXT);
       }
-      fl_draw(l.c_str(), tx, ty + fl_height() - fl_descent(), 0, 0, FL_ALIGN_LEFT, nullptr, 0);
+      fl_draw(l.c_str(), tx, ty, tw, fl_height(), FL_ALIGN_LEFT | FL_ALIGN_INSIDE, nullptr, 0);   // a box: "@" stays text
       ty += fl_height();
     }
   }

@@ -1441,27 +1441,36 @@ void Desktop::open_folder(const std::string &path, bool animate, bool new_window
   }
   // The file manager works in one window: the folder is shown in the most recently used
   // window (a new window - Window > New Window or Ctrl + double-click).
+  // the applications (with their category folders): a plain window also in the explorer mode
+  bool apps = path == apps_dir() || in_apps(path + "/");
+  if (apps && explorer_mode()) force_simple_ = true;
   if (!new_window) {
     NWin *recent = nullptr;
-    for (auto *w : wins_) if (w->pane && w->shown()) recent = w;   // most recently active at the end
+    // most recently active at the end - in the explorer mode an explorer window, for the
+    // applications the plain Applications window
+    for (auto *w : wins_)
+      if (w->pane && w->shown() && (!explorer_mode() || bool(w->ex) != force_simple_)) recent = w;
     if (recent) {
       Rect src;
       if (recent->shaded()) recent->set_shaded(false);
       if (animate && source_rect(path, src)) zoom_rects(src, recent->frame_rect());
       navigate(recent, path);
       recent->activate_window();
+      force_simple_ = false;
       return;
     }
   }
   // The position refers to the window content (without the frame) - that is how FLTK stores it.
   WinState s;
-  bool known_pos = spatial_.get(explorer_mode() ? std::string("@explorer") : path, s);
+  bool ex_win = explorer_mode() && !force_simple_;   // Applications: always a plain window
+  force_simple_ = false;
+  bool known_pos = spatial_.get(ex_win ? std::string("@explorer") : path, s);
   if (!known_pos) {
     int n = 0;
     for (auto *w : wins_) if (w->pane) n++;
     s.x = 40 + 26 * (n % 8);
     s.y = MENUBAR_H + TITLE_H + 24 + 26 * (n % 8);
-    s.w = explorer_mode() ? 820 : 440; s.h = explorer_mode() ? 520 : 270;
+    s.w = ex_win ? 820 : 440; s.h = ex_win ? 520 : 270;
   }
   // the window fits into the folder area: Nirvana HD, the disks, the Trash and the dock stay visible
   Rect area = folder_area();
@@ -1486,7 +1495,7 @@ void Desktop::open_folder(const std::string &path, bool animate, bool new_window
   int ew = csd_mode ? 2 * FRAME : 0, eh = csd_mode ? TITLE_H + FRAME : 0;
   auto *win = new NWin(this, ax - ox, ay - oy, s.w + ew, s.h + eh, title_for(path).c_str(), false);
   win->path = path;
-  if (explorer_mode()) {
+  if (ex_win) {
     build_explorer(win, ox, oy, s.w, s.h, path);
     win->size_range(560 + ew, csd_mode ? TITLE_H : 320);
     wins_.push_back(win);
@@ -1622,6 +1631,9 @@ std::string disk_path(const std::string &path) {
     if (path.rfind(mp + "/", 0) == 0) return name + path.substr(mp.size());
   }
   if (home.empty() || home == "/") return path;
+  std::string apps = home + "/.nirvana-apps";   // the applications by the name of their icon
+  if (path == apps) return _("Applications");
+  if (path.rfind(apps + "/", 0) == 0) return _("Applications") + path.substr(apps.size());
   if (path == home) return "Nirvana HD";
   if (path.rfind(home + "/", 0) == 0) return "Nirvana HD" + path.substr(home.size());
   return path;
@@ -1634,6 +1646,9 @@ std::string real_path(const std::string &text) {
   std::string tn = _("Trash");
   if (text == tn) return trash_files();
   if (text.rfind(tn + "/", 0) == 0) return trash_files() + text.substr(tn.size());
+  std::string an = _("Applications");
+  if (text == an) return home + "/.nirvana-apps";
+  if (text.rfind(an + "/", 0) == 0) return home + "/.nirvana-apps" + text.substr(an.size());
   if (text == disk || text == "~") return home;
   if (text.rfind(disk + "/", 0) == 0) return home + text.substr(disk.size());
   if (text.rfind("~/", 0) == 0) return home + text.substr(1);
@@ -1780,6 +1795,18 @@ void Desktop::open_entry(const Entry &e, NWin *from) {
 }
 
 std::string Desktop::apps_dir() const { return appimage::apps_dir(home_); }
+
+// The Applications icon: a plain Rambler window with the folder structure of the programs
+// (the category folders) - also when the folder windows are explorers
+void Desktop::open_apps() {
+  for (auto *w : wins_)
+    if (w->pane && w->shown() && !w->ex && in_apps(w->path + "/")) {   // already open: to the front
+      if (w->shaded()) w->set_shaded(false);
+      w->activate_window();
+      return;
+    }
+  open_folder(apps_dir(), true, true);
+}
 
 // Is the file in the applications folder (also in a category subfolder)?
 bool Desktop::in_apps(const std::string &path) const {
@@ -2141,6 +2168,7 @@ int Desktop::handle(int e) {
       if (icons_[i].win) gary::activate(icons_[i].win);   // window icon: restore the window
       else if (icons_[i].prefs) open_preferences();
       else if (icons_[i].vol >= 0) open_volume(icons_[i].vol);
+      else if (icons_[i].path == apps_dir() && !icons_[i].dock) open_apps();   // a plain Rambler window
       else open_folder(icons_[i].path);
     } else if (i < 0 && Fl::event_clicks() && Fl::event_button() == FL_LEFT_MOUSE) {
       // double-click on the empty desktop (outside the dock): the file manager - the Nirvana HD window
@@ -2332,6 +2360,7 @@ void Desktop::open_selected() {
     else if (icons_[icon_sel_].prefs) open_preferences();
     else if (icons_[icon_sel_].vol >= 0) open_volume(icons_[icon_sel_].vol);
     else if (icons_[icon_sel_].dock) open_entry(icons_[icon_sel_].entry);
+    else if (icons_[icon_sel_].path == apps_dir()) open_apps();
     else open_folder(icons_[icon_sel_].path);
   }
 }

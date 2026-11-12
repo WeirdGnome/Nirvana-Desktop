@@ -43,8 +43,32 @@ public:
     labelsize(SIZE_SMALL + 1);
     align(FL_ALIGN_BOTTOM | FL_ALIGN_INSIDE);
   }
+  // Like icons everywhere in Nirvana: a click selects, a double click (or Enter) opens
+  int handle(int e) override {
+    switch (e) {
+    case FL_PUSH:
+      take_focus();
+      if (Fl::event_clicks()) { Fl::event_clicks(0); do_callback(); }
+      return 1;
+    case FL_RELEASE:
+    case FL_DRAG:
+      return 1;
+    case FL_FOCUS:
+    case FL_UNFOCUS:
+      redraw();
+      return 1;
+    case FL_KEYBOARD: {
+      int k = Fl::event_key();
+      if (k == FL_Enter || k == FL_KP_Enter || k == ' ') { do_callback(); return 1; }
+      return 0;   // the arrows: the next icon (the group moves the focus)
+    }
+    case FL_SHORTCUT:
+      return 0;
+    }
+    return Fl_Button::handle(e);
+  }
   void draw() override {
-    bool sel = value() || Fl::focus() == this;
+    bool sel = Fl::focus() == this;
     int ix = x() + (w() - 32) / 2, iy = y() + 6;
     switch (kind) {
       case Appearance: {   // a monitor with a color palette

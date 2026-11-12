@@ -41,7 +41,7 @@ What changed in each version: [CHANGELOG.md](CHANGELOG.md).
 
 Unpack the sources and run the installer:
 
-    tar xzf nirvana-desktop-0.0.59.tar.gz && cd nirvana-desktop
+    tar xzf nirvana-desktop-0.0.60.tar.gz && cd nirvana-desktop
     sudo ./install.sh                 # or: sudo ./install.sh --login-screen
 
 The installer:
@@ -177,7 +177,9 @@ Another system font (for example a free bitmap-style one) can be set with `NIRVA
   several versions of the same program can be told apart and installed side by side.
   Icons and .desktop data are cached in `~/.cache/nirvana/icons`.
 - **Where applications live**: in the hidden folder `~/.nirvana-apps`, so they do not clutter
-  Nirvana HD. The **Applications** icon on the desktop opens it. Right-click an application
+  Nirvana HD. The **Applications** icon on the desktop opens it in a plain (simple) Rambler
+  window with the category folders, also when folder windows are set to Rambler Advanced; its
+  address reads *Applications*. Right-click an application
   there and choose **Put on Dock** to keep it at hand; right-click a dock tile for **Open** and
   **Unpin from Dock**. An old `~/Applications` (`~/Aplikacje`) folder is moved there
   automatically, together with dock entries and remembered windows.

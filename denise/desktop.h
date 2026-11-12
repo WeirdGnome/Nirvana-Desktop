@@ -97,6 +97,7 @@ public:
   // A folder in a file manager window: by default in the most recently used window
   // (one window that navigates), new_window - always in a new window.
   void open_folder(const std::string &path, bool animate = true, bool new_window = false);
+  bool force_simple_ = false;   // the next window: a plain one, also in the explorer mode (Applications)
   enum class Nav { Go, Back, Forward };
   void navigate(NWin *w, const std::string &path, Nav how = Nav::Go);
   void update_nav(NWin *w);       // buttons and the location field
@@ -178,6 +179,7 @@ public:
   Fl_Menu_Button *ctx_style_ = nullptr;           // hidden button: the look of the context menus
   bool desk_shortcut();                     // shortcuts of desktop icons (no active window)
   void open_preferences();
+  void open_apps();   // the Applications icon: always a plain (simple) Rambler window
   void execute_command();
   void open_log();
   // menu System (applets::power_action)

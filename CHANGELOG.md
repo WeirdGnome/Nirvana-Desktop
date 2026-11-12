@@ -1,6 +1,12 @@
 # Changelog
 All notable changes to Nirvana Desktop, newest first. Polish: [CHANGELOG.pl.md](CHANGELOG.pl.md).
 
+## 0.0.60 – 2026-11-12
+
+- **Double click everywhere, Preferences too**: a single click on a panel icon in the Preferences window only selects it, a double click (or Enter) opens the panel.
+- **The Applications icon opens a plain Rambler Simple window** with the category folders (Games, Graphics…), also when folder windows are set to Rambler Advanced. Category folders open in the same window, double-clicking the icon again brings it to the front, and the address reads *Applications* instead of *Nirvana HD/.nirvana-apps*.
+- Fixed the label of a selected icon in Rambler being cut off at the top.
+
 ## 0.0.59 – 2026-11-12
 
 - **The file list is the default view** in Rambler (both styles). Folders remembered with the old default (icons) are shown as a list once, after the update; a folder switched to icons afterwards keeps them.
