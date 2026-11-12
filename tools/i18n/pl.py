@@ -1132,4 +1132,7 @@ T = {
     'Do Not Disturb': 'Nie przeszkadzać',
     'Notification Sound': 'Dźwięk powiadomień',
     'Clear Notifications': 'Wyczyść powiadomienia',
+    'history': 'historia',
+    'program': 'program',
+    '↑↓ choose · Tab completes · Enter runs': '↑↓ wybór · Tab uzupełnia · Enter uruchamia',
 }

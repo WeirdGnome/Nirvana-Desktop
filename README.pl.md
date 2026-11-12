@@ -40,7 +40,7 @@ Co się zmieniło w każdej wersji: [CHANGELOG.pl.md](CHANGELOG.pl.md).
 
 Rozpakuj źródła i uruchom instalator:
 
-    tar xzf nirvana-desktop-0.0.44.tar.gz && cd nirvana-desktop
+    tar xzf nirvana-desktop-0.0.45.tar.gz && cd nirvana-desktop
     sudo ./install.sh                 # albo: sudo ./install.sh --login-screen
 
 Instalator:
@@ -366,7 +366,7 @@ ilości wolne i pamięć każdego programu Nirvany. Na wąskim ekranie napis si�
 
 | Menu | Pozycje |
 |------|---------|
-| **Nirvana** (logo i napis) | O systemie, Preferencje (okno z panelami), Wykonaj polecenie `Ctrl+E`, Nirvana Shell `Ctrl+T`, Otwórz dziennik, Resetuj Nirvanę |
+| **Nirvana** (logo i napis) | O systemie, Preferencje (okno z panelami), Wykonaj polecenie `Ctrl+E` (pamięta historię i podpowiada programy z `$PATH` oraz Twoje AppImage; ↑↓, Tab, Enter), Nirvana Shell `Ctrl+T`, Otwórz dziennik, Resetuj Nirvanę |
 
 **Otwórz dziennik** pokazuje pierwszy dziennik, który da się przeczytać: `journalctl`,
 `/var/log/syslog` albo `/var/log/messages` (czytelne dla grupy `adm`), `dmesg`; gdy żaden nie jest

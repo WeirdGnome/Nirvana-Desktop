@@ -41,7 +41,7 @@ What changed in each version: [CHANGELOG.md](CHANGELOG.md).
 
 Unpack the sources and run the installer:
 
-    tar xzf nirvana-desktop-0.0.44.tar.gz && cd nirvana-desktop
+    tar xzf nirvana-desktop-0.0.45.tar.gz && cd nirvana-desktop
     sudo ./install.sh                 # or: sudo ./install.sh --login-screen
 
 The installer:
@@ -367,7 +367,7 @@ text gets shorter.
 
 | Menu | Items |
 |------|---------|
-| **Nirvana** (logo and name) | About This Computer, Preferences (window with panels), Execute Command `Ctrl+E`, Nirvana Shell `Ctrl+T`, Open System Log, Reset Nirvana |
+| **Nirvana** (logo and name) | About This Computer, Preferences (window with panels), Execute Command `Ctrl+E` (remembers the history and suggests programs from `$PATH` and your AppImages; ↑↓, Tab, Enter), Nirvana Shell `Ctrl+T`, Open System Log, Reset Nirvana |
 
 **Open System Log** shows the first log it can read: `journalctl`, `/var/log/syslog` or
 `/var/log/messages` (readable for the `adm` group), `dmesg`; when none is readable it asks for

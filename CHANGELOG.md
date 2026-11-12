@@ -1,6 +1,10 @@
 # Changelog
 All notable changes to Nirvana Desktop, newest first. Polish: [CHANGELOG.pl.md](CHANGELOG.pl.md).
 
+## 0.0.45 – 2026-11-12
+
+- **Execute Command** remembers its history (`~/.config/nirvana/run-history`, the last 50) and suggests while typing: matching history, programs from `$PATH` (e.g. /usr/bin) and the user's AppImages (with their versions). ↑↓ choose, Tab completes, Enter or a double click runs.
+
 ## 0.0.44 – 2026-11-12
 
 - **Retro 16 schemes:** *1.3*, *2.1*, *3.1*, *3.9* and *4.1* – the colors of the 16-bit home computer desktops of five eras, with the classic 16-bit window gadgets.

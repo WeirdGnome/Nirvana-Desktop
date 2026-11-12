@@ -21,6 +21,7 @@
 #include <FL/Fl_Button.H>
 #include <FL/Fl_Check_Button.H>
 #include <FL/Fl_Choice.H>
+#include <FL/Fl_Hold_Browser.H>
 #include <FL/Fl_Input.H>
 #include <FL/fl_draw.H>
 #include <FL/platform.H>
@@ -37,6 +38,7 @@
 #include <algorithm>
 #include <filesystem>
 #include <fstream>
+#include <functional>
 #include <grp.h>
 #include <pwd.h>
 #include <sys/stat.h>
@@ -488,27 +490,256 @@ void Desktop::force_quit_pick() {
            }}});
 }
 
+// ---------------------------------------------------------------------------
+// Nirvana > Execute Command: history and suggestions
+// ---------------------------------------------------------------------------
+// The history (~/.config/nirvana/run-history, the last 50 commands, newest first) and, while
+// the first word is typed, the programs from $PATH and the user's AppImages
+// (~/.nirvana-apps). Up/Down choose in the list, Tab or a click puts the suggestion into the
+// field, a double click or Enter runs it.
+namespace {
+
+struct Suggestion {
+  std::string text;      // what goes into the field
+  std::string kind;      // "history", "program", "AppImage"
+  std::string shown;     // the list row
+};
+
+std::string run_history_file() {
+  const char *x = getenv("XDG_CONFIG_HOME");
+  const char *h = getenv("HOME");
+  return (x && *x ? std::string(x) : std::string(h ? h : "/") + "/.config") + "/nirvana/run-history";
+}
+
+std::vector<std::string> load_run_history() {
+  std::vector<std::string> v;
+  std::ifstream in(run_history_file());
+  std::string l;
+  while (std::getline(in, l) && v.size() < 50)
+    if (!l.empty()) v.push_back(l);
+  return v;
+}
+
+void save_run_history(const std::string &cmd) {
+  std::vector<std::string> v = load_run_history();
+  v.erase(std::remove(v.begin(), v.end(), cmd), v.end());
+  v.insert(v.begin(), cmd);
+  if (v.size() > 50) v.resize(50);
+  std::string f = run_history_file();
+  std::error_code ec;
+  fs::create_directories(fs::path(f).parent_path(), ec);
+  std::ofstream out(f);
+  for (auto &c : v) out << c << "\n";
+}
+
+// executable files in the $PATH folders (names only, sorted, without duplicates)
+std::vector<std::string> path_programs() {
+  std::vector<std::string> v;
+  const char *p = getenv("PATH");
+  std::string path = p && *p ? p : "/usr/local/bin:/usr/bin:/bin";
+  size_t a = 0;
+  while (a <= path.size()) {
+    size_t b = path.find(':', a);
+    if (b == std::string::npos) b = path.size();
+    std::string dir = path.substr(a, b - a);
+    a = b + 1;
+    if (dir.empty()) continue;
+    std::error_code ec;
+    for (auto it = fs::directory_iterator(dir, ec); !ec && it != fs::directory_iterator(); it.increment(ec)) {
+      std::string n = it->path().filename().string();
+      if (n.empty() || n[0] == '.') continue;
+      if (access(it->path().c_str(), X_OK) != 0 || fs::is_directory(it->path(), ec)) continue;
+      v.push_back(n);
+    }
+  }
+  std::sort(v.begin(), v.end());
+  v.erase(std::unique(v.begin(), v.end()), v.end());
+  return v;
+}
+
+std::string lower(std::string s) {
+  for (auto &c : s) c = (char)tolower((unsigned char)c);
+  return s;
+}
+
+std::string shell_quote(const std::string &s) {
+  std::string o = "'";
+  for (char c : s) o += c == '\'' ? std::string("'\\''") : std::string(1, c);
+  return o + "'";
+}
+
+// the user's AppImages: (name without version and extension, full path)
+std::vector<std::pair<std::string, std::string>> user_appimages(const std::string &dir) {
+  std::vector<std::pair<std::string, std::string>> v;
+  std::error_code ec;
+  for (auto it = fs::recursive_directory_iterator(dir, fs::directory_options::skip_permission_denied, ec);
+       !ec && it != fs::recursive_directory_iterator(); it.increment(ec)) {
+    if (it.depth() > 2) { it.disable_recursion_pending(); continue; }
+    std::string n = it->path().filename().string();
+    std::string ln = lower(n);
+    if (ln.size() < 9 || ln.compare(ln.size() - 9, 9, ".appimage") != 0) continue;
+    std::string name = n.substr(0, n.size() - 9);
+    // "Kalkulator-1.0-x86_64" -> "Kalkulator"
+    size_t cut = name.find_first_of("-_ ");
+    auto ver_at = [&](size_t i) {   // "1.0" or "v1.0"
+      if (i >= name.size()) return false;
+      if (isdigit((unsigned char)name[i])) return true;
+      return (name[i] == 'v' || name[i] == 'V') && i + 1 < name.size() && isdigit((unsigned char)name[i + 1]);
+    };
+    while (cut != std::string::npos && !ver_at(cut + 1)) cut = name.find_first_of("-_ ", cut + 1);
+    std::string version;
+    if (cut != std::string::npos && cut > 0) { version = name.substr(cut + 1); name = name.substr(0, cut); }
+    for (const char *arch : {"-x86_64", "_x86_64", "-amd64", "-i686", "-aarch64", "-arm64"})   // no architecture
+      if (size_t p = version.find(arch); p != std::string::npos) version.erase(p);
+    if (!version.empty() && (version[0] == 'v' || version[0] == 'V')) version.erase(0, 1);
+    v.push_back({version.empty() ? name : name + " " + version, it->path().string()});
+  }
+  std::sort(v.begin(), v.end());
+  return v;
+}
+
+class RunInput;
+struct RunState {
+  std::vector<std::string> history, programs;
+  std::vector<std::pair<std::string, std::string>> apps;
+  std::vector<Suggestion> shown;
+  Fl_Hold_Browser *list = nullptr;
+  RunInput *in = nullptr;
+  bool quiet = false;   // while we fill the field ourselves
+};
+RunState *g_run;
+
+void refill();
+
+class RunInput : public Fl_Input {
+public:
+  std::function<void()> run;
+  RunInput(int X, int Y, int W, int H) : Fl_Input(X, Y, W, H) { when(FL_WHEN_CHANGED); }
+  void take(int row) {   // the suggestion into the field
+    if (!g_run || row < 1 || row > (int)g_run->shown.size()) return;
+    g_run->quiet = true;
+    value(g_run->shown[row - 1].text.c_str());
+    insert_position(size());
+    g_run->quiet = false;
+    refill();
+  }
+  int handle(int e) override {
+    if (e == FL_KEYBOARD && g_run && g_run->list) {
+      int k = Fl::event_key(), n = g_run->list->size(), v = g_run->list->value();
+      if ((k == FL_Down || k == FL_Up) && n > 0) {
+        v = k == FL_Down ? std::min(n, v + 1) : std::max(1, v - 1);
+        g_run->list->value(v);
+        g_run->list->middleline(v);
+        return 1;
+      }
+      if (k == FL_Tab && n > 0 && !Fl::event_shift()) { take(v > 0 ? v : 1); return 1; }
+      if ((k == FL_Enter || k == FL_KP_Enter) && v > 0) {   // a chosen suggestion: run it
+        take(v);
+        if (run) run();
+        return 1;
+      }
+      if (k == FL_Escape && v > 0) { g_run->list->value(0); return 1; }
+    }
+    return Fl_Input::handle(e);
+  }
+};
+
+void refill() {
+  if (!g_run || !g_run->list) return;
+  std::string t = g_run->in->value();
+  std::string lt = lower(t);
+  bool first_word = t.find(' ') == std::string::npos;
+  auto &v = g_run->shown;
+  v.clear();
+  // history: starting with the text first, then containing it
+  for (int pass = 0; pass < 2; pass++)
+    for (auto &h : g_run->history) {
+      std::string lh = lower(h);
+      bool starts = lh.rfind(lt, 0) == 0;
+      if (pass == 0 ? !starts : (starts || lh.find(lt) == std::string::npos)) continue;
+      if (h == t) continue;
+      v.push_back({h, "history", h});
+    }
+  if (first_word && !t.empty()) {
+    for (auto &[name, path] : g_run->apps) {   // a word of the name starts with the text
+      std::string ln = lower(name);
+      bool hit = false;
+      for (size_t i = 0; i < ln.size() && !hit; i++)
+        if ((i == 0 || ln[i - 1] == ' ') && ln.compare(i, lt.size(), lt) == 0) hit = true;
+      if (hit) v.push_back({shell_quote(path), "AppImage", name});
+    }
+    int n = 0;
+    for (auto &p : g_run->programs) {
+      if (p.rfind(t, 0) != 0 || p == t) continue;
+      bool dup = false;
+      for (auto &s : v) if (s.text == p) dup = true;
+      if (dup) continue;
+      v.push_back({p, "program", p});
+      if (++n >= 200) break;
+    }
+  }
+  auto *l = g_run->list;
+  l->clear();
+  for (auto &s : v) {
+    std::string kind = s.kind == "history" ? _("history") : s.kind == "AppImage" ? std::string("AppImage") : _("program");
+    std::string row;
+    for (char c : s.shown) row += c == '\t' ? ' ' : c;
+    if (!row.empty() && row[0] == '@') row = "@." + row;   // a literal '@' at the start
+    l->add((row + "\t@i" + kind).c_str());
+  }
+}
+
+}  // namespace
+
 void Desktop::execute_command() {
-  static std::string last;
   NWin *a = active_folder();
   std::string dir = a ? a->path : home_;
-  int W = 440, H = 160, ox, oy;
+  int W = 500, H = 330, ox, oy;
   NWin *win = begin_form(_("Execute Command"), W, H, nullptr,
                          plat::fmt(_("Command to execute (in folder “%1”):"), title_for(dir)), ox, oy);
-  auto *in = new Fl_Input(ox + 64, oy + 50, W - 80, 24);
+  static RunState st;
+  g_run = &st;
+  st.history = load_run_history();
+  st.programs = path_programs();
+  st.apps = user_appimages(apps_dir());
+  auto *in = new RunInput(ox + 64, oy + 50, W - 80, 24);
+  st.in = in;
   in->box(WELL_BOX);
   in->textfont(FL_COURIER);
   in->textsize(SIZE_SYSTEM);
-  in->value(last.c_str());
-  in->insert_position(0, in->size());
-  auto *show = new Fl_Check_Button(ox + 60, oy + 80, W - 80, 20, _("Show output in Nirvana Shell"));
+  if (!st.history.empty()) {
+    in->value(st.history.front().c_str());
+    in->insert_position(0, in->size());
+  }
+  auto *list = new Fl_Hold_Browser(ox + 64, oy + 80, W - 80, 160);
+  st.list = list;
+  list->box(WELL_BOX);
+  list->textfont(FL_COURIER);
+  list->textsize(SIZE_SMALL + 1);
+  static int cols[] = {W - 80 - 110, 0};
+  list->column_widths(cols);
+  list->column_char('\t');
+  list->callback([](Fl_Widget *w, void *) {
+    auto *l = (Fl_Hold_Browser *)w;
+    if (!g_run || !l->value()) return;
+    g_run->in->take(l->value());
+    g_run->in->take_focus();
+    if (Fl::event_clicks() && g_run->in->run) { Fl::event_clicks(0); g_run->in->run(); }
+  });
+  auto *hint = new Fl_Box(ox + 64, oy + 242, W - 80, 18,
+                          _("↑↓ choose · Tab completes · Enter runs"));
+  hint->labelsize(SIZE_SMALL);
+  hint->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE | FL_ALIGN_CLIP);
+  in->callback([](Fl_Widget *, void *) { if (g_run && !g_run->quiet) refill(); });
+  refill();
+  auto *show = new Fl_Check_Button(ox + 60, oy + 264, W - 80, 20, _("Show output in Nirvana Shell"));
   show->labelsize(SIZE_SMALL + 1);
   static bool show_last = true;
   show->value(show_last);
-  end_form(win, W, H, ox, oy, {{_("Cancel"), nullptr}, {_("Execute"), [in, show, dir] {
+  auto go = [in, show, dir, this] {
     std::string cmd = in->value();
     if (cmd.empty()) return;
-    last = cmd;
+    save_run_history(cmd);
     show_last = show->value();
     // the folder and the command as shell arguments - no quote juggling
     const char *script = show_last
@@ -519,7 +750,14 @@ void Desktop::execute_command() {
                      _("[exit code %s] Press Enter to close…")});
     else
       rambler_spawn({"sh", "-c", script, "sh", dir, cmd});
-  }}});
+  };
+  end_form(win, W, H, ox, oy, {{_("Cancel"), nullptr}, {_("Execute"), go}});
+  // Enter on a chosen suggestion, or a double click: run and close the window
+  in->run = [go, win, this] {
+    go();
+    g_run->list = nullptr;
+    later([this, win] { close(win); });   // not from inside the field's own event
+  };
   in->take_focus();
 }
 

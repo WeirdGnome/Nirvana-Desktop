@@ -1,6 +1,10 @@
 # Lista zmian
 Wszystkie ważniejsze zmiany w Nirvana Desktop, od najnowszych. English: [CHANGELOG.md](CHANGELOG.md).
 
+## 0.0.45 – 2026-11-12
+
+- **Wykonaj polecenie** pamięta historię (`~/.config/nirvana/run-history`, ostatnie 50) i podpowiada podczas pisania: pasujące wpisy z historii, programy z `$PATH` (np. /usr/bin) i AppImage użytkownika (z wersjami). ↑↓ wybór, Tab uzupełnia, Enter albo dwuklik uruchamia.
+
 ## 0.0.44 – 2026-11-12
 
 - **Schematy Retro 16:** *1.3*, *2.1*, *3.1*, *3.9* i *4.1* – kolory pulpitów 16-bitowych komputerów domowych z pięciu epok, z klasycznymi gadżetami okien 16-bit.
