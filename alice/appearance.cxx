@@ -20,6 +20,10 @@
 #include "framewin.h"
 #include <FL/Fl_Hold_Browser.H>
 #include <FL/fl_draw.H>
+#include <FL/platform.H>
+#if defined(FLTK_USE_X11)
+#include <X11/Xcursor/Xcursor.h>
+#endif
 
 #include <algorithm>
 #include <cstring>
@@ -41,6 +45,47 @@ static Fl_Button *g_desk2;
 static Fl_Choice *g_icons;
 static std::vector<std::string> g_walls;   // wallpaper list items (0 = none, the last = "Other file…")
 static Fl_Check_Button *g_anim;
+static Fl_Choice *g_cursor, *g_csize;
+static std::vector<std::pair<std::string, std::string>> g_cursors;   // (theme, name); [0] = the system's
+static Fl_Widget *g_cpreview;
+
+// The pointer preview: the arrow, the hand and the busy clock of the chosen theme, on the
+// desktop color - read from the theme's own files (any Xcursor theme)
+class CursorPreview : public Fl_Widget {
+public:
+  CursorPreview(int X, int Y, int W, int H) : Fl_Widget(X, Y, W, H) {}
+  void draw() override {
+    fl_color(DESK_A);
+    fl_rectf(x(), y(), w(), h());
+    const char *theme = g_cur.cursor.empty() ? "default" : g_cur.cursor.c_str();
+    int size = g_cur.cursor_size > 0 ? g_cur.cursor_size : 24;
+#if defined(FLTK_USE_X11)
+    if (fl_x11_display() && g_cur.cursor_size <= 0) size = XcursorGetDefaultSize(fl_x11_display());
+#endif
+    size = std::min(size, h() - 8);
+    int cx = x() + 12;
+    for (const char *name : {"left_ptr", "hand2", "watch"}) {
+      XcursorImage *im = XcursorLibraryLoadImage(name, theme, size);
+      if (!im && !g_cur.cursor.empty()) im = XcursorLibraryLoadImage(name, nullptr, size);
+      if (!im) continue;
+      int iw = (int)im->width, ih = (int)im->height;
+      std::vector<uchar> rgba((size_t)iw * ih * 4);
+      for (int i = 0; i < iw * ih; i++) {   // premultiplied ARGB -> RGBA
+        XcursorPixel p = im->pixels[i];
+        unsigned a = p >> 24;
+        auto un = [a](unsigned c) { return (uchar)(a ? std::min(255u, c * 255 / a) : 0); };
+        rgba[i * 4] = un((p >> 16) & 255);
+        rgba[i * 4 + 1] = un((p >> 8) & 255);
+        rgba[i * 4 + 2] = un(p & 255);
+        rgba[i * 4 + 3] = (uchar)a;
+      }
+      Fl_RGB_Image img(rgba.data(), iw, ih, 4);
+      img.draw(cx, y() + (h() - ih) / 2);
+      cx += std::max(iw, size) + 14;
+      XcursorImageDestroy(im);
+    }
+  }
+};
 static Fl_Choice *g_scale;
 static Fl_Button *g_desk_default;
 
@@ -255,7 +300,7 @@ int panel_appearance() {
   g_saved_scheme = g_cur.scheme;
   g_schemes = list_schemes();
 
-  const int W = 600, H = 558;
+  const int W = 600, H = 618;
   g_win = new FrameWindow(W, H, _("Appearance"));
   g_win->xclass("nirvana-alice");
 
@@ -427,6 +472,46 @@ int panel_appearance() {
   g_anim->value(g_cur.animations);
   g_anim->callback([](Fl_Widget *, void *) { g_cur.animations = g_anim->value(); });
 
+  // The mouse pointer: Nirvana's red Retro 16 themes, the other installed ones, or the system's
+  auto *pt = new Fl_Box(15, 498, 220, 20, _("Mouse Pointer"));
+  pt->labelfont(FONT_SYSTEM); pt->labelsize(SIZE_SYSTEM);
+  pt->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
+  auto *cpw = new Fl_Box(15, 520, 220, 54);
+  cpw->box(WELL_BOX);
+  g_cpreview = new CursorPreview(17, 522, 216, 50);
+  g_cursor = new Fl_Choice(400, 520, 185, 22, _("Pointer:"));
+  g_cursors.clear();
+  g_cursors.push_back({"", _("System default")});
+  for (auto &c : list_cursor_themes()) g_cursors.push_back(c);
+  if (!g_cur.cursor.empty() && std::none_of(g_cursors.begin(), g_cursors.end(), [](auto &c) { return c.first == g_cur.cursor; }))
+    g_cursors.push_back({g_cur.cursor, g_cur.cursor});   // set, but not found: keep it in the list
+  for (size_t i = 0; i < g_cursors.size(); i++) {
+    int k = g_cursor->add("x");             // add() treats '/' as a submenu - the text is set separately
+    g_cursor->replace(k, g_cursors[i].second.c_str());
+    if (g_cursors[i].first == g_cur.cursor) g_cursor->value((int)i);
+  }
+  if (g_cursors.size() > 1) g_cursor->mode(0, FL_MENU_DIVIDER);
+  if (g_cursor->value() < 0) g_cursor->value(0);
+  g_cursor->callback([](Fl_Widget *, void *) {
+    int i = g_cursor->value();
+    if (i >= 0 && i < (int)g_cursors.size()) g_cur.cursor = g_cursors[i].first;
+    g_cpreview->redraw();
+  });
+  g_csize = new Fl_Choice(400, 548, 185, 22, _("Pointer size:"));
+  g_csize->add(_("Automatic"));
+  g_csize->value(0);
+  for (int i = 0; CURSOR_SIZES[i]; i++) {
+    static const char *const names[] = {N_("Small (%1 px)"), N_("Medium (%1 px)"), N_("Normal (%1 px)"), N_("Large (%1 px)"),
+                                        N_("Very large (%1 px)")};
+    g_csize->add(fmt(_(names[std::min(i, 4)]), std::to_string(CURSOR_SIZES[i])).c_str());
+    if (CURSOR_SIZES[i] == g_cur.cursor_size) g_csize->value(i + 1);
+  }
+  g_csize->callback([](Fl_Widget *, void *) {
+    int i = g_csize->value();
+    g_cur.cursor_size = i <= 0 ? 0 : CURSOR_SIZES[i - 1];
+    g_cpreview->redraw();
+  });
+
   auto button = [](int X, const char *l) {
     auto *b = new Fl_Button(X, H - 36, 86, 24, l);
     b->box(BUTTON_BOX); b->down_box(BUTTON_DOWN);
@@ -438,7 +523,7 @@ int panel_appearance() {
   ok->shortcut(FL_Enter);
   ok->callback([](Fl_Widget *, void *) { save(); g_win->hide(); });
 
-  for (Fl_Choice *c : {g_style, g_pattern, g_wall, g_wall_mode, g_bg, g_grad, g_icons, g_scale}) {
+  for (Fl_Choice *c : {g_style, g_pattern, g_wall, g_wall_mode, g_bg, g_grad, g_icons, g_scale, g_cursor, g_csize}) {
     c->labelsize(SIZE_SMALL + 1);
     c->textsize(SIZE_SMALL + 1);
   }

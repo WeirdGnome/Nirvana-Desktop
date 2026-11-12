@@ -37,6 +37,22 @@ if command -v dbus-update-activation-environment >/dev/null 2>&1; then
 fi
 [ -f "$HOME/.Xresources" ] && command -v xrdb >/dev/null 2>&1 && xrdb -merge "$HOME/.Xresources"
 
+# The mouse pointer chosen in Preferences > Appearance (cursor=, cursor_size= in appearance.conf)
+# for every program of the session; Nirvana's own pointer themes are in share/icons next to
+# the binaries (or in cursors/ of the source tree).
+APPEARANCE="${XDG_CONFIG_HOME:-$HOME/.config}/nirvana/appearance.conf"
+XCURSOR_PATH="${XDG_DATA_HOME:-$HOME/.local/share}/icons:$HOME/.icons:$BIN/../share/icons:$BIN/../cursors:/usr/local/share/icons:/usr/share/icons:/usr/share/pixmaps"
+export XCURSOR_PATH
+if [ -f "$APPEARANCE" ]; then
+  c=$(sed -n 's/^cursor=//p' "$APPEARANCE" | tail -n 1)
+  z=$(sed -n 's/^cursor_size=//p' "$APPEARANCE" | tail -n 1)
+  [ -n "$c" ] && export XCURSOR_THEME="$c"
+  [ -n "$z" ] && [ "$z" != 0 ] && export XCURSOR_SIZE="$z"
+fi
+if command -v dbus-update-activation-environment >/dev/null 2>&1; then
+  dbus-update-activation-environment XCURSOR_PATH XCURSOR_THEME XCURSOR_SIZE 2>/dev/null
+fi
+
 "$BIN/nirvana-insight" &
 INSIGHT=$!
 

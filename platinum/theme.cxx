@@ -3,6 +3,7 @@
 
 #include <FL/Fl.H>
 #include <FL/platform.H>
+#include <FL/Fl_Window.H>
 
 #include <algorithm>
 #include <cmath>
@@ -18,6 +19,7 @@
 #if defined(FLTK_USE_X11)
 #include <X11/Xatom.h>
 #include <X11/Xlib.h>
+#include <X11/Xcursor/Xcursor.h>
 #endif
 
 namespace plat {
@@ -286,6 +288,8 @@ Appearance read_appearance() {
       for (int i = 0; GRADIENTS[i]; i++) if (v == GRADIENTS[i]) a.gradient = v;
     }
     else if (k == "scale") a.scale = std::clamp(atoi(v.c_str()), 0, 400);
+    else if (k == "cursor") a.cursor = v;
+    else if (k == "cursor_size") a.cursor_size = std::clamp(atoi(v.c_str()), 0, 256);
     else if (k == "wallpaper_layout") {
       for (int i = 0; WALLPAPER_MODES[i]; i++) if (v == WALLPAPER_MODES[i]) a.wallpaper_mode = v;
     }
@@ -316,7 +320,9 @@ bool write_appearance(const Appearance &a) {
         << "icons=" << a.icons << "\n"
         << "wallpaper=" << a.wallpaper << "\n"
         << "wallpaper_layout=" << a.wallpaper_mode << "\n"
-        << "scale=" << a.scale << "\n";
+        << "scale=" << a.scale << "\n"
+        << "cursor=" << a.cursor << "\n"
+        << "cursor_size=" << a.cursor_size << "\n";
     if (!out) return false;
   }
   return rename(tmp.c_str(), f.c_str()) == 0;
@@ -325,9 +331,11 @@ bool write_appearance(const Appearance &a) {
 // ---------------------------------------------------------------------------
 // Applying a scheme
 // ---------------------------------------------------------------------------
+static void apply_cursor(const Appearance &a);
 void apply(const Scheme &s, const Appearance &a) {
   g_scheme = s;
   g_app = a;
+  apply_cursor(a);
   g_style = a.style >= 0 ? (TitleStyle)a.style : s.style;
   // A gradient chosen by hand for a scheme with a solid bar: the second color
   // is the first one lightened (as in Windows 98).
@@ -376,6 +384,122 @@ void apply(const Scheme &s, const Appearance &a) {
                 : mix(s.sel, face, 0.15);
   set(DESK_A, desk);
   set(DESK_B, lum(desk) > 0.6 ? mix(desk, 0x000000, 0.08) : mix(desk, 0xFFFFFF, 0.09));
+}
+
+// ---------------------------------------------------------------------------
+// The mouse pointer (Xcursor themes)
+// ---------------------------------------------------------------------------
+const int CURSOR_SIZES[] = {16, 24, 32, 48, 64, 0};
+// the names of Nirvana's pointer themes (index.theme) - for translation
+[[maybe_unused]] static const char *const CURSOR_NAMES[] = {N_("Retro 16 · classic"), N_("Retro 16 · outline"),
+                                                            N_("Retro 16 · glass")};
+
+// Where Xcursor looks for themes - and Nirvana's own folders (installed with a prefix, or
+// the source tree's cursors/ folder when running from build/)
+static std::vector<std::string> cursor_paths() {
+  std::vector<std::string> v;
+  const char *h = getenv("HOME");
+  std::string home = h ? h : "";
+  if (const char *x = getenv("XDG_DATA_HOME"); x && *x) v.push_back(std::string(x) + "/icons");
+  else if (!home.empty()) v.push_back(home + "/.local/share/icons");
+  if (!home.empty()) v.push_back(home + "/.icons");
+  std::string e = exe_dir();
+  if (!e.empty()) { v.push_back(e + "/../share/icons"); v.push_back(e + "/../cursors"); }
+  if (const char *d = getenv("XDG_DATA_DIRS"); d && *d) {
+    std::string s = d;
+    size_t a = 0;
+    while (a <= s.size()) {
+      size_t b = s.find(':', a);
+      if (b == std::string::npos) b = s.size();
+      if (b > a) v.push_back(s.substr(a, b - a) + "/icons");
+      a = b + 1;
+    }
+  }
+  for (const char *p : {"/usr/local/share/icons", "/usr/share/icons", "/usr/share/pixmaps"}) v.push_back(p);
+  std::vector<std::string> out;   // without duplicates, only folders that exist
+  for (auto &p : v) {
+    struct stat st;
+    if (stat(p.c_str(), &st) == 0 && S_ISDIR(st.st_mode) && std::find(out.begin(), out.end(), p) == out.end()) out.push_back(p);
+  }
+  return out;
+}
+
+std::string cursor_theme_dir(const std::string &theme) {
+  if (theme.empty() || theme.find('/') != std::string::npos) return "";
+  for (auto &p : cursor_paths()) {
+    std::string d = p + "/" + theme;
+    struct stat st;
+    if (stat((d + "/cursors").c_str(), &st) == 0 && S_ISDIR(st.st_mode)) return d;
+  }
+  return "";
+}
+
+std::vector<std::pair<std::string, std::string>> list_cursor_themes() {
+  std::vector<std::pair<std::string, std::string>> mine, others;
+  std::set<std::string> seen;
+  for (auto &p : cursor_paths()) {
+    DIR *dd = opendir(p.c_str());
+    if (!dd) continue;
+    while (dirent *e = readdir(dd)) {
+      std::string n = e->d_name;
+      if (n[0] == '.' || n == "default" || seen.count(n)) continue;
+      struct stat st;
+      if (stat((p + "/" + n + "/cursors").c_str(), &st) != 0 || !S_ISDIR(st.st_mode)) continue;
+      seen.insert(n);
+      std::string label = n;
+      std::ifstream in(p + "/" + n + "/index.theme");
+      std::string l;
+      while (std::getline(in, l))
+        if (l.rfind("Name=", 0) == 0) { label = l.substr(5); break; }
+      if (n.rfind("Nirvana-", 0) == 0) mine.push_back({n, _(label.c_str())});
+      else others.push_back({n, label});
+    }
+    closedir(dd);
+  }
+  std::sort(mine.begin(), mine.end());
+  std::sort(others.begin(), others.end(), [](auto &a, auto &b) { return a.second < b.second; });
+  mine.insert(mine.end(), others.begin(), others.end());
+  return mine;
+}
+
+// The pointer for this program and the programs it starts: the environment (Xcursor reads
+// XCURSOR_THEME/XCURSOR_SIZE/XCURSOR_PATH) and, with the display open, the display's theme.
+// The empty theme gives back the one the session started with.
+static void apply_cursor(const Appearance &a) {
+  static bool saved = false;
+  static std::string env_theme, env_size;
+  static bool had_theme = false, had_size = false;
+  if (!saved) {
+    saved = true;
+    if (const char *t = getenv("XCURSOR_THEME")) { had_theme = true; env_theme = t; }
+    if (const char *z = getenv("XCURSOR_SIZE")) { had_size = true; env_size = z; }
+    // Nirvana's own themes, wherever they are installed
+    std::string path;
+    for (auto &p : cursor_paths()) path += (path.empty() ? "" : ":") + p;
+    setenv("XCURSOR_PATH", path.c_str(), 1);
+  }
+  std::string theme = !a.cursor.empty() && !cursor_theme_dir(a.cursor).empty() ? a.cursor : "";
+  if (!theme.empty()) setenv("XCURSOR_THEME", theme.c_str(), 1);
+  else if (had_theme) setenv("XCURSOR_THEME", env_theme.c_str(), 1);
+  else unsetenv("XCURSOR_THEME");
+  if (a.cursor_size > 0) setenv("XCURSOR_SIZE", std::to_string(a.cursor_size).c_str(), 1);
+  else if (had_size) setenv("XCURSOR_SIZE", env_size.c_str(), 1);
+  else unsetenv("XCURSOR_SIZE");
+#if defined(FLTK_USE_X11)
+  if (fl_x11_display()) {
+    const char *t = getenv("XCURSOR_THEME");
+    const char *z = getenv("XCURSOR_SIZE");
+    XcursorSetTheme(fl_x11_display(), t && *t ? t : nullptr);
+    if (z && atoi(z) > 0) XcursorSetDefaultSize(fl_x11_display(), atoi(z));
+    // changed while the program runs: its windows take the new pointer (FLTK gave each
+    // window its own copy of the arrow, made from the old theme)
+    static std::string last;
+    std::string now = std::string(t ? t : "") + "/" + (z ? z : "");
+    if (!last.empty() && now != last)
+      for (Fl_Window *w = Fl::first_window(); w; w = Fl::next_window(w)) w->cursor(FL_CURSOR_DEFAULT);
+    last = now;
+  }
+#endif
 }
 
 void reload_appearance() {

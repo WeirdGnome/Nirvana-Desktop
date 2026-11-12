@@ -1,6 +1,12 @@
 # Changelog
 All notable changes to Nirvana Desktop, newest first. Polish: [CHANGELOG.pl.md](CHANGELOG.pl.md).
 
+## 0.0.51 – 2026-11-12
+
+- **Red Retro 16 mouse pointers**, Nirvana's own (`tools/cursors/make_cursors.py` draws every shape): *classic* (the pixels of the 16-bit era – a slanted red arrow with a black edge and a light shine, enlarged by whole pixels), *outline* (red with a white outline and a shadow) and *glass* (a glassy red). Every pointer a desktop needs – arrow, busy clock (animated), arrow with a clock, text, hand, crosshair, move, the four resize arrows, forbidden, help, copy, link – with the names X11, GTK and Qt ask for. Installed into `share/icons`.
+- **Preferences > Appearance > Mouse Pointer:** the system's pointer, the Retro 16 ones or any installed Xcursor theme, size Automatic or 16–64 px, with a preview of the arrow, the hand and the clock. It changes at once over the desktop and Nirvana's windows; the session passes it to the other programs (`XCURSOR_THEME`, `XCURSOR_SIZE`, `XCURSOR_PATH`). About This Computer shows its name.
+- **The new logo:** an enso – one red brush stroke in a circle, checkered red and white, on night blue – in the menu bar, About, the login and lock screens and the screen savers (built in as PNG files of several sizes; `tools/logo/make_logo.py`). The screen saver with flying logos is now *Flying Enso*.
+
 ## 0.0.50 – 2026-11-12
 
 - **Fixed: closing a folder window reset the desktop.** The explorer window's status timer kept running after the window was freed and crashed Rambler, and the session started it again. The timers now stop with the window.

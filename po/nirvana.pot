@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Nirvana Desktop 0.1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-12 17:31+0000\n"
+"POT-Creation-Date: 2026-11-12 17:45+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -18,169 +18,209 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=INTEGER; plural=EXPRESSION;\n"
 
-#: alice/appearance.cxx:93
+#: alice/appearance.cxx:138
 msgid "Window"
 msgstr ""
 
-#: alice/appearance.cxx:93 denise/about.cxx:437
+#: alice/appearance.cxx:138 denise/about.cxx:441
 msgid "Icons"
 msgstr ""
 
-#: alice/appearance.cxx:93 dm/nirvana-dm-greeter.cxx:434
+#: alice/appearance.cxx:138 dm/nirvana-dm-greeter.cxx:434
 #: dm/nirvana-dm-greeter.cxx:435 dm/nirvana-dm-greeter.cxx:436
 msgid "Special"
 msgstr ""
 
-#: alice/appearance.cxx:104 alice/desktop.cxx:49 denise/sniff.cxx:244
+#: alice/appearance.cxx:149 alice/desktop.cxx:49 denise/sniff.cxx:244
 #: platinum/filedialog.cxx:409
 msgid "Documents"
 msgstr ""
 
-#: alice/appearance.cxx:149
+#: alice/appearance.cxx:194
 msgid "3 items, 12.4 GB free"
 msgstr ""
 
-#: alice/appearance.cxx:149
+#: alice/appearance.cxx:194
 msgid "2 items"
 msgstr ""
 
-#: alice/appearance.cxx:158 platinum/filedialog.cxx:412
+#: alice/appearance.cxx:203 platinum/filedialog.cxx:412
 msgid "Music"
 msgstr ""
 
-#: alice/appearance.cxx:159
+#: alice/appearance.cxx:204
 msgid "Letter.txt"
 msgstr ""
 
-#: alice/appearance.cxx:160
+#: alice/appearance.cxx:205
 msgid "Game"
 msgstr ""
 
-#: alice/appearance.cxx:165
+#: alice/appearance.cxx:210
 msgid "Photos"
 msgstr ""
 
-#: alice/appearance.cxx:192
+#: alice/appearance.cxx:237
 msgid "Source: %1"
 msgstr ""
 
-#: alice/appearance.cxx:192
+#: alice/appearance.cxx:237
 msgid "custom"
 msgstr ""
 
-#: alice/appearance.cxx:259 alice/preferences.cxx:174 denise/gary.cxx:117
+#: alice/appearance.cxx:304 alice/preferences.cxx:174 denise/gary.cxx:117
 msgid "Appearance"
 msgstr ""
 
-#: alice/appearance.cxx:262
+#: alice/appearance.cxx:307
 msgid "Color Scheme"
 msgstr ""
 
-#: alice/appearance.cxx:275 platinum/platinum.cxx:1405
+#: alice/appearance.cxx:320 platinum/platinum.cxx:1328
 msgid "Preview"
 msgstr ""
 
-#: alice/appearance.cxx:282
+#: alice/appearance.cxx:327
 msgid "Title bar:"
 msgstr ""
 
-#: alice/appearance.cxx:283
+#: alice/appearance.cxx:328
 msgid "As in scheme|Stripes (Platinum)|Solid color|Gradient|Glass"
 msgstr ""
 
-#: alice/appearance.cxx:287
+#: alice/appearance.cxx:332
 msgid "Desktop background:"
 msgstr ""
 
-#: alice/appearance.cxx:295
+#: alice/appearance.cxx:340
 msgid "Colors:"
 msgstr ""
 
-#: alice/appearance.cxx:297
+#: alice/appearance.cxx:342
 msgid "Desktop color (gradient start)"
 msgstr ""
 
-#: alice/appearance.cxx:301
+#: alice/appearance.cxx:346
 msgid "Desktop color"
 msgstr ""
 
-#: alice/appearance.cxx:308 alice/appearance.cxx:313
+#: alice/appearance.cxx:353 alice/appearance.cxx:358
 msgid "Second gradient color"
 msgstr ""
 
-#: alice/appearance.cxx:318
+#: alice/appearance.cxx:363
 msgid "From scheme"
 msgstr ""
 
-#: alice/appearance.cxx:323
+#: alice/appearance.cxx:368
 msgid "Desktop pattern:"
 msgstr ""
 
-#: alice/appearance.cxx:329
+#: alice/appearance.cxx:374
 msgid "Direction:"
 msgstr ""
 
-#: alice/appearance.cxx:337
+#: alice/appearance.cxx:382
 msgid "Wallpaper:"
 msgstr ""
 
-#: alice/appearance.cxx:350
+#: alice/appearance.cxx:395
 msgid "None (pattern only)"
 msgstr ""
 
-#: alice/appearance.cxx:351
+#: alice/appearance.cxx:396
 msgid "Other File…"
 msgstr ""
 
-#: alice/appearance.cxx:362
+#: alice/appearance.cxx:407
 msgid "Choose Wallpaper"
 msgstr ""
 
-#: alice/appearance.cxx:362 alice/user.cxx:333
+#: alice/appearance.cxx:407 alice/user.cxx:333
 msgid "Images"
 msgstr ""
 
-#: alice/appearance.cxx:370
+#: alice/appearance.cxx:415
 msgid "Wallpaper"
 msgstr ""
 
-#: alice/appearance.cxx:371
+#: alice/appearance.cxx:416
 msgid ""
 "Could not open this image.\n"
 "The file may be damaged or in an unsupported format."
 msgstr ""
 
-#: alice/appearance.cxx:391
+#: alice/appearance.cxx:436
 msgid "Wallpaper layout:"
 msgstr ""
 
-#: alice/appearance.cxx:401
+#: alice/appearance.cxx:446
 msgid "Icon style:"
 msgstr ""
 
-#: alice/appearance.cxx:402
+#: alice/appearance.cxx:447
 msgid "Retro|Platinum"
 msgstr ""
 
-#: alice/appearance.cxx:411
+#: alice/appearance.cxx:456
 msgid "Interface scale:"
 msgstr ""
 
-#: alice/appearance.cxx:415
+#: alice/appearance.cxx:460
 msgid "Automatic (%1%)"
 msgstr ""
 
-#: alice/appearance.cxx:422
+#: alice/appearance.cxx:467
 msgid ""
 "Larger text, icons and windows on high-resolution screens.\n"
 "After applying, the desktop restarts (application windows stay open)."
 msgstr ""
 
-#: alice/appearance.cxx:426
+#: alice/appearance.cxx:471
 msgid "Window animations"
 msgstr ""
 
-#: alice/appearance.cxx:435 alice/bluetooth.cxx:244 alice/datetime.cxx:386
+#: alice/appearance.cxx:476
+msgid "Mouse Pointer"
+msgstr ""
+
+#: alice/appearance.cxx:482
+msgid "Pointer:"
+msgstr ""
+
+#: alice/appearance.cxx:484
+msgid "System default"
+msgstr ""
+
+#: alice/appearance.cxx:500
+msgid "Pointer size:"
+msgstr ""
+
+#: alice/appearance.cxx:501
+msgid "Automatic"
+msgstr ""
+
+#: alice/appearance.cxx:504
+msgid "Small (%1 px)"
+msgstr ""
+
+#: alice/appearance.cxx:504
+msgid "Medium (%1 px)"
+msgstr ""
+
+#: alice/appearance.cxx:504
+msgid "Normal (%1 px)"
+msgstr ""
+
+#: alice/appearance.cxx:504
+msgid "Large (%1 px)"
+msgstr ""
+
+#: alice/appearance.cxx:505
+msgid "Very large (%1 px)"
+msgstr ""
+
+#: alice/appearance.cxx:520 alice/bluetooth.cxx:244 alice/datetime.cxx:386
 #: alice/network.cxx:245 alice/network.cxx:342 alice/network.cxx:390
 #: alice/network.cxx:492 alice/network.cxx:743 alice/power.cxx:143
 #: alice/printers.cxx:164 alice/printers.cxx:320 alice/saver.cxx:186
@@ -191,22 +231,22 @@ msgstr ""
 #: denise/filetypes.cxx:389 denise/jobs.cxx:163 denise/menus.cxx:500
 #: denise/menus.cxx:768 denise/menus.cxx:1079 denise/menus.cxx:1188
 #: denise/menus.cxx:1193 denise/updates.cxx:272 platinum/filedialog.cxx:341
-#: platinum/filedialog.cxx:575 platinum/platinum.cxx:229
-#: platinum/platinum.cxx:1392 polkit/nirvana-polkit-agent.cxx:161
+#: platinum/filedialog.cxx:575 platinum/platinum.cxx:233
+#: platinum/platinum.cxx:1315 polkit/nirvana-polkit-agent.cxx:161
 #: shell/main.cxx:615
 msgid "Cancel"
 msgstr ""
 
-#: alice/appearance.cxx:436 alice/datetime.cxx:387 alice/power.cxx:144
+#: alice/appearance.cxx:521 alice/datetime.cxx:387 alice/power.cxx:144
 #: alice/saver.cxx:187 alice/user.cxx:708
 msgid "Apply"
 msgstr ""
 
-#: alice/appearance.cxx:437 alice/bluetooth.cxx:255 alice/datetime.cxx:388
+#: alice/appearance.cxx:522 alice/bluetooth.cxx:255 alice/datetime.cxx:388
 #: alice/desktop.cxx:173 alice/power.cxx:145 alice/printers.cxx:443
 #: alice/saver.cxx:188 alice/shader.cxx:262 alice/shield.cxx:408
-#: alice/user.cxx:709 denise/about.cxx:613 denise/bluetooth.cxx:42
-#: denise/clock.cxx:174 denise/desktop.cxx:1767 platinum/platinum.cxx:228
+#: alice/user.cxx:709 denise/about.cxx:617 denise/bluetooth.cxx:42
+#: denise/clock.cxx:174 denise/desktop.cxx:1767 platinum/platinum.cxx:232
 msgid "OK"
 msgstr ""
 
@@ -290,7 +330,7 @@ msgid ""
 msgstr ""
 
 #: alice/bluetooth.cxx:141 denise/shield_applet.cxx:196
-#: platinum/platinum.cxx:231
+#: platinum/platinum.cxx:235
 msgid "No"
 msgstr ""
 
@@ -710,7 +750,7 @@ msgid "DNS servers:"
 msgstr ""
 
 #: alice/network.cxx:343 denise/filetypes.cxx:392 platinum/filedialog.cxx:246
-#: platinum/filedialog.cxx:248 platinum/platinum.cxx:1406
+#: platinum/filedialog.cxx:248 platinum/platinum.cxx:1329
 msgid "Save"
 msgstr ""
 
@@ -999,7 +1039,7 @@ msgstr ""
 msgid "Airplane mode is off."
 msgstr ""
 
-#: alice/network.cxx:762 platinum/platinum.cxx:232 shell/main.cxx:616
+#: alice/network.cxx:762 platinum/platinum.cxx:236 shell/main.cxx:616
 msgid "Close"
 msgstr ""
 
@@ -1055,7 +1095,7 @@ msgstr ""
 msgid "On power adapter, when idle for:"
 msgstr ""
 
-#: alice/power.cxx:119 denise/about.cxx:448 denise/applets.cxx:597
+#: alice/power.cxx:119 denise/about.cxx:452 denise/applets.cxx:597
 msgid "Battery"
 msgstr ""
 
@@ -2056,131 +2096,131 @@ msgstr ""
 msgid "offline"
 msgstr ""
 
-#: denise/about.cxx:316
+#: denise/about.cxx:320
 msgid "X11 default"
 msgstr ""
 
-#: denise/about.cxx:372
+#: denise/about.cxx:376
 msgid "version %1"
 msgstr ""
 
-#: denise/about.cxx:421
+#: denise/about.cxx:425
 msgid "stripes"
 msgstr ""
 
-#: denise/about.cxx:421
+#: denise/about.cxx:425
 msgid "solid"
 msgstr ""
 
-#: denise/about.cxx:422
+#: denise/about.cxx:426
 msgid "glass"
 msgstr ""
 
-#: denise/about.cxx:422
+#: denise/about.cxx:426
 msgid "gradient"
 msgstr ""
 
-#: denise/about.cxx:426
+#: denise/about.cxx:430
 msgid "OS"
 msgstr ""
 
-#: denise/about.cxx:427
+#: denise/about.cxx:431
 msgid "Host"
 msgstr ""
 
-#: denise/about.cxx:428
+#: denise/about.cxx:432
 msgid "Kernel"
 msgstr ""
 
-#: denise/about.cxx:429
+#: denise/about.cxx:433
 msgid "Uptime"
 msgstr ""
 
-#: denise/about.cxx:430
+#: denise/about.cxx:434
 msgid "Packages"
 msgstr ""
 
-#: denise/about.cxx:431
+#: denise/about.cxx:435
 msgid "Shell"
 msgstr ""
 
-#: denise/about.cxx:432
+#: denise/about.cxx:436
 msgid "Resolution"
 msgstr ""
 
-#: denise/about.cxx:433
+#: denise/about.cxx:437
 msgid "DE"
 msgstr ""
 
-#: denise/about.cxx:434
+#: denise/about.cxx:438
 msgid "WM"
 msgstr ""
 
-#: denise/about.cxx:435
+#: denise/about.cxx:439
 msgid "WM Theme"
 msgstr ""
 
-#: denise/about.cxx:435
+#: denise/about.cxx:439
 msgid "%1 (title bar: %2)"
 msgstr ""
 
-#: denise/about.cxx:436 dm/nirvana-dm-greeter.cxx:402
+#: denise/about.cxx:440 dm/nirvana-dm-greeter.cxx:402
 msgid "Theme"
 msgstr ""
 
-#: denise/about.cxx:437
+#: denise/about.cxx:441
 msgid "Retro"
 msgstr ""
 
-#: denise/about.cxx:437
+#: denise/about.cxx:441
 msgid "Platinum"
 msgstr ""
 
-#: denise/about.cxx:438
+#: denise/about.cxx:442
 msgid "Font"
 msgstr ""
 
-#: denise/about.cxx:439
+#: denise/about.cxx:443
 msgid "Cursor"
 msgstr ""
 
-#: denise/about.cxx:440
+#: denise/about.cxx:444
 msgid "Terminal"
 msgstr ""
 
-#: denise/about.cxx:441
+#: denise/about.cxx:445
 msgid "Terminal Font"
 msgstr ""
 
-#: denise/about.cxx:442
+#: denise/about.cxx:446
 msgid "CPU"
 msgstr ""
 
-#: denise/about.cxx:443
+#: denise/about.cxx:447
 msgid "GPU"
 msgstr ""
 
-#: denise/about.cxx:444
+#: denise/about.cxx:448
 msgid "Memory"
 msgstr ""
 
-#: denise/about.cxx:445
+#: denise/about.cxx:449
 msgid "Disk (/)"
 msgstr ""
 
-#: denise/about.cxx:449
+#: denise/about.cxx:453
 msgid "Local IP"
 msgstr ""
 
-#: denise/about.cxx:450
+#: denise/about.cxx:454
 msgid "Locale"
 msgstr ""
 
-#: denise/about.cxx:459
+#: denise/about.cxx:463
 msgid "Copyright © 2026 the Nirvana Desktop authors"
 msgstr ""
 
-#: denise/about.cxx:460
+#: denise/about.cxx:464
 msgid ""
 "This program is free software: you can redistribute it and/or modify it "
 "under the terms of the GNU General Public License as published by the Free "
@@ -2188,7 +2228,7 @@ msgid ""
 "any later version."
 msgstr ""
 
-#: denise/about.cxx:463
+#: denise/about.cxx:467
 msgid ""
 "This program is distributed in the hope that it will be useful, but WITHOUT "
 "ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or "
@@ -2196,107 +2236,107 @@ msgid ""
 "more details."
 msgstr ""
 
-#: denise/about.cxx:466
+#: denise/about.cxx:470
 msgid ""
 "The full text of the licence follows (only the English original is legally "
 "binding)."
 msgstr ""
 
-#: denise/about.cxx:476
+#: denise/about.cxx:480
 msgid ""
 "The licence file was not found. See https://www.gnu.org/licenses/gpl-3.0.html"
 msgstr ""
 
-#: denise/about.cxx:485
+#: denise/about.cxx:489
 msgid ""
 "Nirvana Desktop stands on the work of these people and projects. Thank you!"
 msgstr ""
 
-#: denise/about.cxx:486
+#: denise/about.cxx:490
 msgid "Libraries in the code"
 msgstr ""
 
-#: denise/about.cxx:488
+#: denise/about.cxx:492
 msgid "and the whole FLTK team"
 msgstr ""
 
-#: denise/about.cxx:488
+#: denise/about.cxx:492
 msgid "with the FLTK exceptions"
 msgstr ""
 
-#: denise/about.cxx:489
+#: denise/about.cxx:493
 msgid "the terminal emulation in Nirvana Shell"
 msgstr ""
 
-#: denise/about.cxx:490
+#: denise/about.cxx:494
 msgid "the X.Org Foundation and the X Window System authors"
 msgstr ""
 
-#: denise/about.cxx:497
+#: denise/about.cxx:501
 msgid "Color schemes"
 msgstr ""
 
-#: denise/about.cxx:500
+#: denise/about.cxx:504
 msgid "Programs Nirvana Desktop works with"
 msgstr ""
 
-#: denise/about.cxx:504
+#: denise/about.cxx:508
 msgid "Standards"
 msgstr ""
 
-#: denise/about.cxx:505
+#: denise/about.cxx:509
 msgid "Trash, autostart"
 msgstr ""
 
-#: denise/about.cxx:508
+#: denise/about.cxx:512
 msgid "and the AppImage team"
 msgstr ""
 
-#: denise/about.cxx:509
+#: denise/about.cxx:513
 msgid "Inspirations"
 msgstr ""
 
-#: denise/about.cxx:510
+#: denise/about.cxx:514
 msgid ""
 "the desktops of the late 1980s and the 1990s: bevelled gray windows, a menu "
 "bar at the top, icons on the desktop"
 msgstr ""
 
-#: denise/about.cxx:511
+#: denise/about.cxx:515
 msgid ""
 "and its many authors: the idea of the screen savers (written anew, no code "
 "taken)"
 msgstr ""
 
-#: denise/about.cxx:512
+#: denise/about.cxx:516
 msgid "the layout of “About This Computer”"
 msgstr ""
 
-#: denise/about.cxx:513
+#: denise/about.cxx:517
 msgid "the system underneath"
 msgstr ""
 
-#: denise/about.cxx:514
+#: denise/about.cxx:518
 msgid "Made with"
 msgstr ""
 
-#: denise/about.cxx:515
+#: denise/about.cxx:519
 msgid "co-author of the code"
 msgstr ""
 
-#: denise/about.cxx:558
+#: denise/about.cxx:562
 msgid "About This Computer"
 msgstr ""
 
-#: denise/about.cxx:562
+#: denise/about.cxx:566
 msgid "System Info"
 msgstr ""
 
-#: denise/about.cxx:562
+#: denise/about.cxx:566
 msgid "Licence"
 msgstr ""
 
-#: denise/about.cxx:562
+#: denise/about.cxx:566
 msgid "Acknowledgements"
 msgstr ""
 
@@ -3469,7 +3509,7 @@ msgid "Pack into an Archive…"
 msgstr ""
 
 #: denise/menus.cxx:359 platinum/filedialog.cxx:298 platinum/filedialog.cxx:553
-#: platinum/platinum.cxx:1404
+#: platinum/platinum.cxx:1327
 msgid "New Folder"
 msgstr ""
 
@@ -4348,7 +4388,7 @@ msgstr ""
 msgid "Preview: nobody is logged in from here."
 msgstr ""
 
-#: insight/main.cxx:187
+#: insight/main.cxx:188
 msgid "untitled"
 msgstr ""
 
@@ -4729,7 +4769,7 @@ msgstr ""
 msgid "Choose Folder"
 msgstr ""
 
-#: platinum/filedialog.cxx:248 platinum/platinum.cxx:1393
+#: platinum/filedialog.cxx:248 platinum/platinum.cxx:1316
 msgid "Choose"
 msgstr ""
 
@@ -4753,7 +4793,7 @@ msgstr ""
 msgid "Show hidden files"
 msgstr ""
 
-#: platinum/filedialog.cxx:329 platinum/platinum.cxx:1407
+#: platinum/filedialog.cxx:329 platinum/platinum.cxx:1330
 msgid "Show:"
 msgstr ""
 
@@ -4806,174 +4846,186 @@ msgstr ""
 msgid "%2 %1, %3, %4"
 msgstr ""
 
-#: platinum/platinum.cxx:230
+#: platinum/platinum.cxx:234
 msgid "Yes"
 msgstr ""
 
-#: platinum/platinum.cxx:1387
+#: platinum/platinum.cxx:1310
 msgid "%1 item"
 msgid_plural "%1 items"
 msgstr[0] ""
 msgstr[1] ""
 
-#: platinum/platinum.cxx:1394
+#: platinum/platinum.cxx:1317
 msgid "Add to Favorites"
 msgstr ""
 
-#: platinum/platinum.cxx:1395
+#: platinum/platinum.cxx:1318
 msgid "All Files (*)"
 msgstr ""
 
-#: platinum/platinum.cxx:1396
+#: platinum/platinum.cxx:1319
 msgid "Custom Filter"
 msgstr ""
 
-#: platinum/platinum.cxx:1397
+#: platinum/platinum.cxx:1320
 msgid "The file already exists. Replace it?"
 msgstr ""
 
-#: platinum/platinum.cxx:1398
+#: platinum/platinum.cxx:1321
 msgid "Favorites"
 msgstr ""
 
-#: platinum/platinum.cxx:1399
+#: platinum/platinum.cxx:1322
 msgid "File:"
 msgstr ""
 
-#: platinum/platinum.cxx:1400
+#: platinum/platinum.cxx:1323
 msgid "Disks"
 msgstr ""
 
-#: platinum/platinum.cxx:1401
+#: platinum/platinum.cxx:1324
 msgid "Hidden files"
 msgstr ""
 
-#: platinum/platinum.cxx:1402
+#: platinum/platinum.cxx:1325
 msgid "Manage Favorites"
 msgstr ""
 
-#: platinum/platinum.cxx:1403
+#: platinum/platinum.cxx:1326
 msgid "New folder name:"
 msgstr ""
 
-#: platinum/theme.cxx:43
+#: platinum/theme.cxx:45
 msgid "Plain"
 msgstr ""
 
-#: platinum/theme.cxx:43
+#: platinum/theme.cxx:45
 msgid "Dots"
 msgstr ""
 
-#: platinum/theme.cxx:43
+#: platinum/theme.cxx:45
 msgid "Polka dots"
 msgstr ""
 
-#: platinum/theme.cxx:43
+#: platinum/theme.cxx:45
 msgid "Grid"
 msgstr ""
 
-#: platinum/theme.cxx:43
+#: platinum/theme.cxx:45
 msgid "Fine grid"
 msgstr ""
 
-#: platinum/theme.cxx:43
+#: platinum/theme.cxx:45
 msgid "Checkerboard"
 msgstr ""
 
-#: platinum/theme.cxx:44
+#: platinum/theme.cxx:46
 msgid "Diagonal stripes"
 msgstr ""
 
-#: platinum/theme.cxx:44
+#: platinum/theme.cxx:46
 msgid "Horizontal stripes"
 msgstr ""
 
-#: platinum/theme.cxx:44
+#: platinum/theme.cxx:46
 msgid "Vertical stripes"
 msgstr ""
 
-#: platinum/theme.cxx:44
+#: platinum/theme.cxx:46
 msgid "Bricks"
 msgstr ""
 
-#: platinum/theme.cxx:45
+#: platinum/theme.cxx:47
 msgid "Raster"
 msgstr ""
 
-#: platinum/theme.cxx:45
+#: platinum/theme.cxx:47
 msgid "Diamonds"
 msgstr ""
 
-#: platinum/theme.cxx:45
+#: platinum/theme.cxx:47
 msgid "Crosses"
 msgstr ""
 
-#: platinum/theme.cxx:45
+#: platinum/theme.cxx:47
 msgid "Zigzag"
 msgstr ""
 
-#: platinum/theme.cxx:45
+#: platinum/theme.cxx:47
 msgid "Herringbone"
 msgstr ""
 
-#: platinum/theme.cxx:45
+#: platinum/theme.cxx:47
 msgid "Weave"
 msgstr ""
 
-#: platinum/theme.cxx:46
+#: platinum/theme.cxx:48
 msgid "Waves"
 msgstr ""
 
-#: platinum/theme.cxx:46
+#: platinum/theme.cxx:48
 msgid "Scales"
 msgstr ""
 
-#: platinum/theme.cxx:46
+#: platinum/theme.cxx:48
 msgid "Stars"
 msgstr ""
 
-#: platinum/theme.cxx:46
+#: platinum/theme.cxx:48
 msgid "Sand"
 msgstr ""
 
-#: platinum/theme.cxx:48
+#: platinum/theme.cxx:50
 msgid "Pattern"
 msgstr ""
 
-#: platinum/theme.cxx:48
+#: platinum/theme.cxx:50
 msgid "Solid color"
 msgstr ""
 
-#: platinum/theme.cxx:48
+#: platinum/theme.cxx:50
 msgid "Gradient"
 msgstr ""
 
-#: platinum/theme.cxx:50
+#: platinum/theme.cxx:52
 msgid "Vertical"
 msgstr ""
 
-#: platinum/theme.cxx:50
+#: platinum/theme.cxx:52
 msgid "Horizontal"
 msgstr ""
 
-#: platinum/theme.cxx:50
+#: platinum/theme.cxx:52
 msgid "Diagonal"
 msgstr ""
 
-#: platinum/theme.cxx:50
+#: platinum/theme.cxx:52
 msgid "Radial"
 msgstr ""
 
-#: platinum/theme.cxx:139
+#: platinum/theme.cxx:141
 msgid "Graphite"
 msgstr ""
 
-#: platinum/theme.cxx:139
+#: platinum/theme.cxx:141
 msgid "Retro Blue"
 msgstr ""
 
-#: platinum/theme.cxx:139
+#: platinum/theme.cxx:141
 msgid "Glacier"
+msgstr ""
+
+#: platinum/theme.cxx:394
+msgid "Retro 16 · classic"
+msgstr ""
+
+#: platinum/theme.cxx:394
+msgid "Retro 16 · outline"
+msgstr ""
+
+#: platinum/theme.cxx:395
+msgid "Retro 16 · glass"
 msgstr ""
 
 #: platinum/wallpaper.cxx:28
@@ -5233,7 +5285,7 @@ msgid "Spirograph"
 msgstr ""
 
 #: savers/savers.cxx:774
-msgid "Flying Chips"
+msgid "Flying Enso"
 msgstr ""
 
 #: savers/savers.cxx:774

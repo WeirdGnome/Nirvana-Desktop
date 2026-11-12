@@ -66,7 +66,7 @@ add_library(nirvana-platinum STATIC
   platinum/framewin.cxx)
 find_package(X11 REQUIRED)
 target_include_directories(nirvana-platinum PUBLIC platinum)
-target_link_libraries(nirvana-platinum PUBLIC nirvana-i18n fltk::fltk fltk::images X11::X11 X11::Xext)
+target_link_libraries(nirvana-platinum PUBLIC nirvana-i18n fltk::fltk fltk::images X11::X11 X11::Xext X11::Xcursor)
 
 # --- nirvana-net: networking via NetworkManager (nmcli + D-Bus) -------------
 find_package(PkgConfig REQUIRED)
@@ -253,6 +253,7 @@ target_link_libraries(logo-sheet PRIVATE nirvana-platinum)
 install(TARGETS nirvana-denise nirvana-insight nirvana-alice nirvana-shell RUNTIME DESTINATION bin COMPONENT nirvana)
 install(DIRECTORY schemes/ DESTINATION share/nirvana/schemes COMPONENT nirvana)
 install(DIRECTORY wallpapers/ DESTINATION share/nirvana/wallpapers COMPONENT nirvana)
+install(DIRECTORY cursors/ DESTINATION share/icons COMPONENT nirvana PATTERN "preview.png" EXCLUDE)   # the red Retro 16 pointer themes
 install(PROGRAMS session/nirvana-session session/nirvana-autostart DESTINATION bin COMPONENT nirvana)
 install(FILES session/nirvana.desktop DESTINATION share/xsessions COMPONENT nirvana)
 install(FILES session/nirvana-portals.conf DESTINATION share/xdg-desktop-portal COMPONENT nirvana)

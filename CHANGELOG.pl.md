@@ -1,6 +1,12 @@
 # Lista zmian
 Wszystkie ważniejsze zmiany w Nirvana Desktop, od najnowszych. English: [CHANGELOG.md](CHANGELOG.md).
 
+## 0.0.51 – 2026-11-12
+
+- **Czerwone wskaźniki myszy Retro 16**, własne Nirvany (każdy kształt rysuje `tools/cursors/make_cursors.py`): *klasyczny* (piksele epoki 16-bit – pochylona czerwona strzałka z czarną krawędzią i jasnym połyskiem, powiększana o całe piksele), *z obwódką* (czerwony z białą obwódką i cieniem) i *szklany* (szklisty czerwony). Wszystkie wskaźniki potrzebne pulpitowi – strzałka, zegar oczekiwania (animowany), strzałka z zegarem, tekst, rączka, celownik, przesuwanie, cztery strzałki zmiany rozmiaru, zakaz, pomoc, kopiowanie, skrót – pod nazwami, o które pytają X11, GTK i Qt. Instalowane do `share/icons`.
+- **Preferencje > Wygląd > Wskaźnik myszy:** wskaźnik systemowy, Retro 16 albo każdy zainstalowany motyw Xcursor, rozmiar Automatyczny albo 16–64 px, z podglądem strzałki, rączki i zegara. Zmienia się od razu nad biurkiem i oknami Nirvany; sesja przekazuje go innym programom (`XCURSOR_THEME`, `XCURSOR_SIZE`, `XCURSOR_PATH`). O systemie pokazuje jego nazwę.
+- **Nowe logo:** enso – jedno czerwone pociągnięcie pędzla w kole, w czerwono-białą szachownicę, na nocnym granacie – w pasku menu, O systemie, na ekranie logowania i blokady oraz w wygaszaczach (wbudowane jako pliki PNG w kilku rozmiarach; `tools/logo/make_logo.py`). Wygaszacz z latającymi logami nazywa się teraz *Latające enso*.
+
 ## 0.0.50 – 2026-11-12
 
 - **Poprawione: zamknięcie okna folderu resetowało pulpit.** Timer paska stanu eksploratora działał dalej po zwolnieniu okna i wywracał Ramblera, a sesja uruchamiała go od nowa. Teraz timery zatrzymują się razem z oknem.

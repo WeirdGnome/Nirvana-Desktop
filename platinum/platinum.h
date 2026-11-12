@@ -106,7 +106,15 @@ struct Appearance {                 // ~/.config/nirvana/wyglad.conf
   std::string wallpaper;            // wallpaper file; empty = just the pattern
   std::string wallpaper_mode = "fill";   // see WALLPAPER_MODES
   int scale = 0;                    // interface scale in percent; 0 = automatic (Xft.dpi)
+  std::string cursor;               // the mouse pointer theme (Xcursor); empty = the system's
+  int cursor_size = 0;              // the pointer size in pixels; 0 = the system's (Xcursor's)
 };
+
+// The pointer themes: the red Retro 16 ones of Nirvana first, then the others installed
+// (Adwaita, DMZ...): (theme folder name, name for people)
+std::vector<std::pair<std::string, std::string>> list_cursor_themes();
+std::string cursor_theme_dir(const std::string &theme);   // the folder with cursors/ ("" if missing)
+extern const int CURSOR_SIZES[];                          // offered in the Appearance panel; 0 ends
 
 // Scales offered in the Appearance panel (percent); 0 = automatic
 extern const int SCALES[];

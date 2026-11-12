@@ -41,7 +41,7 @@ What changed in each version: [CHANGELOG.md](CHANGELOG.md).
 
 Unpack the sources and run the installer:
 
-    tar xzf nirvana-desktop-0.0.50.tar.gz && cd nirvana-desktop
+    tar xzf nirvana-desktop-0.0.51.tar.gz && cd nirvana-desktop
     sudo ./install.sh                 # or: sudo ./install.sh --login-screen
 
 The installer:
@@ -569,6 +569,16 @@ the whole system: Rambler and Insight reload the palette without a restart.
   ![Retro icons (normal and selected) and Platinum](docs/img/icons.png)
   ![The Retro Blue scheme with Retro icons](docs/img/icons-retro.png)
 - **Window animations**: on or off.
+- **Mouse pointer**: the system's, Nirvana's red **Retro 16** pointers – *classic* (the
+  pixels of the 16-bit era, a slanted arrow with a black edge and a light shine, enlarged by
+  whole pixels), *outline* (red with a white outline) and *glass* (a glassy red) – or any other installed Xcursor theme;
+  size *Automatic* or 16–64 px. A preview shows the arrow, the hand and the busy clock. The
+  pointer changes at once over the desktop and Nirvana's windows; other programs take it when
+  they start (the session passes `XCURSOR_THEME`/`XCURSOR_SIZE`). Every shape is Nirvana's own
+  (`tools/cursors/make_cursors.py` draws them; the themes are installed into `share/icons`).
+
+  ![The red Retro 16 pointers: classic, with an outline, glassy](docs/img/pointers.png)
+
 - **Interface scale**: *Automatic* (from the `Xft.dpi` setting, e.g. 192 dpi = 200%)
   or 100–300%. It scales everything at once: the menu bar, windows, fonts, icons, frames
   and the dock; the wallpaper is rendered at the full screen resolution. After a change the
@@ -919,7 +929,7 @@ password; administrators at the computer are not asked.
 
 **Preferences → Screen Saver** chooses the saver - Black Screen, Starfield, Bouncing Lines,
 Nirvana Logo, Pipes, Plasma, Clock, Snow, Fireworks, Game of Life, Maze (carved and then
-walked through), Spirograph, Flying Chips, Aquarium, Fire, Bubbles or Random - with a preview in a little monitor, when it
+walked through), Spirograph, Flying Enso, Aquarium, Fire, Bubbles or Random - with a preview in a little monitor, when it
 starts, whether it **locks** the screen (at once or after it ran a few minutes) and when the
 monitor goes to sleep. *Test* shows it full screen, *Lock Now* locks. The ideas come from the
 savers of the 1990s and xscreensaver; the code is new.

@@ -21,6 +21,7 @@
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 #include <X11/cursorfont.h>
+#include <X11/Xcursor/Xcursor.h>
 #include <X11/keysym.h>
 
 #include <algorithm>
@@ -1069,8 +1070,21 @@ static void set_root_background() {
   XClearWindow(dpy, root);
 }
 
+// The pointer over the desktop - and over every window that does not set its own (they all
+// inherit it): from the theme chosen in Appearance (reload_appearance sets it for the display)
+static void set_root_cursor() {
+  static Cursor current = None;
+  Cursor c = XcursorLibraryLoadCursor(dpy, "left_ptr");
+  if (!c) c = XCreateFontCursor(dpy, XC_left_ptr);
+  XDefineCursor(dpy, root, c);
+  if (current != None) XFreeCursor(dpy, current);
+  current = c;
+  XFlush(dpy);
+}
+
 static void appearance_changed() {
   plat::reload_appearance();
+  set_root_cursor();
   set_root_background();
   for (auto &[w, c] : clients) c->frame->redraw();
 }
@@ -1360,7 +1374,7 @@ int main(int argc, char **argv) {
   read_dock_height();
   publish_workarea();
 
-  XDefineCursor(dpy, root, XCreateFontCursor(dpy, XC_left_ptr));
+  set_root_cursor();
   set_root_background();   // the scheme's desktop color before Rambler comes up
 
   Fl::add_system_handler(x_handler, nullptr);

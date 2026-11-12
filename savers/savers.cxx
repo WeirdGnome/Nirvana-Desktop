@@ -771,7 +771,7 @@ std::vector<std::pair<std::string, std::string>> list() {
           {"logo", _("Nirvana Logo")},  {"pipes", _("Pipes")},     {"plasma", _("Plasma")},
           {"clock", _("Clock")},        {"snow", _("Snow")},       {"fireworks", _("Fireworks")},
           {"life", _("Game of Life")},  {"maze", _("Maze")},       {"spiro", _("Spirograph")},
-          {"chips", _("Flying Chips")}, {"aquarium", _("Aquarium")}, {"fire", _("Fire")},
+          {"chips", _("Flying Enso")}, {"aquarium", _("Aquarium")}, {"fire", _("Fire")},
           {"bubbles", _("Bubbles")},    {"random", _("Random")}};
 }
 

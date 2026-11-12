@@ -310,7 +310,11 @@ std::string locale_name() {
 }
 
 std::string cursor_theme() {
-  if (const char *e = getenv("XCURSOR_THEME"); e && *e) return e;
+  if (const char *e = getenv("XCURSOR_THEME"); e && *e) {
+    for (auto &[dir, name] : plat::list_cursor_themes())   // the theme's own name ("Retro 16 · classic red")
+      if (dir == e) return name;
+    return e;
+  }
   if (fl_display)
     if (const char *t = XGetDefault(fl_display, "Xcursor", "theme")) return t;
   return _("X11 default");

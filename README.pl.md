@@ -40,7 +40,7 @@ Co się zmieniło w każdej wersji: [CHANGELOG.pl.md](CHANGELOG.pl.md).
 
 Rozpakuj źródła i uruchom instalator:
 
-    tar xzf nirvana-desktop-0.0.50.tar.gz && cd nirvana-desktop
+    tar xzf nirvana-desktop-0.0.51.tar.gz && cd nirvana-desktop
     sudo ./install.sh                 # albo: sudo ./install.sh --login-screen
 
 Instalator:
@@ -565,6 +565,16 @@ przestawia cały system: Rambler i Insight przeładowują paletę bez restartu.
   ![Ikony Retro (normalne i zaznaczone) i Platinum](docs/img/icons.png)
   ![Schemat Retro niebieski z ikonami Retro](docs/img/icons-retro.png)
 - **Animacje okien**: włączone lub wyłączone.
+- **Wskaźnik myszy**: systemowy, czerwone wskaźniki **Retro 16** Nirvany – *klasyczny*
+  (piksele epoki 16-bit, pochylona strzałka z czarną krawędzią i jasnym połyskiem, powiększana
+  o całe piksele), *z obwódką* (czerwony z białą obwódką) i *szklany* (szklisty czerwony) – albo każdy inny zainstalowany
+  motyw Xcursor; rozmiar *Automatyczny* albo 16–64 px. Podgląd pokazuje strzałkę, rączkę
+  i zegar oczekiwania. Wskaźnik zmienia się od razu nad biurkiem i oknami Nirvany; inne programy
+  biorą go przy starcie (sesja przekazuje `XCURSOR_THEME`/`XCURSOR_SIZE`). Każdy kształt jest
+  własny Nirvany (rysuje je `tools/cursors/make_cursors.py`; motywy instalują się do `share/icons`).
+
+  ![Czerwone wskaźniki Retro 16: klasyczny, z obwódką, szklany](docs/img/pointers.png)
+
 - **Skala interfejsu**: *Automatycznie* (z ustawienia `Xft.dpi`, np. 192 dpi = 200%)
   albo 100–300%. Skaluje wszystko naraz: pasek menu, okna, czcionki, ikony, ramki
   i dok; tapeta jest liczona w pełnej rozdzielczości ekranu. Po zmianie biurko
@@ -918,7 +928,7 @@ hasłem; administratorzy przy komputerze nie są pytani.
 
 **Preferencje → Wygaszacz ekranu** wybiera wygaszacz – Czarny ekran, Gwiazdy, Odbijające się
 linie, Logo Nirvany, Rury, Plazma, Zegar, Śnieg, Fajerwerki, Gra w życie, Labirynt (drążony,
-a potem przechodzony), Spirograf, Latające chipy, Akwarium, Ogień, Bańki albo Losowy – z podglądem w małym monitorze,
+a potem przechodzony), Spirograf, Latające enso, Akwarium, Ogień, Bańki albo Losowy – z podglądem w małym monitorze,
 czas włączenia, czy **blokuje** ekran (od razu albo gdy działa już kilka minut) i kiedy usypia
 monitor. *Wypróbuj* pokazuje go na całym ekranie, *Zablokuj teraz* blokuje. Pomysły pochodzą z
 wygaszaczy lat 90. i xscreensaver; kod jest napisany od nowa.
