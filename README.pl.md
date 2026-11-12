@@ -40,7 +40,7 @@ Co się zmieniło w każdej wersji: [CHANGELOG.pl.md](CHANGELOG.pl.md).
 
 Rozpakuj źródła i uruchom instalator:
 
-    tar xzf nirvana-desktop-0.0.63.tar.gz && cd nirvana-desktop
+    tar xzf nirvana-desktop-0.0.64.tar.gz && cd nirvana-desktop
     sudo ./install.sh                 # albo: sudo ./install.sh --login-screen
 
 Instalator:
@@ -462,19 +462,18 @@ ilości wolne i pamięć każdego programu Nirvany. Na wąskim ekranie napis si�
 
 | Menu | Pozycje |
 |------|---------|
-| **Nirvana** (logo i napis) | O systemie, Preferencje (okno z panelami), Wykonaj polecenie `Ctrl+E` (pamięta historię i podpowiada programy z `$PATH` oraz Twoje AppImage; ↑↓, Tab, Enter), Nirvana Shell `Ctrl+T`, Otwórz dziennik, Resetuj Nirvanę |
+| **Nirvana** (logo i napis) | O systemie, Preferencje (okno z panelami), Wykonaj polecenie `Win+E` (pamięta historię i podpowiada programy z `$PATH` oraz Twoje AppImage; ↑↓, Tab, Enter), Nirvana Shell `Win+T`, Otwórz dziennik, Resetuj Nirvanę |
 
 **Otwórz dziennik** pokazuje pierwszy dziennik, który da się przeczytać: `journalctl`,
 `/var/log/syslog` albo `/var/log/messages` (czytelne dla grupy `adm`), `dmesg`; gdy żaden nie jest
 dostępny, prosi o hasło administratora (pkexec – jako root działa tylko odczyt pliku), a w
 ostateczności pokazuje dziennik sesji (`~/.xsession-errors`).
-| **System** | Zablokuj ekran, Uśpij, Hibernuj, Wyloguj `Ctrl+Q`, Uruchom ponownie, Wyłącz |
-| **Narzędzia** | Formatuj dysk, Opróżnij kosz, Zabij okno… `Ctrl+Alt+K` (jak xkill: kursor z czaszką, klik w okno zawieszonego programu, potwierdzenie; prawy przycisk albo Esc przerywa; okna samej Nirvany są chronione) |
+| **System** | Zablokuj ekran, Uśpij, Hibernuj, Wyloguj `Win+Q`, Uruchom ponownie, Wyłącz |
+| **Narzędzia** | Formatuj dysk, Opróżnij kosz, Zabij okno… `Win+K` (jak xkill: kursor z czaszką, klik w okno zawieszonego programu, potwierdzenie; prawy przycisk albo Esc przerywa; okna samej Nirvany są chronione) |
 
-Skróty tych menu są **globalne**: działają także wtedy, gdy aktywne jest inne okno – zawsze
-w oknach samej Nirvany (Preferencje, okna wyboru plików, Szukaj…), a `Ctrl+Alt+K` wszędzie.
-Inne programy i Nirvana Shell zachowują swoje `Ctrl+litera` (terminal potrzebuje `Ctrl+E`,
-`Ctrl+Q`… dla działających w nim programów).
+Skróty tych menu są **globalne** i używają **klawisza Windows (Super)**: `Win+E`, `Win+T`,
+`Win+Q`, `Win+K` działają bez względu na to, które okno jest aktywne, a żaden program nie traci
+swoich `Ctrl+litera`.
 
 **O systemie** pokazuje system na wzór neofetch: po lewej duże logo z próbkami kolorów,
 po prawej `użytkownik@komputer` i parametry – system, komputer, jądro, czas pracy, pakiety
@@ -786,7 +785,7 @@ mu nie pozwolisz.** Zrobiona tak, żeby obsłużyło ją dziecko i dziadek – p
 `nirvana-shell` to emulator terminala zgodny z xterm (`TERM=xterm-256color`),
 zbudowany na bibliotece libvterm (dołączona w `third_party/`, MIT; systemowa
 jest używana, jeśli jest). Uruchamianie: logo → Nirvana Shell, w Ramblerze
-Plik → Otwórz w Nirvana Shell (Ctrl+T, w folderze aktywnego okna) albo
+Plik → Otwórz w Nirvana Shell (Win+T, w folderze aktywnego okna) albo
 `nirvana-shell [--working-directory KATALOG] [-e polecenie]`.
 
 - **Wyświetlanie:** 256 kolorów i truecolor, pogrubienie, kursywa, podkreślenie, ekran

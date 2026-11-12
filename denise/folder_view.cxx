@@ -573,15 +573,25 @@ void FolderView::draw() {
   }
   fl_color(CONTENT);
   fl_rectf(x(), y(), w(), h());
+  if (state_ == BANDING) {   // the fill of the selection rectangle - under the items
+    int x0 = std::min(band_x_, press_x_), y0 = std::min(band_y_, press_y_);
+    int x1 = std::max(band_x_, press_x_), y1 = std::max(band_y_, press_y_);
+    fl_color(fl_color_average(SEL, CONTENT, 0.2f));
+    fl_rectf(x0, y0, x1 - x0 + 1, y1 - y0 + 1);
+  }
   if (mode_ == Icons) draw_icons(); else draw_list();
 
-  // selection rectangle (dotted)
+  // selection rectangle: a light fill of the selection color and a clear dashed edge
+  // (the gray dotted line alone was hardly visible on the white list)
   if (state_ == BANDING) {
     int x0 = std::min(band_x_, press_x_), y0 = std::min(band_y_, press_y_);
     int x1 = std::max(band_x_, press_x_), y1 = std::max(band_y_, press_y_);
-    fl_color(SHADOW);
-    fl_line_style(FL_DOT);
-    fl_rect(x0, y0, x1 - x0 + 1, y1 - y0 + 1);
+    int bw = x1 - x0 + 1, bh = y1 - y0 + 1;
+    fl_color(SEL);
+    fl_rect(x0, y0, bw, bh);
+    fl_color(CONTENT_TEXT);
+    fl_line_style(FL_DASH, 1);
+    fl_rect(x0, y0, bw, bh);
     fl_line_style(0);
   }
   // the whole folder is the drop target: a thick frame around the visible part

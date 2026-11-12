@@ -1,6 +1,12 @@
 # Changelog
 All notable changes to Nirvana Desktop, newest first. Polish: [CHANGELOG.pl.md](CHANGELOG.pl.md).
 
+## 0.0.64 – 2026-11-12
+
+- **Global shortcuts on the Windows key**: Execute Command `Win+E`, Nirvana Shell `Win+T`, Log Out `Win+Q`, Force Quit `Win+K`. The `Ctrl` versions are removed. They work whatever window is active, and programs (browsers, the terminal) keep their own `Ctrl+letter`. The menus label them "Win+…".
+- **The selection rectangle is visible**: it has a fill in the selection color and a clear edge. Before it was only a gray dotted line, hardly visible on the white list.
+- **Preferences and other programs animate opening and closing**: FLTK writes the window class with a capital letter ("Nirvana-preferences"), so Insight took them for Rambler windows, which animate themselves, and did not animate them at all. The Preferences window now flies out of its desktop icon, and a panel out of its icon in the Preferences window.
+
 ## 0.0.63 – 2026-11-12
 
 - **Global shortcuts work while another window is active**: the shortcuts of the Nirvana, System and Special menus (`Ctrl+E` Execute Command, `Ctrl+T` Nirvana Shell, `Ctrl+Q` Log Out, `Ctrl+Alt+K` Force Quit) only worked with the desktop or a Rambler window active. Now they also work in Nirvana's other windows (Preferences, file dialogs, Find…), and `Ctrl+Alt+K` everywhere. Other programs and Nirvana Shell keep their own `Ctrl+letter`.

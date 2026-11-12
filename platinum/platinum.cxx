@@ -227,6 +227,10 @@ static void watch_pointer() {
 }
 
 void init() {
+  // where the window manager zooms this program's window from (it reads our starting
+  // environment) - not for the programs we start
+  unsetenv("NIRVANA_ZOOM_FROM");
+  fl_local_meta = "Win";   // menus show the global shortcuts as "Win+E" (the Windows/Super key)
   init_i18n();   // before the first interface text
   Fl::scheme("none");
   reload_appearance();   // color scheme from ~/.config/nirvana/appearance.conf

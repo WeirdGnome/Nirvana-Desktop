@@ -427,7 +427,18 @@ void Desktop::set_as_wallpaper() {
 // ---------------------------------------------------------------------------
 // Menu Nirvana
 // ---------------------------------------------------------------------------
-void Desktop::open_preferences() { rambler_spawn({rambler_exe("nirvana-alice"), "preferences"}); }
+// The window flies out of the Preferences icon on the desktop (Insight reads NIRVANA_ZOOM_FROM)
+void Desktop::open_preferences() {
+  for (auto &ic : icons_)
+    if (ic.prefs) {
+      Rect r = to_screen({ic.x + 24, ic.y, 32, 32});
+      setenv("NIRVANA_ZOOM_FROM", (std::to_string(r.x) + " " + std::to_string(r.y) + " " + std::to_string(r.w) + " " +
+                                   std::to_string(r.h)).c_str(), 1);
+      break;
+    }
+  rambler_spawn({rambler_exe("nirvana-alice"), "preferences"});
+  unsetenv("NIRVANA_ZOOM_FROM");
+}
 
 // --- Force Quit (like xkill) ------------------------------------------------------------
 // The program of a window that does not respond is cut off from the X server (XKillClient):

@@ -41,7 +41,7 @@ What changed in each version: [CHANGELOG.md](CHANGELOG.md).
 
 Unpack the sources and run the installer:
 
-    tar xzf nirvana-desktop-0.0.63.tar.gz && cd nirvana-desktop
+    tar xzf nirvana-desktop-0.0.64.tar.gz && cd nirvana-desktop
     sudo ./install.sh                 # or: sudo ./install.sh --login-screen
 
 The installer:
@@ -465,19 +465,18 @@ text gets shorter.
 
 | Menu | Items |
 |------|---------|
-| **Nirvana** (logo and name) | About This Computer, Preferences (window with panels), Execute Command `Ctrl+E` (remembers the history and suggests programs from `$PATH` and your AppImages; ↑↓, Tab, Enter), Nirvana Shell `Ctrl+T`, Open System Log, Reset Nirvana |
+| **Nirvana** (logo and name) | About This Computer, Preferences (window with panels), Execute Command `Win+E` (remembers the history and suggests programs from `$PATH` and your AppImages; ↑↓, Tab, Enter), Nirvana Shell `Win+T`, Open System Log, Reset Nirvana |
 
 **Open System Log** shows the first log it can read: `journalctl`, `/var/log/syslog` or
 `/var/log/messages` (readable for the `adm` group), `dmesg`; when none is readable it asks for
 the administrator password (pkexec – only reading the file runs as root), and as a last resort
 shows the log of the session (`~/.xsession-errors`).
-| **System** | Lock Screen, Sleep, Hibernate, Log Out `Ctrl+Q`, Restart, Shut Down |
-| **Special** | Format Disk, Empty Trash, Force Quit a Window… `Ctrl+Alt+K` (like xkill: a skull cursor, click the window of a program that hangs, confirm; the right button or Esc cancels; Nirvana's own windows are protected) |
+| **System** | Lock Screen, Sleep, Hibernate, Log Out `Win+Q`, Restart, Shut Down |
+| **Special** | Format Disk, Empty Trash, Force Quit a Window… `Win+K` (like xkill: a skull cursor, click the window of a program that hangs, confirm; the right button or Esc cancels; Nirvana's own windows are protected) |
 
-The shortcuts of these menus are **global**: they also work while another window is active –
-always in Nirvana's own windows (Preferences, file dialogs, Find…), and `Ctrl+Alt+K` everywhere.
-Other programs and Nirvana Shell keep their own `Ctrl+letter` (a terminal needs `Ctrl+E`,
-`Ctrl+Q`… for the programs running in it).
+The shortcuts of these menus are **global** and use the **Windows (Super) key**: `Win+E`,
+`Win+T`, `Win+Q`, `Win+K` work whatever window is active, and no program loses its own
+`Ctrl+letter`.
 
 **About This Computer** shows the system in the manner of neofetch: a large logo with the
 color swatches on the left and `user@host` with the parameters on the right – OS, host, kernel,
@@ -789,7 +788,7 @@ until you allow it.** Made so that a child and a grandparent can use it – simp
 
 `nirvana-shell` is an xterm-compatible terminal emulator (`TERM=xterm-256color`),
 built on the libvterm library (bundled in `third_party/`, MIT; the system one is used
-if available). Start it from the logo → Nirvana Shell, in Rambler with `Ctrl+T` (in the
+if available). Start it from the logo → Nirvana Shell, with `Win+T` (in Rambler: in the
 folder of the active window) or with
 `nirvana-shell [--working-directory DIR] [-e command]`.
 

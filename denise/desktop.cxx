@@ -532,27 +532,28 @@ Desktop::Desktop(int W, int H, const std::string &home)
     // --- Nirvana: the whole system ---
     {P_("logo/About This Computer…"), 0, &Desktop::about, FL_MENU_DIVIDER},
     {P_("logo/Preferences…"), 0, &Desktop::open_preferences, 0},
-    {P_("logo/Execute Command…"), FL_COMMAND + 'e', &Desktop::execute_command, 0},
-    {P_("logo/Nirvana Shell"), FL_COMMAND + 't', &Desktop::open_terminal, 0},
+    {P_("logo/Execute Command…"), FL_META + 'e', &Desktop::execute_command, 0},
+    {P_("logo/Nirvana Shell"), FL_META + 't', &Desktop::open_terminal, 0},
     {P_("logo/Open System Log"), 0, &Desktop::open_log, FL_MENU_DIVIDER},
     {P_("logo/Reset Nirvana"), 0, &Desktop::reset_nirvana, 0},
     // --- System: session and computer (formerly in the power applet) ---
     {P_("System/Lock Screen"), 0, &Desktop::system_lock, 0},
     {P_("System/Sleep"), 0, &Desktop::system_sleep, 0},
     {P_("System/Hibernate"), 0, &Desktop::system_hibernate, FL_MENU_DIVIDER},
-    {P_("System/Log Out…"), FL_COMMAND + 'q', &Desktop::system_logout, 0},
+    {P_("System/Log Out…"), FL_META + 'q', &Desktop::system_logout, 0},
     {P_("System/Restart…"), 0, &Desktop::system_restart, 0},
     {P_("System/Shut Down…"), 0, &Desktop::system_shutdown, 0},
     // --- Special ---
     {P_("Special/Format Disk…"), 0, &Desktop::format_disk, 0},
     {P_("Special/Empty Trash…"), 0, &Desktop::empty_trash, 0},
     {P_("Special/File Types…"), 0, &Desktop::edit_filetypes, FL_MENU_DIVIDER},
-    {P_("Special/Force Quit a Window…"), FL_COMMAND + FL_ALT + 'k', &Desktop::force_quit, 0},
+    {P_("Special/Force Quit a Window…"), FL_META + 'k', &Desktop::force_quit, 0},
   };
   for (auto &it : items) {
     menu_->add(plat::tr_path(it.path).c_str(), it.shortcut, global_menu_cb, (void *)&it, it.flags);
   }
   g_global_items = &items;
+  update_global_keys();
   logo_item_ = (Fl_Menu_Item *)menu_->find_item("logo");
   set_logo();
 
@@ -1009,12 +1010,10 @@ static void net_message(Window w, Atom type, long l0, long l1, long l2) {
 }
 
 // ---------------------------------------------------------------------------
-// Global shortcuts: the items of the Nirvana, System and Special menus (Ctrl+E, Ctrl+T,
-// Ctrl+Q, Ctrl+Alt+K) also work when another window is active. In Rambler's own windows FLTK
-// finds them itself; for the other Nirvana programs (Preferences, file dialogs, Find...) they
-// are taken from the X server (XGrabKey on the root window) - while such a window is active.
-// The other programs (and Nirvana Shell - a terminal needs Ctrl+letter for its programs) keep
-// their own Ctrl+letter; only the shortcuts with Ctrl+Alt are taken over them.
+// Global shortcuts: the items of the Nirvana, System and Special menus are on the Windows
+// (Super) key - Win+E, Win+T, Win+Q, Win+K - so they work everywhere, whatever window is
+// active, without taking a Ctrl+letter from any program. They are taken from the X server
+// (XGrabKey on the root window); the key events of Rambler's own windows come here too.
 // ---------------------------------------------------------------------------
 struct GlobalKey { KeyCode code; unsigned mods; const MenuDef *def; };
 static std::vector<GlobalKey> g_global_keys;
@@ -1029,36 +1028,16 @@ static unsigned x_mods(int sc) {
   return m;
 }
 
-static std::string window_class(Window w) {
-  std::string c;
-  XClassHint h{};
-  if (w && XGetClassHint(fl_display, w, &h)) {
-    c = h.res_class ? h.res_class : h.res_name ? h.res_name : "";
-    if (h.res_name) XFree(h.res_name);
-    if (h.res_class) XFree(h.res_class);
-  }
-  for (auto &ch : c) ch = (char)tolower((unsigned char)ch);
-  return c;
-}
-
 static int ignore_x_errors(Display *, XErrorEvent *) { return 0; }
 
 void Desktop::update_global_keys() {
   if (!g_global_items || !fl_display) return;
-  Window a = net_active();
-  bool ours = a == 0 || (shown() && a == fl_xid(this));
-  for (auto *w : wins_) if (w->shown() && fl_xid(w) == a) ours = true;
-  std::string cls = ours ? std::string() : window_class(a);
-  bool nirvana = cls.rfind("nirvana", 0) == 0 && cls != "nirvana-shell";
   std::vector<GlobalKey> want;
-  if (!ours)
-    for (auto &d : *g_global_items) {
-      if (!d.shortcut) continue;
-      unsigned m = x_mods(d.shortcut);
-      if (!nirvana && !((m & ControlMask) && (m & Mod1Mask))) continue;   // other programs: only Ctrl+Alt
-      KeyCode k = XKeysymToKeycode(fl_display, (KeySym)(d.shortcut & 0xFFFF));
-      if (k) want.push_back({k, m, &d});
-    }
+  for (auto &d : *g_global_items) {
+    if (!d.shortcut) continue;
+    KeyCode k = XKeysymToKeycode(fl_display, (KeySym)(d.shortcut & 0xFFFF));
+    if (k) want.push_back({k, x_mods(d.shortcut), &d});
+  }
   bool same = want.size() == g_global_keys.size();
   for (size_t i = 0; same && i < want.size(); i++)
     same = want[i].code == g_global_keys[i].code && want[i].mods == g_global_keys[i].mods;
@@ -1441,7 +1420,7 @@ int Desktop::shortcut() {
 }
 
 void Desktop::active_changed() {
-  update_global_keys();
+  if (g_global_keys.empty()) update_global_keys();   // (the display was not open yet at the start)
   if (app_menu_) app_menu_->redraw();   // name and icon of the active application in the bar
   Window a = net_active();
   for (auto it = wins_.begin(); it != wins_.end(); ++it) {

@@ -19,11 +19,17 @@ using namespace plat;
 
 namespace {
 
-void open_panel(const char *name) {
+void open_panel(const char *name, Fl_Widget *from = nullptr) {
   // the same program with another argument, in the background (double fork - no zombie)
   pid_t p = fork();
   if (p == 0) {
     if (fork() == 0) {
+      if (from && from->window()) {   // Insight: the panel flies out of its icon
+        Fl_Window *w = from->window();
+        char z[64];
+        snprintf(z, sizeof z, "%d %d %d %d", w->x_root() + from->x() + (from->w() - 32) / 2, w->y_root() + from->y() + 4, 32, 32);
+        setenv("NIRVANA_ZOOM_FROM", z, 1);
+      }
       char exe[4096];
       ssize_t n = readlink("/proc/self/exe", exe, sizeof exe - 1);
       exe[n > 0 ? n : 0] = 0;
@@ -210,7 +216,7 @@ int panel_preferences() {
   for (int i = 0; i < N; i++) {
     auto &p = panels[i];
     auto *b = new PanelIcon(14 + (i % PER_ROW) * CELL_W, 20 + (i / PER_ROW) * CELL_H, p.k, p.label);
-    b->callback([](Fl_Widget *, void *a) { open_panel((const char *)a); }, (void *)p.arg);
+    b->callback([](Fl_Widget *w, void *a) { open_panel((const char *)a, w); }, (void *)p.arg);
   }
 
   // Interface language - saved in ~/.config/nirvana/language, applies after a restart

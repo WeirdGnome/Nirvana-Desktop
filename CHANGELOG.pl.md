@@ -1,6 +1,12 @@
 # Lista zmian
 Wszystkie ważniejsze zmiany w Nirvana Desktop, od najnowszych. English: [CHANGELOG.md](CHANGELOG.md).
 
+## 0.0.64 – 2026-11-12
+
+- **Skróty globalne na klawiszu Windows**: Wykonaj polecenie `Win+E`, Nirvana Shell `Win+T`, Wyloguj `Win+Q`, Zabij okno `Win+K`. Wersje z `Ctrl` usunięte. Działają bez względu na aktywne okno, a programy (przeglądarki, terminal) zachowują swoje `Ctrl+litera`. Menu podpisuje je jako „Win+…”.
+- **Zaznaczanie prostokątem jest widoczne**: prostokąt ma wypełnienie w kolorze zaznaczenia i wyraźną krawędź. Wcześniej była to tylko szara kropkowana linia, prawie niewidoczna na białej liście.
+- **Preferencje i inne programy mają animację otwierania i zamykania**: FLTK zapisuje klasę okna wielką literą („Nirvana-preferences”), więc Insight brał je za okna Ramblera, które animują się same, i nie animował ich wcale. Okno Preferencji wylatuje teraz z ikony na biurku, a panel – z ikony w oknie Preferencji.
+
 ## 0.0.63 – 2026-11-12
 
 - **Globalne skróty działają przy aktywnym innym oknie**: skróty z menu Nirvana, System i Narzędzia (`Ctrl+E` Wykonaj polecenie, `Ctrl+T` Nirvana Shell, `Ctrl+Q` Wyloguj, `Ctrl+Alt+K` Zabij okno) działały tylko wtedy, gdy aktywny był pulpit albo okno Ramblera. Teraz działają też w pozostałych oknach Nirvany (Preferencje, okna wyboru plików, Szukaj…), a `Ctrl+Alt+K` wszędzie. Inne programy i Nirvana Shell zachowują swoje `Ctrl+litera`.

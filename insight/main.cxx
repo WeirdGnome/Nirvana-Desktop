@@ -212,6 +212,40 @@ static bool is_desktop(Window w) {
   return d || has_atom(w, A_NET_WM_TYPE, A_NET_WM_TYPE_DESKTOP);
 }
 
+// Where a new window "flies out" from: the icon it was opened with. The program that opened it
+// (Rambler for the Preferences icon, Preferences for a panel icon) gives the rectangle in the
+// environment of the new program: NIRVANA_ZOOM_FROM="x y w h" - Insight reads it through
+// _NET_WM_PID. Only the first window of the program (its later dialogs open from their middle).
+static bool zoom_source(Window w, Rect &out) {
+  static std::vector<long> used;
+  Atom type; int fmt; unsigned long n, after; unsigned char *data = nullptr;
+  long pid = 0;
+  if (XGetWindowProperty(dpy, w, XInternAtom(dpy, "_NET_WM_PID", False), 0, 1, False, XA_CARDINAL, &type, &fmt, &n,
+                         &after, &data) == Success && data) {
+    if (n) pid = *(long *)data;
+    XFree(data);
+  }
+  if (pid <= 0 || std::find(used.begin(), used.end(), pid) != used.end()) return false;
+  FILE *f = fopen(("/proc/" + std::to_string(pid) + "/environ").c_str(), "r");
+  if (!f) return false;
+  std::string env, var;
+  int ch;
+  bool found = false;
+  while ((ch = fgetc(f)) != EOF) {
+    if (ch) { var += (char)ch; continue; }
+    if (var.rfind("NIRVANA_ZOOM_FROM=", 0) == 0) { env = var.substr(18); found = true; break; }
+    var.clear();
+  }
+  fclose(f);
+  if (!found) return false;
+  used.push_back(pid);
+  if (used.size() > 64) used.erase(used.begin());
+  Rect r{};
+  if (sscanf(env.c_str(), "%d %d %d %d", &r.x, &r.y, &r.w, &r.h) != 4 || r.w <= 0 || r.h <= 0) return false;
+  out = r;
+  return true;
+}
+
 static std::string get_class(Window w) {
   XClassHint ch;
   std::string r;
@@ -761,7 +795,10 @@ static void manage(Window w, bool existing) {
   c->title = get_title(w);
   std::string cls = get_class(w);
   c->cls = cls;
-  c->own_anim = cls.rfind("Nirvana-", 0) == 0;
+  // only Rambler animates its folder windows and dialogs itself; FLTK writes every class with
+  // a capital letter ("nirvana-preferences" -> "Nirvana-preferences"), so the Preferences,
+  // Nirvana Shell... were taken for Rambler and opened without any animation
+  c->own_anim = cls == "Nirvana-Rambler" || cls == "Nirvana-Dialog" || cls == "Nirvana-Desktop";
   Window tf = 0;
   c->dialog = (XGetTransientForHint(dpy, w, &tf) && tf) ||
               has_atom(w, A_NET_WM_TYPE, A_NET_WM_TYPE_DIALOG) || cls == "Nirvana-Dialog";
@@ -797,7 +834,11 @@ static void manage(Window w, bool existing) {
   y = std::max(y, MENUBAR_H);
 
   // a new window "flies out" of the middle of the place where it will appear
-  if (!existing && !c->own_anim) zoom_rects(center_of({x, y, fw, fh}), {x, y, fw, fh});
+  if (!existing && !c->own_anim) {
+    Rect from;
+    if (!zoom_source(w, from)) from = center_of({x, y, fw, fh});
+    zoom_rects(from, {x, y, fw, fh});
+  }
   c->frame = new Frame(c, x, y, fw, fh);
   c->frame->xclass("Nirvana-Frame");
   c->frame->show();
