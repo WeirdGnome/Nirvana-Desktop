@@ -1,6 +1,11 @@
 # Lista zmian
 Wszystkie ważniejsze zmiany w Nirvana Desktop, od najnowszych. English: [CHANGELOG.md](CHANGELOG.md).
 
+## 0.0.62 – 2026-11-12
+
+- **NirvanaSHIELD w zwykłych rozmiarach**: panel ma teraz litery, przyciski, przełączniki i wiersze programów takie jak pozostałe panele Preferencji (okno 600×470 zamiast 780×640). Prosta obsługa została bez zmian: jeden przełącznik „MA INTERNET” / „BEZ INTERNETU” na program i trzy przyciski dla całego komputera.
+- **Rambler zaawansowany jest jedynym stylem okien folderów**: wybór stylu zniknął z Preferencji > Pulpit, a wcześniejsze ustawienie „uproszczony” nie ma już znaczenia. Zwykłym oknem zostaje tylko okno Aplikacji. Przejście z niego w górę albo wpisanie w adres innego folderu otwiera ten folder w Ramblerze zaawansowanym.
+
 ## 0.0.61 – 2026-11-12
 
 - **Aplikacje jako duże ikony**, jak w oknie Preferencji, zamiast listy – w oknie Aplikacji i w folderach kategorii (lista nadal pod `Ctrl+2`, zapamiętywana). Foldery aplikacji zapamiętane wcześniej jako lista jednorazowo przechodzą na ikony.

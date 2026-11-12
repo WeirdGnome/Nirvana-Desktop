@@ -209,7 +209,9 @@ public:
   void format_disk();
   void reset_nirvana();
   // --- the explorer (explorer.cxx): folder tree, one or two panes (source/destination) ---
-  bool explorer_mode() const { return desk_set_.folder_style == "explorer"; }
+  // folder windows: always Rambler Advanced (tree, two panes) - only the Applications window
+  // is a plain one (force_simple_)
+  bool explorer_mode() const { return true; }
   std::string folder_title(const std::string &path) const { return title_for(path); }   // "wakacje.zip", not the cache folder
   void build_explorer(NWin *win, int ox, int oy, int W, int H, const std::string &path);
   void ex_layout(NWin *w);

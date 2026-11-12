@@ -23,7 +23,6 @@ namespace {
 
 DesktopSettings g_d;
 Fl_Check_Button *g_margin, *g_dock, *g_classic, *g_outline;
-Fl_Round_Button *g_style_r, *g_style_e;
 
 // Two overlapping windows in the chosen style: the active one in front.
 class WindowSample : public Fl_Widget {
@@ -99,7 +98,7 @@ void changed(Fl_Widget *, void *) {
   g_d.dock_room = g_dock->value();
   g_d.classic = g_classic->value();
   g_d.outline = g_outline->value();
-  g_d.folder_style = g_style_e->value() ? "explorer" : "rambler";
+  g_d.folder_style = "explorer";   // the folder windows: always Rambler Advanced
   write_desktop(g_d);
   notify_desktop_changed();
   g_preview->redraw();
@@ -117,7 +116,7 @@ Fl_Box *note(int X, int Y, int W, int H, const char *t) {
 
 int panel_desktop() {
   g_d = read_desktop();
-  const int W = 500, H = 580;
+  const int W = 500, H = 510;
   auto *win = new FrameWindow(W, H, _("Desktop"));
   win->xclass("nirvana-desktop-panel");
   auto *h = new Fl_Box(15, 10, 300, 20, _("Room for Windows"));
@@ -156,20 +155,7 @@ int panel_desktop() {
   g_outline->callback(changed);
   note(35, 398, 270, 30, _("The window jumps to its new place when the mouse button is released."));
   g_sample = new WindowSample(320, 238, 165, 150);
-  auto *sep2 = new Fl_Box(15, 436, W - 30, 2);
-  sep2->box(FL_ENGRAVED_BOX);
-  auto *h3 = new Fl_Box(15, 444, 300, 20, _("Folder Windows"));
-  h3->labelfont(FONT_SYSTEM);
-  h3->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
-  g_style_r = new Fl_Round_Button(15, 468, W - 30, 20, _("Rambler Simple: one list of files, each folder remembers its window"));
-  g_style_e = new Fl_Round_Button(15, 488, W - 30, 20, _("Rambler Advanced: folder tree, two panes, jobs, search"));
-  for (auto *b : {g_style_r, g_style_e}) {
-    b->type(FL_RADIO_BUTTON);
-    b->labelsize(SIZE_SMALL + 1);
-    b->callback(changed);
-  }
-  (g_d.folder_style == "explorer" ? g_style_e : g_style_r)->value(1);
-  note(15, H - 66, W - 120, 30, _("The changes apply at once; the folder window style to the windows opened from now on."));
+  note(15, H - 66, W - 120, 30, _("The changes apply at once, to all open windows."));
   auto *ok = new Fl_Button(W - 102, H - 36, 86, 24, _("OK"));
   ok->box(BUTTON_BOX);
   ok->down_box(BUTTON_DOWN);

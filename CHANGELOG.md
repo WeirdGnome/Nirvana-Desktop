@@ -1,6 +1,11 @@
 # Changelog
 All notable changes to Nirvana Desktop, newest first. Polish: [CHANGELOG.pl.md](CHANGELOG.pl.md).
 
+## 0.0.62 – 2026-11-12
+
+- **NirvanaSHIELD in the usual sizes**: the panel now has the letters, buttons, switches and program rows of the other Preferences panels (a 600×470 window instead of 780×640). The simple handling stays: one "HAS INTERNET" / "NO INTERNET" switch per program and three buttons for the whole computer.
+- **Rambler Advanced is the only folder window style**: the style choice is gone from Preferences > Desktop, and an earlier "Simple" setting no longer matters. Only the Applications window stays plain; going up from it or typing another folder in its address opens that folder in Rambler Advanced.
+
 ## 0.0.61 – 2026-11-12
 
 - **Applications as big icons**, like the Preferences window, instead of a list – in the Applications window and the category folders (the list is still under `Ctrl+2`, remembered). Application folders remembered as a list switch to icons once.

@@ -40,7 +40,7 @@ Co się zmieniło w każdej wersji: [CHANGELOG.pl.md](CHANGELOG.pl.md).
 
 Rozpakuj źródła i uruchom instalator:
 
-    tar xzf nirvana-desktop-0.0.61.tar.gz && cd nirvana-desktop
+    tar xzf nirvana-desktop-0.0.62.tar.gz && cd nirvana-desktop
     sudo ./install.sh                 # albo: sudo ./install.sh --login-screen
 
 Instalator:
@@ -176,9 +176,9 @@ Inną czcionkę systemową (np. wolną, w stylu bitmapowym) można podać przez 
   wersji tego samego programu da się rozróżnić i mieć zainstalowane jednocześnie.
   Ikony i dane z .desktop są zapamiętywane w `~/.cache/nirvana/icons`.
 - **Gdzie są aplikacje**: w ukrytym folderze `~/.nirvana-apps`, żeby nie zaśmiecały Nirvana HD.
-  Otwiera go ikona **Aplikacje** na biurku – w zwykłym oknie Ramblera uproszczonego, z folderami
-  kategorii, także gdy okna folderów są ustawione na Ramblera zaawansowanego; w adresie widać
-  *Aplikacje*; programy są dużymi ikonami, jak w oknie Preferencji (lista – `Ctrl+2`). Prawy przycisk na aplikacji i **Połóż na doku**
+  Otwiera go ikona **Aplikacje** na biurku – w zwykłym oknie Ramblera (bez drzewa i paneli –
+  jedynym takim; każdy inny folder otwiera się w Ramblerze zaawansowanym), z folderami kategorii;
+  w adresie widać *Aplikacje*, a przejście w górę otwiera Nirvana HD w Ramblerze zaawansowanym; programy są dużymi ikonami, jak w oknie Preferencji (lista – `Ctrl+2`). Prawy przycisk na aplikacji i **Połóż na doku**
   trzyma ją pod ręką; prawy przycisk na kafelku doku daje **Otwórz** i **Odepnij z doku**.
   Dawny folder `~/Aplikacje` (`~/Applications`) jest przenoszony tam automatycznie, razem
   z wpisami doku i zapamiętanymi oknami.
@@ -301,8 +301,8 @@ okno biurka nie przyjmuje fokusu, żeby klik w pasek menu nie zmieniał aktywnej
 
 ## Rambler zaawansowany (dwa panele)
 
-**Preferencje > Pulpit > Okna folderów** przełącza okna folderów między **Ramblerem uproszczonym**
-(jedna lista, każdy folder pamięta swoje okno) a **Ramblerem zaawansowanym** – oknem w stylu klasycznych
+Każde okno folderu to **Rambler zaawansowany** (dawnego Ramblera uproszczonego już nie ma; zwykłe
+zostało tylko okno Aplikacji) – okno w stylu klasycznych
 eksploratorów z końca lat 90. ze sposobem pracy dwupanelowych menedżerów plików z pulpitów
 16-bitowych:
 
@@ -704,11 +704,11 @@ sieci (resztę przekazuje do prawdziwego `nmcli`).
 ## NirvanaSHIELD: które programy mogą korzystać z internetu
 
 Zapora w duchu prostych zapór z listą dozwolonych: **żaden program nie wyjdzie do internetu, dopóki
-mu nie pozwolisz.** Zrobiona tak, żeby obsłużyło ją dziecko i dziadek.
+mu nie pozwolisz.** Zrobiona tak, żeby obsłużyło ją dziecko i dziadek – prosta w obsłudze, w zwykłych rozmiarach jak pozostałe panele.
 
-- **Preferencje > NirvanaSHIELD:** duża tarcza i jedno zdanie mówią, co się dzieje; trzy duże
+- **Preferencje > NirvanaSHIELD:** tarcza i jedno zdanie mówią, co się dzieje; trzy
   przyciski dla całego komputera – **Chroń** (tylko zielone), **Zablokuj cały internet**, **Wyłącz
-  ochronę**; i lista Twoich programów (z menu i Twoje AppImage) z jednym dużym przełącznikiem przy
+  ochronę**; i lista Twoich programów (z menu i Twoje AppImage) z jednym przełącznikiem przy
   każdym: **MA INTERNET** / **BEZ INTERNETU**. Programy, które przed chwilą próbowały wyjść, są
   na górze z pomarańczową notką. *Szukaj* i *Dodaj inny program…* dla programów spoza menu.
 - **Gdy program pyta:** powiadomienie „Czy „Firefox” może korzystać z internetu?” z przyciskami

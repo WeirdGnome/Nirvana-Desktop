@@ -1685,6 +1685,13 @@ void Desktop::navigate(NWin *w, const std::string &target, Nav how) {
   std::string path = target;
   while (path.size() > 1 && path.back() == '/') path.pop_back();
   if (path == w->path) { update_nav(w); return; }
+  // the plain Applications window shows only the applications: another folder (Up from
+  // Applications, an address) opens in Rambler Advanced
+  if (!w->ex && !(path == apps_dir() || in_apps(path + "/"))) {
+    update_nav(w);
+    open_folder(path);
+    return;
+  }
   if (!allowed(path)) {
     update_nav(w);
     dialog(GURU_TITLE,

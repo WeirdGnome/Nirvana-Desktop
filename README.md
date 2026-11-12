@@ -41,7 +41,7 @@ What changed in each version: [CHANGELOG.md](CHANGELOG.md).
 
 Unpack the sources and run the installer:
 
-    tar xzf nirvana-desktop-0.0.61.tar.gz && cd nirvana-desktop
+    tar xzf nirvana-desktop-0.0.62.tar.gz && cd nirvana-desktop
     sudo ./install.sh                 # or: sudo ./install.sh --login-screen
 
 The installer:
@@ -177,9 +177,10 @@ Another system font (for example a free bitmap-style one) can be set with `NIRVA
   several versions of the same program can be told apart and installed side by side.
   Icons and .desktop data are cached in `~/.cache/nirvana/icons`.
 - **Where applications live**: in the hidden folder `~/.nirvana-apps`, so they do not clutter
-  Nirvana HD. The **Applications** icon on the desktop opens it in a plain (simple) Rambler
-  window with the category folders, also when folder windows are set to Rambler Advanced; its
-  address reads *Applications*; the programs are shown as big icons, like the Preferences
+  Nirvana HD. The **Applications** icon on the desktop opens it in a plain Rambler
+  window (without the tree and the panes - the only one; every other folder opens in Rambler
+  Advanced) with the category folders; its address reads *Applications*, and going up from it
+  opens Nirvana HD in Rambler Advanced; the programs are shown as big icons, like the Preferences
   window (a list with `Ctrl+2`). Right-click an application
   there and choose **Put on Dock** to keep it at hand; right-click a dock tile for **Open** and
   **Unpin from Dock**. An old `~/Applications` (`~/Aplikacje`) folder is moved there
@@ -303,8 +304,8 @@ desktop window does not take focus, so clicking the menu bar does not change the
 
 ## Rambler Advanced (two panes)
 
-**Preferences > Desktop > Folder Windows** switches the folder windows between **Rambler
-Simple** (one list, every folder remembers its window) and **Rambler Advanced**, a window in the
+Every folder window is **Rambler Advanced** (the former Rambler Simple style is gone; only the
+Applications window stays plain), a window in the
 style of the classic explorers of the late 1990s with the working style of the two-pane file
 managers of the 16-bit desktops:
 
@@ -706,12 +707,12 @@ and a few networks (everything else is passed on to the real `nmcli`).
 ## NirvanaSHIELD: which programs may use the internet
 
 A firewall in the spirit of the simple whitelist firewalls: **no program gets to the internet
-until you allow it.** Made so that a child and a grandparent can use it.
+until you allow it.** Made so that a child and a grandparent can use it – simple to handle, in the usual sizes of the other panels.
 
-- **Preferences > NirvanaSHIELD:** a big shield and one sentence say what is going on; three big
+- **Preferences > NirvanaSHIELD:** a shield and one sentence say what is going on; three
   buttons for the whole computer – **Protect** (only the green ones), **Block all internet**,
   **Switch protection off**; and a list of your programs (from the menus and your AppImages) with
-  one big switch each: **HAS INTERNET** / **NO INTERNET**. Programs that just tried to get out
+  one switch each: **HAS INTERNET** / **NO INTERNET**. Programs that just tried to get out
   come first, with an orange note. *Find* and *Add another program…* for programs not in the
   menus.
 - **When a program asks:** a notification "May “Firefox” use the internet?" with **Allow** and

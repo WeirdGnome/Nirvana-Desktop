@@ -64,7 +64,7 @@ struct DesktopSettings {
   // a size gadget in the corner; a click activates a window without raising it
   bool classic = false;
   bool outline = false;      // move and resize with an XOR outline (the window jumps on release)
-  std::string folder_style = "rambler";   // folder windows: rambler (one list) or explorer (tree, two panes)
+  std::string folder_style = "explorer";   // kept in the file; Rambler always uses explorer windows now
 };
 DesktopSettings read_desktop();
 bool write_desktop(const DesktopSettings &d);

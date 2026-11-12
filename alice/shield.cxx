@@ -1,8 +1,8 @@
 // Nirvana Desktop - alice: the NirvanaSHIELD panel
 //
-// Made so that a child and a grandfather can use it: big letters, one big switch per
-// program ("HAS INTERNET" / "NO INTERNET"), three big buttons for the whole computer,
-// and no network words. Programs that just tried to get to the internet come first, with
+// Made so that a child and a grandfather can use it - simple to handle, in the usual sizes
+// of the other panels: one switch per program ("HAS INTERNET" / "NO INTERNET"), three
+// buttons for the whole computer, and no network words. Programs that just tried to get to the internet come first, with
 // an orange note. With the parental lock every change asks for the administrator password.
 #include "framewin.h"
 #include "platinum.h"
@@ -34,7 +34,8 @@ using namespace plat;
 
 namespace {
 
-const int W = 780, H = 640;
+const int W = 600, H = 470;
+const int ROW = 40;   // a program on the list
 const Fl_Color GREEN = fl_rgb_color(0x2E, 0xA0, 0x44), RED = fl_rgb_color(0xD2, 0x3B, 0x30),
                ORANGE = fl_rgb_color(0xE0, 0x7A, 0x10);
 
@@ -101,7 +102,7 @@ public:
     box(BUTTON_BOX);
     down_box(BUTTON_DOWN);
     labelfont(FONT_SYSTEM);
-    labelsize(15);
+    labelsize(SIZE_SMALL + 1);
     callback([](Fl_Widget *w, void *) {
       auto *b = (ModeButton *)w;
       if (g_st.mode == b->mode) return;
@@ -113,10 +114,10 @@ public:
     Fl_Color bg = on ? (state == 1 ? GREEN : state == 2 ? RED : fl_rgb_color(0x80, 0x80, 0x80)) : GRAY;
     fl_draw_box(on ? BUTTON_DOWN : BUTTON_BOX, x(), y(), w(), h(), bg);
     if (on) { fl_color(bg); fl_rectf(x() + 3, y() + 3, w() - 6, h() - 6); }   // the chosen one in its color
-    draw_shield(x() + 14, y() + (h() - 30) / 2, 30, state);
-    fl_font(FONT_SYSTEM, 15);
+    draw_shield(x() + 8, y() + (h() - 22) / 2, 22, state);
+    fl_font(FONT_SYSTEM, SIZE_SMALL + 1);
     fl_color(on ? FL_WHITE : TEXT);
-    fl_draw(label(), x() + 52, y(), w() - 58, h(), FL_ALIGN_LEFT | FL_ALIGN_WRAP);
+    fl_draw(label(), x() + 34, y(), w() - 38, h(), FL_ALIGN_LEFT | FL_ALIGN_WRAP);
     if (Fl::focus() == this) draw_focus();
   }
 };
@@ -135,10 +136,10 @@ public:
     // the knob: right when on, left when off
     int kw = h() - 6, kx = on ? x() + w() - kw - 3 : x() + 3;
     fl_draw_box(UP_BOX, kx, y() + 3, kw, h() - 6, LIGHT);
-    fl_font(FONT_SYSTEM, 12);
+    fl_font(FONT_SYSTEM, SIZE_SMALL - 1);
     fl_color(FL_WHITE);
     const char *t = on ? _("HAS INTERNET") : _("NO INTERNET");
-    int tx = on ? x() + 6 : x() + kw + 8, tw = w() - kw - 14;
+    int tx = on ? x() + 4 : x() + kw + 6, tw = w() - kw - 10;
     fl_draw(t, tx, y(), tw, h(), FL_ALIGN_CENTER);
   }
   int handle(int e) override {
@@ -164,7 +165,7 @@ Fl_Image *icon_for(const shield::Program &p) {
   for (auto &t : tries) {
     if (access(t.c_str(), R_OK) != 0) continue;
     if (Fl_Shared_Image *si = Fl_Shared_Image::get(t.c_str())) {
-      if (si->w() > 0 && si->image()) { img = si->image()->copy(40, 40); si->release(); break; }
+      if (si->w() > 0 && si->image()) { img = si->image()->copy(32, 32); si->release(); break; }
       si->release();
     }
   }
@@ -178,9 +179,9 @@ public:
   Switch *sw;
   bool tried = false;
   std::string note;
-  Tile(int X, int Y, int W, const shield::Program &p) : Fl_Group(X, Y, W, 62), prog(p) {
+  Tile(int X, int Y, int W, const shield::Program &p) : Fl_Group(X, Y, W, ROW), prog(p) {
     box(FL_NO_BOX);
-    sw = new Switch(X + W - 176, Y + 12, 164, 38);
+    sw = new Switch(X + W - 132, Y + (ROW - 22) / 2, 122, 22);
     end();
     sw->on = std::any_of(prog.paths.begin(), prog.paths.end(), [](const std::string &f) { return g_allowed.count(f); });
     for (auto &f : prog.paths) {
@@ -206,20 +207,20 @@ public:
     fl_rectf(x(), y(), w(), h());
     fl_color(fl_color_average(TEXT, CONTENT, 0.15f));
     fl_xyline(x() + 8, y() + h() - 1, x() + w() - 8);
-    if (Fl_Image *img = icon_for(prog)) img->draw(x() + 14 + (40 - img->w()) / 2, y() + 11 + (40 - img->h()) / 2);
-    else draw_icon(Icon::Application, x() + 18, y() + 15, false);
+    if (Fl_Image *img = icon_for(prog)) img->draw(x() + 8 + (32 - img->w()) / 2, y() + 4 + (32 - img->h()) / 2);
+    else draw_icon(Icon::Application, x() + 8, y() + 4, false);
     fl_color(CONTENT_TEXT);
-    fl_font(FONT_SYSTEM, 16);
-    int tw = w() - 76 - 190;
-    fl_draw(ellipsize(prog.name, tw).c_str(), x() + 66, y() + 27);
-    fl_font(FONT_SMALL, 13);
+    fl_font(FONT_SYSTEM, SIZE_SYSTEM);
+    int tw = w() - 48 - 140;
+    fl_draw(ellipsize(prog.name, tw).c_str(), x() + 48, y() + 17);
+    fl_font(FONT_SMALL, SIZE_SMALL);
     if (!note.empty() && !sw->on) {
       fl_color(ORANGE);
-      fl_draw(ellipsize(note, tw).c_str(), x() + 66, y() + 47);
+      fl_draw(ellipsize(note, tw).c_str(), x() + 48, y() + 32);
     } else {
       fl_color(fl_color_average(CONTENT_TEXT, CONTENT, 0.55f));
       std::string sub = prog.appimage ? std::string(_("Program from the Applications folder")) : prog.comment;
-      fl_draw(ellipsize(sub, tw).c_str(), x() + 66, y() + 47);
+      fl_draw(ellipsize(sub, tw).c_str(), x() + 48, y() + 32);
     }
     draw_children();
   }
@@ -293,11 +294,11 @@ void rebuild() {
   for (auto &p : list) {
     if (!f.empty() && lower(p.name).find(f) == std::string::npos) continue;
     new Tile(g_scroll->x(), y, g_scroll->w() - SCROLL_W, p);
-    y += 62;
+    y += ROW;
   }
   if (y == g_scroll->y()) {
-    auto *b = new Fl_Box(g_scroll->x(), y, g_scroll->w() - SCROLL_W, 60, _("No program found."));
-    b->labelsize(15);
+    auto *b = new Fl_Box(g_scroll->x(), y, g_scroll->w() - SCROLL_W, ROW, _("No program found."));
+    b->labelsize(SIZE_SYSTEM);
   }
   g_scroll->end();
   g_scroll->scroll_to(0, std::min(sy, std::max(0, y - g_scroll->y() - g_scroll->h())));
@@ -316,7 +317,7 @@ void tick(void *) {
   Fl::repeat_timeout(3.0, tick);
 }
 
-Fl_Button *button(int X, int Y, int W, int H, const char *t, int size = 14) {
+Fl_Button *button(int X, int Y, int W, int H, const char *t, int size = SIZE_SMALL + 1) {
   auto *b = new Fl_Button(X, Y, W, H, t);
   b->box(BUTTON_BOX);
   b->down_box(BUTTON_DOWN);
@@ -333,31 +334,30 @@ int panel_shield() {
   g_win = new FrameWindow(W, H, "NirvanaSHIELD");
   g_win->xclass("nirvana-shield");
 
-  g_banner_shield = new BigShield(22, 14, 84);
-  g_title = new Fl_Box(126, 16, W - 140, 32);
+  g_banner_shield = new BigShield(16, 12, 48);
+  g_title = new Fl_Box(70, 12, W - 84, 20);
   g_title->labelfont(FONT_SYSTEM);
-  g_title->labelsize(22);
+  g_title->labelsize(SIZE_SYSTEM + 2);
   g_title->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
-  g_text = new Fl_Box(126, 50, W - 140, 48);
-  g_text->labelsize(15);
+  g_text = new Fl_Box(70, 34, W - 84, 30);
+  g_text->labelsize(SIZE_SMALL + 1);
   g_text->align(FL_ALIGN_LEFT | FL_ALIGN_TOP | FL_ALIGN_INSIDE | FL_ALIGN_WRAP);
 
   // --- the service is running ---
-  g_main_group = new Fl_Group(0, 110, W, H - 110);
-  int bw = (W - 30 - 2 * 10) / 3;
-  g_modes[0] = new ModeButton(15, 116, bw, 52, _("Protect\n(only green ones)"), "protect", 1);
-  g_modes[1] = new ModeButton(15 + bw + 10, 116, bw, 52, _("Block all\ninternet"), "block", 2);
-  g_modes[2] = new ModeButton(15 + 2 * (bw + 10), 116, bw, 52, _("Switch\nprotection off"), "off", 0);
-  auto *sl = new Fl_Box(15, 182, 80, 32, _("Find:"));
-  sl->labelfont(FONT_SYSTEM);
-  sl->labelsize(15);
+  g_main_group = new Fl_Group(0, 70, W, H - 70);
+  int bw = (W - 30 - 2 * 8) / 3;
+  g_modes[0] = new ModeButton(15, 74, bw, 36, _("Protect\n(only green ones)"), "protect", 1);
+  g_modes[1] = new ModeButton(15 + bw + 8, 74, bw, 36, _("Block all\ninternet"), "block", 2);
+  g_modes[2] = new ModeButton(15 + 2 * (bw + 8), 74, bw, 36, _("Switch\nprotection off"), "off", 0);
+  auto *sl = new Fl_Box(15, 120, 50, 22, _("Find:"));
+  sl->labelsize(SIZE_SMALL + 1);
   sl->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
-  g_search = new Fl_Input(85, 182, 300, 32);
+  g_search = new Fl_Input(62, 120, 200, 22);
   g_search->box(WELL_BOX);
-  g_search->textsize(16);
+  g_search->textsize(SIZE_SMALL + 1);
   g_search->when(FL_WHEN_CHANGED);
   g_search->callback([](Fl_Widget *w, void *) { g_filter = ((Fl_Input *)w)->value(); rebuild(); });
-  auto *add = button(W - 15 - 220, 182, 220, 32, _("Add another program…"));
+  auto *add = button(W - 15 - 180, 120, 180, 22, _("Add another program…"));
   add->callback([](Fl_Widget *, void *) {
     std::string f = choose_file(_("Which program may use the internet?"), {}, "/usr/bin");
     if (f.empty()) return;
@@ -365,13 +365,13 @@ int panel_shield() {
     if (realpath(f.c_str(), real)) f = real;
     if (change({"ALLOW " + f})) refresh();
   });
-  g_scroll = new Fl_Scroll(15, 224, W - 30, H - 224 - 62);
+  g_scroll = new Fl_Scroll(15, 150, W - 30, H - 150 - 58);
   g_scroll->box(WELL_BOX);
   g_scroll->color(CONTENT);
   g_scroll->type(Fl_Scroll::VERTICAL_ALWAYS);
   g_scroll->end();
-  g_lock = new Fl_Check_Button(15, H - 52, 300, 22, _("Changes need the parent's password"));
-  g_lock->labelsize(14);
+  g_lock = new Fl_Check_Button(15, H - 52, 300, 20, _("Changes need the parent's password"));
+  g_lock->labelsize(SIZE_SMALL + 1);
   g_lock->callback([](Fl_Widget *w, void *) {
     bool on = ((Fl_Check_Button *)w)->value();
     // switching the lock always takes the administrator password
@@ -379,8 +379,8 @@ int panel_shield() {
     if (!err.empty() && err != "canceled") fl_alert("%s", err.c_str());
     refresh();
   });
-  g_lan = new Fl_Check_Button(15, H - 30, 380, 22, _("Home network always allowed (printers, shared folders)"));
-  g_lan->labelsize(14);
+  g_lan = new Fl_Check_Button(15, H - 30, 380, 20, _("Home network always allowed (printers, shared folders)"));
+  g_lan->labelsize(SIZE_SMALL + 1);
   g_lan->callback([](Fl_Widget *w, void *) {
     if (!change({std::string("LAN ") + (((Fl_Check_Button *)w)->value() ? "1" : "0")})) {}
     refresh();
@@ -388,14 +388,14 @@ int panel_shield() {
   g_main_group->end();
 
   // --- the service is not running ---
-  g_off_group = new Fl_Group(0, 110, W, H - 110);
-  auto *info = new Fl_Box(60, 150, W - 120, 120,
+  g_off_group = new Fl_Group(0, 70, W, H - 70);
+  auto *info = new Fl_Box(70, 84, W - 100, 90,
                           _("When NirvanaSHIELD is on, no program can use the internet until you allow it. "
                             "Updates of the system and printing always work.\n\n"
                             "Programs asking for the internet show a message with the buttons \"Allow\" and \"No\"."));
-  info->labelsize(16);
+  info->labelsize(SIZE_SMALL + 1);
   info->align(FL_ALIGN_LEFT | FL_ALIGN_TOP | FL_ALIGN_INSIDE | FL_ALIGN_WRAP);
-  auto *on = button((W - 360) / 2, 300, 360, 64, _("Switch NirvanaSHIELD on"), 20);
+  auto *on = button(70, 184, 200, 26, _("Switch NirvanaSHIELD on"), SIZE_SYSTEM);
   on->labelfont(FONT_SYSTEM);
   on->callback([](Fl_Widget *, void *) {
     std::string err = shield::enable_service(true);
@@ -405,7 +405,7 @@ int panel_shield() {
   });
   g_off_group->end();
 
-  auto *ok = button(W - 102, H - 42, 86, 28, _("OK"));
+  auto *ok = button(W - 90, H - 36, 76, 24, _("OK"));
   ok->labelfont(FONT_SYSTEM);
   ok->shortcut(FL_Enter);
   ok->callback([](Fl_Widget *, void *) { g_win->hide(); });
