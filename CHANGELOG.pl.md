@@ -1,6 +1,12 @@
 # Lista zmian
 Wszystkie ważniejsze zmiany w Nirvana Desktop, od najnowszych. English: [CHANGELOG.md](CHANGELOG.md).
 
+## 0.0.43 – 2026-11-12
+
+- **Powiadomienia:** Rambler jest serwerem powiadomień (`org.freedesktop.Notifications`): okienka w prawym górnym rogu w bieżącym wyglądzie z obrazkiem programu, tekstem i przyciskami akcji, pilne z czerwonym paskiem; dźwięk (własny powiadomienia, z motywu albo wbudowany dzwonek Nirvany).
+- **Aplet powiadomień** (dzwonek): kropka nieprzeczytanych, ostatnie powiadomienia, Nie przeszkadzać, Dźwięk powiadomień, Wyczyść.
+- Sesja nie uruchamia już innych programów powiadomień z autostartu (`NIRVANA_NOTIFICATIONS=0` je zostawia).
+
 ## 0.0.42 – 2026-11-12
 
 - Poprawka: kółko myszy zmieniało głośność w dowolnym miejscu pulpitu – teraz tylko nad ikoną głośności (FLTK oddaje niewykorzystane kółko wszystkim widżetom okna). Ta sama poprawka dla ikon zasobnika i kalendarza.

@@ -1125,4 +1125,11 @@ T = {
     'Nothing copied yet': 'Nic jeszcze nie skopiowano',
     'Pause Recording': 'Wstrzymaj zapisywanie',
     'Clear History': 'Wyczyść historię',
+    'Notification': 'Powiadomienie',
+    'Another program shows the notifications': 'Powiadomienia wyświetla inny program',
+    'Notifications': 'Powiadomienia',
+    'No notifications': 'Brak powiadomień',
+    'Do Not Disturb': 'Nie przeszkadzać',
+    'Notification Sound': 'Dźwięk powiadomień',
+    'Clear Notifications': 'Wyczyść powiadomienia',
 }

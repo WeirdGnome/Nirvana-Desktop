@@ -41,7 +41,7 @@ What changed in each version: [CHANGELOG.md](CHANGELOG.md).
 
 Unpack the sources and run the installer:
 
-    tar xzf nirvana-desktop-0.0.42.tar.gz && cd nirvana-desktop
+    tar xzf nirvana-desktop-0.0.43.tar.gz && cd nirvana-desktop
     sudo ./install.sh                 # or: sudo ./install.sh --login-screen
 
 The installer:
@@ -584,6 +584,28 @@ and a few networks (everything else is passed on to the real `nmcli`).
   BlueZ errors (device off, codes did not match, no audio service – PipeWire/PulseAudio with
   Bluetooth support is needed for headphones).
 - Testing without hardware: `NIRVANA_BLUETOOTHCTL=/path/to/a/fake/bluetoothctl`.
+
+## Notifications
+
+- Rambler is the desktop's **notification server** (`org.freedesktop.Notifications` on the session
+  bus), so notifications of any program – web browsers, messengers, mail, `notify-send` – show up.
+- Each one is a small window at the top right below the menu bar, **in the current appearance**
+  (the scheme's title bar, or the classic 16-bit gadgets): the program's name in the title bar,
+  its picture (`image-data`, an icon name or a file), the summary in bold, the text (markup tags
+  removed) and up to 3 action buttons. A click on the notification runs its default action (e.g.
+  opens the chat) and closes it; the close box closes it only. Urgent notifications have a red
+  stripe and stay until clicked; the others go after ~5 s (longer texts stay longer, the pointer
+  over a window keeps it). At most 5 at once, the newest on top.
+- **Sound:** the notification's own sound (`sound-file`, `sound-name` from the sound theme), or
+  Nirvana's built-in chime (two short bell notes, made at the first use); played with paplay,
+  pw-play or aplay. `suppress-sound` is respected; several at once play one sound.
+- **The bell in the menu bar:** a red dot for unread notifications; the menu lists the recent ones
+  (only in memory – a click shows one again), **Do Not Disturb** (no windows and no sound – urgent
+  ones still show; the bell is crossed out), **Notification Sound** and **Clear Notifications**.
+  Settings in `~/.config/nirvana/notify.conf`.
+- If another notification program already owns the service (dunst, xfce4-notifyd…), it stays in
+  charge and the menu says so; the session does not start them from autostart.
+  `NIRVANA_NOTIFICATIONS=0` leaves notifications to another program.
 
 ## Clipboard history
 

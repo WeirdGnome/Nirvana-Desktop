@@ -71,6 +71,10 @@ for d in $dirs; do
     cmd=$(key "$f" Exec | sed -e 's/%[fFuUdDnNickvm]//g' -e 's/%%/%/g')
     [ -n "$cmd" ] || continue
     case "$cmd" in
+      # Rambler shows the notifications itself (the bell in the menu bar);
+      # NIRVANA_NOTIFICATIONS=0 leaves them to another program
+      *xfce4-notifyd*|*dunst*|*notification-daemon*|*mate-notification-daemon*|*lxqt-notificationd*|*notify-osd*|*mako*)
+        [ "${NIRVANA_NOTIFICATIONS:-1}" != 0 ] && continue ;;
       *polkit*|*policykit*|*PolicyKit*)
         [ -n "$AGENT" ] && continue   # Nirvana Desktop's own agent instead
         polkit_started=1 ;;

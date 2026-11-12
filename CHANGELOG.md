@@ -1,6 +1,12 @@
 # Changelog
 All notable changes to Nirvana Desktop, newest first. Polish: [CHANGELOG.pl.md](CHANGELOG.pl.md).
 
+## 0.0.43 – 2026-11-12
+
+- **Notifications:** Rambler is the notification server (`org.freedesktop.Notifications`): windows at the top right in the current appearance with the program's picture, text and action buttons, urgent ones with a red stripe; a sound (the notification's own, the theme's or Nirvana's built-in chime).
+- **Notification applet** (a bell): unread dot, the recent notifications, Do Not Disturb, Notification Sound, Clear.
+- The session no longer starts other notification programs from autostart (`NIRVANA_NOTIFICATIONS=0` keeps them).
+
 ## 0.0.42 – 2026-11-12
 
 - Fixed: the mouse wheel changed the volume anywhere on the desktop – now only over the volume icon (FLTK offers an unused wheel to all widgets of the window). The same fix for the tray icons and the calendar.

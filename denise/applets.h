@@ -47,6 +47,8 @@ int bluetooth_width();
 void refresh_bluetooth();
 // Clipboard history (clipboard.cxx): the copied texts in memory, Ctrl+Alt+V shows them
 Fl_Widget *make_clipboard(int X, int Y, int W, int H);
+// Notifications (notify.cxx): the org.freedesktop.Notifications server, windows, the bell applet
+Fl_Widget *make_notifications(int X, int Y, int W, int H);
 void clipboard_hotkey();   // grabs Ctrl+Alt+V on the root window
 // The clock (clock.cxx): time, calendar, pomodoro, timer, stopwatch. Its width follows
 // the content; relayout is called when it changes.

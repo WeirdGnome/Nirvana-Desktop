@@ -40,7 +40,7 @@ Co się zmieniło w każdej wersji: [CHANGELOG.pl.md](CHANGELOG.pl.md).
 
 Rozpakuj źródła i uruchom instalator:
 
-    tar xzf nirvana-desktop-0.0.42.tar.gz && cd nirvana-desktop
+    tar xzf nirvana-desktop-0.0.43.tar.gz && cd nirvana-desktop
     sudo ./install.sh                 # albo: sudo ./install.sh --login-screen
 
 Instalator:
@@ -581,6 +581,29 @@ sieci (resztę przekazuje do prawdziwego `nmcli`).
   typowych błędów BlueZ (urządzenie wyłączone, kody się nie zgadzały, brak usługi dźwięku –
   do słuchawek potrzebny jest PipeWire/PulseAudio z obsługą Bluetooth).
 - Testy bez sprzętu: `NIRVANA_BLUETOOTHCTL=/ścieżka/do/atrapy/bluetoothctl`.
+
+## Powiadomienia
+
+- Rambler jest **serwerem powiadomień** pulpitu (`org.freedesktop.Notifications` na szynie sesji),
+  więc pojawiają się powiadomienia każdego programu – przeglądarek, komunikatorów, poczty,
+  `notify-send`.
+- Każde to małe okienko w prawym górnym rogu pod paskiem menu, **w bieżącym wyglądzie** (pasek
+  tytułu schematu albo klasyczne gadżety 16-bit): nazwa programu na pasku tytułu, jego obrazek
+  (`image-data`, nazwa ikony albo plik), pogrubione podsumowanie, tekst (bez znaczników) i do 3
+  przycisków akcji. Klik w powiadomienie uruchamia jego domyślną akcję (np. otwiera rozmowę)
+  i je zamyka; przycisk zamykania tylko zamyka. Pilne mają czerwony pasek i zostają do kliknięcia;
+  pozostałe znikają po ~5 s (dłuższe teksty dłużej, kursor nad okienkiem je zatrzymuje). Najwyżej
+  5 naraz, najnowsze na górze.
+- **Dźwięk:** własny dźwięk powiadomienia (`sound-file`, `sound-name` z motywu dźwięków) albo
+  wbudowany dzwonek Nirvany (dwie krótkie nuty, tworzony przy pierwszym użyciu); odtwarzany przez
+  paplay, pw-play albo aplay. `suppress-sound` jest szanowane; kilka naraz – jeden dźwięk.
+- **Dzwonek na pasku menu:** czerwona kropka przy nieprzeczytanych; menu z ostatnimi (tylko
+  w pamięci – klik pokazuje powiadomienie jeszcze raz), **Nie przeszkadzać** (bez okienek i dźwięku
+  – pilne i tak się pokażą; dzwonek jest przekreślony), **Dźwięk powiadomień** i **Wyczyść
+  powiadomienia**. Ustawienia w `~/.config/nirvana/notify.conf`.
+- Jeśli usługę ma już inny program (dunst, xfce4-notifyd…), zostaje on przy powiadomieniach,
+  a menu o tym mówi; sesja nie uruchamia ich z autostartu. `NIRVANA_NOTIFICATIONS=0` zostawia
+  powiadomienia innemu programowi.
 
 ## Historia schowka
 
