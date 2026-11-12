@@ -1,6 +1,10 @@
 # Lista zmian
 Wszystkie ważniejsze zmiany w Nirvana Desktop, od najnowszych. English: [CHANGELOG.md](CHANGELOG.md).
 
+## 0.0.47 – 2026-11-12
+
+- Ikona apletu NirvanaSHIELD to jednokolorowa tarcza w kolorze tekstu paska menu, jak pozostałe aplety: wypełniona z ptaszkiem (chroni), wypełniona z kreską (cały internet zablokowany), kontur (ochrona wyłączona), przygaszony kropkowany kontur (usługa nie działa).
+
 ## 0.0.46 – 2026-11-12
 
 - **NirvanaSHIELD:** zapora, która wpuszcza do internetu tylko programy, którym pozwolisz – usługa `nirvana-shield` (nftables + cgroup net_cls + zdarzenia procesów z kernela), Preferencje > NirvanaSHIELD z dużym przełącznikiem przy każdym programie i trzema dużymi trybami (Chroń, Zablokuj cały internet, Wyłącz ochronę), tarcza na pasku menu i powiadomienie z Zezwól/Nie, gdy program pyta. Hasło rodzica i zawsze dozwolona sieć domowa.

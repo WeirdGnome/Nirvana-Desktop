@@ -41,7 +41,7 @@ What changed in each version: [CHANGELOG.md](CHANGELOG.md).
 
 Unpack the sources and run the installer:
 
-    tar xzf nirvana-desktop-0.0.46.tar.gz && cd nirvana-desktop
+    tar xzf nirvana-desktop-0.0.47.tar.gz && cd nirvana-desktop
     sudo ./install.sh                 # or: sudo ./install.sh --login-screen
 
 The installer:
@@ -604,7 +604,8 @@ until you allow it.** Made so that a child and a grandparent can use it.
   come first, with an orange note. *Find* and *Add another program…* for programs not in the
   menus.
 - **When a program asks:** a notification "May “Firefox” use the internet?" with **Allow** and
-  **No** (with a sound, like all notifications). The shield in the menu bar also lists the
+  **No** (with a sound, like all notifications). The shield in the menu bar (one color, like the other applets: filled
+  with a check mark – protecting, with a bar – all blocked, an outline – off) also lists the
   programs that asked.
 - **Parental lock** ("Changes need the parent's password"): then every change asks for the
   administrator password. **Home network always allowed**: printers, shared folders and other

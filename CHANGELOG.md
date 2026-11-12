@@ -1,6 +1,10 @@
 # Changelog
 All notable changes to Nirvana Desktop, newest first. Polish: [CHANGELOG.pl.md](CHANGELOG.pl.md).
 
+## 0.0.47 – 2026-11-12
+
+- The NirvanaSHIELD applet icon is a monochrome shield in the menu bar text color, like the other applets: filled with a check mark (protecting), filled with a bar (all internet blocked), an outline (protection off), a dotted, dimmed outline (the service is not running).
+
 ## 0.0.46 – 2026-11-12
 
 - **NirvanaSHIELD:** a firewall that lets only the programs you allowed use the internet – the `nirvana-shield` service (nftables + net_cls cgroup + the kernel's process events), Preferences > NirvanaSHIELD with big switches per program and three big modes (Protect, Block all internet, Protection off), a shield in the menu bar, and a notification with Allow/No when a program asks. Parental lock and an always-allowed home network.

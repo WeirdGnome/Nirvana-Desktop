@@ -618,6 +618,61 @@ void draw_bluetooth(int x, int y, Fl_Color c) {
   fl_line(x + 8, y + 9, x + 1, y + 3);
 }
 
+// The shield outline (as in draw_shield) - a path to fill or stroke
+static void shield_path(double x, double y, double W, double H) {
+  double l = x, r = x + W, t = y, b = y + H, m = x + W / 2;
+  fl_vertex(m, t);
+  fl_curve(m, t, m + (r - m) * 0.45, t + (b - t) * 0.10, r, t + (b - t) * 0.08, r, t + (b - t) * 0.12);
+  fl_curve(r, t + (b - t) * 0.12, r, t + (b - t) * 0.55, r - (r - m) * 0.35, t + (b - t) * 0.82, m, b);
+  fl_curve(m, b, l + (m - l) * 0.35, t + (b - t) * 0.82, l, t + (b - t) * 0.55, l, t + (b - t) * 0.12);
+  fl_curve(l, t + (b - t) * 0.12, l, t + (b - t) * 0.08, m - (m - l) * 0.45, t + (b - t) * 0.10, m, t);
+}
+
+// a small shield (12 x 14) drawn point by point: shoulders, straight sides, the point below
+static void small_shield(int x, int y, bool fill) {
+  static const int P[][2] = {{0, 2}, {3, 1}, {6, 0}, {9, 1}, {12, 2}, {12, 7}, {11, 10}, {9, 12}, {6, 14},
+                             {3, 12}, {1, 10}, {0, 7}};
+  if (fill) fl_begin_polygon(); else fl_begin_loop();
+  for (auto &p : P) fl_vertex(x + p[0] + (fill ? 0 : 0.5), y + p[1] + (fill ? 0 : 0.5));
+  if (fill) fl_end_polygon(); else fl_end_loop();
+}
+
+void draw_shield_mono(int x, int y, int size, int state, Fl_Color c, Fl_Color bg) {
+  if (size <= 16) {
+    fl_color(c);
+    if (state == 1 || state == 2) {
+      small_shield(x, y, true);
+      fl_color(bg);
+      fl_line_style(FL_SOLID, 2);
+      if (state == 1) fl_line(x + 3, y + 6, x + 5, y + 9, x + 9, y + 4);
+      else fl_line(x + 3, y + 6, x + 9, y + 6);
+      fl_line_style(0);
+    } else {
+      fl_line_style(state == 3 ? FL_DOT : FL_SOLID, 1);
+      small_shield(x, y, false);
+      fl_line_style(0);
+    }
+    return;
+  }
+  double W = size * 0.82, H = size;
+  fl_color(c);
+  if (state == 1 || state == 2) {   // filled, the sign cut out in the background color
+    fl_begin_complex_polygon(); shield_path(x, y, W, H); fl_end_complex_polygon();
+    fl_color(bg);
+    fl_line_style(FL_SOLID | FL_CAP_ROUND, std::max(1, size / 8));
+    double cx = x + W / 2, cy = y + H * 0.45;
+    if (state == 1)
+      fl_line((int)(cx - W * 0.24), (int)cy, (int)(cx - W * 0.05), (int)(cy + H * 0.17), (int)(cx + W * 0.26), (int)(cy - H * 0.17));
+    else
+      fl_line((int)(cx - W * 0.24), (int)cy, (int)(cx + W * 0.24), (int)cy);
+    fl_line_style(0);
+  } else {                          // an outline: off; dotted look when the service is not there
+    fl_line_style(state == 3 ? FL_DOT : FL_SOLID, 1);
+    fl_begin_loop(); shield_path(x + 0.5, y + 0.5, W - 1, H - 1); fl_end_loop();
+    fl_line_style(0);
+  }
+}
+
 void draw_shield(int x, int y, int size, int state) {
   double W = size * 0.82, H = size;
   auto shape = [&](double inset) {

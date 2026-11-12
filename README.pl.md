@@ -40,7 +40,7 @@ Co się zmieniło w każdej wersji: [CHANGELOG.pl.md](CHANGELOG.pl.md).
 
 Rozpakuj źródła i uruchom instalator:
 
-    tar xzf nirvana-desktop-0.0.46.tar.gz && cd nirvana-desktop
+    tar xzf nirvana-desktop-0.0.47.tar.gz && cd nirvana-desktop
     sudo ./install.sh                 # albo: sudo ./install.sh --login-screen
 
 Instalator:
@@ -601,8 +601,9 @@ mu nie pozwolisz.** Zrobiona tak, żeby obsłużyło ją dziecko i dziadek.
   każdym: **MA INTERNET** / **BEZ INTERNETU**. Programy, które przed chwilą próbowały wyjść, są
   na górze z pomarańczową notką. *Szukaj* i *Dodaj inny program…* dla programów spoza menu.
 - **Gdy program pyta:** powiadomienie „Czy „Firefox” może korzystać z internetu?” z przyciskami
-  **Zezwól** i **Nie** (z dźwiękiem, jak wszystkie powiadomienia). Tarcza na pasku menu też
-  pokazuje programy, które pytały.
+  **Zezwól** i **Nie** (z dźwiękiem, jak wszystkie powiadomienia). Tarcza na pasku menu (jednokolorowa jak inne aplety: wypełniona
+  z ptaszkiem – chroni, z kreską – wszystko zablokowane, kontur – wyłączona) też pokazuje programy,
+  które pytały.
 - **Hasło rodzica** („Zmiany tylko z hasłem rodzica”): wtedy każda zmiana prosi o hasło
   administratora. **Sieć domowa zawsze dozwolona**: drukarki, wspólne foldery i inne komputery
   w domu zostają osiągalne.

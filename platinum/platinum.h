@@ -223,7 +223,9 @@ void draw_display(int x, int y, Fl_Color c);
 void draw_bluetooth(int x, int y, Fl_Color c);
 // NirvanaSHIELD: a shield of the given size (height; width 0.82 x). state: 0 off (gray),
 // 1 protecting (green, a check mark), 2 everything blocked (red, a bar), 3 not running (gray, outline)
-void draw_shield(int x, int y, int size, int state);                   // 9x13, the rune of the radio standard
+void draw_shield(int x, int y, int size, int state);
+// the same in one color for the menu bar: filled with a check mark / a bar, or an outline
+void draw_shield_mono(int x, int y, int size, int state, Fl_Color c, Fl_Color bg);                   // 9x13, the rune of the radio standard
 // A depth gadget: a back rectangle and a front one overlapping it.
 void draw_depth_gadget(int x, int y, bool pressed);              // 18x14
 

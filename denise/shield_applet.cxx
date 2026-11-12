@@ -170,7 +170,10 @@ public:
     fl_push_clip(x(), y(), w(), h());
     draw_box(MENUBAR_BOX, GRAY);
     if (open_) { fl_color(selection_color()); fl_rectf(x(), y(), w(), h() - 1); }
-    draw_shield(x() + (w() - 12) / 2, y() + 3, 14, state());
+    Fl_Color on = open_ ? SEL_TEXT : TEXT, bg = open_ ? selection_color() : GRAY;
+    int st = state();
+    if (st == 3) on = fl_color_average(on, bg, 0.45f);   // the service is not running: dimmed
+    draw_shield_mono(x() + (w() - 12) / 2, y() + 3, 14, st, on, bg);
     fl_pop_clip();
   }
 private:
