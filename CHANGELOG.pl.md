@@ -1,6 +1,10 @@
 # Lista zmian
 Wszystkie ważniejsze zmiany w Nirvana Desktop, od najnowszych. English: [CHANGELOG.md](CHANGELOG.md).
 
+## 0.0.66 – 2026-11-12
+
+- **Wielkość doku w Preferencjach > Pulpit**: mały (24 px), normalny (32 px), duży (48 px) albo bardzo duży (64 px). Zmienia się od razu. Kosz przesuwa się nad dok, a okna zostawiają pod sobą miejsce na nowy rozmiar. Ikony programów są skalowane gładko, a ikony Nirvany powiększane o całe piksele, więc zostają ostre.
+
 ## 0.0.65 – 2026-11-12
 
 - **Narzędzia > Zrzut ekranu** (klawisz `Print`, działa w każdym oknie): zapisuje cały ekran jako PNG w Obrazach (`Zrzut ekranu <data>.png`) i pokazuje powiadomienie z przyciskiem *Pokaż w folderze*.

@@ -1,6 +1,10 @@
 # Changelog
 All notable changes to Nirvana Desktop, newest first. Polish: [CHANGELOG.pl.md](CHANGELOG.pl.md).
 
+## 0.0.66 – 2026-11-12
+
+- **Dock size in Preferences > Desktop**: small (24 px), normal (32 px), large (48 px) or very large (64 px). It changes at once; the Trash moves above the dock and windows leave room for the new size. Program pictures are scaled smoothly, Nirvana's own icons by whole pixels, so they stay crisp.
+
 ## 0.0.65 – 2026-11-12
 
 - **Special > Screenshot** (the `Print` key, in any window): saves the whole screen as a PNG in Pictures (`Screenshot <date>.png`) and shows a notification with *Show in Folder*.

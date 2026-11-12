@@ -12,6 +12,7 @@
 #include <FL/Fl_Box.H>
 #include <FL/Fl_Button.H>
 #include <FL/Fl_Check_Button.H>
+#include <FL/Fl_Choice.H>
 #include <FL/Fl_Round_Button.H>
 #include <FL/fl_draw.H>
 
@@ -23,6 +24,7 @@ namespace {
 
 DesktopSettings g_d;
 Fl_Check_Button *g_margin, *g_dock, *g_classic, *g_outline;
+Fl_Choice *g_dsize;
 
 // Two overlapping windows in the chosen style: the active one in front.
 class WindowSample : public Fl_Widget {
@@ -72,7 +74,7 @@ public:
       fl_color(DARK);
       fl_rect(X + 6, Y + 16 + i * 22, 12, 10);
     }
-    int dh = 14;                                // the dock
+    int dh = g_d.dock_size / 4 + 6;             // the dock (its size from the setting)
     fl_color(GRAY);
     fl_rectf(X + 2, Y + H - dh, 70, dh - 2);
     fl_color(DARK);
@@ -96,6 +98,7 @@ Preview *g_preview;
 void changed(Fl_Widget *, void *) {
   g_d.icon_margin = g_margin->value();
   g_d.dock_room = g_dock->value();
+  { static const int sizes[] = {24, 32, 48, 64}; int i = g_dsize->value(); g_d.dock_size = sizes[i >= 0 && i < 4 ? i : 1]; }
   g_d.classic = g_classic->value();
   g_d.outline = g_outline->value();
   g_d.folder_style = "explorer";   // the folder windows: always Rambler Advanced
@@ -116,7 +119,7 @@ Fl_Box *note(int X, int Y, int W, int H, const char *t) {
 
 int panel_desktop() {
   g_d = read_desktop();
-  const int W = 500, H = 510;
+  const int W = 500, H = 544;
   auto *win = new FrameWindow(W, H, _("Desktop"));
   win->xclass("nirvana-desktop-panel");
   auto *h = new Fl_Box(15, 10, 300, 20, _("Room for Windows"));
@@ -134,27 +137,39 @@ int panel_desktop() {
   g_dock->value(g_d.dock_room);
   g_dock->callback(changed);
   note(35, 148, 270, 46, _("Off: zoomed windows reach the bottom edge and may cover the dock."));
+  auto *dsl = new Fl_Box(15, 200, 120, 22, _("Dock size:"));
+  dsl->labelsize(SIZE_SMALL + 1);
+  dsl->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
+  g_dsize = new Fl_Choice(120, 200, 185, 22);
+  g_dsize->labelsize(SIZE_SMALL + 1);
+  g_dsize->textsize(SIZE_SMALL + 1);
+  for (const char *n : {_("Small (24 px)"), _("Normal (32 px)"), _("Large (48 px)"), _("Very large (64 px)")}) {
+    int k = g_dsize->add("x");   // add() treats '/' as a submenu - the text is set separately
+    g_dsize->replace(k, n);
+  }
+  g_dsize->value(g_d.dock_size == 24 ? 0 : g_d.dock_size == 48 ? 2 : g_d.dock_size == 64 ? 3 : 1);
+  g_dsize->callback(changed);
   g_preview = new Preview(320, 38, 165, 110);
   note(320, 152, 165, 40, _("Preview of a zoomed window."));
-  auto *sep = new Fl_Box(15, 200, W - 30, 2);
+  auto *sep = new Fl_Box(15, 234, W - 30, 2);
   sep->box(FL_ENGRAVED_BOX);
-  auto *h2 = new Fl_Box(15, 210, 300, 20, _("Window Behavior"));
+  auto *h2 = new Fl_Box(15, 244, 300, 20, _("Window Behavior"));
   h2->labelfont(FONT_SYSTEM);
   h2->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
-  g_classic = new Fl_Check_Button(15, 238, 290, 20, _("Classic 16-bit windows"));
+  g_classic = new Fl_Check_Button(15, 272, 290, 20, _("Classic 16-bit windows"));
   g_classic->labelsize(SIZE_SMALL + 1);
   g_classic->value(g_d.classic);
   g_classic->callback(changed);
-  note(35, 260, 270, 112,
+  note(35, 294, 270, 112,
        _("Close gadget at the left, zoom and depth gadgets at the right, size gadget in the bottom right corner. "
          "A click activates a window without bringing it to the front - the depth gadget sends the top window "
          "to the back and brings any other to the front."));
-  g_outline = new Fl_Check_Button(15, 376, 290, 20, _("Move and resize with an outline"));
+  g_outline = new Fl_Check_Button(15, 410, 290, 20, _("Move and resize with an outline"));
   g_outline->labelsize(SIZE_SMALL + 1);
   g_outline->value(g_d.outline);
   g_outline->callback(changed);
-  note(35, 398, 270, 30, _("The window jumps to its new place when the mouse button is released."));
-  g_sample = new WindowSample(320, 238, 165, 150);
+  note(35, 432, 270, 30, _("The window jumps to its new place when the mouse button is released."));
+  g_sample = new WindowSample(320, 272, 165, 150);
   note(15, H - 66, W - 120, 30, _("The changes apply at once, to all open windows."));
   auto *ok = new Fl_Button(W - 102, H - 36, 86, 24, _("OK"));
   ok->box(BUTTON_BOX);

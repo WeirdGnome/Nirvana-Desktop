@@ -32,6 +32,7 @@
 #include <ctime>
 #include <dirent.h>
 #include <map>
+#include <tuple>
 #include <vector>
 #include <filesystem>
 #include <fstream>
@@ -378,7 +379,7 @@ static std::string alice_exe();
 static Entry entry_for(const std::string &path);
 // The dock: a strip of tiles at the left and bottom screen edge,
 // names in tooltips. A collapse tab on the left, a rounded end on the right.
-static const int DOCK_TILE = 40;   // tile (32 px icon + frame)
+#define DOCK_TILE (desk_set_.dock_size + 8)   // tile: the icon (Preferences > Desktop > Dock size) + frame
 static const int DOCK_TAB = 14;    // collapse tab
 static const int DOCK_END = 12;    // rounded end of the strip
 static std::vector<net::Network> g_menu_nets;
@@ -884,7 +885,12 @@ plat::Rect Desktop::folder_area() const {
 // Insight (the window manager) takes the zoom rectangle for Rambler windows from here:
 // _NIRVANA_WINDOW_AREA on the root window = x, y, width, height of the frame on screen.
 void Desktop::desktop_settings_changed() {
+  int dock = desk_set_.dock_size;
   desk_set_ = plat::read_desktop();
+  if (dock != desk_set_.dock_size) {   // a new dock size: the tiles and the Trash above them move
+    layout_icons();
+    redraw();
+  }
   publish_folder_area();
 }
 
@@ -911,6 +917,34 @@ void Desktop::publish_folder_area() {
 void Desktop::dock_rect(int &X, int &Y, int &W, int &H) const {
   X = 0; H = DOCK_TILE; Y = h() - H;
   W = dock_.empty() ? 0 : DOCK_TAB + dock_shown_ * DOCK_TILE + DOCK_END;
+}
+
+// A dock icon of any size: pictures of programs scaled, Nirvana's vector icons drawn at 32 px
+// on the tile color and enlarged (64: by whole pixels, crisp) or made smaller
+static Fl_Image *dock_vector_icon(Icon icon, int size) {
+  static std::map<std::tuple<Fl_Color, int, int, int>, Fl_Image *> cache;
+  auto key = std::make_tuple(Fl::get_color(GRAY), (int)icon, size, (int)icon_style());
+  auto it = cache.find(key);
+  if (it != cache.end()) return it->second;
+  Fl_Image_Surface surf(32, 32);
+  Fl_Surface_Device::push_current(&surf);
+  fl_color(GRAY);
+  fl_rectf(0, 0, 32, 32);
+  draw_icon(icon, 0, 0, false);
+  Fl_Surface_Device::pop_current();
+  Fl_RGB_Image *src = surf.image();
+  Fl_RGB_Scaling was = Fl_Image::RGB_scaling();
+  Fl_Image::RGB_scaling(size % 32 == 0 ? FL_RGB_SCALING_NEAREST : FL_RGB_SCALING_BILINEAR);
+  Fl_Image *img = src->copy(size, size);
+  Fl_Image::RGB_scaling(was);
+  delete src;
+  cache[key] = img;
+  return img;
+}
+
+static void draw_dock_icon(const Entry &e, int x, int y, int size) {
+  if (size == 32 || !e.icon_file.empty()) draw_entry_icon(e, x, y, false, size);
+  else dock_vector_icon(e.icon, size)->draw(x, y);
 }
 
 void Desktop::draw_dock() {
@@ -945,7 +979,7 @@ void Desktop::draw_dock() {
                 sel ? fl_color_average(GRAY, SHADOW, 0.6f) : GRAY);
     fl_color(DARK);
     fl_rect(bx, by, DOCK_TILE + 1, DOCK_TILE + 1);
-    draw_entry_icon(ic.entry, ic.x + 24, ic.y, false, 32);
+    draw_dock_icon(ic.entry, ic.x + 24, ic.y, desk_set_.dock_size);
   }
 }
 

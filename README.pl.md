@@ -40,7 +40,7 @@ Co się zmieniło w każdej wersji: [CHANGELOG.pl.md](CHANGELOG.pl.md).
 
 Rozpakuj źródła i uruchom instalator:
 
-    tar xzf nirvana-desktop-0.0.65.tar.gz && cd nirvana-desktop
+    tar xzf nirvana-desktop-0.0.66.tar.gz && cd nirvana-desktop
     sudo ./install.sh                 # albo: sudo ./install.sh --login-screen
 
 Instalator:
@@ -426,7 +426,9 @@ eksploratorów z końca lat 90. ze sposobem pracy dwupanelowych menedżerów pli
   Za duże zapamiętane okna są przy otwarciu zmniejszane do tego obszaru.
   **Preferencje → Pulpit** pozwalają to wyłączyć: bez *Nie zasłaniaj ikon na pulpicie* okna zajmują
   cały ekran pod paskiem menu (bez kolumny ikon i odstępów), bez *Okna nad dokiem* sięgają dolnej
-  krawędzi. Zmiana działa od razu (`~/.config/nirvana/desktop.conf`).
+  krawędzi. *Wielkość doku* robi ikony doku małe (24 px), normalne (32 px), duże (48 px) albo
+  bardzo duże (64 px); okna i Kosz trzymają się nad nim. Zmiana działa od razu
+  (`~/.config/nirvana/desktop.conf`).
 - **Zaznaczanie**: klik, Shift/Ctrl+klik dodaje lub odejmuje, ramka zaznaczania myszą, `Ctrl+A`.
 - **Zmiana nazwy**: `F2` albo klik w nazwę już zaznaczonego elementu.
   Zmiana nazwy folderu aktualizuje jego otwarte okna i zapamiętane pozycje.

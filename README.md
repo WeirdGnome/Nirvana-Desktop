@@ -41,7 +41,7 @@ What changed in each version: [CHANGELOG.md](CHANGELOG.md).
 
 Unpack the sources and run the installer:
 
-    tar xzf nirvana-desktop-0.0.65.tar.gz && cd nirvana-desktop
+    tar xzf nirvana-desktop-0.0.66.tar.gz && cd nirvana-desktop
     sudo ./install.sh                 # or: sudo ./install.sh --login-screen
 
 The installer:
@@ -429,7 +429,9 @@ managers of the 16-bit desktops:
   Remembered windows that are too large are shrunk to this area when they open.
   **Preferences → Desktop** turns this off: without *Keep the desktop icons free* windows use the
   whole screen below the menu bar (no icon column, no gaps), without *Keep windows above the dock*
-  they reach the bottom edge. The change applies at once (`~/.config/nirvana/desktop.conf`).
+  they reach the bottom edge. *Dock size* makes the dock icons small (24 px), normal (32 px),
+  large (48 px) or very large (64 px); windows and the Trash keep above it. The change applies at
+  once (`~/.config/nirvana/desktop.conf`).
 - **Selecting**: click, Shift/Ctrl+click adds or removes, rubber-band selection with the mouse, `Ctrl+A`.
 - **Renaming**: `F2` or a click on the name of an item that is already selected.
   Renaming a folder updates its open windows and remembered positions.
