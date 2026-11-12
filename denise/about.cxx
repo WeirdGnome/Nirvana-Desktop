@@ -515,6 +515,8 @@ std::string credits_text() {
   item(std::string("xscreensaver — Jamie Zawinski ") + _("and its many authors: the idea of the screen savers (written anew, no code taken)"));
   item(std::string("neofetch — Dylan Araps: ") + _("the layout of “About This Computer”"));
   item(std::string("Devuan, Debian — ") + _("the system underneath"));
+  head(_("Community"));
+  item(std::string("ppa.pl — ") + _("the Polish retro computer community: support, ideas and testing"));
   head(_("Made with"));
   item(std::string("Claude (Anthropic) — ") + _("co-author of the code"));
   return t;

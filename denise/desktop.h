@@ -109,6 +109,7 @@ public:
   void restore();                 // open the windows remembered from the previous session
   void close(NWin *w);            // closing a window (frame button, Ctrl+W, dialog)
   void remember(NWin *w, bool open);
+  void update_global_keys();    // the global shortcuts for the active window (XGrabKey)
   void active_changed();          // the window manager changed the active window
   void clients_changed();         // the window list changed (_NET_CLIENT_LIST)
   void current_app(std::string &name, Fl_Image *&icon);   // the active application for the bar

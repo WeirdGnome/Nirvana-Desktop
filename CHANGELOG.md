@@ -1,6 +1,11 @@
 # Changelog
 All notable changes to Nirvana Desktop, newest first. Polish: [CHANGELOG.pl.md](CHANGELOG.pl.md).
 
+## 0.0.63 – 2026-11-12
+
+- **Global shortcuts work while another window is active**: the shortcuts of the Nirvana, System and Special menus (`Ctrl+E` Execute Command, `Ctrl+T` Nirvana Shell, `Ctrl+Q` Log Out, `Ctrl+Alt+K` Force Quit) only worked with the desktop or a Rambler window active. Now they also work in Nirvana's other windows (Preferences, file dialogs, Find…), and `Ctrl+Alt+K` everywhere. Other programs and Nirvana Shell keep their own `Ctrl+letter`.
+- **Acknowledgements** (About This Computer): a new *Community* section with [ppa.pl](https://www.ppa.pl).
+
 ## 0.0.62 – 2026-11-12
 
 - **NirvanaSHIELD in the usual sizes**: the panel now has the letters, buttons, switches and program rows of the other Preferences panels (a 600×470 window instead of 780×640). The simple handling stays: one "HAS INTERNET" / "NO INTERNET" switch per program and three buttons for the whole computer.

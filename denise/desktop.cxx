@@ -433,6 +433,7 @@ static Fl_RGB_Image *make_logo_image() {
 // carries a pointer to a constant item description (with a Desktop method).
 // ---------------------------------------------------------------------------
 struct MenuDef { const char *path; int shortcut; void (Desktop::*m)(); int flags; };
+static const std::vector<MenuDef> *g_global_items = nullptr;   // the global bar's items (global shortcuts)
 
 static void global_menu_cb(Fl_Widget *w, void *d) {
   auto *self = (Desktop *)w->window();
@@ -551,6 +552,7 @@ Desktop::Desktop(int W, int H, const std::string &home)
   for (auto &it : items) {
     menu_->add(plat::tr_path(it.path).c_str(), it.shortcut, global_menu_cb, (void *)&it, it.flags);
   }
+  g_global_items = &items;
   logo_item_ = (Fl_Menu_Item *)menu_->find_item("logo");
   set_logo();
 
@@ -1006,9 +1008,93 @@ static void net_message(Window w, Atom type, long l0, long l1, long l2) {
   XFlush(fl_display);
 }
 
+// ---------------------------------------------------------------------------
+// Global shortcuts: the items of the Nirvana, System and Special menus (Ctrl+E, Ctrl+T,
+// Ctrl+Q, Ctrl+Alt+K) also work when another window is active. In Rambler's own windows FLTK
+// finds them itself; for the other Nirvana programs (Preferences, file dialogs, Find...) they
+// are taken from the X server (XGrabKey on the root window) - while such a window is active.
+// The other programs (and Nirvana Shell - a terminal needs Ctrl+letter for its programs) keep
+// their own Ctrl+letter; only the shortcuts with Ctrl+Alt are taken over them.
+// ---------------------------------------------------------------------------
+struct GlobalKey { KeyCode code; unsigned mods; const MenuDef *def; };
+static std::vector<GlobalKey> g_global_keys;
+static const unsigned KEY_MODS = ControlMask | Mod1Mask | ShiftMask | Mod4Mask;
+
+static unsigned x_mods(int sc) {
+  unsigned m = 0;
+  if (sc & FL_CTRL) m |= ControlMask;
+  if (sc & FL_ALT) m |= Mod1Mask;
+  if (sc & FL_SHIFT) m |= ShiftMask;
+  if (sc & FL_META) m |= Mod4Mask;
+  return m;
+}
+
+static std::string window_class(Window w) {
+  std::string c;
+  XClassHint h{};
+  if (w && XGetClassHint(fl_display, w, &h)) {
+    c = h.res_class ? h.res_class : h.res_name ? h.res_name : "";
+    if (h.res_name) XFree(h.res_name);
+    if (h.res_class) XFree(h.res_class);
+  }
+  for (auto &ch : c) ch = (char)tolower((unsigned char)ch);
+  return c;
+}
+
+static int ignore_x_errors(Display *, XErrorEvent *) { return 0; }
+
+void Desktop::update_global_keys() {
+  if (!g_global_items || !fl_display) return;
+  Window a = net_active();
+  bool ours = a == 0 || (shown() && a == fl_xid(this));
+  for (auto *w : wins_) if (w->shown() && fl_xid(w) == a) ours = true;
+  std::string cls = ours ? std::string() : window_class(a);
+  bool nirvana = cls.rfind("nirvana", 0) == 0 && cls != "nirvana-shell";
+  std::vector<GlobalKey> want;
+  if (!ours)
+    for (auto &d : *g_global_items) {
+      if (!d.shortcut) continue;
+      unsigned m = x_mods(d.shortcut);
+      if (!nirvana && !((m & ControlMask) && (m & Mod1Mask))) continue;   // other programs: only Ctrl+Alt
+      KeyCode k = XKeysymToKeycode(fl_display, (KeySym)(d.shortcut & 0xFFFF));
+      if (k) want.push_back({k, m, &d});
+    }
+  bool same = want.size() == g_global_keys.size();
+  for (size_t i = 0; same && i < want.size(); i++)
+    same = want[i].code == g_global_keys[i].code && want[i].mods == g_global_keys[i].mods;
+  if (same) return;
+  Window root = DefaultRootWindow(fl_display);
+  XSync(fl_display, False);
+  auto old = XSetErrorHandler(ignore_x_errors);   // someone else holds a key: that one stays theirs
+  static const unsigned extras[] = {0u, (unsigned)LockMask, (unsigned)Mod2Mask, (unsigned)(LockMask | Mod2Mask)};
+  for (auto &g : g_global_keys)
+    for (unsigned x : extras) XUngrabKey(fl_display, g.code, g.mods | x, root);
+  g_global_keys = want;
+  for (auto &g : g_global_keys)
+    for (unsigned x : extras) XGrabKey(fl_display, g.code, g.mods | x, root, True, GrabModeAsync, GrabModeAsync);
+  XSync(fl_display, False);
+  XSetErrorHandler(old);
+}
+
+static int global_key(XEvent *e) {
+  if (e->type != KeyPress || !g_desk) return 0;
+  for (auto &g : g_global_keys)
+    if (e->xkey.keycode == g.code && (e->xkey.state & KEY_MODS) == g.mods) {
+      const MenuDef *d = g.def;
+      Fl::add_timeout(0.0, [](void *p) {   // after this event: the action may open windows
+        auto *def = (const MenuDef *)p;
+        g_desk->update_menu();
+        if (def->m) (g_desk->*(def->m))();
+      }, (void *)d);
+      return 1;
+    }
+  return 0;
+}
+
 // Change of the active window (a property on the root window).
 static int x_watch(void *event, void *) {
   XEvent *e = (XEvent *)event;
+  if (global_key(e)) return 1;
   if (e->type == PropertyNotify && e->xproperty.window == DefaultRootWindow(fl_display) && g_desk) {
     if (e->xproperty.atom == atom("_NET_ACTIVE_WINDOW")) g_desk->active_changed();
     else if (e->xproperty.atom == atom("_NIRVANA_ICONS")) g_desk->iconic_changed();
@@ -1355,6 +1441,7 @@ int Desktop::shortcut() {
 }
 
 void Desktop::active_changed() {
+  update_global_keys();
   if (app_menu_) app_menu_->redraw();   // name and icon of the active application in the bar
   Window a = net_active();
   for (auto it = wins_.begin(); it != wins_.end(); ++it) {

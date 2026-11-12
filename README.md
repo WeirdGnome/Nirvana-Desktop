@@ -41,7 +41,7 @@ What changed in each version: [CHANGELOG.md](CHANGELOG.md).
 
 Unpack the sources and run the installer:
 
-    tar xzf nirvana-desktop-0.0.62.tar.gz && cd nirvana-desktop
+    tar xzf nirvana-desktop-0.0.63.tar.gz && cd nirvana-desktop
     sudo ./install.sh                 # or: sudo ./install.sh --login-screen
 
 The installer:
@@ -474,12 +474,17 @@ shows the log of the session (`~/.xsession-errors`).
 | **System** | Lock Screen, Sleep, Hibernate, Log Out `Ctrl+Q`, Restart, Shut Down |
 | **Special** | Format Disk, Empty Trash, Force Quit a Window… `Ctrl+Alt+K` (like xkill: a skull cursor, click the window of a program that hangs, confirm; the right button or Esc cancels; Nirvana's own windows are protected) |
 
+The shortcuts of these menus are **global**: they also work while another window is active –
+always in Nirvana's own windows (Preferences, file dialogs, Find…), and `Ctrl+Alt+K` everywhere.
+Other programs and Nirvana Shell keep their own `Ctrl+letter` (a terminal needs `Ctrl+E`,
+`Ctrl+Q`… for the programs running in it).
+
 **About This Computer** shows the system in the manner of neofetch: a large logo with the
 color swatches on the left and `user@host` with the parameters on the right – OS, host, kernel,
 uptime, packages (dpkg/rpm, Flatpak, AppImage), shell, resolution, desktop environment, window
 manager and its theme, theme, icons, font, cursor, terminal and its font, CPU, GPU, memory,
 disk, battery, local IP and locale. The other two tabs hold the **Licence** (GPL-3.0) and the
-**Acknowledgements**.
+**Acknowledgements** (among them the [ppa.pl](https://www.ppa.pl) community).
 
 ![About This Computer](docs/img/about.png)
 

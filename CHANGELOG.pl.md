@@ -1,6 +1,11 @@
 # Lista zmian
 Wszystkie ważniejsze zmiany w Nirvana Desktop, od najnowszych. English: [CHANGELOG.md](CHANGELOG.md).
 
+## 0.0.63 – 2026-11-12
+
+- **Globalne skróty działają przy aktywnym innym oknie**: skróty z menu Nirvana, System i Narzędzia (`Ctrl+E` Wykonaj polecenie, `Ctrl+T` Nirvana Shell, `Ctrl+Q` Wyloguj, `Ctrl+Alt+K` Zabij okno) działały tylko wtedy, gdy aktywny był pulpit albo okno Ramblera. Teraz działają też w pozostałych oknach Nirvany (Preferencje, okna wyboru plików, Szukaj…), a `Ctrl+Alt+K` wszędzie. Inne programy i Nirvana Shell zachowują swoje `Ctrl+litera`.
+- **Podziękowania** (O systemie): nowa sekcja *Społeczność* z [ppa.pl](https://www.ppa.pl).
+
 ## 0.0.62 – 2026-11-12
 
 - **NirvanaSHIELD w zwykłych rozmiarach**: panel ma teraz litery, przyciski, przełączniki i wiersze programów takie jak pozostałe panele Preferencji (okno 600×470 zamiast 780×640). Prosta obsługa została bez zmian: jeden przełącznik „MA INTERNET” / „BEZ INTERNETU” na program i trzy przyciski dla całego komputera.

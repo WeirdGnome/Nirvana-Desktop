@@ -40,7 +40,7 @@ Co się zmieniło w każdej wersji: [CHANGELOG.pl.md](CHANGELOG.pl.md).
 
 Rozpakuj źródła i uruchom instalator:
 
-    tar xzf nirvana-desktop-0.0.62.tar.gz && cd nirvana-desktop
+    tar xzf nirvana-desktop-0.0.63.tar.gz && cd nirvana-desktop
     sudo ./install.sh                 # albo: sudo ./install.sh --login-screen
 
 Instalator:
@@ -471,12 +471,17 @@ ostateczności pokazuje dziennik sesji (`~/.xsession-errors`).
 | **System** | Zablokuj ekran, Uśpij, Hibernuj, Wyloguj `Ctrl+Q`, Uruchom ponownie, Wyłącz |
 | **Narzędzia** | Formatuj dysk, Opróżnij kosz, Zabij okno… `Ctrl+Alt+K` (jak xkill: kursor z czaszką, klik w okno zawieszonego programu, potwierdzenie; prawy przycisk albo Esc przerywa; okna samej Nirvany są chronione) |
 
+Skróty tych menu są **globalne**: działają także wtedy, gdy aktywne jest inne okno – zawsze
+w oknach samej Nirvany (Preferencje, okna wyboru plików, Szukaj…), a `Ctrl+Alt+K` wszędzie.
+Inne programy i Nirvana Shell zachowują swoje `Ctrl+litera` (terminal potrzebuje `Ctrl+E`,
+`Ctrl+Q`… dla działających w nim programów).
+
 **O systemie** pokazuje system na wzór neofetch: po lewej duże logo z próbkami kolorów,
 po prawej `użytkownik@komputer` i parametry – system, komputer, jądro, czas pracy, pakiety
 (dpkg/rpm, Flatpak, AppImage), powłoka, rozdzielczość, środowisko, menedżer okien i jego motyw,
 motyw, ikony, czcionka, kursor, terminal i jego czcionka, procesor, grafika, pamięć, dysk,
 bateria, lokalny IP i ustawienia regionalne. Dwie pozostałe karty to **Licencja** (GPL-3.0)
-i **Podziękowania**.
+i **Podziękowania** (wśród nich społeczność [ppa.pl](https://www.ppa.pl)).
 
 ![O systemie](docs/img/about.png)
 

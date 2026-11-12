@@ -600,6 +600,8 @@ T = {
     'About This Computer': 'O systemie',
     'Licence': 'Licencja',
     'Acknowledgements': 'Podziękowania',
+    'Community': 'Społeczność',
+    'the Polish retro computer community: support, ideas and testing': 'polska społeczność miłośników dawnych komputerów: wsparcie, pomysły i testy',
     'System Info': 'System',
     'Retro|Platinum': 'Retro|Platinum',
     'Retro': 'Retro',
