@@ -232,8 +232,9 @@ void draw_titlebar(int x, int y, int w, const char *title, bool active,
                    int boxes = 1 /* 0: dialog without buttons, 1: all, 2: without "zoom" */);
 void draw_frame(int x, int y, int w, int h, bool active, bool shaded);
 void draw_grow_box(int x, int y);
+void draw_close_box(int x, int y, bool pressed, bool active);   // the title bar close button alone (BOX x BOX)
 // "Classic 16-bit" windows (Preferences > Desktop): the bar is a row of beveled cells.
-// boxes: 0 no gadgets, 1 close + zoom + depth, 2 depth only (dialogs), 3 close + depth
+// boxes: 0 no gadgets, 1 close + zoom + depth, 2 depth only (dialogs), 3 close + depth, 4 close only
 // pressed: 1 close, 2 zoom, 4 depth
 constexpr int CLASSIC_GADGET = 22;   // width of a gadget cell
 constexpr int CLASSIC_SIZE = 16;     // the size gadget in the bottom right corner (L on the frame)

@@ -1174,6 +1174,7 @@ public:
       return 1;
     }
     case FL_MOUSEWHEEL: {
+      if (!Fl::event_inside(this)) return 0;   // only over the tray icons
       int sx;
       Slot *s = slot_at(Fl::event_x(), sx);
       if (s && !s->xembed) scroll(*s, -Fl::event_dy() * 120);

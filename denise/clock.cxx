@@ -251,6 +251,7 @@ public:
       return 1;
     }
     if (e == FL_MOUSEWHEEL) {
+      if (!Fl::event_inside(this) || !Fl::event_dy()) return 0;
       month += Fl::event_dy() > 0 ? 1 : -1;
       if (month < 0) { month = 11; year--; }
       if (month > 11) { month = 0; year++; }

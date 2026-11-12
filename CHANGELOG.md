@@ -1,6 +1,10 @@
 # Changelog
 All notable changes to Nirvana Desktop, newest first. Polish: [CHANGELOG.pl.md](CHANGELOG.pl.md).
 
+## 0.0.42 – 2026-11-12
+
+- Fixed: the mouse wheel changed the volume anywhere on the desktop – now only over the volume icon (FLTK offers an unused wheel to all widgets of the window). The same fix for the tray icons and the calendar.
+
 ## 0.0.41 – 2026-11-12
 
 - **Clipboard history:** a menu bar applet remembers the last 25 copied texts (in memory only); a click or Ctrl+Alt+V shows them, choosing one puts it back into the clipboard; Pause Recording and Clear History.

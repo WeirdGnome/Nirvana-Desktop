@@ -1,6 +1,10 @@
 # Lista zmian
 Wszystkie ważniejsze zmiany w Nirvana Desktop, od najnowszych. English: [CHANGELOG.md](CHANGELOG.md).
 
+## 0.0.42 – 2026-11-12
+
+- Poprawka: kółko myszy zmieniało głośność w dowolnym miejscu pulpitu – teraz tylko nad ikoną głośności (FLTK oddaje niewykorzystane kółko wszystkim widżetom okna). Ta sama poprawka dla ikon zasobnika i kalendarza.
+
 ## 0.0.41 – 2026-11-12
 
 - **Historia schowka:** aplet na pasku menu pamięta ostatnie 25 skopiowanych tekstów (tylko w pamięci); klik albo Ctrl+Alt+V je pokazuje, wybranie wpisu wkłada go z powrotem do schowka; Wstrzymaj zapisywanie i Wyczyść historię.

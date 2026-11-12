@@ -104,7 +104,10 @@ public:
       open_popup();
       return 1;
     }
+    // only over the icon: FLTK also offers the wheel to widgets away from the pointer
+    // when nothing under it wants it (the whole desktop changed the volume)
     if (e == FL_MOUSEWHEEL) {
+      if (!Fl::event_inside(this) || !Fl::event_dy()) return 0;
       audio::step_volume(-Fl::event_dy() * 5);
       refresh(true);
       return 1;

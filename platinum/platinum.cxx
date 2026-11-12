@@ -1103,6 +1103,8 @@ void draw_titlebar(int x, int y, int w, const char *title, bool active, int pres
   fl_draw(t.c_str(), tx, y + TITLE_H / 2 + fl_height() / 2 - fl_descent());
 }
 
+void draw_close_box(int x, int y, bool pressed, bool active) { title_button(x, y, 1, pressed, active); }
+
 void draw_frame(int x, int y, int w, int h, bool active, bool shaded) {
   fl_color(GRAY);
   fl_rectf(x, y, w, h);
@@ -1144,9 +1146,9 @@ static void classic_cell(int x, int y, int w, int h, bool pressed, Fl_Color face
   fl_yxline(x + w - 1, y, y + h - 1);
 }
 
-static bool has_close(int b) { return b == 1 || b == 3; }
+static bool has_close(int b) { return b == 1 || b == 3 || b == 4; }
 static bool has_zoom(int b) { return b == 1; }
-static bool has_depth(int b) { return b >= 1; }
+static bool has_depth(int b) { return b >= 1 && b <= 3; }
 
 int classic_gadget_hit(int w, int ex, int ey, int boxes) {
   if (!boxes || ey < 0 || ey >= TITLE_H || ex < 0 || ex >= w) return 0;
