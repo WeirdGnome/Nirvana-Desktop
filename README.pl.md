@@ -40,7 +40,7 @@ Co się zmieniło w każdej wersji: [CHANGELOG.pl.md](CHANGELOG.pl.md).
 
 Rozpakuj źródła i uruchom instalator:
 
-    tar xzf nirvana-desktop-0.0.52.tar.gz && cd nirvana-desktop
+    tar xzf nirvana-desktop-0.0.53.tar.gz && cd nirvana-desktop
     sudo ./install.sh                 # albo: sudo ./install.sh --login-screen
 
 Instalator:
@@ -309,9 +309,12 @@ eksploratorów z końca lat 90. ze sposobem pracy dwupanelowych menedżerów pli
   (lista/ikony), Serwer. Pod nim pole **Adres** z **Przejdź** – folder domowy jest pokazany jako
   dysk, którym jest: `Nirvana HD/Muzyka` (wpisanie `~/Muzyka` też działa, tak jak ścieżki
   wewnątrz archiwów).
-- **Drzewo folderów** po lewej (kropkowane linie, wczytywane przy rozwijaniu): Nirvana HD,
-  zamontowane dyski, połączone serwery, Kosz; podąża za panelem źródłowym, klik otwiera tam
-  folder. Przegrodę można przeciągać.
+- **Drzewo folderów** po lewej (kropkowane linie, wczytywane przy rozwijaniu), każda pozycja
+  z własną ikoną: Nirvana HD, **wszystkie dyski** – partycje, pendrive’y, karty, płyty,
+  zamontowane i nie (klik na niezamontowanym montuje go i pokazuje; zaszyfrowany najpierw pyta
+  o hasło) – połączone serwery i Kosz (pusty albo pełny). Podąża za panelem źródłowym, klik
+  otwiera tam folder, zmienia się po podłączeniu i odłączeniu dysku. Przegrodę można przeciągać.
+  Dyski mają swoje nazwy także w adresie: `PENDRIVE/Zdjecia` (tak też można wpisać).
 - **Dwa panele – ŹRÓDŁO i CEL:** aktywny panel to źródło (niebieska etykieta), każde polecenie
   Ramblera działa na nim; drugi to cel. **F5** kopiuje, **F6** przenosi zaznaczenie do celu, **F7**
   tworzy folder, **F8** usuwa, **Tab** zamienia źródło; przeciąganie między panelami też działa.
@@ -385,7 +388,9 @@ eksploratorów z końca lat 90. ze sposobem pracy dwupanelowych menedżerów pli
   zikonizowane okna; **Kosz** stoi zawsze w tym samym miejscu na dole, nad dokiem – dodanie
   czegoś do doku ani jego opróżnienie go nie przesuwa.
 - **Menu podręczne** (prawy przycisk myszy):
-  - ikony biurka: Otwórz, Informacje, Wysuń, Formatuj dysk, Opróżnij kosz, Przywróć (ikony
+  - ikony biurka: Otwórz, Informacje, Wysuń, Formatuj dysk, Opróżnij kosz (z dźwiękiem
+    zgniatanego papieru wpadającego do kosza – własnym Nirvany, syntetyzowanym; własny plik
+    `~/.local/share/nirvana/sounds/trash-empty.wav` go zastępuje, pusty plik go wyłącza), Przywróć (ikony
     okien); `Ctrl+O`, `Ctrl+I`, `Ctrl+Y` działają na zaznaczoną ikonę biurka,
   - kafelki doku: Otwórz, Odepnij z doku,
   - ikony w oknie folderu: Otwórz, Połóż na doku / Odepnij z doku, Informacje, Zmień nazwę,

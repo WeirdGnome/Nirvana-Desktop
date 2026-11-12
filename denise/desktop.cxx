@@ -1,6 +1,7 @@
 // Nirvana Desktop - denise: the desktop, the menu bar and the file manager windows
 #include "desktop.h"
 #include "jobs.h"
+#include "sounds.h"
 #include "applets.h"
 #include "appimage.h"
 #include "gary.h"
@@ -692,6 +693,7 @@ void Desktop::watch_trash() {
         Icon want = full ? Icon::TrashFull : Icon::Trash;
         if (ic.icon != want) { ic.icon = want; self->redraw(); }
       }
+    self->ex_trash_changed(full);
   }, this);
 }
 
@@ -1573,17 +1575,25 @@ Fl_Menu_Bar *Desktop::make_folder_menubar(NWin *win, int X, int Y, int W) {
   return mb;
 }
 
-// Paths for people: the home folder is the disk "Nirvana HD" - "Nirvana HD/Muzyka", never "~"
+// The mounted disks by their names (Desktop::rescan_volumes keeps it): "PENDRIVE" for /media/...
+static std::vector<std::pair<std::string, std::string>> g_disk_names;   // (mount point, name)
+
+// Paths for people: the home folder is the disk "Nirvana HD" - "Nirvana HD/Muzyka", never "~";
+// a mounted disk by its name - "PENDRIVE/Zdjecia"
 std::string disk_path(const std::string &path) {
   const char *h = getenv("HOME");
   std::string home = h ? h : "";
   while (home.size() > 1 && home.back() == '/') home.pop_back();
+  for (auto &[mp, name] : g_disk_names) {   // a disk inside the home folder (rare) is still the disk
+    if (path == mp) return name;
+    if (path.rfind(mp + "/", 0) == 0) return name + path.substr(mp.size());
+  }
   if (home.empty() || home == "/") return path;
   if (path == home) return "Nirvana HD";
   if (path.rfind(home + "/", 0) == 0) return "Nirvana HD" + path.substr(home.size());
   return path;
 }
-// ...and back: "Nirvana HD/Muzyka" (and the old "~/Muzyka") -> the real path
+// ...and back: "Nirvana HD/Muzyka" (and the old "~/Muzyka"), "PENDRIVE/Zdjecia" -> the real path
 std::string real_path(const std::string &text) {
   const char *h = getenv("HOME");
   std::string home = h ? h : "";
@@ -1591,6 +1601,11 @@ std::string real_path(const std::string &text) {
   if (text == disk || text == "~") return home;
   if (text.rfind(disk + "/", 0) == 0) return home + text.substr(disk.size());
   if (text.rfind("~/", 0) == 0) return home + text.substr(1);
+  if (!text.empty() && text[0] != '/')
+    for (auto &[mp, name] : g_disk_names) {
+      if (text == name) return mp;
+      if (text.rfind(name + "/", 0) == 0) return mp + text.substr(name.size());
+    }
   return text;
 }
 static std::string location_text(const std::string &path, const std::string &) { return disk_path(path); }
@@ -2360,6 +2375,7 @@ void Desktop::empty_trash() {
              };
              job->on_done = [this](jobs::Job &) { refresh_all(); };
              jobs::start(job);
+             sounds::play("trash-empty");   // the paper crumpled into the basket
            }}});
 }
 
@@ -3253,6 +3269,9 @@ void Desktop::drop_uris(const std::string &list, const std::string &dest) {
 // and every few seconds (an inserted disc creates no new device).
 void Desktop::watch_volumes() {
   vols_ = vol::scan();
+  g_disk_names.clear();
+  for (auto &v : vols_)
+    if (!v.mountpoint.empty() && v.name.find('/') == std::string::npos) g_disk_names.push_back({v.mountpoint, v.name});
   layout_icons();
   int fd = inotify_init1(IN_NONBLOCK | IN_CLOEXEC);
   if (fd >= 0 && inotify_add_watch(fd, "/dev", IN_CREATE | IN_DELETE) >= 0) {
@@ -3297,10 +3316,14 @@ void Desktop::rescan_volumes() {
   }
   std::string sel_path = icon_sel_ >= 0 && icon_sel_ < (int)icons_.size() ? icons_[icon_sel_].name : "";
   vols_ = now;
+  g_disk_names.clear();
+  for (auto &v : vols_)
+    if (!v.mountpoint.empty() && v.name.find('/') == std::string::npos) g_disk_names.push_back({v.mountpoint, v.name});
   layout_icons();
   icon_sel_ = -1;
   for (int i = 0; i < (int)icons_.size(); i++) if (!sel_path.empty() && icons_[i].name == sel_path) icon_sel_ = i;
   redraw();
+  ex_refresh_trees();   // the explorer windows' trees show the disks too
 }
 
 void Desktop::open_volume(int vi) {

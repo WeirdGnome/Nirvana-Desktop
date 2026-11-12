@@ -287,6 +287,8 @@ public:
 // ---------------------------------------------------------------------------
 // The folder tree (loaded as it is opened)
 // ---------------------------------------------------------------------------
+struct TreeRoot { std::string label, path; Icon icon; };   // path "mount:sdb1": not mounted yet
+
 class ExTree : public Fl_Tree {
 public:
   Desktop *desk;
@@ -308,7 +310,8 @@ public:
     item_reselect_mode(FL_TREE_SELECTABLE_ALWAYS);
     callback([](Fl_Widget *w, void *) { ((ExTree *)w)->changed(); });
   }
-  Fl_Tree_Item *add_dir(Fl_Tree_Item *parent, const std::string &label, const std::string &path, bool lazy = true) {
+  Fl_Tree_Item *add_dir(Fl_Tree_Item *parent, const std::string &label, const std::string &path, bool lazy = true,
+                        int icon = -1) {
     // add(parent, name) - not add(path): a "/" in the name would make sub-items
     Fl_Tree_Item *it = add(parent ? parent : root(), label.c_str());
     if (!it) return nullptr;
@@ -318,9 +321,9 @@ public:
     e.dir = true;
     e.path = path;
     e.name = fs::path(path).filename().string();
-    e.icon = icon_for_path(path, true);
+    e.icon = icon >= 0 ? (Icon)icon : icon_for_path(path, true);
     if (Fl_Image *img = entry_icon_image(e, 16, false)) it->usericon(img);
-    if (lazy && has_subdirs(path)) { add(it, "…"); it->close(); }
+    if (lazy && path.rfind("mount:", 0) != 0 && has_subdirs(path)) { add(it, "…"); it->close(); }
     return it;
   }
   static std::string path_of(Fl_Tree_Item *it) { return it && it->user_data() ? *(std::string *)it->user_data() : ""; }
@@ -353,16 +356,34 @@ public:
     if (callback_reason() == FL_TREE_REASON_OPENED) { populate(it); redraw(); return; }
     if (callback_reason() == FL_TREE_REASON_SELECTED && !quiet) {
       std::string p = path_of(it);
-      if (!p.empty()) desk->navigate(win, p);
+      if (p.rfind("mount:", 0) == 0) {   // a disk that is not mounted: mount it, then show it
+        std::string kname = p.substr(6);
+        NWin *w = win;
+        Desktop *d = desk;
+        Desktop::later([d, w, kname] { d->ex_open_volume(w, kname); });
+      } else if (!p.empty()) {
+        desk->navigate(win, p);
+      }
     }
   }
-  void rebuild(const std::string &home, const std::string &trash, const std::vector<std::pair<std::string, std::string>> &roots) {
+  // Nirvana HD, the disks (mounted or not), the servers, the Trash - each with its own icon
+  void rebuild(const std::string &home, const std::string &trash, const std::vector<TreeRoot> &roots) {
     if (root()) clear_children(root());   // clear() would remove the root item too
     paths.clear();
-    Fl_Tree_Item *h = add_dir(nullptr, "Nirvana HD", home);
+    Fl_Tree_Item *h = add_dir(nullptr, "Nirvana HD", home, true, (int)Icon::Home);
     if (h) { populate(h); h->open(); }
-    for (auto &[label, path] : roots) add_dir(nullptr, label, path);
-    add_dir(nullptr, _("Trash"), trash, false);
+    for (auto &r : roots) add_dir(nullptr, r.label, r.path, true, (int)r.icon);
+    trash_item = add_dir(nullptr, _("Trash"), trash, false, (int)(desk->trash_is_full() ? Icon::TrashFull : Icon::Trash));
+    redraw();
+  }
+  Fl_Tree_Item *trash_item = nullptr;
+  void set_trash(bool full) {   // the Trash filled or emptied: its picture
+    if (!trash_item) return;
+    Entry e;
+    e.dir = true;
+    e.path = path_of(trash_item);
+    e.icon = full ? Icon::TrashFull : Icon::Trash;
+    if (Fl_Image *img = entry_icon_image(e, 16, false)) trash_item->usericon(img);
     redraw();
   }
   // show the folder: open the items down to it and select it (without navigating)
@@ -611,6 +632,8 @@ static void ex_restore_state(Desktop *d, NWin *w, const std::string &path);
 // ---------------------------------------------------------------------------
 // Building the window
 // ---------------------------------------------------------------------------
+std::vector<TreeRoot> ex_tree_roots(Desktop *d);
+
 void Desktop::build_explorer(NWin *win, int ox, int oy, int W, int H, const std::string &path) {
   auto *x = new Explorer;
   win->ex = x;
@@ -707,10 +730,7 @@ void Desktop::build_explorer(NWin *win, int ox, int oy, int W, int H, const std:
   win->resizable(rz);
   win->end();
 
-  std::vector<std::pair<std::string, std::string>> roots;
-  for (auto &v : vols_) if (!v.mountpoint.empty()) roots.push_back({v.name, v.mountpoint});
-  for (auto &s : servers()) roots.push_back(s);
-  x->tree->rebuild(home_, trash_dir(), roots);
+  x->tree->rebuild(home_, trash_dir(), ex_tree_roots(this));
   ex_restore_state(this, win, path);
   win->copy_label(title_for(win->path).c_str());   // the source pane's folder (it may be another after the restore)
   update_nav(win);
@@ -1828,14 +1848,52 @@ static void ex_restore_state(Desktop *d, NWin *w, const std::string &path) {
 void Desktop::servers_changed() {
   layout_icons();
   redraw();
-  std::vector<std::pair<std::string, std::string>> roots;
-  for (auto &v : vols_) if (!v.mountpoint.empty()) roots.push_back({v.name, v.mountpoint});
-  for (auto &s : servers()) roots.push_back(s);
+  ex_refresh_trees();
+}
+
+void Desktop::ex_trash_changed(bool full) {
+  for (auto *w : wins_)
+    if (w->ex && w->ex->tree) w->ex->tree->set_trash(full);
+}
+
+void Desktop::ex_refresh_trees() {
+  auto roots = ex_tree_roots(this);
   for (auto *w : wins_)
     if (w->ex && w->ex->tree) {
       w->ex->tree->rebuild(home_, trash_dir(), roots);
       w->ex->tree->reveal(w->path);
     }
+}
+
+// The disks for the trees: every volume - a mounted one by its folder, the others to be
+// mounted with a click - then the connected servers
+std::vector<TreeRoot> ex_tree_roots(Desktop *d) {
+  std::vector<TreeRoot> v;
+  for (auto &vo : d->volumes())
+    v.push_back({vo.name, vo.mountpoint.empty() ? "mount:" + vo.kname : vo.mountpoint, vo.icon});
+  for (auto &[label, mp] : d->servers()) v.push_back({label, mp, Icon::Network});
+  return v;
+}
+
+// A disk clicked in the tree: mounted (or unlocked first - the password window), then shown
+void Desktop::ex_open_volume(NWin *w, const std::string &kname) {
+  for (int i = 0; i < (int)vols_.size(); i++) {
+    if (vols_[i].kname != kname) continue;
+    vol::Volume v = vols_[i];
+    if (v.encrypted && !v.unlocked) { ask_password(v, ""); return; }
+    std::string mp = v.mountpoint;
+    if (mp.empty()) {
+      for (auto *o : wins_) o->cursor(FL_CURSOR_WAIT);
+      Fl::flush();
+      std::string err = vol::mount(v, mp);
+      for (auto *o : wins_) o->cursor(FL_CURSOR_DEFAULT);
+      if (!err.empty()) { dialog(GURU_TITLE, err, {{"OK", nullptr}}); ex_refresh_trees(); return; }
+      rescan_volumes();
+    }
+    if (!mp.empty() && known(w)) navigate(w, mp);
+    ex_refresh_trees();
+    return;
+  }
 }
 
 

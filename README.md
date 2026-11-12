@@ -41,7 +41,7 @@ What changed in each version: [CHANGELOG.md](CHANGELOG.md).
 
 Unpack the sources and run the installer:
 
-    tar xzf nirvana-desktop-0.0.52.tar.gz && cd nirvana-desktop
+    tar xzf nirvana-desktop-0.0.53.tar.gz && cd nirvana-desktop
     sudo ./install.sh                 # or: sudo ./install.sh --login-screen
 
 The installer:
@@ -309,9 +309,12 @@ managers of the 16-bit desktops:
   Folders (the tree on/off), Two Panes, Swap · Copy To, Move To, Delete · Views (list/icons),
   Server. Below it the **Address** field with **Go** – the home folder is shown as the disk it is,
   `Nirvana HD/Muzyka` (typing `~/Muzyka` works too, and so do paths inside archives).
-- **The folder tree** on the left (dotted lines, loaded as it opens): Nirvana HD, the mounted
-  disks, the connected servers, the Trash; it follows the source pane, a click opens the folder
-  there. The divider can be dragged.
+- **The folder tree** on the left (dotted lines, loaded as it opens), each with its own icon:
+  Nirvana HD, **every disk** – partitions, USB sticks, cards, discs, mounted or not (a click on one
+  that is not mounted mounts it and shows it; an encrypted one asks for its password first) –
+  the connected servers and the Trash (empty or full). It follows the source pane, a click opens
+  the folder there, and it changes when a disk is plugged in or taken out. The divider can be
+  dragged. Disks are named in the address too: `PENDRIVE/Zdjecia` (typing that works as well).
 - **Two panes – SOURCE and DESTINATION:** the active pane is the source (a blue label), every
   command of Rambler works on it; the other one is the destination. **F5** copies, **F6** moves
   the selection to the destination, **F7** makes a folder, **F8** deletes, **Tab** swaps the
@@ -389,7 +392,10 @@ managers of the 16-bit desktops:
   iconified windows; the **Trash** always stays in the same place at the bottom, above the
   dock – adding to or emptying the dock does not move it.
 - **Context menus** (right mouse button):
-  - desktop icons: Open, Information, Eject, Format Disk, Empty Trash, Restore (window icons);
+  - desktop icons: Open, Information, Eject, Format Disk, Empty Trash (with the sound of paper
+    crumpled into the basket – Nirvana's own, synthesized; your own file
+    `~/.local/share/nirvana/sounds/trash-empty.wav` replaces it, an empty one turns it off),
+    Restore (window icons);
     `Ctrl+O`, `Ctrl+I`, `Ctrl+Y` work on the selected desktop icon,
   - dock tiles: Open, Unpin from Dock,
   - icons in a folder window: Open, Put on Dock / Unpin from Dock, Information, Rename,

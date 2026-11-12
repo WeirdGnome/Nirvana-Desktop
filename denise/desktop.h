@@ -236,6 +236,11 @@ public:
   void ex_toggle_info();
   void ex_set_filter(NWin *w, const std::string &f);
   void ex_save_state();
+  void ex_refresh_trees();
+  void ex_trash_changed(bool full);
+  bool trash_is_full() const { return trash_full(); }                                  // the disks changed: the explorer trees again
+  void ex_open_volume(NWin *w, const std::string &kname);   // a disk clicked in the tree
+  const std::vector<vol::Volume> &volumes() const { return vols_; }
   std::vector<std::string> ex_saved_windows() const;   // explorer mode: the windows to open at the start      // the explorer windows' state (~/.config/nirvana/explorer.conf)
   void release_archives();   // archives no window shows any more: written back and closed
   void reconnect_servers();  // the remembered servers, at the start

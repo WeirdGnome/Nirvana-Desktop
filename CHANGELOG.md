@@ -1,6 +1,11 @@
 # Changelog
 All notable changes to Nirvana Desktop, newest first. Polish: [CHANGELOG.pl.md](CHANGELOG.pl.md).
 
+## 0.0.53 – 2026-11-12
+
+- **A sound for emptying the Trash:** paper crumpled into a ball and thrown into the basket, in the spirit of the late 1990s desktops – Nirvana's own, synthesized (nothing recorded or copied). `~/.local/share/nirvana/sounds/trash-empty.wav` (or .oga/.ogg) replaces it, an empty file turns it off.
+- **Disks in Rambler:** the tree of Rambler Advanced shows every disk – partitions, USB sticks, cards, discs – mounted or not, with their own icons (and the Trash empty or full). A click on a disk that is not mounted mounts it (an encrypted one asks for its password) and shows it; the tree changes when a disk is plugged in or taken out. The address names disks too: `PENDRIVE/Zdjecia`.
+
 ## 0.0.52 – 2026-11-12
 
 - **NirvanaSHIELD asks about blocked name lookups.** A program that was not allowed and only looked up a name (DNS) – e.g. `git clone` / `cmake` fetching FLTK in a terminal – failed with "Could not resolve host" and nobody was asked: a dropped UDP packet fails at once and the program's socket was gone before the service could see whose it was. Now these lookups are redirected to the service (`127.0.0.1:5399`, `::1`), which finds the program while it waits, asks "May X use the internet?" with the name it looked up, and answers "refused" (the program still fails at once, as before).

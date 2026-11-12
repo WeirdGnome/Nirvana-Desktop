@@ -1,6 +1,11 @@
 # Lista zmian
 Wszystkie ważniejsze zmiany w Nirvana Desktop, od najnowszych. English: [CHANGELOG.md](CHANGELOG.md).
 
+## 0.0.53 – 2026-11-12
+
+- **Dźwięk opróżniania Kosza:** papier zgniatany w kulkę i wrzucany do kosza, w duchu pulpitów z końca lat 90. – własny Nirvany, syntetyzowany (nic nagranego ani skopiowanego). `~/.local/share/nirvana/sounds/trash-empty.wav` (albo .oga/.ogg) go zastępuje, pusty plik go wyłącza.
+- **Dyski w Ramblerze:** drzewo Ramblera zaawansowanego pokazuje wszystkie dyski – partycje, pendrive’y, karty, płyty – zamontowane i nie, z własnymi ikonami (i Kosz pusty albo pełny). Klik na niezamontowanym dysku montuje go (zaszyfrowany pyta o hasło) i pokazuje; drzewo zmienia się po podłączeniu i odłączeniu dysku. Adres też nazywa dyski: `PENDRIVE/Zdjecia`.
+
 ## 0.0.52 – 2026-11-12
 
 - **NirvanaSHIELD pyta o zablokowane zapytania o nazwy.** Program bez pozwolenia, który tylko szukał nazwy (DNS) – np. `git clone` / `cmake` pobierający FLTK w terminalu – kończył się błędem „Could not resolve host” i nikt nie pytał: odrzucony pakiet UDP zawodzi od razu, a gniazdo programu znikało, zanim usługa zdążyła sprawdzić, czyje było. Teraz te zapytania trafiają do usługi (`127.0.0.1:5399`, `::1`), która znajduje program, póki czeka, pyta „Czy X może korzystać z internetu?” z nazwą, której szukał, i odpowiada „odmowa” (program dalej kończy się od razu, jak wcześniej).
