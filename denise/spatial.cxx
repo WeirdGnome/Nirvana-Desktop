@@ -1,6 +1,9 @@
 // Nirvana Desktop - denise: the file manager's spatial memory
 #include "spatial.h"
 
+#include <cstdio>
+#include <unistd.h>
+
 #include <cstdlib>
 #include <filesystem>
 #include <fstream>
@@ -65,4 +68,12 @@ void Spatial::save() const {
   }
   std::error_code ec;
   fs::rename(tmp, file_, ec);
+}
+
+void Spatial::list_default_once() {
+  std::string marker = file_.substr(0, file_.rfind('/') + 1) + ".list-default";
+  if (access(marker.c_str(), F_OK) == 0) return;
+  for (auto &[path, st] : map_) st.list = true;
+  save();
+  if (FILE *f = fopen(marker.c_str(), "w")) fclose(f);
 }

@@ -1,6 +1,11 @@
 # Changelog
 All notable changes to Nirvana Desktop, newest first. Polish: [CHANGELOG.pl.md](CHANGELOG.pl.md).
 
+## 0.0.59 – 2026-11-12
+
+- **The file list is the default view** in Rambler (both styles). Folders remembered with the old default (icons) are shown as a list once, after the update; a folder switched to icons afterwards keeps them.
+- **A new color scheme reaches every window at once**: every Nirvana program (Nirvana Shell, the Preferences panels…) reloads the scheme and redraws when Appearance changes – before, only the desktop and the window manager did, and the other windows kept the old colors until they were opened again.
+
 ## 0.0.58 – 2026-11-12
 
 - **Rambler no longer cuts file names**: the icon view shows the whole name in more lines under the icon (the grid rows grow as needed), the list view widens the name column to the longest name and scrolls sideways (the column headers follow). Desktop icons show their name in two lines, all of it when selected.

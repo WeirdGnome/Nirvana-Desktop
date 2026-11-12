@@ -1,6 +1,11 @@
 # Lista zmian
 Wszystkie ważniejsze zmiany w Nirvana Desktop, od najnowszych. English: [CHANGELOG.md](CHANGELOG.md).
 
+## 0.0.59 – 2026-11-12
+
+- **Lista plików jest domyślnym widokiem** w Ramblerze (w obu stylach). Foldery zapamiętane ze starym domyślnym widokiem (ikony) po aktualizacji jednorazowo pokazują się jako lista; folder przełączony potem na ikony je zachowa.
+- **Nowy schemat kolorów trafia od razu do wszystkich okien**: każdy program Nirvany (Nirvana Shell, panele Preferencji…) przeładowuje schemat i przerysowuje się przy zmianie Wyglądu – wcześniej robiły to tylko biurko i menedżer okien, a pozostałe okna miały stare kolory do ponownego otwarcia.
+
 ## 0.0.58 – 2026-11-12
 
 - **Rambler nie skraca już nazw plików**: widok ikon pokazuje całą nazwę w kilku wierszach pod ikoną (wiersze siatki rosną, ile trzeba), widok listy poszerza kolumnę nazwy do najdłuższej nazwy i przewija się w bok (nagłówki kolumn idą za nim). Ikony biurka pokazują nazwę w dwóch wierszach, zaznaczona – całą.

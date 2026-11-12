@@ -1507,7 +1507,7 @@ void Desktop::open_folder(const std::string &path, bool animate, bool new_window
   win->size_range(MIN_W + ew, csd_mode ? TITLE_H : MIN_H);
   win->end();
   setup_pane(win, win->pane, -1);
-  if (known_pos && s.list) win->pane->set_mode(FolderView::List);
+  if (!known_pos || s.list) win->pane->set_mode(FolderView::List);   // the list is the default
   wins_.push_back(win);
   update_nav(win);
   win->show();
@@ -1700,8 +1700,7 @@ void Desktop::navigate(NWin *w, const std::string &target, Nav how) {
   WinState s;
   bool known_pos = spatial_.get(path, s);
   w->pane->view()->set_icon_size(known_pos ? s.icons : 32);
-  w->pane->set_mode(known_pos ? (s.list ? FolderView::List : FolderView::Icons)
-                              : (w->ex ? FolderView::List : FolderView::Icons));   // the explorer: a list
+  w->pane->set_mode(known_pos && !s.list ? FolderView::Icons : FolderView::List);   // the list is the default
   w->pane->go(path);
   // going up: select the folder we came from
   if (fs::path(old).parent_path().string() == path) w->pane->view()->select_path(old);
@@ -2009,6 +2008,7 @@ void Desktop::start_tray() {
 }
 
 void Desktop::restore() {
+  spatial_.list_default_once();
   start_tray();
   publish_folder_area();
   later([this] { reconnect_servers(); });   // the remembered servers (Connect at every start)

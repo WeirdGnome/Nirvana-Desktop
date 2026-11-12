@@ -41,7 +41,7 @@ What changed in each version: [CHANGELOG.md](CHANGELOG.md).
 
 Unpack the sources and run the installer:
 
-    tar xzf nirvana-desktop-0.0.58.tar.gz && cd nirvana-desktop
+    tar xzf nirvana-desktop-0.0.59.tar.gz && cd nirvana-desktop
     sudo ./install.sh                 # or: sudo ./install.sh --login-screen
 
 The installer:
@@ -383,6 +383,8 @@ managers of the 16-bit desktops:
   parent folder and the location field (the home folder shows as `Nirvana HD`, `~` can be typed too; type a path and press Enter –
   a file path opens its folder with the file selected). Shortcuts: `Alt+←` back, `Alt+→`
   forward, `Ctrl+↑` parent folder. Going up selects the folder you came from.
+- **The list is the default view** (name, date, size, kind); **Window > View as > Icons** (`Ctrl+1`, or *Views*
+  in Rambler Advanced) shows icons, and each folder remembers its choice.
 - **Names are never cut**: in the icon view a long name goes on in more lines under its icon,
   in the list view the name column is as wide as the longest name (the list scrolls sideways).
 - **Nirvana Shell here**: the context menu (on the background, or on a folder) and **Window >

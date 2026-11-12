@@ -199,8 +199,15 @@ static void apply_scale() {
   for (int i = 0; i < Fl::screen_count(); i++) Fl::screen_scale(i, g_scale);
 }
 
-// Every Nirvana program follows the pointer chosen in Appearance at once: the panel tells
-// everybody through a property of the root window (APPEARANCE_ATOM)
+// Every Nirvana program follows Appearance at once - the colors, the window style, the
+// pointer: the panel tells everybody through a property of the root window (APPEARANCE_ATOM).
+// (Before, only the desktop and the window manager did; the other programs kept the old
+// scheme until they were opened again.) The interface scale still needs them started again.
+static void appearance_later(void *) {
+  reload_appearance();
+  for (Fl_Window *w = Fl::first_window(); w; w = Fl::next_window(w)) w->redraw();
+}
+
 static void watch_pointer() {
 #if defined(FLTK_USE_X11)
   Display *d = fl_x11_display();
@@ -213,8 +220,8 @@ static void watch_pointer() {
   Fl::add_system_handler([](void *ev, void *) {
     auto *e = (XEvent *)ev;
     if (e->type == PropertyNotify && e->xproperty.atom == at && e->xproperty.window == DefaultRootWindow(fl_x11_display()))
-      apply_cursor(read_appearance());
-    return 0;   // the others may need it too (the desktop, the window manager reload everything)
+      Fl::add_timeout(0.0, appearance_later);   // after this event, not in the middle of it
+    return 0;   // the others may need it too (the desktop, the window manager reload more)
   }, nullptr);
 #endif
 }

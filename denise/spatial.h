@@ -10,7 +10,7 @@ struct WinState {
   int x = 0, y = 0, w = 0, h = 0;
   bool shaded = false;
   bool open = false;
-  bool list = false;   // list view instead of icons
+  bool list = true;    // list view instead of icons (the list is the default)
   int icons = 32;      // icon size: 16, 32, 64
 };
 
@@ -20,6 +20,9 @@ public:
   bool get(const std::string &path, WinState &out) const;
   void set(const std::string &path, const WinState &s);
   std::vector<std::string> open_paths() const;   // windows open at exit
+  // Rambler 0.0.59: the list became the default view - the folders remembered with the old
+  // default (icons) are shown as a list once (a marker file: only the first time)
+  void list_default_once();
   void save() const;
 
 private:

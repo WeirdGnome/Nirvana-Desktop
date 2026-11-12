@@ -40,7 +40,7 @@ Co się zmieniło w każdej wersji: [CHANGELOG.pl.md](CHANGELOG.pl.md).
 
 Rozpakuj źródła i uruchom instalator:
 
-    tar xzf nirvana-desktop-0.0.58.tar.gz && cd nirvana-desktop
+    tar xzf nirvana-desktop-0.0.59.tar.gz && cd nirvana-desktop
     sudo ./install.sh                 # albo: sudo ./install.sh --login-screen
 
 Instalator:
@@ -382,6 +382,8 @@ eksploratorów z końca lat 90. ze sposobem pracy dwupanelowych menedżerów pli
   i pole położenia (folder domowy widać jako `Nirvana HD`, można też wpisać `~`; wpisz ścieżkę i naciśnij Enter – ścieżka pliku
   otwiera jego folder z zaznaczonym plikiem). Skróty: `Alt+←` wstecz, `Alt+→` dalej,
   `Ctrl+↑` folder nadrzędny. Po wyjściu w górę zaznaczony jest folder, z którego przyszliśmy.
+- **Lista jest domyślnym widokiem** (nazwa, data, rozmiar, rodzaj); **Okno > Pokaż jako > Ikony** (`Ctrl+1`, albo
+  *Widoki* w Ramblerze zaawansowanym) pokazuje ikony, a każdy folder pamięta swój wybór.
 - **Nazwy nigdy nie są skracane**: w widoku ikon długa nazwa ciągnie się w kolejnych wierszach
   pod ikoną, w widoku listy kolumna nazwy jest tak szeroka jak najdłuższa nazwa (lista
   przewija się w bok).
