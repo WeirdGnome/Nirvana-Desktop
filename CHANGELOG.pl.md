@@ -1,6 +1,14 @@
 # Lista zmian
 Wszystkie ważniejsze zmiany w Nirvana Desktop, od najnowszych. English: [CHANGELOG.md](CHANGELOG.md).
 
+## 0.0.58 – 2026-11-12
+
+- **Rambler nie skraca już nazw plików**: widok ikon pokazuje całą nazwę w kilku wierszach pod ikoną (wiersze siatki rosną, ile trzeba), widok listy poszerza kolumnę nazwy do najdłuższej nazwy i przewija się w bok (nagłówki kolumn idą za nim). Ikony biurka pokazują nazwę w dwóch wierszach, zaznaczona – całą.
+- **Otwórz tutaj Nirvana Shell** w menu podręcznym Ramblera (na tle albo na folderze) i w menu Okno.
+- **Opróżnianie Kosza z Ramblera**: Okno > Opróżnij kosz… oraz Opróżnij kosz… w menu podręcznym w Koszu. Kosz widać w adresie jako *Kosz*.
+- **Przeciąganie plików**: na foldery, dyski i Kosz w drzewie Ramblera zaawansowanego (podświetlane pod kursorem) oraz **do innych programów** – po wyjściu poza okna Nirvany przeciąganie trwa jako standardowe XDND z listą `file://`.
+- Zminimalizowane programy Nirvany mają na biurku własny obrazek (panele Preferencji – ikonę Preferencji, Nirvana Shell – terminal) zamiast ogólnego rombu.
+
 ## 0.0.57 – 2026-11-12
 
 - Logo w pasku menu (menu „Nirvana”) też jest przezroczyste – wcześniej było rysowane na szarym kwadracie, widocznym na innych kolorach paska i przy otwartym menu.

@@ -41,7 +41,7 @@ What changed in each version: [CHANGELOG.md](CHANGELOG.md).
 
 Unpack the sources and run the installer:
 
-    tar xzf nirvana-desktop-0.0.57.tar.gz && cd nirvana-desktop
+    tar xzf nirvana-desktop-0.0.58.tar.gz && cd nirvana-desktop
     sudo ./install.sh                 # or: sudo ./install.sh --login-screen
 
 The installer:
@@ -383,6 +383,17 @@ managers of the 16-bit desktops:
   parent folder and the location field (the home folder shows as `Nirvana HD`, `~` can be typed too; type a path and press Enter –
   a file path opens its folder with the file selected). Shortcuts: `Alt+←` back, `Alt+→`
   forward, `Ctrl+↑` parent folder. Going up selects the folder you came from.
+- **Names are never cut**: in the icon view a long name goes on in more lines under its icon,
+  in the list view the name column is as wide as the longest name (the list scrolls sideways).
+- **Nirvana Shell here**: the context menu (on the background, or on a folder) and **Window >
+  Open Nirvana Shell Here** open the terminal in that folder.
+- **The Trash** shows as `Trash` in the address; **Window > Empty Trash…** and, inside the
+  Trash, the context menu's **Empty Trash…** empty it.
+- **Dragging files**: between windows and panes, onto desktop icons (disks, the Trash), in
+  Rambler Advanced also onto the folders, disks and Trash of the tree – and **out to other
+  programs** (another file manager, a browser, an editor): leaving Nirvana's windows the drag
+  goes on as standard drag and drop (XDND, a list of `file://` addresses). Files from other
+  programs can be dropped into Rambler as before.
 - **More windows**: **Window > New Window** (`Ctrl+Shift+N`) or `Ctrl` + double-click on a folder.
   Desktop icons (Nirvana HD, disks, Trash) open in the most recently used window.
 - **Opening**: double-click or Enter. An AppImage from another folder offers installation.

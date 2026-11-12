@@ -1349,4 +1349,5 @@ T = {
     'Retro 16 · classic': 'Retro 16 · klasyczny',
     'Retro 16 · outline': 'Retro 16 · z obwódką',
     'Retro 16 · glass': 'Retro 16 · szklany',
+    'Open Nirvana Shell Here': 'Otwórz tutaj Nirvana Shell',
 }

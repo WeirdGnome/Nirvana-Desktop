@@ -1342,6 +1342,40 @@ std::string ellipsize(const std::string &s, int max_w) {
   return ell;
 }
 
+// A name in lines no wider than max_w (the current font): broken after a space, "-", "_" or
+// "." when there is one in the line, otherwise between two characters - nothing left out
+std::vector<std::string> wrap_text(const std::string &s, int max_w) {
+  std::vector<std::string> lines;
+  if (max_w <= 0 || fl_width(s.c_str()) <= max_w) { lines.push_back(s); return lines; }
+  std::string cur;
+  size_t brk = std::string::npos;   // where the current line may be broken (after this byte)
+  const char *p = s.c_str(), *end = p + s.size();
+  while (p < end) {
+    int len = fl_utf8len1(*p);
+    if (len < 1) len = 1;
+    std::string ch(p, (size_t)std::min<long>(len, end - p));
+    p += ch.size();
+    if (!cur.empty() && fl_width((cur + ch).c_str()) > max_w) {
+      if (brk != std::string::npos && brk + 1 < cur.size()) {
+        lines.push_back(cur.substr(0, brk + 1));
+        cur = cur.substr(brk + 1);
+      } else {
+        lines.push_back(cur);
+        cur.clear();
+      }
+      brk = std::string::npos;
+      for (size_t i = 0; i < cur.size(); i++)
+        if (cur[i] == ' ' || cur[i] == '-' || cur[i] == '_' || cur[i] == '.') brk = i;
+    }
+    cur += ch;
+    if (ch == " " || ch == "-" || ch == "_" || ch == ".") brk = cur.size() - 1;
+  }
+  if (!cur.empty()) lines.push_back(cur);
+  for (auto &l : lines)   // a space at the end of a line is not shown
+    while (l.size() > 1 && l.back() == ' ') l.pop_back();
+  return lines;
+}
+
 std::string items_text(int n) {
   return fmt(trn(n, "%1 item", "%1 items"), std::to_string(n));
 }

@@ -267,6 +267,7 @@ int classic_gadget_hit(int w, int ex, int ey, int boxes);   // the gadget under 
 
 // Helpers
 std::string ellipsize(const std::string &s, int max_w);   // text cut with "…"
+std::vector<std::string> wrap_text(const std::string &s, int max_w);   // whole, in lines (the current font)
 std::string items_text(int n);                           // "1 item", "3 items" (with plural forms of the language)
 
 } // namespace plat

@@ -307,7 +307,14 @@ void FolderView::set_sort(SortKey k) {
 void FolderView::relayout(int avail_w, int min_h) {
   last_w_ = avail_w;
   last_min_h_ = min_h;
+  fl_font(FONT_SMALL, SIZE_SMALL);
+  line_h_ = fl_height();
   if (mode_ == Icons) {
+    // names are never cut: the rows are as high as the longest name needs (8 lines at most)
+    label_lines_ = 1;
+    for (auto &e : entries_)
+      if (fl_width(e.label.c_str()) > cell_w() - 6)
+        label_lines_ = std::max(label_lines_, std::min(8, (int)wrap_text(e.label, cell_w() - 6).size()));
     int cw = cell_w(), ch = cell_h();
     cols_ = std::max(1, (avail_w - 8) / cw);
     // Icons placed by hand take their grid cells; the rest fills
@@ -348,7 +355,11 @@ void FolderView::relayout(int avail_w, int min_h) {
     size(std::max(avail_w, max_x + 4), std::max(min_h, max_y + 6));
   } else {
     cols_ = 1;
-    size(avail_w, std::max(min_h, (int)entries_.size() * ROW_H + 4));
+    // the name column as wide as the longest name: the list scrolls sideways when it must
+    int longest = 0;
+    for (auto &e : entries_) longest = std::max(longest, (int)fl_width(e.label.c_str()));
+    int need = longest + 40 + COL_DATE + COL_SIZE + COL_KIND + 8;
+    size(std::max(avail_w, need), std::max(min_h, (int)entries_.size() * ROW_H + 4));
   }
 }
 
@@ -469,7 +480,7 @@ int FolderView::index_at(int ex, int ey, bool *on_label) const {
     if (lx < 0 || ly < 0 || lx >= cw || ly >= cell_h()) continue;
     // a hit counts only on the icon and the label, not the whole cell
     bool on_icon = lx >= (cw - is) / 2 && lx < (cw + is) / 2 && ly < is + 4;
-    bool lbl = ly >= is + 4 && ly < is + 22;
+    bool lbl = ly >= is + 4 && ly < is + 8 + label_lines_ * line_h_;
     if (!on_icon && !lbl) continue;
     if (on_label) *on_label = lbl;
     return i;
@@ -551,7 +562,15 @@ void FolderView::select_paths(const std::vector<std::string> &paths) {
 }
 
 // --- drawing -----------------------------------------------------------------
+void pane_redraw_later(void *pane) { ((Fl_Widget *)pane)->redraw(); }
+
 void FolderView::draw() {
+  // the list scrolled sideways: the column headers (drawn by the pane) follow it
+  // (after this drawing: a redraw asked for during it would be forgotten)
+  if (mode_ == List && x() != drawn_x_) {
+    drawn_x_ = x();
+    if (parent() && parent()->parent()) Fl::add_timeout(0.0, pane_redraw_later, parent()->parent());
+  }
   fl_color(CONTENT);
   fl_rectf(x(), y(), w(), h());
   if (mode_ == Icons) draw_icons(); else draw_list();
@@ -584,17 +603,22 @@ void FolderView::draw_icons() {
     bool open = e.dir && is_open && is_open(e.path);
     draw_entry_icon(e, cx + (cw - isize_) / 2, cy + 2, sel, isize_, open);
 
-    std::string lbl = ellipsize(e.label, cw - 6);
-    int tw = (int)fl_width(lbl.c_str());
-    int tx = cx + (cw - tw) / 2, ty = cy + isize_ + 6;
-    if (sel_[i]) {
-      fl_color(ICON_SEL);
-      fl_rectf(tx - 2, ty, tw + 4, fl_height());
-      fl_color(ICON_SEL_TEXT);
-    } else {
-      fl_color(CONTENT_TEXT);
+    // the whole name, in lines under the icon
+    auto lines = wrap_text(e.label, cw - 6);
+    int ty = cy + isize_ + 6;
+    for (auto &l : lines) {
+      int tw = (int)fl_width(l.c_str());
+      int tx = cx + (cw - tw) / 2;
+      if (sel_[i]) {
+        fl_color(ICON_SEL);
+        fl_rectf(tx - 2, ty, tw + 4, fl_height());
+        fl_color(ICON_SEL_TEXT);
+      } else {
+        fl_color(CONTENT_TEXT);
+      }
+      fl_draw(l.c_str(), tx, ty + fl_height() - fl_descent(), 0, 0, FL_ALIGN_LEFT, nullptr, 0);
+      ty += fl_height();
     }
-    fl_draw(lbl.c_str(), tx, ty + fl_height() - fl_descent());
   }
 }
 
@@ -610,7 +634,7 @@ void FolderView::draw_list() {
     bool open = e.dir && is_open && is_open(e.path);
     draw_entry_icon(e, x() + 6, ry + 1, sel, 16, open);
     int base = ry + ROW_H / 2 + fl_height() / 2 - fl_descent();
-    std::string name = ellipsize(e.label, nw - 32);
+    const std::string &name = e.label;   // the column is as wide as the longest name
     int tw = (int)fl_width(name.c_str());
     if (sel_[i]) {
       fl_color(ICON_SEL);
@@ -837,8 +861,10 @@ void FolderPane::refresh_later(void *d) {
   p->refresh();
 }
 
+void pane_redraw_later(void *pane);
 FolderPane::~FolderPane() {
   Fl::remove_timeout(refresh_later, this);
+  Fl::remove_timeout(pane_redraw_later, this);
   if (ino_fd_ >= 0) { Fl::remove_fd(ino_fd_); close(ino_fd_); }
 }
 
@@ -892,7 +918,7 @@ void FolderPane::resize(int X, int Y, int W, int H) {
   // When everything fits, the scrollbar is dimmed (gray thumb).
   bool need = view_->h() > inner_h;
   scroll_->scrollbar.selection_color(need ? HILITE : GRAY);
-  scroll_->hscrollbar.selection_color(GRAY);
+  scroll_->hscrollbar.selection_color(view_->w() > inner_w ? HILITE : GRAY);   // a long name: sideways
   scroll_->redraw();
 }
 
@@ -916,7 +942,7 @@ void FolderPane::draw() {
     fl_rectf(x(), hy, w(), HEADER_H);
     fl_color(SHADOW);
     fl_xyline(x(), hy + HEADER_H - 1, x() + w() - 1);
-    ListCols lc = list_cols(x() + 4, w() - SCROLL_W);
+    ListCols lc = list_cols(view_->x() + 4, view_->w());   // with the list, also scrolled sideways
     fl_push_clip(x(), hy, w() - SCROLL_W, HEADER_H);
     fl_font(FONT_SYSTEM, SIZE_SMALL);
     int base = hy + HEADER_H / 2 + fl_height() / 2 - fl_descent();
@@ -1016,7 +1042,7 @@ int FolderPane::handle(int e) {
     // a click on a column header: sorting
     if (view_->mode() == FolderView::List && Fl::event_y() >= y() + INFO_H &&
         Fl::event_y() < y() + INFO_H + HEADER_H && Fl::event_x() < x() + w() - SCROLL_W) {
-      ListCols lc = list_cols(x() + 4, w() - SCROLL_W);
+      ListCols lc = list_cols(view_->x() + 4, view_->w());
       int ex = Fl::event_x();
       FolderView::SortKey k = FolderView::ByName;
       if (lc.kind && ex >= lc.kind_x) k = FolderView::ByKind;

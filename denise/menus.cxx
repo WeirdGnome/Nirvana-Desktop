@@ -335,12 +335,21 @@ void Desktop::folder_context_menu(NWin *w, int X, int Y) {
   for (auto &e : sel)
     if (std::find(dock_.begin(), dock_.end(), e.path) != dock_.end()) in_dock = true;
   DeskMenu dm;
+  // Nirvana Shell in this folder - or in the selected folder
+  std::string shell_dir = sel.size() == 1 && sel[0].dir ? sel[0].path : w->path;
+  auto add_shell = [&] {
+    dm.add(_("Open Nirvana Shell Here"), 0, [this, shell_dir] {
+      rambler_spawn({rambler_exe("nirvana-shell"), "--working-directory", shell_dir});
+    });
+  };
+  bool in_trash = w->path == trash_dir();
   if (!sel.empty()) {
     dm.add(_("Open"), FL_COMMAND + 'o', [this] { open_selected(); });
     // the file type's actions (Special > File Types…), the first one is the double click
     // ("Open" itself is there already - it runs the type's first action, as the double click)
     for (auto &[label, f] : filetype_menu(sel, w))
       if (strcasecmp(label.c_str(), _("Open")) != 0 && strcasecmp(label.c_str(), "Open") != 0) dm.add(label, 0, f);
+    if (sel.size() == 1 && sel[0].dir) add_shell();
     dm.divider();
     if (w->ex && ex_other_path(w).size()) {   // the explorer with two panes
       dm.add(_("Copy to the Other Pane"), FL_F + 5, [this] { ex_copy_to_other(); });
@@ -357,12 +366,16 @@ void Desktop::folder_context_menu(NWin *w, int X, int Y) {
     dm.add(_("Pack into an Archive…"), 0, [this] { pack_selected(); });
     dm.divider();
     dm.add(_("Delete"), FL_COMMAND + FL_BackSpace, [this] { move_to_trash(); });
+    if (in_trash) { dm.divider(); dm.add(_("Empty Trash…"), 0, [this] { empty_trash(); }); }
   } else {
-    dm.add(_("New Folder"), FL_COMMAND + 'n', [this] { new_folder(); });
+    dm.add(_("New Folder"), FL_COMMAND + 'n', [this] { new_folder(); }, in_trash ? FL_MENU_INACTIVE : 0);
     dm.add(_("Paste"), FL_COMMAND + 'v', [this] { paste(); }, clipboard_.empty() ? FL_MENU_INACTIVE : 0);
+    dm.divider();
+    add_shell();
     dm.divider();
     dm.add(_("Update"), FL_COMMAND + 'r', [this] { update_window(); });
     dm.add(_("Select Contents"), FL_COMMAND + 'a', [this] { select_all(); });
+    if (in_trash) { dm.divider(); dm.add(_("Empty Trash…"), 0, [this] { empty_trash(); }, trash_full() ? 0 : FL_MENU_INACTIVE); }
   }
   // folder window coordinates -> desktop ones (the menu's owner is a button on the desktop)
   Fl_Menu_Item *items = dm.finish();

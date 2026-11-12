@@ -405,6 +405,53 @@ public:
     trash_item = add_dir(nullptr, _("Trash"), trash, false, (int)(desk->trash_is_full() ? Icon::TrashFull : Icon::Trash));
     redraw();
   }
+  Fl_Tree_Item *drop_item = nullptr;   // files dragged over it: a frame around it
+  Fl_Tree_Item *item_at(int ly) {
+    for (Fl_Tree_Item *it = first(); it; it = next(it)) {
+      if (it == root() || !it->visible_r()) continue;
+      if (ly >= it->y() && ly < it->y() + it->h()) return it;
+    }
+    return nullptr;
+  }
+  void draw() override {
+    Fl_Tree::draw();
+    if (drop_item && drop_item->visible_r()) {
+      fl_push_clip(x() + 2, y() + 2, w() - 4, h() - 4);
+      fl_color(SEL);
+      fl_rect(drop_item->label_x() - 2, drop_item->y(), drop_item->label_w() + 4, drop_item->h());
+      fl_rect(drop_item->label_x() - 1, drop_item->y() + 1, drop_item->label_w() + 2, drop_item->h() - 2);
+      fl_pop_clip();
+    }
+  }
+  int handle(int e) override {
+    if (e == FL_PUSH && Fl::event_button() == FL_RIGHT_MOUSE) {
+      Fl_Tree_Item *it = item_at(Fl::event_y());
+      std::string p = path_of(it);
+      if (p.empty()) return 1;
+      bool trash = it == trash_item, mounted = p.rfind("mount:", 0) != 0;
+      Fl_Menu_Item items[] = {
+          {_("Open"), 0, nullptr, (void *)1, 0},
+          {_("Open Nirvana Shell Here"), 0, nullptr, (void *)2, mounted && !trash ? 0 : FL_MENU_INACTIVE},
+          {_("Empty Trash…"), 0, nullptr, (void *)3, trash ? 0 : FL_MENU_INVISIBLE},
+          {nullptr}};
+      for (auto &m : items) if (m.text) { m.labelfont(FONT_SMALL); m.labelsize(SIZE_SMALL + 1); }
+      const Fl_Menu_Item *m = items->popup(Fl::event_x(), Fl::event_y());
+      if (!m) return 1;
+      long what = (long)m->user_data();
+      Desktop *d = desk;
+      NWin *nw = win;
+      if (what == 1) {
+        if (p.rfind("mount:", 0) == 0) Desktop::later([d, nw, p] { d->ex_open_volume(nw, p.substr(6)); });
+        else d->navigate(nw, p);
+      } else if (what == 2) {
+        rambler_spawn({rambler_exe("nirvana-shell"), "--working-directory", p});
+      } else if (what == 3) {
+        Desktop::later([d] { d->empty_trash(); });
+      }
+      return 1;
+    }
+    return Fl_Tree::handle(e);
+  }
   Fl_Tree_Item *trash_item = nullptr;
   void set_trash(bool full) {   // the Trash filled or emptied: its picture
     if (!trash_item) return;
@@ -1886,6 +1933,28 @@ void Desktop::servers_changed() {
   layout_icons();
   redraw();
   ex_refresh_trees();
+}
+
+// Files dragged over the explorer's tree: the folder (disk, Trash) under the point - "" outside
+std::string Desktop::ex_tree_target(NWin *w, int lx, int ly) {
+  if (!w || !w->ex || !w->ex->tree || !w->ex->tree_on || !w->ex->tree->visible()) return "";
+  ExTree *t = w->ex->tree;
+  if (lx < t->x() || ly < t->y() || lx >= t->x() + t->w() || ly >= t->y() + t->h()) return "";
+  Fl_Tree_Item *it = t->item_at(ly);
+  std::string p = ExTree::path_of(it);
+  return p.rfind("mount:", 0) == 0 ? "" : p;   // a disk not mounted yet: open it first
+}
+// the frame around the target in the trees (path "" - no frame anywhere)
+void Desktop::ex_tree_mark(NWin *w, const std::string &path) {
+  for (auto *o : wins_) {
+    if (!o->ex || !o->ex->tree) continue;
+    ExTree *t = o->ex->tree;
+    Fl_Tree_Item *want = nullptr;
+    if (o == w && !path.empty())
+      for (Fl_Tree_Item *it = t->first(); it; it = t->next(it))
+        if (ExTree::path_of(it) == path) { want = it; break; }
+    if (t->drop_item != want) { t->drop_item = want; t->redraw(); }
+  }
 }
 
 void Desktop::ex_trash_changed(bool full) {

@@ -461,6 +461,8 @@ static const std::vector<MenuDef> &window_menu_defs() {
     {P_("Window/Connect to a Server…"), 0, &Desktop::connect_server, 0},
     {P_("Window/Find…"), FL_COMMAND + 'f', &Desktop::open_search, 0},
     {P_("Window/Jobs…"), 0, &Desktop::show_jobs, 0},
+    {P_("Window/Open Nirvana Shell Here"), 0, &Desktop::open_terminal, 0},
+    {P_("Window/Empty Trash…"), 0, &Desktop::empty_trash, FL_MENU_DIVIDER},
     {P_("Window/Close"), FL_COMMAND + 'w', &Desktop::close_active, 0},
     {P_("Window/Update"), FL_COMMAND + 'r', &Desktop::update_window, FL_MENU_DIVIDER},
     {P_("Window/Select Contents"), FL_COMMAND + 'a', &Desktop::select_all, 0},
@@ -719,6 +721,25 @@ static std::vector<Window> iconic_windows() {
 
 static bool is_ours(Window w);
 
+// Nirvana's own programs set no window icon - their minimized windows by their class: the
+// Preferences panels get the Preferences picture (not the generic program diamond)
+static Icon nirvana_icon(Window w) {
+  XClassHint ch{};
+  std::string cls;
+  if (XGetClassHint(fl_display, w, &ch)) {
+    if (ch.res_name) { cls = ch.res_name; XFree(ch.res_name); }
+    if (ch.res_class) XFree(ch.res_class);
+  }
+  for (auto &c : cls) c = (char)tolower((unsigned char)c);
+  if (cls == "nirvana-shell") return Icon::Terminal;
+  static const char *const prefs[] = {"nirvana-alice", "nirvana-preferences", "nirvana-bluetooth", "nirvana-datetime",
+                                      "nirvana-network", "nirvana-power", "nirvana-printers", "nirvana-shader-panel",
+                                      "nirvana-shield", "nirvana-user", "nirvana-desktop-panel"};
+  for (const char *p : prefs) if (cls == p) return Icon::Preferences;
+  if (cls == "nirvana-find" || cls == "nirvana-peek") return Icon::Folder;
+  return Icon::Application;
+}
+
 // A 32x32 window icon image: the icon of an AppImage started from Rambler, _NET_WM_ICON,
 // and as a last resort the generic application icon (nullptr - draw_icon).
 static Fl_Image *iconic_image(Window w, const std::string &home) {
@@ -779,8 +800,8 @@ void Desktop::layout_icons() {
     d.win = w;
     d.name = gary::window_title(w);
     bool ours = is_ours(w);
-    d.icon = ours ? Icon::Folder : Icon::Application;
-    if (!ours) d.img = iconic_image(w, home_);
+    d.icon = ours ? Icon::Folder : nirvana_icon(w);   // Nirvana's own programs: their own picture
+    if (!ours && d.icon == Icon::Application) d.img = iconic_image(w, home_);
     if (d.name.empty()) d.name = "?";
     place(d);
   }
@@ -1582,10 +1603,20 @@ static std::vector<std::pair<std::string, std::string>> g_disk_names;   // (moun
 
 // Paths for people: the home folder is the disk "Nirvana HD" - "Nirvana HD/Muzyka", never "~";
 // a mounted disk by its name - "PENDRIVE/Zdjecia"
+// the Trash's folder (the freedesktop.org one, as trash_dir())
+static std::string trash_files() {
+  const char *x = getenv("XDG_DATA_HOME");
+  const char *h = getenv("HOME");
+  return (x && *x ? std::string(x) : std::string(h ? h : "") + "/.local/share") + "/Trash/files";
+}
+
 std::string disk_path(const std::string &path) {
   const char *h = getenv("HOME");
   std::string home = h ? h : "";
   while (home.size() > 1 && home.back() == '/') home.pop_back();
+  std::string trash = trash_files();   // the Trash by its name, not ".local/share/Trash/files"
+  if (path == trash) return _("Trash");
+  if (path.rfind(trash + "/", 0) == 0) return _("Trash") + path.substr(trash.size());
   for (auto &[mp, name] : g_disk_names) {   // a disk inside the home folder (rare) is still the disk
     if (path == mp) return name;
     if (path.rfind(mp + "/", 0) == 0) return name + path.substr(mp.size());
@@ -1600,6 +1631,9 @@ std::string real_path(const std::string &text) {
   const char *h = getenv("HOME");
   std::string home = h ? h : "";
   static const std::string disk = "Nirvana HD";
+  std::string tn = _("Trash");
+  if (text == tn) return trash_files();
+  if (text.rfind(tn + "/", 0) == 0) return trash_files() + text.substr(tn.size());
   if (text == disk || text == "~") return home;
   if (text.rfind(disk + "/", 0) == 0) return home + text.substr(disk.size());
   if (text.rfind("~/", 0) == 0) return home + text.substr(1);
@@ -2018,16 +2052,22 @@ void Desktop::draw() {
     } else {
       draw_icon(shown, ic.x + 24, ic.y, sel);
     }
-    std::string nm = ellipsize(ic.name, 76);
-    int tw = (int)fl_width(nm.c_str());
-    int tx = ic.x + 40 - tw / 2, ty = ic.y + 36;
+    // the name in two lines; the selected icon shows all of it
+    auto lines = wrap_text(ic.name, 76);
+    if (!sel && lines.size() > 2) { lines.resize(2); lines[1] = ellipsize(lines[1] + "…", 76); }
+    int ty = ic.y + 36;
     // minimized windows have a yellow label (the color of the minimize button),
     // so they stand out from files, disks and folders whatever the scheme
     bool minimized = ic.win != 0;
-    fl_color(sel ? ICON_SEL : minimized ? fl_rgb_color(0xF2, 0xB5, 0x26) : CONTENT);
-    fl_rectf(tx - 2, ty, tw + 4, fl_height());
-    fl_color(sel ? ICON_SEL_TEXT : minimized ? FL_BLACK : CONTENT_TEXT);
-    fl_draw(nm.c_str(), tx, ty + fl_height() - fl_descent());
+    for (auto &nm : lines) {
+      int tw = (int)fl_width(nm.c_str());
+      int tx = ic.x + 40 - tw / 2;
+      fl_color(sel ? ICON_SEL : minimized ? fl_rgb_color(0xF2, 0xB5, 0x26) : CONTENT);
+      fl_rectf(tx - 2, ty, tw + 4, fl_height());
+      fl_color(sel ? ICON_SEL_TEXT : minimized ? FL_BLACK : CONTENT_TEXT);
+      fl_draw(nm.c_str(), tx, ty + fl_height() - fl_descent());
+      ty += fl_height();
+    }
   }
   draw_dock();
   for (int i = 0; i < children(); i++) draw_child(*child(i));
@@ -3030,6 +3070,43 @@ static bool is_under(Window top, Window w) {
   return false;
 }
 
+// The pointer over a window of another program - not a folder window, the desktop, the dock or
+// a menu of Rambler (every window of this program is "ours")
+bool Desktop::pointer_over_foreign() const {
+  Window rootret, child = 0;
+  int rx, ry, wx, wy;
+  unsigned mask;
+  XQueryPointer(fl_display, DefaultRootWindow(fl_display), &rootret, &child, &rx, &ry, &wx, &wy, &mask);
+  if (!child) return false;
+  for (Fl_Window *fw = Fl::first_window(); fw; fw = Fl::next_window(fw))
+    if (fw->shown() && is_under(child, fl_xid(fw))) return false;
+  return true;
+}
+
+// Files dragged out of Rambler into another program (a file manager, a browser, an editor):
+// our drag ends, the standard one (XDND, text/uri-list) carries the files on
+void Desktop::drag_out() {
+  std::vector<Entry> items = drag_.items;
+  NWin *src = drag_.src;
+  FolderPane *src_pane = drag_.src_pane;
+  clear_drop_highlight();
+  if (drag_.ghost) { drag_.ghost->hide(); Fl::delete_widget(drag_.ghost); drag_.ghost = nullptr; }
+  drag_.active = false;
+  if (known(src) && src_pane) src_pane->view()->cancel_drag();
+  std::string uris;
+  static const char *hex = "0123456789ABCDEF";
+  for (auto &e : items) {
+    uris += "file://";
+    for (unsigned char c : e.path) {
+      if (isalnum(c) || strchr("/-_.~!$&'()*+,;=:@", c)) uris += (char)c;
+      else { uris += '%'; uris += hex[c >> 4]; uris += hex[c & 15]; }
+    }
+    uris += "\r\n";
+  }
+  Fl::copy(uris.c_str(), (int)uris.size(), 0);   // the drag-and-drop buffer
+  Fl::dnd();                                       // until the button is let go
+}
+
 Desktop::DropTarget Desktop::target_at(int xr, int yr) {
   DropTarget t;
   Window rootret, child = 0;
@@ -3041,6 +3118,8 @@ Desktop::DropTarget Desktop::target_at(int xr, int yr) {
     if (!w->pane || !w->shown() || !is_under(child, fl_xid(w))) continue;
     t.win = w;
     int lx = xr - w->x(), ly = yr - w->y();
+    t.tree = ex_tree_target(w, lx, ly);   // a folder, disk or the Trash in the explorer's tree
+    if (!t.tree.empty()) return t;
     FolderPane *p = w->pane;
     if (w->ex) if (FolderPane *q = ex_pane_at(w, lx, ly)) p = q;   // the explorer pane under the pointer
     t.pane = p;
@@ -3056,6 +3135,7 @@ Desktop::DropTarget Desktop::target_at(int xr, int yr) {
 }
 
 void Desktop::clear_drop_highlight() {
+  ex_tree_mark(nullptr, "");
   if (drag_.hl_win && known(drag_.hl_win) && drag_.hl_pane) drag_.hl_pane->view()->set_drop_target(-2);
   drag_.hl_win = nullptr;
   drag_.hl_pane = nullptr;
@@ -3079,9 +3159,12 @@ void Desktop::drag_move(int xr, int yr) {
   if (!drag_.active) return;
   // the ghost is offset from the cursor, so it does not cover the target under the cursor
   drag_.ghost->position(xr + 8, yr + 8);
+  if (pointer_over_foreign()) { drag_out(); return; }   // into another program: XDND
   DropTarget t = target_at(xr, yr);
   clear_drop_highlight();
-  if (t.win) {
+  if (!t.tree.empty()) {
+    ex_tree_mark(t.win, t.tree);
+  } else if (t.win) {
     // the same folder as the source (without pointing at a subfolder) is not a target
     bool same = t.pane == drag_.src_pane && t.item < 0;
     if (!same) { t.pane->view()->set_drop_target(t.item); drag_.hl_win = t.win; drag_.hl_pane = t.pane; }
@@ -3105,7 +3188,8 @@ void Desktop::drag_end(int xr, int yr, bool copy) {
 
   std::string dest;
   bool same_pane = t.pane && t.pane == drag_.src_pane;
-  if (t.win) dest = t.item >= 0 ? t.pane->view()->entry(t.item)->path : t.pane->path();
+  if (!t.tree.empty()) dest = t.tree;
+  else if (t.win) dest = t.item >= 0 ? t.pane->view()->entry(t.item)->path : t.pane->path();
   else if (t.icon >= 0) {
     dest = icons_[t.icon].path;
     if (int vi = icons_[t.icon].vol; vi >= 0) {

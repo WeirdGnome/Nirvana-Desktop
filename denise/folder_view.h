@@ -90,6 +90,7 @@ public:
   std::function<void(const std::vector<Entry> &)> on_drag_start;
   std::function<void(int xr, int yr)> on_drag_move;
   std::function<void(int xr, int yr, bool copy)> on_drag_end;
+  void cancel_drag() { if (state_ == DRAGGING) state_ = IDLE; }   // the drag went on as XDND (into another program)
   // files dropped from another program (XDND): the file:// list and the target folder
   // (empty = this view's folder)
   std::function<void(const std::string &uris, const std::string &dest)> on_drop_uris;
@@ -101,7 +102,10 @@ public:
   void set_icon_size(int s);            // 16, 32 or 64
   int icon_size() const { return isize_; }
   int cell_w() const { return isize_ == 16 ? 76 : isize_ == 64 ? 104 : 80; }
-  int cell_h() const { return isize_ == 16 ? 40 : isize_ == 64 ? 98 : 66; }
+  // the grid row: the icon and its name in as many lines as the longest name needs
+  int cell_h() const { return (isize_ == 16 ? 40 : isize_ == 64 ? 98 : 66) + (label_lines_ - 1) * line_h_; }
+  int label_lines_ = 1, line_h_ = 13;   // relayout() counts them
+  int drawn_x_ = 0;                     // where the list was drawn last (sideways scrolling)
   // Moving icons within the window (dragging onto the background of the same window).
   void move_items(const std::vector<std::string> &paths, int dx, int dy);
   // Snapshot: positions saved permanently (~/.config/nirvana/icon-positions).

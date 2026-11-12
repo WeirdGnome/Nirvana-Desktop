@@ -238,6 +238,8 @@ public:
   void ex_save_state();
   void ex_refresh_trees();
   void ex_trash_changed(bool full);
+  std::string ex_tree_target(NWin *w, int lx, int ly);   // a drop on the explorer's tree
+  void ex_tree_mark(NWin *w, const std::string &path);
   bool trash_is_full() const { return trash_full(); }                                  // the disks changed: the explorer trees again
   void ex_open_volume(NWin *w, const std::string &kname);   // a disk clicked in the tree
   const std::vector<vol::Volume> &volumes() const { return vols_; }
@@ -352,7 +354,9 @@ private:
   void transfer(const std::vector<Entry> &items, const std::string &dest, bool copy, bool replace);
   void path_moved(const std::string &from, const std::string &to);   // windows and position memory
   // dragging
-  struct DropTarget { NWin *win = nullptr; FolderPane *pane = nullptr; int item = -2; int icon = -1; };
+  struct DropTarget { NWin *win = nullptr; FolderPane *pane = nullptr; int item = -2; int icon = -1; std::string tree; };
+  bool pointer_over_foreign() const;   // over a window of another program (not Nirvana's)
+  void drag_out();                    // the drag goes on as XDND into that program
   DropTarget target_at(int xr, int yr);
   void drag_start(NWin *src, const std::vector<Entry> &items);
   void drag_move(int xr, int yr);

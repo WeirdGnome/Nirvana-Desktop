@@ -1,6 +1,14 @@
 # Changelog
 All notable changes to Nirvana Desktop, newest first. Polish: [CHANGELOG.pl.md](CHANGELOG.pl.md).
 
+## 0.0.58 – 2026-11-12
+
+- **Rambler no longer cuts file names**: the icon view shows the whole name in more lines under the icon (the grid rows grow as needed), the list view widens the name column to the longest name and scrolls sideways (the column headers follow). Desktop icons show their name in two lines, all of it when selected.
+- **Open Nirvana Shell Here** in Rambler's context menu (on the background, or on a folder) and in the Window menu.
+- **Emptying the Trash from Rambler**: Window > Empty Trash…, and Empty Trash… in the context menu inside the Trash. The Trash shows as *Trash* in the address.
+- **Dragging files**: onto the folders, disks and the Trash of Rambler Advanced's tree (highlighted under the pointer), and **out to other programs** – leaving Nirvana's windows, the drag goes on as standard XDND with a `file://` list.
+- Minimized Nirvana programs get their own picture on the desktop (Preferences panels the Preferences icon, Nirvana Shell the terminal) instead of the generic diamond.
+
 ## 0.0.57 – 2026-11-12
 
 - The logo in the menu bar (the "Nirvana" menu) is transparent too – before it was drawn on a gray square, seen on other bar colors and on the open menu.
