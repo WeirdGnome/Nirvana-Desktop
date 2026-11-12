@@ -40,7 +40,7 @@ Co się zmieniło w każdej wersji: [CHANGELOG.pl.md](CHANGELOG.pl.md).
 
 Rozpakuj źródła i uruchom instalator:
 
-    tar xzf nirvana-desktop-0.0.43.tar.gz && cd nirvana-desktop
+    tar xzf nirvana-desktop-0.0.44.tar.gz && cd nirvana-desktop
     sudo ./install.sh                 # albo: sudo ./install.sh --login-screen
 
 Instalator:
@@ -439,6 +439,14 @@ przestawia cały system: Rambler i Insight przeładowują paletę bez restartu.
   (szary z niebieskim akcentem) i *Lodowiec* (chłodne srebrne okna, szklane paski tytułu w głębokim
   błękicie – najlepiej z tapetą *Glacier*) oraz ponad 40 schematów z
   [Redmond97 SE](https://codeberg.org/Sliver_X/Redmond97-SE) (GPL-3.0).
+- **Retro 16** – pięć schematów w duchu pulpitów 16-bitowych komputerów domowych, nazwanych
+  od epok: *1.3* (niebieskie biurko, białe paski, pomarańczowe wyróżnienia), *2.1* (jasnoszary,
+  niebieskie paski), *3.1* (ośmiokolorowa szarość, stalowy błękit i beż), *3.9* (paski
+  z gradientem, ciepły akcent) i *4.1* (szklane paski, głęboki granat). Przynoszą też klasyczne
+  gadżety okien 16-bit (zamykanie po lewej, powiększenie i głębia po prawej, gadżet rozmiaru
+  w rogu) – schemat prosi o nie kluczem `window_style=classic`; zachowanie okien (klik bez
+  wysuwania) zostaje przełącznikiem w Preferencje > Pulpit. Celowo bez nazw produktów, kolory
+  i gadżety są własne Nirvany.
 - **Wygląd domyślny**: schemat *In Tenebris*, wzór *Cegiełki* i ikony Platinum.
 - **Pasek tytułu**: jak w schemacie, prążki Platinum, jednolity kolor, gradient albo szkło (połysk
   w górnej połowie i ciemniejszy środek, jak na błyszczących pulpitach z lat 2000); przy szkle także

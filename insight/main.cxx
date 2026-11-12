@@ -304,7 +304,7 @@ public:
   void draw() override {
     if (c->bare) return;   // the window covers the whole frame and draws itself
     bool act = c == g_active;
-    if (g_classic) {
+    if (classic_look(g_classic)) {
       draw_classic_frame(0, 0, w(), h(), act, c->shaded, !c->dialog && !c->fixed);
       draw_classic_titlebar(0, 0, w(), c->title.c_str(), act, pressed_, gadgets());
       if (!c->shaded) {
@@ -329,7 +329,7 @@ public:
   int gadgets() const { return c->dialog ? 2 : c->fixed ? 3 : 1; }
 
   int hit_button(int ex, int ey) const {
-    if (g_classic) return classic_gadget_hit(w(), ex, ey, gadgets());
+    if (classic_look(g_classic)) return classic_gadget_hit(w(), ex, ey, gadgets());
     if (c->dialog) return 0;
     int by = (TITLE_H - BOX) / 2;
     if (ey < by || ey >= by + BOX) return 0;
@@ -405,11 +405,11 @@ public:
       if (c->bare) return 1;
       if (ey < TITLE_H) {
         if (int b = hit_button(ex, ey)) { drag_ = BTN; armed_ = pressed_ = b; redraw(); return 1; }
-        if (Fl::event_clicks() && !c->dialog && !g_classic) {
+        if (Fl::event_clicks() && !c->dialog && !classic_look(g_classic)) {
           Fl::event_clicks(0); iconify_client(c); drag_ = NONE; return 1;
         }
         drag_ = MOVE;
-      } else if (g_classic && !c->shaded && !c->dialog && !c->fixed) {
+      } else if (classic_look(g_classic) && !c->shaded && !c->dialog && !c->fixed) {
         // classic: only the size gadget in the corner resizes, the rest of the frame moves
         bool corner = (ex >= w() - CLASSIC_SIZE && ey >= h() - FRAME) || (ex >= w() - FRAME && ey >= h() - CLASSIC_SIZE);
         drag_ = corner ? GROW : MOVE;

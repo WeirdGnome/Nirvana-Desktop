@@ -53,6 +53,7 @@ struct Scheme {
   unsigned title_i = 0xDDDDDD, title_i2 = 0xDDDDDD, title_i_text = 0x777777;
   int icon_sel = -1, accent = -1, desk = -1;   // -1: computed from the others
   int light = -1, mid = -1, shadow = -1;       // -1: computed from the window color
+  bool classic = false;   // window_style=classic: the scheme brings the classic 16-bit gadgets
 };
 
 // The desktop (~/.config/nirvana/desktop.conf, Preferences > Desktop)
@@ -123,6 +124,8 @@ std::string appearance_file();
 void apply(const Scheme &s, const Appearance &a);   // set the palette
 void reload_appearance();          // read the settings and the scheme, apply
 const Scheme &current_scheme();
+// Classic 16-bit gadgets: switched on in Preferences > Desktop or brought by the scheme
+inline bool classic_look(bool desktop_classic) { return desktop_classic || current_scheme().classic; }
 std::string data_file(const std::string &rel);   // a file from share/nirvana (or the source tree), "" if missing
 const Appearance &current_appearance();
 TitleStyle title_style();

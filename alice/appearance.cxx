@@ -125,8 +125,8 @@ private:
   }
 
   static void draw_window(int X, int Y, int W, int H, const char *title, bool active) {
-    static const bool classic = read_desktop().classic;   // Preferences > Desktop
-    if (classic) {
+    static const bool desk_classic = read_desktop().classic;   // Preferences > Desktop
+    if (classic_look(desk_classic)) {   // or the scheme brings the gadgets
       draw_classic_frame(X, Y, W, H, active, false, true);
       draw_classic_titlebar(X, Y, W, title, active, 0, 1);
     } else {

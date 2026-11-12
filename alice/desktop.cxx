@@ -28,7 +28,7 @@ class WindowSample : public Fl_Widget {
 public:
   WindowSample(int X, int Y, int W, int H) : Fl_Widget(X, Y, W, H) {}
   static void one(int X, int Y, int W, int H, const char *t, bool act) {
-    if (g_d.classic) {
+    if (classic_look(g_d.classic)) {
       draw_classic_frame(X, Y, W, H, act, false, true);
       draw_classic_titlebar(X, Y, W, t, act, 0, 1);
     } else {

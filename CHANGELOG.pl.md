@@ -1,6 +1,11 @@
 # Lista zmian
 Wszystkie ważniejsze zmiany w Nirvana Desktop, od najnowszych. English: [CHANGELOG.md](CHANGELOG.md).
 
+## 0.0.44 – 2026-11-12
+
+- **Schematy Retro 16:** *1.3*, *2.1*, *3.1*, *3.9* i *4.1* – kolory pulpitów 16-bitowych komputerów domowych z pięciu epok, z klasycznymi gadżetami okien 16-bit.
+- Schematy mogą włączać klasyczne gadżety (`window_style=classic`); klasyczne paski tytułu przyjmują jednolity kolor, gradient albo szkło ze schematu.
+
 ## 0.0.43 – 2026-11-12
 
 - **Powiadomienia:** Rambler jest serwerem powiadomień (`org.freedesktop.Notifications`): okienka w prawym górnym rogu w bieżącym wyglądzie z obrazkiem programu, tekstem i przyciskami akcji, pilne z czerwonym paskiem; dźwięk (własny powiadomienia, z motywu albo wbudowany dzwonek Nirvany).

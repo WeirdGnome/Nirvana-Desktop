@@ -1,6 +1,11 @@
 # Changelog
 All notable changes to Nirvana Desktop, newest first. Polish: [CHANGELOG.pl.md](CHANGELOG.pl.md).
 
+## 0.0.44 – 2026-11-12
+
+- **Retro 16 schemes:** *1.3*, *2.1*, *3.1*, *3.9* and *4.1* – the colors of the 16-bit home computer desktops of five eras, with the classic 16-bit window gadgets.
+- Schemes can bring the classic gadgets (`window_style=classic`); classic title bars take the scheme's solid, gradient or glass bar colors.
+
 ## 0.0.43 – 2026-11-12
 
 - **Notifications:** Rambler is the notification server (`org.freedesktop.Notifications`): windows at the top right in the current appearance with the program's picture, text and action buttons, urgent ones with a red stripe; a sound (the notification's own, the theme's or Nirvana's built-in chime).

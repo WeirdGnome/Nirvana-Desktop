@@ -41,7 +41,7 @@ What changed in each version: [CHANGELOG.md](CHANGELOG.md).
 
 Unpack the sources and run the installer:
 
-    tar xzf nirvana-desktop-0.0.43.tar.gz && cd nirvana-desktop
+    tar xzf nirvana-desktop-0.0.44.tar.gz && cd nirvana-desktop
     sudo ./install.sh                 # or: sudo ./install.sh --login-screen
 
 The installer:
@@ -442,6 +442,13 @@ the whole system: Rambler and Insight reload the palette without a restart.
   accent) and *Glacier* (cool silver windows, glass title bars in deep blue – best with the
   *Glacier* wallpaper), plus over 40 schemes from
   [Redmond97 SE](https://codeberg.org/Sliver_X/Redmond97-SE) (GPL-3.0).
+- **Retro 16** – five schemes in the spirit of the 16-bit home computer desktops, named after
+  their eras: *1.3* (blue desktop, white bars, orange highlights), *2.1* (light gray, blue bars),
+  *3.1* (eight-color gray, steel blue and beige), *3.9* (gradient bars, warm accent) and *4.1*
+  (glass bars, deep blue). They also bring the classic 16-bit window gadgets (close on the left,
+  zoom and depth on the right, size gadget in the corner) – a scheme can ask for them with
+  `window_style=classic`; the window behavior (click without raising) stays a switch in
+  Preferences > Desktop. No product names on purpose, the colors and gadgets are Nirvana's own.
 - **Default look**: the *In Tenebris* scheme, the *Bricks* pattern and Platinum icons.
 - **Title bar**: as in the scheme, Platinum stripes, solid colour, gradient or glass (a shine on
   the upper half, the darker middle, as on the glossy desktops of the 2000s); with glass the menu

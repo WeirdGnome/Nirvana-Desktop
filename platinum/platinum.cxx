@@ -1029,6 +1029,34 @@ static unsigned mix_hex(unsigned a, unsigned b, double t) {
   return ch(16) | ch(8) | ch(0);
 }
 
+// The colored title bar (schemes with solid, gradient or glass bars) in the given box
+static void title_fill(int fx, int fy, int fw, int fh, bool active, TitleStyle st) {
+  const Scheme &sc = current_scheme();
+  unsigned c1 = active ? sc.title : sc.title_i, c2 = active ? sc.title2 : sc.title_i2;
+  if (st == TitleStyle::Glossy) {
+    // glass: a light upper half fading down, the darker middle, a little light at the bottom
+    for (int i = 0; i < fh; i++) {
+      double t = fh > 1 ? (double)i / (fh - 1) : 0;
+      unsigned c = t < 0.5 ? mix_hex(c1, 0xFFFFFF, 0.42 - 0.6 * t) : mix_hex(c2, c1, (t - 0.5) * 1.6);
+      fl_color(fl_rgb_color(c >> 16, (c >> 8) & 0xFF, c & 0xFF));
+      fl_xyline(fx, fy + i, fx + fw - 1);
+    }
+    unsigned hl = mix_hex(c1, 0xFFFFFF, 0.65);   // the shine on the top edge
+    fl_color(fl_rgb_color(hl >> 16, (hl >> 8) & 0xFF, hl & 0xFF));
+    fl_xyline(fx + 1, fy, fx + fw - 2);
+  } else if (st == TitleStyle::Solid || c1 == c2) {
+    fl_color(fl_rgb_color(c1 >> 16, (c1 >> 8) & 0xFF, c1 & 0xFF));
+    fl_rectf(fx, fy, fw, fh);
+  } else {
+    for (int i = 0; i < fw; i++) {
+      double t = fw > 1 ? (double)i / (fw - 1) : 0;
+      auto ch = [&](int sh) { return (uchar)(((c1 >> sh) & 0xFF) * (1 - t) + ((c2 >> sh) & 0xFF) * t + 0.5); };
+      fl_color(fl_rgb_color(ch(16), ch(8), ch(0)));
+      fl_yxline(fx + i, fy, fy + fh - 1);
+    }
+  }
+}
+
 void draw_titlebar(int x, int y, int w, const char *title, bool active, int pressed, int boxes) {
   int by = y + (TITLE_H - BOX) / 2;
   int close_x = x + 8;
@@ -1043,31 +1071,7 @@ void draw_titlebar(int x, int y, int w, const char *title, bool active, int pres
   TitleStyle st = title_style();
   if (st != TitleStyle::Stripes) {
     // A colored bar (Redmond97 style schemes): solid or gradient.
-    const Scheme &sc = current_scheme();
-    unsigned c1 = active ? sc.title : sc.title_i, c2 = active ? sc.title2 : sc.title_i2;
-    int fx = x + 3, fw = w - 6, fy = y + 3, fh = TITLE_H - 5;
-    if (st == TitleStyle::Glossy) {
-      // glass: a light upper half fading down, the darker middle, a little light at the bottom
-      for (int i = 0; i < fh; i++) {
-        double t = fh > 1 ? (double)i / (fh - 1) : 0;
-        unsigned c = t < 0.5 ? mix_hex(c1, 0xFFFFFF, 0.42 - 0.6 * t) : mix_hex(c2, c1, (t - 0.5) * 1.6);
-        fl_color(fl_rgb_color(c >> 16, (c >> 8) & 0xFF, c & 0xFF));
-        fl_xyline(fx, fy + i, fx + fw - 1);
-      }
-      unsigned hl = mix_hex(c1, 0xFFFFFF, 0.65);   // the shine on the top edge
-      fl_color(fl_rgb_color(hl >> 16, (hl >> 8) & 0xFF, hl & 0xFF));
-      fl_xyline(fx + 1, fy, fx + fw - 2);
-    } else if (st == TitleStyle::Solid || c1 == c2) {
-      fl_color(fl_rgb_color(c1 >> 16, (c1 >> 8) & 0xFF, c1 & 0xFF));
-      fl_rectf(fx, fy, fw, fh);
-    } else {
-      for (int i = 0; i < fw; i++) {
-        double t = fw > 1 ? (double)i / (fw - 1) : 0;
-        auto ch = [&](int sh) { return (uchar)(((c1 >> sh) & 0xFF) * (1 - t) + ((c2 >> sh) & 0xFF) * t + 0.5); };
-        fl_color(fl_rgb_color(ch(16), ch(8), ch(0)));
-        fl_yxline(fx + i, fy, fy + fh - 1);
-      }
-    }
+    title_fill(x + 3, y + 3, w - 6, TITLE_H - 5, active, st);
     if (boxes) {   // the buttons also in inactive windows
       title_button(close_x, by, 1, pressed == 1, active);
       title_button(shade_x, by, 3, pressed == 3, active);
@@ -1135,15 +1139,24 @@ void draw_grow_box(int x, int y) {
 // "Classic 16-bit" windows - our own drawing of the gadget style of the 16-bit
 // desktops: a flat bar of beveled cells, colored when the window is active.
 // ---------------------------------------------------------------------------
-static void classic_cell(int x, int y, int w, int h, bool pressed, Fl_Color face) {
-  fl_color(face);
-  fl_rectf(x, y, w, h);
+static void classic_cell(int x, int y, int w, int h, bool pressed, Fl_Color face, bool fill = true) {
+  if (fill) {
+    fl_color(face);
+    fl_rectf(x, y, w, h);
+  }
   fl_color(pressed ? DARK : LIGHT);
   fl_xyline(x, y, x + w - 2);
   fl_yxline(x, y, y + h - 2);
   fl_color(pressed ? LIGHT : DARK);
   fl_xyline(x, y + h - 1, x + w - 1);
   fl_yxline(x + w - 1, y, y + h - 1);
+}
+
+// Does the scheme color the classic bar itself (gradient, glass, or a solid title color)?
+static bool classic_own_bar() {
+  const Scheme &sc = current_scheme();
+  TitleStyle st = title_style();
+  return st == TitleStyle::Gradient || st == TitleStyle::Glossy || (st == TitleStyle::Solid && sc.title != sc.window);
 }
 
 static bool has_close(int b) { return b == 1 || b == 3 || b == 4; }
@@ -1164,11 +1177,22 @@ void draw_classic_titlebar(int x, int y, int w, const char *title, bool active, 
   Fl_Color face = active ? SEL : GRAY;
   Fl_Color ink = DARK;                       // the gadget pictures: dark lines,
   Fl_Color fill = active ? LIGHT : CONTENT;  // light sheets - readable on any bar color
-  classic_cell(x, y, w, H, false, face);
+  // a scheme with its own bar colors (gradient, glass, or a solid title color) paints the bar
+  // with them, the gadget cells then only carry their bevels
+  const Scheme &sc = current_scheme();
+  TitleStyle st = title_style();
+  bool own = classic_own_bar();
+  Fl_Color tcol = active ? SEL_TEXT : TEXT;
+  if (own) {
+    title_fill(x, y, w, H, active, st);
+    unsigned tc = active ? sc.title_text : sc.title_i_text;
+    tcol = fl_rgb_color(tc >> 16, (tc >> 8) & 0xFF, tc & 0xFF);
+  }
+  classic_cell(x, y, w, H, false, face, !own);
   int left = x + 6, right = x + w - 6;
   if (has_close(boxes)) {
     bool p = pressed == 1;
-    classic_cell(x, y, G, H, p, face);
+    classic_cell(x, y, G, H, p, face, !own);
     int cx = x + (G - 9) / 2 + p, cy = y + (H - 9) / 2 + p;   // a square with a solid core
     fl_color(fill); fl_rectf(cx + 1, cy + 1, 7, 7);
     fl_color(ink);  fl_rect(cx, cy, 9, 9);
@@ -1178,7 +1202,7 @@ void draw_classic_titlebar(int x, int y, int w, const char *title, bool active, 
   if (has_depth(boxes)) {
     bool p = pressed == 4;
     int gx = x + w - G;
-    classic_cell(gx, y, G, H, p, face);
+    classic_cell(gx, y, G, H, p, face, !own);
     int cx = gx + (G - 14) / 2 + p, cy = y + (H - 11) / 2 + p;   // two sheets, one behind the other
     fl_color(ink);  fl_rectf(cx, cy, 9, 7);
     fl_color(fill); fl_rectf(cx + 5, cy + 4, 9, 7);
@@ -1188,7 +1212,7 @@ void draw_classic_titlebar(int x, int y, int w, const char *title, bool active, 
   if (has_zoom(boxes)) {
     bool p = pressed == 2;
     int gx = x + w - 2 * G;
-    classic_cell(gx, y, G, H, p, face);
+    classic_cell(gx, y, G, H, p, face, !own);
     int cx = gx + (G - 12) / 2 + p, cy = y + (H - 10) / 2 + p;   // a big frame with a small one in its corner
     fl_color(fill); fl_rectf(cx + 1, cy + 1, 10, 8);
     fl_color(ink);  fl_rect(cx, cy, 12, 10);
@@ -1197,7 +1221,7 @@ void draw_classic_titlebar(int x, int y, int w, const char *title, bool active, 
   }
   fl_font(FONT_SYSTEM, SIZE_SYSTEM);
   std::string t = ellipsize(title ? title : "", right - left);
-  fl_color(active ? SEL_TEXT : TEXT);
+  fl_color(tcol);
   fl_push_clip(left, y, std::max(0, right - left), H);
   fl_draw(t.c_str(), left, y + H / 2 + fl_height() / 2 - fl_descent());
   fl_pop_clip();
@@ -1205,6 +1229,10 @@ void draw_classic_titlebar(int x, int y, int w, const char *title, bool active, 
 
 void draw_classic_frame(int x, int y, int w, int h, bool active, bool shaded, bool size_gadget) {
   Fl_Color face = active ? SEL : GRAY;
+  if (classic_own_bar()) {   // the frame in the bar's color
+    unsigned c = active ? current_scheme().title : current_scheme().title_i;
+    face = fl_rgb_color(c >> 16, (c >> 8) & 0xFF, c & 0xFF);
+  }
   fl_color(face);
   fl_rectf(x, y, w, h);
   fl_color(LIGHT);

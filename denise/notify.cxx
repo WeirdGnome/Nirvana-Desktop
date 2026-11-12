@@ -420,7 +420,7 @@ public:
     static bool c = false;
     double now = clock_now();
     if (now - t > 2) { c = read_desktop().classic; t = now; }
-    return c;
+    return classic_look(c);
   }
 };
 

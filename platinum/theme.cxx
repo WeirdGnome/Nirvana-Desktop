@@ -169,6 +169,7 @@ bool parse_scheme(const std::string &file, Scheme &s) {
     else if (k == "title_style")
       s.style = v == "stripes" ? TitleStyle::Stripes : v == "gradient" ? TitleStyle::Gradient
               : v == "glossy" ? TitleStyle::Glossy : TitleStyle::Solid;
+    else if (k == "window_style") s.classic = v == "classic";
     else if (!col) continue;
     else if (k == "window") { s.window = c; have_window = true; }
     else if (k == "text") s.text = c;
