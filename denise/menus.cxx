@@ -295,7 +295,11 @@ void Desktop::desk_context_menu(int i, int X, int Y) {
   icon_sel_ = i;
   redraw();
   DeskMenu dm;
-  if (i >= 0) {
+  if (i >= 0 && icons_[i].server) {   // a server: open or disconnect
+    std::string mp = icons_[i].path;
+    dm.add(_("Open"), 0, [this, mp] { open_folder(mp); });
+    dm.add(_("Disconnect"), 0, [this, mp] { disconnect_server(mp); servers_changed(); });
+  } else if (i >= 0) {
     const DeskIcon &ic = icons_[i];
     unsigned long win = ic.win;
     bool vol = ic.vol >= 0;

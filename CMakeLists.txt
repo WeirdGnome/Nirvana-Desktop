@@ -122,6 +122,8 @@ add_library(nirvana-power STATIC power/power.cxx)
 target_include_directories(nirvana-power PUBLIC power)
 target_link_libraries(nirvana-power PUBLIC nirvana-i18n fltk::fltk PkgConfig::DBUS PkgConfig::XSS X11::Xext X11::X11)
 
+find_package(Threads REQUIRED)
+
 # --- denise: file manager ----------------------------------------------------
 add_executable(nirvana-denise
   denise/main.cxx
@@ -143,8 +145,12 @@ add_executable(nirvana-denise
   denise/notify.cxx
   denise/shield_applet.cxx
   denise/explorer.cxx
-  denise/filetypes.cxx)
-target_link_libraries(nirvana-denise PRIVATE nirvana-platinum nirvana-net nirvana-bt nirvana-shield-client nirvana-audio nirvana-power ${NIRVANA_PRINT_LIB} fltk::images PkgConfig::DBUS)
+  denise/filetypes.cxx
+  denise/jobs.cxx
+  denise/sniff.cxx
+  denise/metadata.cxx
+  denise/search.cxx)
+target_link_libraries(nirvana-denise PRIVATE Threads::Threads nirvana-platinum nirvana-net nirvana-bt nirvana-shield-client nirvana-audio nirvana-power ${NIRVANA_PRINT_LIB} fltk::images PkgConfig::DBUS)
 
 # --- insight: X11 window manager ---------------------------------------------
 add_executable(nirvana-insight insight/main.cxx)
@@ -277,10 +283,10 @@ set(CPACK_DEBIAN_PACKAGE_SHLIBDEPS ON)
 set(CPACK_DEBIAN_PACKAGE_DEPENDS "dbus-bin | dbus")
 set(CPACK_DEBIAN_PACKAGE_RECOMMENDS
   "xserver-xorg, xinit, fonts-dejavu-core, libpam-elogind | elogind, polkitd, pkexec, \
-udisks2, network-manager, bluez, rfkill, nftables, libarchive-tools, sshfs, pulseaudio-utils, alsa-utils, squashfs-tools, bubblewrap, xdg-utils, \
+udisks2, network-manager, bluez, rfkill, nftables, libarchive-tools, archivemount, sshfs, pulseaudio-utils, alsa-utils, squashfs-tools, bubblewrap, xdg-utils, \
 xdg-desktop-portal, xdg-desktop-portal-gtk, libgl1-mesa-dri, \
 libxcb-cursor0, libxcb-icccm4, libxcb-keysyms1, libxcb-image0, libxcb-render-util0, libxkbcommon-x11-0, \
 libxcb-xkb1, libxcb-shape0, libxcb-randr0, libxcb-xinerama0")
 set(CPACK_DEBIAN_PACKAGE_SUGGESTS
-  "lightdm, network-manager-openvpn, network-manager-vpnc, wireguard-tools, power-profiles-daemon, pipewire-pulse, cups, gvfs-backends, gvfs-fuse")
+  "lightdm, network-manager-openvpn, network-manager-vpnc, wireguard-tools, power-profiles-daemon, pipewire-pulse, cups, gvfs-backends, gvfs-fuse, ffmpeg")
 include(CPack)

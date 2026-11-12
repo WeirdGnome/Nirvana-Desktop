@@ -40,7 +40,7 @@ Co się zmieniło w każdej wersji: [CHANGELOG.pl.md](CHANGELOG.pl.md).
 
 Rozpakuj źródła i uruchom instalator:
 
-    tar xzf nirvana-desktop-0.0.48.tar.gz && cd nirvana-desktop
+    tar xzf nirvana-desktop-0.0.49.tar.gz && cd nirvana-desktop
     sudo ./install.sh                 # albo: sudo ./install.sh --login-screen
 
 Instalator:
@@ -320,16 +320,56 @@ eksploratorów z końca lat 90. ze sposobem pracy dwupanelowych menedżerów pli
   `{s}` jego folder, `{d}` drugi panel, `{n}` nazwa bez końcówki; `@browse` (otwórz jak folder),
   `@wallpaper`, `@shell polecenie` (w Nirvana Shell). Wbudowane: archiwa, skrypty powłoki, programy
   w Pythonie, tekst, zdjęcia, pakiety Debiana. Zapis w `~/.config/nirvana/filetypes.conf`.
-- **Archiwa jak foldery:** dwuklik na zip/tar/7z/rar/iso… otwiera je jak folder (rozpakowane przez
-  `bsdtar` do `~/.cache/nirvana/archives`; adres pokazuje `~/x.zip/…`, pasek stanu mówi, że to
-  kopia). *Rozpakuj tutaj*, *Rozpakuj do drugiego panelu*, *Pokaż zawartość*; **Ikony > Spakuj do
-  archiwum…** robi zip/tar.gz/tar.xz/7z z zaznaczenia.
-- **Serwery:** **Okno > Połącz z serwerem…** (albo przycisk *Serwer*): SFTP przez `sshfs` (hasło
-  albo klucz SSH), FTP przez `gio`/gvfs; foldery serwera otwierają się jak foldery, są w drzewie
-  i działają z oboma panelami (kopiowanie, przenoszenie, rozpakowanie prosto na serwer).
-  *Rozłącz wszystkie* w tym samym oknie.
-- Potrzebne `libarchive-tools` (bsdtar) i `sshfs` – polecane przez paczkę; FTP wymaga
-  `gvfs-backends` i `gvfs-fuse`.
+- **Archiwa jak foldery:** dwuklik na zip/tar/7z/rar/iso… otwiera je jak folder. Archiwa zip, tar
+  (także .gz/.bz2/.xz), 7z i cpio są **zapisywalne**: otwiera je `archivemount`, można do nich
+  kopiować, zmieniać nazwy, usuwać i edytować pliki w środku, a gdy żadne okno już archiwum nie
+  pokazuje, Rambler pakuje je na nowo w tle (`bsdtar`, w formacie z nazwy – zip zostaje zipem) –
+  tylko gdy coś się zmieniło. Pasek stanu o tym mówi. Inne formaty (rar, iso…) są rozpakowywane do
+  `~/.cache/nirvana/archives` jako kopia tylko do odczytu. Adres pokazuje `~/x.zip/…`. *Rozpakuj
+  tutaj*, *Rozpakuj do drugiego panelu*, *Pokaż zawartość*; **Ikony > Spakuj do archiwum…** robi
+  zip/tar.gz/tar.xz/7z z zaznaczenia.
+- **Serwery jak dyski:** **Okno > Połącz z serwerem…** (albo przycisk *Serwer*): **SFTP** przez
+  `sshfs` (hasło albo klucz SSH), **FTP** i **SMB** (udziały Windows, `DOMENA\użytkownik`) przez
+  `gio`/gvfs. Połączony serwer pojawia się **na biurku jako ikona dysku** (Otwórz, Rozłącz),
+  w drzewie i w obu panelach (kopiowanie, przenoszenie, rozpakowanie prosto na serwer); pole adresu
+  pokazuje i przyjmuje `sftp://ja@host/folder`, `ftp://host/folder`, `smb://host/udział/folder`.
+  *Łącz przy każdym starcie* zapamiętuje serwer (`~/.config/nirvana/servers.conf`, nigdy hasło):
+  łączy się sam z kluczem SSH, anonimowym FTP albo udziałem dla gości, w przeciwnym razie
+  wypełnione okno pyta tylko o hasło. Na serwerach pliki nie są czytane dla rozpoznania typu (bez
+  ruchu w sieci) – tam decyduje nazwa.
+- **Rozpoznawanie zawartości:** rodzaj pliku wynika z jego pierwszych bajtów, nie z nazwy – PNG
+  nazwany `zdjecie.dat` to „obraz PNG” z ikoną obrazka, zip bez rozszerzenia to „archiwum ZIP”,
+  pusty `x.jpg` to „pusty plik”. Obrazy, dźwięki, filmy, archiwa, dokumenty, programy ELF, AppImage,
+  skrypty, tekst. Typy plików mogą pasować po zawartości (`image/*`, `application/zip`…) tak jak po
+  nazwie; zawartość wygrywa.
+- **Zadania w tle:** kopiowanie, przenoszenie, usuwanie, Kosz i zapis archiwów działają we własnych
+  wątkach, każde osobno – okna dalej działają, drugie kopiowanie może ruszyć, gdy trwa pierwsze.
+  **Okno > Zadania…** (otwiera się też samo, gdy zadanie trwa dłużej niż chwilę, w prawym dolnym
+  rogu, bez zabierania klawiatury): postęp, prędkość, pozostały czas, **Wstrzymaj**/**Wznów**
+  i **Anuluj** dla każdego zadania (nie zostają pół-skopiowane pliki). Pasek stanu pokazuje
+  `Zadania: N`.
+- **Zdarzenia dla typów plików** (Narzędzia > Typy plików…): *Dwuklik*, *Shift + dwuklik* i *Spacja
+  (podgląd)* mogą każde uruchamiać własne polecenie – skrypt, odtwarzacz, edytor – albo
+  `@preview`, wbudowany szybki podgląd.
+- **Panel informacji** (przycisk *Informacje*): pod drzewem, dla zaznaczonego pliku – miniatura
+  obrazów, rodzaj, rozmiar, data i to, co w środku: wymiary obrazu, kolory i aparat (EXIF), tagi MP3
+  (ID3: tytuł, wykonawca, album, rok), komentarze FLAC/Ogg, długość, przepływność, strony i tytuł
+  PDF, architektura programu, wiersze i słowa tekstu; filmy (`ffprobe`) i liczba plików w archiwum
+  są czytane w tle.
+- **Szybki podgląd:** **Spacja** pokazuje zaznaczony obraz, tekst albo szczegóły pliku w oknie;
+  Spacja albo Escape je zamyka.
+- **Sesja jest pamiętana** (`~/.config/nirvana/explorer.conf`): foldery obu paneli, który jest
+  źródłem, historia (Wstecz/Dalej), zaznaczone pliki, lista albo ikony w każdym panelu, filtry,
+  drzewo, panel i dwa panele – po ponownym zalogowaniu wszystko jest jak było.
+- **Filtr i wyszukiwanie:** pole **Filtr** obok adresu zostawia tylko pasujące pliki – część nazwy,
+  `*.jpg` albo rodzaj z zawartości: `rodzaj:obraz`, `rodzaj:dźwięk`, `rodzaj:film`,
+  `rodzaj:archiwum`, `rodzaj:dokument`, `rodzaj:tekst`, `rodzaj:program` (także po angielsku:
+  `kind:picture`…). **Okno > Znajdź…** (`Ctrl+F`, przycisk *Szukaj*) przeszukuje folder i jego
+  podfoldery w tle po nazwie lub wzorcu, rodzaju (z zawartości), tekście w środku, **znacznikach**
+  (wykonawca, tytuł, album, aparat…), rozmiarze i dacie; wyniki otwiera dwuklik, *Pokaż w folderze*,
+  *Kopiuj do drugiego panelu*.
+- Potrzebne `libarchive-tools` (bsdtar), `archivemount` i `sshfs` – polecane przez paczkę; FTP
+  i SMB wymagają `gvfs-backends` i `gvfs-fuse`, szczegóły filmów `ffmpeg` (sugerowany).
 
 ## Rambler: praca z plikami
 

@@ -41,7 +41,7 @@ What changed in each version: [CHANGELOG.md](CHANGELOG.md).
 
 Unpack the sources and run the installer:
 
-    tar xzf nirvana-desktop-0.0.48.tar.gz && cd nirvana-desktop
+    tar xzf nirvana-desktop-0.0.49.tar.gz && cd nirvana-desktop
     sudo ./install.sh                 # or: sudo ./install.sh --login-screen
 
 The installer:
@@ -322,16 +322,55 @@ managers of the 16-bit desktops:
   `@browse` (open like a folder), `@wallpaper`, `@shell command` (in Nirvana Shell). Built in:
   archives, shell scripts, Python programs, text, pictures, Debian packages. Saved in
   `~/.config/nirvana/filetypes.conf`.
-- **Archives like folders:** a double click on a zip/tar/7z/rar/iso… opens it as a folder (unpacked
-  with `bsdtar` into `~/.cache/nirvana/archives`; the address shows `~/x.zip/…`, the status bar
-  says it is a copy). *Extract Here*, *Extract to the Other Pane*, *List Contents*;
+- **Archives like folders:** a double click on a zip/tar/7z/rar/iso… opens it as a folder. Zip,
+  tar (also .gz/.bz2/.xz), 7z and cpio archives are **writable**: they are opened with
+  `archivemount`, you copy into them, rename, delete or edit files inside, and when no window shows
+  the archive any more Rambler packs it again in the background (`bsdtar`, in the format of its
+  name – a zip stays a zip) – only when something changed. The status bar says so. Other formats
+  (rar, iso…) are unpacked into `~/.cache/nirvana/archives` as a read-only copy. The address shows
+  `~/x.zip/…`. *Extract Here*, *Extract to the Other Pane*, *List Contents*;
   **Icons > Pack into an Archive…** makes a zip/tar.gz/tar.xz/7z from the selection.
-- **Servers:** **Window > Connect to a Server…** (or the *Server* button): SFTP through `sshfs`
-  (password or SSH key), FTP through `gio`/gvfs; the server's folders open like folders, appear
-  in the tree and work with both panes (copy, move, extract straight onto the server).
-  *Disconnect All* in the same window.
-- Needs `libarchive-tools` (bsdtar) and `sshfs` – recommended by the package; FTP needs
-  `gvfs-backends` and `gvfs-fuse`.
+- **Servers like disks:** **Window > Connect to a Server…** (or the *Server* button): **SFTP**
+  through `sshfs` (password or SSH key), **FTP** and **SMB** (Windows shares, `DOMAIN\user`)
+  through `gio`/gvfs. A connected server appears **on the desktop as a disk icon** (Open,
+  Disconnect), in the tree and in both panes (copy, move, extract straight onto the server); the
+  address field shows and accepts `sftp://me@host/dir`, `ftp://host/dir`, `smb://host/share/dir`.
+  *Connect at every start* remembers the server (`~/.config/nirvana/servers.conf`, never the
+  password): it connects by itself with an SSH key, anonymous FTP or a guest share, otherwise the
+  filled-in window asks only for the password. On servers files are not read for their type (no
+  traffic) – the name decides there.
+- **Content recognition:** the kind of a file comes from its first bytes, not from its name – a PNG
+  named `photo.dat` is a "PNG picture" with a picture icon, a zip without an ending is a "ZIP
+  archive", an empty `x.jpg` is an "empty file". Pictures, sounds, films, archives, documents, ELF
+  programs, AppImages, scripts, text. File types can match the content (`image/*`,
+  `application/zip`…) as well as the name; the content wins.
+- **Jobs in the background:** copying, moving, deleting, the Trash and saving archives run in
+  their own threads, each on its own – the windows keep working, a second copy can start while the
+  first runs. **Window > Jobs…** (it also opens by itself when a job takes longer than a moment, in
+  the lower right corner, without taking the keyboard): progress, speed, time left, **Pause**/
+  **Resume** and **Cancel** per job (no half-copied files stay). The status bar shows `Jobs: N`.
+- **Events per file type** (Special > File Types…): *Double click*, *Shift + double click* and
+  *Space (preview)* can each run their own command – a script, a player, an editor – or
+  `@preview`, the built-in quick look.
+- **Information panel** (the *Information* button): under the tree, for the selected file – a
+  thumbnail of pictures, the kind, size, date and what is inside: picture dimensions, colors and the
+  camera (EXIF), MP3 tags (ID3: title, artist, album, year), FLAC/Ogg comments, length, bit rate,
+  PDF pages and title, program architecture, lines and words of text; films (`ffprobe`) and the
+  number of files in an archive are read in the background.
+- **Quick look:** **Space** shows the selected picture, text or the file's details in a window;
+  Space or Escape closes it.
+- **The session is remembered** (`~/.config/nirvana/explorer.conf`): the folders of both panes,
+  which one is the source, the history (Back/Forward), the selected files, list or icons per pane,
+  the filters, the tree, the panel and two panes – after logging in again it is all as it was.
+- **Filter and search:** the **Filter** field next to the address keeps only matching files – a part
+  of the name, `*.jpg`, or a kind from the content: `kind:picture`, `kind:sound`, `kind:film`,
+  `kind:archive`, `kind:document`, `kind:text`, `kind:program` (also in Polish: `rodzaj:obraz`…).
+  **Window > Find…** (`Ctrl+F`, the *Search* button) searches a folder and its subfolders in the
+  background by name or pattern, kind (from the content), the text inside, **tags** (artist,
+  title, album, camera…), size and date; results open with a double click, *Show in Folder*,
+  *Copy to the Other Pane*.
+- Needs `libarchive-tools` (bsdtar), `archivemount` and `sshfs` – recommended by the package; FTP
+  and SMB need `gvfs-backends` and `gvfs-fuse`, film details `ffmpeg` (suggested).
 
 ## Rambler: working with files
 

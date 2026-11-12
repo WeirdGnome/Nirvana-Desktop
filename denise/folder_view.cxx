@@ -1,5 +1,6 @@
 // Nirvana Desktop - denise: the folder view (icons or list) with an information bar
 #include "folder_view.h"
+#include "sniff.h"
 
 #include <FL/Fl.H>
 #include <FL/Fl_Image_Surface.H>
@@ -61,6 +62,7 @@ Icon icon_for_path(const std::string &path, bool dir) {
 
 std::string kind_name(const Entry &e) {
   if (e.dir) return _("folder");
+  if (!e.kind.empty()) return e.kind;   // recognized from the content
   switch (e.icon) {
   case Icon::Application: return _("application");
   case Icon::Image: return _("image");
@@ -225,6 +227,7 @@ FolderView::FolderView(int X, int Y, int W, int H) : Fl_Widget(X, Y, W, H) {}
 void FolderView::load(const std::string &path, bool show_hidden) {
   entries_.clear();
   std::error_code ec;
+  int sniffed = 0;
   for (auto &de : fs::directory_iterator(path, fs::directory_options::skip_permission_denied, ec)) {
     std::string name = de.path().filename().string();
     if (!show_hidden && !name.empty() && name[0] == '.') continue;
@@ -240,10 +243,23 @@ void FolderView::load(const std::string &path, bool show_hidden) {
       e.mtime = st.st_mtime;
       if (!e.dir) e.size = (uintmax_t)st.st_size;
     }
+    if (!e.dir && sniffed < 3000) {   // the type from the first bytes, not from the name
+      sniffed++;
+      sniff::Kind k = sniff::of(e.path);
+      e.mime = k.mime;
+      e.kind = k.label;
+      e.cat = k.cat;
+      if (e.icon == Icon::Document) {   // a file without a known ending: the icon after its content
+        if (k.cat == "image") e.icon = Icon::Image;
+        else if (k.cat == "audio") e.icon = Icon::Music;
+        else if (k.mime == "application/vnd.appimage" || k.mime == "application/x-executable") e.icon = Icon::Application;
+      }
+    }
     if (!e.dir && is_appimage(name)) {
       e.label = !g_home.empty() ? appimage::label(e.path, g_home) : appimage::display_name(name);
       if (!g_home.empty()) e.icon_file = appimage::icon(e.path, g_home);
     }
+    if (filter && !e.dir && !filter(e)) continue;   // the explorer's filter
     entries_.push_back(std::move(e));
   }
   sort_entries();

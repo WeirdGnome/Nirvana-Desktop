@@ -831,7 +831,16 @@ static void manage(Window w, bool existing) {
   client_order.push_back(w);
   publish_client_list();
   c->frame->sync_client();
-  focus(c);
+  // a window that does not want the keyboard (WM_HINTS input = False, or the class
+  // "Nirvana-Progress" - the progress of Rambler's file jobs) comes up on top but leaves the
+  // focus where it was: typing and F5 go on undisturbed in the window the person works in
+  bool no_input = strcasecmp(get_class(w).c_str(), "nirvana-progress") == 0;
+  if (XWMHints *h = XGetWMHints(dpy, w)) {
+    if ((h->flags & InputHint) && !h->input) no_input = true;
+    XFree(h);
+  }
+  if (no_input && g_active) XRaiseWindow(dpy, fl_xid(c->frame));
+  else focus(c);
 }
 
 static void unmanage(Client *c, bool destroyed) {

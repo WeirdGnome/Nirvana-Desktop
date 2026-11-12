@@ -1,6 +1,21 @@
 # Changelog
 All notable changes to Nirvana Desktop, newest first. Polish: [CHANGELOG.pl.md](CHANGELOG.pl.md).
 
+## 0.0.49 – 2026-11-12
+
+Rambler's explorer grows up:
+- **Writable archives:** zip, tar(.gz/.bz2/.xz), 7z and cpio open through `archivemount` – copy into them, rename, delete, edit; when no window shows the archive, it is packed again in the background in its own format (only when something changed). Other formats stay a read-only copy.
+- **Servers like disks:** SFTP, FTP and now **SMB**; a connected server is a disk icon on the desktop (Open, Disconnect), `sftp://` `ftp://` `smb://` addresses in the Address field, *Connect at every start* (without the password – it is asked for when needed).
+- **Content sniffing:** the kind of a file comes from its first bytes (PNG, JPEG, ZIP, ELF, MP3… even without an ending or with a wrong one); file types can match the content (`image/*`); on servers the name decides (no network reading).
+- **Jobs in the background:** copy, move, delete, Trash and archive saving run in their own threads, side by side; **Window > Jobs…** with progress, speed, time left, Pause/Resume, Cancel; it does not take the keyboard when it opens by itself.
+- **Events per file type:** Double click, Shift + double click and Space (preview) with their own commands or `@preview`.
+- **Metadata:** the *Information* panel with a thumbnail, picture dimensions and EXIF camera, MP3/FLAC/Ogg tags and length, PDF pages, program architecture, text lines; films and archive contents in the background. **Space** = quick look.
+- **Session state:** both panes' folders, the history, the selection, list/icons, filters, the tree, the panel and two panes come back after logging in.
+- **Filter and Find:** the *Filter* field (`*.jpg`, `kind:sound`, `rodzaj:obraz`…) and **Window > Find…** (`Ctrl+F`): name, kind from the content, text inside, tags, size, date – in the background.
+- Insight: a window that does not want the keyboard (`WM_HINTS` input = false, Rambler's job progress) comes up without taking the focus.
+- Fixes: a relative address in the Address field; only one window per saved explorer window at the start.
+- The package recommends `archivemount`, suggests `ffmpeg`.
+
 ## 0.0.48 – 2026-11-12
 
 - **Rambler as an explorer** (Preferences > Desktop > Folder Windows): a bar of big flat buttons with labels, the Address field, the folder tree, one or two panes (SOURCE/DESTINATION: F5 copy, F6 move, F7 new folder, F8 delete, Tab swap, dragging between them) and a status bar. The usual Rambler stays the default.

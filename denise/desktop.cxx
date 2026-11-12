@@ -1,5 +1,6 @@
 // Nirvana Desktop - denise: the desktop, the menu bar and the file manager windows
 #include "desktop.h"
+#include "jobs.h"
 #include "applets.h"
 #include "appimage.h"
 #include "gary.h"
@@ -455,6 +456,8 @@ static const std::vector<MenuDef> &window_menu_defs() {
     {P_("Window/Forward"), FL_ALT + FL_Right, &Desktop::go_forward, 0},
     {P_("Window/Open Parent"), FL_COMMAND + FL_Up, &Desktop::open_parent, FL_MENU_DIVIDER},
     {P_("Window/Connect to a Server…"), 0, &Desktop::connect_server, 0},
+    {P_("Window/Find…"), FL_COMMAND + 'f', &Desktop::open_search, 0},
+    {P_("Window/Jobs…"), 0, &Desktop::show_jobs, 0},
     {P_("Window/Close"), FL_COMMAND + 'w', &Desktop::close_active, 0},
     {P_("Window/Update"), FL_COMMAND + 'r', &Desktop::update_window, FL_MENU_DIVIDER},
     {P_("Window/Select Contents"), FL_COMMAND + 'a', &Desktop::select_all, 0},
@@ -759,6 +762,12 @@ void Desktop::layout_icons() {
   for (int i = 0; i < (int)vols_.size(); i++) {
     DeskIcon d{vols_[i].name, vols_[i].mountpoint, vols_[i].icon, 0, 0};
     d.vol = i;
+    place(d);
+  }
+  // connected servers: like disks
+  for (auto &[label, mp] : servers()) {
+    DeskIcon d{label, mp, Icon::Network, 0, 0};
+    d.server = true;
     place(d);
   }
   for (Window w : iconic_windows()) {
@@ -1266,6 +1275,13 @@ int NWin::handle(int e) {
     }
   }
   if (ex && e == FL_KEYBOARD && desk->ex_key(this)) return 1;   // Tab, F5-F8 in the explorer
+  if (e == FL_KEYBOARD && pane && Fl::event_key() == ' ' && !dynamic_cast<Fl_Input *>(Fl::focus()) &&
+      !(Fl::event_state() & (FL_CTRL | FL_ALT | FL_META))) {   // Space: a quick look at the selected file
+    desk->menu_target = this;
+    desk->preview_selected();
+    desk->menu_target = nullptr;
+    return 1;
+  }
   int r = Fl_Double_Window::handle(e);
   // The menu bar lives in the desktop window while a folder window has the focus - pass the shortcut on.
   if (!r && e == FL_SHORTCUT && !dialog) r = desk->shortcut();
@@ -1367,6 +1383,7 @@ void Desktop::close(NWin *w) {
   wins_.erase(std::find(wins_.begin(), wins_.end(), w));
   w->hide();
   Fl::delete_widget(w);
+  later([this] { release_archives(); ex_save_state(); });
   // folder icons in the other windows lose the "open" hatching
   for (auto *o : wins_) if (o->pane) o->pane->view()->redraw();
   if (folder) {
@@ -1559,10 +1576,14 @@ static std::string location_text(const std::string &path, const std::string &hom
   return path;
 }
 
+std::string server_url(const std::string &path);   // explorer.cxx
+
 void Desktop::update_nav(NWin *w) {
   if (!w || !w->loc) return;
   std::string arch, inner;
+  std::string url = server_url(w->path);   // a server: "sftp://me@host/dir"
   if (is_archive_cache(w->path, &arch, &inner)) w->loc->value((location_text(arch, home_) + inner).c_str());
+  else if (!url.empty()) w->loc->value(url.c_str());
   else w->loc->value(location_text(w->path, home_).c_str());
   if (w->ex) ex_after_nav(w);
   auto set = [](Fl_Widget *b, bool on) { if (on) b->activate(); else b->deactivate(); };
@@ -1643,11 +1664,16 @@ void Desktop::go_location(NWin *w) {
   while (!t.empty() && isspace((unsigned char)t.back())) t.pop_back();
   while (!t.empty() && isspace((unsigned char)t.front())) t.erase(0, 1);
   if (t.empty()) { update_nav(w); return; }
+  if (t.find("://") != std::string::npos) {   // "sftp://me@host/dir" - a connected server
+    std::string p = server_path(t);
+    if (p.empty()) { guru(fmt(_("“%1” is not connected. Connect to it first with Server in the toolbar (or Window > Connect to a Server…)."), t)); update_nav(w); return; }
+    t = p;
+  }
   if (t == "~") t = home_;
   else if (t.rfind("~/", 0) == 0) t = home_ + t.substr(1);
+  else if (t[0] != '/') t = w->path + "/" + t;   // relative to the folder shown
   for (auto &[dir, arch] : archive_dirs_)   // "~/x.zip/sub" - inside an archive that is open
     if (t == arch || t.rfind(arch + "/", 0) == 0) { t = dir + t.substr(arch.size()); break; }
-  else if (t[0] != '/') t = w->path + "/" + t;
   std::error_code ec;
   fs::path p = fs::weakly_canonical(fs::path(t), ec);
   if (ec) p = fs::path(t).lexically_normal();
@@ -1669,7 +1695,8 @@ void Desktop::open_entry(const Entry &e, NWin *from) {
     return;
   }
   if (is_appimage(e.name)) { open_appimage(e.path); return; }
-  if (run_filetype(e, from, 0)) return;   // Tools > File Types: the type's first action
+  // Special > File Types: the type's double click (Shift: the second action)
+  if (run_event(e, from, (Fl::event_state() & FL_SHIFT) ? "open2" : "open")) return;
   // a file with the "Program" flag (Information): run it in Nirvana Shell with its arguments
   struct stat st;
   if (stat(e.path.c_str(), &st) == 0 && S_ISREG(st.st_mode) && (st.st_mode & S_IXUSR) && allowed(e.path)) {
@@ -1915,6 +1942,7 @@ void Desktop::start_tray() {
 void Desktop::restore() {
   start_tray();
   publish_folder_area();
+  later([this] { reconnect_servers(); });   // the remembered servers (Connect at every start)
   g_desk = this;
   // follow changes of the active window (without overwriting the masks FLTK has set)
   XWindowAttributes wa;
@@ -1924,7 +1952,12 @@ void Desktop::restore() {
   Fl::add_system_handler(x_watch, nullptr);
 
   int n = 0;
-  for (auto &p : spatial_.open_paths()) {
+  std::vector<std::string> open = spatial_.open_paths();
+  if (explorer_mode()) {   // the explorer windows of the last session, as they were
+    auto ex = ex_saved_windows();
+    if (!ex.empty()) open = ex;
+  }
+  for (auto &p : open) {
     std::error_code ec;
     if (fs::is_directory(p, ec) && allowed(p)) { open_folder(p, false, true); n++; }
   }
@@ -2262,13 +2295,25 @@ bool Desktop::trash_path(const std::string &src, std::string &err) {
 void Desktop::move_to_trash() {
   NWin *a = active_folder();
   if (!a) return;
-  std::string errors;
-  for (auto &e : a->pane->view()->selection()) {
-    std::string err;
-    if (!trash_path(e.path, err)) errors += err + "\n";
-  }
-  refresh_all();
-  if (!errors.empty()) dialog(GURU_TITLE, _("Could not move to the Trash:") + std::string("\n") + errors, {{"OK", nullptr}});
+  auto sel = a->pane->view()->selection();
+  if (sel.empty()) return;
+  auto job = std::make_shared<jobs::Job>();   // in the background (another disk = copying)
+  job->title = plat::fmt(_("Moving %1 to the Trash"), items_text((int)sel.size()));
+  job->files_total = (int)sel.size();
+  job->work = [this, sel](jobs::Job &j) {
+    for (auto &e : sel) {
+      if (!j.check()) break;
+      j.set_current(e.name);
+      std::string err;
+      if (!trash_path(e.path, err)) j.error(err);
+      j.files_done++;
+    }
+  };
+  job->on_done = [this](jobs::Job &j) {
+    refresh_all();
+    if (!j.errors.empty()) dialog(GURU_TITLE, _("Could not move to the Trash:") + std::string("\n") + j.errors, {{"OK", nullptr}});
+  };
+  jobs::start(job);
 }
 
 void Desktop::empty_trash() {
@@ -2281,12 +2326,22 @@ void Desktop::empty_trash() {
          plat::fmt(_("The Trash contains %1.\nDelete them permanently?"), items_text(n)),
          {{_("Cancel"), nullptr},
           {_("Empty"), [this] {
-             std::error_code ec2;
-             for (auto dir : {trash_dir(), home_ + "/.local/share/Trash/info"}) {
-               if (!fs::exists(dir, ec2)) continue;
-               for (auto &x : fs::directory_iterator(dir, ec2)) fs::remove_all(x.path(), ec2);
-             }
-             refresh_all();
+             auto job = std::make_shared<jobs::Job>();
+             job->title = _("Emptying the Trash");
+             std::vector<std::string> dirs = {trash_dir(), home_ + "/.local/share/Trash/info"};
+             job->work = [dirs](jobs::Job &j) {
+               std::error_code ec2;
+               for (auto &dir : dirs) {
+                 if (!fs::exists(dir, ec2)) continue;
+                 for (auto &x : fs::directory_iterator(dir, ec2)) {
+                   if (!j.check()) return;
+                   std::string err;
+                   if (!jobs::remove_tree(j, x.path(), err)) j.error(err);
+                 }
+               }
+             };
+             job->on_done = [this](jobs::Job &) { refresh_all(); };
+             jobs::start(job);
            }}});
 }
 
@@ -2838,30 +2893,41 @@ void Desktop::transfer(const std::vector<Entry> &items, const std::string &dest,
       return;
     }
   }
-  std::string errors;
-  for (auto &e : items) {
-    fs::path src = e.path, dst = fs::path(dest) / e.name;
-    bool same_dir = src.parent_path() == fs::path(dest);
-    if (same_dir && !copy) continue;                      // moving to the same place
-    if (same_dir && copy) dst = fs::path(dest) / copy_name(dest, e.name);
-    ec.clear();
-    if (fs::exists(dst, ec) && replace && !same_dir) fs::remove_all(dst, ec);
-    ec.clear();
-    if (copy) {
-      fs::copy(src, dst, fs::copy_options::recursive | fs::copy_options::copy_symlinks, ec);
-    } else {
-      fs::rename(src, dst, ec);
-      if (ec) {   // another file system: copy and delete
-        ec.clear();
-        fs::copy(src, dst, fs::copy_options::recursive | fs::copy_options::copy_symlinks, ec);
-        if (!ec) fs::remove_all(src, ec);
-      }
-      if (!ec) path_moved(src.string(), dst.string());
+  // the work itself in the background: windows keep working, jobs run side by side
+  auto job = std::make_shared<jobs::Job>();
+  job->title = plat::fmt(copy ? _("Copying %1 to “%2”") : _("Moving %1 to “%2”"), items_text((int)items.size()), title_for(dest));
+  std::string apps = apps_dir();
+  job->work = [items, dest, copy, replace](jobs::Job &j) {
+    std::error_code ec;
+    uint64_t total = 0;
+    int files = 0;
+    for (auto &e : items) total += jobs::measure(e.path, files);
+    j.total = total;
+    j.files_total = files;
+    for (auto &e : items) {
+      if (!j.check()) break;
+      fs::path src = e.path, dst = fs::path(dest) / e.name;
+      bool same_dir = src.parent_path() == fs::path(dest);
+      if (same_dir && !copy) continue;                      // moving to the same place
+      if (same_dir && copy) dst = fs::path(dest) / copy_name(dest, e.name);
+      ec.clear();
+      if (fs::exists(dst, ec) && replace && !same_dir) fs::remove_all(dst, ec);
+      std::string err;
+      bool ok = copy ? jobs::copy_tree(j, src, dst, err) : jobs::move_tree(j, src, dst, err);
+      if (!ok) { if (!err.empty()) j.error("“" + e.name + "”: " + err); continue; }
+      std::lock_guard<std::mutex> l(j.m);
+      if (!copy) j.moved.push_back({src.string(), dst.string()});
+      j.made.push_back(dst.string());
     }
-    if (ec) { errors += "“" + e.name + "”: " + ec.message() + "\n"; continue; }
+  };
+  job->on_done = [this, apps](jobs::Job &j) {
+    for (auto &[from, to] : j.moved) path_moved(from, to);
     // An AppImage dropped into Applications is ready to run (installing by dragging)
     // and goes straight to the folder of its category (Games, Graphics...)
-    if (is_appimage(e.name) && fs::path(dest) == fs::path(apps_dir())) {
+    std::error_code ec;
+    for (auto &d : j.made) {
+      fs::path dst = d;
+      if (!is_appimage(dst.filename().string()) || dst.parent_path() != fs::path(apps)) continue;
       chmod(dst.c_str(), 0755);
       fs::path cat = app_destination(dst.string());
       if (!fs::exists(cat, ec)) {
@@ -2871,10 +2937,11 @@ void Desktop::transfer(const std::vector<Entry> &items, const std::string &dest,
         ec.clear();
       }
     }
-  }
-  refresh_all();
-  if (!errors.empty())
-    dialog(GURU_TITLE, _("There were errors:") + std::string("\n") + errors, {{"OK", nullptr}});
+    refresh_all();
+    if (j.cancel) return;
+    if (!j.errors.empty()) dialog(GURU_TITLE, _("There were errors:") + std::string("\n") + j.errors, {{"OK", nullptr}});
+  };
+  jobs::start(job);
 }
 
 // ---------------------------------------------------------------------------

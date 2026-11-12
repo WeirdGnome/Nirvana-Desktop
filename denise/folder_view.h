@@ -24,6 +24,8 @@ struct Entry {
   std::string icon_file;   // own icon (PNG/SVG), e.g. extracted from an AppImage
   uintmax_t size = 0;      // file size (0 for folders)
   time_t mtime = 0;        // modification date
+  std::string mime, kind; // from the file's content (sniff.h): "image/png", "PNG picture"
+  std::string cat;        // image audio video archive document text program other
 };
 
 plat::Icon icon_for(const std::string &name, bool dir);
@@ -79,6 +81,7 @@ public:
   int drop_target_at(int ex, int ey) const;      // ex, ey - window coordinates
   const Entry *entry(int i) const { return i >= 0 && i < count() ? &entries_[i] : nullptr; }
 
+  std::function<bool(const Entry &)> filter;                // files shown (folders always); empty: all
   std::function<void(const Entry &)> on_open;               // double click / Enter
   std::function<void()> on_context;                         // right button (context menu)
   std::function<bool(const std::string &)> is_open;         // does the folder have an open window

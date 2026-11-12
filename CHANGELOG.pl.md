@@ -1,6 +1,21 @@
 # Lista zmian
 Wszystkie ważniejsze zmiany w Nirvana Desktop, od najnowszych. English: [CHANGELOG.md](CHANGELOG.md).
 
+## 0.0.49 – 2026-11-12
+
+Eksplorator Ramblera dorasta:
+- **Zapisywalne archiwa:** zip, tar(.gz/.bz2/.xz), 7z i cpio otwierane przez `archivemount` – można do nich kopiować, zmieniać nazwy, usuwać, edytować; gdy żadne okno nie pokazuje archiwum, jest pakowane na nowo w tle we własnym formacie (tylko gdy coś się zmieniło). Inne formaty zostają kopią tylko do odczytu.
+- **Serwery jak dyski:** SFTP, FTP i teraz **SMB**; połączony serwer to ikona dysku na biurku (Otwórz, Rozłącz), adresy `sftp://` `ftp://` `smb://` w polu Adres, *Łącz przy każdym starcie* (bez hasła – pytanie o nie, gdy trzeba).
+- **Rozpoznawanie zawartości:** rodzaj pliku wynika z pierwszych bajtów (PNG, JPEG, ZIP, ELF, MP3… nawet bez rozszerzenia albo z błędnym); typy plików mogą pasować po zawartości (`image/*`); na serwerach decyduje nazwa (bez czytania przez sieć).
+- **Zadania w tle:** kopiowanie, przenoszenie, usuwanie, Kosz i zapis archiwów we własnych wątkach, obok siebie; **Okno > Zadania…** z postępem, prędkością, pozostałym czasem, Wstrzymaj/Wznów, Anuluj; nie zabiera klawiatury, gdy otwiera się samo.
+- **Zdarzenia dla typów plików:** Dwuklik, Shift + dwuklik i Spacja (podgląd) z własnymi poleceniami albo `@preview`.
+- **Metadane:** panel *Informacje* z miniaturą, wymiarami obrazu i aparatem z EXIF, tagami MP3/FLAC/Ogg i długością, stronami PDF, architekturą programu, wierszami tekstu; filmy i zawartość archiwów w tle. **Spacja** = szybki podgląd.
+- **Stan sesji:** foldery obu paneli, historia, zaznaczenie, lista/ikony, filtry, drzewo, panel i dwa panele wracają po zalogowaniu.
+- **Filtr i Znajdź:** pole *Filtr* (`*.jpg`, `rodzaj:dźwięk`, `kind:picture`…) i **Okno > Znajdź…** (`Ctrl+F`): nazwa, rodzaj z zawartości, tekst w środku, znaczniki, rozmiar, data – w tle.
+- Insight: okno, które nie chce klawiatury (`WM_HINTS` input = false, postęp zadań Ramblera), pojawia się bez zabierania fokusu.
+- Poprawki: względny adres w polu Adres; przy starcie jedno okno na każde zapisane okno eksploratora.
+- Paczka poleca `archivemount`, sugeruje `ffmpeg`.
+
 ## 0.0.48 – 2026-11-12
 
 - **Rambler jako eksplorator** (Preferencje > Pulpit > Okna folderów): pasek dużych płaskich przycisków z podpisami, pole Adres, drzewo folderów, jeden albo dwa panele (ŹRÓDŁO/CEL: F5 kopiuj, F6 przenieś, F7 nowy folder, F8 usuń, Tab zamiana, przeciąganie między nimi) i pasek stanu. Domyślnie zostaje zwykły Rambler.

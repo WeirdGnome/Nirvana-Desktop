@@ -204,6 +204,7 @@ public:
   void reset_nirvana();
   // --- the explorer (explorer.cxx): folder tree, one or two panes (source/destination) ---
   bool explorer_mode() const { return desk_set_.folder_style == "explorer"; }
+  std::string folder_title(const std::string &path) const { return title_for(path); }   // "wakacje.zip", not the cache folder
   void build_explorer(NWin *win, int ox, int oy, int W, int H, const std::string &path);
   void ex_layout(NWin *w);
   void ex_activate(NWin *w, int idx);
@@ -222,13 +223,30 @@ public:
   // the type's actions for the context menu of the selection (label, what it does)
   std::vector<std::pair<std::string, std::function<void()>>> filetype_menu(const std::vector<Entry> &sel, NWin *w);
   void edit_filetypes();
+  void show_jobs();   // the background jobs window (jobs.cxx)
+  // --- search (search.cxx), preview and the information panel (explorer.cxx) ---
+  void open_search();
+  void open_found(const std::string &path, bool in_folder);
+  void copy_found(const std::vector<Entry> &items);
+  void preview_selected();   // Space: the type's preview action, or the built-in preview
+  void ex_toggle_info();
+  void ex_set_filter(NWin *w, const std::string &f);
+  void ex_save_state();
+  std::vector<std::string> ex_saved_windows() const;   // explorer mode: the windows to open at the start      // the explorer windows' state (~/.config/nirvana/explorer.conf)
+  void release_archives();   // archives no window shows any more: written back and closed
+  void reconnect_servers();  // the remembered servers, at the start
+  void servers_changed();    // the tree and the desktop icons follow
+  bool run_event(const Entry &e, NWin *from, const std::string &event);   // file type events
   // --- archives as folders and servers (explorer.cxx) ---
   void browse_archive(NWin *w, const std::string &archive);
   bool is_archive_cache(const std::string &path, std::string *archive = nullptr, std::string *inner = nullptr) const;
   void pack_selected();
-  void connect_server();
+  void connect_server() { connect_server_to({}, ""); }
+  // the dialog filled in: kind, host, port, user, folder (a remembered server that needs a password)
+  void connect_server_to(const std::vector<std::string> &spec, const std::string &note);
   void disconnect_server(const std::string &mountpoint);
-  std::vector<std::pair<std::string, std::string>> servers() const;   // (label, mount point)
+  std::vector<std::pair<std::string, std::string>> servers() const;
+  std::string server_path(const std::string &url) const;   // "sftp://me@host/dir" -> the folder ("" if not connected)   // (label, mount point)
   mutable std::map<std::string, std::string> archive_dirs_;   // cache folder -> archive file
   bool is_known(NWin *w) const { return known(w); }
   void error_box(const std::string &t) { guru(t); }
@@ -248,6 +266,7 @@ private:
     Entry entry;         // for the dock: file/folder/application
     unsigned long win = 0;      // icon of an iconified window (Window); a double click restores it
     bool prefs = false;         // the Preferences icon (opens the panel, not a folder)
+    bool server = false;        // a connected server (SFTP, FTP, SMB) - like a disk
     bool no_drop() const { return win || prefs; }   // files cannot be dropped on this icon
     Fl_Image *img = nullptr;    // its picture (from _NET_WM_ICON or the AppImage)
   };
