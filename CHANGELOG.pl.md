@@ -1,6 +1,12 @@
 # Lista zmian
 Wszystkie ważniejsze zmiany w Nirvana Desktop, od najnowszych. English: [CHANGELOG.md](CHANGELOG.md).
 
+## 0.0.61 – 2026-11-12
+
+- **Aplikacje jako duże ikony**, jak w oknie Preferencji, zamiast listy – w oknie Aplikacji i w folderach kategorii (lista nadal pod `Ctrl+2`, zapamiętywana). Foldery aplikacji zapamiętane wcześniej jako lista jednorazowo przechodzą na ikony.
+- **Logo Nirvany jednobarwne**: czarne na jasnych schematach, jasne na ciemnych (pasek menu, Rambler zaawansowany, O systemie, ekran logowania i blokady); wygaszacze rysują je jasne na czarnym. Zmienia się od razu przy zmianie schematu.
+- **Naprawiony wskaźnik „Systemowy”**: powrót z wskaźnika Retro 16 na systemowy nic nie zmieniał – sesja zapisywała wybór Nirvany jako wskaźnik startowy, a Xcursor brak motywu i tak zamieniał na ten startowy. Teraz sesja pamięta prawdziwy wskaźnik systemu, a „Systemowy” wybiera go wprost (`Xcursor.theme` z zasobów X albo motyw `default`).
+
 ## 0.0.60 – 2026-11-12
 
 - **Dwuklik wszędzie, także w Preferencjach**: pojedyncze kliknięcie ikony panelu w oknie Preferencji tylko ją zaznacza, dwuklik (albo Enter) otwiera panel.

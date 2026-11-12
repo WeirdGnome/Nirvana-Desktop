@@ -1509,6 +1509,8 @@ void Desktop::open_folder(const std::string &path, bool animate, bool new_window
   const int bars = NWin::MB_H + NWin::NAV_H;
   // the content as the first child: it gets the keyboard focus when the window opens
   win->pane = new FolderPane(ox, oy + bars, s.w, s.h - bars, path, show_hidden_);
+  // a folder seen for the first time: a list, the applications - big icons (like Preferences)
+  if (!known_pos) { s.list = !(path == apps_dir() || in_apps(path + "/")); s.icons = 32; }
   win->pane->view()->set_icon_size(s.icons);
   build_folder_bars(win, ox, oy, s.w);
   win->resizable(win->pane);
@@ -1516,7 +1518,7 @@ void Desktop::open_folder(const std::string &path, bool animate, bool new_window
   win->size_range(MIN_W + ew, csd_mode ? TITLE_H : MIN_H);
   win->end();
   setup_pane(win, win->pane, -1);
-  if (!known_pos || s.list) win->pane->set_mode(FolderView::List);   // the list is the default
+  win->pane->set_mode(s.list ? FolderView::List : FolderView::Icons);
   wins_.push_back(win);
   update_nav(win);
   win->show();
@@ -1714,8 +1716,10 @@ void Desktop::navigate(NWin *w, const std::string &target, Nav how) {
   // the view remembered for the new folder (list / icons, icon size)
   WinState s;
   bool known_pos = spatial_.get(path, s);
-  w->pane->view()->set_icon_size(known_pos ? s.icons : 32);
-  w->pane->set_mode(known_pos && !s.list ? FolderView::Icons : FolderView::List);   // the list is the default
+  // the list is the default, the applications are big icons (like Preferences)
+  if (!known_pos) { s.list = !(path == apps_dir() || in_apps(path + "/")); s.icons = 32; }
+  w->pane->view()->set_icon_size(s.icons);
+  w->pane->set_mode(s.list ? FolderView::List : FolderView::Icons);
   w->pane->go(path);
   // going up: select the folder we came from
   if (fs::path(old).parent_path().string() == path) w->pane->view()->select_path(old);
@@ -2036,6 +2040,7 @@ void Desktop::start_tray() {
 
 void Desktop::restore() {
   spatial_.list_default_once();
+  spatial_.apps_icons_once(apps_dir());
   start_tray();
   publish_folder_area();
   later([this] { reconnect_servers(); });   // the remembered servers (Connect at every start)

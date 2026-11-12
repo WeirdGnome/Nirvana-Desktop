@@ -978,44 +978,71 @@ void guru_alert(const std::string &m) {
   fl_alert("%s\n\n%s %s", m.c_str(), GURU_TITLE, guru_number(m).c_str());
 }
 
-// The Nirvana Desktop logo: an enso - one stroke of a brush in a circle, red with white
-// checks fading into red and white dots; transparent around (it sits on the menu bar, the
-// About window, the login screen as it is). Built into the program as PNG files
-// (platinum/logo_data.h, made by tools/logo/make_logo.py); other sizes are scaled from the
-// nearest larger one (smoothly) and kept.
-static std::map<int, Fl_RGB_Image *> g_logo_cache;
+// The Nirvana Desktop logo: an enso - one stroke of a brush in a circle, in one color: black
+// on light schemes, light on dark ones (on the screen saver's black too); transparent around
+// (it sits on the menu bar, the About window, the login screen as it is). Built into the
+// program as PNG files (platinum/logo_data.h, made by tools/logo/make_logo.py) - only their
+// transparency is used; other sizes are scaled from the nearest larger one (smoothly) and kept.
+static std::map<std::pair<int, unsigned>, Fl_RGB_Image *> g_logo_cache;
 
-void draw_logo(int x, int y, int s) {
-  if (s <= 0) return;
+Fl_Color logo_ink(Fl_Color bg) {
+  uchar r, g, b;
+  Fl::get_color(bg, r, g, b);
+  bool dark = 0.299 * r + 0.587 * g + 0.114 * b < 128;
+  return dark ? fl_rgb_color(0xF4, 0xF4, 0xF4) : fl_rgb_color(0x00, 0x00, 0x00);
+}
+
+static Fl_RGB_Image *logo_for(int s, Fl_Color ink) {
+  uchar ir, ig, ib;
+  Fl::get_color(ink, ir, ig, ib);
+  unsigned key = (unsigned)ir << 16 | (unsigned)ig << 8 | ib;
   auto &cache = g_logo_cache;
-  auto it = cache.find(s);
-  if (it == cache.end()) {
-    const logo_data::Png *best = nullptr;
-    for (auto &p : logo_data::all)
-      if (p.size >= s && (!best || p.size < best->size)) best = &p;
-    if (!best) best = &logo_data::all[std::size(logo_data::all) - 1];
-    Fl_PNG_Image png(nullptr, best->data, best->len);
-    Fl_RGB_Image *img = nullptr;
-    if (png.w() > 0) {
-      if (png.w() == s) {
-        img = (Fl_RGB_Image *)png.copy();
-      } else {
-        Fl_RGB_Scaling was = Fl_Image::RGB_scaling();
-        Fl_Image::RGB_scaling(FL_RGB_SCALING_BILINEAR);
-        img = (Fl_RGB_Image *)png.copy(s, s);
-        Fl_Image::RGB_scaling(was);
+  auto it = cache.find({s, key});
+  if (it != cache.end()) return it->second;
+  const logo_data::Png *best = nullptr;
+  for (auto &p : logo_data::all)
+    if (p.size >= s && (!best || p.size < best->size)) best = &p;
+  if (!best) best = &logo_data::all[std::size(logo_data::all) - 1];
+  Fl_PNG_Image png(nullptr, best->data, best->len);
+  Fl_RGB_Image *img = nullptr;
+  if (png.w() > 0 && png.d() == 4) {
+    Fl_RGB_Image *src = (Fl_RGB_Image *)png.copy();
+    if (png.w() != s) {
+      Fl_RGB_Scaling was = Fl_Image::RGB_scaling();
+      Fl_Image::RGB_scaling(FL_RGB_SCALING_BILINEAR);
+      delete src;
+      src = (Fl_RGB_Image *)png.copy(s, s);
+      Fl_Image::RGB_scaling(was);
+    }
+    // one color, the shape (the transparency) of the picture
+    int w = src->w(), h = src->h(), ld = src->ld() ? src->ld() : w * 4;
+    const uchar *in = (const uchar *)src->data()[0];
+    uchar *out = new uchar[w * h * 4];
+    for (int y = 0; y < h; y++)
+      for (int x = 0; x < w; x++) {
+        const uchar *p = in + y * ld + x * 4;
+        uchar *q = out + (y * w + x) * 4;
+        q[0] = ir; q[1] = ig; q[2] = ib; q[3] = p[3];
       }
-    }
-    if (cache.size() > 64) {   // the screen saver draws many sizes: do not keep them all
-      for (auto &[k, v] : cache) delete v;
-      cache.clear();
-    }
-    it = cache.emplace(s, img).first;
+    delete src;
+    img = new Fl_RGB_Image(out, w, h, 4);
+    img->alloc_array = 1;
   }
-  if (it->second) {
-    it->second->draw(x, y);
-  } else {   // no PNG support: a red ring
-    fl_color(fl_rgb_color(0xE8, 0x14, 0x22));
+  if (cache.size() > 64) {   // the screen saver draws many sizes: do not keep them all
+    for (auto &[k, v] : cache) delete v;
+    cache.clear();
+  }
+  cache[{s, key}] = img;
+  return img;
+}
+
+void draw_logo(int x, int y, int s, Fl_Color bg) {
+  if (s <= 0) return;
+  Fl_Color ink = logo_ink(bg);
+  if (Fl_RGB_Image *img = logo_for(s, ink)) {
+    img->draw(x, y);
+  } else {   // no PNG support: a ring
+    fl_color(ink);
     fl_line_style(FL_SOLID, std::max(2, s / 8));
     fl_arc(x + s / 6, y + s / 6, s * 2 / 3, s * 2 / 3, 0, 330);
     fl_line_style(0);
@@ -1023,16 +1050,10 @@ void draw_logo(int x, int y, int s) {
 }
 
 // The logo as a picture with transparency (for menu items, buttons): a copy, the caller owns it
-Fl_RGB_Image *logo_image(int s) {
+Fl_RGB_Image *logo_image(int s, Fl_Color bg) {
   if (s <= 0) return nullptr;
-  if (!g_logo_cache.count(s)) {   // made by draw_logo - into a surface nobody sees
-    Fl_Image_Surface surf(s, s);
-    Fl_Surface_Device::push_current(&surf);
-    draw_logo(0, 0, s);
-    Fl_Surface_Device::pop_current();
-  }
-  auto it = g_logo_cache.find(s);
-  return it != g_logo_cache.end() && it->second ? (Fl_RGB_Image *)it->second->copy() : nullptr;
+  Fl_RGB_Image *img = logo_for(s, logo_ink(bg));
+  return img ? (Fl_RGB_Image *)img->copy() : nullptr;
 }
 
 // ---------------------------------------------------------------------------

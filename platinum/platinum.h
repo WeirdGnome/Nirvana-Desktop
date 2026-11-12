@@ -211,8 +211,10 @@ void draw_category_emblem(int category, int x, int y, bool selected, int style);
 void draw_icon(Icon icon, int x, int y, bool selected);   // in the style from the appearance settings
 bool draw_icon_retro(Icon icon, int x, int y, bool selected);
 int icon_style();   // 0 = Retro, 1 = Platinum (key for the icon caches)
-void draw_logo(int x, int y, int size);
-Fl_RGB_Image *logo_image(int size);   // the logo with transparency, a copy (the caller deletes it)
+// The logo in one color: black on a light background, light on a dark one (bg - what it sits on)
+void draw_logo(int x, int y, int size, Fl_Color bg = GRAY);
+Fl_RGB_Image *logo_image(int size, Fl_Color bg = GRAY);   // with transparency, a copy (the caller deletes it)
+Fl_Color logo_ink(Fl_Color bg = GRAY);   // the color of the logo on that background
 // Error windows have this title (a nod to the error screens of 1980s home computers).
 constexpr const char *GURU_TITLE = "Guru Meditation";
 // "#00000004.4B3A91C0": a guru number made from the message, for the error windows

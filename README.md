@@ -41,7 +41,7 @@ What changed in each version: [CHANGELOG.md](CHANGELOG.md).
 
 Unpack the sources and run the installer:
 
-    tar xzf nirvana-desktop-0.0.60.tar.gz && cd nirvana-desktop
+    tar xzf nirvana-desktop-0.0.61.tar.gz && cd nirvana-desktop
     sudo ./install.sh                 # or: sudo ./install.sh --login-screen
 
 The installer:
@@ -179,7 +179,8 @@ Another system font (for example a free bitmap-style one) can be set with `NIRVA
 - **Where applications live**: in the hidden folder `~/.nirvana-apps`, so they do not clutter
   Nirvana HD. The **Applications** icon on the desktop opens it in a plain (simple) Rambler
   window with the category folders, also when folder windows are set to Rambler Advanced; its
-  address reads *Applications*. Right-click an application
+  address reads *Applications*; the programs are shown as big icons, like the Preferences
+  window (a list with `Ctrl+2`). Right-click an application
   there and choose **Put on Dock** to keep it at hand; right-click a dock tile for **Open** and
   **Unpin from Dock**. An old `~/Applications` (`~/Aplikacje`) folder is moved there
   automatically, together with dock entries and remembered windows.
@@ -590,7 +591,8 @@ the whole system: Rambler and Insight reload the palette without a restart.
   ![Retro icons (normal and selected) and Platinum](docs/img/icons.png)
   ![The Retro Blue scheme with Retro icons](docs/img/icons-retro.png)
 - **Window animations**: on or off.
-- **Mouse pointer**: the system's, Nirvana's red **Retro 16** pointers – *classic* (the
+- **Mouse pointer**: the system's (the one the system had before Nirvana's choice: `Xcursor.theme`
+  of the X resources or the `default` theme), Nirvana's red **Retro 16** pointers – *classic* (the
   pixels of the 16-bit era: a leaning arrow with a wide head and a short tail, red inside, a light
   edge up and left, black down and right, no line around; enlarged by whole pixels), *outline*
   (the same made smooth, with a thin black line and a shadow) and *glass* (a glassy red) – or any

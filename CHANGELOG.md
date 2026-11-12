@@ -1,6 +1,12 @@
 # Changelog
 All notable changes to Nirvana Desktop, newest first. Polish: [CHANGELOG.pl.md](CHANGELOG.pl.md).
 
+## 0.0.61 – 2026-11-12
+
+- **Applications as big icons**, like the Preferences window, instead of a list – in the Applications window and the category folders (the list is still under `Ctrl+2`, remembered). Application folders remembered as a list switch to icons once.
+- **A one-color Nirvana logo**: black on light schemes, light on dark ones (menu bar, Rambler Advanced, About, the login and lock screens); screen savers draw it light on black. It changes at once with the scheme.
+- **Fixed the "System default" pointer**: going back from a Retro 16 pointer to the system's changed nothing – the session stored Nirvana's choice as the starting pointer, and Xcursor turned "no theme" into that starting one anyway. Now the session remembers the system's real pointer and "System default" picks it by name (`Xcursor.theme` of the X resources or the `default` theme).
+
 ## 0.0.60 – 2026-11-12
 
 - **Double click everywhere, Preferences too**: a single click on a panel icon in the Preferences window only selects it, a double click (or Enter) opens the panel.

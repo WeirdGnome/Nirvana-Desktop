@@ -152,7 +152,7 @@ struct Logo : Saver {
   }
   void draw(int X, int Y) override {
     black(X, Y, w, h);
-    plat::draw_logo(X + (int)x, Y + (int)y, size);
+    plat::draw_logo(X + (int)x, Y + (int)y, size, FL_BLACK);
     fl_font(plat::FONT_SYSTEM, std::max(8, size / 4));
     fl_color(hsv(hue, 0.6, 1));
     fl_draw("Nirvana", X + (int)x, Y + (int)y + size, size, size / 2, FL_ALIGN_CENTER);
@@ -601,7 +601,7 @@ struct Chips : Saver {
       if (size < 4) continue;
       int sx = (int)(X + w / 2.0 + p.x / p.z * k * 0.6) - size / 2, sy = (int)(Y + h / 2.0 + p.y / p.z * k * 0.6) - size / 2;
       if (sx > X + w || sy > Y + h || sx + size < X || sy + size < Y) continue;
-      plat::draw_logo(sx, sy, size);
+      plat::draw_logo(sx, sy, size, FL_BLACK);
     }
   }
 };

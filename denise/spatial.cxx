@@ -77,3 +77,15 @@ void Spatial::list_default_once() {
   save();
   if (FILE *f = fopen(marker.c_str(), "w")) fclose(f);
 }
+
+void Spatial::apps_icons_once(const std::string &apps) {
+  std::string marker = file_.substr(0, file_.rfind('/') + 1) + ".apps-icons";
+  if (access(marker.c_str(), F_OK) == 0) return;
+  for (auto &[path, st] : map_)
+    if (path == apps || path.rfind(apps + "/", 0) == 0) {
+      st.list = false;
+      if (st.icons < 32) st.icons = 32;
+    }
+  save();
+  if (FILE *f = fopen(marker.c_str(), "w")) fclose(f);
+}

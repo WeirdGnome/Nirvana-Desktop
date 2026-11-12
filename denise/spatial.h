@@ -23,6 +23,9 @@ public:
   // Rambler 0.0.59: the list became the default view - the folders remembered with the old
   // default (icons) are shown as a list once (a marker file: only the first time)
   void list_default_once();
+  // Rambler 0.0.61: the applications (and their category folders) are big icons by default,
+  // like the Preferences window - remembered as a list in 0.0.59-0.0.60, switched once
+  void apps_icons_once(const std::string &apps);
   void save() const;
 
 private:

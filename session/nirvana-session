@@ -43,6 +43,10 @@ fi
 APPEARANCE="${XDG_CONFIG_HOME:-$HOME/.config}/nirvana/appearance.conf"
 XCURSOR_PATH="${XDG_DATA_HOME:-$HOME/.local/share}/icons:$HOME/.icons:$BIN/../share/icons:$BIN/../cursors:/usr/local/share/icons:/usr/share/icons:/usr/share/pixmaps"
 export XCURSOR_PATH
+# the system's own pointer (before Nirvana's choice): "System default" in Appearance goes back to it
+NIRVANA_SYSTEM_XCURSOR_THEME="${XCURSOR_THEME:-}"
+NIRVANA_SYSTEM_XCURSOR_SIZE="${XCURSOR_SIZE:-}"
+export NIRVANA_SYSTEM_XCURSOR_THEME NIRVANA_SYSTEM_XCURSOR_SIZE
 if [ -f "$APPEARANCE" ]; then
   c=$(sed -n 's/^cursor=//p' "$APPEARANCE" | tail -n 1)
   z=$(sed -n 's/^cursor_size=//p' "$APPEARANCE" | tail -n 1)

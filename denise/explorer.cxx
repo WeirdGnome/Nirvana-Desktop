@@ -246,6 +246,7 @@ static void ex_icon(ExIcon k, int x, int y, bool on) {
 class ExLogo : public Fl_Widget {
 public:
   Fl_RGB_Image *img = nullptr;
+  Fl_Color ink = 0;
   ExLogo(int X, int Y, int W, int H) : Fl_Widget(X, Y, W, H) {}
   ~ExLogo() override { delete img; }
   void draw() override {
@@ -254,7 +255,7 @@ public:
     fl_color(SHADOW); fl_yxline(x() + 1, y() + 3, y() + h() - 4);
     fl_color(LIGHT); fl_yxline(x() + 2, y() + 3, y() + h() - 4);
     int s = std::min(w() - 10, h() - 4);
-    if (!img || img->w() != s) { delete img; img = logo_image(s); }
+    if (!img || img->w() != s || ink != logo_ink()) { delete img; img = logo_image(s); ink = logo_ink(); }
     if (img) img->draw(x() + 6 + (w() - 6 - s) / 2, y() + (h() - s) / 2);
   }
 };

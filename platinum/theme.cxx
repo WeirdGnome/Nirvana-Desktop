@@ -471,8 +471,18 @@ void apply_cursor(const Appearance &a) {
   static bool had_theme = false, had_size = false;
   if (!saved) {
     saved = true;
-    if (const char *t = getenv("XCURSOR_THEME")) { had_theme = true; env_theme = t; }
-    if (const char *z = getenv("XCURSOR_SIZE")) { had_size = true; env_size = z; }
+    // the system's own pointer: the session keeps it in NIRVANA_SYSTEM_XCURSOR_* - XCURSOR_THEME
+    // already holds Nirvana's choice from the login (so "System default" went back to it)
+    const char *t = getenv("NIRVANA_SYSTEM_XCURSOR_THEME");
+    const char *z = getenv("NIRVANA_SYSTEM_XCURSOR_SIZE");
+    if (!t) {   // started outside the session: what it was given is the system's, for its children too
+      t = getenv("XCURSOR_THEME");
+      z = getenv("XCURSOR_SIZE");
+      setenv("NIRVANA_SYSTEM_XCURSOR_THEME", t ? t : "", 1);
+      setenv("NIRVANA_SYSTEM_XCURSOR_SIZE", z ? z : "", 1);
+    }
+    if (t && *t) { had_theme = true; env_theme = t; }
+    if (z && *z) { had_size = true; env_size = z; }
     // Nirvana's own themes, wherever they are installed
     std::string path;
     for (auto &p : cursor_paths()) path += (path.empty() ? "" : ":") + p;
@@ -491,7 +501,11 @@ void apply_cursor(const Appearance &a) {
   if (fl_x11_display()) {
     const char *t = getenv("XCURSOR_THEME");
     const char *z = getenv("XCURSOR_SIZE");
-    XcursorSetTheme(fl_x11_display(), t && *t ? t : nullptr);
+    // no theme: the one of the X resources (Xcursor.theme), otherwise the "default" theme by
+    // name - Xcursor turns a null theme into the one the program started with (the session's
+    // XCURSOR_THEME: Nirvana's pointer), so "System default" changed nothing
+    const char *xr = t && *t ? nullptr : XGetDefault(fl_x11_display(), "Xcursor", "theme");
+    XcursorSetTheme(fl_x11_display(), t && *t ? t : xr && *xr ? xr : "default");
     if (z && atoi(z) > 0) XcursorSetDefaultSize(fl_x11_display(), atoi(z));
     // changed while the program runs: its windows take the new pointer (FLTK gave each
     // window its own copy of the arrow, made from the old theme)
