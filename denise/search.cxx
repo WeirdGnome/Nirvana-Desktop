@@ -154,18 +154,9 @@ std::string human(uintmax_t b) {
   return t;
 }
 
-// "~/Muzyka" for people in the Look in field, the full path for the search
-static std::string tilde(const std::string &p) {
-  const char *home = getenv("HOME");
-  size_t n = home ? strlen(home) : 0;
-  if (n && p.compare(0, n, home) == 0 && (p.size() == n || p[n] == '/')) return "~" + p.substr(n);
-  return p;
-}
-static std::string untilde(const std::string &p) {
-  const char *home = getenv("HOME");
-  if (home && !p.empty() && p[0] == '~' && (p.size() == 1 || p[1] == '/')) return home + p.substr(1);
-  return p;
-}
+// "Nirvana HD/Muzyka" for people in the Look in field, the real path for the search
+static std::string tilde(const std::string &p) { return disk_path(p); }
+static std::string untilde(const std::string &p) { return real_path(p); }
 
 class FindWin : public Fl_Double_Window {
 public:
@@ -258,7 +249,6 @@ public:
     auto s = std::make_shared<Search>();
     Query &q = s->q;
     q.root = untilde(root->value());
-    if (q.root.rfind("~", 0) == 0) { const char *h = getenv("HOME"); q.root = std::string(h ? h : "") + q.root.substr(1); }
     q.name = name->value();
     q.text = text->value();
     q.metatext = metatext->value();

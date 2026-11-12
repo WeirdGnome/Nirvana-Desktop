@@ -4,7 +4,8 @@ Five color schemes in the spirit of the 16-bit home computer desktops, from the 
 to the late 2000s. The numbers name the eras, not products; the colors were chosen for
 Nirvana Desktop and every gadget is drawn by Nirvana itself. Each scheme also brings the
 classic 16-bit window gadgets (`window_style=classic`): close on the left, zoom and depth on
-the right, a size gadget in the corner.
+the right, a size gadget in the corner. Choosing the scheme turns on Preferences > Desktop >
+Classic 16-bit windows; that switch can be turned off again.
 
 | Scheme | Look |
 |---|---|

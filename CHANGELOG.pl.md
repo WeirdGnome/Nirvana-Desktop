@@ -1,6 +1,13 @@
 # Lista zmian
 Wszystkie ważniejsze zmiany w Nirvana Desktop, od najnowszych. English: [CHANGELOG.md](CHANGELOG.md).
 
+## 0.0.50 – 2026-11-12
+
+- **Poprawione: zamknięcie okna folderu resetowało pulpit.** Timer paska stanu eksploratora działał dalej po zwolnieniu okna i wywracał Ramblera, a sesja uruchamiała go od nowa. Teraz timery zatrzymują się razem z oknem.
+- **Klasyczne okna 16-bit da się wyłączyć przy schemacie Retro 16.** Taki schemat wymuszał gadżety, a przełącznik w Preferencje > Pulpit nic nie robił. Teraz decyduje tylko przełącznik; wybór schematu Retro 16 w Wyglądzie go włącza, każdy inny schemat wyłącza.
+- Folder domowy jest wszędzie pokazany jako **Nirvana HD** – pole Adres, nagłówki paneli, pasek stanu, Znajdź (`Nirvana HD/Muzyka`, nie `~/Muzyka`); wpisać można jedno i drugie.
+- Style okien folderów nazywają się teraz **Rambler uproszczony** i **Rambler zaawansowany** (Preferencje > Pulpit > Okna folderów).
+
 ## 0.0.49 – 2026-11-12
 
 Eksplorator Ramblera dorasta:

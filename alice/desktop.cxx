@@ -161,8 +161,8 @@ int panel_desktop() {
   auto *h3 = new Fl_Box(15, 444, 300, 20, _("Folder Windows"));
   h3->labelfont(FONT_SYSTEM);
   h3->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
-  g_style_r = new Fl_Round_Button(15, 468, W - 30, 20, _("Rambler: one list of files, each folder remembers its window"));
-  g_style_e = new Fl_Round_Button(15, 488, W - 30, 20, _("Explorer: folder tree, buttons, two panes (source and destination)"));
+  g_style_r = new Fl_Round_Button(15, 468, W - 30, 20, _("Rambler Simple: one list of files, each folder remembers its window"));
+  g_style_e = new Fl_Round_Button(15, 488, W - 30, 20, _("Rambler Advanced: folder tree, two panes, jobs, search"));
   for (auto *b : {g_style_r, g_style_e}) {
     b->type(FL_RADIO_BUTTON);
     b->labelsize(SIZE_SMALL + 1);

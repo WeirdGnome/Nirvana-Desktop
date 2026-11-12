@@ -26,6 +26,10 @@
 #include "volumes.h"
 #include "spatial.h"
 
+// The home folder is the disk "Nirvana HD": "Nirvana HD/Muzyka" for people, and back
+std::string disk_path(const std::string &path);
+std::string real_path(const std::string &text);
+
 class Desktop;
 void rambler_spawn(const std::vector<std::string> &args);   // double fork
 std::string rambler_exe(const char *name);                  // np. "nirvana-shell"

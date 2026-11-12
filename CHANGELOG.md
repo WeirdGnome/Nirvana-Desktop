@@ -1,6 +1,13 @@
 # Changelog
 All notable changes to Nirvana Desktop, newest first. Polish: [CHANGELOG.pl.md](CHANGELOG.pl.md).
 
+## 0.0.50 – 2026-11-12
+
+- **Fixed: closing a folder window reset the desktop.** The explorer window's status timer kept running after the window was freed and crashed Rambler, and the session started it again. The timers now stop with the window.
+- **Classic 16-bit windows can be switched off with a Retro 16 scheme.** Such a scheme used to force the gadgets, and the switch in Preferences > Desktop did nothing. Now the switch alone decides; choosing a Retro 16 scheme in Appearance turns it on, any other scheme turns it off.
+- The home folder is shown as **Nirvana HD** everywhere – the Address field, the pane headers, the status bar, Find (`Nirvana HD/Muzyka`, not `~/Muzyka`); typing either works.
+- The folder window styles are now called **Rambler Simple** and **Rambler Advanced** (Preferences > Desktop > Folder Windows).
+
 ## 0.0.49 – 2026-11-12
 
 Rambler's explorer grows up:

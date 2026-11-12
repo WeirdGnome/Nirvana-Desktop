@@ -104,9 +104,13 @@ std::string ex_other_path(NWin *w) {
   return w->ex->panes[1 - w->ex->active]->path();
 }
 
-void destroy_explorer(Explorer *x);
-void destroy_explorer(Explorer *x) {
-  Fl::remove_timeout(nullptr, x);
+static void status_tick(void *d);
+// The window is going away: its timer stops first (it ran with the window as its data -
+// after the window was freed it crashed Rambler, and the session started it again: the
+// desktop "reset" when a folder window was closed)
+void destroy_explorer(Explorer *x, NWin *w);
+void destroy_explorer(Explorer *x, NWin *w) {
+  Fl::remove_timeout(status_tick, w);
   delete x;
 }
 
@@ -403,11 +407,7 @@ static std::string short_path(Desktop *d, const std::string &p) {
   if (d->is_archive_cache(p, &arch, &inner)) s = arch + inner;
   std::string url = server_url(s);
   if (!url.empty()) return url;
-  const char *h = getenv("HOME");
-  std::string home = h ? h : "";
-  if (!home.empty() && s == home) return "~";
-  if (!home.empty() && s.rfind(home + "/", 0) == 0) return "~" + s.substr(home.size());
-  return s;
+  return disk_path(s);
 }
 
 class ExSlot : public Fl_Group {

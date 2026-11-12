@@ -126,7 +126,10 @@ void apply(const Scheme &s, const Appearance &a);   // set the palette
 void reload_appearance();          // read the settings and the scheme, apply
 const Scheme &current_scheme();
 // Classic 16-bit gadgets: switched on in Preferences > Desktop or brought by the scheme
-inline bool classic_look(bool desktop_classic) { return desktop_classic || current_scheme().classic; }
+// The classic 16-bit gadgets: only the switch in Preferences > Desktop decides (a scheme with
+// window_style=classic turns that switch on when it is chosen in Appearance - and it can be
+// turned off again; before, such a scheme forced the gadgets and the switch did nothing)
+inline bool classic_look(bool desktop_classic) { return desktop_classic; }
 std::string data_file(const std::string &rel);   // a file from share/nirvana (or the source tree), "" if missing
 const Appearance &current_appearance();
 TitleStyle title_style();

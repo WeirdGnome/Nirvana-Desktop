@@ -41,7 +41,7 @@ What changed in each version: [CHANGELOG.md](CHANGELOG.md).
 
 Unpack the sources and run the installer:
 
-    tar xzf nirvana-desktop-0.0.49.tar.gz && cd nirvana-desktop
+    tar xzf nirvana-desktop-0.0.50.tar.gz && cd nirvana-desktop
     sudo ./install.sh                 # or: sudo ./install.sh --login-screen
 
 The installer:
@@ -298,16 +298,17 @@ It works on the EWMH standard (`_NET_CLIENT_LIST`, `_NET_ACTIVE_WINDOW`, `WM_CHA
 `_NET_CLOSE_WINDOW`), so also under GNOME, KDE or Openbox. Under another window manager the
 desktop window does not take focus, so clicking the menu bar does not change the active application.
 
-## Rambler as an explorer (two panes)
+## Rambler Advanced (two panes)
 
-**Preferences > Desktop > Folder Windows** switches the folder windows between the usual
-Rambler (one list, every folder remembers its window) and the **explorer**, a window in the
+**Preferences > Desktop > Folder Windows** switches the folder windows between **Rambler
+Simple** (one list, every folder remembers its window) and **Rambler Advanced**, a window in the
 style of the classic explorers of the late 1990s with the working style of the two-pane file
 managers of the 16-bit desktops:
 
 - **A bar of big flat buttons with labels** (they rise under the pointer): Back, Forward, Up ·
   Folders (the tree on/off), Two Panes, Swap · Copy To, Move To, Delete · Views (list/icons),
-  Server. Below it the **Address** field with **Go** (`~` and paths inside archives work).
+  Server. Below it the **Address** field with **Go** – the home folder is shown as the disk it is,
+  `Nirvana HD/Muzyka` (typing `~/Muzyka` works too, and so do paths inside archives).
 - **The folder tree** on the left (dotted lines, loaded as it opens): Nirvana HD, the mounted
   disks, the connected servers, the Trash; it follows the source pane, a click opens the folder
   there. The divider can be dragged.
@@ -328,7 +329,7 @@ managers of the 16-bit desktops:
   the archive any more Rambler packs it again in the background (`bsdtar`, in the format of its
   name – a zip stays a zip) – only when something changed. The status bar says so. Other formats
   (rar, iso…) are unpacked into `~/.cache/nirvana/archives` as a read-only copy. The address shows
-  `~/x.zip/…`. *Extract Here*, *Extract to the Other Pane*, *List Contents*;
+  `Nirvana HD/x.zip/…`. *Extract Here*, *Extract to the Other Pane*, *List Contents*;
   **Icons > Pack into an Archive…** makes a zip/tar.gz/tar.xz/7z from the selection.
 - **Servers like disks:** **Window > Connect to a Server…** (or the *Server* button): **SFTP**
   through `sshfs` (password or SSH key), **FTP** and **SMB** (Windows shares, `DOMAIN\user`)
@@ -376,7 +377,7 @@ managers of the 16-bit desktops:
 
 - **One window**: opening a folder shows it in the same window. Above the contents there is
   the window's own menu bar (**Window**, **Icons**) and a navigation bar: back, forward,
-  parent folder and the location field (`~` = home folder; type a path and press Enter –
+  parent folder and the location field (the home folder shows as `Nirvana HD`, `~` can be typed too; type a path and press Enter –
   a file path opens its folder with the file selected). Shortcuts: `Alt+←` back, `Alt+→`
   forward, `Ctrl+↑` parent folder. Going up selects the folder you came from.
 - **More windows**: **Window > New Window** (`Ctrl+Shift+N`) or `Ctrl` + double-click on a folder.
@@ -520,9 +521,9 @@ the whole system: Rambler and Insight reload the palette without a restart.
   their eras: *1.3* (blue desktop, white bars, orange highlights), *2.1* (light gray, blue bars),
   *3.1* (eight-color gray, steel blue and beige), *3.9* (gradient bars, warm accent) and *4.1*
   (glass bars, deep blue). They also bring the classic 16-bit window gadgets (close on the left,
-  zoom and depth on the right, size gadget in the corner) – a scheme can ask for them with
-  `window_style=classic`; the window behavior (click without raising) stays a switch in
-  Preferences > Desktop. No product names on purpose, the colors and gadgets are Nirvana's own.
+  zoom and depth on the right, size gadget in the corner): choosing a scheme with
+  `window_style=classic` in Appearance turns on **Preferences > Desktop > Classic 16-bit windows**
+  (the other schemes turn it off) – and that switch can be changed afterwards either way. No product names on purpose, the colors and gadgets are Nirvana's own.
 - **Default look**: the *In Tenebris* scheme, the *Bricks* pattern and Platinum icons.
 - **Title bar**: as in the scheme, Platinum stripes, solid colour, gradient or glass (a shine on
   the upper half, the darker middle, as on the glossy desktops of the 2000s); with glass the menu

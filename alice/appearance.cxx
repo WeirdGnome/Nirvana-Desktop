@@ -31,6 +31,7 @@ using namespace plat;
 
 static std::vector<Scheme> g_schemes;
 static Appearance g_cur;            // settings shown in the panel
+static std::string g_saved_scheme;   // the scheme in use (saved last)
 static int g_scheme = 0;            // index into g_schemes
 static FrameWindow *g_win;
 static Fl_Hold_Browser *g_list;
@@ -125,8 +126,13 @@ private:
   }
 
   static void draw_window(int X, int Y, int W, int H, const char *title, bool active) {
-    static const bool desk_classic = read_desktop().classic;   // Preferences > Desktop
-    if (classic_look(desk_classic)) {   // or the scheme brings the gadgets
+    // the scheme being chosen: its window style (it becomes the switch in Preferences > Desktop
+    // when saved); the scheme already in use: the switch as it is
+    const bool desk_classic = read_desktop().classic;   // Preferences > Desktop (it may change while the panel is open)
+    bool cl = desk_classic;
+    if (g_scheme >= 0 && g_scheme < (int)g_schemes.size() && g_schemes[g_scheme].id != g_saved_scheme)
+      cl = g_schemes[g_scheme].classic;
+    if (classic_look(cl)) {
       draw_classic_frame(X, Y, W, H, active, false, true);
       draw_classic_titlebar(X, Y, W, title, active, 0, 1);
     } else {
@@ -228,12 +234,25 @@ static void list_cb(Fl_Widget *, void *) {
 }
 
 static void save() {
+  // a new scheme brings its window style: the Retro 16 schemes the classic 16-bit gadgets,
+  // the others the Nirvana windows (Preferences > Desktop can change it afterwards)
+  bool new_scheme = g_cur.scheme != g_saved_scheme;
   write_appearance(g_cur);
+  g_saved_scheme = g_cur.scheme;
   notify_appearance_changed();
+  if (new_scheme && g_scheme >= 0 && g_scheme < (int)g_schemes.size()) {
+    DesktopSettings d = read_desktop();
+    if (d.classic != g_schemes[g_scheme].classic) {
+      d.classic = g_schemes[g_scheme].classic;
+      write_desktop(d);
+      notify_desktop_changed();
+    }
+  }
 }
 
 int panel_appearance() {
   g_cur = current_appearance();
+  g_saved_scheme = g_cur.scheme;
   g_schemes = list_schemes();
 
   const int W = 600, H = 558;

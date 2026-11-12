@@ -40,7 +40,7 @@ Co się zmieniło w każdej wersji: [CHANGELOG.pl.md](CHANGELOG.pl.md).
 
 Rozpakuj źródła i uruchom instalator:
 
-    tar xzf nirvana-desktop-0.0.49.tar.gz && cd nirvana-desktop
+    tar xzf nirvana-desktop-0.0.50.tar.gz && cd nirvana-desktop
     sudo ./install.sh                 # albo: sudo ./install.sh --login-screen
 
 Instalator:
@@ -297,17 +297,18 @@ Działa na standardzie EWMH (`_NET_CLIENT_LIST`, `_NET_ACTIVE_WINDOW`, `WM_CHANG
 `_NET_CLOSE_WINDOW`), więc także pod GNOME, KDE czy Openboksem. Pod obcym menedżerem
 okno biurka nie przyjmuje fokusu, żeby klik w pasek menu nie zmieniał aktywnej aplikacji.
 
-## Rambler jako eksplorator (dwa panele)
+## Rambler zaawansowany (dwa panele)
 
-**Preferencje > Pulpit > Okna folderów** przełącza okna folderów między zwykłym Ramblerem (jedna
-lista, każdy folder pamięta swoje okno) a **eksploratorem** – oknem w stylu klasycznych
+**Preferencje > Pulpit > Okna folderów** przełącza okna folderów między **Ramblerem uproszczonym**
+(jedna lista, każdy folder pamięta swoje okno) a **Ramblerem zaawansowanym** – oknem w stylu klasycznych
 eksploratorów z końca lat 90. ze sposobem pracy dwupanelowych menedżerów plików z pulpitów
 16-bitowych:
 
 - **Pasek dużych płaskich przycisków z podpisami** (unoszą się pod kursorem): Wstecz, Dalej,
   W górę · Foldery (drzewo wł./wył.), Dwa panele, Zamień · Kopiuj do, Przenieś do, Usuń · Widoki
-  (lista/ikony), Serwer. Pod nim pole **Adres** z **Przejdź** (działa `~` i ścieżki wewnątrz
-  archiwów).
+  (lista/ikony), Serwer. Pod nim pole **Adres** z **Przejdź** – folder domowy jest pokazany jako
+  dysk, którym jest: `Nirvana HD/Muzyka` (wpisanie `~/Muzyka` też działa, tak jak ścieżki
+  wewnątrz archiwów).
 - **Drzewo folderów** po lewej (kropkowane linie, wczytywane przy rozwijaniu): Nirvana HD,
   zamontowane dyski, połączone serwery, Kosz; podąża za panelem źródłowym, klik otwiera tam
   folder. Przegrodę można przeciągać.
@@ -325,7 +326,7 @@ eksploratorów z końca lat 90. ze sposobem pracy dwupanelowych menedżerów pli
   kopiować, zmieniać nazwy, usuwać i edytować pliki w środku, a gdy żadne okno już archiwum nie
   pokazuje, Rambler pakuje je na nowo w tle (`bsdtar`, w formacie z nazwy – zip zostaje zipem) –
   tylko gdy coś się zmieniło. Pasek stanu o tym mówi. Inne formaty (rar, iso…) są rozpakowywane do
-  `~/.cache/nirvana/archives` jako kopia tylko do odczytu. Adres pokazuje `~/x.zip/…`. *Rozpakuj
+  `~/.cache/nirvana/archives` jako kopia tylko do odczytu. Adres pokazuje `Nirvana HD/x.zip/…`. *Rozpakuj
   tutaj*, *Rozpakuj do drugiego panelu*, *Pokaż zawartość*; **Ikony > Spakuj do archiwum…** robi
   zip/tar.gz/tar.xz/7z z zaznaczenia.
 - **Serwery jak dyski:** **Okno > Połącz z serwerem…** (albo przycisk *Serwer*): **SFTP** przez
@@ -375,7 +376,7 @@ eksploratorów z końca lat 90. ze sposobem pracy dwupanelowych menedżerów pli
 
 - **Jedno okno**: otwarty folder pojawia się w tym samym oknie. Nad zawartością jest własny
   pasek menu okna (**Okno**, **Ikony**) i pasek nawigacji: wstecz, dalej, folder nadrzędny
-  i pole położenia (`~` = folder domowy; wpisz ścieżkę i naciśnij Enter – ścieżka pliku
+  i pole położenia (folder domowy widać jako `Nirvana HD`, można też wpisać `~`; wpisz ścieżkę i naciśnij Enter – ścieżka pliku
   otwiera jego folder z zaznaczonym plikiem). Skróty: `Alt+←` wstecz, `Alt+→` dalej,
   `Ctrl+↑` folder nadrzędny. Po wyjściu w górę zaznaczony jest folder, z którego przyszliśmy.
 - **Więcej okien**: **Okno > Nowe okno** (`Ctrl+Shift+N`) albo `Ctrl` + dwuklik na folderze.
@@ -518,8 +519,9 @@ przestawia cały system: Rambler i Insight przeładowują paletę bez restartu.
   niebieskie paski), *3.1* (ośmiokolorowa szarość, stalowy błękit i beż), *3.9* (paski
   z gradientem, ciepły akcent) i *4.1* (szklane paski, głęboki granat). Przynoszą też klasyczne
   gadżety okien 16-bit (zamykanie po lewej, powiększenie i głębia po prawej, gadżet rozmiaru
-  w rogu) – schemat prosi o nie kluczem `window_style=classic`; zachowanie okien (klik bez
-  wysuwania) zostaje przełącznikiem w Preferencje > Pulpit. Celowo bez nazw produktów, kolory
+  w rogu): wybranie w Wyglądzie schematu z `window_style=classic` włącza **Preferencje > Pulpit >
+  Klasyczne okna 16-bit** (inne schematy je wyłączają) – a ten przełącznik można potem zmienić
+  w obie strony. Celowo bez nazw produktów, kolory
   i gadżety są własne Nirvany.
 - **Wygląd domyślny**: schemat *In Tenebris*, wzór *Cegiełki* i ikony Platinum.
 - **Pasek tytułu**: jak w schemacie, prążki Platinum, jednolity kolor, gradient albo szkło (połysk

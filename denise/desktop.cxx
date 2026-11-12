@@ -1151,6 +1151,13 @@ void NWin::start_moveresize(int direction) {
   XFlush(fl_display);
 }
 
+// a moment after a change: the window's place and size are remembered
+static void remember_later(void *d) {
+  auto *w = (NWin *)d;
+  w->desk->remember(w, true);
+}
+static void remember_soon(void *d) { remember_later(d); }
+
 void NWin::csd_toggle_shade() {
   Rect full = {x(), y(), w(), csd_shaded_ ? full_h_ : h()}, bar = {x(), y(), w(), TITLE_H};
   if (csd_shaded_) zoom_rects(bar, full); else zoom_rects(full, bar);
@@ -1167,7 +1174,7 @@ void NWin::csd_toggle_shade() {
     init_sizes();
   }
   redraw();
-  if (pane) Fl::add_timeout(0.4, [](void *d) { auto *w = (NWin *)d; w->desk->remember(w, true); }, this);
+  if (pane) Fl::add_timeout(0.4, remember_soon, this);
 }
 
 void NWin::csd_toggle_zoom() {
@@ -1249,15 +1256,12 @@ int NWin::csd_handle(int e) {
   return 0;
 }
 
-static void remember_later(void *d) {
-  auto *w = (NWin *)d;
-  w->desk->remember(w, true);
-}
 
-void destroy_explorer(Explorer *x);
+void destroy_explorer(Explorer *x, NWin *w);
 NWin::~NWin() {
   Fl::remove_timeout(remember_later, this);
-  if (ex) destroy_explorer(ex);
+  Fl::remove_timeout(remember_soon, this);
+  if (ex) destroy_explorer(ex, this);
 }
 
 int NWin::handle(int e) {
@@ -1569,12 +1573,27 @@ Fl_Menu_Bar *Desktop::make_folder_menubar(NWin *win, int X, int Y, int W) {
   return mb;
 }
 
-// A path for the location field: the home folder as "~".
-static std::string location_text(const std::string &path, const std::string &home) {
-  if (path == home) return "~";
-  if (path.rfind(home + "/", 0) == 0) return "~" + path.substr(home.size());
+// Paths for people: the home folder is the disk "Nirvana HD" - "Nirvana HD/Muzyka", never "~"
+std::string disk_path(const std::string &path) {
+  const char *h = getenv("HOME");
+  std::string home = h ? h : "";
+  while (home.size() > 1 && home.back() == '/') home.pop_back();
+  if (home.empty() || home == "/") return path;
+  if (path == home) return "Nirvana HD";
+  if (path.rfind(home + "/", 0) == 0) return "Nirvana HD" + path.substr(home.size());
   return path;
 }
+// ...and back: "Nirvana HD/Muzyka" (and the old "~/Muzyka") -> the real path
+std::string real_path(const std::string &text) {
+  const char *h = getenv("HOME");
+  std::string home = h ? h : "";
+  static const std::string disk = "Nirvana HD";
+  if (text == disk || text == "~") return home;
+  if (text.rfind(disk + "/", 0) == 0) return home + text.substr(disk.size());
+  if (text.rfind("~/", 0) == 0) return home + text.substr(1);
+  return text;
+}
+static std::string location_text(const std::string &path, const std::string &) { return disk_path(path); }
 
 std::string server_url(const std::string &path);   // explorer.cxx
 
@@ -1669,10 +1688,9 @@ void Desktop::go_location(NWin *w) {
     if (p.empty()) { guru(fmt(_("“%1” is not connected. Connect to it first with Server in the toolbar (or Window > Connect to a Server…)."), t)); update_nav(w); return; }
     t = p;
   }
-  if (t == "~") t = home_;
-  else if (t.rfind("~/", 0) == 0) t = home_ + t.substr(1);
-  else if (t[0] != '/') t = w->path + "/" + t;   // relative to the folder shown
-  for (auto &[dir, arch] : archive_dirs_)   // "~/x.zip/sub" - inside an archive that is open
+  t = real_path(t);   // "Nirvana HD/Muzyka" (or "~/Muzyka")
+  if (t[0] != '/') t = w->path + "/" + t;   // relative to the folder shown
+  for (auto &[dir, arch] : archive_dirs_)   // "Nirvana HD/x.zip/sub" - inside an archive that is open
     if (t == arch || t.rfind(arch + "/", 0) == 0) { t = dir + t.substr(arch.size()); break; }
   std::error_code ec;
   fs::path p = fs::weakly_canonical(fs::path(t), ec);
