@@ -13,6 +13,7 @@
 
 namespace shield {
 
+constexpr unsigned DNS_TRAP_PORT = 5399;     // the name lookups of not allowed programs (127.0.0.1/::1)
 constexpr unsigned CLASSID = 0x4E530001;   // net_cls class id of the allowed group ("NS")
 constexpr const char *RUN_DIR = "/run/nirvana-shield";
 std::string socket_path();                 // /run/nirvana-shield.sock (NIRVANA_SHIELD_SOCKET for tests)

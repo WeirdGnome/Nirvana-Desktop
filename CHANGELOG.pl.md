@@ -1,6 +1,10 @@
 # Lista zmian
 Wszystkie ważniejsze zmiany w Nirvana Desktop, od najnowszych. English: [CHANGELOG.md](CHANGELOG.md).
 
+## 0.0.52 – 2026-11-12
+
+- **NirvanaSHIELD pyta o zablokowane zapytania o nazwy.** Program bez pozwolenia, który tylko szukał nazwy (DNS) – np. `git clone` / `cmake` pobierający FLTK w terminalu – kończył się błędem „Could not resolve host” i nikt nie pytał: odrzucony pakiet UDP zawodzi od razu, a gniazdo programu znikało, zanim usługa zdążyła sprawdzić, czyje było. Teraz te zapytania trafiają do usługi (`127.0.0.1:5399`, `::1`), która znajduje program, póki czeka, pyta „Czy X może korzystać z internetu?” z nazwą, której szukał, i odpowiada „odmowa” (program dalej kończy się od razu, jak wcześniej).
+
 ## 0.0.51 – 2026-11-12
 
 - **Czerwone wskaźniki myszy Retro 16**, własne Nirvany (każdy kształt rysuje `tools/cursors/make_cursors.py`): *klasyczny* (piksele epoki 16-bit – pochylona czerwona strzałka z czarną krawędzią i jasnym połyskiem, powiększana o całe piksele), *z obwódką* (czerwony z białą obwódką i cieniem) i *szklany* (szklisty czerwony). Wszystkie wskaźniki potrzebne pulpitowi – strzałka, zegar oczekiwania (animowany), strzałka z zegarem, tekst, rączka, celownik, przesuwanie, cztery strzałki zmiany rozmiaru, zakaz, pomoc, kopiowanie, skrót – pod nazwami, o które pytają X11, GTK i Qt. Instalowane do `share/icons`.

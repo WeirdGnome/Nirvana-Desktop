@@ -41,7 +41,7 @@ What changed in each version: [CHANGELOG.md](CHANGELOG.md).
 
 Unpack the sources and run the installer:
 
-    tar xzf nirvana-desktop-0.0.51.tar.gz && cd nirvana-desktop
+    tar xzf nirvana-desktop-0.0.52.tar.gz && cd nirvana-desktop
     sudo ./install.sh                 # or: sudo ./install.sh --login-screen
 
 The installer:
@@ -705,6 +705,10 @@ until you allow it.** Made so that a child and a grandparent can use it.
   interpreter runs (`firefox` the script and `/usr/lib/firefox-esr/firefox-esr` the program are
   switched together). Programs started by an allowed program are allowed too. Blocked attempts
   come from the kernel log (rate-limited `log` rule) and are matched to the program by its socket.
+  Name lookups (DNS) of programs that are not allowed are redirected to the service
+  (`127.0.0.1:5399`): it finds the program while it waits, asks about it with the name it looked
+  up (e.g. *git-remote-http – github.com*) and answers "refused". Before, a blocked lookup failed
+  at once and nobody was asked – `git clone` in a terminal just said "Could not resolve host".
   Settings: `/etc/nirvana-shield.conf`; control: `/run/nirvana-shield.sock` (each user changes
   only their own list). Stopping the service removes the rules; if it crashes they stay (fails
   closed).

@@ -1,6 +1,10 @@
 # Changelog
 All notable changes to Nirvana Desktop, newest first. Polish: [CHANGELOG.pl.md](CHANGELOG.pl.md).
 
+## 0.0.52 – 2026-11-12
+
+- **NirvanaSHIELD asks about blocked name lookups.** A program that was not allowed and only looked up a name (DNS) – e.g. `git clone` / `cmake` fetching FLTK in a terminal – failed with "Could not resolve host" and nobody was asked: a dropped UDP packet fails at once and the program's socket was gone before the service could see whose it was. Now these lookups are redirected to the service (`127.0.0.1:5399`, `::1`), which finds the program while it waits, asks "May X use the internet?" with the name it looked up, and answers "refused" (the program still fails at once, as before).
+
 ## 0.0.51 – 2026-11-12
 
 - **Red Retro 16 mouse pointers**, Nirvana's own (`tools/cursors/make_cursors.py` draws every shape): *classic* (the pixels of the 16-bit era – a slanted red arrow with a black edge and a light shine, enlarged by whole pixels), *outline* (red with a white outline and a shadow) and *glass* (a glassy red). Every pointer a desktop needs – arrow, busy clock (animated), arrow with a clock, text, hand, crosshair, move, the four resize arrows, forbidden, help, copy, link – with the names X11, GTK and Qt ask for. Installed into `share/icons`.

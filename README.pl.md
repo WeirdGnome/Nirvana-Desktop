@@ -40,7 +40,7 @@ Co się zmieniło w każdej wersji: [CHANGELOG.pl.md](CHANGELOG.pl.md).
 
 Rozpakuj źródła i uruchom instalator:
 
-    tar xzf nirvana-desktop-0.0.51.tar.gz && cd nirvana-desktop
+    tar xzf nirvana-desktop-0.0.52.tar.gz && cd nirvana-desktop
     sudo ./install.sh                 # albo: sudo ./install.sh --login-screen
 
 Instalator:
@@ -702,7 +702,11 @@ mu nie pozwolisz.** Zrobiona tak, żeby obsłużyło ją dziecko i dziadek.
   trafiają do grupy – plik programu, AppImage albo skrypt uruchamiany przez interpreter (`firefox`
   – skrypt i `/usr/lib/firefox-esr/firefox-esr` – program włączają się razem). Programy
   uruchomione przez dozwolony program też są dozwolone. Zablokowane próby przychodzą z logu kernela
-  (reguła `log` z limitem) i są dopasowywane do programu po jego gnieździe. Ustawienia:
+  (reguła `log` z limitem) i są dopasowywane do programu po jego gnieździe.
+  Zapytania o nazwy (DNS) programów bez pozwolenia trafiają do usługi (`127.0.0.1:5399`): znajduje
+  program, póki ten czeka, pyta o niego z nazwą, której szukał (np. *git-remote-http – github.com*),
+  i odpowiada „odmowa”. Wcześniej zablokowane zapytanie kończyło się od razu i nikt nie pytał –
+  `git clone` w terminalu mówił tylko „Could not resolve host”. Ustawienia:
   `/etc/nirvana-shield.conf`; sterowanie: `/run/nirvana-shield.sock` (każdy zmienia tylko swoją
   listę). Zatrzymanie usługi zdejmuje reguły; jeśli usługa padnie, reguły zostają (bezpieczniej).
 - **Włączanie:** duży przycisk w panelu (hasło administratora) włącza i uruchamia usługę. Potrzebny

@@ -15,6 +15,12 @@
 //  * Blocked attempts: a rate-limited "log" rule writes the packet to the kernel log; we
 //    read /dev/kmsg, find the socket by its port and the process by the socket, and
 //    tell the user's session (WATCH) - Rambler then asks "May X use the internet?".
+//  * Name lookups (DNS, UDP port 53) of programs that are not allowed: a dropped UDP packet
+//    fails at once (EPERM) and the resolver closes its socket before we could see whose
+//    it was - the program never even gets to connecting, and nobody is asked. So these
+//    queries are redirected to us (127.0.0.1 / ::1, DNS_TRAP_PORT): the socket still waits
+//    for the answer, we find the program, ask about it (with the name it looked up) and
+//    answer "refused" - the program fails at once, as before.
 //
 // Modes: protect (the list decides), block (no user program gets out), off (no rules).
 // Settings: /etc/nirvana-shield.conf. Control: the socket /run/nirvana-shield.sock -
@@ -42,6 +48,8 @@
 #include <set>
 #include <sstream>
 #include <string>
+#include <arpa/inet.h>
+#include <netinet/in.h>
 #include <sys/mount.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
@@ -154,7 +162,10 @@ bool apply_rules() {
       << "  chain out {\n"
       << "    type filter hook output priority filter; policy accept;\n"
       << "    oifname \"lo\" accept\n"
-      << "    meta skuid != 1000-59999 accept\n";   // system services always get out
+      << "    meta skuid != 1000-59999 accept\n"   // system services always get out
+      // the name lookups redirected to the DNS trap (still marked for the old interface here)
+      << "    ip daddr 127.0.0.1 udp dport " << DNS_TRAP_PORT << " accept\n"
+      << "    ip6 daddr ::1 udp dport " << DNS_TRAP_PORT << " accept\n";
     if (g.lan) r << "    ip daddr " << PRIVATE4 << " accept\n    ip6 daddr " << PRIVATE6 << " accept\n";
     if (g.mode == "protect") {
       r << "    meta cgroup " << cls << " accept\n"
@@ -166,8 +177,18 @@ bool apply_rules() {
       // everything blocked: a quick refusal, programs say "no connection" at once
       r << "    meta l4proto tcp reject with tcp reset\n    reject with icmpx admin-prohibited\n";
     }
-    r << "  }\n"
-      << "  chain in {\n"
+    r << "  }\n";
+    if (g.mode == "protect") {   // the name lookups of not allowed programs come to us (see the top)
+      r << "  chain dns {\n"
+        << "    type nat hook output priority -100; policy accept;\n"
+        << "    oifname \"lo\" return\n"
+        << "    meta skuid != 1000-59999 return\n"
+        << "    meta cgroup " << cls << " return\n";
+      if (g.lan) r << "    ip daddr " << PRIVATE4 << " return\n    ip6 daddr " << PRIVATE6 << " return\n";
+      r << "    udp dport 53 redirect to :" << DNS_TRAP_PORT << "\n"
+        << "  }\n";
+    }
+    r << "  chain in {\n"
       << "    type filter hook input priority filter; policy accept;\n"
       << "    iifname \"lo\" accept\n"
       << "    ct state established,related accept\n"
@@ -424,7 +445,8 @@ std::string field(const std::string &l, const char *key) {
   return l.substr(a, b == std::string::npos ? std::string::npos : b - a);
 }
 
-unsigned long socket_inode(const std::string &proto, unsigned port, unsigned uid) {
+// uid: the socket's owner; with any_uid the first user socket on the port (its owner into uid)
+unsigned long socket_inode(const std::string &proto, unsigned port, unsigned &uid, bool any_uid = false) {
   for (const char *v : {"", "6"}) {
     std::ifstream f("/proc/net/" + proto + v);
     std::string l;
@@ -436,7 +458,9 @@ unsigned long socket_inode(const std::string &proto, unsigned port, unsigned uid
       size_t c = local.rfind(':');
       if (c == std::string::npos) continue;
       if (strtoul(local.c_str() + c + 1, nullptr, 16) != port) continue;
-      if ((unsigned)strtoul(u.c_str(), nullptr, 10) != uid) continue;
+      unsigned owner = (unsigned)strtoul(u.c_str(), nullptr, 10);
+      if (any_uid ? (owner < 1000 || owner > 59999) : owner != uid) continue;
+      uid = owner;
       return strtoul(inode.c_str(), nullptr, 10);
     }
   }
@@ -474,16 +498,8 @@ void send_str(int fd, const std::string &s) {
   }
 }
 
-void blocked(const std::string &line) {
-  std::string proto = field(line, "PROTO"), spt = field(line, "SPT"), uid_s = field(line, "UID");
-  std::string dst = field(line, "DST"), dpt = field(line, "DPT");
-  if (uid_s.empty() || spt.empty()) return;
-  unsigned uid = (unsigned)strtoul(uid_s.c_str(), nullptr, 10);
-  std::string pr = proto == "TCP" ? "tcp" : proto == "UDP" ? "udp" : "";
-  if (pr.empty()) return;
-  unsigned long ino = socket_inode(pr, (unsigned)atoi(spt.c_str()), uid);
-  int pid = ino ? pid_of_socket(ino, uid) : 0;
-  if (!pid) return;
+// A program of the user tried to get out: remember it and tell the user's session
+void report(int pid, unsigned uid, const std::string &dest) {
   auto ids = identities(pid);
   if (ids.empty()) return;
   if (g.mode == "protect" && matches(pid, uid)) {   // allowed meanwhile, just not moved yet
@@ -491,7 +507,6 @@ void blocked(const std::string &line) {
     return;
   }
   std::string path = ids.front();
-  std::string dest = dst + (dpt.empty() ? "" : ":" + dpt);
   auto &list = g_blocked[uid];
   time_t now = time(nullptr);
   for (auto it = list.begin(); it != list.end(); ++it) {
@@ -511,6 +526,88 @@ void blocked(const std::string &line) {
 notify:
   for (auto &c : g_clients)
     if (c.watch && (c.uid == uid || c.uid == 0)) send_str(c.fd, "blocked " + path + "\t" + dest + "\n");
+}
+
+void blocked(const std::string &line) {
+  std::string proto = field(line, "PROTO"), spt = field(line, "SPT"), uid_s = field(line, "UID");
+  std::string dst = field(line, "DST"), dpt = field(line, "DPT");
+  if (uid_s.empty() || spt.empty()) return;
+  unsigned uid = (unsigned)strtoul(uid_s.c_str(), nullptr, 10);
+  std::string pr = proto == "TCP" ? "tcp" : proto == "UDP" ? "udp" : "";
+  if (pr.empty()) return;
+  unsigned long ino = socket_inode(pr, (unsigned)atoi(spt.c_str()), uid);
+  int pid = ino ? pid_of_socket(ino, uid) : 0;
+  if (!pid) return;
+  report(pid, uid, dst + (dpt.empty() ? "" : ":" + dpt));
+}
+
+// ---------------------------------------------------------------------------
+// The DNS trap: the name lookups of not allowed programs (see the top)
+// ---------------------------------------------------------------------------
+int open_trap(int family) {
+  int s = socket(family, SOCK_DGRAM | SOCK_CLOEXEC | SOCK_NONBLOCK, 0);
+  if (s < 0) return -1;
+  int one = 1;
+  setsockopt(s, SOL_SOCKET, SO_REUSEADDR, &one, sizeof one);
+  int rc;
+  if (family == AF_INET) {
+    sockaddr_in a{};
+    a.sin_family = AF_INET;
+    a.sin_port = htons(DNS_TRAP_PORT);
+    a.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+    rc = bind(s, (sockaddr *)&a, sizeof a);
+  } else {
+    setsockopt(s, IPPROTO_IPV6, IPV6_V6ONLY, &one, sizeof one);
+    sockaddr_in6 a{};
+    a.sin6_family = AF_INET6;
+    a.sin6_port = htons(DNS_TRAP_PORT);
+    a.sin6_addr = in6addr_loopback;
+    rc = bind(s, (sockaddr *)&a, sizeof a);
+  }
+  if (rc != 0) { close(s); return -1; }
+  return s;
+}
+
+// the name asked about in a DNS query ("" if it cannot be read)
+std::string dns_name(const unsigned char *d, size_t n) {
+  std::string name;
+  size_t p = 12;
+  while (p < n && d[p]) {
+    unsigned len = d[p];
+    if (len > 63 || p + 1 + len > n) return "";
+    if (!name.empty()) name += '.';
+    for (unsigned i = 0; i < len; i++) {
+      char c = (char)d[p + 1 + i];
+      name += (c >= 33 && c < 127) ? c : '?';
+    }
+    p += 1 + len;
+  }
+  return name;
+}
+
+void read_trap(int fd) {
+  for (;;) {
+    unsigned char buf[1500];
+    sockaddr_storage from{};
+    socklen_t fl = sizeof from;
+    ssize_t n = recvfrom(fd, buf, sizeof buf, 0, (sockaddr *)&from, &fl);
+    if (n < 0) return;
+    if (n < 12) continue;
+    unsigned port = from.ss_family == AF_INET ? ntohs(((sockaddr_in *)&from)->sin_port)
+                                              : ntohs(((sockaddr_in6 *)&from)->sin6_port);
+    // first find the program (its socket waits for the answer), then answer
+    unsigned uid = 0;
+    unsigned long ino = socket_inode("udp", port, uid, true);
+    int pid = ino ? pid_of_socket(ino, uid) : 0;
+    if (pid) {
+      std::string name = dns_name(buf, (size_t)n);
+      report(pid, uid, name.empty() ? "DNS" : name);
+    }
+    // the answer: the same question, "refused" - the resolver gives up at once
+    buf[2] = (unsigned char)(0x80 | (buf[2] & 0x79));   // QR = 1, the opcode and RD kept
+    buf[3] = 0x05;                                      // RCODE = REFUSED
+    sendto(fd, buf, (size_t)n, 0, (sockaddr *)&from, fl);
+  }
 }
 
 void read_kmsg(int fd) {
@@ -634,12 +731,16 @@ int daemon_main() {
   if (km >= 0) lseek(km, 0, SEEK_END);
   int srv = open_server();
   if (srv < 0) { log("cannot open the control socket"); return 1; }
+  int trap4 = open_trap(AF_INET), trap6 = open_trap(AF_INET6);
+  if (trap4 < 0) log("cannot open the DNS trap - blocked name lookups are not asked about");
   log("running, mode " + g.mode);
   time_t last_scan = time(nullptr);
   while (!g_stop) {
     std::vector<pollfd> fds = {{srv, POLLIN, 0}};
     if (pc >= 0) fds.push_back({pc, POLLIN, 0});
     if (km >= 0) fds.push_back({km, POLLIN, 0});
+    if (trap4 >= 0) fds.push_back({trap4, POLLIN, 0});
+    if (trap6 >= 0) fds.push_back({trap6, POLLIN, 0});
     size_t first_client = fds.size();
     for (auto &c : g_clients) fds.push_back({c.fd, POLLIN, 0});
     int r = poll(fds.data(), fds.size(), 1000);
@@ -660,6 +761,7 @@ int daemon_main() {
       if (!(fds[i].revents & POLLIN)) continue;
       if (fds[i].fd == pc) read_proc_connector(pc);
       else if (fds[i].fd == km) read_kmsg(km);
+      else if (fds[i].fd == trap4 || fds[i].fd == trap6) read_trap(fds[i].fd);
     }
     for (size_t i = first_client; i < fds.size(); i++) {
       if (!(fds[i].revents & (POLLIN | POLLHUP | POLLERR))) continue;
