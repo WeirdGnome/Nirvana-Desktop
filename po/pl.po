@@ -3,7 +3,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Nirvana Desktop 0.1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-11 21:20+0000\n"
+"POT-Creation-Date: 2026-11-12 10:23+0000\n"
 "PO-Revision-Date: 2026-11-09 13:00+0000\n"
 "Last-Translator: Nirvana Desktop\n"
 "Language-Team: Polish\n"
@@ -11,8 +11,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=3; plural=(n==1 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 "
-"|| n%100>=20) ? 1 : 2);\n"
+"Plural-Forms: nplurals=3; plural=(n==1 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
 
 #: alice/appearance.cxx:92
 msgid "Window"
@@ -27,119 +26,119 @@ msgstr "Ikony"
 msgid "Special"
 msgstr "Narzędzia"
 
-#: alice/appearance.cxx:103 platinum/filedialog.cxx:409
+#: alice/appearance.cxx:103 alice/desktop.cxx:47 platinum/filedialog.cxx:409
 msgid "Documents"
 msgstr "Dokumenty"
 
-#: alice/appearance.cxx:137
+#: alice/appearance.cxx:143
 msgid "3 items, 12.4 GB free"
 msgstr "3 elementy, 12,4 GB wolne"
 
-#: alice/appearance.cxx:137
+#: alice/appearance.cxx:143
 msgid "2 items"
 msgstr "2 elementy"
 
-#: alice/appearance.cxx:146 platinum/filedialog.cxx:412
+#: alice/appearance.cxx:152 platinum/filedialog.cxx:412
 msgid "Music"
 msgstr "Muzyka"
 
-#: alice/appearance.cxx:147
+#: alice/appearance.cxx:153
 msgid "Letter.txt"
 msgstr "List.txt"
 
-#: alice/appearance.cxx:148
+#: alice/appearance.cxx:154
 msgid "Game"
 msgstr "Gra"
 
-#: alice/appearance.cxx:153
+#: alice/appearance.cxx:159
 msgid "Photos"
 msgstr "Zdjęcia"
 
-#: alice/appearance.cxx:180
+#: alice/appearance.cxx:186
 msgid "Source: %1"
 msgstr "Źródło: %1"
 
-#: alice/appearance.cxx:180
+#: alice/appearance.cxx:186
 msgid "custom"
 msgstr "własny"
 
-#: alice/appearance.cxx:234 alice/preferences.cxx:160 denise/gary.cxx:117
+#: alice/appearance.cxx:240 alice/preferences.cxx:160 denise/gary.cxx:117
 msgid "Appearance"
 msgstr "Wygląd"
 
-#: alice/appearance.cxx:237
+#: alice/appearance.cxx:243
 msgid "Color Scheme"
 msgstr "Schemat kolorów"
 
-#: alice/appearance.cxx:250 platinum/platinum.cxx:1158
+#: alice/appearance.cxx:256 platinum/platinum.cxx:1263
 msgid "Preview"
 msgstr "Podgląd"
 
-#: alice/appearance.cxx:257
+#: alice/appearance.cxx:263
 msgid "Title bar:"
 msgstr "Pasek tytułu:"
 
-#: alice/appearance.cxx:258
+#: alice/appearance.cxx:264
 msgid "As in scheme|Stripes (Platinum)|Solid color|Gradient|Glass"
 msgstr "Jak w schemacie|Prążki (Platinum)|Jednolity kolor|Gradient|Szkło"
 
-#: alice/appearance.cxx:262
+#: alice/appearance.cxx:268
 msgid "Desktop background:"
 msgstr "Tło biurka:"
 
-#: alice/appearance.cxx:270
+#: alice/appearance.cxx:276
 msgid "Colors:"
 msgstr "Kolory:"
 
-#: alice/appearance.cxx:272
+#: alice/appearance.cxx:278
 msgid "Desktop color (gradient start)"
 msgstr "Kolor biurka (początek gradientu)"
 
-#: alice/appearance.cxx:276
+#: alice/appearance.cxx:282
 msgid "Desktop color"
 msgstr "Kolor biurka"
 
-#: alice/appearance.cxx:283 alice/appearance.cxx:288
+#: alice/appearance.cxx:289 alice/appearance.cxx:294
 msgid "Second gradient color"
 msgstr "Drugi kolor gradientu"
 
-#: alice/appearance.cxx:293
+#: alice/appearance.cxx:299
 msgid "From scheme"
 msgstr "Ze schematu"
 
-#: alice/appearance.cxx:298
+#: alice/appearance.cxx:304
 msgid "Desktop pattern:"
 msgstr "Wzór biurka:"
 
-#: alice/appearance.cxx:304
+#: alice/appearance.cxx:310
 msgid "Direction:"
 msgstr "Kierunek:"
 
-#: alice/appearance.cxx:312
+#: alice/appearance.cxx:318
 msgid "Wallpaper:"
 msgstr "Tapeta:"
 
-#: alice/appearance.cxx:325
+#: alice/appearance.cxx:331
 msgid "None (pattern only)"
 msgstr "Brak (sam wzór)"
 
-#: alice/appearance.cxx:326
+#: alice/appearance.cxx:332
 msgid "Other File…"
 msgstr "Inny plik…"
 
-#: alice/appearance.cxx:337
+#: alice/appearance.cxx:343
 msgid "Choose Wallpaper"
 msgstr "Wybierz tapetę"
 
-#: alice/appearance.cxx:337 alice/user.cxx:333
+#: alice/appearance.cxx:343 alice/user.cxx:333
 msgid "Images"
 msgstr "Obrazy"
 
-#: alice/appearance.cxx:345
+#: alice/appearance.cxx:351
 msgid "Wallpaper"
 msgstr "Tapeta"
 
-#: alice/appearance.cxx:346
+#: alice/appearance.cxx:352
 msgid ""
 "Could not open this image.\n"
 "The file may be damaged or in an unsupported format."
@@ -147,27 +146,27 @@ msgstr ""
 "Nie udało się otworzyć tego obrazu.\n"
 "Plik może być uszkodzony albo w nieobsługiwanym formacie."
 
-#: alice/appearance.cxx:366
+#: alice/appearance.cxx:372
 msgid "Wallpaper layout:"
 msgstr "Układ tapety:"
 
-#: alice/appearance.cxx:376
+#: alice/appearance.cxx:382
 msgid "Icon style:"
 msgstr "Styl ikon:"
 
-#: alice/appearance.cxx:377
+#: alice/appearance.cxx:383
 msgid "Retro|Platinum"
 msgstr "Retro|Platinum"
 
-#: alice/appearance.cxx:386
+#: alice/appearance.cxx:392
 msgid "Interface scale:"
 msgstr "Skala interfejsu:"
 
-#: alice/appearance.cxx:390
+#: alice/appearance.cxx:396
 msgid "Automatic (%1%)"
 msgstr "Automatycznie (%1%)"
 
-#: alice/appearance.cxx:397
+#: alice/appearance.cxx:403
 msgid ""
 "Larger text, icons and windows on high-resolution screens.\n"
 "After applying, the desktop restarts (application windows stay open)."
@@ -175,11 +174,11 @@ msgstr ""
 "Większe litery, ikony i okna na ekranach o dużej rozdzielczości.\n"
 "Po zastosowaniu biurko uruchomi się od nowa (okna programów zostają)."
 
-#: alice/appearance.cxx:401
+#: alice/appearance.cxx:407
 msgid "Window animations"
 msgstr "Animacje okien"
 
-#: alice/appearance.cxx:410 alice/datetime.cxx:386 alice/network.cxx:245
+#: alice/appearance.cxx:416 alice/datetime.cxx:386 alice/network.cxx:245
 #: alice/network.cxx:342 alice/network.cxx:390 alice/network.cxx:492
 #: alice/network.cxx:743 alice/power.cxx:143 alice/printers.cxx:164
 #: alice/printers.cxx:320 alice/saver.cxx:186 alice/user.cxx:549
@@ -189,17 +188,17 @@ msgstr "Animacje okien"
 #: denise/menus.cxx:484 denise/menus.cxx:508 denise/menus.cxx:827
 #: denise/menus.cxx:936 denise/menus.cxx:941 denise/updates.cxx:272
 #: platinum/filedialog.cxx:341 platinum/filedialog.cxx:575
-#: platinum/platinum.cxx:229 platinum/platinum.cxx:1145
+#: platinum/platinum.cxx:229 platinum/platinum.cxx:1250
 #: polkit/nirvana-polkit-agent.cxx:161 shell/main.cxx:615
 msgid "Cancel"
 msgstr "Anuluj"
 
-#: alice/appearance.cxx:411 alice/datetime.cxx:387 alice/power.cxx:144
+#: alice/appearance.cxx:417 alice/datetime.cxx:387 alice/power.cxx:144
 #: alice/saver.cxx:187 alice/user.cxx:708
 msgid "Apply"
 msgstr "Zastosuj"
 
-#: alice/appearance.cxx:412 alice/datetime.cxx:388 alice/desktop.cxx:103
+#: alice/appearance.cxx:418 alice/datetime.cxx:388 alice/desktop.cxx:157
 #: alice/power.cxx:145 alice/printers.cxx:443 alice/saver.cxx:188
 #: alice/shader.cxx:262 alice/user.cxx:709 denise/about.cxx:613
 #: denise/clock.cxx:174 denise/desktop.cxx:1664 platinum/platinum.cxx:228
@@ -358,19 +357,23 @@ msgstr ""
 "Strefa czasowa i data wymagają uprawnień administratora; administratorzy "
 "przy komputerze nie są pytani o hasło."
 
-#: alice/desktop.cxx:83 alice/preferences.cxx:161 platinum/filedialog.cxx:408
+#: alice/desktop.cxx:48
+msgid "Notes"
+msgstr "Notatki"
+
+#: alice/desktop.cxx:118 alice/preferences.cxx:161 platinum/filedialog.cxx:408
 msgid "Desktop"
 msgstr "Pulpit"
 
-#: alice/desktop.cxx:85
+#: alice/desktop.cxx:120
 msgid "Room for Windows"
 msgstr "Miejsce dla okien"
 
-#: alice/desktop.cxx:88
+#: alice/desktop.cxx:123
 msgid "Keep the desktop icons free"
 msgstr "Nie zasłaniaj ikon na pulpicie"
 
-#: alice/desktop.cxx:93
+#: alice/desktop.cxx:128
 msgid ""
 "Zoomed and new windows leave the column of icons at the left edge free and "
 "keep small gaps at the edges. Off: windows use the whole screen below the "
@@ -380,22 +383,50 @@ msgstr ""
 "małe odstępy od krawędzi. Wyłączone: okna zajmują cały ekran pod paskiem "
 "menu."
 
-#: alice/desktop.cxx:95
+#: alice/desktop.cxx:130
 msgid "Keep windows above the dock"
 msgstr "Okna nad dokiem"
 
-#: alice/desktop.cxx:99
+#: alice/desktop.cxx:134
 msgid "Off: zoomed windows reach the bottom edge and may cover the dock."
 msgstr ""
 "Wyłączone: powiększone okna sięgają dolnej krawędzi i mogą zasłonić dok."
 
-#: alice/desktop.cxx:101
+#: alice/desktop.cxx:136
 msgid "Preview of a zoomed window."
 msgstr "Podgląd powiększonego okna."
 
-#: alice/desktop.cxx:102
-msgid "The change applies at once, also to windows zoomed from now on."
-msgstr "Zmiana działa od razu, także dla okien powiększanych od teraz."
+#: alice/desktop.cxx:139
+msgid "Window Behavior"
+msgstr "Zachowanie okien"
+
+#: alice/desktop.cxx:142
+msgid "Classic 16-bit windows"
+msgstr "Klasyczne okna 16-bit"
+
+#: alice/desktop.cxx:147
+msgid ""
+"Close gadget at the left, zoom and depth gadgets at the right, size gadget "
+"in the bottom right corner. A click activates a window without bringing it "
+"to the front - the depth gadget sends the top window to the back and brings "
+"any other to the front."
+msgstr ""
+"Gadżet zamykania po lewej, gadżety powiększenia i głębi po prawej, gadżet "
+"rozmiaru w prawym dolnym rogu. Kliknięcie aktywuje okno bez wysuwania go na "
+"wierzch - gadżet głębi chowa okno z wierzchu pod spód, a każde inne wysuwa "
+"na wierzch."
+
+#: alice/desktop.cxx:150
+msgid "Move and resize with an outline"
+msgstr "Przesuwanie i zmiana rozmiaru konturem"
+
+#: alice/desktop.cxx:154
+msgid "The window jumps to its new place when the mouse button is released."
+msgstr "Okno przeskakuje na nowe miejsce po puszczeniu przycisku myszy."
+
+#: alice/desktop.cxx:156
+msgid "The changes apply at once, to all open windows."
+msgstr "Zmiany działają od razu, we wszystkich otwartych oknach."
 
 #: alice/main.cxx:38
 msgid "No such scheme: %1"
@@ -514,7 +545,7 @@ msgid "DNS servers:"
 msgstr "Serwery DNS:"
 
 #: alice/network.cxx:343 platinum/filedialog.cxx:246
-#: platinum/filedialog.cxx:248 platinum/platinum.cxx:1159
+#: platinum/filedialog.cxx:248 platinum/platinum.cxx:1264
 msgid "Save"
 msgstr "Zapisz"
 
@@ -899,8 +930,8 @@ msgid ""
 "Presentation mode (battery menu in the menu bar) suspends screen blanking, "
 "locking and sleep."
 msgstr ""
-"Tryb projekcji (menu baterii na pasku menu) wstrzymuje wygaszanie, blokadę i "
-"usypianie."
+"Tryb projekcji (menu baterii na pasku menu) wstrzymuje wygaszanie, blokadę i"
+" usypianie."
 
 #: alice/power.cxx:134
 msgid ""
@@ -1031,8 +1062,8 @@ msgstr "Bez sterownika (IPP Everywhere / AirPrint) – zalecane"
 
 #: alice/printers.cxx:235
 msgid ""
-"No driver for %1 is installed. Install the drivers for this manufacturer and "
-"the list fills in."
+"No driver for %1 is installed. Install the drivers for this manufacturer and"
+" the list fills in."
 msgstr ""
 "Nie ma zainstalowanego sterownika dla %1. Zainstaluj sterowniki tego "
 "producenta, a lista się uzupełni."
@@ -1251,7 +1282,8 @@ msgid "Scanlines"
 msgstr "Linie kineskopu"
 
 #: alice/shader.cxx:38
-msgid "Only the dark lines of a tube screen; the picture stays flat and sharp."
+msgid ""
+"Only the dark lines of a tube screen; the picture stays flat and sharp."
 msgstr "Tylko ciemne linie kineskopu; obraz zostaje płaski i ostry."
 
 #: alice/shader.cxx:39
@@ -1292,7 +1324,8 @@ msgstr "Światło nocne"
 
 #: alice/shader.cxx:43
 msgid "Warmer colors with less blue light, for the evening."
-msgstr "Cieplejsze kolory z mniejszą ilością niebieskiego światła, na wieczór."
+msgstr ""
+"Cieplejsze kolory z mniejszą ilością niebieskiego światła, na wieczór."
 
 #: alice/shader.cxx:44
 msgid "VHS tape"
@@ -1300,7 +1333,8 @@ msgstr "Kaseta VHS"
 
 #: alice/shader.cxx:44
 msgid ""
-"Color bleeding, a shaky picture, noise and a rolling tracking band. Animated."
+"Color bleeding, a shaky picture, noise and a rolling tracking band. "
+"Animated."
 msgstr ""
 "Rozmyte kolory, drżący obraz, szum i przesuwający się pas zakłóceń. "
 "Animowany."
@@ -1350,10 +1384,11 @@ msgid "LCD"
 msgstr "LCD"
 
 #: alice/shader.cxx:49
-msgid "A coarse liquid crystal panel with visible red, green and blue stripes."
+msgid ""
+"A coarse liquid crystal panel with visible red, green and blue stripes."
 msgstr ""
-"Gruboziarnisty panel ciekłokrystaliczny z widocznymi czerwonymi, zielonymi i "
-"niebieskimi paskami."
+"Gruboziarnisty panel ciekłokrystaliczny z widocznymi czerwonymi, zielonymi i"
+" niebieskimi paskami."
 
 #: alice/shader.cxx:50
 msgid "Thermal camera"
@@ -1416,8 +1451,8 @@ msgid ""
 "Effects use OpenGL. Without graphics acceleration animated effects can be "
 "slow."
 msgstr ""
-"Efekty używają OpenGL. Bez akceleracji grafiki efekty animowane mogą działać "
-"wolno."
+"Efekty używają OpenGL. Bez akceleracji grafiki efekty animowane mogą działać"
+" wolno."
 
 #: alice/shader.cxx:225
 msgid "Full-screen effect"
@@ -1841,14 +1876,16 @@ msgid ""
 "The full text of the licence follows (only the English original is legally "
 "binding)."
 msgstr ""
-"Poniżej pełny tekst licencji (wiążący prawnie jest tylko oryginał angielski)."
+"Poniżej pełny tekst licencji (wiążący prawnie jest tylko oryginał "
+"angielski)."
 
 #: denise/about.cxx:476
 msgid ""
-"The licence file was not found. See https://www.gnu.org/licenses/gpl-3.0.html"
+"The licence file was not found. See "
+"https://www.gnu.org/licenses/gpl-3.0.html"
 msgstr ""
-"Nie znaleziono pliku licencji. Zobacz https://www.gnu.org/licenses/gpl-3.0."
-"html"
+"Nie znaleziono pliku licencji. Zobacz "
+"https://www.gnu.org/licenses/gpl-3.0.html"
 
 #: denise/about.cxx:485
 msgid ""
@@ -1905,8 +1942,8 @@ msgid ""
 "the desktops of the late 1980s and the 1990s: bevelled gray windows, a menu "
 "bar at the top, icons on the desktop"
 msgstr ""
-"pulpity końca lat 80. i lat 90.: szare okna z fazowaniem, pasek menu u góry, "
-"ikony na biurku"
+"pulpity końca lat 80. i lat 90.: szare okna z fazowaniem, pasek menu u góry,"
+" ikony na biurku"
 
 #: denise/about.cxx:511
 msgid ""
@@ -2373,8 +2410,8 @@ msgid ""
 "Nirvana Desktop does not know which packages provide them; without them the "
 "application may not start."
 msgstr ""
-"Nirvana nie wie, które pakiety je zawierają; bez nich aplikacja może się nie "
-"uruchomić."
+"Nirvana nie wie, które pakiety je zawierają; bez nich aplikacja może się nie"
+" uruchomić."
 
 #: denise/desktop.cxx:1818
 msgid "They can be installed now (%1)."
@@ -2670,8 +2707,8 @@ msgstr "Duplikuj"
 msgid "Copy"
 msgstr "Kopiuj"
 
-#: denise/menus.cxx:343 platinum/filedialog.cxx:298 platinum/filedialog.cxx:553
-#: platinum/platinum.cxx:1157
+#: denise/menus.cxx:343 platinum/filedialog.cxx:298
+#: platinum/filedialog.cxx:553 platinum/platinum.cxx:1262
 msgid "New Folder"
 msgstr "Nowy folder"
 
@@ -2725,8 +2762,7 @@ msgid ""
 "The program is closed at once, and what was not saved in it is lost."
 msgstr ""
 "Wymusić zamknięcie „%1”?\n"
-"Program zostanie zamknięty od razu, a to, czego w nim nie zapisano, "
-"przepadnie."
+"Program zostanie zamknięty od razu, a to, czego w nim nie zapisano, przepadnie."
 
 #: denise/menus.cxx:496
 msgid "Execute Command"
@@ -2919,8 +2955,8 @@ msgstr "Wszystkie dane na tym dysku zostaną usunięte!"
 
 #: denise/menus.cxx:933
 msgid ""
-"FAT32 (USB stick - works everywhere)|exFAT (large files, Windows and Mac)|"
-"ext4 (Linux)|NTFS (Windows)"
+"FAT32 (USB stick - works everywhere)|exFAT (large files, Windows and "
+"Mac)|ext4 (Linux)|NTFS (Windows)"
 msgstr ""
 "FAT32 (pendrive - działa wszędzie)|exFAT (duże pliki, Windows i Mac)|ext4 "
 "(Linux)|NTFS (Windows)"
@@ -3017,8 +3053,8 @@ msgstr[2] "Zainstalować %1 aktualizacji?"
 
 #: denise/updates.cxx:270
 msgid ""
-"You can keep working meanwhile. Programs that are running may need a restart "
-"afterwards."
+"You can keep working meanwhile. Programs that are running may need a restart"
+" afterwards."
 msgstr ""
 "W tym czasie możesz dalej pracować. Uruchomione programy mogą potem wymagać "
 "ponownego uruchomienia."
@@ -3231,7 +3267,7 @@ msgstr "Zaloguj"
 msgid "Preview: nobody is logged in from here."
 msgstr "Podgląd: stąd nikt nie zostanie zalogowany."
 
-#: insight/main.cxx:176
+#: insight/main.cxx:186
 msgid "untitled"
 msgstr "bez tytułu"
 
@@ -3329,11 +3365,11 @@ msgstr "Nie można odczytać pliku."
 
 #: net/net.cxx:436
 msgid ""
-"Unknown format. Supported: WireGuard (.conf), OpenVPN (.ovpn), Cisco VPNC (."
-"pcf)."
-msgstr ""
-"Nieznany format. Obsługiwane: WireGuard (.conf), OpenVPN (.ovpn), Cisco VPNC "
+"Unknown format. Supported: WireGuard (.conf), OpenVPN (.ovpn), Cisco VPNC "
 "(.pcf)."
+msgstr ""
+"Nieznany format. Obsługiwane: WireGuard (.conf), OpenVPN (.ovpn), Cisco VPNC"
+" (.pcf)."
 
 #: net/net.cxx:440
 msgid ""
@@ -3344,11 +3380,11 @@ msgstr ""
 
 #: net/net.cxx:449
 msgid ""
-"A WireGuard file name must be a short interface name (e.g. wg0.conf, office."
-"conf)."
+"A WireGuard file name must be a short interface name (e.g. wg0.conf, "
+"office.conf)."
 msgstr ""
-"Nazwa pliku WireGuard musi być krótką nazwą interfejsu (np. wg0.conf, firma."
-"conf)."
+"Nazwa pliku WireGuard musi być krótką nazwą interfejsu (np. wg0.conf, "
+"firma.conf)."
 
 #: net/net.cxx:483
 msgid "Cannot create a temporary file."
@@ -3619,7 +3655,7 @@ msgstr "%1 %2"
 msgid "Choose Folder"
 msgstr "Wybierz folder"
 
-#: platinum/filedialog.cxx:248 platinum/platinum.cxx:1146
+#: platinum/filedialog.cxx:248 platinum/platinum.cxx:1251
 msgid "Choose"
 msgstr "Wybierz"
 
@@ -3647,7 +3683,7 @@ msgstr "Folder wyżej (Backspace)"
 msgid "Show hidden files"
 msgstr "Pokaż ukryte pliki"
 
-#: platinum/filedialog.cxx:329 platinum/platinum.cxx:1160
+#: platinum/filedialog.cxx:329 platinum/platinum.cxx:1265
 msgid "Show:"
 msgstr "Pokaż:"
 
@@ -3713,50 +3749,50 @@ msgstr "Tak"
 msgid "No"
 msgstr "Nie"
 
-#: platinum/platinum.cxx:1140
+#: platinum/platinum.cxx:1245
 msgid "%1 item"
 msgid_plural "%1 items"
 msgstr[0] "%1 element"
 msgstr[1] "%1 elementy"
 msgstr[2] "%1 elementów"
 
-#: platinum/platinum.cxx:1147
+#: platinum/platinum.cxx:1252
 msgid "Add to Favorites"
 msgstr "Dodaj do ulubionych"
 
-#: platinum/platinum.cxx:1148
+#: platinum/platinum.cxx:1253
 msgid "All Files (*)"
 msgstr "Wszystkie pliki (*)"
 
-#: platinum/platinum.cxx:1149
+#: platinum/platinum.cxx:1254
 msgid "Custom Filter"
 msgstr "Własny filtr"
 
-#: platinum/platinum.cxx:1150
+#: platinum/platinum.cxx:1255
 msgid "The file already exists. Replace it?"
 msgstr "Plik już istnieje. Zastąpić go?"
 
-#: platinum/platinum.cxx:1151
+#: platinum/platinum.cxx:1256
 msgid "Favorites"
 msgstr "Ulubione"
 
-#: platinum/platinum.cxx:1152
+#: platinum/platinum.cxx:1257
 msgid "File:"
 msgstr "Plik:"
 
-#: platinum/platinum.cxx:1153
+#: platinum/platinum.cxx:1258
 msgid "Disks"
 msgstr "Dyski"
 
-#: platinum/platinum.cxx:1154
+#: platinum/platinum.cxx:1259
 msgid "Hidden files"
 msgstr "Ukryte pliki"
 
-#: platinum/platinum.cxx:1155
+#: platinum/platinum.cxx:1260
 msgid "Manage Favorites"
 msgstr "Zarządzaj ulubionymi"
 
-#: platinum/platinum.cxx:1156
+#: platinum/platinum.cxx:1261
 msgid "New folder name:"
 msgstr "Nazwa nowego folderu:"
 

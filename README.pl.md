@@ -38,7 +38,7 @@ Napisane w C++ i FLTK 1.4.
 
 Rozpakuj źródła i uruchom instalator:
 
-    tar xzf nirvana-desktop-0.0.37.tar.gz && cd nirvana-desktop
+    tar xzf nirvana-desktop-0.0.38.tar.gz && cd nirvana-desktop
     sudo ./install.sh                 # albo: sudo ./install.sh --login-screen
 
 Instalator:
@@ -148,6 +148,20 @@ Inną czcionkę systemową (np. wolną, w stylu bitmapowym) można podać przez 
 - Flatpaki: sesja przekazuje usługom D-Bus ekran i nazwę pulpitu, a
   `nirvana-portals.conf` kieruje xdg-desktop-portal do backendu GTK
 - bez kompozytora: aplikacje rysują prosto na ekran (mniej pamięci)
+- **Klasyczne okna 16-bit** (Preferencje > Pulpit > Zachowanie okien): przełącznik na styl
+  gadżetów z pulpitów 16-bitowych komputerów domowych, narysowany przez Nirvanę od zera. Pasek
+  tytułu to rząd wypukłych komórek, w aktywnym oknie wypełniony kolorem zaznaczenia, z tytułem
+  po lewej; gadżet zamykania po lewej, powiększenia i **gadżet głębi** po prawej (bez przycisku
+  ikonizacji i bez zwijania dwuklikiem), a w prawym dolnym rogu ramki gadżet rozmiaru (tylko on
+  zmienia rozmiar). Kliknięcie aktywuje okno **bez wysuwania go na wierzch**; gadżet głębi
+  chowa okno z wierzchu na sam spód, a każde inne wysuwa na wierzch, fokus klawiatury zostaje
+  tam, gdzie był. Dialogi mają tylko gadżet głębi. Nazwa „klasyczne 16-bit”, a nie nazwa
+  produktu, jest celowa – bez nazw zastrzeżonych.
+- **Przesuwanie i zmiana rozmiaru konturem** (ten sam panel, działa z każdym stylem): podczas
+  przeciągania przesuwa się tylko kontur XOR (serwer X jest wtedy zablokowany, żeby nie
+  zostawały ślady, najwyżej 30 s), a okno przeskakuje na miejsce po puszczeniu przycisku –
+  przydatne na wolnej grafice. Oba przełączniki działają od razu we wszystkich otwartych
+  oknach (`desktop.conf`, `_NIRVANA_DESKTOP`).
 
 ## Aplikacje (AppImage)
 

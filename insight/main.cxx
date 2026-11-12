@@ -48,7 +48,7 @@ static Atom A_WM_PROTOCOLS, A_WM_DELETE, A_WM_STATE, A_NET_WM_NAME, A_UTF8,
     A_NET_CHECK, A_NET_ACTIVE, A_NET_WM_STATE, A_NET_WM_STATE_SHADED, A_NET_WM_TYPE_DIALOG,
     A_NET_CLIENT_LIST, A_NET_CLOSE, A_NET_WM_STATE_HIDDEN, A_WM_CHANGE_STATE,
     A_NET_WM_STATE_MAX_V, A_NET_WM_STATE_MAX_H, A_NET_WORKAREA, A_NET_FRAME_EXTENTS,
-    A_NET_REQUEST_FRAME_EXTENTS, A_NIRVANA_DOCK;
+    A_NET_REQUEST_FRAME_EXTENTS, A_NIRVANA_DOCK, A_DESKTOP;
 
 class Frame;
 
@@ -142,7 +142,17 @@ static std::map<Window, Client *> clients;   // application window -> client
 static Window desktop_win = 0;                // desktop window (no frame)
 static Client *g_active = nullptr;
 
-static void focus(Client *c);
+// Preferences > Desktop: "Classic 16-bit" windows and outline dragging (desktop.conf)
+static bool g_classic = false, g_outline = false;
+static void read_window_mode() {
+  DesktopSettings d = read_desktop();
+  g_classic = d.classic;
+  g_outline = d.outline;
+}
+
+static void focus(Client *c, bool raise = true);
+static bool on_top(Client *c);
+static void depth(Client *c);
 static void unmanage(Client *c, bool destroyed);
 static void iconify_client(Client *c);
 static void preview_soon(void *);
@@ -293,6 +303,15 @@ public:
   void draw() override {
     if (c->bare) return;   // the window covers the whole frame and draws itself
     bool act = c == g_active;
+    if (g_classic) {
+      draw_classic_frame(0, 0, w(), h(), act, c->shaded, !c->dialog);
+      draw_classic_titlebar(0, 0, w(), c->title.c_str(), act, pressed_, gadgets());
+      if (!c->shaded) {
+        fl_color(DARK);
+        fl_rect(FRAME - 1, TITLE_H - 1, cw() + 2, ch() + 2);
+      }
+      return;
+    }
     draw_frame(0, 0, w(), h(), act, c->shaded);
     draw_titlebar(0, 0, w(), c->title.c_str(), act, pressed_, !c->dialog);
     if (!c->shaded && !c->dialog) {
@@ -305,7 +324,10 @@ public:
     }
   }
 
+  int gadgets() const { return c->dialog ? 2 : 1; }   // classic: dialogs only get the depth gadget
+
   int hit_button(int ex, int ey) const {
+    if (g_classic) return classic_gadget_hit(w(), ex, ey, gadgets());
     if (c->dialog) return 0;
     int by = (TITLE_H - BOX) / 2;
     if (ey < by || ey >= by + BOX) return 0;
@@ -374,12 +396,18 @@ public:
     int ex = Fl::event_x(), ey = Fl::event_y();
     switch (e) {
     case FL_PUSH:
-      ::focus(c);
+      ::focus(c, !g_classic);   // classic windows: a click activates, only the depth gadget raises
       if (c->bare) return 1;
       if (ey < TITLE_H) {
         if (int b = hit_button(ex, ey)) { drag_ = BTN; armed_ = pressed_ = b; redraw(); return 1; }
-        if (Fl::event_clicks() && !c->dialog) { Fl::event_clicks(0); iconify_client(c); drag_ = NONE; return 1; }
+        if (Fl::event_clicks() && !c->dialog && !g_classic) {
+          Fl::event_clicks(0); iconify_client(c); drag_ = NONE; return 1;
+        }
         drag_ = MOVE;
+      } else if (g_classic && !c->shaded && !c->dialog) {
+        // classic: only the size gadget in the corner resizes, the rest of the frame moves
+        bool corner = (ex >= w() - CLASSIC_SIZE && ey >= h() - FRAME) || (ex >= w() - FRAME && ey >= h() - CLASSIC_SIZE);
+        drag_ = corner ? GROW : MOVE;
       } else if (!c->shaded && !c->dialog && (ex >= w() - 16 || ey >= h() - FRAME)) {
         drag_ = GROW;          // right or bottom edge / bottom right corner
       } else {
@@ -387,8 +415,29 @@ public:
       }
       dx_ = Fl::event_x_root() - x(); dy_ = Fl::event_y_root() - y();
       gw_ = w() - ex; gh_ = h() - ey;
+      px_ = Fl::event_x_root(); py_ = Fl::event_y_root();
       return 1;
     case FL_DRAG:
+      if ((drag_ == MOVE || drag_ == GROW) && g_outline) {
+        // outline: an XOR rectangle on the screen, the window follows on release
+        if (!outlining_) {
+          if (abs(Fl::event_x_root() - px_) + abs(Fl::event_y_root() - py_) < 3) return 1;
+          outlining_ = true;
+          out_ = geom();
+          outline_begin(out_);
+        }
+        Rect n = out_;
+        if (drag_ == MOVE) {
+          n.x = Fl::event_x_root() - dx_;
+          n.y = std::max(MENUBAR_H, Fl::event_y_root() - dy_);
+        } else {
+          n.w = std::max(160, Fl::event_x_root() - x() + gw_);
+          n.h = std::max(TITLE_H + 60, Fl::event_y_root() - y() + gh_);
+        }
+        outline_move(out_, n);
+        out_ = n;
+        return 1;
+      }
       if (drag_ == MOVE) {
         int nx = Fl::event_x_root() - dx_;
         int ny = std::max(MENUBAR_H, Fl::event_y_root() - dy_);   // the menu bar stays visible
@@ -403,6 +452,7 @@ public:
       }
       return 1;
     case FL_RELEASE:
+      if (outlining_) { finish_outline(); drag_ = NONE; return 1; }
       if (drag_ == BTN) {
         int b = pressed_;
         pressed_ = armed_ = 0;
@@ -411,6 +461,7 @@ public:
         if (b == 1) close_client();
         else if (b == 2) toggle_zoom();
         else if (b == 3) iconify_client(c);   // window icon on the desktop
+        else if (b == 4) depth(c);            // classic: to the front or to the back
       }
       drag_ = NONE;
       return 1;
@@ -418,9 +469,64 @@ public:
     return Fl_Double_Window::handle(e);
   }
 
+  // ends an outline drag: the outline disappears and the window jumps to its place
+  void finish_outline() {
+    if (!outlining_) return;
+    outlining_ = false;
+    outline_end(out_);
+    if (c->shaded) position(out_.x, out_.y);
+    else resize(out_.x, out_.y, out_.w, out_.h);
+    c->zoomed = false;
+  }
+
+  // XOR outlines on the root window (IncludeInferiors), with the server grabbed so that
+  // nothing draws under them and leaves traces
+  static GC xor_gc() {
+    static GC gc = nullptr;
+    if (!gc) {
+      XGCValues gv;
+      gv.function = GXxor;
+      gv.foreground = 0xFFFFFF;
+      gv.subwindow_mode = IncludeInferiors;
+      gv.line_width = 1;
+      gc = XCreateGC(dpy, root, GCFunction | GCForeground | GCSubwindowMode | GCLineWidth, &gv);
+    }
+    return gc;
+  }
+  static void outline_draw(Rect r) {
+    Rect p = px(r);
+    XDrawRectangle(dpy, root, xor_gc(), p.x, p.y, std::max(1, p.w - 1), std::max(1, p.h - 1));
+    if (r.h > TITLE_H + 2) XDrawLine(dpy, root, xor_gc(), p.x, p.y + px(TITLE_H), p.x + p.w - 1, p.y + px(TITLE_H));
+  }
+  static bool grab_ok() {   // NIRVANA_OUTLINE_GRAB=0: no server grab (testing with xdotool)
+    const char *e = getenv("NIRVANA_OUTLINE_GRAB");
+    return !e || strcmp(e, "0");
+  }
+  static void outline_begin(Rect r) {
+    XSync(dpy, False);
+    if (grab_ok()) XGrabServer(dpy);
+    outline_draw(r);
+    XFlush(dpy);
+    Fl::add_timeout(30, outline_safety);
+  }
+  static void outline_move(Rect a, Rect b) {
+    outline_draw(a);
+    outline_draw(b);
+    XFlush(dpy);
+  }
+  static void outline_end(Rect r) {
+    Fl::remove_timeout(outline_safety);
+    outline_draw(r);
+    if (grab_ok()) XUngrabServer(dpy);
+    XFlush(dpy);
+  }
+  static void outline_safety(void *);   // never keep the server grabbed for long
+
 private:
   enum { NONE, MOVE, GROW, BTN } drag_ = NONE;
-  int dx_ = 0, dy_ = 0, gw_ = 0, gh_ = 0, armed_ = 0, pressed_ = 0;
+  int dx_ = 0, dy_ = 0, gw_ = 0, gh_ = 0, armed_ = 0, pressed_ = 0, px_ = 0, py_ = 0;
+  bool outlining_ = false;
+  Rect out_{0, 0, 0, 0};
 };
 
 // ---------------------------------------------------------------------------
@@ -554,14 +660,14 @@ static void iconify_client(Client *c) {
   Fl::add_timeout(0.4, iconify_fallback);
 }
 
-static void focus(Client *c) {
-  if (c && c->hidden) show_client(c);
+static void focus(Client *c, bool raise) {
+  if (c && c->hidden) { show_client(c); raise = true; }
   if (c) c->mru = ++mru_clock;
   Client *old = g_active;
   g_active = c;
   if (old && old != c && clients.count(old->win)) old->frame->redraw();
   if (!c) return;
-  XRaiseWindow(dpy, fl_xid(c->frame));
+  if (raise) XRaiseWindow(dpy, fl_xid(c->frame));
   XSetInputFocus(dpy, c->win, RevertToPointerRoot, CurrentTime);
   Window w = c->win;
   XChangeProperty(dpy, root, A_NET_ACTIVE, XA_WINDOW, 32, PropModeReplace, (unsigned char *)&w, 1);
@@ -569,6 +675,50 @@ static void focus(Client *c) {
   if (desktop_win) XLowerWindow(dpy, desktop_win);
   Fl::remove_timeout(preview_soon);
   Fl::add_timeout(0.6, preview_soon);
+}
+
+// The client whose frame is this X window
+static Client *client_of_frame(Window f) {
+  for (auto &[w, c] : clients)
+    if (c->frame && c->frame->shown() && fl_xid(c->frame) == f) return c;
+  return nullptr;
+}
+
+// Is the window the top one of all visible program windows?
+static bool on_top(Client *c) {
+  Window r, p, *kids = nullptr;
+  unsigned n = 0;
+  if (!XQueryTree(dpy, root, &r, &p, &kids, &n)) return true;
+  bool top = false;
+  for (int i = (int)n - 1; i >= 0; i--) {
+    Client *k = client_of_frame(kids[i]);
+    if (!k || k->hidden) continue;
+    top = k == c;
+    break;
+  }
+  if (kids) XFree(kids);
+  return top;
+}
+
+// The depth gadget: a window that is on top goes to the very back (still above the
+// desktop), any other comes to the front. The keyboard focus stays where it was.
+static void depth(Client *c) {
+  if (!c || c->hidden) return;
+  if (on_top(c)) {
+    XLowerWindow(dpy, fl_xid(c->frame));
+    if (desktop_win) XLowerWindow(dpy, desktop_win);
+  } else {
+    XRaiseWindow(dpy, fl_xid(c->frame));
+  }
+  if (c == g_active) {
+    Fl::remove_timeout(preview_soon);
+    Fl::add_timeout(0.6, preview_soon);
+  }
+}
+
+void Frame::outline_safety(void *) {
+  for (auto &[w, c] : clients)
+    if (c->frame) c->frame->finish_outline();
 }
 
 static void manage(Window w, bool existing) {
@@ -746,6 +896,7 @@ static Fl_RGB_Image *grab_preview(Client *c) {
 static std::map<Window, Fl_RGB_Image *> g_previews;
 
 static void take_preview(Client *c) {
+  if (g_classic && !on_top(c)) return;   // an active window may lie under others here
   if (Fl_RGB_Image *img = grab_preview(c)) {
     delete g_previews[c->win];
     g_previews[c->win] = img;
@@ -987,6 +1138,11 @@ static int x_handler(void *event, void *) {
       publish_workarea();
       return 0;
     }
+    if (e->xproperty.window == root && e->xproperty.atom == A_DESKTOP) {
+      read_window_mode();   // Preferences > Desktop: classic windows / outline dragging
+      for (auto &[w, c] : clients) c->frame->redraw();
+      return 0;
+    }
     if (e->xproperty.window == root && e->xproperty.atom == A_APPEARANCE) {
       appearance_changed();
       return 0;   // let the other handlers see it too
@@ -1004,7 +1160,7 @@ static int x_handler(void *event, void *) {
 
   case ButtonPress:
     if (Client *c = client_of(e->xbutton.window)) {
-      if (c != g_active) focus(c);
+      if (c != g_active) focus(c, !g_classic);
       XAllowEvents(dpy, ReplayPointer, CurrentTime);
       return 1;
     }
@@ -1155,6 +1311,8 @@ int main(int argc, char **argv) {
   A_NET_FRAME_EXTENTS = XInternAtom(dpy, "_NET_FRAME_EXTENTS", False);
   A_NET_REQUEST_FRAME_EXTENTS = XInternAtom(dpy, "_NET_REQUEST_FRAME_EXTENTS", False);
   A_NIRVANA_DOCK = XInternAtom(dpy, "_NIRVANA_DOCK", False);
+  A_DESKTOP = XInternAtom(dpy, plat::DESKTOP_ATOM, False);
+  read_window_mode();
   A_ICON_RECT = XInternAtom(dpy, "_NIRVANA_ICON_RECT", False);
   A_WM_CHANGE_STATE = XInternAtom(dpy, "WM_CHANGE_STATE", False);
 

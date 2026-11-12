@@ -59,6 +59,10 @@ struct Scheme {
 struct DesktopSettings {
   bool icon_margin = true;   // zoomed and new windows leave the column of desktop icons free, with gaps
   bool dock_room = true;     // windows stay above the dock
+  // "Classic 16-bit" windows: close gadget at the left, zoom and depth gadgets at the right,
+  // a size gadget in the corner; a click activates a window without raising it
+  bool classic = false;
+  bool outline = false;      // move and resize with an XOR outline (the window jumps on release)
 };
 DesktopSettings read_desktop();
 bool write_desktop(const DesktopSettings &d);
@@ -227,6 +231,14 @@ void draw_titlebar(int x, int y, int w, const char *title, bool active,
                    int boxes = 1 /* 0: dialog without buttons, 1: all, 2: without "zoom" */);
 void draw_frame(int x, int y, int w, int h, bool active, bool shaded);
 void draw_grow_box(int x, int y);
+// "Classic 16-bit" windows (Preferences > Desktop): the bar is a row of beveled cells.
+// boxes: 0 no gadgets, 1 close + zoom + depth, 2 depth only (dialogs), 3 close + depth
+// pressed: 1 close, 2 zoom, 4 depth
+constexpr int CLASSIC_GADGET = 22;   // width of a gadget cell
+constexpr int CLASSIC_SIZE = 16;     // the size gadget in the bottom right corner (L on the frame)
+void draw_classic_titlebar(int x, int y, int w, const char *title, bool active, int pressed = 0, int boxes = 1);
+void draw_classic_frame(int x, int y, int w, int h, bool active, bool shaded, bool size_gadget);
+int classic_gadget_hit(int w, int ex, int ey, int boxes);   // the gadget under the point (title bar coordinates)
 
 // Helpers
 std::string ellipsize(const std::string &s, int max_w);   // text cut with "…"

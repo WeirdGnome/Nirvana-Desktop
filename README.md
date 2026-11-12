@@ -39,7 +39,7 @@ on the desktop. Written in C++ and FLTK 1.4.
 
 Unpack the sources and run the installer:
 
-    tar xzf nirvana-desktop-0.0.37.tar.gz && cd nirvana-desktop
+    tar xzf nirvana-desktop-0.0.38.tar.gz && cd nirvana-desktop
     sudo ./install.sh                 # or: sudo ./install.sh --login-screen
 
 The installer:
@@ -149,6 +149,19 @@ Another system font (for example a free bitmap-style one) can be set with `NIRVA
 - Flatpaks: the session passes the display and desktop name to D-Bus services, and
   `nirvana-portals.conf` points xdg-desktop-portal to the GTK backend
 - no compositor: applications draw straight to the screen (less memory)
+- **Classic 16-bit windows** (Preferences > Desktop > Window Behavior): a switch for the
+  gadget style of the 16-bit home-computer desktops, drawn by Nirvana from scratch. The title
+  bar is a row of beveled cells, filled with the selection color in the active window, with the
+  title on the left; close gadget on the left, zoom and **depth gadget** on the right (no
+  iconify button, no shading on a double click), and a size gadget in the bottom-right corner
+  of the frame (the only place that resizes). A click activates a window **without raising
+  it**; the depth gadget sends the top window to the very back and brings any other one to
+  the front, the keyboard focus stays where it was. Dialogs only get the depth gadget.
+  It is called "classic 16-bit" and not after any product on purpose – no trademarked names.
+- **Move and resize with an outline** (same panel, can be combined with either style): while
+  dragging only an XOR outline moves (the X server is grabbed so it leaves no traces, at most
+  30 s), the window jumps to its place on release – handy on slow graphics.
+  Both switches apply at once to all open windows (`desktop.conf`, `_NIRVANA_DESKTOP`).
 - **interface scale** (HiDPI): see [Appearance](#appearance-nirvana-alice-panel)
 
 ## Applications (AppImage)

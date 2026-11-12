@@ -3,6 +3,8 @@
 // How much room windows leave on the desktop: the column of desktop icons with
 // small gaps at the edges (the margins) and the dock at the bottom. Saved in
 // ~/.config/nirvana/desktop.conf; Rambler and Insight follow at once.
+// Also the window behavior: the "Classic 16-bit" windows (gadgets, click without raising,
+// depth gadget) and moving with an outline.
 #include "framewin.h"
 #include "platinum.h"
 
@@ -19,7 +21,37 @@ using namespace plat;
 namespace {
 
 DesktopSettings g_d;
-Fl_Check_Button *g_margin, *g_dock;
+Fl_Check_Button *g_margin, *g_dock, *g_classic, *g_outline;
+
+// Two overlapping windows in the chosen style: the active one in front.
+class WindowSample : public Fl_Widget {
+public:
+  WindowSample(int X, int Y, int W, int H) : Fl_Widget(X, Y, W, H) {}
+  static void one(int X, int Y, int W, int H, const char *t, bool act) {
+    if (g_d.classic) {
+      draw_classic_frame(X, Y, W, H, act, false, true);
+      draw_classic_titlebar(X, Y, W, t, act, 0, 1);
+    } else {
+      draw_frame(X, Y, W, H, act, false);
+      draw_titlebar(X, Y, W, "", act, 0, 1);   // too narrow for a centered title
+    }
+    fl_color(CONTENT);
+    fl_rectf(X + FRAME, Y + TITLE_H, W - 2 * FRAME, H - TITLE_H - FRAME);
+    fl_color(DARK);
+    fl_rect(X + FRAME - 1, Y + TITLE_H - 1, W - 2 * FRAME + 2, H - TITLE_H - FRAME + 2);
+  }
+  void draw() override {
+    fl_color(DESK_A);
+    fl_rectf(x(), y(), w(), h());
+    fl_push_clip(x(), y(), w(), h());
+    one(x() + 8, y() + 8, w() - 50, h() - 40, _("Documents"), false);
+    one(x() + 40, y() + 32, w() - 50, h() - 40, _("Notes"), true);
+    fl_pop_clip();
+    fl_color(DARK);
+    fl_rect(x(), y(), w(), h());
+  }
+};
+WindowSample *g_sample;
 
 // A small screen: menu bar, icon column, dock and the zoomed window over them.
 class Preview : public Fl_Widget {
@@ -63,9 +95,12 @@ Preview *g_preview;
 void changed(Fl_Widget *, void *) {
   g_d.icon_margin = g_margin->value();
   g_d.dock_room = g_dock->value();
+  g_d.classic = g_classic->value();
+  g_d.outline = g_outline->value();
   write_desktop(g_d);
   notify_desktop_changed();
   g_preview->redraw();
+  g_sample->redraw();
 }
 
 Fl_Box *note(int X, int Y, int W, int H, const char *t) {
@@ -79,7 +114,7 @@ Fl_Box *note(int X, int Y, int W, int H, const char *t) {
 
 int panel_desktop() {
   g_d = read_desktop();
-  const int W = 500, H = 300;
+  const int W = 500, H = 500;
   auto *win = new FrameWindow(W, H, _("Desktop"));
   win->xclass("nirvana-desktop-panel");
   auto *h = new Fl_Box(15, 10, 300, 20, _("Room for Windows"));
@@ -99,7 +134,26 @@ int panel_desktop() {
   note(35, 148, 270, 46, _("Off: zoomed windows reach the bottom edge and may cover the dock."));
   g_preview = new Preview(320, 38, 165, 110);
   note(320, 152, 165, 40, _("Preview of a zoomed window."));
-  note(15, H - 72, W - 30, 30, _("The change applies at once, also to windows zoomed from now on."));
+  auto *sep = new Fl_Box(15, 200, W - 30, 2);
+  sep->box(FL_ENGRAVED_BOX);
+  auto *h2 = new Fl_Box(15, 210, 300, 20, _("Window Behavior"));
+  h2->labelfont(FONT_SYSTEM);
+  h2->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
+  g_classic = new Fl_Check_Button(15, 238, 290, 20, _("Classic 16-bit windows"));
+  g_classic->labelsize(SIZE_SMALL + 1);
+  g_classic->value(g_d.classic);
+  g_classic->callback(changed);
+  note(35, 260, 270, 112,
+       _("Close gadget at the left, zoom and depth gadgets at the right, size gadget in the bottom right corner. "
+         "A click activates a window without bringing it to the front - the depth gadget sends the top window "
+         "to the back and brings any other to the front."));
+  g_outline = new Fl_Check_Button(15, 376, 290, 20, _("Move and resize with an outline"));
+  g_outline->labelsize(SIZE_SMALL + 1);
+  g_outline->value(g_d.outline);
+  g_outline->callback(changed);
+  note(35, 398, 270, 30, _("The window jumps to its new place when the mouse button is released."));
+  g_sample = new WindowSample(320, 238, 165, 150);
+  note(15, H - 66, W - 120, 30, _("The changes apply at once, to all open windows."));
   auto *ok = new Fl_Button(W - 102, H - 36, 86, 24, _("OK"));
   ok->box(BUTTON_BOX);
   ok->down_box(BUTTON_DOWN);

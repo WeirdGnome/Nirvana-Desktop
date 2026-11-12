@@ -125,8 +125,14 @@ private:
   }
 
   static void draw_window(int X, int Y, int W, int H, const char *title, bool active) {
-    draw_frame(X, Y, W, H, active, false);
-    draw_titlebar(X, Y, W, title, active, 0, true);
+    static const bool classic = read_desktop().classic;   // Preferences > Desktop
+    if (classic) {
+      draw_classic_frame(X, Y, W, H, active, false, true);
+      draw_classic_titlebar(X, Y, W, title, active, 0, 1);
+    } else {
+      draw_frame(X, Y, W, H, active, false);
+      draw_titlebar(X, Y, W, title, active, 0, true);
+    }
     int cx = X + FRAME, cy = Y + TITLE_H, cw = W - 2 * FRAME, ch = H - TITLE_H - FRAME;
     // information bar
     const int INFO = 16;

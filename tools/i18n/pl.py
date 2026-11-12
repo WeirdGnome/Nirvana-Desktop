@@ -1042,4 +1042,11 @@ T = {
     'Force Quit': 'Wymuś zamknięcie',
     'Force quit “%1”?\nThe program is closed at once, and what was not saved in it is lost.': 'Wymusić zamknięcie „%1”?\nProgram zostanie zamknięty od razu, a to, czego w nim nie zapisano, przepadnie.',
     'Force Quit a Window…': 'Zabij okno…',
+    'Notes': 'Notatki',
+    'Window Behavior': 'Zachowanie okien',
+    'Classic 16-bit windows': 'Klasyczne okna 16-bit',
+    'Close gadget at the left, zoom and depth gadgets at the right, size gadget in the bottom right corner. A click activates a window without bringing it to the front - the depth gadget sends the top window to the back and brings any other to the front.': 'Gadżet zamykania po lewej, gadżety powiększenia i głębi po prawej, gadżet rozmiaru w prawym dolnym rogu. Kliknięcie aktywuje okno bez wysuwania go na wierzch - gadżet głębi chowa okno z wierzchu pod spód, a każde inne wysuwa na wierzch.',
+    'Move and resize with an outline': 'Przesuwanie i zmiana rozmiaru konturem',
+    'The window jumps to its new place when the mouse button is released.': 'Okno przeskakuje na nowe miejsce po puszczeniu przycisku myszy.',
+    'The changes apply at once, to all open windows.': 'Zmiany działają od razu, we wszystkich otwartych oknach.',
 }

@@ -132,6 +132,8 @@ DesktopSettings read_desktop() {
   while (std::getline(in, line)) {
     if (line.rfind("icon_margin=", 0) == 0) d.icon_margin = line.substr(12) != "0";
     else if (line.rfind("dock_room=", 0) == 0) d.dock_room = line.substr(10) != "0";
+    else if (line.rfind("classic_windows=", 0) == 0) d.classic = line.substr(16) == "1";
+    else if (line.rfind("outline_drag=", 0) == 0) d.outline = line.substr(13) == "1";
   }
   return d;
 }
@@ -143,7 +145,8 @@ bool write_desktop(const DesktopSettings &d) {
   mkdir(dir.c_str(), 0755);
   std::ofstream out(f);
   out << "# Nirvana Desktop - the desktop (Preferences > Desktop)\n"
-      << "icon_margin=" << d.icon_margin << "\ndock_room=" << d.dock_room << "\n";
+      << "icon_margin=" << d.icon_margin << "\ndock_room=" << d.dock_room << "\n"
+      << "classic_windows=" << d.classic << "\noutline_drag=" << d.outline << "\n";
   return (bool)out;
 }
 

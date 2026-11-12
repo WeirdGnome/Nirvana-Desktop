@@ -1118,6 +1118,111 @@ void draw_grow_box(int x, int y) {
 }
 
 // ---------------------------------------------------------------------------
+// "Classic 16-bit" windows - our own drawing of the gadget style of the 16-bit
+// desktops: a flat bar of beveled cells, colored when the window is active.
+// ---------------------------------------------------------------------------
+static void classic_cell(int x, int y, int w, int h, bool pressed, Fl_Color face) {
+  fl_color(face);
+  fl_rectf(x, y, w, h);
+  fl_color(pressed ? DARK : LIGHT);
+  fl_xyline(x, y, x + w - 2);
+  fl_yxline(x, y, y + h - 2);
+  fl_color(pressed ? LIGHT : DARK);
+  fl_xyline(x, y + h - 1, x + w - 1);
+  fl_yxline(x + w - 1, y, y + h - 1);
+}
+
+static bool has_close(int b) { return b == 1 || b == 3; }
+static bool has_zoom(int b) { return b == 1; }
+static bool has_depth(int b) { return b >= 1; }
+
+int classic_gadget_hit(int w, int ex, int ey, int boxes) {
+  if (!boxes || ey < 0 || ey >= TITLE_H || ex < 0 || ex >= w) return 0;
+  const int G = CLASSIC_GADGET;
+  if (has_close(boxes) && ex < G) return 1;
+  if (has_depth(boxes) && ex >= w - G) return 4;
+  if (has_zoom(boxes) && ex >= w - 2 * G && ex < w - G) return 2;
+  return 0;
+}
+
+void draw_classic_titlebar(int x, int y, int w, const char *title, bool active, int pressed, int boxes) {
+  const int G = CLASSIC_GADGET, H = TITLE_H;
+  Fl_Color face = active ? SEL : GRAY;
+  Fl_Color ink = DARK;                       // the gadget pictures: dark lines,
+  Fl_Color fill = active ? LIGHT : CONTENT;  // light sheets - readable on any bar color
+  classic_cell(x, y, w, H, false, face);
+  int left = x + 6, right = x + w - 6;
+  if (has_close(boxes)) {
+    bool p = pressed == 1;
+    classic_cell(x, y, G, H, p, face);
+    int cx = x + (G - 9) / 2 + p, cy = y + (H - 9) / 2 + p;   // a square with a solid core
+    fl_color(fill); fl_rectf(cx + 1, cy + 1, 7, 7);
+    fl_color(ink);  fl_rect(cx, cy, 9, 9);
+    fl_rectf(cx + 3, cy + 3, 3, 3);
+    left = x + G + 6;
+  }
+  if (has_depth(boxes)) {
+    bool p = pressed == 4;
+    int gx = x + w - G;
+    classic_cell(gx, y, G, H, p, face);
+    int cx = gx + (G - 14) / 2 + p, cy = y + (H - 11) / 2 + p;   // two sheets, one behind the other
+    fl_color(ink);  fl_rectf(cx, cy, 9, 7);
+    fl_color(fill); fl_rectf(cx + 5, cy + 4, 9, 7);
+    fl_color(ink);  fl_rect(cx + 5, cy + 4, 9, 7);
+    right = gx - 6;
+  }
+  if (has_zoom(boxes)) {
+    bool p = pressed == 2;
+    int gx = x + w - 2 * G;
+    classic_cell(gx, y, G, H, p, face);
+    int cx = gx + (G - 12) / 2 + p, cy = y + (H - 10) / 2 + p;   // a big frame with a small one in its corner
+    fl_color(fill); fl_rectf(cx + 1, cy + 1, 10, 8);
+    fl_color(ink);  fl_rect(cx, cy, 12, 10);
+    fl_rectf(cx + 2, cy + 2, 5, 4);
+    right = gx - 6;
+  }
+  fl_font(FONT_SYSTEM, SIZE_SYSTEM);
+  std::string t = ellipsize(title ? title : "", right - left);
+  fl_color(active ? SEL_TEXT : TEXT);
+  fl_push_clip(left, y, std::max(0, right - left), H);
+  fl_draw(t.c_str(), left, y + H / 2 + fl_height() / 2 - fl_descent());
+  fl_pop_clip();
+}
+
+void draw_classic_frame(int x, int y, int w, int h, bool active, bool shaded, bool size_gadget) {
+  Fl_Color face = active ? SEL : GRAY;
+  fl_color(face);
+  fl_rectf(x, y, w, h);
+  fl_color(LIGHT);
+  fl_xyline(x + 1, y + 1, x + w - 2);
+  fl_yxline(x + 1, y + 1, y + h - 2);
+  fl_color(SHADOW);
+  fl_xyline(x + 1, y + h - 2, x + w - 2);
+  fl_yxline(x + w - 2, y + 1, y + h - 2);
+  fl_color(DARK);
+  fl_rect(x, y, w, h);
+  if (!size_gadget || shaded) return;
+  // the size gadget: an L of the frame in the bottom right corner, gray, with a little
+  // arrow pointing out of the corner
+  const int S = CLASSIC_SIZE, F = FRAME;
+  int rx = x + w - F, by = y + h - F;
+  fl_color(GRAY);
+  fl_rectf(x + w - S, by, S, F);
+  fl_rectf(rx, y + h - S, F, S);
+  fl_color(LIGHT);
+  fl_xyline(x + w - S, by, rx);
+  fl_yxline(rx, y + h - S, by);
+  fl_color(DARK);
+  fl_xyline(x + w - S - 1, by, x + w - S - 1);
+  fl_yxline(x + w - S - 1, by, y + h - 1);
+  fl_xyline(rx, y + h - S - 1, x + w - 1);
+  fl_rect(x, y, w, h);
+  fl_color(TEXT);
+  for (int i = 0; i < 3; i++) fl_point(x + w - 3 - i, y + h - 3);
+  for (int i = 0; i < 3; i++) fl_point(x + w - 3, y + h - 3 - i);
+}
+
+// ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
 std::string ellipsize(const std::string &s, int max_w) {
