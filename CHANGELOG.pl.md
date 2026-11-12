@@ -1,6 +1,11 @@
 # Lista zmian
 Wszystkie ważniejsze zmiany w Nirvana Desktop, od najnowszych. English: [CHANGELOG.md](CHANGELOG.md).
 
+## 0.0.57 – 2026-11-12
+
+- Logo w pasku menu (menu „Nirvana”) też jest przezroczyste – wcześniej było rysowane na szarym kwadracie, widocznym na innych kolorach paska i przy otwartym menu.
+- Rambler zaawansowany: **logo na prawym końcu paska przycisków**, we własnym polu (chowa się, gdy okno jest na nie za wąskie).
+
 ## 0.0.56 – 2026-11-12
 
 - Menu kontekstowe Ramblera pokazywało **dwa razy Otwórz** (własne i pierwszą akcję typu pliku o tej samej nazwie) – teraz raz.

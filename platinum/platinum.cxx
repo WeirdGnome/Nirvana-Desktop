@@ -976,9 +976,11 @@ void guru_alert(const std::string &m) {
 // About window, the login screen as it is). Built into the program as PNG files
 // (platinum/logo_data.h, made by tools/logo/make_logo.py); other sizes are scaled from the
 // nearest larger one (smoothly) and kept.
+static std::map<int, Fl_RGB_Image *> g_logo_cache;
+
 void draw_logo(int x, int y, int s) {
   if (s <= 0) return;
-  static std::map<int, Fl_RGB_Image *> cache;
+  auto &cache = g_logo_cache;
   auto it = cache.find(s);
   if (it == cache.end()) {
     const logo_data::Png *best = nullptr;
@@ -1011,6 +1013,19 @@ void draw_logo(int x, int y, int s) {
     fl_arc(x + s / 6, y + s / 6, s * 2 / 3, s * 2 / 3, 0, 330);
     fl_line_style(0);
   }
+}
+
+// The logo as a picture with transparency (for menu items, buttons): a copy, the caller owns it
+Fl_RGB_Image *logo_image(int s) {
+  if (s <= 0) return nullptr;
+  if (!g_logo_cache.count(s)) {   // made by draw_logo - into a surface nobody sees
+    Fl_Image_Surface surf(s, s);
+    Fl_Surface_Device::push_current(&surf);
+    draw_logo(0, 0, s);
+    Fl_Surface_Device::pop_current();
+  }
+  auto it = g_logo_cache.find(s);
+  return it != g_logo_cache.end() && it->second ? (Fl_RGB_Image *)it->second->copy() : nullptr;
 }
 
 // ---------------------------------------------------------------------------

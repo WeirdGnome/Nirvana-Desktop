@@ -73,7 +73,7 @@ static std::string human_size(uintmax_t b) {
 }
 
 
-static const int TOOL_H = 46, ADDR_H = 26, STATUS_H = 20, HEAD_H = 18, SPLIT_W = 5;
+static const int TOOL_H = 46, ADDR_H = 26, STATUS_H = 20, HEAD_H = 18, SPLIT_W = 5, LOGO_W = 52;
 
 class ExTree;
 struct Explorer {
@@ -88,6 +88,8 @@ struct Explorer {
   Fl_Widget *status = nullptr, *splitter = nullptr;
   Fl_Button *b_tree = nullptr, *b_dual = nullptr, *b_copy = nullptr, *b_move = nullptr, *go = nullptr;
   Fl_Box *addr_label = nullptr;
+  Fl_Widget *logo = nullptr;         // the logo at the right end of the button bar
+  int tools_end = 0;                 // where the buttons end (relative to the bar)
   std::string status_key;
   bool info_on = false;              // the information panel (under the tree)
   Fl_Widget *info = nullptr;
@@ -238,6 +240,24 @@ static void ex_icon(ExIcon k, int x, int y, bool on) {
     break;
   }
 }
+
+// The logo at the right end of the button bar, in its own field - where the explorers of the
+// late 1990s had theirs
+class ExLogo : public Fl_Widget {
+public:
+  Fl_RGB_Image *img = nullptr;
+  ExLogo(int X, int Y, int W, int H) : Fl_Widget(X, Y, W, H) {}
+  ~ExLogo() override { delete img; }
+  void draw() override {
+    fl_color(GRAY);
+    fl_rectf(x(), y(), w(), h());
+    fl_color(SHADOW); fl_yxline(x() + 1, y() + 3, y() + h() - 4);
+    fl_color(LIGHT); fl_yxline(x() + 2, y() + 3, y() + h() - 4);
+    int s = std::min(w() - 10, h() - 4);
+    if (!img || img->w() != s) { delete img; img = logo_image(s); }
+    if (img) img->draw(x() + 6 + (w() - 6 - s) / 2, y() + (h() - s) / 2);
+  }
+};
 
 class ExButton : public Fl_Button {
 public:
@@ -697,6 +717,8 @@ void Desktop::build_explorer(NWin *win, int ox, int oy, int W, int H, const std:
   sep();
   button(ExIcon::Search, _("Search"), 50, [this](NWin *) { open_search(); });
   x->b_info = button(ExIcon::Info, _("Information"), 70, [this](NWin *) { ex_toggle_info(); });
+  x->tools_end = bx - ox;
+  x->logo = new ExLogo(ox + W - LOGO_W, oy + NWin::MB_H, LOGO_W, TOOL_H);
   x->toolbar->end();
   x->toolbar->resizable(nullptr);
 
@@ -756,6 +778,10 @@ void Desktop::ex_layout(NWin *w) {
   int W = w->w() - w->extra_w(), H = w->h() - w->extra_h();
   if (w->menubar) w->menubar->resize(ox, oy, W, NWin::MB_H);
   x->toolbar->resize(ox, oy + NWin::MB_H, W, TOOL_H);
+  if (x->logo) {   // at the right end - hidden when the window is too narrow for it
+    x->logo->resize(ox + W - LOGO_W, oy + NWin::MB_H, LOGO_W, TOOL_H);
+    if (W - LOGO_W >= x->tools_end + 4) x->logo->show(); else x->logo->hide();
+  }
   x->addr->resize(ox, oy + NWin::MB_H + TOOL_H, W, ADDR_H);
   x->addr_label->resize(ox + 4, oy + NWin::MB_H + TOOL_H + 3, 52, ADDR_H - 6);
   int fy = oy + NWin::MB_H + TOOL_H + 3;

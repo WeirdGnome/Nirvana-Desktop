@@ -40,7 +40,7 @@ Co się zmieniło w każdej wersji: [CHANGELOG.pl.md](CHANGELOG.pl.md).
 
 Rozpakuj źródła i uruchom instalator:
 
-    tar xzf nirvana-desktop-0.0.56.tar.gz && cd nirvana-desktop
+    tar xzf nirvana-desktop-0.0.57.tar.gz && cd nirvana-desktop
     sudo ./install.sh                 # albo: sudo ./install.sh --login-screen
 
 Instalator:
@@ -304,7 +304,7 @@ okno biurka nie przyjmuje fokusu, żeby klik w pasek menu nie zmieniał aktywnej
 eksploratorów z końca lat 90. ze sposobem pracy dwupanelowych menedżerów plików z pulpitów
 16-bitowych:
 
-- **Pasek dużych płaskich przycisków z podpisami** (unoszą się pod kursorem): Wstecz, Dalej,
+- **Pasek dużych płaskich przycisków z podpisami** (unoszą się pod kursorem; na prawym końcu logo): Wstecz, Dalej,
   W górę · Foldery (drzewo wł./wył.), Dwa panele, Zamień · Kopiuj do, Przenieś do, Usuń · Widoki
   (lista/ikony), Serwer. Pod nim pole **Adres** z **Przejdź** – folder domowy jest pokazany jako
   dysk, którym jest: `Nirvana HD/Muzyka` (wpisanie `~/Muzyka` też działa, tak jak ścieżki

@@ -1,6 +1,11 @@
 # Changelog
 All notable changes to Nirvana Desktop, newest first. Polish: [CHANGELOG.pl.md](CHANGELOG.pl.md).
 
+## 0.0.57 – 2026-11-12
+
+- The logo in the menu bar (the "Nirvana" menu) is transparent too – before it was drawn on a gray square, seen on other bar colors and on the open menu.
+- Rambler Advanced: **the logo at the right end of the button bar**, in its own field (hidden when the window is too narrow for it).
+
 ## 0.0.56 – 2026-11-12
 
 - Rambler's context menu showed **Open twice** (its own and the file type's first action of the same name) – now once.

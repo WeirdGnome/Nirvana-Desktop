@@ -41,7 +41,7 @@ What changed in each version: [CHANGELOG.md](CHANGELOG.md).
 
 Unpack the sources and run the installer:
 
-    tar xzf nirvana-desktop-0.0.56.tar.gz && cd nirvana-desktop
+    tar xzf nirvana-desktop-0.0.57.tar.gz && cd nirvana-desktop
     sudo ./install.sh                 # or: sudo ./install.sh --login-screen
 
 The installer:
@@ -305,7 +305,7 @@ Simple** (one list, every folder remembers its window) and **Rambler Advanced**,
 style of the classic explorers of the late 1990s with the working style of the two-pane file
 managers of the 16-bit desktops:
 
-- **A bar of big flat buttons with labels** (they rise under the pointer): Back, Forward, Up ·
+- **A bar of big flat buttons with labels** (they rise under the pointer; the logo at its right end): Back, Forward, Up ·
   Folders (the tree on/off), Two Panes, Swap · Copy To, Move To, Delete · Views (list/icons),
   Server. Below it the **Address** field with **Go** – the home folder is shown as the disk it is,
   `Nirvana HD/Muzyka` (typing `~/Muzyka` works too, and so do paths inside archives).

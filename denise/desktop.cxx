@@ -417,6 +417,8 @@ void Desktop::set_logo() {
 }
 
 static Fl_RGB_Image *make_logo_image() {
+  // transparent around: the menu bar's own color (any scheme, also when the menu is open) shows
+  if (Fl_RGB_Image *img = logo_image(16)) return img;
   Fl_Image_Surface surf(18, 18);
   Fl_Surface_Device::push_current(&surf);
   fl_color(GRAY);
