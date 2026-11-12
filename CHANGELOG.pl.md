@@ -1,6 +1,10 @@
 # Lista zmian
 Wszystkie ważniejsze zmiany w Nirvana Desktop, od najnowszych. English: [CHANGELOG.md](CHANGELOG.md).
 
+## 0.0.55 – 2026-11-12
+
+- Logo enso jest **przezroczyste** dookoła: tylko koło pędzla w pasku menu, w O systemie, na ekranie logowania i blokady oraz w wygaszaczach (bez granatowego kwadratu; granat wycięty z miękkimi krawędziami, bez niebieskiej obwódki).
+
 ## 0.0.54 – 2026-11-12
 
 - **Wskaźnik zmienia się od razu wszędzie.** Wcześniej otwarte okna zachowywały stary wskaźnik, dopóki się ich nie zamknęło i nie otworzyło ponownie (FLTK, GTK i Qt trzymają utworzone wskaźniki). Teraz menedżer okien podmienia każdy już utworzony wskaźnik we wszystkich programach (XFixes), ogłasza wskaźnik programom GTK (XSETTINGS – tylko gdy nie działa inny menedżer ustawień), a każdy program Nirvany – także sam panel Wygląd – idzie za zmianą.

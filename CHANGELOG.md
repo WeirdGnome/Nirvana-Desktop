@@ -1,6 +1,10 @@
 # Changelog
 All notable changes to Nirvana Desktop, newest first. Polish: [CHANGELOG.pl.md](CHANGELOG.pl.md).
 
+## 0.0.55 – 2026-11-12
+
+- The enso logo is **transparent** around: only the brush circle in the menu bar, About This Computer, the login and lock screens and the screen savers (the night-blue square is gone; the blue is taken out with soft edges and no blue fringe).
+
 ## 0.0.54 – 2026-11-12
 
 - **The pointer changes at once everywhere.** Before, the windows already open kept the old pointer until they were closed and opened again (FLTK, GTK and Qt keep the pointers they made). Now the window manager gives every pointer already made, in every program, its new picture (XFixes), publishes the pointer for GTK programs (XSETTINGS – only when no other settings manager runs), and every Nirvana program – the Appearance panel itself too – follows the change.

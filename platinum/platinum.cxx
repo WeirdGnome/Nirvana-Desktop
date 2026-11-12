@@ -972,7 +972,8 @@ void guru_alert(const std::string &m) {
 }
 
 // The Nirvana Desktop logo: an enso - one stroke of a brush in a circle, red with white
-// checks fading into red and white dots, on night blue. Built into the program as PNG files
+// checks fading into red and white dots; transparent around (it sits on the menu bar, the
+// About window, the login screen as it is). Built into the program as PNG files
 // (platinum/logo_data.h, made by tools/logo/make_logo.py); other sizes are scaled from the
 // nearest larger one (smoothly) and kept.
 void draw_logo(int x, int y, int s) {
@@ -1004,9 +1005,7 @@ void draw_logo(int x, int y, int s) {
   }
   if (it->second) {
     it->second->draw(x, y);
-  } else {   // no PNG support: a red ring on blue
-    fl_color(fl_rgb_color(0x00, 0x2A, 0x8C));
-    fl_rectf(x, y, s, s);
+  } else {   // no PNG support: a red ring
     fl_color(fl_rgb_color(0xE8, 0x14, 0x22));
     fl_line_style(FL_SOLID, std::max(2, s / 8));
     fl_arc(x + s / 6, y + s / 6, s * 2 / 3, s * 2 / 3, 0, 330);

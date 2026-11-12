@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Nirvana Desktop - the logo (an enso: a red and white brush circle on night blue) into
+"""Nirvana Desktop - the logo (an enso: a red and white brush circle, transparent around) into
 platinum/logo_data.h: PNG files of several sizes, built into every Nirvana program
 (the menu bar, About, the login and lock screens, the screen savers).
 
@@ -17,13 +17,47 @@ SRC = os.path.join(HERE, "enso-512.png")
 OUT = os.path.join(HERE, "..", "..", "platinum", "logo_data.h")
 SIZES = [16, 20, 24, 32, 48, 64, 96, 128, 256]
 
-src = Image.open(SRC).convert("RGB")
+BG = (0, 42, 140)   # the night blue around the circle: made transparent
+
+
+def keyed(img):
+    """The blue background out: transparent, a soft edge, and no blue fringe left on the
+    brush (the color without its share of blue)."""
+    img = img.convert("RGB")
+    out = Image.new("RGBA", img.size)
+    src_px, out_px = img.load(), out.load()
+    for y in range(img.height):
+        for x in range(img.width):
+            r, g, b = src_px[x, y]
+            d = abs(r - BG[0]) + abs(g - BG[1]) + abs(b - BG[2])
+            a = min(1.0, max(0.0, (d - 40) / 110.0))
+            if a <= 0:
+                out_px[x, y] = (0, 0, 0, 0)
+                continue
+            # un-mix the background: c = a*fg + (1-a)*bg
+            fg = [min(255, max(0, round((c - (1 - a) * k) / a))) for c, k in zip((r, g, b), BG)]
+            out_px[x, y] = (fg[0], fg[1], fg[2], round(a * 255))
+    return out
+
+
+def resized(img, s):
+    """Smaller with the colors weighed by their transparency (no dark halo)."""
+    if s == img.width:
+        return img
+    pre = img.convert("RGBa").resize((s, s), Image.LANCZOS)
+    return pre.convert("RGBA")
+
+
+src = keyed(Image.open(SRC))
 parts = []
 for s in SIZES:
-    img = src if s == src.width else src.resize((s, s), Image.LANCZOS)
+    img = resized(src, s)
     if s <= 48:
         boost = 1.6 if s <= 24 else 1.3
-        img = ImageEnhance.Contrast(ImageEnhance.Color(img).enhance(boost)).enhance(1.15)
+        a = img.getchannel("A")
+        rgb = ImageEnhance.Contrast(ImageEnhance.Color(img.convert("RGB")).enhance(boost)).enhance(1.15)
+        img = rgb.convert("RGBA")
+        img.putalpha(a)
     buf = io.BytesIO()
     img.save(buf, "PNG", optimize=True)
     data = buf.getvalue()
