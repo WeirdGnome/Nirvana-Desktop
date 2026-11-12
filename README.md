@@ -41,7 +41,7 @@ What changed in each version: [CHANGELOG.md](CHANGELOG.md).
 
 Unpack the sources and run the installer:
 
-    tar xzf nirvana-desktop-0.0.47.tar.gz && cd nirvana-desktop
+    tar xzf nirvana-desktop-0.0.48.tar.gz && cd nirvana-desktop
     sudo ./install.sh                 # or: sudo ./install.sh --login-screen
 
 The installer:
@@ -297,6 +297,41 @@ never active yet shows its initial.
 It works on the EWMH standard (`_NET_CLIENT_LIST`, `_NET_ACTIVE_WINDOW`, `WM_CHANGE_STATE`,
 `_NET_CLOSE_WINDOW`), so also under GNOME, KDE or Openbox. Under another window manager the
 desktop window does not take focus, so clicking the menu bar does not change the active application.
+
+## Rambler as an explorer (two panes)
+
+**Preferences > Desktop > Folder Windows** switches the folder windows between the usual
+Rambler (one list, every folder remembers its window) and the **explorer**, a window in the
+style of the classic explorers of the late 1990s with the working style of the two-pane file
+managers of the 16-bit desktops:
+
+- **A bar of big flat buttons with labels** (they rise under the pointer): Back, Forward, Up ·
+  Folders (the tree on/off), Two Panes, Swap · Copy To, Move To, Delete · Views (list/icons),
+  Server. Below it the **Address** field with **Go** (`~` and paths inside archives work).
+- **The folder tree** on the left (dotted lines, loaded as it opens): Nirvana HD, the mounted
+  disks, the connected servers, the Trash; it follows the source pane, a click opens the folder
+  there. The divider can be dragged.
+- **Two panes – SOURCE and DESTINATION:** the active pane is the source (a blue label), every
+  command of Rambler works on it; the other one is the destination. **F5** copies, **F6** moves
+  the selection to the destination, **F7** makes a folder, **F8** deletes, **Tab** swaps the
+  source; dragging between the panes works too. The status bar shows the items, the selection with
+  its size, and where Copy/Move goes.
+- **File types** (Special > File Types…): name, patterns (`*.zip *.tar.gz`…) and actions – the
+  first one is the double click, all of them are in the context menu. Placeholders: `{f}` the file,
+  `{F}` all selected, `{s}` its folder, `{d}` the other pane, `{n}` the name without ending;
+  `@browse` (open like a folder), `@wallpaper`, `@shell command` (in Nirvana Shell). Built in:
+  archives, shell scripts, Python programs, text, pictures, Debian packages. Saved in
+  `~/.config/nirvana/filetypes.conf`.
+- **Archives like folders:** a double click on a zip/tar/7z/rar/iso… opens it as a folder (unpacked
+  with `bsdtar` into `~/.cache/nirvana/archives`; the address shows `~/x.zip/…`, the status bar
+  says it is a copy). *Extract Here*, *Extract to the Other Pane*, *List Contents*;
+  **Icons > Pack into an Archive…** makes a zip/tar.gz/tar.xz/7z from the selection.
+- **Servers:** **Window > Connect to a Server…** (or the *Server* button): SFTP through `sshfs`
+  (password or SSH key), FTP through `gio`/gvfs; the server's folders open like folders, appear
+  in the tree and work with both panes (copy, move, extract straight onto the server).
+  *Disconnect All* in the same window.
+- Needs `libarchive-tools` (bsdtar) and `sshfs` – recommended by the package; FTP needs
+  `gvfs-backends` and `gvfs-fuse`.
 
 ## Rambler: working with files
 

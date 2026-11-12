@@ -16,6 +16,8 @@
 #include "i18n.h"
 #include "applets.h"
 
+std::string ex_other_path(NWin *w);   // explorer.cxx: the destination pane
+
 #include <FL/Fl.H>
 #include <FL/Fl_Box.H>
 #include <FL/Fl_Button.H>
@@ -331,7 +333,14 @@ void Desktop::folder_context_menu(NWin *w, int X, int Y) {
   DeskMenu dm;
   if (!sel.empty()) {
     dm.add(_("Open"), FL_COMMAND + 'o', [this] { open_selected(); });
+    // the file type's actions (Special > File Types…), the first one is the double click
+    for (auto &[label, f] : filetype_menu(sel, w)) dm.add(label, 0, f);
     dm.divider();
+    if (w->ex && ex_other_path(w).size()) {   // the explorer with two panes
+      dm.add(_("Copy to the Other Pane"), FL_F + 5, [this] { ex_copy_to_other(); });
+      dm.add(_("Move to the Other Pane"), FL_F + 6, [this] { ex_move_to_other(); });
+      dm.divider();
+    }
     if (in_dock) dm.add(_("Unpin from Dock"), FL_COMMAND + 'k', [this] { dock_remove(); });
     else dm.add(_("Put on Dock"), FL_COMMAND + 'l', [this] { dock_add(); });
     dm.divider();
@@ -339,6 +348,7 @@ void Desktop::folder_context_menu(NWin *w, int X, int Y) {
     dm.add(_("Rename…"), FL_F + 2, [this] { rename_selected(); }, sel.size() == 1 ? 0 : FL_MENU_INACTIVE);
     dm.add(_("Duplicate"), FL_COMMAND + 'd', [this] { duplicate(); });
     dm.add(_("Copy"), FL_COMMAND + 'c', [this] { copy_selected(); });
+    dm.add(_("Pack into an Archive…"), 0, [this] { pack_selected(); });
     dm.divider();
     dm.add(_("Delete"), FL_COMMAND + FL_BackSpace, [this] { move_to_trash(); });
   } else {

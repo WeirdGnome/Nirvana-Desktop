@@ -141,7 +141,9 @@ add_executable(nirvana-denise
   denise/bluetooth.cxx
   denise/clipboard.cxx
   denise/notify.cxx
-  denise/shield_applet.cxx)
+  denise/shield_applet.cxx
+  denise/explorer.cxx
+  denise/filetypes.cxx)
 target_link_libraries(nirvana-denise PRIVATE nirvana-platinum nirvana-net nirvana-bt nirvana-shield-client nirvana-audio nirvana-power ${NIRVANA_PRINT_LIB} fltk::images PkgConfig::DBUS)
 
 # --- insight: X11 window manager ---------------------------------------------
@@ -275,10 +277,10 @@ set(CPACK_DEBIAN_PACKAGE_SHLIBDEPS ON)
 set(CPACK_DEBIAN_PACKAGE_DEPENDS "dbus-bin | dbus")
 set(CPACK_DEBIAN_PACKAGE_RECOMMENDS
   "xserver-xorg, xinit, fonts-dejavu-core, libpam-elogind | elogind, polkitd, pkexec, \
-udisks2, network-manager, bluez, rfkill, nftables, pulseaudio-utils, alsa-utils, squashfs-tools, bubblewrap, xdg-utils, \
+udisks2, network-manager, bluez, rfkill, nftables, libarchive-tools, sshfs, pulseaudio-utils, alsa-utils, squashfs-tools, bubblewrap, xdg-utils, \
 xdg-desktop-portal, xdg-desktop-portal-gtk, libgl1-mesa-dri, \
 libxcb-cursor0, libxcb-icccm4, libxcb-keysyms1, libxcb-image0, libxcb-render-util0, libxkbcommon-x11-0, \
 libxcb-xkb1, libxcb-shape0, libxcb-randr0, libxcb-xinerama0")
 set(CPACK_DEBIAN_PACKAGE_SUGGESTS
-  "lightdm, network-manager-openvpn, network-manager-vpnc, wireguard-tools, power-profiles-daemon, pipewire-pulse, cups")
+  "lightdm, network-manager-openvpn, network-manager-vpnc, wireguard-tools, power-profiles-daemon, pipewire-pulse, cups, gvfs-backends, gvfs-fuse")
 include(CPack)

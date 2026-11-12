@@ -454,6 +454,7 @@ static const std::vector<MenuDef> &window_menu_defs() {
     {P_("Window/Back"), FL_ALT + FL_Left, &Desktop::go_back, 0},
     {P_("Window/Forward"), FL_ALT + FL_Right, &Desktop::go_forward, 0},
     {P_("Window/Open Parent"), FL_COMMAND + FL_Up, &Desktop::open_parent, FL_MENU_DIVIDER},
+    {P_("Window/Connect to a Server…"), 0, &Desktop::connect_server, 0},
     {P_("Window/Close"), FL_COMMAND + 'w', &Desktop::close_active, 0},
     {P_("Window/Update"), FL_COMMAND + 'r', &Desktop::update_window, FL_MENU_DIVIDER},
     {P_("Window/Select Contents"), FL_COMMAND + 'a', &Desktop::select_all, 0},
@@ -473,6 +474,7 @@ static const std::vector<MenuDef> &window_menu_defs() {
     {P_("Icons/Copy"), FL_COMMAND + 'c', &Desktop::copy_selected, 0},
     {P_("Icons/Paste"), FL_COMMAND + 'v', &Desktop::paste, 0},
     {P_("Icons/Duplicate"), FL_COMMAND + 'd', &Desktop::duplicate, 0},
+    {P_("Icons/Pack into an Archive…"), 0, &Desktop::pack_selected, 0},
     {P_("Icons/Rename…"), FL_F + 2, &Desktop::rename_selected, 0},
     {P_("Icons/Delete"), FL_COMMAND + FL_BackSpace, &Desktop::move_to_trash, FL_MENU_DIVIDER},
     {P_("Icons/Information…"), FL_COMMAND + 'i', &Desktop::get_info, 0},
@@ -534,7 +536,8 @@ Desktop::Desktop(int W, int H, const std::string &home)
     {P_("System/Shut Down…"), 0, &Desktop::system_shutdown, 0},
     // --- Special ---
     {P_("Special/Format Disk…"), 0, &Desktop::format_disk, 0},
-    {P_("Special/Empty Trash…"), 0, &Desktop::empty_trash, FL_MENU_DIVIDER},
+    {P_("Special/Empty Trash…"), 0, &Desktop::empty_trash, 0},
+    {P_("Special/File Types…"), 0, &Desktop::edit_filetypes, FL_MENU_DIVIDER},
     {P_("Special/Force Quit a Window…"), FL_COMMAND + FL_ALT + 'k', &Desktop::force_quit, 0},
   };
   for (auto &it : items) {
@@ -911,6 +914,8 @@ bool Desktop::allowed(const std::string &path) const {
   std::string c = fs::weakly_canonical(path, ec).string();
   std::string h = fs::weakly_canonical(home_, ec).string();
   if (c == h || c.rfind(h + "/", 0) == 0) return true;
+  std::string gvfs = "/run/user/" + std::to_string(getuid()) + "/gvfs";   // servers (FTP/SFTP)
+  if (c == gvfs || c.rfind(gvfs + "/", 0) == 0) return true;
   return volume_at_path(c) >= 0;   // mounted disks and discs are "ours" too
 }
 
@@ -923,6 +928,8 @@ int Desktop::volume_at_path(const std::string &path) const {
 }
 
 std::string Desktop::title_for(const std::string &path) const {
+  std::string arch, inner;
+  if (is_archive_cache(path, &arch, &inner)) return fs::path(arch).filename().string() + inner;   // inside an archive
   if (path == home_) return "Nirvana HD";
   if (path == "/") return "System";
   if (path == trash_dir()) return _("Trash");
@@ -1238,7 +1245,11 @@ static void remember_later(void *d) {
   w->desk->remember(w, true);
 }
 
-NWin::~NWin() { Fl::remove_timeout(remember_later, this); }
+void destroy_explorer(Explorer *x);
+NWin::~NWin() {
+  Fl::remove_timeout(remember_later, this);
+  if (ex) destroy_explorer(ex);
+}
 
 int NWin::handle(int e) {
   if (csd && csd_handle(e)) return 1;
@@ -1254,6 +1265,7 @@ int NWin::handle(int e) {
       return desk->shortcut();
     }
   }
+  if (ex && e == FL_KEYBOARD && desk->ex_key(this)) return 1;   // Tab, F5-F8 in the explorer
   int r = Fl_Double_Window::handle(e);
   // The menu bar lives in the desktop window while a folder window has the focus - pass the shortcut on.
   if (!r && e == FL_SHORTCUT && !dialog) r = desk->shortcut();
@@ -1264,6 +1276,7 @@ int NWin::handle(int e) {
 // because the window manager sends many changes while dragging.
 void NWin::resize(int X, int Y, int W, int H) {
   Fl_Double_Window::resize(X, Y, W, H);
+  if (ex) desk->ex_layout(this);
   if (pane && shown()) {
     Fl::remove_timeout(remember_later, this);
     Fl::add_timeout(0.4, remember_later, this);
@@ -1323,6 +1336,11 @@ void Desktop::remember(NWin *w, bool open) {
   s.list = w->pane->view()->mode() == FolderView::List;
   s.icons = w->pane->view()->icon_size();
   spatial_.set(w->path, s);
+  if (w->ex) {   // the explorer window keeps one size of its own, whatever folder it shows
+    WinState e = s;
+    e.open = false;
+    spatial_.set("@explorer", e);
+  }
 }
 
 bool Desktop::source_rect(const std::string &path, Rect &out) {
@@ -1391,13 +1409,13 @@ void Desktop::open_folder(const std::string &path, bool animate, bool new_window
   }
   // The position refers to the window content (without the frame) - that is how FLTK stores it.
   WinState s;
-  bool known_pos = spatial_.get(path, s);
+  bool known_pos = spatial_.get(explorer_mode() ? std::string("@explorer") : path, s);
   if (!known_pos) {
     int n = 0;
     for (auto *w : wins_) if (w->pane) n++;
     s.x = 40 + 26 * (n % 8);
     s.y = MENUBAR_H + TITLE_H + 24 + 26 * (n % 8);
-    s.w = 440; s.h = 270;
+    s.w = explorer_mode() ? 820 : 440; s.h = explorer_mode() ? 520 : 270;
   }
   // the window fits into the folder area: Nirvana HD, the disks, the Trash and the dock stay visible
   Rect area = folder_area();
@@ -1422,6 +1440,17 @@ void Desktop::open_folder(const std::string &path, bool animate, bool new_window
   int ew = csd_mode ? 2 * FRAME : 0, eh = csd_mode ? TITLE_H + FRAME : 0;
   auto *win = new NWin(this, ax - ox, ay - oy, s.w + ew, s.h + eh, title_for(path).c_str(), false);
   win->path = path;
+  if (explorer_mode()) {
+    build_explorer(win, ox, oy, s.w, s.h, path);
+    win->size_range(560 + ew, csd_mode ? TITLE_H : 320);
+    wins_.push_back(win);
+    update_nav(win);
+    win->show();
+    win->pane->view()->take_focus();
+    if (known_pos && s.shaded) win->set_shaded(true);
+    remember(win, true);
+    return;
+  }
   const int bars = NWin::MB_H + NWin::NAV_H;
   // the content as the first child: it gets the keyboard focus when the window opens
   win->pane = new FolderPane(ox, oy + bars, s.w, s.h - bars, path, show_hidden_);
@@ -1431,20 +1460,7 @@ void Desktop::open_folder(const std::string &path, bool animate, bool new_window
   // with our own frame a shaded window is only as high as the title bar
   win->size_range(MIN_W + ew, csd_mode ? TITLE_H : MIN_H);
   win->end();
-  win->pane->view()->on_open = [this, win](const Entry &e) { open_entry(e, win); };
-  win->pane->view()->on_context = [this, win] {
-    int X = Fl::event_x(), Y = Fl::event_y();
-    later([this, win, X, Y] { if (known(win)) folder_context_menu(win, X, Y); });
-  };
-  win->pane->view()->is_open = [this, win](const std::string &p) { NWin *o = find(p); return o && o != win; };
-  win->pane->view()->on_drag_start = [this, win](const std::vector<Entry> &v) { drag_start(win, v); };
-  win->pane->view()->on_drag_move = [this](int xr, int yr) { drag_move(xr, yr); };
-  win->pane->view()->on_drag_end = [this](int xr, int yr, bool copy) { drag_end(xr, yr, copy); };
-  win->pane->view()->on_drop_uris = [this, win](const std::string &uris, const std::string &dest) {
-    drop_uris(uris, dest.empty() ? win->path : dest);
-  };
-  win->pane->on_rename_commit = [this](const std::string &o, const std::string &n) { return rename_path(o, n); };
-  win->pane->on_error = [this](const std::string &m) { dialog(GURU_TITLE, m, {{"OK", nullptr}}); };
+  setup_pane(win, win->pane, -1);
   if (known_pos && s.list) win->pane->set_mode(FolderView::List);
   wins_.push_back(win);
   update_nav(win);
@@ -1456,20 +1472,31 @@ void Desktop::open_folder(const std::string &path, bool animate, bool new_window
   remember(win, true);
 }
 
+// The callbacks of a file list. In an explorer (idx >= 0) every use of a pane first makes
+// it the active one (the source), so all the window's commands work on it.
+void Desktop::setup_pane(NWin *win, FolderPane *p, int idx) {
+  auto act = [this, win, idx] { if (idx >= 0 && known(win)) ex_activate(win, idx); };
+  p->view()->on_open = [this, win, act](const Entry &e) { act(); open_entry(e, win); };
+  p->view()->on_context = [this, win, act] {
+    act();
+    int X = Fl::event_x(), Y = Fl::event_y();
+    later([this, win, X, Y] { if (known(win)) folder_context_menu(win, X, Y); });
+  };
+  p->view()->is_open = [this, win](const std::string &q) { NWin *o = find(q); return o && o != win; };
+  p->view()->on_drag_start = [this, win, act](const std::vector<Entry> &v) { act(); drag_start(win, v); };
+  p->view()->on_drag_move = [this](int xr, int yr) { drag_move(xr, yr); };
+  p->view()->on_drag_end = [this](int xr, int yr, bool copy) { drag_end(xr, yr, copy); };
+  p->view()->on_drop_uris = [this, p](const std::string &uris, const std::string &dest) {
+    drop_uris(uris, dest.empty() ? p->path() : dest);
+  };
+  p->on_rename_commit = [this](const std::string &o, const std::string &n) { return rename_path(o, n); };
+  p->on_error = [this](const std::string &m) { dialog(GURU_TITLE, m, {{"OK", nullptr}}); };
+}
+
 // The window's menu bar (Window, Icons) and the navigation bar above the folder content.
 void Desktop::build_folder_bars(NWin *win, int X, int Y, int W) {
   win->begin();
-  auto *mb = new NirvanaMenuBar(X, Y, W, NWin::MB_H);
-  mb->box(MENUBAR_BOX);
-  mb->color(GRAY);
-  mb->textfont(FONT_SYSTEM);
-  mb->textsize(SIZE_SYSTEM);
-  mb->down_box(FL_FLAT_BOX);
-  mb->selection_color(SEL);
-  for (auto &d : window_menu_defs())
-    mb->add(plat::tr_path(d.path).c_str(), d.shortcut, window_menu_cb, (void *)&d, d.flags);
-  mb->before_open = [this, win] { update_menu(win->menubar, win); };
-  win->menubar = mb;
+  make_folder_menubar(win, X, Y, W);
 
   auto *nav = new NavBar(X, Y + NWin::MB_H, W, NWin::NAV_H);
   const int by = Y + NWin::MB_H + 3, bh = NWin::NAV_H - 6, bw = 26;
@@ -1510,6 +1537,21 @@ void Desktop::build_folder_bars(NWin *win, int X, int Y, int W) {
   win->end();
 }
 
+Fl_Menu_Bar *Desktop::make_folder_menubar(NWin *win, int X, int Y, int W) {
+  auto *mb = new NirvanaMenuBar(X, Y, W, NWin::MB_H);
+  mb->box(MENUBAR_BOX);
+  mb->color(GRAY);
+  mb->textfont(FONT_SYSTEM);
+  mb->textsize(SIZE_SYSTEM);
+  mb->down_box(FL_FLAT_BOX);
+  mb->selection_color(SEL);
+  for (auto &d : window_menu_defs())
+    mb->add(plat::tr_path(d.path).c_str(), d.shortcut, window_menu_cb, (void *)&d, d.flags);
+  mb->before_open = [this, win] { update_menu(win->menubar, win); };
+  win->menubar = mb;
+  return mb;
+}
+
 // A path for the location field: the home folder as "~".
 static std::string location_text(const std::string &path, const std::string &home) {
   if (path == home) return "~";
@@ -1519,7 +1561,10 @@ static std::string location_text(const std::string &path, const std::string &hom
 
 void Desktop::update_nav(NWin *w) {
   if (!w || !w->loc) return;
-  w->loc->value(location_text(w->path, home_).c_str());
+  std::string arch, inner;
+  if (is_archive_cache(w->path, &arch, &inner)) w->loc->value((location_text(arch, home_) + inner).c_str());
+  else w->loc->value(location_text(w->path, home_).c_str());
+  if (w->ex) ex_after_nav(w);
   auto set = [](Fl_Widget *b, bool on) { if (on) b->activate(); else b->deactivate(); };
   set(w->back_b, !w->back_hist.empty());
   set(w->fwd_b, !w->fwd_hist.empty());
@@ -1564,7 +1609,8 @@ void Desktop::navigate(NWin *w, const std::string &target, Nav how) {
   WinState s;
   bool known_pos = spatial_.get(path, s);
   w->pane->view()->set_icon_size(known_pos ? s.icons : 32);
-  w->pane->set_mode(known_pos && s.list ? FolderView::List : FolderView::Icons);
+  w->pane->set_mode(known_pos ? (s.list ? FolderView::List : FolderView::Icons)
+                              : (w->ex ? FolderView::List : FolderView::Icons));   // the explorer: a list
   w->pane->go(path);
   // going up: select the folder we came from
   if (fs::path(old).parent_path().string() == path) w->pane->view()->select_path(old);
@@ -1599,6 +1645,8 @@ void Desktop::go_location(NWin *w) {
   if (t.empty()) { update_nav(w); return; }
   if (t == "~") t = home_;
   else if (t.rfind("~/", 0) == 0) t = home_ + t.substr(1);
+  for (auto &[dir, arch] : archive_dirs_)   // "~/x.zip/sub" - inside an archive that is open
+    if (t == arch || t.rfind(arch + "/", 0) == 0) { t = dir + t.substr(arch.size()); break; }
   else if (t[0] != '/') t = w->path + "/" + t;
   std::error_code ec;
   fs::path p = fs::weakly_canonical(fs::path(t), ec);
@@ -1621,6 +1669,7 @@ void Desktop::open_entry(const Entry &e, NWin *from) {
     return;
   }
   if (is_appimage(e.name)) { open_appimage(e.path); return; }
+  if (run_filetype(e, from, 0)) return;   // Tools > File Types: the type's first action
   // a file with the "Program" flag (Information): run it in Nirvana Shell with its arguments
   struct stat st;
   if (stat(e.path.c_str(), &st) == 0 && S_ISREG(st.st_mode) && (st.st_mode & S_IXUSR) && allowed(e.path)) {
@@ -2889,10 +2938,13 @@ Desktop::DropTarget Desktop::target_at(int xr, int yr) {
     if (!w->pane || !w->shown() || !is_under(child, fl_xid(w))) continue;
     t.win = w;
     int lx = xr - w->x(), ly = yr - w->y();
-    Fl_Widget *area = w->pane->view()->parent();   // the visible part of the file list
+    FolderPane *p = w->pane;
+    if (w->ex) if (FolderPane *q = ex_pane_at(w, lx, ly)) p = q;   // the explorer pane under the pointer
+    t.pane = p;
+    Fl_Widget *area = p->view()->parent();   // the visible part of the file list
     bool inside = area && lx >= area->x() && ly >= area->y() &&
                   lx < area->x() + area->w() && ly < area->y() + area->h();
-    t.item = (inside && !w->shaded()) ? w->pane->view()->drop_target_at(lx, ly) : -1;
+    t.item = (inside && !w->shaded()) ? p->view()->drop_target_at(lx, ly) : -1;
     return t;
   }
   if (is_under(child, fl_xid(this))) t.icon = icon_at(xr - x_root(), yr - y_root());
@@ -2901,8 +2953,9 @@ Desktop::DropTarget Desktop::target_at(int xr, int yr) {
 }
 
 void Desktop::clear_drop_highlight() {
-  if (drag_.hl_win && known(drag_.hl_win)) drag_.hl_win->pane->view()->set_drop_target(-2);
+  if (drag_.hl_win && known(drag_.hl_win) && drag_.hl_pane) drag_.hl_pane->view()->set_drop_target(-2);
   drag_.hl_win = nullptr;
+  drag_.hl_pane = nullptr;
   if (icon_drop_ >= 0) { icon_drop_ = -1; redraw(); }
 }
 
@@ -2910,6 +2963,7 @@ void Desktop::drag_start(NWin *src, const std::vector<Entry> &items) {
   if (items.empty()) return;
   drag_.active = true;
   drag_.src = src;
+  drag_.src_pane = src->pane;
   drag_.items = items;
   drag_.ghost = new DragGhost(items[0], (int)items.size());
   drag_.px = src->x_root() + src->pane->view()->press_x();
@@ -2926,8 +2980,8 @@ void Desktop::drag_move(int xr, int yr) {
   clear_drop_highlight();
   if (t.win) {
     // the same folder as the source (without pointing at a subfolder) is not a target
-    bool same = t.win == drag_.src && t.item < 0;
-    if (!same) { t.win->pane->view()->set_drop_target(t.item); drag_.hl_win = t.win; }
+    bool same = t.pane == drag_.src_pane && t.item < 0;
+    if (!same) { t.pane->view()->set_drop_target(t.item); drag_.hl_win = t.win; drag_.hl_pane = t.pane; }
   } else if (t.icon >= 0) {
     icon_drop_ = t.icon;
     redraw();
@@ -2947,7 +3001,8 @@ void Desktop::drag_end(int xr, int yr, bool copy) {
   NWin *src = drag_.src;
 
   std::string dest;
-  if (t.win) dest = t.item >= 0 ? t.win->pane->view()->entry(t.item)->path : t.win->path;
+  bool same_pane = t.pane && t.pane == drag_.src_pane;
+  if (t.win) dest = t.item >= 0 ? t.pane->view()->entry(t.item)->path : t.pane->path();
   else if (t.icon >= 0) {
     dest = icons_[t.icon].path;
     if (int vi = icons_[t.icon].vol; vi >= 0) {
@@ -2968,7 +3023,7 @@ void Desktop::drag_end(int xr, int yr, bool copy) {
   }
 
   // Dropping on the background of the same window in icon view: moving the icons
-  if (t.win == src && t.item < 0 && !copy && known(src) &&
+  if (same_pane && t.item < 0 && !copy && known(src) &&
       src->pane->view()->mode() == FolderView::Icons) {
     FolderView *v = src->pane->view();
     std::vector<std::string> paths;
@@ -2978,7 +3033,7 @@ void Desktop::drag_end(int xr, int yr, bool copy) {
     src->pane->redraw();
     return;
   }
-  if (dest.empty() || (t.win == src && t.item < 0 && !copy)) {
+  if (dest.empty() || (same_pane && t.item < 0 && !copy)) {
     // a missed drop: the icon "flies back" to its place
     Rect back;
     if (known(src) && src->pane->view()->icon_rect(items[0].path, back)) {

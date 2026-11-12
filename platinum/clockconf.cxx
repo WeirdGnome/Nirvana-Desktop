@@ -134,6 +134,7 @@ DesktopSettings read_desktop() {
     else if (line.rfind("dock_room=", 0) == 0) d.dock_room = line.substr(10) != "0";
     else if (line.rfind("classic_windows=", 0) == 0) d.classic = line.substr(16) == "1";
     else if (line.rfind("outline_drag=", 0) == 0) d.outline = line.substr(13) == "1";
+    else if (line.rfind("folder_style=", 0) == 0) d.folder_style = line.substr(13) == "explorer" ? "explorer" : "rambler";
   }
   return d;
 }
@@ -146,7 +147,8 @@ bool write_desktop(const DesktopSettings &d) {
   std::ofstream out(f);
   out << "# Nirvana Desktop - the desktop (Preferences > Desktop)\n"
       << "icon_margin=" << d.icon_margin << "\ndock_room=" << d.dock_room << "\n"
-      << "classic_windows=" << d.classic << "\noutline_drag=" << d.outline << "\n";
+      << "classic_windows=" << d.classic << "\noutline_drag=" << d.outline << "\n"
+      << "folder_style=" << d.folder_style << "\n";
   return (bool)out;
 }
 

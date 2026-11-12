@@ -1,6 +1,14 @@
 # Changelog
 All notable changes to Nirvana Desktop, newest first. Polish: [CHANGELOG.pl.md](CHANGELOG.pl.md).
 
+## 0.0.48 – 2026-11-12
+
+- **Rambler as an explorer** (Preferences > Desktop > Folder Windows): a bar of big flat buttons with labels, the Address field, the folder tree, one or two panes (SOURCE/DESTINATION: F5 copy, F6 move, F7 new folder, F8 delete, Tab swap, dragging between them) and a status bar. The usual Rambler stays the default.
+- **File types** with actions (Special > File Types…): the double click and context menu actions with `{f} {F} {s} {d} {n}` placeholders, `@browse`, `@wallpaper`, `@shell`; built-in types for archives, scripts, text, pictures, packages.
+- **Archives open like folders** (bsdtar), Extract Here / to the Other Pane, Icons > Pack into an Archive….
+- **Servers:** Window > Connect to a Server… – SFTP (sshfs) and FTP (gio/gvfs) shown like folders, in the tree and in both panes.
+- The package recommends `libarchive-tools` and `sshfs`, suggests `gvfs-backends` and `gvfs-fuse`.
+
 ## 0.0.47 – 2026-11-12
 
 - The NirvanaSHIELD applet icon is a monochrome shield in the menu bar text color, like the other applets: filled with a check mark (protecting), filled with a bar (all internet blocked), an outline (protection off), a dotted, dimmed outline (the service is not running).

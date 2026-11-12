@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Nirvana Desktop 0.1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-12 11:23+0000\n"
+"POT-Creation-Date: 2026-11-12 11:45+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -31,7 +31,7 @@ msgstr ""
 msgid "Special"
 msgstr ""
 
-#: alice/appearance.cxx:103 alice/desktop.cxx:47 platinum/filedialog.cxx:409
+#: alice/appearance.cxx:103 alice/desktop.cxx:49 platinum/filedialog.cxx:409
 msgid "Documents"
 msgstr ""
 
@@ -75,7 +75,7 @@ msgstr ""
 msgid "Color Scheme"
 msgstr ""
 
-#: alice/appearance.cxx:256 platinum/platinum.cxx:1350
+#: alice/appearance.cxx:256 platinum/platinum.cxx:1405
 msgid "Preview"
 msgstr ""
 
@@ -184,13 +184,14 @@ msgstr ""
 #: alice/network.cxx:492 alice/network.cxx:743 alice/power.cxx:143
 #: alice/printers.cxx:164 alice/printers.cxx:320 alice/saver.cxx:186
 #: alice/user.cxx:549 alice/user.cxx:707 denise/applets.cxx:446
-#: denise/desktop.cxx:1694 denise/desktop.cxx:1728 denise/desktop.cxx:1829
-#: denise/desktop.cxx:2233 denise/desktop.cxx:2787 denise/desktop.cxx:3223
-#: denise/desktop.cxx:3235 denise/menus.cxx:486 denise/menus.cxx:754
-#: denise/menus.cxx:1065 denise/menus.cxx:1174 denise/menus.cxx:1179
+#: denise/desktop.cxx:1743 denise/desktop.cxx:1777 denise/desktop.cxx:1878
+#: denise/desktop.cxx:2282 denise/desktop.cxx:2836 denise/desktop.cxx:3278
+#: denise/desktop.cxx:3290 denise/explorer.cxx:790 denise/explorer.cxx:959
+#: denise/filetypes.cxx:299 denise/menus.cxx:496 denise/menus.cxx:764
+#: denise/menus.cxx:1075 denise/menus.cxx:1184 denise/menus.cxx:1189
 #: denise/updates.cxx:272 platinum/filedialog.cxx:341
 #: platinum/filedialog.cxx:575 platinum/platinum.cxx:229
-#: platinum/platinum.cxx:1337 polkit/nirvana-polkit-agent.cxx:161
+#: platinum/platinum.cxx:1392 polkit/nirvana-polkit-agent.cxx:161
 #: shell/main.cxx:615
 msgid "Cancel"
 msgstr ""
@@ -201,10 +202,10 @@ msgid "Apply"
 msgstr ""
 
 #: alice/appearance.cxx:418 alice/bluetooth.cxx:255 alice/datetime.cxx:388
-#: alice/desktop.cxx:157 alice/power.cxx:145 alice/printers.cxx:443
+#: alice/desktop.cxx:173 alice/power.cxx:145 alice/printers.cxx:443
 #: alice/saver.cxx:188 alice/shader.cxx:262 alice/shield.cxx:408
 #: alice/user.cxx:709 denise/about.cxx:613 denise/bluetooth.cxx:42
-#: denise/clock.cxx:174 denise/desktop.cxx:1673 platinum/platinum.cxx:228
+#: denise/clock.cxx:174 denise/desktop.cxx:1722 platinum/platinum.cxx:228
 msgid "OK"
 msgstr ""
 
@@ -217,14 +218,15 @@ msgid "Search"
 msgstr ""
 
 #: alice/bluetooth.cxx:71 alice/network.cxx:428 alice/network.cxx:560
-#: denise/desktop.cxx:2340
+#: denise/desktop.cxx:2389
 msgid "Disconnect"
 msgstr ""
 
 #: alice/bluetooth.cxx:71 alice/bluetooth.cxx:229 alice/network.cxx:246
 #: alice/network.cxx:391 alice/network.cxx:428 alice/network.cxx:560
 #: alice/network.cxx:650 alice/network.cxx:701 alice/network.cxx:727
-#: denise/desktop.cxx:2343 denise/desktop.cxx:2417 denise/desktop.cxx:2458
+#: denise/desktop.cxx:2392 denise/desktop.cxx:2466 denise/desktop.cxx:2507
+#: denise/explorer.cxx:962
 msgid "Connect"
 msgstr ""
 
@@ -285,7 +287,7 @@ msgid ""
 "Confirm only when the codes are the same."
 msgstr ""
 
-#: alice/bluetooth.cxx:141 denise/shield_applet.cxx:193
+#: alice/bluetooth.cxx:141 denise/shield_applet.cxx:196
 #: platinum/platinum.cxx:231
 msgid "No"
 msgstr ""
@@ -317,7 +319,7 @@ msgstr ""
 msgid "Deny"
 msgstr ""
 
-#: alice/bluetooth.cxx:156 denise/shield_applet.cxx:193
+#: alice/bluetooth.cxx:156 denise/shield_applet.cxx:196
 msgid "Allow"
 msgstr ""
 
@@ -520,50 +522,50 @@ msgid ""
 "computer are not asked for a password."
 msgstr ""
 
-#: alice/desktop.cxx:48
+#: alice/desktop.cxx:50
 msgid "Notes"
 msgstr ""
 
-#: alice/desktop.cxx:118 alice/preferences.cxx:175 platinum/filedialog.cxx:408
+#: alice/desktop.cxx:121 alice/preferences.cxx:175 platinum/filedialog.cxx:408
 msgid "Desktop"
 msgstr ""
 
-#: alice/desktop.cxx:120
+#: alice/desktop.cxx:123
 msgid "Room for Windows"
 msgstr ""
 
-#: alice/desktop.cxx:123
+#: alice/desktop.cxx:126
 msgid "Keep the desktop icons free"
 msgstr ""
 
-#: alice/desktop.cxx:128
+#: alice/desktop.cxx:131
 msgid ""
 "Zoomed and new windows leave the column of icons at the left edge free and "
 "keep small gaps at the edges. Off: windows use the whole screen below the "
 "menu bar."
 msgstr ""
 
-#: alice/desktop.cxx:130
+#: alice/desktop.cxx:133
 msgid "Keep windows above the dock"
 msgstr ""
 
-#: alice/desktop.cxx:134
+#: alice/desktop.cxx:137
 msgid "Off: zoomed windows reach the bottom edge and may cover the dock."
 msgstr ""
 
-#: alice/desktop.cxx:136
+#: alice/desktop.cxx:139
 msgid "Preview of a zoomed window."
 msgstr ""
 
-#: alice/desktop.cxx:139
+#: alice/desktop.cxx:142
 msgid "Window Behavior"
 msgstr ""
 
-#: alice/desktop.cxx:142
+#: alice/desktop.cxx:145
 msgid "Classic 16-bit windows"
 msgstr ""
 
-#: alice/desktop.cxx:147
+#: alice/desktop.cxx:150
 msgid ""
 "Close gadget at the left, zoom and depth gadgets at the right, size gadget "
 "in the bottom right corner. A click activates a window without bringing it "
@@ -571,16 +573,30 @@ msgid ""
 "any other to the front."
 msgstr ""
 
-#: alice/desktop.cxx:150
+#: alice/desktop.cxx:153
 msgid "Move and resize with an outline"
 msgstr ""
 
-#: alice/desktop.cxx:154
+#: alice/desktop.cxx:157
 msgid "The window jumps to its new place when the mouse button is released."
 msgstr ""
 
-#: alice/desktop.cxx:156
-msgid "The changes apply at once, to all open windows."
+#: alice/desktop.cxx:161
+msgid "Folder Windows"
+msgstr ""
+
+#: alice/desktop.cxx:164
+msgid "Rambler: one list of files, each folder remembers its window"
+msgstr ""
+
+#: alice/desktop.cxx:165
+msgid "Explorer: folder tree, buttons, two panes (source and destination)"
+msgstr ""
+
+#: alice/desktop.cxx:172
+msgid ""
+"The changes apply at once; the folder window style to the windows opened "
+"from now on."
 msgstr ""
 
 #: alice/main.cxx:40
@@ -603,8 +619,8 @@ msgstr ""
 msgid "Other Wi-Fi Network"
 msgstr ""
 
-#: alice/network.cxx:195 denise/desktop.cxx:2439 denise/desktop.cxx:2450
-#: denise/desktop.cxx:2457
+#: alice/network.cxx:195 denise/desktop.cxx:2488 denise/desktop.cxx:2499
+#: denise/desktop.cxx:2506
 msgid "Wi-Fi Network"
 msgstr ""
 
@@ -612,7 +628,7 @@ msgstr ""
 msgid "Connect to a network that does not broadcast its name."
 msgstr ""
 
-#: alice/network.cxx:202 denise/desktop.cxx:2458
+#: alice/network.cxx:202 denise/desktop.cxx:2507
 msgid ""
 "The network “%1” is secured.\n"
 "Enter the password to connect."
@@ -630,8 +646,9 @@ msgstr ""
 msgid "WPA\\/WPA2 Personal|WPA3 Personal|None"
 msgstr ""
 
-#: alice/network.cxx:230 alice/network.cxx:388 dm/nirvana-dm-greeter.cxx:502
-#: lock/nirvana-lock.cxx:150 polkit/nirvana-polkit-agent.cxx:152
+#: alice/network.cxx:230 alice/network.cxx:388 denise/explorer.cxx:943
+#: dm/nirvana-dm-greeter.cxx:502 lock/nirvana-lock.cxx:150
+#: polkit/nirvana-polkit-agent.cxx:152
 msgid "Password:"
 msgstr ""
 
@@ -643,13 +660,13 @@ msgstr ""
 msgid "Enterprise networks (802.1X) are not supported yet - use nmtui."
 msgstr ""
 
-#: alice/network.cxx:279 alice/network.cxx:411 denise/desktop.cxx:2409
-#: denise/desktop.cxx:2446 denise/desktop.cxx:3266 denise/volumes.cxx:317
+#: alice/network.cxx:279 alice/network.cxx:411 denise/desktop.cxx:2458
+#: denise/desktop.cxx:2495 denise/desktop.cxx:3321 denise/volumes.cxx:317
 #: net/net.cxx:93
 msgid "Wrong password."
 msgstr ""
 
-#: alice/network.cxx:280 denise/desktop.cxx:2447 net/net.cxx:683
+#: alice/network.cxx:280 denise/desktop.cxx:2496 net/net.cxx:683
 #: net/net.cxx:809
 msgid "Could not connect. Check the password."
 msgstr ""
@@ -690,8 +707,8 @@ msgstr ""
 msgid "DNS servers:"
 msgstr ""
 
-#: alice/network.cxx:343 platinum/filedialog.cxx:246
-#: platinum/filedialog.cxx:248 platinum/platinum.cxx:1351
+#: alice/network.cxx:343 denise/filetypes.cxx:302 platinum/filedialog.cxx:246
+#: platinum/filedialog.cxx:248 platinum/platinum.cxx:1406
 msgid "Save"
 msgstr ""
 
@@ -783,7 +800,7 @@ msgstr ""
 msgid "Hotspot is on."
 msgstr ""
 
-#: alice/network.cxx:524 denise/desktop.cxx:2326
+#: alice/network.cxx:524 denise/desktop.cxx:2375
 msgid "Network unavailable"
 msgstr ""
 
@@ -829,7 +846,7 @@ msgstr ""
 msgid "Disconnected."
 msgstr ""
 
-#: alice/network.cxx:592 denise/desktop.cxx:2370
+#: alice/network.cxx:592 denise/desktop.cxx:2419
 msgid "Looking for networks…"
 msgstr ""
 
@@ -845,8 +862,8 @@ msgstr ""
 msgid "disconnected"
 msgstr ""
 
-#: alice/network.cxx:625 alice/preferences.cxx:176 denise/desktop.cxx:2356
-#: denise/desktop.cxx:2397 denise/desktop.cxx:2428 denise/gary.cxx:118
+#: alice/network.cxx:625 alice/preferences.cxx:176 denise/desktop.cxx:2405
+#: denise/desktop.cxx:2446 denise/desktop.cxx:2477 denise/gary.cxx:118
 #: net/net.cxx:326
 msgid "Network"
 msgstr ""
@@ -914,7 +931,7 @@ msgstr ""
 msgid "Choose a network from the list."
 msgstr ""
 
-#: alice/network.cxx:706 denise/desktop.cxx:2378
+#: alice/network.cxx:706 denise/desktop.cxx:2427
 msgid "Other Network…"
 msgstr ""
 
@@ -946,7 +963,8 @@ msgstr ""
 msgid "Import…"
 msgstr ""
 
-#: alice/network.cxx:740 alice/network.cxx:743 denise/menus.cxx:343
+#: alice/network.cxx:740 alice/network.cxx:743 denise/explorer.cxx:484
+#: denise/menus.cxx:353
 msgid "Delete"
 msgstr ""
 
@@ -959,7 +977,7 @@ msgstr ""
 msgid "VPN connection deleted."
 msgstr ""
 
-#: alice/network.cxx:752 denise/desktop.cxx:2393
+#: alice/network.cxx:752 denise/desktop.cxx:2442
 msgid "Airplane Mode"
 msgstr ""
 
@@ -1067,7 +1085,7 @@ msgid ""
 "these settings apply to the Nirvana Desktop session."
 msgstr ""
 
-#: alice/preferences.cxx:170 denise/desktop.cxx:751 denise/gary.cxx:121
+#: alice/preferences.cxx:170 denise/desktop.cxx:754 denise/gary.cxx:121
 msgid "Preferences"
 msgstr ""
 
@@ -1173,8 +1191,8 @@ msgid ""
 "older ones need the driver of their manufacturer."
 msgstr ""
 
-#: alice/printers.cxx:165 denise/desktop.cxx:1729 denise/desktop.cxx:1831
-#: denise/updates.cxx:272
+#: alice/printers.cxx:165 denise/desktop.cxx:1778 denise/desktop.cxx:1880
+#: denise/filetypes.cxx:69 denise/updates.cxx:272
 msgid "Install"
 msgstr ""
 
@@ -1248,7 +1266,7 @@ msgstr ""
 msgid "2. The driver"
 msgstr ""
 
-#: alice/printers.cxx:317 denise/menus.cxx:1164 dm/nirvana-dm-greeter.cxx:494
+#: alice/printers.cxx:317 denise/menus.cxx:1174 dm/nirvana-dm-greeter.cxx:494
 #: platinum/filedialog.cxx:323
 msgid "Name:"
 msgstr ""
@@ -1327,7 +1345,7 @@ msgstr ""
 msgid "A test page was sent to %1."
 msgstr ""
 
-#: alice/printers.cxx:432
+#: alice/printers.cxx:432 denise/filetypes.cxx:281
 msgid "Remove"
 msgstr ""
 
@@ -1782,7 +1800,7 @@ msgstr ""
 msgid "The password was not changed: %1"
 msgstr ""
 
-#: alice/user.cxx:635
+#: alice/user.cxx:635 denise/filetypes.cxx:65
 msgid "Picture"
 msgstr ""
 
@@ -2386,7 +2404,7 @@ msgstr ""
 msgid "Input:"
 msgstr ""
 
-#: denise/applets.cxx:220 denise/desktop.cxx:749 denise/desktop.cxx:929
+#: denise/applets.cxx:220 denise/desktop.cxx:752 denise/desktop.cxx:936
 #: platinum/filedialog.cxx:414
 msgid "Applications"
 msgstr ""
@@ -2479,7 +2497,7 @@ msgstr ""
 msgid "(disconnecting…)"
 msgstr ""
 
-#: denise/bluetooth.cxx:76 denise/desktop.cxx:2388
+#: denise/bluetooth.cxx:76 denise/desktop.cxx:2437
 msgid "(connecting…)"
 msgstr ""
 
@@ -2682,274 +2700,525 @@ msgstr ""
 msgid "Applications - current: %1"
 msgstr ""
 
-#: denise/desktop.cxx:771 denise/desktop.cxx:928 denise/desktop.cxx:2230
+#: denise/desktop.cxx:774 denise/desktop.cxx:935 denise/desktop.cxx:2279
+#: denise/explorer.cxx:304
 msgid "Trash"
 msgstr ""
 
-#: denise/desktop.cxx:1364 denise/desktop.cxx:1538
+#: denise/desktop.cxx:1382 denise/desktop.cxx:1583
 msgid "This folder is outside Nirvana HD."
 msgstr ""
 
-#: denise/desktop.cxx:1494
+#: denise/desktop.cxx:1521 denise/explorer.cxx:474
 msgid "Back"
 msgstr ""
 
-#: denise/desktop.cxx:1495
+#: denise/desktop.cxx:1522 denise/explorer.cxx:475
 msgid "Forward"
 msgstr ""
 
-#: denise/desktop.cxx:1496
+#: denise/desktop.cxx:1523
 msgid "Open Parent"
 msgstr ""
 
-#: denise/desktop.cxx:1546
+#: denise/desktop.cxx:1591
 msgid "The folder “%1” could not be found."
 msgstr ""
 
 #. TRANSLATORS: %s = the program's exit code (keep %s)
-#: denise/desktop.cxx:1630 denise/menus.cxx:750
+#: denise/desktop.cxx:1679 denise/filetypes.cxx:156 denise/menus.cxx:760
 #, c-format
 msgid "[exit code %s] Press Enter to close…"
 msgstr ""
 
-#: denise/desktop.cxx:1673
+#: denise/desktop.cxx:1722
 msgid "Could not move the file:"
 msgstr ""
 
-#: denise/desktop.cxx:1691 denise/desktop.cxx:1706
+#: denise/desktop.cxx:1740 denise/desktop.cxx:1755
 msgid "Installation"
 msgstr ""
 
-#: denise/desktop.cxx:1692
+#: denise/desktop.cxx:1741
 msgid ""
 "“%1” is already installed in %2.\n"
 "Other versions of this program can be installed alongside it."
 msgstr ""
 
-#: denise/desktop.cxx:1695 denise/desktop.cxx:2788 platinum/filedialog.cxx:575
+#: denise/desktop.cxx:1744 denise/desktop.cxx:2837 platinum/filedialog.cxx:575
 msgid "Replace"
 msgstr ""
 
-#: denise/desktop.cxx:1696
+#: denise/desktop.cxx:1745
 msgid "Run"
 msgstr ""
 
-#: denise/desktop.cxx:1706
+#: denise/desktop.cxx:1755
 msgid "Install the application “%1”?"
 msgstr ""
 
-#: denise/desktop.cxx:1707
+#: denise/desktop.cxx:1756
 msgid "Category:"
 msgstr ""
 
-#: denise/desktop.cxx:1723
+#: denise/desktop.cxx:1772
 msgid "The application will run in a sandbox: it will only see Nirvana HD."
 msgstr ""
 
-#: denise/desktop.cxx:1724
+#: denise/desktop.cxx:1773
 msgid ""
 "Note: bubblewrap is missing - the application will run without a sandbox."
 msgstr ""
 
-#: denise/desktop.cxx:1824
+#: denise/desktop.cxx:1873
 msgid ""
 "“%1” needs system libraries that are missing:\n"
 "%2"
 msgstr ""
 
-#: denise/desktop.cxx:1826
+#: denise/desktop.cxx:1875
 msgid ""
 "Nirvana Desktop does not know which packages provide them; without them the "
 "application may not start."
 msgstr ""
 
-#: denise/desktop.cxx:1827
+#: denise/desktop.cxx:1876
 msgid "They can be installed now (%1)."
 msgstr ""
 
-#: denise/desktop.cxx:1830
+#: denise/desktop.cxx:1879
 msgid "Run Anyway"
 msgstr ""
 
-#: denise/desktop.cxx:1832
+#: denise/desktop.cxx:1881
 msgid "Missing Libraries"
 msgstr ""
 
-#: denise/desktop.cxx:1837
+#: denise/desktop.cxx:1886
 msgid "nirvana-libs-helper is missing."
 msgstr ""
 
-#: denise/desktop.cxx:1852
+#: denise/desktop.cxx:1901
 msgid "The libraries were not installed."
 msgstr ""
 
-#: denise/desktop.cxx:1853
+#: denise/desktop.cxx:1902
 msgid ""
 "The libraries were not installed:\n"
 "%1"
 msgstr ""
 
-#: denise/desktop.cxx:2162
+#: denise/desktop.cxx:2211
 msgid "untitled folder"
 msgstr ""
 
-#: denise/desktop.cxx:2222 denise/desktop.cxx:2998 denise/desktop.cxx:3102
+#: denise/desktop.cxx:2271 denise/desktop.cxx:3053 denise/desktop.cxx:3157
 msgid "Could not move to the Trash:"
 msgstr ""
 
-#: denise/desktop.cxx:2230
+#: denise/desktop.cxx:2279
 msgid "The Trash is empty."
 msgstr ""
 
-#: denise/desktop.cxx:2231
+#: denise/desktop.cxx:2280
 msgid "Empty Trash"
 msgstr ""
 
-#: denise/desktop.cxx:2232
+#: denise/desktop.cxx:2281
 msgid ""
 "The Trash contains %1.\n"
 "Delete them permanently?"
 msgstr ""
 
-#: denise/desktop.cxx:2234
+#: denise/desktop.cxx:2283
 msgid "Empty"
 msgstr ""
 
-#: denise/desktop.cxx:2327 denise/desktop.cxx:2400
+#: denise/desktop.cxx:2376 denise/desktop.cxx:2449
 msgid "Network Settings…"
 msgstr ""
 
-#: denise/desktop.cxx:2335
+#: denise/desktop.cxx:2384
 msgid "%1 (%2): %3"
 msgstr ""
 
-#: denise/desktop.cxx:2346
+#: denise/desktop.cxx:2395
 msgid "Cable unplugged"
 msgstr ""
 
-#: denise/desktop.cxx:2350
+#: denise/desktop.cxx:2399
 msgid "Wi-Fi: hotspot “%1”"
 msgstr ""
 
-#: denise/desktop.cxx:2351
+#: denise/desktop.cxx:2400
 msgid "Wi-Fi: On"
 msgstr ""
 
-#: denise/desktop.cxx:2351
+#: denise/desktop.cxx:2400
 msgid "Wi-Fi: Off"
 msgstr ""
 
-#: denise/desktop.cxx:2352
+#: denise/desktop.cxx:2401
 msgid "Turn Wi-Fi Off"
 msgstr ""
 
-#: denise/desktop.cxx:2352
+#: denise/desktop.cxx:2401
 msgid "Turn Wi-Fi On"
 msgstr ""
 
-#: denise/desktop.cxx:2374
+#: denise/desktop.cxx:2423
 msgid "Turn Hotspot Off"
 msgstr ""
 
-#: denise/desktop.cxx:2374
+#: denise/desktop.cxx:2423
 msgid "Disconnect from “%1”"
 msgstr ""
 
-#: denise/desktop.cxx:2416
+#: denise/desktop.cxx:2465
 msgid ""
 "VPN connection “%1” (%2).\n"
 "Enter the password."
 msgstr ""
 
-#: denise/desktop.cxx:2439
+#: denise/desktop.cxx:2488
 msgid ""
 "Enterprise networks (WPA Enterprise, 802.1X) are not supported yet.\n"
 "Set them up with nmtui or nm-connection-editor."
 msgstr ""
 
-#: denise/desktop.cxx:2624
+#: denise/desktop.cxx:2673
 msgid "Hide %1"
 msgstr ""
 
-#: denise/desktop.cxx:2628
+#: denise/desktop.cxx:2677
 msgid "Hide Others"
 msgstr ""
 
-#: denise/desktop.cxx:2633
+#: denise/desktop.cxx:2682
 msgid "Show All"
 msgstr ""
 
-#: denise/desktop.cxx:2642
+#: denise/desktop.cxx:2691
 msgid "Quit %1"
 msgstr ""
 
-#: denise/desktop.cxx:2708
+#: denise/desktop.cxx:2757
 msgid "A name cannot contain “/”."
 msgstr ""
 
-#: denise/desktop.cxx:2709
+#: denise/desktop.cxx:2758
 msgid "That name is reserved."
 msgstr ""
 
-#: denise/desktop.cxx:2712
+#: denise/desktop.cxx:2761
 msgid "An item named “%1” already exists."
 msgstr ""
 
-#: denise/desktop.cxx:2714
+#: denise/desktop.cxx:2763
 msgid "Could not rename:"
 msgstr ""
 
-#: denise/desktop.cxx:2762
+#: denise/desktop.cxx:2811
 msgid "The destination folder is outside Nirvana HD."
 msgstr ""
 
-#: denise/desktop.cxx:2769
+#: denise/desktop.cxx:2818
 msgid "The folder “%1” cannot be moved into itself."
 msgstr ""
 
-#: denise/desktop.cxx:2783
+#: denise/desktop.cxx:2832
 msgid "an item “%1”"
 msgstr ""
 
-#: denise/desktop.cxx:2785
+#: denise/desktop.cxx:2834
 msgid "Copying"
 msgstr ""
 
-#: denise/desktop.cxx:2785
+#: denise/desktop.cxx:2834
 msgid "Move"
 msgstr ""
 
-#: denise/desktop.cxx:2786
+#: denise/desktop.cxx:2835
 msgid ""
 "The folder “%1” already contains %2.\n"
 "Replace?"
 msgstr ""
 
-#: denise/desktop.cxx:2828
+#: denise/desktop.cxx:2877
 msgid "There were errors:"
 msgstr ""
 
-#: denise/desktop.cxx:2957 denise/desktop.cxx:3254 denise/desktop.cxx:3267
+#: denise/desktop.cxx:3012 denise/desktop.cxx:3309 denise/desktop.cxx:3322
 msgid "Encrypted Disk"
 msgstr ""
 
-#: denise/desktop.cxx:2957
+#: denise/desktop.cxx:3012
 msgid "Open the disk “%1” and enter its password first."
 msgstr ""
 
-#: denise/desktop.cxx:3255
+#: denise/desktop.cxx:3310
 msgid ""
 "The disk “%1” is encrypted.\n"
 "Enter the password to open it."
 msgstr ""
 
-#: denise/desktop.cxx:3255 denise/menus.cxx:257 denise/menus.cxx:259
-#: denise/menus.cxx:263 denise/menus.cxx:333 platinum/filedialog.cxx:246
+#: denise/desktop.cxx:3310 denise/filetypes.cxx:64 denise/filetypes.cxx:67
+#: denise/filetypes.cxx:285 denise/menus.cxx:259 denise/menus.cxx:261
+#: denise/menus.cxx:265 denise/menus.cxx:335 platinum/filedialog.cxx:246
 #: platinum/filedialog.cxx:248
 msgid "Open"
 msgstr ""
 
-#: denise/folder_view.cxx:63 denise/menus.cxx:1007
+#: denise/explorer.cxx:365
+msgid "SOURCE"
+msgstr ""
+
+#: denise/explorer.cxx:365
+msgid "DESTINATION"
+msgstr ""
+
+#: denise/explorer.cxx:476 platinum/filedialog.cxx:295
+msgid "Up"
+msgstr ""
+
+#: denise/explorer.cxx:478
+msgid "Folders"
+msgstr ""
+
+#: denise/explorer.cxx:479
+msgid "Two Panes"
+msgstr ""
+
+#: denise/explorer.cxx:480
+msgid "Swap"
+msgstr ""
+
+#: denise/explorer.cxx:482
+msgid "Copy To"
+msgstr ""
+
+#: denise/explorer.cxx:483
+msgid "Move To"
+msgstr ""
+
+#: denise/explorer.cxx:486
+msgid "Views"
+msgstr ""
+
+#: denise/explorer.cxx:489
+msgid "Server"
+msgstr ""
+
+#: denise/explorer.cxx:495
+msgid "Address"
+msgstr ""
+
+#: denise/explorer.cxx:505
+msgid "Go"
+msgstr ""
+
+#: denise/explorer.cxx:686
+msgid "%1 items"
+msgstr ""
+
+#: denise/explorer.cxx:687
+msgid "%1 of %2 selected (%3)"
+msgstr ""
+
+#: denise/explorer.cxx:689
+msgid "Inside the archive “%1” - a copy: changes do not go back into it"
+msgstr ""
+
+#: denise/explorer.cxx:690
+msgid "Copy/Move to: %1"
+msgstr ""
+
+#: denise/explorer.cxx:765 denise/explorer.cxx:804
+msgid "bsdtar is not installed (package libarchive-tools)."
+msgstr ""
+
+#: denise/explorer.cxx:766
+msgid ""
+"The archive “%1” could not be opened.\n"
+"%2"
+msgstr ""
+
+#: denise/explorer.cxx:781
+msgid "Pack into an Archive"
+msgstr ""
+
+#: denise/explorer.cxx:782
+msgid ""
+"Pack %1 items into the archive (the ending chooses the kind: .zip, .tar.gz, ."
+"tar.xz, .7z):"
+msgstr ""
+
+#: denise/explorer.cxx:790
+msgid "Pack"
+msgstr ""
+
+#: denise/explorer.cxx:805
+msgid "The archive “%1” could not be made."
+msgstr ""
+
+#: denise/explorer.cxx:922
+msgid "Connect to a Server"
+msgstr ""
+
+#: denise/explorer.cxx:923
+msgid "The server's folders open like folders on this computer."
+msgstr ""
+
+#: denise/explorer.cxx:929 denise/menus.cxx:1006 denise/menus.cxx:1017
+msgid "Kind:"
+msgstr ""
+
+#: denise/explorer.cxx:935
+msgid "Server:"
+msgstr ""
+
+#: denise/explorer.cxx:938
+msgid "Port (empty: the usual one)"
+msgstr ""
+
+#: denise/explorer.cxx:939
+msgid "User:"
+msgstr ""
+
+#: denise/explorer.cxx:945
+msgid "Empty: an SSH key or an anonymous FTP login"
+msgstr ""
+
+#: denise/explorer.cxx:946
+msgid "Folder:"
+msgstr ""
+
+#: denise/explorer.cxx:955
+msgid "No server connected."
+msgstr ""
+
+#: denise/explorer.cxx:955
+msgid "Connected: %1"
+msgstr ""
+
+#: denise/explorer.cxx:961
+msgid "Disconnect All"
+msgstr ""
+
+#: denise/explorer.cxx:977 denise/explorer.cxx:1000
+msgid "sshfs is not installed (package sshfs)."
+msgstr ""
+
+#: denise/explorer.cxx:998
+msgid ""
+"The server is connected, but its folder cannot be seen - is gvfs-fuse "
+"installed?"
+msgstr ""
+
+#: denise/explorer.cxx:1000
+msgid "gio is not installed (packages gvfs-backends and gvfs-fuse)."
+msgstr ""
+
+#: denise/explorer.cxx:1002
+msgid ""
+"Could not connect to “%1”.\n"
+"%2"
+msgstr ""
+
+#: denise/filetypes.cxx:52
+msgid "Archive"
+msgstr ""
+
+#: denise/filetypes.cxx:55
+msgid "Open as Folder"
+msgstr ""
+
+#: denise/filetypes.cxx:56
+msgid "Extract Here"
+msgstr ""
+
+#: denise/filetypes.cxx:57
+msgid "Extract to the Other Pane"
+msgstr ""
+
+#: denise/filetypes.cxx:58 denise/filetypes.cxx:69
+msgid "List Contents"
+msgstr ""
+
+#: denise/filetypes.cxx:59
+msgid "Shell Script"
+msgstr ""
+
+#: denise/filetypes.cxx:59 denise/filetypes.cxx:60
+msgid "Run in Nirvana Shell"
+msgstr ""
+
+#: denise/filetypes.cxx:59 denise/filetypes.cxx:60
+msgid "Edit"
+msgstr ""
+
+#: denise/filetypes.cxx:60
+msgid "Python Program"
+msgstr ""
+
+#: denise/filetypes.cxx:61
+msgid "Text"
+msgstr ""
+
+#: denise/filetypes.cxx:64
+msgid "Edit in Nirvana Shell"
+msgstr ""
+
+#: denise/filetypes.cxx:67
+msgid "Set as Wallpaper"
+msgstr ""
+
+#: denise/filetypes.cxx:68
+msgid "Debian Package"
+msgstr ""
+
+#: denise/filetypes.cxx:244
+msgid "File Types"
+msgstr ""
+
+#: denise/filetypes.cxx:245
+msgid ""
+"What a double click and the context menu do with each kind of file. The "
+"first action is the double click."
+msgstr ""
+
+#: denise/filetypes.cxx:260 denise/folder_view.cxx:923
+msgid "Name"
+msgstr ""
+
+#: denise/filetypes.cxx:262
+msgid "Patterns (separated by spaces)"
+msgstr ""
+
+#: denise/filetypes.cxx:264
+msgid "Actions: one per line, \"label = command\""
+msgstr ""
+
+#: denise/filetypes.cxx:269
+msgid ""
+"{f} the file  {F} all selected  {s} its folder  {d} the other pane  {n} name "
+"without ending\n"
+"@browse open like a folder  @wallpaper  \"@shell command\" in Nirvana Shell"
+msgstr ""
+
+#: denise/filetypes.cxx:280
+msgid "New"
+msgstr ""
+
+#: denise/filetypes.cxx:285
+msgid "New Type"
+msgstr ""
+
+#: denise/filetypes.cxx:299
+msgid "Built-in"
+msgstr ""
+
+#: denise/folder_view.cxx:63 denise/menus.cxx:1017
 msgid "folder"
 msgstr ""
 
@@ -2973,10 +3242,6 @@ msgstr ""
 msgid "%1 free"
 msgstr ""
 
-#: denise/folder_view.cxx:923
-msgid "Name"
-msgstr ""
-
 #: denise/folder_view.cxx:924
 msgid "Date Modified"
 msgstr ""
@@ -2993,323 +3258,331 @@ msgstr ""
 msgid "Nirvana Shell"
 msgstr ""
 
-#: denise/menus.cxx:252
+#: denise/menus.cxx:254
 msgid "Open Nirvana HD"
 msgstr ""
 
-#: denise/menus.cxx:253
+#: denise/menus.cxx:255
 msgid "Desktop Appearance…"
 msgstr ""
 
-#: denise/menus.cxx:256
+#: denise/menus.cxx:258
 msgid "Restore"
 msgstr ""
 
-#: denise/menus.cxx:260 denise/menus.cxx:335
+#: denise/menus.cxx:262 denise/menus.cxx:344
 msgid "Unpin from Dock"
 msgstr ""
 
-#: denise/menus.cxx:264 denise/menus.cxx:338
+#: denise/menus.cxx:266 denise/menus.cxx:347
 msgid "Information…"
 msgstr ""
 
-#: denise/menus.cxx:265
+#: denise/menus.cxx:267
 msgid "Empty Trash…"
 msgstr ""
 
-#: denise/menus.cxx:268
+#: denise/menus.cxx:270
 msgid "Eject"
 msgstr ""
 
-#: denise/menus.cxx:269
+#: denise/menus.cxx:271
 msgid "Format Disk…"
 msgstr ""
 
-#: denise/menus.cxx:336
+#: denise/menus.cxx:340
+msgid "Copy to the Other Pane"
+msgstr ""
+
+#: denise/menus.cxx:341
+msgid "Move to the Other Pane"
+msgstr ""
+
+#: denise/menus.cxx:345
 msgid "Put on Dock"
 msgstr ""
 
-#: denise/menus.cxx:339
+#: denise/menus.cxx:348
 msgid "Rename…"
 msgstr ""
 
-#: denise/menus.cxx:340
+#: denise/menus.cxx:349
 msgid "Duplicate"
 msgstr ""
 
-#: denise/menus.cxx:341 shell/main.cxx:656
+#: denise/menus.cxx:350 shell/main.cxx:656
 msgid "Copy"
 msgstr ""
 
-#: denise/menus.cxx:345 platinum/filedialog.cxx:298 platinum/filedialog.cxx:553
-#: platinum/platinum.cxx:1349
+#: denise/menus.cxx:351
+msgid "Pack into an Archive…"
+msgstr ""
+
+#: denise/menus.cxx:355 platinum/filedialog.cxx:298 platinum/filedialog.cxx:553
+#: platinum/platinum.cxx:1404
 msgid "New Folder"
 msgstr ""
 
-#: denise/menus.cxx:346 shell/main.cxx:657
+#: denise/menus.cxx:356 shell/main.cxx:657
 msgid "Paste"
 msgstr ""
 
-#: denise/menus.cxx:348
+#: denise/menus.cxx:358
 msgid "Update"
 msgstr ""
 
-#: denise/menus.cxx:349
+#: denise/menus.cxx:359
 msgid "Select Contents"
 msgstr ""
 
-#: denise/menus.cxx:385
+#: denise/menus.cxx:395
 msgid ""
 "Could not open the image “%1”.\n"
 "The file may be damaged or in an unsupported format."
 msgstr ""
 
-#: denise/menus.cxx:392
+#: denise/menus.cxx:402
 msgid "Could not save the appearance settings."
 msgstr ""
 
-#: denise/menus.cxx:436
+#: denise/menus.cxx:446
 msgid "The mouse is held by another program - try again in a moment."
 msgstr ""
 
-#: denise/menus.cxx:462
+#: denise/menus.cxx:472
 msgid "There is no program window there."
 msgstr ""
 
-#: denise/menus.cxx:466
+#: denise/menus.cxx:476
 msgid "This is part of Nirvana Desktop - it cannot be force quit."
 msgstr ""
 
-#: denise/menus.cxx:483
+#: denise/menus.cxx:493
 msgid "this window"
 msgstr ""
 
-#: denise/menus.cxx:484 denise/menus.cxx:487
+#: denise/menus.cxx:494 denise/menus.cxx:497
 msgid "Force Quit"
 msgstr ""
 
-#: denise/menus.cxx:485
+#: denise/menus.cxx:495
 msgid ""
 "Force quit “%1”?\n"
 "The program is closed at once, and what was not saved in it is lost."
 msgstr ""
 
-#: denise/menus.cxx:684
+#: denise/menus.cxx:694
 msgid "history"
 msgstr ""
 
-#: denise/menus.cxx:684
+#: denise/menus.cxx:694
 msgid "program"
 msgstr ""
 
-#: denise/menus.cxx:698
+#: denise/menus.cxx:708
 msgid "Execute Command"
 msgstr ""
 
-#: denise/menus.cxx:699
+#: denise/menus.cxx:709
 msgid "Command to execute (in folder “%1”):"
 msgstr ""
 
-#: denise/menus.cxx:730
+#: denise/menus.cxx:740
 msgid "↑↓ choose · Tab completes · Enter runs"
 msgstr ""
 
-#: denise/menus.cxx:735
+#: denise/menus.cxx:745
 msgid "Show output in Nirvana Shell"
 msgstr ""
 
-#: denise/menus.cxx:754
+#: denise/menus.cxx:764
 msgid "Execute"
 msgstr ""
 
-#: denise/menus.cxx:788
+#: denise/menus.cxx:798
 msgid ""
 "The system log is readable only by the administrator. Enter the password to "
 "view it."
 msgstr ""
 
-#: denise/menus.cxx:789
+#: denise/menus.cxx:799
 msgid ""
 "The system log is not available without administrator rights (tip: add "
 "yourself to the \"adm\" group). Below is the log of this session."
 msgstr ""
 
-#: denise/menus.cxx:791
+#: denise/menus.cxx:801
 msgid "No log is available. Press Enter to close…"
 msgstr ""
 
-#: denise/menus.cxx:889
+#: denise/menus.cxx:899
 msgid "over %1 (counting stopped)"
 msgstr ""
 
-#: denise/menus.cxx:891
+#: denise/menus.cxx:901
 msgid "%1, files: %2"
 msgstr ""
 
-#: denise/menus.cxx:982
+#: denise/menus.cxx:992
 msgid "Info: %1"
 msgstr ""
 
-#: denise/menus.cxx:996 denise/menus.cxx:1007
-msgid "Kind:"
-msgstr ""
-
-#: denise/menus.cxx:996
+#: denise/menus.cxx:1006
 msgid "disc"
 msgstr ""
 
-#: denise/menus.cxx:996
+#: denise/menus.cxx:1006
 msgid "removable disk"
 msgstr ""
 
-#: denise/menus.cxx:996
+#: denise/menus.cxx:1006
 msgid "disk"
 msgstr ""
 
-#: denise/menus.cxx:997 denise/menus.cxx:1168
+#: denise/menus.cxx:1007 denise/menus.cxx:1178
 msgid "File system:"
 msgstr ""
 
-#: denise/menus.cxx:997
+#: denise/menus.cxx:1007
 msgid "none (unformatted)"
 msgstr ""
 
-#: denise/menus.cxx:998
+#: denise/menus.cxx:1008
 msgid "Capacity:"
 msgstr ""
 
-#: denise/menus.cxx:1001
+#: denise/menus.cxx:1011
 msgid "Free:"
 msgstr ""
 
-#: denise/menus.cxx:1002
+#: denise/menus.cxx:1012
 msgid "Device:"
 msgstr ""
 
-#: denise/menus.cxx:1003
+#: denise/menus.cxx:1013
 msgid "Mounted at:"
 msgstr ""
 
-#: denise/menus.cxx:1003
+#: denise/menus.cxx:1013
 msgid "no"
 msgstr ""
 
-#: denise/menus.cxx:1004
+#: denise/menus.cxx:1014
 msgid "Encryption:"
 msgstr ""
 
-#: denise/menus.cxx:1004
+#: denise/menus.cxx:1014
 msgid "LUKS (unlocked)"
 msgstr ""
 
-#: denise/menus.cxx:1004
+#: denise/menus.cxx:1014
 msgid "LUKS (locked)"
 msgstr ""
 
-#: denise/menus.cxx:1004
+#: denise/menus.cxx:1014
 msgid "none"
 msgstr ""
 
-#: denise/menus.cxx:1008
+#: denise/menus.cxx:1018
 msgid "Size:"
 msgstr ""
 
-#: denise/menus.cxx:1009
+#: denise/menus.cxx:1019
 msgid "Where:"
 msgstr ""
 
-#: denise/menus.cxx:1013
+#: denise/menus.cxx:1023
 msgid "Created:"
 msgstr ""
 
-#: denise/menus.cxx:1014
+#: denise/menus.cxx:1024
 msgid "Modified:"
 msgstr ""
 
-#: denise/menus.cxx:1015
+#: denise/menus.cxx:1025
 msgid "Opened:"
 msgstr ""
 
-#: denise/menus.cxx:1023
+#: denise/menus.cxx:1033
 msgid "Owner:"
 msgstr ""
 
-#: denise/menus.cxx:1026
+#: denise/menus.cxx:1036
 msgid "Permissions:"
 msgstr ""
 
-#: denise/menus.cxx:1032
+#: denise/menus.cxx:1042
 msgid "Flags:"
 msgstr ""
 
-#: denise/menus.cxx:1033
+#: denise/menus.cxx:1043
 msgid "Read only"
 msgstr ""
 
-#: denise/menus.cxx:1037
+#: denise/menus.cxx:1047
 msgid "Program"
 msgstr ""
 
-#: denise/menus.cxx:1040
+#: denise/menus.cxx:1050
 msgid "Execute permission (the e flag)"
 msgstr ""
 
-#: denise/menus.cxx:1045
+#: denise/menus.cxx:1055
 msgid "Comment:"
 msgstr ""
 
-#: denise/menus.cxx:1050
+#: denise/menus.cxx:1060
 msgid "This file system does not support comments."
 msgstr ""
 
-#: denise/menus.cxx:1053
+#: denise/menus.cxx:1063
 msgid "Arguments:"
 msgstr ""
 
-#: denise/menus.cxx:1059
+#: denise/menus.cxx:1069
 msgid "Program start arguments (ToolTypes), e.g. --fullscreen"
 msgstr ""
 
-#: denise/menus.cxx:1072
+#: denise/menus.cxx:1082
 msgid "Could not change the flags."
 msgstr ""
 
-#: denise/menus.cxx:1146 denise/menus.cxx:1157 denise/menus.cxx:1178
-#: denise/menus.cxx:1182 denise/menus.cxx:1190
+#: denise/menus.cxx:1156 denise/menus.cxx:1167 denise/menus.cxx:1188
+#: denise/menus.cxx:1192 denise/menus.cxx:1200
 msgid "Format Disk"
 msgstr ""
 
-#: denise/menus.cxx:1146
+#: denise/menus.cxx:1156
 msgid "Select the icon of the disk you want to format on the desktop."
 msgstr ""
 
-#: denise/menus.cxx:1158
+#: denise/menus.cxx:1168
 msgid "Formatting “%1” (%2)."
 msgstr ""
 
-#: denise/menus.cxx:1159
+#: denise/menus.cxx:1169
 msgid "All data on this disk will be erased!"
 msgstr ""
 
-#: denise/menus.cxx:1171
+#: denise/menus.cxx:1181
 msgid ""
 "FAT32 (USB stick - works everywhere)|exFAT (large files, Windows and Mac)|"
 "ext4 (Linux)|NTFS (Windows)"
 msgstr ""
 
-#: denise/menus.cxx:1174 denise/menus.cxx:1179
+#: denise/menus.cxx:1184 denise/menus.cxx:1189
 msgid "Format"
 msgstr ""
 
-#: denise/menus.cxx:1178
+#: denise/menus.cxx:1188
 msgid "Really format “%1”? This cannot be undone."
 msgstr ""
 
-#: denise/menus.cxx:1182
+#: denise/menus.cxx:1192
 msgid "The disk is gone."
 msgstr ""
 
-#: denise/menus.cxx:1190
+#: denise/menus.cxx:1200
 msgid "The disk “%1” is ready."
 msgstr ""
 
@@ -3395,11 +3668,11 @@ msgstr ""
 msgid "Programs and the Internet…"
 msgstr ""
 
-#: denise/shield_applet.cxx:191
+#: denise/shield_applet.cxx:194
 msgid "May “%1” use the internet?"
 msgstr ""
 
-#: denise/shield_applet.cxx:192
+#: denise/shield_applet.cxx:195
 msgid ""
 "NirvanaSHIELD stopped it. Allow it only if you know this program and trust "
 "it."
@@ -4037,7 +4310,7 @@ msgstr ""
 msgid "Choose Folder"
 msgstr ""
 
-#: platinum/filedialog.cxx:248 platinum/platinum.cxx:1338
+#: platinum/filedialog.cxx:248 platinum/platinum.cxx:1393
 msgid "Choose"
 msgstr ""
 
@@ -4053,10 +4326,6 @@ msgstr ""
 msgid "The folders above this one"
 msgstr ""
 
-#: platinum/filedialog.cxx:295
-msgid "Up"
-msgstr ""
-
 #: platinum/filedialog.cxx:296
 msgid "The folder above (Backspace)"
 msgstr ""
@@ -4065,7 +4334,7 @@ msgstr ""
 msgid "Show hidden files"
 msgstr ""
 
-#: platinum/filedialog.cxx:329 platinum/platinum.cxx:1352
+#: platinum/filedialog.cxx:329 platinum/platinum.cxx:1407
 msgid "Show:"
 msgstr ""
 
@@ -4126,49 +4395,49 @@ msgstr ""
 msgid "Yes"
 msgstr ""
 
-#: platinum/platinum.cxx:1332
+#: platinum/platinum.cxx:1387
 msgid "%1 item"
 msgid_plural "%1 items"
 msgstr[0] ""
 msgstr[1] ""
 
-#: platinum/platinum.cxx:1339
+#: platinum/platinum.cxx:1394
 msgid "Add to Favorites"
 msgstr ""
 
-#: platinum/platinum.cxx:1340
+#: platinum/platinum.cxx:1395
 msgid "All Files (*)"
 msgstr ""
 
-#: platinum/platinum.cxx:1341
+#: platinum/platinum.cxx:1396
 msgid "Custom Filter"
 msgstr ""
 
-#: platinum/platinum.cxx:1342
+#: platinum/platinum.cxx:1397
 msgid "The file already exists. Replace it?"
 msgstr ""
 
-#: platinum/platinum.cxx:1343
+#: platinum/platinum.cxx:1398
 msgid "Favorites"
 msgstr ""
 
-#: platinum/platinum.cxx:1344
+#: platinum/platinum.cxx:1399
 msgid "File:"
 msgstr ""
 
-#: platinum/platinum.cxx:1345
+#: platinum/platinum.cxx:1400
 msgid "Disks"
 msgstr ""
 
-#: platinum/platinum.cxx:1346
+#: platinum/platinum.cxx:1401
 msgid "Hidden files"
 msgstr ""
 
-#: platinum/platinum.cxx:1347
+#: platinum/platinum.cxx:1402
 msgid "Manage Favorites"
 msgstr ""
 
-#: platinum/platinum.cxx:1348
+#: platinum/platinum.cxx:1403
 msgid "New folder name:"
 msgstr ""
 
@@ -4614,133 +4883,137 @@ msgstr ""
 msgid "Close Window"
 msgstr ""
 
-#: denise/desktop.cxx:460 denise/menus.cxx:183
+#: denise/desktop.cxx:457
+msgid "Connect to a Server…"
+msgstr ""
+
+#: denise/desktop.cxx:461 denise/menus.cxx:185
 msgid "Clean Up"
 msgstr ""
 
-#: denise/desktop.cxx:461 denise/menus.cxx:184
+#: denise/desktop.cxx:462 denise/menus.cxx:186
 msgid "Show Hidden Files"
 msgstr ""
 
-#: denise/desktop.cxx:462 denise/desktop.cxx:463 denise/menus.cxx:180
-#: denise/menus.cxx:187 denise/menus.cxx:188
+#: denise/desktop.cxx:463 denise/desktop.cxx:464 denise/menus.cxx:182
+#: denise/menus.cxx:189 denise/menus.cxx:190
 msgid "View as"
 msgstr ""
 
-#: denise/desktop.cxx:463 denise/menus.cxx:188
+#: denise/desktop.cxx:464 denise/menus.cxx:190
 msgid "List"
 msgstr ""
 
-#: denise/desktop.cxx:464 denise/desktop.cxx:465 denise/desktop.cxx:466
-#: denise/desktop.cxx:467 denise/menus.cxx:181 denise/menus.cxx:189
-#: denise/menus.cxx:190 denise/menus.cxx:191 denise/menus.cxx:192
+#: denise/desktop.cxx:465 denise/desktop.cxx:466 denise/desktop.cxx:467
+#: denise/desktop.cxx:468 denise/menus.cxx:183 denise/menus.cxx:191
+#: denise/menus.cxx:192 denise/menus.cxx:193 denise/menus.cxx:194
 msgid "Sort"
 msgstr ""
 
-#: denise/desktop.cxx:464 denise/menus.cxx:189
+#: denise/desktop.cxx:465 denise/menus.cxx:191
 msgid "by Name"
 msgstr ""
 
-#: denise/desktop.cxx:465 denise/menus.cxx:190
+#: denise/desktop.cxx:466 denise/menus.cxx:192
 msgid "by Date"
 msgstr ""
 
-#: denise/desktop.cxx:466 denise/menus.cxx:191
+#: denise/desktop.cxx:467 denise/menus.cxx:193
 msgid "by Size"
 msgstr ""
 
-#: denise/desktop.cxx:467 denise/menus.cxx:192
+#: denise/desktop.cxx:468 denise/menus.cxx:194
 msgid "by Kind"
 msgstr ""
 
-#: denise/desktop.cxx:468 denise/desktop.cxx:469 denise/desktop.cxx:470
-#: denise/menus.cxx:181 denise/menus.cxx:193 denise/menus.cxx:194
-#: denise/menus.cxx:195
+#: denise/desktop.cxx:469 denise/desktop.cxx:470 denise/desktop.cxx:471
+#: denise/menus.cxx:183 denise/menus.cxx:195 denise/menus.cxx:196
+#: denise/menus.cxx:197
 msgid "Icon Size"
 msgstr ""
 
-#: denise/desktop.cxx:468 denise/menus.cxx:193
+#: denise/desktop.cxx:469 denise/menus.cxx:195
 msgid "Small"
 msgstr ""
 
-#: denise/desktop.cxx:469 denise/menus.cxx:194
+#: denise/desktop.cxx:470 denise/menus.cxx:196
 msgid "Normal"
 msgstr ""
 
-#: denise/desktop.cxx:470 denise/menus.cxx:195
+#: denise/desktop.cxx:471 denise/menus.cxx:197
 msgid "Large"
 msgstr ""
 
-#: denise/desktop.cxx:479 denise/menus.cxx:211
-msgid "Set as Wallpaper"
-msgstr ""
-
-#: denise/desktop.cxx:480 denise/menus.cxx:212
+#: denise/desktop.cxx:482 denise/menus.cxx:214
 msgid "Snapshot"
 msgstr ""
 
-#: denise/desktop.cxx:481 denise/menus.cxx:213
+#: denise/desktop.cxx:483 denise/menus.cxx:215
 msgid "Unsnapshot"
 msgstr ""
 
-#: denise/desktop.cxx:483 denise/menus.cxx:215
+#: denise/desktop.cxx:485 denise/menus.cxx:217
 msgid "Remove from Dock"
 msgstr ""
 
-#: denise/desktop.cxx:522
+#: denise/desktop.cxx:524
 msgid "About This Computer…"
 msgstr ""
 
-#: denise/desktop.cxx:523
+#: denise/desktop.cxx:525
 msgid "Preferences…"
 msgstr ""
 
-#: denise/desktop.cxx:524
+#: denise/desktop.cxx:526
 msgid "Execute Command…"
 msgstr ""
 
-#: denise/desktop.cxx:526
+#: denise/desktop.cxx:528
 msgid "Open System Log"
 msgstr ""
 
-#: denise/desktop.cxx:527
+#: denise/desktop.cxx:529
 msgid "Reset Nirvana"
 msgstr ""
 
-#: denise/desktop.cxx:529 denise/menus.cxx:164
+#: denise/desktop.cxx:531 denise/menus.cxx:166
 msgid "Lock Screen"
 msgstr ""
 
-#: denise/desktop.cxx:531 denise/menus.cxx:166
+#: denise/desktop.cxx:533 denise/menus.cxx:168
 msgid "Hibernate"
 msgstr ""
 
-#: denise/desktop.cxx:532
+#: denise/desktop.cxx:534
 msgid "Log Out…"
 msgstr ""
 
-#: denise/desktop.cxx:538
+#: denise/desktop.cxx:540
+msgid "File Types…"
+msgstr ""
+
+#: denise/desktop.cxx:541
 msgid "Force Quit a Window…"
 msgstr ""
 
-#: denise/desktop.cxx:2651 denise/desktop.cxx:2657 denise/desktop.cxx:2669
-#: denise/desktop.cxx:2670 denise/desktop.cxx:2671
+#: denise/desktop.cxx:2700 denise/desktop.cxx:2706 denise/desktop.cxx:2718
+#: denise/desktop.cxx:2719 denise/desktop.cxx:2720
 msgid "Rambler Windows"
 msgstr ""
 
-#: denise/desktop.cxx:2651
+#: denise/desktop.cxx:2700
 msgid "No open windows"
 msgstr ""
 
-#: denise/desktop.cxx:2669
+#: denise/desktop.cxx:2718
 msgid "Collapse All"
 msgstr ""
 
-#: denise/desktop.cxx:2670
+#: denise/desktop.cxx:2719
 msgid "Expand All"
 msgstr ""
 
-#: denise/desktop.cxx:2671
+#: denise/desktop.cxx:2720
 msgid "Close All"
 msgstr ""
 

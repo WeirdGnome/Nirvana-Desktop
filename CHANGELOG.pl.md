@@ -1,6 +1,14 @@
 # Lista zmian
 Wszystkie ważniejsze zmiany w Nirvana Desktop, od najnowszych. English: [CHANGELOG.md](CHANGELOG.md).
 
+## 0.0.48 – 2026-11-12
+
+- **Rambler jako eksplorator** (Preferencje > Pulpit > Okna folderów): pasek dużych płaskich przycisków z podpisami, pole Adres, drzewo folderów, jeden albo dwa panele (ŹRÓDŁO/CEL: F5 kopiuj, F6 przenieś, F7 nowy folder, F8 usuń, Tab zamiana, przeciąganie między nimi) i pasek stanu. Domyślnie zostaje zwykły Rambler.
+- **Typy plików** z akcjami (Narzędzia > Typy plików…): akcje dwukliku i menu kontekstowego ze wstawkami `{f} {F} {s} {d} {n}`, `@browse`, `@wallpaper`, `@shell`; wbudowane typy dla archiwów, skryptów, tekstu, zdjęć, pakietów.
+- **Archiwa otwierają się jak foldery** (bsdtar), Rozpakuj tutaj / do drugiego panelu, Ikony > Spakuj do archiwum….
+- **Serwery:** Okno > Połącz z serwerem… – SFTP (sshfs) i FTP (gio/gvfs) widoczne jak foldery, w drzewie i w obu panelach.
+- Paczka poleca `libarchive-tools` i `sshfs`, sugeruje `gvfs-backends` i `gvfs-fuse`.
+
 ## 0.0.47 – 2026-11-12
 
 - Ikona apletu NirvanaSHIELD to jednokolorowa tarcza w kolorze tekstu paska menu, jak pozostałe aplety: wypełniona z ptaszkiem (chroni), wypełniona z kreską (cały internet zablokowany), kontur (ochrona wyłączona), przygaszony kropkowany kontur (usługa nie działa).

@@ -40,7 +40,7 @@ Co się zmieniło w każdej wersji: [CHANGELOG.pl.md](CHANGELOG.pl.md).
 
 Rozpakuj źródła i uruchom instalator:
 
-    tar xzf nirvana-desktop-0.0.47.tar.gz && cd nirvana-desktop
+    tar xzf nirvana-desktop-0.0.48.tar.gz && cd nirvana-desktop
     sudo ./install.sh                 # albo: sudo ./install.sh --login-screen
 
 Instalator:
@@ -296,6 +296,40 @@ swoją literę.
 Działa na standardzie EWMH (`_NET_CLIENT_LIST`, `_NET_ACTIVE_WINDOW`, `WM_CHANGE_STATE`,
 `_NET_CLOSE_WINDOW`), więc także pod GNOME, KDE czy Openboksem. Pod obcym menedżerem
 okno biurka nie przyjmuje fokusu, żeby klik w pasek menu nie zmieniał aktywnej aplikacji.
+
+## Rambler jako eksplorator (dwa panele)
+
+**Preferencje > Pulpit > Okna folderów** przełącza okna folderów między zwykłym Ramblerem (jedna
+lista, każdy folder pamięta swoje okno) a **eksploratorem** – oknem w stylu klasycznych
+eksploratorów z końca lat 90. ze sposobem pracy dwupanelowych menedżerów plików z pulpitów
+16-bitowych:
+
+- **Pasek dużych płaskich przycisków z podpisami** (unoszą się pod kursorem): Wstecz, Dalej,
+  W górę · Foldery (drzewo wł./wył.), Dwa panele, Zamień · Kopiuj do, Przenieś do, Usuń · Widoki
+  (lista/ikony), Serwer. Pod nim pole **Adres** z **Przejdź** (działa `~` i ścieżki wewnątrz
+  archiwów).
+- **Drzewo folderów** po lewej (kropkowane linie, wczytywane przy rozwijaniu): Nirvana HD,
+  zamontowane dyski, połączone serwery, Kosz; podąża za panelem źródłowym, klik otwiera tam
+  folder. Przegrodę można przeciągać.
+- **Dwa panele – ŹRÓDŁO i CEL:** aktywny panel to źródło (niebieska etykieta), każde polecenie
+  Ramblera działa na nim; drugi to cel. **F5** kopiuje, **F6** przenosi zaznaczenie do celu, **F7**
+  tworzy folder, **F8** usuwa, **Tab** zamienia źródło; przeciąganie między panelami też działa.
+  Pasek stanu pokazuje liczbę obiektów, zaznaczenie z rozmiarem i dokąd idzie Kopiuj/Przenieś.
+- **Typy plików** (Narzędzia > Typy plików…): nazwa, wzorce (`*.zip *.tar.gz`…) i akcje – pierwsza
+  to dwuklik, wszystkie są w menu kontekstowym. Wstawki: `{f}` plik, `{F}` wszystkie zaznaczone,
+  `{s}` jego folder, `{d}` drugi panel, `{n}` nazwa bez końcówki; `@browse` (otwórz jak folder),
+  `@wallpaper`, `@shell polecenie` (w Nirvana Shell). Wbudowane: archiwa, skrypty powłoki, programy
+  w Pythonie, tekst, zdjęcia, pakiety Debiana. Zapis w `~/.config/nirvana/filetypes.conf`.
+- **Archiwa jak foldery:** dwuklik na zip/tar/7z/rar/iso… otwiera je jak folder (rozpakowane przez
+  `bsdtar` do `~/.cache/nirvana/archives`; adres pokazuje `~/x.zip/…`, pasek stanu mówi, że to
+  kopia). *Rozpakuj tutaj*, *Rozpakuj do drugiego panelu*, *Pokaż zawartość*; **Ikony > Spakuj do
+  archiwum…** robi zip/tar.gz/tar.xz/7z z zaznaczenia.
+- **Serwery:** **Okno > Połącz z serwerem…** (albo przycisk *Serwer*): SFTP przez `sshfs` (hasło
+  albo klucz SSH), FTP przez `gio`/gvfs; foldery serwera otwierają się jak foldery, są w drzewie
+  i działają z oboma panelami (kopiowanie, przenoszenie, rozpakowanie prosto na serwer).
+  *Rozłącz wszystkie* w tym samym oknie.
+- Potrzebne `libarchive-tools` (bsdtar) i `sshfs` – polecane przez paczkę; FTP wymaga
+  `gvfs-backends` i `gvfs-fuse`.
 
 ## Rambler: praca z plikami
 

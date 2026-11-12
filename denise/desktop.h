@@ -15,6 +15,7 @@
 #include <functional>
 #include <memory>
 #include <set>
+#include <map>
 #include <string>
 #include <vector>
 
@@ -32,12 +33,15 @@ std::string tooltypes(const std::string &path);             // launch arguments 
 std::vector<std::string> split_args(const std::string &s);
 
 // A top-level Rambler window: a folder or a dialog.
+struct Explorer;   // explorer.cxx: the tree, two panes, the button bar
+
 class NWin : public Fl_Double_Window {
 public:
   NWin(Desktop *d, int X, int Y, int W, int H, const char *title, bool dialog);
 
   Desktop *desk;
-  FolderPane *pane = nullptr;                  // nullptr for dialogs
+  FolderPane *pane = nullptr;                  // nullptr for dialogs; in an explorer: the active pane
+  Explorer *ex = nullptr;                      // an explorer window (Preferences > Desktop)
   std::string path;
   // Folder window: its own menu bar (Window, Icons) and a navigation bar
   // (back, forward, parent folder, location) above the content.
@@ -198,6 +202,36 @@ public:
   void dock_remove();
   void format_disk();
   void reset_nirvana();
+  // --- the explorer (explorer.cxx): folder tree, one or two panes (source/destination) ---
+  bool explorer_mode() const { return desk_set_.folder_style == "explorer"; }
+  void build_explorer(NWin *win, int ox, int oy, int W, int H, const std::string &path);
+  void ex_layout(NWin *w);
+  void ex_activate(NWin *w, int idx);
+  void ex_after_nav(NWin *w);
+  bool ex_key(NWin *w);
+  FolderPane *ex_pane_at(NWin *w, int lx, int ly);
+  void ex_toggle_tree();
+  void ex_toggle_dual();
+  void ex_copy_to_other();
+  void ex_move_to_other();
+  void ex_swap_panes();
+  Fl_Menu_Bar *make_folder_menubar(NWin *win, int X, int Y, int W);
+  void setup_pane(NWin *win, FolderPane *p, int idx);   // callbacks of a file list (idx: explorer pane, -1)
+  // --- file types (filetypes.cxx): actions for double click and the context menu ---
+  bool run_filetype(const Entry &e, NWin *from, int action);   // false: no type / no action
+  // the type's actions for the context menu of the selection (label, what it does)
+  std::vector<std::pair<std::string, std::function<void()>>> filetype_menu(const std::vector<Entry> &sel, NWin *w);
+  void edit_filetypes();
+  // --- archives as folders and servers (explorer.cxx) ---
+  void browse_archive(NWin *w, const std::string &archive);
+  bool is_archive_cache(const std::string &path, std::string *archive = nullptr, std::string *inner = nullptr) const;
+  void pack_selected();
+  void connect_server();
+  void disconnect_server(const std::string &mountpoint);
+  std::vector<std::pair<std::string, std::string>> servers() const;   // (label, mount point)
+  mutable std::map<std::string, std::string> archive_dirs_;   // cache folder -> archive file
+  bool is_known(NWin *w) const { return known(w); }
+  void error_box(const std::string &t) { guru(t); }
   static void set_argv(int argc, char **argv);
   NWin *begin_form(const std::string &title, int W, int H, const Entry *icon, const std::string &text,
                    int &ox, int &oy);
@@ -290,7 +324,7 @@ private:
   void transfer(const std::vector<Entry> &items, const std::string &dest, bool copy, bool replace);
   void path_moved(const std::string &from, const std::string &to);   // windows and position memory
   // dragging
-  struct DropTarget { NWin *win = nullptr; int item = -2; int icon = -1; };
+  struct DropTarget { NWin *win = nullptr; FolderPane *pane = nullptr; int item = -2; int icon = -1; };
   DropTarget target_at(int xr, int yr);
   void drag_start(NWin *src, const std::vector<Entry> &items);
   void drag_move(int xr, int yr);
@@ -299,9 +333,11 @@ private:
   struct {
     bool active = false;
     NWin *src = nullptr;
+    FolderPane *src_pane = nullptr;
     std::vector<Entry> items;
     Fl_Window *ghost = nullptr;
     NWin *hl_win = nullptr;
+    FolderPane *hl_pane = nullptr;
     int px = 0, py = 0;   // where the drag started (screen)
   } drag_;
   int icon_drop_ = -1;            // the desktop icon highlighted as the drop target
