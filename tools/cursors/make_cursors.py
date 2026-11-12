@@ -201,6 +201,44 @@ ALIASES = {
     "link": ["alias", "dnd-link", "3085a0e285430894940527032f8b26df", "640fb0e74195791501fd1ed57b41487f"],
 }
 
+# The 16-bit style arrow: leaning strongly, the head ending in a barb on the left and the tail
+# going off diagonally to the lower right (drawn by hand on the 16 x 16 grid)
+CLASSIC_ARROW = [
+    "##..............",
+    "####............",
+    ".#####..........",
+    ".#######........",
+    "..########......",
+    "..##########....",
+    "...#######......",
+    "...########.....",
+    "....###.####....",
+    "....##...####...",
+    ".....#....####..",
+    "...........####.",
+    "............###.",
+    ".............#..",
+    "................",
+    "................",
+]
+# the same arrow, smooth, on the 32 grid (the outline style)
+LEAN_ARROW = [(1, 1), (24.6, 11.2), (14.8, 13.6), (29.2, 24.4), (26, 27.8), (12.6, 18.2), (10.4, 21.6)]
+
+
+# the 16-bit pointer's proportions: a wide head pointing up and to the left, a short thick tail
+WIDE_HEAD = [(0.6, 0.6), (25.5, 9.5), (15.5, 13.5), (13.5, 15.5), (9.5, 25.5)]
+WIDE_TAIL = [(12.5, 16.5), (16.5, 12.5), (27.5, 23.5), (23.5, 27.5)]
+
+
+def lean_arrow(d, s):
+    d.polygon(P(WIDE_HEAD, s), fill=255)
+    d.polygon(P(WIDE_TAIL, s), fill=255)
+
+
+def lean_arrow_small(d, s):
+    d.polygon(P([(x * 0.62, y * 0.62) for x, y in LEAN_ARROW], s), fill=255)
+
+
 # --------------------------------------------------------------------------------------------
 # The classic style: some shapes drawn by hand on the 16 x 16 grid (a polygon at 16 pixels
 # loses them). "#" = the shape, "." = empty; the edge and the shine are added around it.
@@ -280,14 +318,12 @@ def classic_watch(frame):
 
 SMALL_ARROW = [
     "#.......",
-    "##......",
     "###.....",
-    "####....",
-    "#####...",
-    "######..",
-    "####....",
-    "#.##....",
-    "...##...",
+    ".####...",
+    ".######.",
+    "..####..",
+    "..#.###.",
+    ".....##.",
 ]
 
 
@@ -323,12 +359,18 @@ def classic_question():
 
 
 CLASSIC = {
+    "left_ptr": lambda: hard_mask(lean_arrow, 16),
     "watch": [classic_watch(i) for i in range(FRAMES)],
     "left_ptr_watch": [classic_progress(i) for i in range(FRAMES)],
     "sb_h_double_arrow": lambda: grid(H_ARROW),
     "sb_v_double_arrow": lambda: grid(H_ARROW).transpose(Image.TRANSPOSE),
     "fleur": lambda: grid(MOVE),
     "question_arrow": classic_question,
+}
+
+# the outline style: the leaning arrow too (the composite ones keep their small arrow)
+OUTLINE = {
+    "left_ptr": lean_arrow,
 }
 
 # --------------------------------------------------------------------------------------------
@@ -338,6 +380,8 @@ RED = (0xD8, 0x1E, 0x1E)
 RED_LIGHT = (0xFF, 0x7A, 0x5A)
 RED_DARK = (0x6A, 0x08, 0x08)
 CREAM = (0xFF, 0xE8, 0xC8)
+AMIGA_RED = (0xE0, 0x20, 0x20)
+AMIGA_LIGHT = (0xFF, 0xD8, 0xB8)
 BLACK = (0x10, 0x08, 0x08)
 
 
@@ -374,24 +418,26 @@ def style_classic(draw, size):
     # drawn on a 16 x 16 grid (the pixels of the era), enlarged by whole pixels;
     # draw: a shape (drawn at 16 pixels) or a hand-drawn grid (a function without arguments)
     n = 16
-    k = max(1, size // n)
+    k = classic_scale(size)
     m = draw() if draw.__code__.co_argcount == 0 else hard_mask(draw, n)
-    edge = ImageChops.subtract(dilate(m, 1), m)
-    # the shine: pixels of the shape whose upper-left neighbor is outside it
-    up = ImageChops.subtract(m, shift(m, 1, 1))
-    # the shade: pixels whose lower-right neighbor is outside it
-    down = ImageChops.subtract(m, shift(m, -1, -1))
+    # the three colors of the 16-bit pointers: red inside, a light edge where the light comes
+    # from (up, left), black where the shade is (down, right) - and no outline around
+    up = ImageChops.subtract(m, shift(m, 1, 0))                      # the left edge
+    up = ImageChops.lighter(up, ImageChops.subtract(m, shift(m, 0, 1)))   # and the top
+    down = ImageChops.subtract(m, shift(m, -1, 0))
+    down = ImageChops.lighter(down, ImageChops.subtract(m, shift(m, 0, -1)))
+    down = ImageChops.subtract(down, up)
     img = Image.new("RGBA", (n, n), (0, 0, 0, 0))
-    img = Image.alpha_composite(img, solid(BLACK, n, edge))
-    img = Image.alpha_composite(img, solid(RED, n, m))
-    img = Image.alpha_composite(img, solid(RED_DARK, n, ImageChops.subtract(down, up)))
-    img = Image.alpha_composite(img, solid(CREAM, n, up))
+    img = Image.alpha_composite(img, solid(AMIGA_RED, n, m))
+    img = Image.alpha_composite(img, solid(BLACK, n, down))
+    img = Image.alpha_composite(img, solid(AMIGA_LIGHT, n, up))
     img = img.resize((n * k, n * k), Image.NEAREST)
-    if img.size[0] != size:   # 24: the 16-grid enlarged x1, centered on the hotspot's grid
-        canvas = Image.new("RGBA", (size, size), (0, 0, 0, 0))
-        canvas.paste(img, (0, 0))
-        img = canvas
     return img, 1.0
+
+
+def classic_scale(size):
+    """16 -> x1, 24 and 32 -> x2 (the pixels doubled), 48 -> x3, 64 -> x4"""
+    return 1 if size < 20 else max(2, round(size / 16))
 
 
 def soft_shadow(m, size, off, blur, alpha):
@@ -400,13 +446,19 @@ def soft_shadow(m, size, off, blur, alpha):
 
 
 def style_outline(draw, size):
+    # the 16-bit pointer made smooth: red, a light edge up and left, a black edge down and
+    # right, a thin black line around and a soft shadow
     m = mask_of(draw, size)
-    w = max(1, round(size / 24))
-    outline = dilate(m, w)
+    w = max(1, round(size / 18))
+    line = dilate(m, max(1, w // 2))
+    up = ImageChops.subtract(m, shift(m, w, w))
+    down = ImageChops.subtract(m, shift(m, -w, -w))
     img = Image.new("RGBA", (size, size), (0, 0, 0, 0))
-    img = Image.alpha_composite(img, soft_shadow(outline, size, max(1, size // 16), size / 40, 0.45))
-    img = Image.alpha_composite(img, solid((0xFF, 0xFF, 0xFF), size, outline))
-    img = Image.alpha_composite(img, solid(RED, size, m))
+    img = Image.alpha_composite(img, soft_shadow(line, size, max(1, size // 14), size / 36, 0.42))
+    img = Image.alpha_composite(img, solid(BLACK, size, line))
+    img = Image.alpha_composite(img, solid(AMIGA_RED, size, m))
+    img = Image.alpha_composite(img, solid((0x30, 0x00, 0x00), size, down))
+    img = Image.alpha_composite(img, solid(AMIGA_LIGHT, size, up))
     return img, 1.0
 
 
@@ -479,6 +531,8 @@ def build(theme, title, style):
     for name, (draw, (hx, hy)) in SHAPES.items():
         if style is style_classic and name in CLASSIC:
             draw = CLASSIC[name]
+        if style is style_outline and name in OUTLINE:
+            draw = OUTLINE[name]
         frames = draw if isinstance(draw, list) else [draw]
         images = []
         for size in SIZES:
@@ -486,7 +540,7 @@ def build(theme, title, style):
                 img, _ = style(fr, size)
                 s = size / U
                 if style is style_classic:
-                    k = max(1, size // 16)
+                    k = classic_scale(size)
                     xh, yh = int(hx / 2) * k, int(hy / 2) * k
                 else:
                     xh, yh = int(round(hx * s)), int(round(hy * s))

@@ -199,11 +199,33 @@ static void apply_scale() {
   for (int i = 0; i < Fl::screen_count(); i++) Fl::screen_scale(i, g_scale);
 }
 
+// Every Nirvana program follows the pointer chosen in Appearance at once: the panel tells
+// everybody through a property of the root window (APPEARANCE_ATOM)
+static void watch_pointer() {
+#if defined(FLTK_USE_X11)
+  Display *d = fl_x11_display();
+  if (!d) return;
+  Window root = DefaultRootWindow(d);
+  XWindowAttributes wa;
+  XGetWindowAttributes(d, root, &wa);
+  XSelectInput(d, root, wa.your_event_mask | PropertyChangeMask);
+  static Atom at = XInternAtom(d, APPEARANCE_ATOM, False);
+  Fl::add_system_handler([](void *ev, void *) {
+    auto *e = (XEvent *)ev;
+    if (e->type == PropertyNotify && e->xproperty.atom == at && e->xproperty.window == DefaultRootWindow(fl_x11_display()))
+      apply_cursor(read_appearance());
+    return 0;   // the others may need it too (the desktop, the window manager reload everything)
+  }, nullptr);
+#endif
+}
+
 void init() {
   init_i18n();   // before the first interface text
   Fl::scheme("none");
   reload_appearance();   // color scheme from ~/.config/nirvana/appearance.conf
   apply_scale();
+  apply_cursor(read_appearance());   // now with the display open: its pointer theme
+  watch_pointer();
 
   int f = FL_FREE_BOXTYPE;
   UP_BOX      = Fl_Boxtype(f++); Fl::set_boxtype(UP_BOX, up_box, 1, 1, 2, 2);

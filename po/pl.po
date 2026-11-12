@@ -3,7 +3,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Nirvana Desktop 0.1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-12 18:15+0000\n"
+"POT-Creation-Date: 2026-11-12 18:24+0000\n"
 "PO-Revision-Date: 2026-11-09 13:00+0000\n"
 "Last-Translator: Nirvana Desktop\n"
 "Language-Team: Polish\n"
@@ -13,133 +13,133 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=(n==1 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
 
-#: alice/appearance.cxx:138
+#: alice/appearance.cxx:136
 msgid "Window"
 msgstr "Okno"
 
-#: alice/appearance.cxx:138 denise/about.cxx:441
+#: alice/appearance.cxx:136 denise/about.cxx:441
 msgid "Icons"
 msgstr "Ikony"
 
-#: alice/appearance.cxx:138 dm/nirvana-dm-greeter.cxx:434
+#: alice/appearance.cxx:136 dm/nirvana-dm-greeter.cxx:434
 #: dm/nirvana-dm-greeter.cxx:435 dm/nirvana-dm-greeter.cxx:436
 msgid "Special"
 msgstr "Narzędzia"
 
-#: alice/appearance.cxx:149 alice/desktop.cxx:49 denise/sniff.cxx:244
+#: alice/appearance.cxx:147 alice/desktop.cxx:49 denise/sniff.cxx:244
 #: platinum/filedialog.cxx:409
 msgid "Documents"
 msgstr "Dokumenty"
 
-#: alice/appearance.cxx:194
+#: alice/appearance.cxx:192
 msgid "3 items, 12.4 GB free"
 msgstr "3 elementy, 12,4 GB wolne"
 
-#: alice/appearance.cxx:194
+#: alice/appearance.cxx:192
 msgid "2 items"
 msgstr "2 elementy"
 
-#: alice/appearance.cxx:203 platinum/filedialog.cxx:412
+#: alice/appearance.cxx:201 platinum/filedialog.cxx:412
 msgid "Music"
 msgstr "Muzyka"
 
-#: alice/appearance.cxx:204
+#: alice/appearance.cxx:202
 msgid "Letter.txt"
 msgstr "List.txt"
 
-#: alice/appearance.cxx:205
+#: alice/appearance.cxx:203
 msgid "Game"
 msgstr "Gra"
 
-#: alice/appearance.cxx:210
+#: alice/appearance.cxx:208
 msgid "Photos"
 msgstr "Zdjęcia"
 
-#: alice/appearance.cxx:237
+#: alice/appearance.cxx:235
 msgid "Source: %1"
 msgstr "Źródło: %1"
 
-#: alice/appearance.cxx:237
+#: alice/appearance.cxx:235
 msgid "custom"
 msgstr "własny"
 
-#: alice/appearance.cxx:304 alice/preferences.cxx:174 denise/gary.cxx:117
+#: alice/appearance.cxx:303 alice/preferences.cxx:174 denise/gary.cxx:117
 msgid "Appearance"
 msgstr "Wygląd"
 
-#: alice/appearance.cxx:307
+#: alice/appearance.cxx:306
 msgid "Color Scheme"
 msgstr "Schemat kolorów"
 
-#: alice/appearance.cxx:320 platinum/platinum.cxx:1328
+#: alice/appearance.cxx:319 platinum/platinum.cxx:1350
 msgid "Preview"
 msgstr "Podgląd"
 
-#: alice/appearance.cxx:327
+#: alice/appearance.cxx:326
 msgid "Title bar:"
 msgstr "Pasek tytułu:"
 
-#: alice/appearance.cxx:328
+#: alice/appearance.cxx:327
 msgid "As in scheme|Stripes (Platinum)|Solid color|Gradient|Glass"
 msgstr "Jak w schemacie|Prążki (Platinum)|Jednolity kolor|Gradient|Szkło"
 
-#: alice/appearance.cxx:332
+#: alice/appearance.cxx:331
 msgid "Desktop background:"
 msgstr "Tło biurka:"
 
-#: alice/appearance.cxx:340
+#: alice/appearance.cxx:339
 msgid "Colors:"
 msgstr "Kolory:"
 
-#: alice/appearance.cxx:342
+#: alice/appearance.cxx:341
 msgid "Desktop color (gradient start)"
 msgstr "Kolor biurka (początek gradientu)"
 
-#: alice/appearance.cxx:346
+#: alice/appearance.cxx:345
 msgid "Desktop color"
 msgstr "Kolor biurka"
 
-#: alice/appearance.cxx:353 alice/appearance.cxx:358
+#: alice/appearance.cxx:352 alice/appearance.cxx:357
 msgid "Second gradient color"
 msgstr "Drugi kolor gradientu"
 
-#: alice/appearance.cxx:363
+#: alice/appearance.cxx:362
 msgid "From scheme"
 msgstr "Ze schematu"
 
-#: alice/appearance.cxx:368
+#: alice/appearance.cxx:367
 msgid "Desktop pattern:"
 msgstr "Wzór biurka:"
 
-#: alice/appearance.cxx:374
+#: alice/appearance.cxx:373
 msgid "Direction:"
 msgstr "Kierunek:"
 
-#: alice/appearance.cxx:382
+#: alice/appearance.cxx:381
 msgid "Wallpaper:"
 msgstr "Tapeta:"
 
-#: alice/appearance.cxx:395
+#: alice/appearance.cxx:394
 msgid "None (pattern only)"
 msgstr "Brak (sam wzór)"
 
-#: alice/appearance.cxx:396
+#: alice/appearance.cxx:395
 msgid "Other File…"
 msgstr "Inny plik…"
 
-#: alice/appearance.cxx:407
+#: alice/appearance.cxx:406
 msgid "Choose Wallpaper"
 msgstr "Wybierz tapetę"
 
-#: alice/appearance.cxx:407 alice/user.cxx:333
+#: alice/appearance.cxx:406 alice/user.cxx:333
 msgid "Images"
 msgstr "Obrazy"
 
-#: alice/appearance.cxx:415
+#: alice/appearance.cxx:414
 msgid "Wallpaper"
 msgstr "Tapeta"
 
-#: alice/appearance.cxx:416
+#: alice/appearance.cxx:415
 msgid ""
 "Could not open this image.\n"
 "The file may be damaged or in an unsupported format."
@@ -147,27 +147,27 @@ msgstr ""
 "Nie udało się otworzyć tego obrazu.\n"
 "Plik może być uszkodzony albo w nieobsługiwanym formacie."
 
-#: alice/appearance.cxx:436
+#: alice/appearance.cxx:435
 msgid "Wallpaper layout:"
 msgstr "Układ tapety:"
 
-#: alice/appearance.cxx:446
+#: alice/appearance.cxx:445
 msgid "Icon style:"
 msgstr "Styl ikon:"
 
-#: alice/appearance.cxx:447
+#: alice/appearance.cxx:446
 msgid "Retro|Platinum"
 msgstr "Retro|Platinum"
 
-#: alice/appearance.cxx:456
+#: alice/appearance.cxx:455
 msgid "Interface scale:"
 msgstr "Skala interfejsu:"
 
-#: alice/appearance.cxx:460
+#: alice/appearance.cxx:459
 msgid "Automatic (%1%)"
 msgstr "Automatycznie (%1%)"
 
-#: alice/appearance.cxx:467
+#: alice/appearance.cxx:466
 msgid ""
 "Larger text, icons and windows on high-resolution screens.\n"
 "After applying, the desktop restarts (application windows stay open)."
@@ -175,51 +175,51 @@ msgstr ""
 "Większe litery, ikony i okna na ekranach o dużej rozdzielczości.\n"
 "Po zastosowaniu biurko uruchomi się od nowa (okna programów zostają)."
 
-#: alice/appearance.cxx:471
+#: alice/appearance.cxx:470
 msgid "Window animations"
 msgstr "Animacje okien"
 
-#: alice/appearance.cxx:476
+#: alice/appearance.cxx:475
 msgid "Mouse Pointer"
 msgstr "Wskaźnik myszy"
 
-#: alice/appearance.cxx:482
+#: alice/appearance.cxx:481
 msgid "Pointer:"
 msgstr "Wskaźnik:"
 
-#: alice/appearance.cxx:484
+#: alice/appearance.cxx:483
 msgid "System default"
 msgstr "Systemowy"
 
-#: alice/appearance.cxx:500
+#: alice/appearance.cxx:499
 msgid "Pointer size:"
 msgstr "Rozmiar wskaźnika:"
 
-#: alice/appearance.cxx:501
+#: alice/appearance.cxx:500
 msgid "Automatic"
 msgstr "Automatyczny"
 
-#: alice/appearance.cxx:504
+#: alice/appearance.cxx:503
 msgid "Small (%1 px)"
 msgstr "Mały (%1 px)"
 
-#: alice/appearance.cxx:504
+#: alice/appearance.cxx:503
 msgid "Medium (%1 px)"
 msgstr "Średni (%1 px)"
 
-#: alice/appearance.cxx:504
+#: alice/appearance.cxx:503
 msgid "Normal (%1 px)"
 msgstr "Zwykły (%1 px)"
 
-#: alice/appearance.cxx:504
+#: alice/appearance.cxx:503
 msgid "Large (%1 px)"
 msgstr "Duży (%1 px)"
 
-#: alice/appearance.cxx:505
+#: alice/appearance.cxx:504
 msgid "Very large (%1 px)"
 msgstr "Bardzo duży (%1 px)"
 
-#: alice/appearance.cxx:520 alice/bluetooth.cxx:244 alice/datetime.cxx:386
+#: alice/appearance.cxx:519 alice/bluetooth.cxx:244 alice/datetime.cxx:386
 #: alice/network.cxx:245 alice/network.cxx:342 alice/network.cxx:390
 #: alice/network.cxx:492 alice/network.cxx:743 alice/power.cxx:143
 #: alice/printers.cxx:164 alice/printers.cxx:320 alice/saver.cxx:186
@@ -230,22 +230,22 @@ msgstr "Bardzo duży (%1 px)"
 #: denise/filetypes.cxx:389 denise/jobs.cxx:163 denise/menus.cxx:500
 #: denise/menus.cxx:768 denise/menus.cxx:1079 denise/menus.cxx:1188
 #: denise/menus.cxx:1193 denise/updates.cxx:272 platinum/filedialog.cxx:341
-#: platinum/filedialog.cxx:575 platinum/platinum.cxx:233
-#: platinum/platinum.cxx:1315 polkit/nirvana-polkit-agent.cxx:161
+#: platinum/filedialog.cxx:575 platinum/platinum.cxx:255
+#: platinum/platinum.cxx:1337 polkit/nirvana-polkit-agent.cxx:161
 #: shell/main.cxx:615
 msgid "Cancel"
 msgstr "Anuluj"
 
-#: alice/appearance.cxx:521 alice/datetime.cxx:387 alice/power.cxx:144
+#: alice/appearance.cxx:520 alice/datetime.cxx:387 alice/power.cxx:144
 #: alice/saver.cxx:187 alice/user.cxx:708
 msgid "Apply"
 msgstr "Zastosuj"
 
-#: alice/appearance.cxx:522 alice/bluetooth.cxx:255 alice/datetime.cxx:388
+#: alice/appearance.cxx:521 alice/bluetooth.cxx:255 alice/datetime.cxx:388
 #: alice/desktop.cxx:173 alice/power.cxx:145 alice/printers.cxx:443
 #: alice/saver.cxx:188 alice/shader.cxx:262 alice/shield.cxx:408
 #: alice/user.cxx:709 denise/about.cxx:617 denise/bluetooth.cxx:42
-#: denise/clock.cxx:174 denise/desktop.cxx:1782 platinum/platinum.cxx:232
+#: denise/clock.cxx:174 denise/desktop.cxx:1782 platinum/platinum.cxx:254
 msgid "OK"
 msgstr "OK"
 
@@ -334,7 +334,7 @@ msgstr ""
 "Potwierdź tylko, jeśli kody są takie same."
 
 #: alice/bluetooth.cxx:141 denise/shield_applet.cxx:196
-#: platinum/platinum.cxx:235
+#: platinum/platinum.cxx:257
 msgid "No"
 msgstr "Nie"
 
@@ -773,7 +773,7 @@ msgid "DNS servers:"
 msgstr "Serwery DNS:"
 
 #: alice/network.cxx:343 denise/filetypes.cxx:392 platinum/filedialog.cxx:246
-#: platinum/filedialog.cxx:248 platinum/platinum.cxx:1329
+#: platinum/filedialog.cxx:248 platinum/platinum.cxx:1351
 msgid "Save"
 msgstr "Zapisz"
 
@@ -1070,7 +1070,7 @@ msgstr "Tryb samolotowy włączony."
 msgid "Airplane mode is off."
 msgstr "Tryb samolotowy wyłączony."
 
-#: alice/network.cxx:762 platinum/platinum.cxx:236 shell/main.cxx:616
+#: alice/network.cxx:762 platinum/platinum.cxx:258 shell/main.cxx:616
 msgid "Close"
 msgstr "Zamknij"
 
@@ -3667,7 +3667,7 @@ msgid "Pack into an Archive…"
 msgstr "Spakuj do archiwum…"
 
 #: denise/menus.cxx:359 platinum/filedialog.cxx:298
-#: platinum/filedialog.cxx:553 platinum/platinum.cxx:1327
+#: platinum/filedialog.cxx:553 platinum/platinum.cxx:1349
 msgid "New Folder"
 msgstr "Nowy folder"
 
@@ -4567,7 +4567,7 @@ msgstr "Zaloguj"
 msgid "Preview: nobody is logged in from here."
 msgstr "Podgląd: stąd nikt nie zostanie zalogowany."
 
-#: insight/main.cxx:188
+#: insight/main.cxx:189
 msgid "untitled"
 msgstr "bez tytułu"
 
@@ -4955,7 +4955,7 @@ msgstr "%1 %2"
 msgid "Choose Folder"
 msgstr "Wybierz folder"
 
-#: platinum/filedialog.cxx:248 platinum/platinum.cxx:1316
+#: platinum/filedialog.cxx:248 platinum/platinum.cxx:1338
 msgid "Choose"
 msgstr "Wybierz"
 
@@ -4979,7 +4979,7 @@ msgstr "Folder wyżej (Backspace)"
 msgid "Show hidden files"
 msgstr "Pokaż ukryte pliki"
 
-#: platinum/filedialog.cxx:329 platinum/platinum.cxx:1330
+#: platinum/filedialog.cxx:329 platinum/platinum.cxx:1352
 msgid "Show:"
 msgstr "Pokaż:"
 
@@ -5033,174 +5033,174 @@ msgstr "Przejdź do folderu:"
 msgid "%2 %1, %3, %4"
 msgstr "%1 %2 %3, %4"
 
-#: platinum/platinum.cxx:234
+#: platinum/platinum.cxx:256
 msgid "Yes"
 msgstr "Tak"
 
-#: platinum/platinum.cxx:1310
+#: platinum/platinum.cxx:1332
 msgid "%1 item"
 msgid_plural "%1 items"
 msgstr[0] "%1 element"
 msgstr[1] "%1 elementy"
 msgstr[2] "%1 elementów"
 
-#: platinum/platinum.cxx:1317
+#: platinum/platinum.cxx:1339
 msgid "Add to Favorites"
 msgstr "Dodaj do ulubionych"
 
-#: platinum/platinum.cxx:1318
+#: platinum/platinum.cxx:1340
 msgid "All Files (*)"
 msgstr "Wszystkie pliki (*)"
 
-#: platinum/platinum.cxx:1319
+#: platinum/platinum.cxx:1341
 msgid "Custom Filter"
 msgstr "Własny filtr"
 
-#: platinum/platinum.cxx:1320
+#: platinum/platinum.cxx:1342
 msgid "The file already exists. Replace it?"
 msgstr "Plik już istnieje. Zastąpić go?"
 
-#: platinum/platinum.cxx:1321
+#: platinum/platinum.cxx:1343
 msgid "Favorites"
 msgstr "Ulubione"
 
-#: platinum/platinum.cxx:1322
+#: platinum/platinum.cxx:1344
 msgid "File:"
 msgstr "Plik:"
 
-#: platinum/platinum.cxx:1323
+#: platinum/platinum.cxx:1345
 msgid "Disks"
 msgstr "Dyski"
 
-#: platinum/platinum.cxx:1324
+#: platinum/platinum.cxx:1346
 msgid "Hidden files"
 msgstr "Ukryte pliki"
 
-#: platinum/platinum.cxx:1325
+#: platinum/platinum.cxx:1347
 msgid "Manage Favorites"
 msgstr "Zarządzaj ulubionymi"
 
-#: platinum/platinum.cxx:1326
+#: platinum/platinum.cxx:1348
 msgid "New folder name:"
 msgstr "Nazwa nowego folderu:"
 
-#: platinum/theme.cxx:45
+#: platinum/theme.cxx:46
 msgid "Plain"
 msgstr "Gładki"
 
-#: platinum/theme.cxx:45
+#: platinum/theme.cxx:46
 msgid "Dots"
 msgstr "Kropki"
 
-#: platinum/theme.cxx:45
+#: platinum/theme.cxx:46
 msgid "Polka dots"
 msgstr "Groszki"
 
-#: platinum/theme.cxx:45
+#: platinum/theme.cxx:46
 msgid "Grid"
 msgstr "Krata"
 
-#: platinum/theme.cxx:45
+#: platinum/theme.cxx:46
 msgid "Fine grid"
 msgstr "Drobna kratka"
 
-#: platinum/theme.cxx:45
+#: platinum/theme.cxx:46
 msgid "Checkerboard"
 msgstr "Szachownica"
 
-#: platinum/theme.cxx:46
+#: platinum/theme.cxx:47
 msgid "Diagonal stripes"
 msgstr "Ukośne prążki"
 
-#: platinum/theme.cxx:46
+#: platinum/theme.cxx:47
 msgid "Horizontal stripes"
 msgstr "Paski poziome"
 
-#: platinum/theme.cxx:46
+#: platinum/theme.cxx:47
 msgid "Vertical stripes"
 msgstr "Paski pionowe"
 
-#: platinum/theme.cxx:46
+#: platinum/theme.cxx:47
 msgid "Bricks"
 msgstr "Cegiełki"
 
-#: platinum/theme.cxx:47
+#: platinum/theme.cxx:48
 msgid "Raster"
 msgstr "Raster"
 
-#: platinum/theme.cxx:47
+#: platinum/theme.cxx:48
 msgid "Diamonds"
 msgstr "Romby"
 
-#: platinum/theme.cxx:47
+#: platinum/theme.cxx:48
 msgid "Crosses"
 msgstr "Krzyżyki"
 
-#: platinum/theme.cxx:47
+#: platinum/theme.cxx:48
 msgid "Zigzag"
 msgstr "Zygzak"
 
-#: platinum/theme.cxx:47
+#: platinum/theme.cxx:48
 msgid "Herringbone"
 msgstr "Jodełka"
 
-#: platinum/theme.cxx:47
+#: platinum/theme.cxx:48
 msgid "Weave"
 msgstr "Tkanina"
 
-#: platinum/theme.cxx:48
+#: platinum/theme.cxx:49
 msgid "Waves"
 msgstr "Fale"
 
-#: platinum/theme.cxx:48
+#: platinum/theme.cxx:49
 msgid "Scales"
 msgstr "Łuski"
 
-#: platinum/theme.cxx:48
+#: platinum/theme.cxx:49
 msgid "Stars"
 msgstr "Gwiazdki"
 
-#: platinum/theme.cxx:48
+#: platinum/theme.cxx:49
 msgid "Sand"
 msgstr "Piasek"
 
-#: platinum/theme.cxx:50
+#: platinum/theme.cxx:51
 msgid "Pattern"
 msgstr "Wzór"
 
-#: platinum/theme.cxx:50
+#: platinum/theme.cxx:51
 msgid "Solid color"
 msgstr "Jednolity kolor"
 
-#: platinum/theme.cxx:50
+#: platinum/theme.cxx:51
 msgid "Gradient"
 msgstr "Gradient"
 
-#: platinum/theme.cxx:52
+#: platinum/theme.cxx:53
 msgid "Vertical"
 msgstr "Pionowy"
 
-#: platinum/theme.cxx:52
+#: platinum/theme.cxx:53
 msgid "Horizontal"
 msgstr "Poziomy"
 
-#: platinum/theme.cxx:52
+#: platinum/theme.cxx:53
 msgid "Diagonal"
 msgstr "Ukośny"
 
-#: platinum/theme.cxx:52
+#: platinum/theme.cxx:53
 msgid "Radial"
 msgstr "Promienisty"
 
-#: platinum/theme.cxx:141
+#: platinum/theme.cxx:142
 msgid "Graphite"
 msgstr "Grafit"
 
-#: platinum/theme.cxx:141
+#: platinum/theme.cxx:142
 msgid "Retro Blue"
 msgstr "Retro niebieski"
 
-#: platinum/theme.cxx:141
+#: platinum/theme.cxx:142
 msgid "Glacier"
 msgstr "Lodowiec"
 

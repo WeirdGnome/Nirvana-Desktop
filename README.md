@@ -41,7 +41,7 @@ What changed in each version: [CHANGELOG.md](CHANGELOG.md).
 
 Unpack the sources and run the installer:
 
-    tar xzf nirvana-desktop-0.0.53.tar.gz && cd nirvana-desktop
+    tar xzf nirvana-desktop-0.0.54.tar.gz && cd nirvana-desktop
     sudo ./install.sh                 # or: sudo ./install.sh --login-screen
 
 The installer:
@@ -576,11 +576,14 @@ the whole system: Rambler and Insight reload the palette without a restart.
   ![The Retro Blue scheme with Retro icons](docs/img/icons-retro.png)
 - **Window animations**: on or off.
 - **Mouse pointer**: the system's, Nirvana's red **Retro 16** pointers – *classic* (the
-  pixels of the 16-bit era, a slanted arrow with a black edge and a light shine, enlarged by
-  whole pixels), *outline* (red with a white outline) and *glass* (a glassy red) – or any other installed Xcursor theme;
-  size *Automatic* or 16–64 px. A preview shows the arrow, the hand and the busy clock. The
-  pointer changes at once over the desktop and Nirvana's windows; other programs take it when
-  they start (the session passes `XCURSOR_THEME`/`XCURSOR_SIZE`). Every shape is Nirvana's own
+  pixels of the 16-bit era: a leaning arrow with a wide head and a short tail, red inside, a light
+  edge up and left, black down and right, no line around; enlarged by whole pixels), *outline*
+  (the same made smooth, with a thin black line and a shadow) and *glass* (a glassy red) – or any
+  other installed Xcursor theme; size *Automatic* (24 px times the interface scale) or 16–64 px.
+  A preview shows the arrow, the hand and the busy clock. The pointer changes **at once
+  everywhere** – the window manager gives every pointer already made, in every program, its new
+  picture (XFixes), and publishes it for GTK programs (XSETTINGS, when no other settings manager
+  runs); programs started later get `XCURSOR_THEME`/`XCURSOR_SIZE`. Every shape is Nirvana's own
   (`tools/cursors/make_cursors.py` draws them; the themes are installed into `share/icons`).
 
   ![The red Retro 16 pointers: classic, with an outline, glassy](docs/img/pointers.png)

@@ -1,6 +1,12 @@
 # Lista zmian
 Wszystkie ważniejsze zmiany w Nirvana Desktop, od najnowszych. English: [CHANGELOG.md](CHANGELOG.md).
 
+## 0.0.54 – 2026-11-12
+
+- **Wskaźnik zmienia się od razu wszędzie.** Wcześniej otwarte okna zachowywały stary wskaźnik, dopóki się ich nie zamknęło i nie otworzyło ponownie (FLTK, GTK i Qt trzymają utworzone wskaźniki). Teraz menedżer okien podmienia każdy już utworzony wskaźnik we wszystkich programach (XFixes), ogłasza wskaźnik programom GTK (XSETTINGS – tylko gdy nie działa inny menedżer ustawień), a każdy program Nirvany – także sam panel Wygląd – idzie za zmianą.
+- Rozmiar wskaźnika *Automatyczny*: 24 px razy skala interfejsu (domysł Xcursora dawał malutki wskaźnik 16 px).
+- **Retro 16 · klasyczny i · z obwódką narysowane od nowa** bliżej czerwonych wskaźników 16-bitowych komputerów domowych: pochylona strzałka z szerokim grotem i krótkim grubym ogonem; klasyczny w trzech kolorach – czerwony w środku, jasna krawędź u góry i z lewej, czarna u dołu i z prawej, bez obwódki, piksele podwojone przy 24 i 32 px; z obwódką to samo gładko, z cienką czarną linią i cieniem. Szklany bez zmian.
+
 ## 0.0.53 – 2026-11-12
 
 - **Dźwięk opróżniania Kosza:** papier zgniatany w kulkę i wrzucany do kosza, w duchu pulpitów z końca lat 90. – własny Nirvany, syntetyzowany (nic nagranego ani skopiowanego). `~/.local/share/nirvana/sounds/trash-empty.wav` (albo .oga/.ogg) go zastępuje, pusty plik go wyłącza.

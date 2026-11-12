@@ -7,6 +7,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <cstdio>
 #include <cstdlib>
 #include <cstring>
 #include <ctime>
@@ -331,7 +332,6 @@ bool write_appearance(const Appearance &a) {
 // ---------------------------------------------------------------------------
 // Applying a scheme
 // ---------------------------------------------------------------------------
-static void apply_cursor(const Appearance &a);
 void apply(const Scheme &s, const Appearance &a) {
   g_scheme = s;
   g_app = a;
@@ -465,7 +465,7 @@ std::vector<std::pair<std::string, std::string>> list_cursor_themes() {
 // The pointer for this program and the programs it starts: the environment (Xcursor reads
 // XCURSOR_THEME/XCURSOR_SIZE/XCURSOR_PATH) and, with the display open, the display's theme.
 // The empty theme gives back the one the session started with.
-static void apply_cursor(const Appearance &a) {
+void apply_cursor(const Appearance &a) {
   static bool saved = false;
   static std::string env_theme, env_size;
   static bool had_theme = false, had_size = false;
@@ -482,9 +482,11 @@ static void apply_cursor(const Appearance &a) {
   if (!theme.empty()) setenv("XCURSOR_THEME", theme.c_str(), 1);
   else if (had_theme) setenv("XCURSOR_THEME", env_theme.c_str(), 1);
   else unsetenv("XCURSOR_THEME");
-  if (a.cursor_size > 0) setenv("XCURSOR_SIZE", std::to_string(a.cursor_size).c_str(), 1);
-  else if (had_size) setenv("XCURSOR_SIZE", env_size.c_str(), 1);
-  else unsetenv("XCURSOR_SIZE");
+  // "Automatic": 24 pixels times the interface scale (Xcursor's own guess from the screen
+  // was often 16-20 px - a tiny pointer, the smallest picture of the theme)
+  int size = a.cursor_size > 0 ? a.cursor_size : had_size && atoi(env_size.c_str()) > 0 ? atoi(env_size.c_str())
+                                                : (int)std::lround(24 * configured_scale(a));
+  setenv("XCURSOR_SIZE", std::to_string(std::max(8, size)).c_str(), 1);
 #if defined(FLTK_USE_X11)
   if (fl_x11_display()) {
     const char *t = getenv("XCURSOR_THEME");

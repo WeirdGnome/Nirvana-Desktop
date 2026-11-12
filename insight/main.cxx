@@ -22,6 +22,7 @@
 #include <X11/Xutil.h>
 #include <X11/cursorfont.h>
 #include <X11/Xcursor/Xcursor.h>
+#include <X11/extensions/Xfixes.h>
 #include <X11/keysym.h>
 
 #include <algorithm>
@@ -1082,9 +1083,109 @@ static void set_root_cursor() {
   XFlush(dpy);
 }
 
+// ---------------------------------------------------------------------------
+// XSETTINGS (only when no other settings manager runs): the pointer for GTK programs -
+// Gtk/CursorThemeName and Gtk/CursorThemeSize. GTK follows a change at once, so Firefox,
+// the editors... take the new pointer without being opened again.
+// ---------------------------------------------------------------------------
+static Window xs_win = 0;
+static Atom A_XS_SEL, A_XS_SETTINGS;
+static unsigned xs_serial = 0;
+
+static void xsettings_publish() {
+  if (!xs_win) return;
+  const char *t = getenv("XCURSOR_THEME");
+  const char *z = getenv("XCURSOR_SIZE");
+  std::string theme = t && *t ? t : "";
+  int size = z ? atoi(z) : 0;
+  std::string b;
+  auto u8 = [&](unsigned v) { b += (char)v; };
+  auto u16 = [&](unsigned v) { b.append((const char *)&v, 2); };   // native byte order (said in byte 0)
+  auto u32 = [&](uint32_t v) { b.append((const char *)&v, 4); };
+  auto pad = [&] { while (b.size() % 4) b += '\0'; };
+  uint32_t one = 1;
+  u8(*(char *)&one == 1 ? 0 : 1);   // LSBFirst = 0, MSBFirst = 1
+  u8(0); u8(0); u8(0);
+  u32(++xs_serial);
+  int n = (theme.empty() ? 0 : 1) + (size > 0 ? 1 : 0);
+  u32((uint32_t)n);
+  auto name = [&](int type, const char *nm) {
+    u8((unsigned)type); u8(0); u16((unsigned)strlen(nm));
+    b += nm; pad();
+    u32(xs_serial);
+  };
+  if (!theme.empty()) {
+    name(1, "Gtk/CursorThemeName");
+    u32((uint32_t)theme.size());
+    b += theme; pad();
+  }
+  if (size > 0) {
+    name(0, "Gtk/CursorThemeSize");
+    u32((uint32_t)size);
+  }
+  XChangeProperty(dpy, xs_win, A_XS_SETTINGS, A_XS_SETTINGS, 8, PropModeReplace, (const unsigned char *)b.data(), (int)b.size());
+  XFlush(dpy);
+}
+
+static void xsettings_start() {
+  A_XS_SEL = XInternAtom(dpy, "_XSETTINGS_S0", False);
+  A_XS_SETTINGS = XInternAtom(dpy, "_XSETTINGS_SETTINGS", False);
+  if (XGetSelectionOwner(dpy, A_XS_SEL) != None) return;   // another manager (xsettingsd...): leave it
+  xs_win = XCreateSimpleWindow(dpy, root, -10, -10, 1, 1, 0, 0, 0);
+  xsettings_publish();
+  XSetSelectionOwner(dpy, A_XS_SEL, xs_win, CurrentTime);
+  if (XGetSelectionOwner(dpy, A_XS_SEL) != xs_win) { XDestroyWindow(dpy, xs_win); xs_win = 0; return; }
+  XClientMessageEvent m{};
+  m.type = ClientMessage;
+  m.window = root;
+  m.message_type = XInternAtom(dpy, "MANAGER", False);
+  m.format = 32;
+  m.data.l[0] = CurrentTime;
+  m.data.l[1] = (long)A_XS_SEL;
+  m.data.l[2] = (long)xs_win;
+  XSendEvent(dpy, root, False, StructureNotifyMask, (XEvent *)&m);
+  XFlush(dpy);
+}
+
+// The pointer changed in Appearance: every pointer already made - in every program (FLTK keeps
+// its pointers for good, GTK and Qt theirs) - takes its new picture at once. Xcursor names the
+// pointers it makes ("left_ptr", "xterm"...); XFixes changes all pointers of a name together.
+static void replace_cursors() {
+  static std::string last;
+  const char *t = getenv("XCURSOR_THEME");
+  const char *z = getenv("XCURSOR_SIZE");
+  std::string now = std::string(t ? t : "") + "/" + (z ? z : "");
+  if (now == last) return;
+  bool first = last.empty();
+  last = now;
+  if (first) return;   // the start: nothing made yet with another theme
+  int ev, er;
+  if (!XFixesQueryExtension(dpy, &ev, &er)) return;
+  static const char *const names[] = {
+      "left_ptr", "default", "arrow", "top_left_arrow", "xterm", "text", "ibeam", "watch", "wait", "left_ptr_watch",
+      "progress", "hand1", "hand2", "pointer", "pointing_hand", "crosshair", "cross", "tcross", "fleur", "move",
+      "all-scroll", "grab", "grabbing", "openhand", "closedhand", "sb_h_double_arrow", "sb_v_double_arrow",
+      "h_double_arrow", "v_double_arrow", "ew-resize", "ns-resize", "col-resize", "row-resize", "nwse-resize",
+      "nesw-resize", "size_hor", "size_ver", "size_fdiag", "size_bdiag", "bd_double_arrow", "fd_double_arrow",
+      "top_left_corner", "top_right_corner", "bottom_left_corner", "bottom_right_corner", "top_side",
+      "bottom_side", "left_side", "right_side", "n-resize", "s-resize", "e-resize", "w-resize", "ne-resize",
+      "nw-resize", "se-resize", "sw-resize", "question_arrow", "help", "whats_this", "not-allowed",
+      "crossed_circle", "no-drop", "forbidden", "copy", "dnd-copy", "alias", "link", "dnd-link", "dnd-move",
+      "dnd-none", "context-menu", "cell", "X_cursor", "pirate", "vertical-text"};
+  for (const char *n : names) {
+    Cursor c = XcursorLibraryLoadCursor(dpy, n);
+    if (!c) continue;
+    XFixesChangeCursorByName(dpy, c, n);
+    XFreeCursor(dpy, c);
+  }
+  XFlush(dpy);
+}
+
 static void appearance_changed() {
   plat::reload_appearance();
   set_root_cursor();
+  replace_cursors();
+  xsettings_publish();
   set_root_background();
   for (auto &[w, c] : clients) c->frame->redraw();
 }
@@ -1375,6 +1476,8 @@ int main(int argc, char **argv) {
   publish_workarea();
 
   set_root_cursor();
+  replace_cursors();   // remembers the starting pointer
+  xsettings_start();   // the pointer for GTK programs (when no other settings manager runs)
   set_root_background();   // the scheme's desktop color before Rambler comes up
 
   Fl::add_system_handler(x_handler, nullptr);

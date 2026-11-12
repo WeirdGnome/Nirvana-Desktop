@@ -154,7 +154,7 @@ target_link_libraries(nirvana-denise PRIVATE Threads::Threads nirvana-platinum n
 
 # --- insight: X11 window manager ---------------------------------------------
 add_executable(nirvana-insight insight/main.cxx)
-target_link_libraries(nirvana-insight PRIVATE nirvana-platinum X11::X11)
+target_link_libraries(nirvana-insight PRIVATE nirvana-platinum X11::X11 X11::Xfixes)
 
 # --- alice: control panels ---------------------------------------------------
 add_executable(nirvana-alice alice/main.cxx alice/appearance.cxx alice/network.cxx alice/power.cxx alice/preferences.cxx alice/shader.cxx alice/datetime.cxx alice/desktop.cxx alice/printers.cxx alice/user.cxx alice/saver.cxx alice/bluetooth.cxx alice/shield.cxx)

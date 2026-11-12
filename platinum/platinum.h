@@ -115,6 +115,8 @@ struct Appearance {                 // ~/.config/nirvana/wyglad.conf
 std::vector<std::pair<std::string, std::string>> list_cursor_themes();
 std::string cursor_theme_dir(const std::string &theme);   // the folder with cursors/ ("" if missing)
 extern const int CURSOR_SIZES[];                          // offered in the Appearance panel; 0 ends
+// the pointer of this program (and the programs it starts) after a change - apply() does it too
+void apply_cursor(const Appearance &a);
 
 // Scales offered in the Appearance panel (percent); 0 = automatic
 extern const int SCALES[];

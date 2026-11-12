@@ -1,6 +1,12 @@
 # Changelog
 All notable changes to Nirvana Desktop, newest first. Polish: [CHANGELOG.pl.md](CHANGELOG.pl.md).
 
+## 0.0.54 – 2026-11-12
+
+- **The pointer changes at once everywhere.** Before, the windows already open kept the old pointer until they were closed and opened again (FLTK, GTK and Qt keep the pointers they made). Now the window manager gives every pointer already made, in every program, its new picture (XFixes), publishes the pointer for GTK programs (XSETTINGS – only when no other settings manager runs), and every Nirvana program – the Appearance panel itself too – follows the change.
+- *Automatic* pointer size: 24 px times the interface scale (Xcursor's own guess gave a tiny 16 px pointer).
+- **Retro 16 · classic and · outline redrawn** closer to the red pointers of the 16-bit home computer desktops: a leaning arrow with a wide head and a short thick tail; classic in three colors – red inside, a light edge up and left, black down and right, no line around, the pixels doubled at 24 and 32 px; outline the same made smooth with a thin black line and a shadow. Glass stays.
+
 ## 0.0.53 – 2026-11-12
 
 - **A sound for emptying the Trash:** paper crumpled into a ball and thrown into the basket, in the spirit of the late 1990s desktops – Nirvana's own, synthesized (nothing recorded or copied). `~/.local/share/nirvana/sounds/trash-empty.wav` (or .oga/.ogg) replaces it, an empty file turns it off.

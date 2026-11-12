@@ -26,6 +26,7 @@
 #endif
 
 #include <algorithm>
+#include <cmath>
 #include <cstring>
 #include <memory>
 #include <string>
@@ -58,10 +59,7 @@ public:
     fl_color(DESK_A);
     fl_rectf(x(), y(), w(), h());
     const char *theme = g_cur.cursor.empty() ? "default" : g_cur.cursor.c_str();
-    int size = g_cur.cursor_size > 0 ? g_cur.cursor_size : 24;
-#if defined(FLTK_USE_X11)
-    if (fl_x11_display() && g_cur.cursor_size <= 0) size = XcursorGetDefaultSize(fl_x11_display());
-#endif
+    int size = g_cur.cursor_size > 0 ? g_cur.cursor_size : (int)std::lround(24 * configured_scale(g_cur));
     size = std::min(size, h() - 8);
     int cx = x() + 12;
     for (const char *name : {"left_ptr", "hand2", "watch"}) {
@@ -284,6 +282,7 @@ static void save() {
   bool new_scheme = g_cur.scheme != g_saved_scheme;
   write_appearance(g_cur);
   g_saved_scheme = g_cur.scheme;
+  apply_cursor(g_cur);   // this panel too: the pointer over it changes at once, like everywhere
   notify_appearance_changed();
   if (new_scheme && g_scheme >= 0 && g_scheme < (int)g_schemes.size()) {
     DesktopSettings d = read_desktop();
