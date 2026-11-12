@@ -40,7 +40,7 @@ Co się zmieniło w każdej wersji: [CHANGELOG.pl.md](CHANGELOG.pl.md).
 
 Rozpakuj źródła i uruchom instalator:
 
-    tar xzf nirvana-desktop-0.0.64.tar.gz && cd nirvana-desktop
+    tar xzf nirvana-desktop-0.0.65.tar.gz && cd nirvana-desktop
     sudo ./install.sh                 # albo: sudo ./install.sh --login-screen
 
 Instalator:
@@ -131,8 +131,12 @@ Inną czcionkę systemową (np. wolną, w stylu bitmapowym) można podać przez 
 - przyciski: zamknij (z lewej, uprzejmie przez `WM_DELETE_WINDOW`), ikonizuj i zoom (z prawej),
   w kolorach schematu, z kontrastową obwódką i symbolami wypełnionymi kolorem akcentu
   (w stylu gadżetów okien starych komputerów domowych), widoczne także w oknach nieaktywnych
+- **Folder Pulpit na biurku:** pliki i foldery z `~/Pulpit` (`XDG_DESKTOP_DIR`, jeśli jest ustawiony;
+  tworzony, gdy go nie ma) są ikonami w lewej kolumnie – zawsze pod dyskami i urządzeniami,
+  a nad zminimalizowanymi oknami, najpierw foldery. Dwuklik je otwiera, prawy przycisk daje
+  Otwórz, Pokaż w folderze i Usuń (do kosza); zmiana w folderze widać od razu.
 - **ikonizacja na biurko:** okno znika, a na biurku (w lewej kolumnie, pod
-  dyskami) pojawia się jego ikona – obrazek programu z `_NET_WM_ICON` i tytuł okna na żółtym
+  dyskami i plikami z Pulpitu) pojawia się jego ikona – obrazek programu z `_NET_WM_ICON` i tytuł okna na żółtym
   tle, więc zminimalizowane okna odróżniają się od dysków i plików. Kontury przelatują z okna do jego ikony, a przy przywracaniu dwuklikiem z ikony z powrotem do okna. Tak samo działa „minimalizuj” w samym programie
   (np. w przeglądarce); „Ukryj” z menu aplikacji chowa okna bez ikon. Ikony przetrwają
   Resetuj Nirvanę.
@@ -469,7 +473,7 @@ ilości wolne i pamięć każdego programu Nirvany. Na wąskim ekranie napis si�
 dostępny, prosi o hasło administratora (pkexec – jako root działa tylko odczyt pliku), a w
 ostateczności pokazuje dziennik sesji (`~/.xsession-errors`).
 | **System** | Zablokuj ekran, Uśpij, Hibernuj, Wyloguj `Win+Q`, Uruchom ponownie, Wyłącz |
-| **Narzędzia** | Formatuj dysk, Opróżnij kosz, Zabij okno… `Win+K` (jak xkill: kursor z czaszką, klik w okno zawieszonego programu, potwierdzenie; prawy przycisk albo Esc przerywa; okna samej Nirvany są chronione) |
+| **Narzędzia** | Formatuj dysk, Opróżnij kosz, Typy plików, Zrzut ekranu `Print` (cały ekran jako PNG w Obrazach: `Zrzut ekranu <data>.png`, z powiadomieniem i Pokaż w folderze), Zabij okno… `Win+K` (jak xkill: kursor z czaszką, klik w okno zawieszonego programu, potwierdzenie; prawy przycisk albo Esc przerywa; okna samej Nirvany są chronione) |
 
 Skróty tych menu są **globalne** i używają **klawisza Windows (Super)**: `Win+E`, `Win+T`,
 `Win+Q`, `Win+K` działają bez względu na to, które okno jest aktywne, a żaden program nie traci

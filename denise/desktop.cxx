@@ -18,6 +18,7 @@
 #include <FL/Fl_Multi_Label.H>
 #include <FL/Fl_Image_Surface.H>
 #include <FL/Fl_RGB_Image.H>
+#include <FL/Fl_PNG_Image.H>
 #include <FL/fl_draw.H>
 #include <FL/platform.H>
 #include <X11/Xatom.h>
@@ -547,6 +548,7 @@ Desktop::Desktop(int W, int H, const std::string &home)
     {P_("Special/Format Disk…"), 0, &Desktop::format_disk, 0},
     {P_("Special/Empty Trash…"), 0, &Desktop::empty_trash, 0},
     {P_("Special/File Types…"), 0, &Desktop::edit_filetypes, FL_MENU_DIVIDER},
+    {P_("Special/Screenshot"), FL_Print, &Desktop::screenshot, FL_MENU_DIVIDER},
     {P_("Special/Force Quit a Window…"), FL_META + 'k', &Desktop::force_quit, 0},
   };
   for (auto &it : items) {
@@ -622,6 +624,7 @@ Desktop::Desktop(int W, int H, const std::string &home)
     }
   }
   load_dock();
+  watch_desktop_dir();   // (creates ~/Pulpit when there is none)
   layout_icons();
   watch_trash();
   watch_volumes();
@@ -797,6 +800,27 @@ void Desktop::layout_icons() {
     DeskIcon d{label, mp, Icon::Network, 0, 0};
     d.server = true;
     place(d);
+  }
+  // the files and folders of the Desktop folder (~/Pulpit): between the disks and the
+  // minimized windows - folders first, then by name
+  {
+    std::vector<Entry> files;
+    std::error_code ec;
+    for (auto &de : fs::directory_iterator(desktop_dir(), fs::directory_options::skip_permission_denied, ec)) {
+      std::string n = de.path().filename().string();
+      if (n.empty() || n[0] == '.') continue;
+      files.push_back(entry_for(de.path().string()));
+    }
+    std::sort(files.begin(), files.end(), [](const Entry &a, const Entry &b) {
+      if (a.dir != b.dir) return a.dir;
+      return strcasecmp(a.label.c_str(), b.label.c_str()) < 0;
+    });
+    for (auto &e : files) {
+      DeskIcon d{e.label, e.path, e.icon, 0, 0};
+      d.deskfile = true;
+      d.entry = e;
+      place(d);
+    }
   }
   for (Window w : iconic_windows()) {
     DeskIcon d;
@@ -1873,6 +1897,80 @@ void Desktop::open_entry(const Entry &e, NWin *from) {
 
 std::string Desktop::apps_dir() const { return appimage::apps_dir(home_); }
 
+// The Desktop folder: XDG_DESKTOP_DIR, otherwise ~/Pulpit (the name in the interface language)
+std::string Desktop::desktop_dir() const {
+  std::string d = plat::xdg_user_dir("DESKTOP");
+  if (d.empty() || !allowed(d)) d = home_ + "/" + _("Desktop");
+  return d;
+}
+
+// A change in the Desktop folder: the icons are laid out again
+void Desktop::watch_desktop_dir() {
+  std::string d = desktop_dir();
+  std::error_code ec;
+  fs::create_directories(d, ec);
+  if (desk_ino_ >= 0) { Fl::remove_fd(desk_ino_); ::close(desk_ino_); }
+  desk_ino_ = inotify_init1(IN_NONBLOCK | IN_CLOEXEC);
+  if (desk_ino_ < 0) return;
+  if (inotify_add_watch(desk_ino_, d.c_str(), IN_CREATE | IN_DELETE | IN_MOVED_FROM | IN_MOVED_TO | IN_ATTRIB |
+                                                   IN_DELETE_SELF | IN_MOVE_SELF) < 0) {
+    ::close(desk_ino_);
+    desk_ino_ = -1;
+    return;
+  }
+  Fl::add_fd(desk_ino_, FL_READ, [](int fd, void *p) {
+    char buf[4096];
+    while (read(fd, buf, sizeof buf) > 0) {}
+    static auto relayout = [](void *q) {
+      auto *dk = (Desktop *)q;
+      dk->layout_icons();
+      dk->icon_sel_ = -1;
+      dk->redraw();
+    };
+    Fl::remove_timeout(relayout, p);
+    Fl::add_timeout(0.2, relayout, p);   // a series of changes: one new layout
+  }, this);
+}
+
+// Special > Screenshot (Print): the whole screen as a PNG in Pictures, "Screenshot <date>.png"
+void Desktop::screenshot() {
+  Fl::add_timeout(0.35, [](void *p) {   // after the menu has closed
+    auto *dk = (Desktop *)p;
+    Display *d = fl_display;
+    Window root = DefaultRootWindow(d);
+    XWindowAttributes wa;
+    XGetWindowAttributes(d, root, &wa);
+    XImage *im = XGetImage(d, root, 0, 0, wa.width, wa.height, AllPlanes, ZPixmap);
+    if (!im) { dk->guru(_("The screenshot could not be taken.")); return; }
+    int W = wa.width, H = wa.height;
+    uchar *rgb = new uchar[(size_t)W * H * 3];
+    for (int y = 0; y < H; y++)
+      for (int x = 0; x < W; x++) {
+        unsigned long px = XGetPixel(im, x, y);
+        uchar *q = rgb + ((size_t)y * W + x) * 3;
+        q[0] = (uchar)((px & im->red_mask) >> __builtin_ctzl(im->red_mask ? im->red_mask : 1));
+        q[1] = (uchar)((px & im->green_mask) >> __builtin_ctzl(im->green_mask ? im->green_mask : 1));
+        q[2] = (uchar)((px & im->blue_mask) >> __builtin_ctzl(im->blue_mask ? im->blue_mask : 1));
+      }
+    XDestroyImage(im);
+    std::string dir = plat::pictures_dir();
+    std::error_code ec;
+    if (!fs::is_directory(dir, ec) && fs::is_directory(dk->home_ + "/" + _("Pictures"), ec)) dir = dk->home_ + "/" + _("Pictures");
+    fs::create_directories(dir, ec);
+    char stamp[64];
+    time_t t = time(nullptr);
+    strftime(stamp, sizeof stamp, "%Y-%m-%d %H.%M.%S", localtime(&t));
+    std::string file = dir + "/" + _("Screenshot") + " " + stamp + ".png";
+    Fl_RGB_Image img(rgb, W, H, 3);
+    int r = fl_write_png(file.c_str(), &img);
+    delete[] rgb;
+    if (r != 0) { dk->guru(_("The screenshot could not be saved.")); return; }
+    std::string shown = disk_path(file);
+    applets::notify_local(_("Screenshot"), _("Screenshot saved"), shown, "", {{"open", _("Show in Folder")}},
+                          [dk, file](const std::string &) { dk->open_folder(fs::path(file).parent_path().string()); });
+  }, this);
+}
+
 // The Applications icon: a plain Rambler window with the folder structure of the programs
 // (the category folders) - also when the folder windows are explorers
 void Desktop::open_apps() {
@@ -2154,6 +2252,8 @@ void Desktop::draw() {
     if (ic.img) {   // window icon: the program's picture; selected - darkened
       ic.img->draw(ic.x + 24, ic.y);
       if (sel) { fl_color(ICON_SEL); for (int k = 0; k < 32; k += 2) fl_xyline(ic.x + 24, ic.y + k, ic.x + 55); }
+    } else if (ic.deskfile) {
+      draw_entry_icon(ic.entry, ic.x + 24, ic.y, sel, 32);
     } else {
       draw_icon(shown, ic.x + 24, ic.y, sel);
     }
@@ -2245,6 +2345,7 @@ int Desktop::handle(int e) {
       vdrag_icon_ = -1;
       if (icons_[i].win) gary::activate(icons_[i].win);   // window icon: restore the window
       else if (icons_[i].prefs) open_preferences();
+      else if (icons_[i].deskfile) { Entry en = icons_[i].entry; open_entry(en); }
       else if (icons_[i].vol >= 0) open_volume(icons_[i].vol);
       else if (icons_[i].path == apps_dir() && !icons_[i].dock) open_apps();   // a plain Rambler window
       else open_folder(icons_[i].path);
@@ -2437,7 +2538,7 @@ void Desktop::open_selected() {
     if (icons_[icon_sel_].win) gary::activate(icons_[icon_sel_].win);
     else if (icons_[icon_sel_].prefs) open_preferences();
     else if (icons_[icon_sel_].vol >= 0) open_volume(icons_[icon_sel_].vol);
-    else if (icons_[icon_sel_].dock) open_entry(icons_[icon_sel_].entry);
+    else if (icons_[icon_sel_].dock || icons_[icon_sel_].deskfile) { Entry en = icons_[icon_sel_].entry; open_entry(en); }
     else if (icons_[icon_sel_].path == apps_dir()) open_apps();
     else open_folder(icons_[icon_sel_].path);
   }

@@ -299,6 +299,17 @@ void Desktop::desk_context_menu(int i, int X, int Y) {
     std::string mp = icons_[i].path;
     dm.add(_("Open"), 0, [this, mp] { open_folder(mp); });
     dm.add(_("Disconnect"), 0, [this, mp] { disconnect_server(mp); servers_changed(); });
+  } else if (i >= 0 && icons_[i].deskfile) {   // a file or folder of the Desktop folder
+    Entry en = icons_[i].entry;
+    dm.add(_("Open"), 0, [this, en] { open_entry(en); });
+    dm.add(_("Show in Folder"), 0, [this, en] {
+      open_folder(desktop_dir());
+      if (NWin *w = find(desktop_dir())) w->pane->view()->select_path(en.path);
+    });
+    dm.add(_("Delete"), 0, [this, en] {
+      std::string err;
+      if (!trash_path(en.path, err)) guru(std::string(_("Could not move to the Trash:")) + " " + err);
+    });
   } else if (i >= 0) {
     const DeskIcon &ic = icons_[i];
     unsigned long win = ic.win;

@@ -41,7 +41,7 @@ What changed in each version: [CHANGELOG.md](CHANGELOG.md).
 
 Unpack the sources and run the installer:
 
-    tar xzf nirvana-desktop-0.0.64.tar.gz && cd nirvana-desktop
+    tar xzf nirvana-desktop-0.0.65.tar.gz && cd nirvana-desktop
     sudo ./install.sh                 # or: sudo ./install.sh --login-screen
 
 The installer:
@@ -130,8 +130,13 @@ Another system font (for example a free bitmap-style one) can be set with `NIRVA
 - buttons: close (on the left, politely via `WM_DELETE_WINDOW`), iconify and zoom (on the right),
   in the scheme colors, with a contrasting rim and accent-filled glyphs
   (in the style of old home-computer window gadgets), also shown in inactive windows
+- **The Desktop folder on the desktop:** the files and folders of `~/Pulpit` (`~/Desktop` in English;
+  `XDG_DESKTOP_DIR` when set; made when missing) are icons in the left column – always below the
+  disks and devices and above the minimized windows, folders first. A double click opens them,
+  the right button gives Open, Show in Folder and Delete (to the Trash); a change in the folder
+  shows at once.
 - **Iconification to the desktop:** the window disappears and its icon appears on the
-  desktop (in the left column, below the disks) – the program's picture from `_NET_WM_ICON`
+  desktop (in the left column, below the disks and the Desktop folder's files) – the program's picture from `_NET_WM_ICON`
   and the window title on a yellow label, so minimized windows stand out from disks and
   files. The outlines fly from the window into its icon, and back when a double click on the
   icon brings the window back. "Minimize" inside
@@ -472,7 +477,7 @@ text gets shorter.
 the administrator password (pkexec – only reading the file runs as root), and as a last resort
 shows the log of the session (`~/.xsession-errors`).
 | **System** | Lock Screen, Sleep, Hibernate, Log Out `Win+Q`, Restart, Shut Down |
-| **Special** | Format Disk, Empty Trash, Force Quit a Window… `Win+K` (like xkill: a skull cursor, click the window of a program that hangs, confirm; the right button or Esc cancels; Nirvana's own windows are protected) |
+| **Special** | Format Disk, Empty Trash, File Types, Screenshot `Print` (the whole screen as a PNG in Pictures: `Screenshot <date>.png`, with a notification and Show in Folder), Force Quit a Window… `Win+K` (like xkill: a skull cursor, click the window of a program that hangs, confirm; the right button or Esc cancels; Nirvana's own windows are protected) |
 
 The shortcuts of these menus are **global** and use the **Windows (Super) key**: `Win+E`,
 `Win+T`, `Win+Q`, `Win+K` work whatever window is active, and no program loses its own

@@ -76,19 +76,25 @@ std::string wallpaper_title(const std::string &path) {
   return s;
 }
 
-std::string pictures_dir() {
+std::string xdg_user_dir(const char *key) {
   // ~/.config/user-dirs.dirs: XDG_PICTURES_DIR="$HOME/Pictures" (localized by xdg-user-dirs)
   const char *x = getenv("XDG_CONFIG_HOME");
   std::ifstream in((x && *x ? std::string(x) : home() + "/.config") + "/user-dirs.dirs");
-  std::string line;
+  std::string line, want = std::string("XDG_") + key + "_DIR=";
   while (std::getline(in, line)) {
-    if (line.rfind("XDG_PICTURES_DIR=", 0) != 0) continue;
-    std::string v = line.substr(17);
+    if (line.rfind(want, 0) != 0) continue;
+    std::string v = line.substr(want.size());
     if (v.size() >= 2 && v.front() == '"' && v.back() == '"') v = v.substr(1, v.size() - 2);
     if (v.rfind("$HOME", 0) == 0) v = home() + v.substr(5);
-    if (!v.empty() && v[0] == '/') return v;
+    while (v.size() > 1 && v.back() == '/') v.pop_back();
+    if (!v.empty() && v[0] == '/' && v != home()) return v;
   }
-  return home() + "/Pictures";
+  return "";
+}
+
+std::string pictures_dir() {
+  std::string v = xdg_user_dir("PICTURES");
+  return v.empty() ? home() + "/Pictures" : v;
 }
 
 std::vector<std::string> wallpaper_candidates() {

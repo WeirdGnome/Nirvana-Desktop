@@ -1,6 +1,11 @@
 # Changelog
 All notable changes to Nirvana Desktop, newest first. Polish: [CHANGELOG.pl.md](CHANGELOG.pl.md).
 
+## 0.0.65 – 2026-11-12
+
+- **Special > Screenshot** (the `Print` key, in any window): saves the whole screen as a PNG in Pictures (`Screenshot <date>.png`) and shows a notification with *Show in Folder*.
+- **The Desktop folder's files on the desktop**: the files and folders of `~/Pulpit` (`XDG_DESKTOP_DIR`; the folder is made when missing) are icons in the left column – always below the disks and devices and above the minimized windows, folders first. A double click opens them, the right button gives Open, Show in Folder and Delete. Changes in the folder show at once.
+
 ## 0.0.64 – 2026-11-12
 
 - **Global shortcuts on the Windows key**: Execute Command `Win+E`, Nirvana Shell `Win+T`, Log Out `Win+Q`, Force Quit `Win+K`. The `Ctrl` versions are removed. They work whatever window is active, and programs (browsers, the terminal) keep their own `Ctrl+letter`. The menus label them "Win+…".

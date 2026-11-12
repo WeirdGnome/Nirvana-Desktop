@@ -1,6 +1,11 @@
 # Lista zmian
 Wszystkie ważniejsze zmiany w Nirvana Desktop, od najnowszych. English: [CHANGELOG.md](CHANGELOG.md).
 
+## 0.0.65 – 2026-11-12
+
+- **Narzędzia > Zrzut ekranu** (klawisz `Print`, działa w każdym oknie): zapisuje cały ekran jako PNG w Obrazach (`Zrzut ekranu <data>.png`) i pokazuje powiadomienie z przyciskiem *Pokaż w folderze*.
+- **Pliki z Pulpitu na biurku**: pliki i foldery z `~/Pulpit` (`XDG_DESKTOP_DIR`; folder powstaje, gdy go nie ma) są ikonami w lewej kolumnie – zawsze pod dyskami i urządzeniami, a nad zminimalizowanymi oknami, najpierw foldery. Dwuklik je otwiera, prawy przycisk daje Otwórz, Pokaż w folderze i Usuń. Zmiany w folderze widać od razu.
+
 ## 0.0.64 – 2026-11-12
 
 - **Skróty globalne na klawiszu Windows**: Wykonaj polecenie `Win+E`, Nirvana Shell `Win+T`, Wyloguj `Win+Q`, Zabij okno `Win+K`. Wersje z `Ctrl` usunięte. Działają bez względu na aktywne okno, a programy (przeglądarki, terminal) zachowują swoje `Ctrl+litera`. Menu podpisuje je jako „Win+…”.

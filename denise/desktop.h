@@ -180,7 +180,11 @@ public:
   Fl_Menu_Button *ctx_style_ = nullptr;           // hidden button: the look of the context menus
   bool desk_shortcut();                     // shortcuts of desktop icons (no active window)
   void open_preferences();
-  void open_apps();   // the Applications icon: always a plain (simple) Rambler window
+  void open_apps();
+  std::string desktop_dir() const;   // ~/Pulpit (XDG_DESKTOP_DIR): its files and folders are on the desktop
+  void watch_desktop_dir();
+  int desk_ino_ = -1;
+  void screenshot();                 // Special > Screenshot (Print): the screen into Pictures   // the Applications icon: always a plain (simple) Rambler window
   void execute_command();
   void open_log();
   // menu System (applets::power_action)
@@ -283,7 +287,8 @@ private:
     unsigned long win = 0;      // icon of an iconified window (Window); a double click restores it
     bool prefs = false;         // the Preferences icon (opens the panel, not a folder)
     bool server = false;        // a connected server (SFTP, FTP, SMB) - like a disk
-    bool no_drop() const { return win || prefs; }   // files cannot be dropped on this icon
+    bool deskfile = false;      // a file or folder of the Desktop folder (~/Pulpit), in .entry
+    bool no_drop() const { return win || prefs || (deskfile && !entry.dir); }   // files cannot be dropped here
     Fl_Image *img = nullptr;    // its picture (from _NET_WM_ICON or the AppImage)
   };
   int icon_cols_ = 1;   // icon columns at the left edge (disks, windows, Trash)

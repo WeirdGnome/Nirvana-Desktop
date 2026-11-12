@@ -153,6 +153,9 @@ bool is_image_file(const std::string &path);
 bool image_loadable(const std::string &path);       // can FLTK open this image
 std::vector<std::string> wallpaper_dirs();          // Nirvana Desktop wallpapers (share/nirvana/wallpapers)
 std::string pictures_dir();                         // XDG_PICTURES_DIR (user-dirs.dirs), else ~/Pictures
+// An XDG user folder (~/.config/user-dirs.dirs, key e.g. "DESKTOP"); empty when it is not set
+// (or is the home folder itself)
+std::string xdg_user_dir(const char *key);
 std::vector<std::string> wallpaper_candidates();    // Nirvana Desktop, system ones, the Pictures folder
 std::string wallpaper_title(const std::string &path);   // "Mountains" from ".../Mountains.jpg"
 // Desktop W x H: the pattern in the scheme colors, the wallpaper on top (if set and loadable).
