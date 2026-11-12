@@ -1,6 +1,13 @@
 # Changelog
 All notable changes to Nirvana Desktop, newest first. Polish: [CHANGELOG.pl.md](CHANGELOG.pl.md).
 
+## 0.0.67 – 2026-11-12
+
+- **Open With** in Rambler's context menu of files, in three parts:
+  - the programs of the menus that declare the file's type (for text files also the text editors);
+  - **every installed AppImage** of the Applications folder and its category folders – it gets the file as its argument;
+  - **Other Program…** – any program or AppImage chosen in a file window.
+
 ## 0.0.66 – 2026-11-12
 
 - **Dock size in Preferences > Desktop**: small (24 px), normal (32 px), large (48 px) or very large (64 px). It changes at once; the Trash moves above the dock and windows leave room for the new size. Program pictures are scaled smoothly, Nirvana's own icons by whole pixels, so they stay crisp.

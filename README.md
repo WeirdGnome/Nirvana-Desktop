@@ -41,7 +41,7 @@ What changed in each version: [CHANGELOG.md](CHANGELOG.md).
 
 Unpack the sources and run the installer:
 
-    tar xzf nirvana-desktop-0.0.66.tar.gz && cd nirvana-desktop
+    tar xzf nirvana-desktop-0.0.67.tar.gz && cd nirvana-desktop
     sudo ./install.sh                 # or: sudo ./install.sh --login-screen
 
 The installer:
@@ -408,6 +408,12 @@ managers of the 16-bit desktops:
 - **More windows**: **Window > New Window** (`Ctrl+Shift+N`) or `Ctrl` + double-click on a folder.
   Desktop icons (Nirvana HD, disks, Trash) open in the most recently used window.
 - **Opening**: double-click or Enter. An AppImage from another folder offers installation.
+- **Open With** (the context menu of files): the programs of the menus that declare the file's
+  type (`MimeType` of their .desktop files; for text files also the text editors), then **every
+  installed AppImage** (the Applications folder with its category folders) – it gets the file as
+  its argument and sees it in its sandbox – and **Other Program…**, any program file or AppImage
+  chosen in a file window (an AppImage from outside the Applications folder offers installation
+  first). Several selected files go to one program (`%F`/`%U`) or one by one (`%f`/`%u`).
 - **Double-clicking the empty desktop** opens the file manager (the Nirvana HD window); if it
   is already open, it is brought to the front.
 - **Desktop icons** in the left column: Nirvana HD, **Applications**, **Preferences**, disks,

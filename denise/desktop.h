@@ -5,6 +5,7 @@
 // moving, shading and focus are provided by the window manager (Insight).
 // The menu bar acts on the active window, which we read from _NET_ACTIVE_WINDOW.
 #pragma once
+#include "openwith.h"
 
 #include <FL/Fl_Button.H>
 #include <FL/Fl_Double_Window.H>
@@ -351,7 +352,11 @@ private:
   void build_folder_bars(NWin *win, int X, int Y, int W);
   bool desk_target_ = false;      // a command from the desktop context menu
   void open_appimage(const std::string &path);
-  void run_app(const std::string &path);
+  void run_app(const std::string &path, const std::vector<std::string> &files = {});   // files: Open With
+  // Open With (the context menu of files)
+  std::vector<std::string> open_with_files(const std::vector<Entry> &sel);
+  void open_with_app(const openwith::App &a, const std::vector<std::string> &files);
+  void open_with_program(const std::string &prog, const std::vector<std::string> &files);
   void ask_missing_libs(const std::string &path, const std::vector<std::string> &missing);
   void install_libs(const std::string &path, const std::vector<std::string> &missing);
   std::set<std::string> libs_ok_;   // applications started even though libraries are missing

@@ -15,6 +15,9 @@
 #include "tray.h"
 #include "i18n.h"
 #include "applets.h"
+#include "openwith.h"
+#include "sniff.h"
+#include "filedialog.h"
 
 std::string ex_other_path(NWin *w);   // explorer.cxx: the destination pane
 
@@ -226,6 +229,7 @@ struct DeskMenu {
   std::vector<std::string> labels;
   std::vector<std::function<void()>> acts;
   std::vector<Fl_Menu_Item> items;
+  std::vector<int> label_of;   // the label of each item (-1: the end of a submenu)
   void add(const std::string &label, int shortcut, std::function<void()> f, int flags = 0) {
     labels.push_back(label);
     acts.push_back(std::move(f));
@@ -234,15 +238,38 @@ struct DeskMenu {
     it.user_data_ = (void *)(long)(acts.size() - 1);
     it.flags = flags;
     items.push_back(it);
+    label_of.push_back((int)labels.size() - 1);
   }
-  void divider() { if (!items.empty()) items.back().flags |= FL_MENU_DIVIDER; }
+  // a submenu: the items added until end_submenu() are inside it
+  void submenu(const std::string &label, int flags = 0) {
+    labels.push_back(label);
+    acts.push_back(nullptr);
+    Fl_Menu_Item it{};
+    it.flags = FL_SUBMENU | flags;
+    it.user_data_ = (void *)(long)(acts.size() - 1);
+    open_.push_back(items.size());
+    items.push_back(it);
+    label_of.push_back((int)labels.size() - 1);
+  }
+  std::vector<size_t> open_, closed_;   // submenu headers: open ones, the last closed one
+  void end_submenu() {
+    items.push_back(Fl_Menu_Item{});
+    label_of.push_back(-1);
+    if (!open_.empty()) { closed_.push_back(open_.back()); open_.pop_back(); }
+  }
+  void divider() {
+    if (items.empty()) return;
+    // after a submenu: the line goes under its header
+    if (label_of.back() < 0 && !closed_.empty()) items[closed_.back()].flags |= FL_MENU_DIVIDER;
+    else items.back().flags |= FL_MENU_DIVIDER;
+  }
   Fl_Menu_Item *finish() {
-    for (size_t i = 0; i < items.size(); i++) items[i].text = labels[i].c_str();
+    for (size_t i = 0; i < items.size(); i++) items[i].text = label_of[i] >= 0 ? labels[label_of[i]].c_str() : nullptr;
     items.push_back(Fl_Menu_Item{});   // end of the array
     return items.data();
   }
   void run(const Fl_Menu_Item *m) {
-    if (m) { auto f = acts[(long)m->user_data()]; if (f) f(); }
+    if (m && !(m->flags & FL_SUBMENU)) { auto f = acts[(long)m->user_data()]; if (f) f(); }
   }
 };
 }   // namespace
@@ -339,6 +366,42 @@ void Desktop::later(std::function<void()> f) {
   });
 }
 
+// "&" in a program's name: FLTK would take it for a shortcut mark
+static std::string amp_escape(const std::string &s) {
+  std::string o;
+  for (char c : s) { if (c == '&') o += '&'; o += c; }
+  return o;
+}
+std::vector<std::string> Desktop::open_with_files(const std::vector<Entry> &sel) {
+  std::vector<std::string> files;
+  for (auto &e : sel) if (!e.dir) files.push_back(e.path);
+  return files;
+}
+
+void Desktop::open_with_app(const openwith::App &a, const std::vector<std::string> &files) {
+  for (auto &argv : openwith::commands(a, files)) {
+    if (argv.empty()) continue;
+    if (a.terminal) {
+      std::vector<std::string> t = {rambler_exe("nirvana-shell"), "-e"};
+      t.insert(t.end(), argv.begin(), argv.end());
+      rambler_spawn(t);
+    } else {
+      rambler_spawn(argv);
+    }
+  }
+}
+
+void Desktop::open_with_program(const std::string &prog, const std::vector<std::string> &files) {
+  if (is_appimage(fs::path(prog).filename().string())) {
+    if (!in_apps(prog)) { open_appimage(prog); return; }   // not installed: offered for installation first
+    run_app(prog, files);
+    return;
+  }
+  std::vector<std::string> argv = {prog};
+  argv.insert(argv.end(), files.begin(), files.end());
+  rambler_spawn(argv);
+}
+
 void Desktop::folder_context_menu(NWin *w, int X, int Y) {
   if (!known(w)) return;
   auto sel = w->pane->view()->selection();
@@ -361,6 +424,49 @@ void Desktop::folder_context_menu(NWin *w, int X, int Y) {
     for (auto &[label, f] : filetype_menu(sel, w))
       if (strcasecmp(label.c_str(), _("Open")) != 0 && strcasecmp(label.c_str(), "Open") != 0) dm.add(label, 0, f);
     if (sel.size() == 1 && sel[0].dir) add_shell();
+    // Open With (files, not only folders): the programs of the menus for the file's type, the
+    // installed AppImages (the applications folder) and "Other Program…" - any program or AppImage
+    if (!open_with_files(sel).empty()) {
+      std::vector<std::string> files = open_with_files(sel);
+      std::string mime;
+      for (auto &e : sel) if (!e.dir) { mime = e.mime.empty() ? sniff::of(e.path).mime : e.mime; break; }
+      dm.submenu(_("Open With"));
+      auto apps = openwith::for_mime(mime);
+      for (const openwith::App &a : apps) {
+        openwith::App app = a;
+        dm.add(amp_escape(a.name), 0, [this, app, files] { open_with_app(app, files); });
+      }
+      // the AppImages of the applications folder (any of them - their file types are not known)
+      std::vector<std::pair<std::string, std::string>> imgs;   // (name, path)
+      std::error_code ec;
+      for (auto it = fs::recursive_directory_iterator(apps_dir(), fs::directory_options::skip_permission_denied, ec);
+           it != fs::recursive_directory_iterator(); it.increment(ec)) {
+        if (ec) break;
+        if (it.depth() > 1) { it.disable_recursion_pending(); continue; }
+        std::string n = it->path().filename().string();
+        if (n.empty() || n[0] == '.' || !is_appimage(n)) continue;
+        imgs.push_back({appimage::label(it->path().string(), home_), it->path().string()});
+      }
+      std::sort(imgs.begin(), imgs.end(), [](auto &a, auto &b) { return strcasecmp(a.first.c_str(), b.first.c_str()) < 0; });
+      if (!apps.empty() && !imgs.empty()) dm.divider();
+      for (auto &[name, path] : imgs) {
+        std::string p = path;
+        dm.add(amp_escape(name), 0, [this, p, files] { open_with_program(p, files); });
+      }
+      if (!apps.empty() || !imgs.empty()) dm.divider();
+      dm.add(_("Other Program…"), 0, [this, files] {
+        std::string prog = plat::choose_file(_("Open with which program?"), {}, apps_dir());
+        if (prog.empty()) return;
+        struct stat st;
+        if (!is_appimage(fs::path(prog).filename().string()) &&
+            (stat(prog.c_str(), &st) != 0 || !S_ISREG(st.st_mode) || !(st.st_mode & S_IXUSR))) {
+          guru(_("This file is not a program."));
+          return;
+        }
+        open_with_program(prog, files);
+      });
+      dm.end_submenu();
+    }
     dm.divider();
     if (w->ex && ex_other_path(w).size()) {   // the explorer with two panes
       dm.add(_("Copy to the Other Pane"), FL_F + 5, [this] { ex_copy_to_other(); });

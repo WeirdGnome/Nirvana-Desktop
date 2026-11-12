@@ -2113,7 +2113,7 @@ void Desktop::open_appimage(const std::string &path) {
              }}});
 }
 
-void Desktop::run_app(const std::string &path) {
+void Desktop::run_app(const std::string &path, const std::vector<std::string> &files) {
   if (std::string a = appimage::arch_problem(path); !a.empty()) { guru(a); return; }
   if (!appimage::is_installed(path, home_)) {
     for (auto *w : wins_) w->cursor(FL_CURSOR_WAIT);
@@ -2137,7 +2137,9 @@ void Desktop::run_app(const std::string &path) {
   // gary: the first new window is this application - it gets the name and icon from the AppImage
   gary::note_launch(appimage::label(path, home_),
                     appimage::icon(path, home_));
-  appimage::launch(path, home_, split_args(tooltypes(path)));   // arguments from the Information window
+  auto args = split_args(tooltypes(path));   // arguments from the Information window
+  args.insert(args.end(), files.begin(), files.end());   // Open With: the files
+  appimage::launch(path, home_, args);
 }
 
 // --- system libraries an application needs ---------------------------------------------

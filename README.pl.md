@@ -40,7 +40,7 @@ Co się zmieniło w każdej wersji: [CHANGELOG.pl.md](CHANGELOG.pl.md).
 
 Rozpakuj źródła i uruchom instalator:
 
-    tar xzf nirvana-desktop-0.0.66.tar.gz && cd nirvana-desktop
+    tar xzf nirvana-desktop-0.0.67.tar.gz && cd nirvana-desktop
     sudo ./install.sh                 # albo: sudo ./install.sh --login-screen
 
 Instalator:
@@ -402,6 +402,12 @@ eksploratorów z końca lat 90. ze sposobem pracy dwupanelowych menedżerów pli
   menedżer plików, przeglądarka, edytor): po wyjściu poza okna Nirvany przeciąganie trwa dalej
   jako standardowe przeciągnij i upuść (XDND, lista adresów `file://`). Pliki z innych
   programów można upuszczać w Ramblerze jak dotąd.
+- **Otwórz z** (menu podręczne plików): programy z menu, które deklarują typ pliku (`MimeType`
+  w ich plikach .desktop; dla plików tekstowych także edytory tekstu), potem **każdy
+  zainstalowany AppImage** (folder Aplikacje z folderami kategorii) – dostaje plik jako argument
+  i widzi go w swojej piaskownicy – oraz **Inny program…**: dowolny plik programu albo AppImage
+  wybrany w oknie plików (AppImage spoza folderu Aplikacje najpierw proponuje instalację). Kilka
+  zaznaczonych plików trafia do jednego programu (`%F`/`%U`) albo po kolei (`%f`/`%u`).
 - **Więcej okien**: **Okno > Nowe okno** (`Ctrl+Shift+N`) albo `Ctrl` + dwuklik na folderze.
   Ikony biurka (Nirvana HD, dyski, Kosz) otwierają się w ostatnio używanym oknie.
 - **Ikony biurka** w lewej kolumnie: Nirvana HD, **Aplikacje**, **Preferencje**, dyski,
