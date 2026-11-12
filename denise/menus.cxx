@@ -338,7 +338,9 @@ void Desktop::folder_context_menu(NWin *w, int X, int Y) {
   if (!sel.empty()) {
     dm.add(_("Open"), FL_COMMAND + 'o', [this] { open_selected(); });
     // the file type's actions (Special > File Types…), the first one is the double click
-    for (auto &[label, f] : filetype_menu(sel, w)) dm.add(label, 0, f);
+    // ("Open" itself is there already - it runs the type's first action, as the double click)
+    for (auto &[label, f] : filetype_menu(sel, w))
+      if (strcasecmp(label.c_str(), _("Open")) != 0 && strcasecmp(label.c_str(), "Open") != 0) dm.add(label, 0, f);
     dm.divider();
     if (w->ex && ex_other_path(w).size()) {   // the explorer with two panes
       dm.add(_("Copy to the Other Pane"), FL_F + 5, [this] { ex_copy_to_other(); });

@@ -1,6 +1,11 @@
 # Changelog
 All notable changes to Nirvana Desktop, newest first. Polish: [CHANGELOG.pl.md](CHANGELOG.pl.md).
 
+## 0.0.56 – 2026-11-12
+
+- Rambler's context menu showed **Open twice** (its own and the file type's first action of the same name) – now once.
+- Rambler Advanced: the **Two Panes** button has a new picture (one window split into the source with a blue header and the destination), and the toolbar buttons are as wide as their labels – *Kopiuj do* and *Przenieś do* no longer run into each other.
+
 ## 0.0.55 – 2026-11-12
 
 - The enso logo is **transparent** around: only the brush circle in the menu bar, About This Computer, the login and lock screens and the screen savers (the night-blue square is gone; the blue is taken out with soft edges and no blue fringe).

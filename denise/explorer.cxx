@@ -165,11 +165,20 @@ static void ex_icon(ExIcon k, int x, int y, bool on) {
     fold(x + 10, y + 9, 10, 7);
     fold(x + 10, y + 16, 10, 7);
     break;
-  case ExIcon::Dual:
-    fl_color(paper); fl_rectf(x + 1, y + 3, 10, 18); fl_rectf(x + 13, y + 3, 10, 18);
-    fl_color(acc); fl_rectf(x + 1, y + 3, 10, 4);
-    fl_color(ink); fl_rect(x + 1, y + 3, 10, 18); fl_rect(x + 13, y + 3, 10, 18);
+  case ExIcon::Dual: {   // one window split in two: the source (a blue header) and the destination
+    Fl_Color frame = fl_color_average(GRAY, ink, 0.55f);
+    fl_color(frame); fl_rectf(x + 1, y + 2, 22, 4);                  // the title bar
+    fl_color(paper); fl_rectf(x + 2, y + 6, 9, 15); fl_rectf(x + 13, y + 6, 9, 15);
+    fl_color(acc); fl_rectf(x + 2, y + 6, 9, 3);                     // the source header
+    fl_color(fl_color_average(GRAY, ink, 0.3f)); fl_rectf(x + 13, y + 6, 9, 3);   // the destination header
+    fl_color(fl_color_average(paper, ink, 0.6f));                   // lines of files
+    for (int ly = y + 11; ly <= y + 18; ly += 3) { fl_xyline(x + 3, ly, x + 9); fl_xyline(x + 14, ly, x + 20); }
+    fl_color(ink);
+    fl_rect(x + 1, y + 2, 22, 20);
+    fl_yxline(x + 11, y + 6, y + 20); fl_yxline(x + 12, y + 6, y + 20);   // the divider
+    fl_xyline(x + 1, y + 5, x + 22);
     break;
+  }
   case ExIcon::CopyTo:
     doc(x + 1, y + 2); doc(x + 4, y + 6);
     arrow_r(x + 12, y + 9, acc);
@@ -655,6 +664,8 @@ void Desktop::build_explorer(NWin *win, int ox, int oy, int W, int H, const std:
   x->toolbar = new ExBar(ox, oy + NWin::MB_H, W, TOOL_H);
   int bx = ox + 4, by = oy + NWin::MB_H + 1, bh = TOOL_H - 2;
   auto button = [&](ExIcon k, const char *l, int bw, std::function<void(NWin *)> f) {
+    fl_font(FONT_SMALL, SIZE_SMALL);   // wide enough for its label (Polish ones are longer)
+    bw = std::max(bw, (int)fl_width(l) + 12);
     auto *b = new ExButton(bx, by, bw, bh, k, l);
     bx += bw + 1;
     auto *fp = new std::function<void(NWin *)>(std::move(f));   // lives as long as Rambler (a few per window)

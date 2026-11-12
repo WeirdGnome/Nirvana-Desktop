@@ -1,6 +1,11 @@
 # Lista zmian
 Wszystkie ważniejsze zmiany w Nirvana Desktop, od najnowszych. English: [CHANGELOG.md](CHANGELOG.md).
 
+## 0.0.56 – 2026-11-12
+
+- Menu kontekstowe Ramblera pokazywało **dwa razy Otwórz** (własne i pierwszą akcję typu pliku o tej samej nazwie) – teraz raz.
+- Rambler zaawansowany: przycisk **Dwa panele** ma nowy obrazek (jedno okno podzielone na źródło z niebieskim nagłówkiem i cel), a przyciski paska są tak szerokie jak ich podpisy – *Kopiuj do* i *Przenieś do* już na siebie nie nachodzą.
+
 ## 0.0.55 – 2026-11-12
 
 - Logo enso jest **przezroczyste** dookoła: tylko koło pędzla w pasku menu, w O systemie, na ekranie logowania i blokady oraz w wygaszaczach (bez granatowego kwadratu; granat wycięty z miękkimi krawędziami, bez niebieskiej obwódki).
