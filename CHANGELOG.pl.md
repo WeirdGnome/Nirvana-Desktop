@@ -1,6 +1,10 @@
 # Lista zmian
 Wszystkie ważniejsze zmiany w Nirvana Desktop, od najnowszych. English: [CHANGELOG.md](CHANGELOG.md).
 
+## 0.0.40 – 2026-11-12
+
+- Insight szanuje okna o stałym rozmiarze (ten sam minimalny i maksymalny rozmiar w `WM_NORMAL_HINTS`, np. Preferencje i ich panele): bez przycisku zoom, bez zmiany rozmiaru krawędziami i rogiem, prośby o maksymalizację są pomijane; w klasycznych oknach 16-bit bez gadżetu powiększenia i rozmiaru.
+
 ## 0.0.39 – 2026-11-12
 
 - **Bluetooth:** aplet na pasku menu (włącz/wyłącz, sparowane urządzenia z łączeniem/rozłączaniem i poziomem baterii, Dodaj urządzenie…) i Preferencje > Bluetooth (wyszukiwanie, parowanie z potwierdzeniem kodu albo PIN-em, łączenie, rozłączanie, zapominanie, widoczność). Działa przez `bluetoothctl` (bluez); czytelne komunikaty dla typowych błędów BlueZ.

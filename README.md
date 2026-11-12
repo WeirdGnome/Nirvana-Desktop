@@ -41,7 +41,7 @@ What changed in each version: [CHANGELOG.md](CHANGELOG.md).
 
 Unpack the sources and run the installer:
 
-    tar xzf nirvana-desktop-0.0.39.tar.gz && cd nirvana-desktop
+    tar xzf nirvana-desktop-0.0.40.tar.gz && cd nirvana-desktop
     sudo ./install.sh                 # or: sudo ./install.sh --login-screen
 
 The installer:
@@ -140,7 +140,8 @@ Another system font (for example a free bitmap-style one) can be set with `NIRVA
 - **undecorated windows** (`_MOTIF_WM_HINTS` without decorations – skinned players such as
   qmmp or Audacious, programs with their own title bar) get no frame: they draw and move
   themselves, Insight only handles focus, stacking, iconification and the work area
-- right and bottom frame edges and the bottom-right corner: resizing
+- right and bottom frame edges and the bottom-right corner: resizing (not for windows with a fixed
+  size such as Preferences – they get no zoom button either)
 - clicking an application window activates it and raises it; clicking the desktop deactivates
   windows, and clicking the menu bar does not change the active window (the menu acts on it)
 - Rambler folders and dialogs are ordinary X windows, so they behave like any application

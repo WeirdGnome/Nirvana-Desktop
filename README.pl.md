@@ -40,7 +40,7 @@ Co się zmieniło w każdej wersji: [CHANGELOG.pl.md](CHANGELOG.pl.md).
 
 Rozpakuj źródła i uruchom instalator:
 
-    tar xzf nirvana-desktop-0.0.39.tar.gz && cd nirvana-desktop
+    tar xzf nirvana-desktop-0.0.40.tar.gz && cd nirvana-desktop
     sudo ./install.sh                 # albo: sudo ./install.sh --login-screen
 
 Instalator:
@@ -139,7 +139,8 @@ Inną czcionkę systemową (np. wolną, w stylu bitmapowym) można podać przez 
 - **okna bez dekoracji** (`_MOTIF_WM_HINTS` bez dekoracji – odtwarzacze ze skórkami, np. qmmp
   czy Audacious, programy z własnym paskiem tytułu) nie dostają ramki: rysują się i przesuwają
   same, a Insight dba tylko o fokus, kolejność, ikonizację i obszar roboczy
-- prawa i dolna krawędź ramki oraz prawy dolny róg: zmiana rozmiaru
+- prawa i dolna krawędź ramki oraz prawy dolny róg: zmiana rozmiaru (nie w oknach o stałym
+  rozmiarze, np. Preferencjach – nie mają też przycisku zoom)
 - klik w okno aplikacji aktywuje je i wyciąga na wierzch; klik w biurko dezaktywuje okna,
   a klik w pasek menu nie zmienia aktywnego okna (menu działa na nie)
 - foldery i dialogi Ramblera to zwykłe okna X, więc zachowują się jak każda aplikacja

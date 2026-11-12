@@ -125,6 +125,7 @@ struct Client {
   int unzoom[4] = {0, 0, 0, 0};
   int ignore_unmap = 0;           // UnmapNotify caused by us (reparent)
   bool dialog = false;            // dialog window: no buttons and no resizing
+  bool fixed = false;             // a fixed size (WM_NORMAL_HINTS min = max): no zoom, no resizing
   bool own_anim = false;          // Nirvana Desktop programs animate opening/closing themselves
   bool hidden = false;            // hidden (Hide / Hide Others in the application menu)
   bool iconic = false;            // iconified: hidden, and its icon is on the desktop
@@ -304,7 +305,7 @@ public:
     if (c->bare) return;   // the window covers the whole frame and draws itself
     bool act = c == g_active;
     if (g_classic) {
-      draw_classic_frame(0, 0, w(), h(), act, c->shaded, !c->dialog);
+      draw_classic_frame(0, 0, w(), h(), act, c->shaded, !c->dialog && !c->fixed);
       draw_classic_titlebar(0, 0, w(), c->title.c_str(), act, pressed_, gadgets());
       if (!c->shaded) {
         fl_color(DARK);
@@ -313,8 +314,8 @@ public:
       return;
     }
     draw_frame(0, 0, w(), h(), act, c->shaded);
-    draw_titlebar(0, 0, w(), c->title.c_str(), act, pressed_, !c->dialog);
-    if (!c->shaded && !c->dialog) {
+    draw_titlebar(0, 0, w(), c->title.c_str(), act, pressed_, c->dialog ? 0 : c->fixed ? 2 : 1);
+    if (!c->shaded && !c->dialog && !c->fixed) {
       fl_color(act ? SHADOW : MID);
       fl_rect(FRAME - 1, TITLE_H - 1, cw() + 2, ch() + 2);
       // resize handle on the frame in the bottom right corner
@@ -324,16 +325,19 @@ public:
     }
   }
 
-  int gadgets() const { return c->dialog ? 2 : 1; }   // classic: dialogs only get the depth gadget
+  // classic: dialogs only get the depth gadget, fixed-size windows no zoom
+  int gadgets() const { return c->dialog ? 2 : c->fixed ? 3 : 1; }
 
   int hit_button(int ex, int ey) const {
     if (g_classic) return classic_gadget_hit(w(), ex, ey, gadgets());
     if (c->dialog) return 0;
     int by = (TITLE_H - BOX) / 2;
     if (ey < by || ey >= by + BOX) return 0;
-    int zoom_x = w() - 8 - BOX, shade_x = zoom_x - BOX - 5;
+    // as draw_titlebar(): without "zoom" the iconify button takes its place in the corner
+    int zoom_x = w() - 8 - BOX, shade_x = c->fixed ? zoom_x : zoom_x - BOX - 5;
     if (ex >= 8 && ex < 8 + BOX) return 1;
-    if (ex >= zoom_x && ex < zoom_x + BOX) return 2;
+    if (ex >= shade_x && ex < shade_x + BOX) return 3;
+    if (!c->fixed && ex >= zoom_x && ex < zoom_x + BOX) return 2;
     if (ex >= shade_x && ex < shade_x + BOX) return 3;
     return 0;
   }
@@ -357,6 +361,7 @@ public:
   }
 
   void toggle_zoom() {
+    if (c->fixed) return;   // a window with a fixed size is not zoomed (nor maximized)
     if (c->shaded) toggle_shade();
     if (!c->zoomed) {
       c->unzoom[0] = x(); c->unzoom[1] = y(); c->unzoom[2] = w(); c->unzoom[3] = h();
@@ -404,11 +409,11 @@ public:
           Fl::event_clicks(0); iconify_client(c); drag_ = NONE; return 1;
         }
         drag_ = MOVE;
-      } else if (g_classic && !c->shaded && !c->dialog) {
+      } else if (g_classic && !c->shaded && !c->dialog && !c->fixed) {
         // classic: only the size gadget in the corner resizes, the rest of the frame moves
         bool corner = (ex >= w() - CLASSIC_SIZE && ey >= h() - FRAME) || (ex >= w() - FRAME && ey >= h() - CLASSIC_SIZE);
         drag_ = corner ? GROW : MOVE;
-      } else if (!c->shaded && !c->dialog && (ex >= w() - 16 || ey >= h() - FRAME)) {
+      } else if (!c->shaded && !c->dialog && !c->fixed && (ex >= w() - 16 || ey >= h() - FRAME)) {
         drag_ = GROW;          // right or bottom edge / bottom right corner
       } else {
         drag_ = MOVE;          // left edge of the frame
@@ -721,6 +726,16 @@ void Frame::outline_safety(void *) {
     if (c->frame) c->frame->finish_outline();
 }
 
+// WM_NORMAL_HINTS with the same minimum and maximum size: the program does not want
+// to be resized (FLTK windows without resizable(), e.g. the Preferences panels)
+static bool fixed_size(Window w) {
+  XSizeHints h;
+  long supplied;
+  if (!XGetWMNormalHints(dpy, w, &h, &supplied)) return false;
+  return (h.flags & PMinSize) && (h.flags & PMaxSize) && h.min_width == h.max_width &&
+         h.min_height == h.max_height && h.min_width > 0;
+}
+
 static void manage(Window w, bool existing) {
   if (clients.count(w) || w == desktop_win) return;
   XWindowAttributes wa;
@@ -749,6 +764,7 @@ static void manage(Window w, bool existing) {
   c->dialog = (XGetTransientForHint(dpy, w, &tf) && tf) ||
               has_atom(w, A_NET_WM_TYPE, A_NET_WM_TYPE_DIALOG) || cls == "Nirvana-Dialog";
   c->bare = undecorated(w);
+  c->fixed = fixed_size(w);
 
   int x = un(wa.x), y = un(wa.y);
   // StaticGravity (FLTK, many other programs): the given position refers to the
@@ -1150,6 +1166,9 @@ static int x_handler(void *event, void *) {
     if (Client *c = client_of(e->xproperty.window)) {
       if (e->xproperty.atom == XA_WM_NAME || e->xproperty.atom == A_NET_WM_NAME) {
         c->title = get_title(c->win);
+        c->frame->redraw();
+      } else if (e->xproperty.atom == XA_WM_NORMAL_HINTS) {
+        c->fixed = fixed_size(c->win);
         c->frame->redraw();
       } else if (g_pending.win == c->win && e->xproperty.atom == A_ICON_RECT) {
         iconify_animate(c->win);   // Rambler has placed the icon of the window just minimized
