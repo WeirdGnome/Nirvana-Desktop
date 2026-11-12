@@ -1,6 +1,12 @@
 # Lista zmian
 Wszystkie ważniejsze zmiany w Nirvana Desktop, od najnowszych. English: [CHANGELOG.md](CHANGELOG.md).
 
+## 0.0.46 – 2026-11-12
+
+- **NirvanaSHIELD:** zapora, która wpuszcza do internetu tylko programy, którym pozwolisz – usługa `nirvana-shield` (nftables + cgroup net_cls + zdarzenia procesów z kernela), Preferencje > NirvanaSHIELD z dużym przełącznikiem przy każdym programie i trzema dużymi trybami (Chroń, Zablokuj cały internet, Wyłącz ochronę), tarcza na pasku menu i powiadomienie z Zezwól/Nie, gdy program pyta. Hasło rodzica i zawsze dozwolona sieć domowa.
+- Własne powiadomienia Nirvany mogą mieć przyciski obsługiwane w Ramblerze.
+- Paczka .deb poleca `nftables`.
+
 ## 0.0.45 – 2026-11-12
 
 - **Wykonaj polecenie** pamięta historię (`~/.config/nirvana/run-history`, ostatnie 50) i podpowiada podczas pisania: pasujące wpisy z historii, programy z `$PATH` (np. /usr/bin) i AppImage użytkownika (z wersjami). ↑↓ wybór, Tab uzupełnia, Enter albo dwuklik uruchamia.

@@ -41,7 +41,7 @@ What changed in each version: [CHANGELOG.md](CHANGELOG.md).
 
 Unpack the sources and run the installer:
 
-    tar xzf nirvana-desktop-0.0.45.tar.gz && cd nirvana-desktop
+    tar xzf nirvana-desktop-0.0.46.tar.gz && cd nirvana-desktop
     sudo ./install.sh                 # or: sudo ./install.sh --login-screen
 
 The installer:
@@ -591,6 +591,43 @@ and a few networks (everything else is passed on to the real `nmcli`).
   BlueZ errors (device off, codes did not match, no audio service – PipeWire/PulseAudio with
   Bluetooth support is needed for headphones).
 - Testing without hardware: `NIRVANA_BLUETOOTHCTL=/path/to/a/fake/bluetoothctl`.
+
+## NirvanaSHIELD: which programs may use the internet
+
+A firewall in the spirit of the simple whitelist firewalls: **no program gets to the internet
+until you allow it.** Made so that a child and a grandparent can use it.
+
+- **Preferences > NirvanaSHIELD:** a big shield and one sentence say what is going on; three big
+  buttons for the whole computer – **Protect** (only the green ones), **Block all internet**,
+  **Switch protection off**; and a list of your programs (from the menus and your AppImages) with
+  one big switch each: **HAS INTERNET** / **NO INTERNET**. Programs that just tried to get out
+  come first, with an orange note. *Find* and *Add another program…* for programs not in the
+  menus.
+- **When a program asks:** a notification "May “Firefox” use the internet?" with **Allow** and
+  **No** (with a sound, like all notifications). The shield in the menu bar also lists the
+  programs that asked.
+- **Parental lock** ("Changes need the parent's password"): then every change asks for the
+  administrator password. **Home network always allowed**: printers, shared folders and other
+  computers at home stay reachable.
+- **System services always work** (updates, DHCP, time, printing, Bluetooth) – only the programs
+  of people's accounts are filtered. Incoming connections from outside are dropped (replies,
+  ping and DHCP pass; the home network too when allowed).
+- **How it works:** the service `nirvana-shield` (root; `/etc/init.d/nirvana-shield`, a systemd
+  unit too) loads nftables rules (`table inet nirvana_shield`): user packets get out only from a
+  group of processes (a net_cls cgroup). The kernel tells the service about every program start
+  and the allowed ones go into the group – the program file, the AppImage, or the script an
+  interpreter runs (`firefox` the script and `/usr/lib/firefox-esr/firefox-esr` the program are
+  switched together). Programs started by an allowed program are allowed too. Blocked attempts
+  come from the kernel log (rate-limited `log` rule) and are matched to the program by its socket.
+  Settings: `/etc/nirvana-shield.conf`; control: `/run/nirvana-shield.sock` (each user changes
+  only their own list). Stopping the service removes the rules; if it crashes they stay (fails
+  closed).
+- **Switching on:** the panel's big button (administrator password) enables and starts the
+  service. Needs `nftables` (recommended by the package) and the net_cls cgroup controller
+  (standard Debian/Devuan kernels have it).
+- **Limits:** Flatpak and Snap programs are not told apart yet; allowing a script interpreter
+  (python3, sh) allows every script it runs; a program allowed in a terminal also allows what is
+  started from that terminal.
 
 ## Notifications
 

@@ -40,7 +40,7 @@ Co się zmieniło w każdej wersji: [CHANGELOG.pl.md](CHANGELOG.pl.md).
 
 Rozpakuj źródła i uruchom instalator:
 
-    tar xzf nirvana-desktop-0.0.45.tar.gz && cd nirvana-desktop
+    tar xzf nirvana-desktop-0.0.46.tar.gz && cd nirvana-desktop
     sudo ./install.sh                 # albo: sudo ./install.sh --login-screen
 
 Instalator:
@@ -589,6 +589,41 @@ sieci (resztę przekazuje do prawdziwego `nmcli`).
   typowych błędów BlueZ (urządzenie wyłączone, kody się nie zgadzały, brak usługi dźwięku –
   do słuchawek potrzebny jest PipeWire/PulseAudio z obsługą Bluetooth).
 - Testy bez sprzętu: `NIRVANA_BLUETOOTHCTL=/ścieżka/do/atrapy/bluetoothctl`.
+
+## NirvanaSHIELD: które programy mogą korzystać z internetu
+
+Zapora w duchu prostych zapór z listą dozwolonych: **żaden program nie wyjdzie do internetu, dopóki
+mu nie pozwolisz.** Zrobiona tak, żeby obsłużyło ją dziecko i dziadek.
+
+- **Preferencje > NirvanaSHIELD:** duża tarcza i jedno zdanie mówią, co się dzieje; trzy duże
+  przyciski dla całego komputera – **Chroń** (tylko zielone), **Zablokuj cały internet**, **Wyłącz
+  ochronę**; i lista Twoich programów (z menu i Twoje AppImage) z jednym dużym przełącznikiem przy
+  każdym: **MA INTERNET** / **BEZ INTERNETU**. Programy, które przed chwilą próbowały wyjść, są
+  na górze z pomarańczową notką. *Szukaj* i *Dodaj inny program…* dla programów spoza menu.
+- **Gdy program pyta:** powiadomienie „Czy „Firefox” może korzystać z internetu?” z przyciskami
+  **Zezwól** i **Nie** (z dźwiękiem, jak wszystkie powiadomienia). Tarcza na pasku menu też
+  pokazuje programy, które pytały.
+- **Hasło rodzica** („Zmiany tylko z hasłem rodzica”): wtedy każda zmiana prosi o hasło
+  administratora. **Sieć domowa zawsze dozwolona**: drukarki, wspólne foldery i inne komputery
+  w domu zostają osiągalne.
+- **Usługi systemowe działają zawsze** (aktualizacje, DHCP, czas, drukowanie, Bluetooth) –
+  filtrowane są tylko programy kont ludzi. Połączenia przychodzące z zewnątrz są odrzucane
+  (odpowiedzi, ping i DHCP przechodzą; sieć domowa też, jeśli dozwolona).
+- **Jak to działa:** usługa `nirvana-shield` (root; `/etc/init.d/nirvana-shield`, jest też jednostka
+  systemd) ładuje reguły nftables (`table inet nirvana_shield`): pakiety użytkowników wychodzą tylko
+  z grupy procesów (cgroup net_cls). Kernel zgłasza usłudze każde uruchomienie programu, a dozwolone
+  trafiają do grupy – plik programu, AppImage albo skrypt uruchamiany przez interpreter (`firefox`
+  – skrypt i `/usr/lib/firefox-esr/firefox-esr` – program włączają się razem). Programy
+  uruchomione przez dozwolony program też są dozwolone. Zablokowane próby przychodzą z logu kernela
+  (reguła `log` z limitem) i są dopasowywane do programu po jego gnieździe. Ustawienia:
+  `/etc/nirvana-shield.conf`; sterowanie: `/run/nirvana-shield.sock` (każdy zmienia tylko swoją
+  listę). Zatrzymanie usługi zdejmuje reguły; jeśli usługa padnie, reguły zostają (bezpieczniej).
+- **Włączanie:** duży przycisk w panelu (hasło administratora) włącza i uruchamia usługę. Potrzebny
+  jest `nftables` (polecany przez paczkę) i kontroler cgroup net_cls (standardowe jądra
+  Debiana/Devuana go mają).
+- **Ograniczenia:** programy Flatpak i Snap nie są jeszcze rozróżniane; pozwolenie interpreterowi
+  skryptów (python3, sh) pozwala każdemu jego skryptowi; program dozwolony w terminalu pozwala też
+  temu, co z tego terminala uruchomiono.
 
 ## Powiadomienia
 

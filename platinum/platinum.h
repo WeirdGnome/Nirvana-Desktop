@@ -220,7 +220,10 @@ void draw_battery(int x, int y, int percent, bool charging, Fl_Color c, double s
 void draw_plug(int x, int y, Fl_Color c);                        // 14x13
 void draw_sun(int x, int y, Fl_Color c, double scale = 1);       // 13x13
 void draw_display(int x, int y, Fl_Color c);
-void draw_bluetooth(int x, int y, Fl_Color c);                   // 9x13, the rune of the radio standard
+void draw_bluetooth(int x, int y, Fl_Color c);
+// NirvanaSHIELD: a shield of the given size (height; width 0.82 x). state: 0 off (gray),
+// 1 protecting (green, a check mark), 2 everything blocked (red, a bar), 3 not running (gray, outline)
+void draw_shield(int x, int y, int size, int state);                   // 9x13, the rune of the radio standard
 // A depth gadget: a back rectangle and a front one overlapping it.
 void draw_depth_gadget(int x, int y, bool pressed);              // 18x14
 

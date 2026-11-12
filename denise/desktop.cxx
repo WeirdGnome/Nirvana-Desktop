@@ -561,6 +561,7 @@ Desktop::Desktop(int W, int H, const std::string &home)
   prn_w_ = applets::make_printer(0, 0, 24, MENUBAR_H);
   clip_w_ = applets::make_clipboard(0, 0, 22, MENUBAR_H);
   bell_w_ = applets::make_notifications(0, 0, 24, MENUBAR_H);
+  shield_w_ = applets::make_shield(0, 0, 22, MENUBAR_H);
   applets::clipboard_hotkey();
   tray_w_ = tray::make(0, 0, MENUBAR_H);
   {
@@ -647,6 +648,7 @@ void Desktop::layout_bar() {
   };
   put(extras_, extras_->w());
   put(bell_w_, 24);
+  put(shield_w_, 22);
   put(net_menu_, 24);
   put(bt_w_, applets::bluetooth_width());
   put(vol_w_, 24);

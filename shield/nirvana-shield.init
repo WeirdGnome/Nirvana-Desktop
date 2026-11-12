@@ -1,0 +1,34 @@
+#!/bin/sh
+### BEGIN INIT INFO
+# Provides:          nirvana-shield
+# Required-Start:    $local_fs $remote_fs $syslog
+# Required-Stop:     $local_fs $remote_fs $syslog
+# Should-Start:      $network
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# Short-Description: NirvanaSHIELD firewall (Nirvana Desktop)
+# Description:       Lets only the programs a user allowed use the network.
+### END INIT INFO
+DAEMON=/usr/sbin/nirvana-shield
+PIDFILE=/run/nirvana-shield.pid
+[ -x "$DAEMON" ] || exit 0
+case "$1" in
+  start)
+    echo "Starting NirvanaSHIELD"
+    start-stop-daemon --start --quiet --background --make-pidfile --pidfile "$PIDFILE" --exec "$DAEMON" -- daemon
+    ;;
+  stop)
+    echo "Stopping NirvanaSHIELD"
+    start-stop-daemon --stop --quiet --retry TERM/5 --pidfile "$PIDFILE" --exec "$DAEMON"
+    rm -f "$PIDFILE"
+    ;;
+  restart|force-reload)
+    "$0" stop; "$0" start
+    ;;
+  status)
+    if start-stop-daemon --status --pidfile "$PIDFILE" --exec "$DAEMON"; then echo "running"; else echo "stopped"; exit 3; fi
+    ;;
+  *)
+    echo "Usage: $0 {start|stop|restart|status}" >&2; exit 2 ;;
+esac
+exit 0

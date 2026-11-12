@@ -618,6 +618,51 @@ void draw_bluetooth(int x, int y, Fl_Color c) {
   fl_line(x + 8, y + 9, x + 1, y + 3);
 }
 
+void draw_shield(int x, int y, int size, int state) {
+  double W = size * 0.82, H = size;
+  auto shape = [&](double inset) {
+    double l = x + inset, r = x + W - inset, t = y + inset, b = y + H - inset, m = x + W / 2;
+    fl_vertex(m, t);
+    fl_curve(m, t, m + (r - m) * 0.45, t + (b - t) * 0.10, r, t + (b - t) * 0.08, r, t + (b - t) * 0.12);
+    fl_curve(r, t + (b - t) * 0.12, r, t + (b - t) * 0.55, r - (r - m) * 0.35, t + (b - t) * 0.82, m, b);
+    fl_curve(m, b, l + (m - l) * 0.35, t + (b - t) * 0.82, l, t + (b - t) * 0.55, l, t + (b - t) * 0.12);
+    fl_curve(l, t + (b - t) * 0.12, l, t + (b - t) * 0.08, m - (m - l) * 0.45, t + (b - t) * 0.10, m, t);
+  };
+  Fl_Color fill = state == 1 ? fl_rgb_color(0x2E, 0xA0, 0x44) : state == 2 ? fl_rgb_color(0xD2, 0x3B, 0x30)
+                : state == 3 ? GRAY : fl_rgb_color(0x9A, 0x9A, 0x9A);
+  Fl_Color hi = fl_color_average(fill, FL_WHITE, 0.6f);
+  fl_color(DARK);
+  fl_begin_complex_polygon(); shape(0); fl_end_complex_polygon();
+  double bw = std::max(1.0, size / 14.0);
+  fl_color(fill);
+  fl_begin_complex_polygon(); shape(bw); fl_end_complex_polygon();
+  if (size >= 24) {   // a light left half, as if lit from the left
+    fl_color(hi);
+    fl_begin_complex_polygon();
+    double l = x + bw * 2, m = x + W / 2, t = y + bw * 2, b = y + H - bw * 2;
+    fl_vertex(m, t + size * 0.02);
+    fl_curve(m, t, l + (m - l) * 0.5, t + (b - t) * 0.1, l, t + (b - t) * 0.09, l, t + (b - t) * 0.13);
+    fl_curve(l, t + (b - t) * 0.13, l, t + (b - t) * 0.5, l + (m - l) * 0.5, t + (b - t) * 0.78, m, b - size * 0.04);
+    fl_end_complex_polygon();
+    fl_color(fill);
+    fl_begin_complex_polygon(); shape(bw + size * 0.08); fl_end_complex_polygon();
+  }
+  // the sign
+  int lw = std::max(1, size / 9);
+  fl_color(state == 3 ? DARK : FL_WHITE);
+  fl_line_style(FL_SOLID | FL_CAP_ROUND | FL_JOIN_ROUND, lw);
+  double cx = x + W / 2, cy = y + H * 0.46;
+  if (state == 1) {
+    fl_line((int)(cx - W * 0.22), (int)(cy), (int)(cx - W * 0.05), (int)(cy + H * 0.16), (int)(cx + W * 0.24), (int)(cy - H * 0.16));
+  } else if (state == 2) {
+    fl_line((int)(cx - W * 0.22), (int)cy, (int)(cx + W * 0.22), (int)cy);
+  } else if (state == 3 && size >= 24) {
+    fl_line((int)(cx - W * 0.15), (int)(cy - H * 0.15), (int)(cx + W * 0.15), (int)(cy + H * 0.15));
+    fl_line((int)(cx + W * 0.15), (int)(cy - H * 0.15), (int)(cx - W * 0.15), (int)(cy + H * 0.15));
+  }
+  fl_line_style(0);
+}
+
 void draw_depth_gadget(int x, int y, bool pressed) {
   Fl_Color line = pressed ? SEL_TEXT : TEXT;
   Fl_Color back = pressed ? SEL : GRAY;

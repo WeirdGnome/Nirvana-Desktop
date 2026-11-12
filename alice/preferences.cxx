@@ -37,7 +37,7 @@ void open_panel(const char *name) {
 
 class PanelIcon : public Fl_Button {
 public:
-  enum Kind { Appearance, Desktop, Network, Power, Shader, DateTime, Printers, User, Saver, Bluetooth } kind;
+  enum Kind { Appearance, Desktop, Network, Power, Shader, DateTime, Printers, User, Saver, Bluetooth, Shield } kind;
   PanelIcon(int X, int Y, Kind k, const char *l) : Fl_Button(X, Y, 96, 74, l), kind(k) {
     box(FL_NO_BOX);
     labelsize(SIZE_SMALL + 1);
@@ -57,6 +57,7 @@ public:
         break;
       }
       case Network: draw_icon(Icon::Network, ix, iy, sel); break;
+      case Shield: draw_shield(ix + 3, iy, 32, 1); break;
       case Bluetooth: {   // a round blue badge with the rune, and a little headset beside it
         fl_color(fl_rgb_color(0x2E, 0x5F, 0xC8)); fl_pie(ix + 3, iy, 26, 30, 0, 360);
         fl_color(DARK); fl_arc(ix + 3, iy, 26, 30, 0, 360);
@@ -162,7 +163,7 @@ public:
 int panel_preferences() {
   // at most 5 icons in a row, then a new row
   const int PER_ROW = 5, CELL_W = 106, CELL_H = 84;
-  const int N = 10;   // the number of panels below
+  const int N = 11;   // the number of panels below
   const int rows = (N + PER_ROW - 1) / PER_ROW;
   const int W = 14 * 2 + PER_ROW * CELL_W - 10, icons_h = 20 + rows * CELL_H;
   const int H = icons_h + 90;
@@ -174,6 +175,7 @@ int panel_preferences() {
       {PanelIcon::Desktop, _("Desktop"), "desktop"},
       {PanelIcon::Network, _("Network"), "network"},
       {PanelIcon::Bluetooth, _("Bluetooth"), "bluetooth"},
+      {PanelIcon::Shield, "NirvanaSHIELD", "shield"},
       {PanelIcon::Power, _("Power"), "power"},
       {PanelIcon::Saver, _("Screen Saver"), "saver"},
       {PanelIcon::DateTime, _("Date & Time"), "datetime"},

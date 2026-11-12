@@ -1,0 +1,11 @@
+[Unit]
+Description=NirvanaSHIELD firewall (Nirvana Desktop)
+After=network-pre.target
+Wants=network-pre.target
+
+[Service]
+ExecStart=/usr/sbin/nirvana-shield daemon
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target

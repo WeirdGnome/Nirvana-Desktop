@@ -1,6 +1,12 @@
 # Changelog
 All notable changes to Nirvana Desktop, newest first. Polish: [CHANGELOG.pl.md](CHANGELOG.pl.md).
 
+## 0.0.46 – 2026-11-12
+
+- **NirvanaSHIELD:** a firewall that lets only the programs you allowed use the internet – the `nirvana-shield` service (nftables + net_cls cgroup + the kernel's process events), Preferences > NirvanaSHIELD with big switches per program and three big modes (Protect, Block all internet, Protection off), a shield in the menu bar, and a notification with Allow/No when a program asks. Parental lock and an always-allowed home network.
+- Nirvana's own notifications can carry action buttons handled inside Rambler.
+- The .deb recommends `nftables`.
+
 ## 0.0.45 – 2026-11-12
 
 - **Execute Command** remembers its history (`~/.config/nirvana/run-history`, the last 50) and suggests while typing: matching history, programs from `$PATH` (e.g. /usr/bin) and the user's AppImages (with their versions). ↑↓ choose, Tab completes, Enter or a double click runs.

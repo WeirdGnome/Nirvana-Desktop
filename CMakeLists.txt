@@ -80,6 +80,15 @@ add_library(nirvana-bt STATIC bt/bt.cxx)
 target_include_directories(nirvana-bt PUBLIC bt)
 target_link_libraries(nirvana-bt PUBLIC nirvana-i18n fltk::fltk util)
 
+# --- NirvanaSHIELD: the firewall service and its client library --------------
+add_library(nirvana-shield-client STATIC shield/client.cxx)
+target_include_directories(nirvana-shield-client PUBLIC shield)
+add_executable(nirvana-shield shield/daemon.cxx)
+target_link_libraries(nirvana-shield PRIVATE nirvana-shield-client)
+install(TARGETS nirvana-shield RUNTIME DESTINATION sbin COMPONENT nirvana)
+install(PROGRAMS shield/nirvana-shield.init DESTINATION /etc/init.d RENAME nirvana-shield COMPONENT nirvana)
+install(FILES shield/nirvana-shield.service DESTINATION lib/systemd/system COMPONENT nirvana)
+
 # --- nirvana-audio and nirvana-power: volume and power applets ---------------
 pkg_check_modules(XSS REQUIRED IMPORTED_TARGET xscrnsaver)
 add_library(nirvana-audio STATIC audio/audio.cxx)
@@ -131,16 +140,17 @@ add_executable(nirvana-denise
   denise/tray.cxx
   denise/bluetooth.cxx
   denise/clipboard.cxx
-  denise/notify.cxx)
-target_link_libraries(nirvana-denise PRIVATE nirvana-platinum nirvana-net nirvana-bt nirvana-audio nirvana-power ${NIRVANA_PRINT_LIB} fltk::images PkgConfig::DBUS)
+  denise/notify.cxx
+  denise/shield_applet.cxx)
+target_link_libraries(nirvana-denise PRIVATE nirvana-platinum nirvana-net nirvana-bt nirvana-shield-client nirvana-audio nirvana-power ${NIRVANA_PRINT_LIB} fltk::images PkgConfig::DBUS)
 
 # --- insight: X11 window manager ---------------------------------------------
 add_executable(nirvana-insight insight/main.cxx)
 target_link_libraries(nirvana-insight PRIVATE nirvana-platinum X11::X11)
 
 # --- alice: control panels ---------------------------------------------------
-add_executable(nirvana-alice alice/main.cxx alice/appearance.cxx alice/network.cxx alice/power.cxx alice/preferences.cxx alice/shader.cxx alice/datetime.cxx alice/desktop.cxx alice/printers.cxx alice/user.cxx alice/saver.cxx alice/bluetooth.cxx)
-target_link_libraries(nirvana-alice PRIVATE nirvana-platinum nirvana-net nirvana-bt nirvana-power ${NIRVANA_PRINT_LIB})
+add_executable(nirvana-alice alice/main.cxx alice/appearance.cxx alice/network.cxx alice/power.cxx alice/preferences.cxx alice/shader.cxx alice/datetime.cxx alice/desktop.cxx alice/printers.cxx alice/user.cxx alice/saver.cxx alice/bluetooth.cxx alice/shield.cxx)
+target_link_libraries(nirvana-alice PRIVATE nirvana-platinum nirvana-net nirvana-bt nirvana-shield-client nirvana-power ${NIRVANA_PRINT_LIB})
 
 # --- Nirvana Shell: terminal emulator (system libvterm or the bundled one) ---
 pkg_check_modules(VTERM IMPORTED_TARGET vterm>=0.3)
@@ -265,7 +275,7 @@ set(CPACK_DEBIAN_PACKAGE_SHLIBDEPS ON)
 set(CPACK_DEBIAN_PACKAGE_DEPENDS "dbus-bin | dbus")
 set(CPACK_DEBIAN_PACKAGE_RECOMMENDS
   "xserver-xorg, xinit, fonts-dejavu-core, libpam-elogind | elogind, polkitd, pkexec, \
-udisks2, network-manager, bluez, rfkill, pulseaudio-utils, alsa-utils, squashfs-tools, bubblewrap, xdg-utils, \
+udisks2, network-manager, bluez, rfkill, nftables, pulseaudio-utils, alsa-utils, squashfs-tools, bubblewrap, xdg-utils, \
 xdg-desktop-portal, xdg-desktop-portal-gtk, libgl1-mesa-dri, \
 libxcb-cursor0, libxcb-icccm4, libxcb-keysyms1, libxcb-image0, libxcb-render-util0, libxkbcommon-x11-0, \
 libxcb-xkb1, libxcb-shape0, libxcb-randr0, libxcb-xinerama0")

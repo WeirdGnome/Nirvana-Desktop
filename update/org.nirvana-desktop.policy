@@ -75,4 +75,16 @@
     </defaults>
     <annotate key="org.freedesktop.policykit.exec.path">/usr/libexec/nirvana-libs-helper</annotate>
   </action>
+  <action id="org.nirvana-desktop.shield">
+    <description>Change the NirvanaSHIELD firewall</description>
+    <description xml:lang="pl">Zmiana zapory NirvanaSHIELD</description>
+    <message>Changing the firewall (which programs may use the network) needs the administrator password</message>
+    <message xml:lang="pl">Zmiana zapory (które programy mogą korzystać z sieci) wymaga hasła administratora</message>
+    <defaults>
+      <allow_any>auth_admin</allow_any>
+      <allow_inactive>auth_admin</allow_inactive>
+      <allow_active>auth_admin_keep</allow_active>
+    </defaults>
+    <annotate key="org.freedesktop.policykit.exec.path">/usr/sbin/nirvana-shield</annotate>
+  </action>
 </policyconfig>

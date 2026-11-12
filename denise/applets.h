@@ -49,6 +49,11 @@ void refresh_bluetooth();
 Fl_Widget *make_clipboard(int X, int Y, int W, int H);
 // Notifications (notify.cxx): the org.freedesktop.Notifications server, windows, the bell applet
 Fl_Widget *make_notifications(int X, int Y, int W, int H);
+void notify_local(const std::string &app, const std::string &summary, const std::string &body,
+                  const std::string &icon, const std::vector<std::pair<std::string, std::string>> &actions,
+                  std::function<void(const std::string &)> on_action, bool urgent = false);
+// NirvanaSHIELD (shield_applet.cxx): the shield in the menu bar, "may X use the internet?"
+Fl_Widget *make_shield(int X, int Y, int W, int H);
 void clipboard_hotkey();   // grabs Ctrl+Alt+V on the root window
 // The clock (clock.cxx): time, calendar, pomodoro, timer, stopwatch. Its width follows
 // the content; relayout is called when it changes.

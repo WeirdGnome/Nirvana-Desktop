@@ -34,6 +34,7 @@
 #include <ctime>
 #include <deque>
 #include <fstream>
+#include <functional>
 #include <memory>
 #include <string>
 #include <sys/stat.h>
@@ -70,6 +71,7 @@ struct Note {
   std::string sound_file, sound_name;
   time_t when = 0;
   bool alive = true;             // the program can still get its actions
+  std::function<void(const std::string &)> local;   // Nirvana's own notification: its actions
 };
 
 std::deque<std::shared_ptr<Note>> g_hist;   // newest first
@@ -302,7 +304,8 @@ public:
       b->callback([](Fl_Widget *w, void *d) {
         auto *p = (Popup *)w->window();
         std::string key = *(std::string *)d;
-        emit_action(p->n->id, key);
+        if (p->n->local) p->n->local(key);
+        else emit_action(p->n->id, key);
         if (!p->n->resident) p->dismiss(2);
       }, &keys_.emplace_back(btns[i].first));
       bx -= 6;
@@ -383,7 +386,10 @@ public:
       if (close_down_) { close_down_ = false; dismiss(2); return 1; }
       if (on_close(Fl::event_x(), Fl::event_y())) return 1;
       // a click on the notification: its default action (e.g. open the chat), then away
-      if (n->alive && !from_history && has_default()) emit_action(n->id, "default");
+      if (n->alive && !from_history && has_default()) {
+        if (n->local) n->local("default");
+        else emit_action(n->id, "default");
+      }
       dismiss(2);
       return 1;
     }
@@ -407,7 +413,7 @@ public:
     Fl::remove_timeout(expire_cb, this);
     g_pops.erase(std::remove(g_pops.begin(), g_pops.end(), this), g_pops.end());
     if (!from_history) {
-      emit_closed(n->id, (unsigned)reason);
+      if (!n->local) emit_closed(n->id, (unsigned)reason);
       n->alive = false;   // closed: the program no longer waits for its actions
     }
     hide();
@@ -815,6 +821,32 @@ private:
 };
 
 }  // namespace
+
+// Nirvana's own notification (e.g. NirvanaSHIELD): shown and sounded like the others,
+// its buttons call back here instead of over D-Bus
+void notify_local(const std::string &app, const std::string &summary, const std::string &body,
+                  const std::string &icon, const std::vector<std::pair<std::string, std::string>> &actions,
+                  std::function<void(const std::string &)> on_action, bool urgent) {
+  auto n = std::make_shared<Note>();
+  n->app = app;
+  n->summary = summary;
+  n->body = body;
+  n->actions = actions;
+  n->local = std::move(on_action);
+  n->urgency = urgent ? 2 : 1;
+  n->timeout = urgent ? 0 : 15000;
+  if (!icon.empty()) n->image = picture_file(icon);
+  n->when = time(nullptr);
+  n->id = g_next_id++;
+  g_hist.push_front(n);
+  while ((int)g_hist.size() > HISTORY) g_hist.pop_back();
+  g_unread++;
+  if (!g_dnd || urgent) {
+    show_note(n, false);
+    play(*n);
+  }
+  if (g_bell) ((Fl_Widget *)g_bell)->redraw();
+}
 
 Fl_Widget *make_notifications(int X, int Y, int W, int H) {
   load_conf();
