@@ -40,7 +40,7 @@ Co się zmieniło w każdej wersji: [CHANGELOG.pl.md](CHANGELOG.pl.md).
 
 Rozpakuj źródła i uruchom instalator:
 
-    tar xzf nirvana-desktop-0.0.40.tar.gz && cd nirvana-desktop
+    tar xzf nirvana-desktop-0.0.41.tar.gz && cd nirvana-desktop
     sudo ./install.sh                 # albo: sudo ./install.sh --login-screen
 
 Instalator:
@@ -581,6 +581,18 @@ sieci (resztę przekazuje do prawdziwego `nmcli`).
   typowych błędów BlueZ (urządzenie wyłączone, kody się nie zgadzały, brak usługi dźwięku –
   do słuchawek potrzebny jest PipeWire/PulseAudio z obsługą Bluetooth).
 - Testy bez sprzętu: `NIRVANA_BLUETOOTHCTL=/ścieżka/do/atrapy/bluetoothctl`.
+
+## Historia schowka
+
+- Aplet na pasku menu pamięta **teksty skopiowane w dowolnym programie** (ostatnie 25, od
+  najnowszego, każdy tekst raz). Klik w ikonę – albo **Ctrl+Alt+V** w dowolnym miejscu, menu
+  otwiera się przy kursorze – pokazuje historię; wybranie wpisu wkłada go z powrotem do schowka
+  (i do zaznaczenia środkowego przycisku), gotowy do Ctrl+V.
+- **Wstrzymaj zapisywanie** (ikona przygasa) – np. przy kopiowaniu haseł; **Wyczyść historię**
+  zapomina wszystko i opróżnia schowek.
+- Historia jest **tylko w pamięci** – znika po wylogowaniu i nigdy nie trafia na dysk. Nirvana
+  nie przejmuje schowka po każdym kopiowaniu, więc program, z którego skopiowano, zachowuje
+  wszystkie formaty (tekst sformatowany, obrazki); zapamiętywany jest tylko czysty tekst.
 
 ## Nirvana Shell (terminal)
 

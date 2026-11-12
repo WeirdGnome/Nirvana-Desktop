@@ -129,7 +129,8 @@ add_executable(nirvana-denise
   denise/printer.cxx
   denise/about.cxx
   denise/tray.cxx
-  denise/bluetooth.cxx)
+  denise/bluetooth.cxx
+  denise/clipboard.cxx)
 target_link_libraries(nirvana-denise PRIVATE nirvana-platinum nirvana-net nirvana-bt nirvana-audio nirvana-power ${NIRVANA_PRINT_LIB} fltk::images PkgConfig::DBUS)
 
 # --- insight: X11 window manager ---------------------------------------------

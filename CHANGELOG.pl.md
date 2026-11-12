@@ -1,6 +1,10 @@
 # Lista zmian
 Wszystkie ważniejsze zmiany w Nirvana Desktop, od najnowszych. English: [CHANGELOG.md](CHANGELOG.md).
 
+## 0.0.41 – 2026-11-12
+
+- **Historia schowka:** aplet na pasku menu pamięta ostatnie 25 skopiowanych tekstów (tylko w pamięci); klik albo Ctrl+Alt+V je pokazuje, wybranie wpisu wkłada go z powrotem do schowka; Wstrzymaj zapisywanie i Wyczyść historię.
+
 ## 0.0.40 – 2026-11-12
 
 - Insight szanuje okna o stałym rozmiarze (ten sam minimalny i maksymalny rozmiar w `WM_NORMAL_HINTS`, np. Preferencje i ich panele): bez przycisku zoom, bez zmiany rozmiaru krawędziami i rogiem, prośby o maksymalizację są pomijane; w klasycznych oknach 16-bit bez gadżetu powiększenia i rozmiaru.

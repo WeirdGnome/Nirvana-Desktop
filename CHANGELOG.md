@@ -1,6 +1,10 @@
 # Changelog
 All notable changes to Nirvana Desktop, newest first. Polish: [CHANGELOG.pl.md](CHANGELOG.pl.md).
 
+## 0.0.41 – 2026-11-12
+
+- **Clipboard history:** a menu bar applet remembers the last 25 copied texts (in memory only); a click or Ctrl+Alt+V shows them, choosing one puts it back into the clipboard; Pause Recording and Clear History.
+
 ## 0.0.40 – 2026-11-12
 
 - Insight respects windows with a fixed size (the same minimum and maximum size in `WM_NORMAL_HINTS`, e.g. Preferences and its panels): no zoom button, no resizing from the edges or the corner, maximize requests are ignored; in classic 16-bit windows no zoom and no size gadget.

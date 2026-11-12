@@ -41,7 +41,7 @@ What changed in each version: [CHANGELOG.md](CHANGELOG.md).
 
 Unpack the sources and run the installer:
 
-    tar xzf nirvana-desktop-0.0.40.tar.gz && cd nirvana-desktop
+    tar xzf nirvana-desktop-0.0.41.tar.gz && cd nirvana-desktop
     sudo ./install.sh                 # or: sudo ./install.sh --login-screen
 
 The installer:
@@ -584,6 +584,18 @@ and a few networks (everything else is passed on to the real `nmcli`).
   BlueZ errors (device off, codes did not match, no audio service – PipeWire/PulseAudio with
   Bluetooth support is needed for headphones).
 - Testing without hardware: `NIRVANA_BLUETOOTHCTL=/path/to/a/fake/bluetoothctl`.
+
+## Clipboard history
+
+- An applet in the menu bar remembers the **texts copied in any program** (the last 25, newest
+  first, each text once). A click on the icon – or **Ctrl+Alt+V** anywhere, the menu opens at the
+  mouse pointer – shows the history; choosing an entry puts it back into the clipboard (and the
+  middle-button selection), ready for Ctrl+V.
+- **Pause Recording** (the icon dims) – e.g. while copying passwords; **Clear History** forgets
+  everything and empties the clipboard.
+- The history lives **only in memory** – it is gone after logging out and never written to disk.
+  Nirvana does not take the clipboard over after every copy, so the program that copied keeps
+  all its formats (formatted text, pictures); only plain text is remembered.
 
 ## Nirvana Shell (terminal)
 

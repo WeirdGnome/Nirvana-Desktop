@@ -45,6 +45,9 @@ void refresh_printers();
 Fl_Widget *make_bluetooth(int X, int Y, int W, int H);
 int bluetooth_width();
 void refresh_bluetooth();
+// Clipboard history (clipboard.cxx): the copied texts in memory, Ctrl+Alt+V shows them
+Fl_Widget *make_clipboard(int X, int Y, int W, int H);
+void clipboard_hotkey();   // grabs Ctrl+Alt+V on the root window
 // The clock (clock.cxx): time, calendar, pomodoro, timer, stopwatch. Its width follows
 // the content; relayout is called when it changes.
 Fl_Widget *make_clock(int H, std::function<void()> relayout);   // a known package manager (or flatpak) is installed

@@ -1118,4 +1118,11 @@ T = {
     'Add a Device…': 'Dodaj urządzenie…',
     'Bluetooth Settings…': 'Ustawienia Bluetooth…',
     'Bluetooth: %1': 'Bluetooth: %1',
+    '(spaces)': '(same spacje)',
+    'Clipboard history (Ctrl+Alt+V)': 'Historia schowka (Ctrl+Alt+V)',
+    'Clipboard History (paused)': 'Historia schowka (wstrzymana)',
+    'Clipboard History': 'Historia schowka',
+    'Nothing copied yet': 'Nic jeszcze nie skopiowano',
+    'Pause Recording': 'Wstrzymaj zapisywanie',
+    'Clear History': 'Wyczyść historię',
 }
