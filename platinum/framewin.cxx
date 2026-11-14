@@ -47,7 +47,7 @@ static bool wm_supports(const char *what) {
 }
 
 // All frames are refreshed when the active window changes.
-static std::set<FrameWindow *> g_frames;
+static std::set<NirvanaWindow *> g_frames;
 static int watch(void *event, void *) {
   XEvent *e = (XEvent *)event;
   if (e->type == PropertyNotify && e->xproperty.window == DefaultRootWindow(fl_display) &&
@@ -57,7 +57,7 @@ static int watch(void *event, void *) {
 }
 #endif
 
-bool FrameWindow::wm_is_insight() {
+bool NirvanaWindow::wm_is_insight() {
 #if defined(FLTK_USE_X11)
   fl_open_display();
   Window chk = prop_window(DefaultRootWindow(fl_display), "_NET_SUPPORTING_WM_CHECK");
@@ -75,7 +75,7 @@ bool FrameWindow::wm_is_insight() {
 #endif
 }
 
-FrameWindow::FrameWindow(int W, int H, const char *title, bool dialog)
+NirvanaWindow::NirvanaWindow(int W, int H, const char *title, bool dialog)
     : Fl_Double_Window(W, H, title), dialog_(dialog) {
   const char *e = getenv("NIRVANA_CSD");
   csd_ = e ? !strcmp(e, "1") : !wm_is_insight();
@@ -95,13 +95,13 @@ FrameWindow::FrameWindow(int W, int H, const char *title, bool dialog)
 #endif
 }
 
-FrameWindow::~FrameWindow() {
+NirvanaWindow::~NirvanaWindow() {
 #if defined(FLTK_USE_X11)
   g_frames.erase(this);
 #endif
 }
 
-void FrameWindow::finish() {
+void NirvanaWindow::finish() {
   if (!csd_) return;
   for (int i = 0; i < children(); i++) {
     Fl_Widget *c = child(i);
@@ -117,7 +117,7 @@ void FrameWindow::finish() {
   full_h_ = H;
 }
 
-bool FrameWindow::active() {
+bool NirvanaWindow::active() {
   if (!shown()) return false;
 #if defined(FLTK_USE_X11)
   if (Window a = prop_window(DefaultRootWindow(fl_display), "_NET_ACTIVE_WINDOW")) return a == fl_xid(this);
@@ -125,7 +125,7 @@ bool FrameWindow::active() {
   return Fl::first_window() == this;
 }
 
-void FrameWindow::draw() {
+void NirvanaWindow::draw() {
   if (!csd_) { Fl_Double_Window::draw(); return; }
   // A change only inside: redraw the changed widgets, the frame stays in the buffer.
   if (!(damage() & ~FL_DAMAGE_CHILD)) {
@@ -145,7 +145,7 @@ void FrameWindow::draw() {
 }
 
 // 1 close, 3 shade (the panels have no "zoom" button)
-int FrameWindow::hit(int ex, int ey) const {
+int NirvanaWindow::hit(int ex, int ey) const {
   if (dialog_ || ey < 0 || ey >= TITLE_W) return 0;
   int by = (TITLE_W - BOX) / 2;
   if (ey < by || ey >= by + BOX) return 0;
@@ -157,7 +157,7 @@ int FrameWindow::hit(int ex, int ey) const {
   return 0;
 }
 
-void FrameWindow::toggle_shade() {
+void NirvanaWindow::toggle_shade() {
   if (dialog_) return;
   Rect full = {x(), y(), w(), shaded_ ? full_h_ : h()}, bar = {x(), y(), w(), TITLE_W};
   if (shaded_) zoom_rects(bar, full); else zoom_rects(full, bar);
@@ -170,12 +170,12 @@ void FrameWindow::toggle_shade() {
   redraw();
 }
 
-bool FrameWindow::in_grow(int ex, int ey) const {
+bool NirvanaWindow::in_grow(int ex, int ey) const {
   return sizable_ && !shaded_ && ex >= w() - FRAME_W - 15 && ey >= h() - FRAME_W - 15;
 }
 
 // Zoom: switching between the own size and the whole work area.
-void FrameWindow::toggle_zoom() {
+void NirvanaWindow::toggle_zoom() {
   if (!sizable_ || shaded_) return;
   Rect from = {x(), y(), w(), h()}, to;
   if (!zoomed_) {
@@ -195,9 +195,9 @@ void FrameWindow::toggle_zoom() {
   redraw();
 }
 
-void FrameWindow::start_move() { start_moveresize(8); }
+void NirvanaWindow::start_move() { start_moveresize(8); }
 
-void FrameWindow::start_moveresize(int direction) {
+void NirvanaWindow::start_moveresize(int direction) {
 #if defined(FLTK_USE_X11)
   XUngrabPointer(fl_display, CurrentTime);
   XEvent ev{};
@@ -216,7 +216,7 @@ void FrameWindow::start_moveresize(int direction) {
 #endif
 }
 
-int FrameWindow::handle(int e) {
+int NirvanaWindow::handle(int e) {
   if (!csd_) return Fl_Double_Window::handle(e);
   int ex = Fl::event_x(), ey = Fl::event_y();
   switch (e) {

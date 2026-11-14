@@ -64,6 +64,7 @@ add_library(nirvana-platinum STATIC
   platinum/clockconf.cxx
   platinum/icons_retro.cxx
   platinum/icons3d.cxx
+  platinum/nirvana_ui.cxx
   platinum/framewin.cxx)
 find_package(X11 REQUIRED)
 target_include_directories(nirvana-platinum PUBLIC platinum)
@@ -147,7 +148,7 @@ add_executable(nirvana-denise
   denise/shield_applet.cxx
   denise/explorer.cxx
   denise/filetypes.cxx
-  denise/jobs.cxx denise/sounds.cxx denise/openwith.cxx denise/screens.cxx denise/appmenu.cxx
+  denise/jobs.cxx denise/sounds.cxx denise/openwith.cxx denise/screens.cxx denise/appmenu.cxx denise/dock.cxx
   denise/sniff.cxx
   denise/metadata.cxx
   denise/search.cxx)

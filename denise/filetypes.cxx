@@ -164,9 +164,9 @@ std::string quote(const std::string &s) {
 
 }  // namespace
 
-std::string ex_other_path(NWin *w);   // explorer.cxx
+std::string ex_other_path(NirvanaDrawerWindow *w);   // explorer.cxx
 
-static void run_action(Desktop *d, const std::string &cmd, const std::vector<Entry> &files, NWin *w) {
+static void run_action(NirvanaDesktopCanvas *d, const std::string &cmd, const std::vector<Entry> &files, NirvanaDrawerWindow *w) {
   if (files.empty()) return;
   if (cmd == "@browse") { d->browse_archive(w, files[0].path); return; }
   if (cmd == "@wallpaper") { d->menu_target = w; d->set_as_wallpaper(); d->menu_target = nullptr; return; }
@@ -196,7 +196,7 @@ static void run_action(Desktop *d, const std::string &cmd, const std::vector<Ent
     rambler_spawn({"sh", "-c", "cd -- \"$1\" && " + out, "sh", src});
 }
 
-bool Desktop::run_filetype(const Entry &e, NWin *from, int action) {
+bool NirvanaDesktopCanvas::run_filetype(const Entry &e, NirvanaDrawerWindow *from, int action) {
   const FileType *t = type_of(e.name, e.path, e.mime);
   if (!t || action >= (int)t->actions.size()) return false;
   std::vector<Entry> files = {e};
@@ -210,7 +210,7 @@ bool Desktop::run_filetype(const Entry &e, NWin *from, int action) {
 
 // An event of a file type: open (double click), open2 (Shift + double click), preview (Space).
 // false: the type has nothing for it (Rambler does its usual thing).
-bool Desktop::run_event(const Entry &e, NWin *from, const std::string &event) {
+bool NirvanaDesktopCanvas::run_event(const Entry &e, NirvanaDrawerWindow *from, const std::string &event) {
   if (e.dir) return false;
   const FileType *t = type_of(e.name, e.path, e.mime);
   if (!t) return false;
@@ -229,7 +229,7 @@ bool Desktop::run_event(const Entry &e, NWin *from, const std::string &event) {
   return true;
 }
 
-std::vector<std::pair<std::string, std::function<void()>>> Desktop::filetype_menu(const std::vector<Entry> &sel, NWin *w) {
+std::vector<std::pair<std::string, std::function<void()>>> NirvanaDesktopCanvas::filetype_menu(const std::vector<Entry> &sel, NirvanaDrawerWindow *w) {
   std::vector<std::pair<std::string, std::function<void()>>> v;
   if (sel.empty() || sel[0].dir) return v;
   const FileType *t = type_of(sel[0].name, sel[0].path, sel[0].mime);
@@ -310,10 +310,10 @@ struct Editor {
 Editor *g_ed;
 }  // namespace
 
-void Desktop::edit_filetypes() {
+void NirvanaDesktopCanvas::edit_filetypes() {
   load();
   int W = 700, H = 600, ox, oy;
-  NWin *f = begin_form(_("File Types"), W, H, nullptr,
+  NirvanaDrawerWindow *f = begin_form(_("File Types"), W, H, nullptr,
                        _("What a double click and the context menu do with each kind of file. The first action is the double click."),
                        ox, oy);
   static Editor ed;

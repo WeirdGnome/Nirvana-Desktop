@@ -178,7 +178,7 @@ public:
   Term(const std::string &dir, const std::vector<std::string> &cmd);
   ~Term();
 
-  FrameWindow *win;
+  NirvanaWindow *win;
   TermArea *area;
   Fl_Scrollbar *sbar;
   Profile prof;
@@ -590,7 +590,7 @@ std::string Term::running_program() const {
 // Ask before closing when something runs in the terminal (e.g. vim, copying).
 bool ask_close(Term *t, const std::string &prog) {
   int W = 400, H = 130;
-  auto *w = new FrameWindow(W, H, "Nirvana Shell", true);
+  auto *w = new NirvanaWindow(W, H, "Nirvana Shell", true);
   struct Pic : Fl_Widget {
     Pic(int X, int Y) : Fl_Widget(X, Y, 34, 34) {}
     void draw() override { draw_icon(Icon::Application, x(), y(), false); }
@@ -865,7 +865,7 @@ Term::Term(const std::string &dir, const std::vector<std::string> &cmd) {
   cols = g_set.cols;
   int aw = cols * cw + 2 * PAD, ah = rows * chh + 2 * PAD;
   int W = aw + SCROLL_W, H = ah;
-  win = new FrameWindow(W, H, "Nirvana Shell");
+  win = new NirvanaWindow(W, H, "Nirvana Shell");
   win->xclass("nirvana-shell");
   {   // window icon (_NET_WM_ICON): the desktop icon when minimized, the application switcher
     static const Fl_RGB_Image *icons[2] = {plat::icon_image(plat::Icon::Terminal, 32),

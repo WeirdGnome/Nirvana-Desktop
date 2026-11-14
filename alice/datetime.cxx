@@ -34,7 +34,7 @@ using namespace plat;
 
 namespace {
 
-FrameWindow *g_win;
+NirvanaWindow *g_win;
 ClockSettings g_c;
 Fl_Check_Button *g_h24, *g_sec, *g_date, *g_wday, *g_sound, *g_auto;
 Fl_Spinner *g_work, *g_short, *g_long, *g_rounds;
@@ -276,7 +276,7 @@ int panel_datetime() {
   g_c = read_clock();
   load_zones();
   const int W = 620, H = 480;
-  g_win = new FrameWindow(W, H, _("Date & Time"));
+  g_win = new NirvanaWindow(W, H, _("Date & Time"));
   g_win->xclass("nirvana-datetime");
 
   // --- left: the clock and the timers

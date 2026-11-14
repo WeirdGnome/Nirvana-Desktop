@@ -103,8 +103,8 @@ int main(int argc, char **argv) {
     Fl::screen_xywh(sx, sy, W, H);
   }
 
-  Desktop::set_argv(argc, argv);   // Special > Reset Nirvana restarts Rambler
-  Desktop desk(W, H, home);
+  NirvanaDesktopCanvas::set_argv(argc, argv);   // Special > Reset Nirvana restarts Rambler
+  NirvanaDesktopCanvas desk(W, H, home);
   gary::init(home);
   desk.position(X, Y);
   desk.border(0);

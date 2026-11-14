@@ -27,7 +27,7 @@ using namespace plat;
 
 namespace {
 
-FrameWindow *g_win;
+NirvanaWindow *g_win;
 Fl_Hold_Browser *g_list;
 Fl_Box *g_details, *g_status;
 Fl_Button *g_remove, *g_default, *g_test, *g_pause;
@@ -144,7 +144,7 @@ void install_drivers(const std::vector<std::string> &ids) {
 
 void drivers_dialog(const std::vector<std::string> &preselect) {
   const int W = 460, H = 330;
-  auto *d = new FrameWindow(W, H, _("Install Printer Drivers"));
+  auto *d = new NirvanaWindow(W, H, _("Install Printer Drivers"));
   d->set_modal();
   auto *t = new Fl_Box(15, 10, W - 30, 36, _("Choose the drivers to install. Most new printers print without a driver; "
                                              "older ones need the driver of their manufacturer."));
@@ -182,7 +182,7 @@ void drivers_dialog(const std::vector<std::string> &preselect) {
 
 // --- adding a printer ------------------------------------------------------------------------
 struct AddState {
-  FrameWindow *win = nullptr;
+  NirvanaWindow *win = nullptr;
   Fl_Hold_Browser *devices = nullptr, *models = nullptr;
   Fl_Input *uri = nullptr, *name = nullptr;
   Fl_Box *hint = nullptr;
@@ -265,7 +265,7 @@ void add_dialog() {
   g_add = &a;
   a.all_models = printing::models();
   const int W = 600, H = 470;
-  a.win = new FrameWindow(W, H, _("Add Printer"));
+  a.win = new NirvanaWindow(W, H, _("Add Printer"));
   a.win->set_modal();
   auto *l1 = new Fl_Box(15, 8, 300, 20, _("1. The printer"));
   l1->labelfont(FONT_SYSTEM);
@@ -372,7 +372,7 @@ Fl_Button *button(int X, int Y, int W, const char *t, Fl_Callback *cb) {
 
 int panel_printers() {
   const int W = 620, H = 400;
-  g_win = new FrameWindow(W, H, _("Printers"));
+  g_win = new NirvanaWindow(W, H, _("Printers"));
   g_win->xclass("nirvana-printers");
   g_st = printing::query();
   g_status = new Fl_Box(15, H - 62, W - 30, 20);

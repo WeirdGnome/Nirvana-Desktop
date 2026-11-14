@@ -220,7 +220,7 @@ void list_cb(Fl_Widget *, void *) {
 
 int panel_shader() {
   const int W = 520, H = 360;
-  auto *win = new FrameWindow(W, H, _("Shader"));
+  auto *win = new NirvanaWindow(W, H, _("Shader"));
   win->xclass("nirvana-shader-panel");
   auto *t1 = new Fl_Box(15, 8, 220, 20, _("Full-screen effect"));
   t1->labelfont(FONT_SYSTEM);

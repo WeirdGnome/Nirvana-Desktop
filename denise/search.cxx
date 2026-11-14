@@ -34,7 +34,7 @@
 namespace fs = std::filesystem;
 using namespace plat;
 
-std::string ex_other_path(NWin *w);
+std::string ex_other_path(NirvanaDrawerWindow *w);
 
 namespace {
 
@@ -160,7 +160,7 @@ static std::string untilde(const std::string &p) { return real_path(p); }
 
 class FindWin : public Fl_Double_Window {
 public:
-  Desktop *desk;
+  NirvanaDesktopCanvas *desk;
   Fl_Input *root, *name, *text, *metatext, *min_mb, *max_mb;
   Fl_Choice *cat, *when;
   Fl_Check_Button *sub;
@@ -171,7 +171,7 @@ public:
   size_t shown = 0;
   std::string status_s;
 
-  FindWin(Desktop *d, const std::string &where) : Fl_Double_Window(720, 560, _("Find")), desk(d) {
+  FindWin(NirvanaDesktopCanvas *d, const std::string &where) : Fl_Double_Window(720, 560, _("Find")), desk(d) {
     color(GRAY);
     xclass("nirvana-find");
     auto label = [&](int X, int Y, int W, const char *t) {
@@ -331,8 +331,8 @@ FindWin *g_find;
 
 }  // namespace
 
-void Desktop::open_search() {
-  NWin *a = active_folder();
+void NirvanaDesktopCanvas::open_search() {
+  NirvanaDrawerWindow *a = active_folder();
   std::string where = a ? a->path : home_;
   if (!g_find) g_find = new FindWin(this, where);
   else g_find->root->value(tilde(where).c_str());
@@ -341,9 +341,9 @@ void Desktop::open_search() {
 }
 
 // a found item: open it (a file with its type's double click), or show it in its folder
-void Desktop::open_found(const std::string &path, bool in_folder) {
+void NirvanaDesktopCanvas::open_found(const std::string &path, bool in_folder) {
   std::error_code ec;
-  NWin *w = nullptr;
+  NirvanaDrawerWindow *w = nullptr;
   for (auto *o : wins_) if (o->pane && o->shown()) w = o;
   if (in_folder || fs::is_directory(path, ec)) {
     std::string dir = in_folder ? fs::path(path).parent_path().string() : path;
@@ -357,8 +357,8 @@ void Desktop::open_found(const std::string &path, bool in_folder) {
   open_entry(e, nullptr);
 }
 
-void Desktop::copy_found(const std::vector<Entry> &items) {
-  NWin *w = nullptr;
+void NirvanaDesktopCanvas::copy_found(const std::vector<Entry> &items) {
+  NirvanaDrawerWindow *w = nullptr;
   for (auto *o : wins_) if (o->pane && o->ex) w = o;
   std::string dest = w ? ex_other_path(w) : "";
   if (dest.empty() && w) dest = w->path;

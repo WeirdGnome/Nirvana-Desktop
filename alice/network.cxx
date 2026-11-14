@@ -37,7 +37,7 @@ namespace {
 net::State g_st;
 std::string g_iface;                 // the selected device
 std::string g_conn;                  // its active profile
-FrameWindow *g_win;
+NirvanaWindow *g_win;
 Fl_Hold_Browser *g_devs, *g_nets;
 Fl_Box *g_title, *g_status, *g_msg, *g_hint;
 Fl_Button *g_connect, *g_ipv4;
@@ -173,7 +173,7 @@ Fl_Button *button(int X, int Y, int W, const char *l) {
 
 // --- modal windows ---------------------------------------------------------------
 // Modal loop: returns true after "Connect"/"Save", false after "Cancel".
-bool run_modal(FrameWindow *w, Fl_Button *ok, Fl_Button *cancel) {
+bool run_modal(NirvanaWindow *w, Fl_Button *ok, Fl_Button *cancel) {
   int result = -1;
   ok->callback([](Fl_Widget *, void *r) { *(int *)r = 1; }, &result);
   cancel->callback([](Fl_Widget *, void *r) { *(int *)r = 0; }, &result);
@@ -192,7 +192,7 @@ struct WifiAnswer { std::string ssid, security, password; };
 // Network password; hidden=true adds the name and security type fields.
 bool ask_wifi(bool hidden, const std::string &ssid, const std::string &err, WifiAnswer &out) {
   int W = 420, H = hidden ? 250 : 180;
-  auto *w = new FrameWindow(W, H, hidden ? _("Other Wi-Fi Network") : _("Wi-Fi Network"), true);
+  auto *w = new NirvanaWindow(W, H, hidden ? _("Other Wi-Fi Network") : _("Wi-Fi Network"), true);
   struct Pic : Fl_Widget {
     Pic(int X, int Y) : Fl_Widget(X, Y, 34, 34) {}
     void draw() override { draw_icon(Icon::Wifi, x(), y(), false); }
@@ -312,7 +312,7 @@ void ipv4_dialog() {
   if (g_conn.empty()) return;
   net::Details d = net::details(g_iface);
   int W = 400, H = 220;
-  auto *w = new FrameWindow(W, H, _("IPv4 Settings"), true);
+  auto *w = new NirvanaWindow(W, H, _("IPv4 Settings"), true);
   std::string head = fmt(_("Connection “%1”"), g_conn);
   auto *t = new Fl_Box(16, 10, W - 32, 22);
   t->copy_label(head.c_str());
@@ -361,7 +361,7 @@ void ipv4_dialog() {
 // User name and password for a VPN (OpenVPN etc.). The password is not saved.
 bool ask_vpn(const net::Vpn &v, const std::string &err, std::string &user, std::string &pass) {
   int W = 420, H = err.empty() ? 196 : 216;
-  auto *w = new FrameWindow(W, H, "VPN", true);
+  auto *w = new NirvanaWindow(W, H, "VPN", true);
   struct Pic : Fl_Widget {
     Pic(int X, int Y) : Fl_Widget(X, Y, 34, 34) {}
     void draw() override { draw_icon(Icon::Encrypted, x(), y(), false); }
@@ -472,7 +472,7 @@ void vpn_import_dialog() {
 // Hotspot: sharing the connection over Wi-Fi.
 void hotspot_dialog() {
   int W = 420, H = 200;
-  auto *w = new FrameWindow(W, H, _("Hotspot"), true);
+  auto *w = new NirvanaWindow(W, H, _("Hotspot"), true);
   struct Pic : Fl_Widget {
     Pic(int X, int Y) : Fl_Widget(X, Y, 34, 34) {}
     void draw() override { draw_icon(Icon::Wifi, x(), y(), false); }
@@ -622,7 +622,7 @@ void refresh() {
 
 int panel_network(bool hidden_dialog) {
   const int W = 640, H = 470;
-  g_win = new FrameWindow(W, H, _("Network"));
+  g_win = new NirvanaWindow(W, H, _("Network"));
   g_win->xclass("nirvana-network");
 
   auto *t1 = new Fl_Box(15, 8, 200, 20, _("Connections"));

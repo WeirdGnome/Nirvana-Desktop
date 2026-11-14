@@ -320,7 +320,7 @@ std::vector<Panel> external_panels(std::set<std::string> &replaced) {
 }
 
 Fl_Group *g_icons = nullptr;
-FrameWindow *g_win = nullptr;
+NirvanaWindow *g_win = nullptr;
 Fl_Choice *g_lang = nullptr;
 Fl_Box *g_note = nullptr;
 std::vector<Panel> g_panels;
@@ -500,7 +500,7 @@ void build() {
 
 int panel_preferences() {
   const int W = 14 * 2 + PER_ROW * CELL_W - 10;
-  auto *win = new FrameWindow(W, 300, _("Preferences"));
+  auto *win = new NirvanaWindow(W, 300, _("Preferences"));
   g_win = win;
   win->xclass("nirvana-preferences");
   g_icons = new IconArea(0, 0, W, 200);

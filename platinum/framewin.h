@@ -14,11 +14,11 @@
 
 namespace plat {
 
-class FrameWindow : public Fl_Double_Window {
+class NirvanaWindow : public Fl_Double_Window {
 public:
   // dialog=true: a dialog window - no buttons in the bar, cannot be shaded
-  FrameWindow(int W, int H, const char *title, bool dialog = false);
-  ~FrameWindow() override;
+  NirvanaWindow(int W, int H, const char *title, bool dialog = false);
+  ~NirvanaWindow() override;
   void finish();                       // after end(): the frame and the content offset
   // A resizable window: the "zoom" button in the bar and a corner to drag
   // (bottom right, the last 15 px of the content - the program draws draw_grow_box there).

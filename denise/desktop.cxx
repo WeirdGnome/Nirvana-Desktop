@@ -390,13 +390,7 @@ static std::string alice_exe();
 static Entry entry_for(const std::string &path);
 // The dock: a strip of tiles at the left and bottom screen edge,
 // names in tooltips. A collapse tab on the left, a rounded end on the right.
-#define DOCK_TILE (desk_set_.dock_size + 8)   // tile: the icon (Preferences > Desktop > Dock size) + frame
-static const int DOCK_TAB = 14;    // collapse tab
-static const int DOCK_GRIP = 10;   // the grip of the floating dock
-static const int DOCK_DIV = 8;     // a divider between groups
-static const int DOCK_PAD = 4;     // the floating dock around its tiles
-static const int DOCK_LIFT = 6;    // ... and above the bottom edge
-static const int DOCK_END = 12;    // rounded end of the strip
+#define DOCK_TILE (dock_.tile())   // tile: the icon (Preferences > Desktop > Dock size) + frame
 static std::vector<net::Network> g_menu_nets;
 static std::vector<net::Vpn> g_menu_vpns;
 static std::vector<std::string> g_menu_ifaces;
@@ -419,7 +413,7 @@ static Fl_Tiled_Image *make_pattern() {
 
 static Fl_RGB_Image *make_logo_image();
 // First menu: the Nirvana Desktop logo and "Nirvana" (after a scheme change the logo gets a new background).
-void Desktop::set_logo() {
+void NirvanaDesktopCanvas::set_logo() {
   if (!logo_item_) return;
   Fl_RGB_Image *prev = logo_img_;
   logo_img_ = make_logo_image();
@@ -449,20 +443,20 @@ static Fl_RGB_Image *make_logo_image() {
 // Menu items: Fl_Callback does not take a capturing lambda, so user_data
 // carries a pointer to a constant item description (with a Desktop method).
 // ---------------------------------------------------------------------------
-struct MenuDef { const char *path; int shortcut; void (Desktop::*m)(); int flags; };
+struct MenuDef { const char *path; int shortcut; void (NirvanaDesktopCanvas::*m)(); int flags; };
 static const std::vector<MenuDef> *g_global_items = nullptr;   // the global bar's items (global shortcuts)
 
 static void global_menu_cb(Fl_Widget *w, void *d) {
-  auto *self = (Desktop *)w->window();
+  auto *self = (NirvanaDesktopCanvas *)w->window();
   auto *def = (const MenuDef *)d;
   if (def->m) (self->*(def->m))();
 }
 
 // Window and Icons menus in a file manager window - they act on that window.
 static void window_menu_cb(Fl_Widget *w, void *d) {
-  auto *nw = (NWin *)w->window();
+  auto *nw = (NirvanaDrawerWindow *)w->window();
   auto *def = (const MenuDef *)d;
-  Desktop *desk = nw->desk;
+  NirvanaDesktopCanvas *desk = nw->desk;
   desk->menu_target = nw;
   if (def->m) (desk->*(def->m))();
   desk->menu_target = nullptr;
@@ -471,47 +465,47 @@ static void window_menu_cb(Fl_Widget *w, void *d) {
 static const std::vector<MenuDef> &window_menu_defs() {
   static const std::vector<MenuDef> defs = {
     // --- Window: this file manager window ---
-    {P_("Window/Clone"), FL_COMMAND + FL_SHIFT + 'n', &Desktop::new_window, 0},   // this folder in a second window
-    {P_("Window/New Drawer"), FL_COMMAND + 'n', &Desktop::new_folder, 0},
-    {P_("Window/Iconify"), FL_COMMAND + 'm', &Desktop::iconify_active, FL_MENU_DIVIDER},
-    {P_("Window/Back"), FL_ALT + FL_Left, &Desktop::go_back, 0},
-    {P_("Window/Forward"), FL_ALT + FL_Right, &Desktop::go_forward, 0},
-    {P_("Window/Open Parent"), FL_COMMAND + FL_Up, &Desktop::open_parent, FL_MENU_DIVIDER},
-    {P_("Window/Connect to a Server…"), 0, &Desktop::connect_server, 0},
-    {P_("Window/Find…"), FL_COMMAND + 'f', &Desktop::open_search, 0},
-    {P_("Window/Jobs…"), 0, &Desktop::show_jobs, 0},
-    {P_("Window/Open Nirvana Shell Here"), 0, &Desktop::open_terminal, 0},
-    {P_("Window/Empty Trash…"), 0, &Desktop::empty_trash, FL_MENU_DIVIDER},
-    {P_("Window/Close"), FL_COMMAND + 'w', &Desktop::close_active, 0},
-    {P_("Window/Update"), FL_COMMAND + 'r', &Desktop::update_window, FL_MENU_DIVIDER},
-    {P_("Window/Select Contents"), FL_COMMAND + 'a', &Desktop::select_all, 0},
-    {P_("Window/Clean Up"), FL_COMMAND + '.', &Desktop::clean_up, FL_MENU_DIVIDER},
-    {P_("Window/Show Hidden Files"), FL_COMMAND + 'h', &Desktop::toggle_hidden, FL_MENU_TOGGLE},
-    {P_("Window/View as/Icons"), FL_COMMAND + '1', &Desktop::view_icons, FL_MENU_RADIO},
-    {P_("Window/View as/List"), FL_COMMAND + '2', &Desktop::view_list, FL_MENU_RADIO},
-    {P_("Window/Sort/by Name"), 0, &Desktop::sort_name, FL_MENU_RADIO},
-    {P_("Window/Sort/by Date"), 0, &Desktop::sort_date, FL_MENU_RADIO},
-    {P_("Window/Sort/by Size"), 0, &Desktop::sort_size, FL_MENU_RADIO},
-    {P_("Window/Sort/by Kind"), 0, &Desktop::sort_kind, FL_MENU_RADIO},
-    {P_("Window/Icon Size/Small"), 0, &Desktop::icons_small, FL_MENU_RADIO},
-    {P_("Window/Icon Size/Normal"), 0, &Desktop::icons_normal, FL_MENU_RADIO},
-    {P_("Window/Icon Size/Large"), 0, &Desktop::icons_large, FL_MENU_RADIO},
+    {P_("Window/Clone"), FL_COMMAND + FL_SHIFT + 'n', &NirvanaDesktopCanvas::new_window, 0},   // this folder in a second window
+    {P_("Window/New Drawer"), FL_COMMAND + 'n', &NirvanaDesktopCanvas::new_folder, 0},
+    {P_("Window/Iconify"), FL_COMMAND + 'm', &NirvanaDesktopCanvas::iconify_active, FL_MENU_DIVIDER},
+    {P_("Window/Back"), FL_ALT + FL_Left, &NirvanaDesktopCanvas::go_back, 0},
+    {P_("Window/Forward"), FL_ALT + FL_Right, &NirvanaDesktopCanvas::go_forward, 0},
+    {P_("Window/Open Parent"), FL_COMMAND + FL_Up, &NirvanaDesktopCanvas::open_parent, FL_MENU_DIVIDER},
+    {P_("Window/Connect to a Server…"), 0, &NirvanaDesktopCanvas::connect_server, 0},
+    {P_("Window/Find…"), FL_COMMAND + 'f', &NirvanaDesktopCanvas::open_search, 0},
+    {P_("Window/Jobs…"), 0, &NirvanaDesktopCanvas::show_jobs, 0},
+    {P_("Window/Open Nirvana Shell Here"), 0, &NirvanaDesktopCanvas::open_terminal, 0},
+    {P_("Window/Empty Trash…"), 0, &NirvanaDesktopCanvas::empty_trash, FL_MENU_DIVIDER},
+    {P_("Window/Close"), FL_COMMAND + 'w', &NirvanaDesktopCanvas::close_active, 0},
+    {P_("Window/Update"), FL_COMMAND + 'r', &NirvanaDesktopCanvas::update_window, FL_MENU_DIVIDER},
+    {P_("Window/Select Contents"), FL_COMMAND + 'a', &NirvanaDesktopCanvas::select_all, 0},
+    {P_("Window/Clean Up"), FL_COMMAND + '.', &NirvanaDesktopCanvas::clean_up, FL_MENU_DIVIDER},
+    {P_("Window/Show Hidden Files"), FL_COMMAND + 'h', &NirvanaDesktopCanvas::toggle_hidden, FL_MENU_TOGGLE},
+    {P_("Window/View as/Icons"), FL_COMMAND + '1', &NirvanaDesktopCanvas::view_icons, FL_MENU_RADIO},
+    {P_("Window/View as/List"), FL_COMMAND + '2', &NirvanaDesktopCanvas::view_list, FL_MENU_RADIO},
+    {P_("Window/Sort/by Name"), 0, &NirvanaDesktopCanvas::sort_name, FL_MENU_RADIO},
+    {P_("Window/Sort/by Date"), 0, &NirvanaDesktopCanvas::sort_date, FL_MENU_RADIO},
+    {P_("Window/Sort/by Size"), 0, &NirvanaDesktopCanvas::sort_size, FL_MENU_RADIO},
+    {P_("Window/Sort/by Kind"), 0, &NirvanaDesktopCanvas::sort_kind, FL_MENU_RADIO},
+    {P_("Window/Icon Size/Small"), 0, &NirvanaDesktopCanvas::icons_small, FL_MENU_RADIO},
+    {P_("Window/Icon Size/Normal"), 0, &NirvanaDesktopCanvas::icons_normal, FL_MENU_RADIO},
+    {P_("Window/Icon Size/Large"), 0, &NirvanaDesktopCanvas::icons_large, FL_MENU_RADIO},
     // --- Icons: selected files and folders in this window ---
-    {P_("Icons/Open"), FL_COMMAND + 'o', &Desktop::open_selected, 0},
-    {P_("Icons/Copy"), FL_COMMAND + 'c', &Desktop::copy_selected, 0},
-    {P_("Icons/Paste"), FL_COMMAND + 'v', &Desktop::paste, 0},
-    {P_("Icons/Duplicate"), FL_COMMAND + 'd', &Desktop::duplicate, 0},
-    {P_("Icons/Pack into an Archive…"), 0, &Desktop::pack_selected, 0},
-    {P_("Icons/Rename…"), FL_F + 2, &Desktop::rename_selected, 0},
-    {P_("Icons/Delete"), FL_COMMAND + FL_BackSpace, &Desktop::move_to_trash, FL_MENU_DIVIDER},
-    {P_("Icons/Information…"), FL_COMMAND + 'i', &Desktop::get_info, 0},
-    {P_("Icons/Set as Wallpaper"), 0, &Desktop::set_as_wallpaper, FL_MENU_DIVIDER},
-    {P_("Icons/Snapshot"), FL_COMMAND + 's', &Desktop::snapshot, 0},
-    {P_("Icons/Unsnapshot"), 0, &Desktop::unsnapshot, FL_MENU_DIVIDER},
-    {P_("Icons/Leave Out"), 0, &Desktop::leave_out, 0},
-    {P_("Icons/Put Away"), 0, &Desktop::put_away, FL_MENU_DIVIDER},
-    {P_("Icons/Put on Dock"), FL_COMMAND + 'l', &Desktop::dock_add, 0},
-    {P_("Icons/Remove from Dock"), FL_COMMAND + 'k', &Desktop::dock_remove, 0},
+    {P_("Icons/Open"), FL_COMMAND + 'o', &NirvanaDesktopCanvas::open_selected, 0},
+    {P_("Icons/Copy"), FL_COMMAND + 'c', &NirvanaDesktopCanvas::copy_selected, 0},
+    {P_("Icons/Paste"), FL_COMMAND + 'v', &NirvanaDesktopCanvas::paste, 0},
+    {P_("Icons/Duplicate"), FL_COMMAND + 'd', &NirvanaDesktopCanvas::duplicate, 0},
+    {P_("Icons/Pack into an Archive…"), 0, &NirvanaDesktopCanvas::pack_selected, 0},
+    {P_("Icons/Rename…"), FL_F + 2, &NirvanaDesktopCanvas::rename_selected, 0},
+    {P_("Icons/Delete"), FL_COMMAND + FL_BackSpace, &NirvanaDesktopCanvas::move_to_trash, FL_MENU_DIVIDER},
+    {P_("Icons/Information…"), FL_COMMAND + 'i', &NirvanaDesktopCanvas::get_info, 0},
+    {P_("Icons/Set as Wallpaper"), 0, &NirvanaDesktopCanvas::set_as_wallpaper, FL_MENU_DIVIDER},
+    {P_("Icons/Snapshot"), FL_COMMAND + 's', &NirvanaDesktopCanvas::snapshot, 0},
+    {P_("Icons/Unsnapshot"), 0, &NirvanaDesktopCanvas::unsnapshot, FL_MENU_DIVIDER},
+    {P_("Icons/Leave Out"), 0, &NirvanaDesktopCanvas::leave_out, 0},
+    {P_("Icons/Put Away"), 0, &NirvanaDesktopCanvas::put_away, FL_MENU_DIVIDER},
+    {P_("Icons/Put on Dock"), FL_COMMAND + 'l', &NirvanaDesktopCanvas::dock_add, 0},
+    {P_("Icons/Remove from Dock"), FL_COMMAND + 'k', &NirvanaDesktopCanvas::dock_remove, 0},
   };
   return defs;
 }
@@ -535,30 +529,30 @@ static std::string menu_label(const std::string &s) {
 }
 
 // The menu bar: Nirvana's own menus, then those of the active program (if it has registered them)
-void Desktop::rebuild_global_menu() {
+void NirvanaDesktopCanvas::rebuild_global_menu() {
   menu_->clear();
   static const std::vector<MenuDef> items = {
     // --- Nirvana: the whole system ---
-    {P_("logo/About This Computer…"), 0, &Desktop::about, FL_MENU_DIVIDER},
-    {P_("logo/Preferences…"), 0, &Desktop::open_preferences, 0},
-    {P_("logo/Execute Command…"), FL_META + 'e', &Desktop::execute_command, 0},
-    {P_("logo/Nirvana Shell"), FL_META + 't', &Desktop::open_terminal, 0},
-    {P_("logo/Backdrop"), FL_META + 'b', &Desktop::toggle_backdrop, FL_MENU_TOGGLE},
-    {P_("logo/Open System Log"), 0, &Desktop::open_log, FL_MENU_DIVIDER},
-    {P_("logo/Reset Nirvana"), 0, &Desktop::reset_nirvana, 0},
+    {P_("logo/About This Computer…"), 0, &NirvanaDesktopCanvas::about, FL_MENU_DIVIDER},
+    {P_("logo/Preferences…"), 0, &NirvanaDesktopCanvas::open_preferences, 0},
+    {P_("logo/Execute Command…"), FL_META + 'e', &NirvanaDesktopCanvas::execute_command, 0},
+    {P_("logo/Nirvana Shell"), FL_META + 't', &NirvanaDesktopCanvas::open_terminal, 0},
+    {P_("logo/Backdrop"), FL_META + 'b', &NirvanaDesktopCanvas::toggle_backdrop, FL_MENU_TOGGLE},
+    {P_("logo/Open System Log"), 0, &NirvanaDesktopCanvas::open_log, FL_MENU_DIVIDER},
+    {P_("logo/Reset Nirvana"), 0, &NirvanaDesktopCanvas::reset_nirvana, 0},
     // --- System: session and computer (formerly in the power applet) ---
-    {P_("System/Lock Screen"), 0, &Desktop::system_lock, 0},
-    {P_("System/Sleep"), 0, &Desktop::system_sleep, 0},
-    {P_("System/Hibernate"), 0, &Desktop::system_hibernate, FL_MENU_DIVIDER},
-    {P_("System/Log Out…"), FL_META + 'q', &Desktop::system_logout, 0},
-    {P_("System/Restart…"), 0, &Desktop::system_restart, 0},
-    {P_("System/Shut Down…"), 0, &Desktop::system_shutdown, 0},
+    {P_("System/Lock Screen"), 0, &NirvanaDesktopCanvas::system_lock, 0},
+    {P_("System/Sleep"), 0, &NirvanaDesktopCanvas::system_sleep, 0},
+    {P_("System/Hibernate"), 0, &NirvanaDesktopCanvas::system_hibernate, FL_MENU_DIVIDER},
+    {P_("System/Log Out…"), FL_META + 'q', &NirvanaDesktopCanvas::system_logout, 0},
+    {P_("System/Restart…"), 0, &NirvanaDesktopCanvas::system_restart, 0},
+    {P_("System/Shut Down…"), 0, &NirvanaDesktopCanvas::system_shutdown, 0},
     // --- Special ---
-    {P_("Special/Format Disk…"), 0, &Desktop::format_disk, 0},
-    {P_("Special/Empty Trash…"), 0, &Desktop::empty_trash, 0},
-    {P_("Special/File Types…"), 0, &Desktop::edit_filetypes, FL_MENU_DIVIDER},
-    {P_("Special/Screenshot"), FL_Print, &Desktop::screenshot, FL_MENU_DIVIDER},
-    {P_("Special/Force Quit a Window…"), FL_META + 'k', &Desktop::force_quit, 0},
+    {P_("Special/Format Disk…"), 0, &NirvanaDesktopCanvas::format_disk, 0},
+    {P_("Special/Empty Trash…"), 0, &NirvanaDesktopCanvas::empty_trash, 0},
+    {P_("Special/File Types…"), 0, &NirvanaDesktopCanvas::edit_filetypes, FL_MENU_DIVIDER},
+    {P_("Special/Screenshot"), FL_Print, &NirvanaDesktopCanvas::screenshot, FL_MENU_DIVIDER},
+    {P_("Special/Force Quit a Window…"), FL_META + 'k', &NirvanaDesktopCanvas::force_quit, 0},
   };
 
   for (auto &it : items)
@@ -619,7 +613,7 @@ void Desktop::rebuild_global_menu() {
 }
 
 // The width of the menu titles - computed the same way as in Fl_Menu_Bar::draw()
-void Desktop::fit_menu_width() {
+void NirvanaDesktopCanvas::fit_menu_width() {
   int mx = 6;
   for (const Fl_Menu_Item *m = menu_->menu(); m && m->label(); m = m->next())
     if (m->visible()) mx += m->measure(nullptr, menu_) + 16;
@@ -628,7 +622,7 @@ void Desktop::fit_menu_width() {
   redraw();
 }
 
-Desktop::Desktop(int W, int H, const std::string &home)
+NirvanaDesktopCanvas::NirvanaDesktopCanvas(int W, int H, const std::string &home)
     : Fl_Double_Window(0, 0, W, H, "Nirvana Desktop"),
       home_(home), root_path_(home), spatial_(home) {
   fl_open_display();
@@ -706,7 +700,7 @@ Desktop::Desktop(int W, int H, const std::string &home)
   // Escape must not close the desktop
   callback([](Fl_Widget *w, void *) {
     if (Fl::event() == FL_SHORTCUT && Fl::event_key() == FL_Escape) return;
-    ((Desktop *)w)->quit();
+    ((NirvanaDesktopCanvas *)w)->quit();
   });
 
   // hidden files: the remembered choice (Window > Show Hidden Files)
@@ -717,10 +711,10 @@ Desktop::Desktop(int W, int H, const std::string &home)
     std::string line;
     while (std::getline(in, line)) {
       if (line == "show_hidden=1") show_hidden_ = true;
-      if (line == "dock_collapsed=1") dock_collapsed_ = true;
+      if (line == "dock_collapsed=1") dock_.collapsed = true;
     }
   }
-  load_dock();
+  dock_.load();
   // the "Nirvana Desktop" window (backdrop off): its links have the pictures of the desktop icons
   FolderView::icon_override = [this](const std::string &path, Icon &icon) {
     if (path.rfind(backdrop_dir() + "/", 0) != 0) return false;
@@ -738,12 +732,12 @@ Desktop::Desktop(int W, int H, const std::string &home)
   layout_icons();
   if (!desk_set_.backdrop)   // the desktop as a window: it comes back with the session
     Fl::add_timeout(0.8, [](void *p) {
-      auto *dk = (Desktop *)p;
+      auto *dk = (NirvanaDesktopCanvas *)p;
       if (!dk->find(dk->backdrop_dir())) dk->open_folder(dk->backdrop_dir(), false);
     }, this);
   // the Ram Disk's fill in its label - and the icon itself, once the session has mounted it
   static Fl_Timeout_Handler ramdisk_tick = [](void *p) {
-    auto *dk = (Desktop *)p;
+    auto *dk = (NirvanaDesktopCanvas *)p;
     bool has = false, changed = false;
     std::string lbl = dk->ramdisk_label();
     for (auto &ic : dk->icons_)
@@ -784,7 +778,7 @@ Desktop::Desktop(int W, int H, const std::string &home)
 }
 
 // Right side of the menu bar, from the screen edge towards the middle.
-void Desktop::layout_bar() {
+void NirvanaDesktopCanvas::layout_bar() {
   int rx = w() - APP_W;
   auto put = [&](Fl_Widget *wd, int ww) {
     if (!wd) return;
@@ -813,7 +807,7 @@ void Desktop::layout_bar() {
 }
 
 // The Trash can change from outside (another program, another window) - full/empty icon.
-void Desktop::watch_trash() {
+void NirvanaDesktopCanvas::watch_trash() {
   std::error_code ec;
   fs::create_directories(trash_dir(), ec);
   int fd = inotify_init1(IN_NONBLOCK | IN_CLOEXEC);
@@ -825,7 +819,7 @@ void Desktop::watch_trash() {
   Fl::add_fd(fd, FL_READ, [](int f, void *data) {
     char buf[4096];
     while (read(f, buf, sizeof buf) > 0) {}
-    auto *self = (Desktop *)data;
+    auto *self = (NirvanaDesktopCanvas *)data;
     bool full = self->trash_full();
     for (auto &ic : self->icons_)
       if (ic.path == self->trash_dir()) {
@@ -836,9 +830,9 @@ void Desktop::watch_trash() {
   }, this);
 }
 
-std::string Desktop::trash_dir() const { return home_ + "/.local/share/Trash/files"; }
+std::string NirvanaDesktopCanvas::trash_dir() const { return home_ + "/.local/share/Trash/files"; }
 
-bool Desktop::trash_full() const {
+bool NirvanaDesktopCanvas::trash_full() const {
   std::error_code ec;
   return fs::exists(trash_dir(), ec) && !fs::is_empty(trash_dir(), ec);
 }
@@ -894,7 +888,7 @@ static Fl_Image *iconic_image(Window w, const std::string &home) {
   return gary::desktop_icon(w, 32);
 }
 
-void Desktop::layout_icons() {
+void NirvanaDesktopCanvas::layout_icons() {
   icons_.clear();
   // Desktop icons at the LEFT edge, from the top: Nirvana HD, Applications, Preferences, disks,
   // iconified windows; the Trash at the bottom, above the dock. When a column is full,
@@ -902,7 +896,7 @@ void Desktop::layout_icons() {
   const int COL = 90, ROW = 70, top = MENUBAR_H + 14;
   // The Trash always stays in the same place, above the dock - also when the dock is empty,
   // so adding something to the dock does not move it
-  int trash_y = h() - 74 - (dock_space() + 4);
+  int trash_y = h() - 74 - (dock_.space() + 4);
   int ix = 0, iy = top, cols = 1;
   // Backdrop off (Nirvana > Backdrop, Win+B): the desktop's own icons live in the window
   // "Nirvana Desktop" (a folder of links); only the icons of minimized windows stay here
@@ -1012,58 +1006,21 @@ void Desktop::layout_icons() {
   // left corner. The icon position as for the others: the picture at (x + 24, y).
   // The floating dock (the default): centered above the bottom edge, a grip on the left, a
   // divider between groups (folders, each applications category, other programs and files).
-  dock_shown_ = 0;
-  dock_divs_.clear();
-  if (!dock_collapsed_) {
-    std::vector<std::string> shown;
-    for (auto &p : dock_) {
-      std::error_code ec;
-      if (fs::exists(p, ec)) shown.push_back(p);
-    }
-    auto group = [this](const std::string &p) {
-      std::error_code ec;
-      if (fs::is_directory(p, ec)) return std::string("/folder");
-      if (in_apps(p)) return fs::path(p).parent_path().string();   // a category folder
-      return std::string("/other");
-    };
-    bool fl = desk_set_.dock_floating;
-    int lead = fl ? DOCK_GRIP + 4 : DOCK_TAB, tail = fl ? 6 : DOCK_END;
-    // how wide it would be: the tiles that fit
-    int width = lead + tail, n = 0, divs = 0;
-    std::string prev;
-    for (auto &p : shown) {
-      std::string g = group(p);
-      int add = DOCK_TILE + (fl && n && g != prev ? DOCK_DIV : 0);
-      if (width + add > w() - 20) break;
-      width += add;
-      if (fl && n && g != prev) divs++;
-      prev = g;
-      n++;
-    }
-    (void)divs;
-    int x0 = fl ? (w() - width) / 2 : 0;
-    int tx = x0 + lead;
-    int ty = fl ? h() - DOCK_LIFT - DOCK_PAD - DOCK_TILE : h() - DOCK_TILE;
-    prev.clear();
-    for (int i = 0; i < n; i++) {
-      const std::string &p = shown[i];
-      std::string g = group(p);
-      if (fl && i && g != prev) { dock_divs_.push_back(tx + DOCK_DIV / 2); tx += DOCK_DIV; }
-      prev = g;
-      DeskIcon d;
-      d.path = p;
-      d.dock = true;
-      d.entry = entry_for(p);
-      d.name = d.entry.label;
-      d.icon = d.entry.icon;
-      d.x = tx - 20;   // the tile at (x + 20, y - 4), the picture at (x + 24, y)
-      d.y = ty + 4;
-      icons_.push_back(d);
-      tx += DOCK_TILE;
-      dock_shown_++;
-    }
-    dock_w_ = dock_.empty() ? 0 : tx - x0 + tail;
-    dock_x_ = x0;
+  for (auto &sl : dock_.layout([this](const std::string &p) {
+         std::error_code ec;
+         if (fs::is_directory(p, ec)) return std::string("/folder");
+         if (in_apps(p)) return fs::path(p).parent_path().string();   // a category folder
+         return std::string("/other");
+       })) {
+    DeskIcon d;
+    d.path = sl.path;
+    d.dock = true;
+    d.entry = entry_for(sl.path);
+    d.name = d.entry.label;
+    d.icon = d.entry.icon;
+    d.x = sl.x - 20;   // the tile at (x + 20, y - 4), the picture at (x + 24, y)
+    d.y = sl.y + 4;
+    icons_.push_back(d);
   }
   publish_folder_area();
 }
@@ -1071,19 +1028,19 @@ void Desktop::layout_icons() {
 static constexpr int MIN_W = 220, MIN_H = 170;   // smallest folder window
 static Atom atom(const char *name) { return XInternAtom(fl_display, name, False); }
 
-plat::Rect Desktop::folder_area() const {
+plat::Rect NirvanaDesktopCanvas::folder_area() const {
   // Preferences > Desktop: without the margins windows may cover the icon column, and
   // there are no gaps; without the dock room they reach the bottom edge.
   const int GAP = desk_set_.icon_margin ? 6 : 0;
   int L = (desk_set_.icon_margin ? icon_cols_ * 90 + 6 : 0) + FRAME, T = MENUBAR_H + TITLE_H + GAP;
   int R = w() - FRAME - GAP;
-  int B = h() - FRAME - GAP - (desk_set_.dock_room ? dock_space() : 0);   // room for the dock (also when empty or collapsed)
+  int B = h() - FRAME - GAP - (desk_set_.dock_room ? dock_.space() : 0);   // room for the dock (also when empty or collapsed)
   return {L, T, std::max(MIN_W, R - L), std::max(MIN_H, B - T)};
 }
 
 // Insight (the window manager) takes the zoom rectangle for Rambler windows from here:
 // _NIRVANA_WINDOW_AREA on the root window = x, y, width, height of the frame on screen.
-void Desktop::desktop_settings_changed() {
+void NirvanaDesktopCanvas::desktop_settings_changed() {
   int dock = desk_set_.dock_size;
   bool floating = desk_set_.dock_floating, backdrop = desk_set_.backdrop;
   desk_set_ = plat::read_desktop();
@@ -1094,11 +1051,11 @@ void Desktop::desktop_settings_changed() {
   publish_folder_area();
 }
 
-void Desktop::publish_folder_area() {
+void NirvanaDesktopCanvas::publish_folder_area() {
   if (!shown() || !fl_display) return;
   // _NIRVANA_DOCK: height of the dock - Insight keeps the windows of all programs above it
   static long last_dock = -1;
-  long dock = desk_set_.dock_room ? dock_space() : 0;   // fixed room - windows do not jump when an icon is added
+  long dock = desk_set_.dock_room ? dock_.space() : 0;   // fixed room - windows do not jump when an icon is added
   if (dock != last_dock) {
     last_dock = dock;
     XChangeProperty(fl_display, DefaultRootWindow(fl_display), atom("_NIRVANA_DOCK"), XA_CARDINAL, 32,
@@ -1113,53 +1070,10 @@ void Desktop::publish_folder_area() {
                   PropModeReplace, (unsigned char *)v, 4);
 }
 
-// Rectangle of the whole dock strip (with the tab and the end); empty when the dock is empty.
-void Desktop::dock_rect(int &X, int &Y, int &W, int &H) const {
-  if (dock_.empty()) { X = Y = W = H = 0; return; }
-  if (desk_set_.dock_floating) {
-    H = DOCK_TILE + 2 * DOCK_PAD;
-    Y = h() - DOCK_LIFT - H;
-    if (dock_collapsed_) { W = DOCK_GRIP + 8; X = (w() - W) / 2; return; }   // only the grip
-    X = dock_x_;
-    W = dock_w_;
-    return;
-  }
-  X = 0; H = DOCK_TILE; Y = h() - H;
-  W = DOCK_TAB + dock_shown_ * DOCK_TILE + DOCK_END;
-}
-
-// A dock icon of any size: pictures of programs scaled, Nirvana's vector icons drawn at 32 px
-// on the tile color and enlarged (64: by whole pixels, crisp) or made smaller
-static Fl_Image *dock_vector_icon(Icon icon, int size) {
-  static std::map<std::tuple<Fl_Color, int, int, int>, Fl_Image *> cache;
-  auto key = std::make_tuple(Fl::get_color(GRAY), (int)icon, size, (int)icon_style());
-  auto it = cache.find(key);
-  if (it != cache.end()) return it->second;
-  Fl_Image_Surface surf(32, 32);
-  Fl_Surface_Device::push_current(&surf);
-  fl_color(GRAY);
-  fl_rectf(0, 0, 32, 32);
-  draw_icon(icon, 0, 0, false);
-  Fl_Surface_Device::pop_current();
-  Fl_RGB_Image *src = surf.image();
-  Fl_RGB_Scaling was = Fl_Image::RGB_scaling();
-  Fl_Image::RGB_scaling(size % 32 == 0 ? FL_RGB_SCALING_NEAREST : FL_RGB_SCALING_BILINEAR);
-  Fl_Image *img = src->copy(size, size);
-  Fl_Image::RGB_scaling(was);
-  delete src;
-  cache[key] = img;
-  return img;
-}
-
-static void draw_dock_icon(const Entry &e, int x, int y, int size) {
-  if (size == 32 || !e.icon_file.empty()) draw_entry_icon(e, x, y, false, size);
-  else dock_vector_icon(e.icon, size)->draw(x, y);
-}
-
 // The window of the desktop without the backdrop: a folder of links to its icons
-std::string Desktop::backdrop_dir() const { return home_ + "/.cache/nirvana/" + _("Nirvana Desktop"); }
+std::string NirvanaDesktopCanvas::backdrop_dir() const { return home_ + "/.cache/nirvana/" + _("Nirvana Desktop"); }
 
-void Desktop::sync_backdrop_folder(const std::vector<std::pair<std::string, std::string>> &items) {
+void NirvanaDesktopCanvas::sync_backdrop_folder(const std::vector<std::pair<std::string, std::string>> &items) {
   std::string dir = backdrop_dir();
   std::error_code ec;
   fs::create_directories(dir, ec);
@@ -1183,113 +1097,17 @@ void Desktop::sync_backdrop_folder(const std::vector<std::pair<std::string, std:
 
 // Nirvana > Backdrop (Win+B): the desktop is the backdrop (icons on it), or its icons are a
 // window of their own - "Nirvana Desktop", moved, sized and stacked like any other
-void Desktop::toggle_backdrop() {
+void NirvanaDesktopCanvas::toggle_backdrop() {
   desk_set_.backdrop = !desk_set_.backdrop;
   plat::write_desktop(desk_set_);
   icon_sel_ = -1;
   layout_icons();
   redraw();
   if (!desk_set_.backdrop) open_folder(backdrop_dir());
-  else if (NWin *w = find(backdrop_dir())) close(w);
+  else if (NirvanaDrawerWindow *w = find(backdrop_dir())) close(w);
 }
 
-// The room the dock takes at the bottom (windows stay above it)
-int Desktop::dock_space() const {
-  return desk_set_.dock_floating ? DOCK_TILE + 2 * DOCK_PAD + DOCK_LIFT : DOCK_TILE;
-}
-
-// The grip of the floating dock (a click: the dock folds to it / unfolds)
-bool Desktop::dock_grip_at(int ex, int ey) const {
-  int X, Y, W, H;
-  dock_rect(X, Y, W, H);
-  if (!W) return false;
-  if (!desk_set_.dock_floating) return ex < DOCK_TAB && ey >= h() - DOCK_TILE;
-  return ex >= X && ex < X + DOCK_GRIP + 6 && ey >= Y && ey < Y + H;
-}
-
-void Desktop::draw_dock() {
-  int X, Y, W, H;
-  dock_rect(X, Y, W, H);
-  if (!W) return;
-  if (desk_set_.dock_floating) {
-    // a bevelled tray with rounded ends, a black outline, a lit top edge
-    fl_color(DARK);
-    fl_rounded_rectf(X, Y, W, H, 6);
-    fl_color(GRAY);
-    fl_rounded_rectf(X + 1, Y + 1, W - 2, H - 2, 5);
-    fl_color(LIGHT);
-    fl_xyline(X + 5, Y + 1, X + W - 6);
-    fl_yxline(X + 1, Y + 5, Y + H - 6);
-    fl_color(SHADOW);
-    fl_xyline(X + 5, Y + H - 2, X + W - 6);
-    fl_yxline(X + W - 2, Y + 5, Y + H - 6);
-    // the grip: ribs
-    int gx = X + 5;
-    for (int i = 0; i < 3; i++) {
-      fl_color(LIGHT); fl_yxline(gx + i * 3, Y + 8, Y + H - 9);
-      fl_color(SHADOW); fl_yxline(gx + i * 3 + 1, Y + 8, Y + H - 9);
-    }
-    // a little arrow under the grip: which way it folds
-    int cx = gx + 4, cy = Y + H - 5;
-    fl_color(TEXT);
-    if (dock_collapsed_) fl_polygon(cx - 2, cy - 2, cx + 2, cy - 2, cx, cy);
-    else fl_polygon(cx - 2, cy, cx + 2, cy, cx, cy - 2);
-    // the dividers between groups
-    for (int dx : dock_divs_) {
-      fl_color(SHADOW); fl_yxline(dx, Y + 6, Y + H - 7);
-      fl_color(LIGHT); fl_yxline(dx + 1, Y + 6, Y + H - 7);
-    }
-    for (int i = 0; i < (int)icons_.size(); i++) {
-      auto &ic = icons_[i];
-      if (!ic.dock) continue;
-      bool sel = i == icon_sel_ || i == icon_drop_;
-      int bx = ic.x + 20, by = ic.y - 4;
-      if (sel) fl_draw_box(DOWN_BOX, bx, by, DOCK_TILE, DOCK_TILE, fl_color_average(GRAY, SHADOW, 0.6f));
-      draw_dock_icon(ic.entry, ic.x + 24 + (sel ? 1 : 0), ic.y + (sel ? 1 : 0), desk_set_.dock_size);
-    }
-    return;
-  }
-  // rounded end: background with an outline, an arc on the right
-  int ex = X + W - DOCK_END - 6;
-  fl_color(DARK);
-  fl_rounded_rectf(ex, Y, DOCK_END + 6, H, 7);
-  fl_color(GRAY);
-  fl_rounded_rectf(ex + 1, Y + 1, DOCK_END + 4, H - 1, 6);
-  fl_color(LIGHT);
-  fl_xyline(ex + 1, Y + 1, X + W - 6);
-  fl_color(SHADOW);
-  for (int i = 0; i < 3; i++) fl_yxline(X + W - 9 + i * 2 - 2, Y + 12, Y + H - 12);   // handle
-  // collapse tab
-  fl_draw_box(UP_BOX, X, Y, DOCK_TAB, H, GRAY);
-  fl_color(DARK);
-  fl_rect(X, Y, DOCK_TAB + 1, H + 1);
-  int cx = X + DOCK_TAB / 2, cy = Y + H / 2;
-  fl_color(TEXT);
-  if (dock_collapsed_) fl_polygon(cx - 2, cy - 4, cx + 2, cy, cx - 2, cy + 4);
-  else fl_polygon(cx + 2, cy - 4, cx - 2, cy, cx + 2, cy + 4);
-  // tiles
-  for (int i = 0; i < (int)icons_.size(); i++) {
-    auto &ic = icons_[i];
-    if (!ic.dock) continue;
-    bool sel = i == icon_sel_ || i == icon_drop_;
-    int bx = ic.x + 20, by = ic.y - 4;
-    fl_draw_box(sel ? DOWN_BOX : UP_BOX, bx, by, DOCK_TILE, DOCK_TILE,
-                sel ? fl_color_average(GRAY, SHADOW, 0.6f) : GRAY);
-    fl_color(DARK);
-    fl_rect(bx, by, DOCK_TILE + 1, DOCK_TILE + 1);
-    draw_dock_icon(ic.entry, ic.x + 24, ic.y, desk_set_.dock_size);
-  }
-}
-
-void Desktop::toggle_dock() {
-  dock_collapsed_ = !dock_collapsed_;
-  if (dock_collapsed_ && icon_sel_ >= 0 && icon_sel_ < (int)icons_.size() && icons_[icon_sel_].dock) icon_sel_ = -1;
-  save_rambler_conf();
-  layout_icons();
-  redraw();
-}
-
-int Desktop::icon_at(int ex, int ey) const {
+int NirvanaDesktopCanvas::icon_at(int ex, int ey) const {
   for (int i = 0; i < (int)icons_.size(); i++) {
     const auto &ic = icons_[i];
     if (ic.dock) {   // the whole tile
@@ -1302,7 +1120,7 @@ int Desktop::icon_at(int ex, int ey) const {
   return -1;
 }
 
-bool Desktop::allowed(const std::string &path) const {
+bool NirvanaDesktopCanvas::allowed(const std::string &path) const {
   std::error_code ec;
   std::string c = fs::weakly_canonical(path, ec).string();
   std::string h = fs::weakly_canonical(home_, ec).string();
@@ -1312,7 +1130,7 @@ bool Desktop::allowed(const std::string &path) const {
   return volume_at_path(c) >= 0;   // mounted disks and discs are "ours" too
 }
 
-int Desktop::volume_at_path(const std::string &path) const {
+int NirvanaDesktopCanvas::volume_at_path(const std::string &path) const {
   for (int i = 0; i < (int)vols_.size(); i++) {
     const std::string &mp = vols_[i].mountpoint;
     if (!mp.empty() && (path == mp || path.rfind(mp + "/", 0) == 0)) return i;
@@ -1320,7 +1138,7 @@ int Desktop::volume_at_path(const std::string &path) const {
   return -1;
 }
 
-std::string Desktop::title_for(const std::string &path) const {
+std::string NirvanaDesktopCanvas::title_for(const std::string &path) const {
   std::string arch, inner;
   if (is_archive_cache(path, &arch, &inner)) return fs::path(arch).filename().string() + inner;   // inside an archive
   if (path == home_) return "Nirvana HD";
@@ -1336,7 +1154,7 @@ Fl_Window *make_drag_ghost(const Entry &e, int n);   // below, with dragging
 // ---------------------------------------------------------------------------
 // EWMH: talking to the window manager (Insight or any compliant one)
 // ---------------------------------------------------------------------------
-static Desktop *g_desk = nullptr;
+static NirvanaDesktopCanvas *g_desk = nullptr;
 
 
 static Window net_active() {
@@ -1386,7 +1204,7 @@ static unsigned x_mods(int sc) {
 
 static int ignore_x_errors(Display *, XErrorEvent *) { return 0; }
 
-void Desktop::update_global_keys() {
+void NirvanaDesktopCanvas::update_global_keys() {
   if (!g_global_items || !fl_display) return;
   std::vector<GlobalKey> want;
   for (auto &d : *g_global_items) {
@@ -1455,7 +1273,7 @@ static Window wm_check_window() {
   return w;
 }
 
-void Desktop::detect_wm() {
+void NirvanaDesktopCanvas::detect_wm() {
   std::string name;
   if (Window chk = wm_check_window()) {
     wm_present = true;
@@ -1478,34 +1296,34 @@ void Desktop::detect_wm() {
   if (const char *e = getenv("NIRVANA_CSD")) csd_mode = !strcmp(e, "1");   // for testing
 }
 
-void Desktop::redraw_frames() {
+void NirvanaDesktopCanvas::redraw_frames() {
   for (auto *w : wins_) if (w->csd) w->redraw();
 }
 
 // ---------------------------------------------------------------------------
 // NWin - a folder or dialog window
 // ---------------------------------------------------------------------------
-NWin::NWin(Desktop *d, int X, int Y, int W, int H, const char *title, bool dlg)
+NirvanaDrawerWindow::NirvanaDrawerWindow(NirvanaDesktopCanvas *d, int X, int Y, int W, int H, const char *title, bool dlg)
     : Fl_Double_Window(X, Y, W, H), desk(d), dialog(dlg), csd(d->csd_mode) {
   copy_label(title);
   if (csd) border(0);   // a window manager without decorations - we draw the frame ourselves
   // The "Nirvana-*" class tells Insight that we do the opening animations ourselves.
   xclass(dlg ? "Nirvana-Dialog" : "Nirvana-Rambler");
   callback([](Fl_Widget *w, void *) {
-    auto *n = (NWin *)w;
+    auto *n = (NirvanaDrawerWindow *)w;
     // Escape closes a dialog, but not a folder window
     if (!n->dialog && Fl::event() == FL_SHORTCUT && Fl::event_key() == FL_Escape) return;
     n->desk->close(n);
   });
 }
 
-bool NWin::is_active() {
+bool NirvanaDrawerWindow::is_active() {
   if (!shown()) return false;
   if (!desk->wm_present) return desk->manual_active == this;
   return net_active() == fl_xid(this);
 }
 
-bool NWin::shaded() {
+bool NirvanaDrawerWindow::shaded() {
   if (csd) return csd_shaded_;
   if (!shown()) return false;
   Atom type; int fmt; unsigned long n, after; unsigned char *data = nullptr;
@@ -1519,13 +1337,13 @@ bool NWin::shaded() {
   return s;
 }
 
-void NWin::set_shaded(bool s) {
+void NirvanaDrawerWindow::set_shaded(bool s) {
   if (csd) { if (s != csd_shaded_) csd_toggle_shade(); return; }
   if (shown()) net_message(fl_xid(this), atom("_NET_WM_STATE"), s ? 1 : 0,
                            (long)atom("_NET_WM_STATE_SHADED"), 0);
 }
 
-void NWin::activate_window() {
+void NirvanaDrawerWindow::activate_window() {
   show();   // FLTK: an already visible window is raised
   if (desk->wm_present) {
     net_message(fl_xid(this), atom("_NET_ACTIVE_WINDOW"), 1, CurrentTime, 0);
@@ -1536,18 +1354,18 @@ void NWin::activate_window() {
   }
 }
 
-Rect NWin::frame_rect() {
+Rect NirvanaDrawerWindow::frame_rect() {
   if (csd) return {x(), y(), w(), h()};
   return {x() - FRAME, y() - TITLE_H, w() + 2 * FRAME, shaded() ? TITLE_H : h() + TITLE_H + FRAME};
 }
 
-Rect NWin::content_rect() {
+Rect NirvanaDrawerWindow::content_rect() {
   int H = csd ? (csd_shaded_ ? full_h_ : h()) - extra_h() : h();
   return {x() + ox(), y() + oy(), w() - extra_w(), H};
 }
 
 // --- own frame (CSD) ---------------------------------------------------------
-void NWin::draw() {
+void NirvanaDrawerWindow::draw() {
   if (!csd) { Fl_Double_Window::draw(); return; }
   // Change only inside the window (e.g. scrolling, switching the view): redraw
   // only the changed widgets. The frame stays in the window buffer - if we painted
@@ -1568,7 +1386,7 @@ void NWin::draw() {
   for (int i = 0; i < children(); i++) draw_child(*child(i));   // full redraw of the content
 }
 
-int NWin::hit_button(int ex, int ey) const {
+int NirvanaDrawerWindow::hit_button(int ex, int ey) const {
   if (dialog) return 0;
   int by = (TITLE_H - BOX) / 2;
   if (ey < by || ey >= by + BOX) return 0;
@@ -1581,7 +1399,7 @@ int NWin::hit_button(int ex, int ey) const {
 
 // Move/resize through the window manager (EWMH) - smooth and consistent
 // with the desktop's behavior (snapping to edges etc.).
-void NWin::start_moveresize(int direction) {
+void NirvanaDrawerWindow::start_moveresize(int direction) {
   XUngrabPointer(fl_display, CurrentTime);   // hand the pointer over to the window manager
   XEvent ev{};
   ev.xclient.type = ClientMessage;
@@ -1601,12 +1419,12 @@ void NWin::start_moveresize(int direction) {
 
 // a moment after a change: the window's place and size are remembered
 static void remember_later(void *d) {
-  auto *w = (NWin *)d;
+  auto *w = (NirvanaDrawerWindow *)d;
   w->desk->remember(w, true);
 }
 static void remember_soon(void *d) { remember_later(d); }
 
-void NWin::csd_toggle_shade() {
+void NirvanaDrawerWindow::csd_toggle_shade() {
   Rect full = {x(), y(), w(), csd_shaded_ ? full_h_ : h()}, bar = {x(), y(), w(), TITLE_H};
   if (csd_shaded_) zoom_rects(bar, full); else zoom_rects(full, bar);
   if (!csd_shaded_) {
@@ -1625,7 +1443,7 @@ void NWin::csd_toggle_shade() {
   if (pane) Fl::add_timeout(0.4, remember_soon, this);
 }
 
-void NWin::csd_toggle_zoom() {
+void NirvanaDrawerWindow::csd_toggle_zoom() {
   if (csd_shaded_) csd_toggle_shade();
   Rect before = {x(), y(), w(), h()};
   if (!csd_zoomed_) {
@@ -1642,7 +1460,7 @@ void NWin::csd_toggle_zoom() {
   }
 }
 
-int NWin::csd_handle(int e) {
+int NirvanaDrawerWindow::csd_handle(int e) {
   int ex = Fl::event_x(), ey = Fl::event_y();
   switch (e) {
   case FL_PUSH: {
@@ -1705,14 +1523,14 @@ int NWin::csd_handle(int e) {
 }
 
 
-void destroy_explorer(Explorer *x, NWin *w);
-NWin::~NWin() {
+void destroy_explorer(Explorer *x, NirvanaDrawerWindow *w);
+NirvanaDrawerWindow::~NirvanaDrawerWindow() {
   Fl::remove_timeout(remember_later, this);
   Fl::remove_timeout(remember_soon, this);
   if (ex) destroy_explorer(ex, this);
 }
 
-int NWin::handle(int e) {
+int NirvanaDrawerWindow::handle(int e) {
   if (csd && csd_handle(e)) return 1;
   // FLTK sends unhandled shortcuts to all windows - the Window/Icons menus
   // only work in the window with the keyboard focus.
@@ -1742,7 +1560,7 @@ int NWin::handle(int e) {
 
 // Remember the position after a move or resize - with a delay,
 // because the window manager sends many changes while dragging.
-void NWin::resize(int X, int Y, int W, int H) {
+void NirvanaDrawerWindow::resize(int X, int Y, int W, int H) {
   Fl_Double_Window::resize(X, Y, W, H);
   if (ex) desk->ex_layout(this);
   if (pane && shown()) {
@@ -1754,16 +1572,16 @@ void NWin::resize(int X, int Y, int W, int H) {
 // ---------------------------------------------------------------------------
 // Windows
 // ---------------------------------------------------------------------------
-NWin *Desktop::find(const std::string &path) {
+NirvanaDrawerWindow *NirvanaDesktopCanvas::find(const std::string &path) {
   for (auto *w : wins_) if (w->pane && w->path == path) return w;
   return nullptr;
 }
 
-bool Desktop::known(NWin *w) const {
+bool NirvanaDesktopCanvas::known(NirvanaDrawerWindow *w) const {
   return std::find(wins_.begin(), wins_.end(), w) != wins_.end();
 }
 
-NWin *Desktop::active_folder() {
+NirvanaDrawerWindow *NirvanaDesktopCanvas::active_folder() {
   if (desk_target_) return nullptr;                    // desktop context menu
   if (menu_target && known(menu_target)) return menu_target;   // window menu bar
   Window a = net_active();
@@ -1771,25 +1589,25 @@ NWin *Desktop::active_folder() {
   return nullptr;
 }
 
-int Desktop::shortcut() {
+int NirvanaDesktopCanvas::shortcut() {
   // Note: Fl_Menu_::test_shortcut() calls the action of the found item itself.
   update_menu();
   return menu_->test_shortcut() ? 1 : 0;
 }
 
 // Insight showed another screen: the gadget's number; the folder windows of that screen
-void Desktop::screen_changed() {
+void NirvanaDesktopCanvas::screen_changed() {
   if (screens_w_) screens_w_->redraw();
 }
 
-void Desktop::active_changed() {
+void NirvanaDesktopCanvas::active_changed() {
   if (g_global_keys.empty()) update_global_keys();   // (the display was not open yet at the start)
   appmenu::set_active(net_active());   // the active program's menus in the menu bar
   if (app_menu_) app_menu_->redraw();   // name and icon of the active application in the bar
   Window a = net_active();
   for (auto it = wins_.begin(); it != wins_.end(); ++it) {
     if ((*it)->shown() && fl_xid(*it) == a) {
-      NWin *w = *it;
+      NirvanaDrawerWindow *w = *it;
       wins_.erase(it);
       wins_.push_back(w);           // most recently active at the end of the list
       if (icon_sel_ >= 0) { icon_sel_ = -1; redraw(); }
@@ -1800,7 +1618,7 @@ void Desktop::active_changed() {
   redraw_frames();
 }
 
-void Desktop::remember(NWin *w, bool open) {
+void NirvanaDesktopCanvas::remember(NirvanaDrawerWindow *w, bool open) {
   if (!w->pane || !known(w)) return;
   WinState s;
   Rect cr = w->content_rect();   // we store the position of the content - without the frame
@@ -1818,12 +1636,12 @@ void Desktop::remember(NWin *w, bool open) {
   }
 }
 
-bool Desktop::source_rect(const std::string &path, Rect &out) {
+bool NirvanaDesktopCanvas::source_rect(const std::string &path, Rect &out) {
   // Disks and the Trash have icons on the desktop
   for (auto &ic : icons_)
     if (ic.path == path) { out = to_screen({ic.x + 24, ic.y, 32, 32}); return true; }
   // Other folders - the icon in the parent folder's window, if it is open
-  NWin *parent_win = find(fs::path(path).parent_path().string());
+  NirvanaDrawerWindow *parent_win = find(fs::path(path).parent_path().string());
   if (parent_win && parent_win->shown() && !parent_win->shaded() &&
       parent_win->pane->view()->icon_rect(path, out)) {
     out = {out.x + parent_win->x(), out.y + parent_win->y(), out.w, out.h};
@@ -1832,7 +1650,7 @@ bool Desktop::source_rect(const std::string &path, Rect &out) {
   return false;
 }
 
-void Desktop::close(NWin *w) {
+void NirvanaDesktopCanvas::close(NirvanaDrawerWindow *w) {
   if (!known(w)) return;
   bool folder = w->pane != nullptr;
   Rect from = w->frame_rect(), to;
@@ -1852,7 +1670,7 @@ void Desktop::close(NWin *w) {
   }
 }
 
-void Desktop::open_folder(const std::string &path, bool animate, bool new_window) {
+void NirvanaDesktopCanvas::open_folder(const std::string &path, bool animate, bool new_window) {
   if (!allowed(path)) {
     dialog(GURU_TITLE,
            _("This folder is outside Nirvana HD."),
@@ -1861,7 +1679,7 @@ void Desktop::open_folder(const std::string &path, bool animate, bool new_window
   }
   std::error_code ec;
   if (path == trash_dir()) fs::create_directories(path, ec);
-  if (NWin *w = new_window ? nullptr : find(path)) {
+  if (NirvanaDrawerWindow *w = new_window ? nullptr : find(path)) {
     // already open: outlines show where its window is
     Rect src;
     if (animate && source_rect(path, src)) zoom_rects(src, w->frame_rect());
@@ -1877,7 +1695,7 @@ void Desktop::open_folder(const std::string &path, bool animate, bool new_window
   // drawers: every folder its own window (the one already open was brought forward above)
   if (!explorer_mode()) new_window = true;
   if (!new_window) {
-    NWin *recent = nullptr;
+    NirvanaDrawerWindow *recent = nullptr;
     // most recently active at the end - in the explorer mode an explorer window, for the
     // applications the plain Applications window
     for (auto *w : wins_)
@@ -1925,7 +1743,7 @@ void Desktop::open_folder(const std::string &path, bool animate, bool new_window
   // with our own frame the window is larger by the frame, and the content lies inside
   int ox = csd_mode ? FRAME : 0, oy = csd_mode ? TITLE_H : 0;
   int ew = csd_mode ? 2 * FRAME : 0, eh = csd_mode ? TITLE_H + FRAME : 0;
-  auto *win = new NWin(this, ax - ox, ay - oy, s.w + ew, s.h + eh, title_for(path).c_str(), false);
+  auto *win = new NirvanaDrawerWindow(this, ax - ox, ay - oy, s.w + ew, s.h + eh, title_for(path).c_str(), false);
   win->path = path;
   if (ex_win) {
     build_explorer(win, ox, oy, s.w, s.h, path);
@@ -1938,7 +1756,7 @@ void Desktop::open_folder(const std::string &path, bool animate, bool new_window
     remember(win, true);
     return;
   }
-  const int bars = NWin::MB_H + NWin::NAV_H;
+  const int bars = NirvanaDrawerWindow::MB_H + NirvanaDrawerWindow::NAV_H;
   // the content as the first child: it gets the keyboard focus when the window opens
   win->pane = new FolderPane(ox, oy + bars, s.w, s.h - bars, path, show_hidden_);
   // a folder seen for the first time: a list, the applications - big icons (like Preferences)
@@ -1963,7 +1781,7 @@ void Desktop::open_folder(const std::string &path, bool animate, bool new_window
 
 // The callbacks of a file list. In an explorer (idx >= 0) every use of a pane first makes
 // it the active one (the source), so all the window's commands work on it.
-void Desktop::setup_pane(NWin *win, FolderPane *p, int idx) {
+void NirvanaDesktopCanvas::setup_pane(NirvanaDrawerWindow *win, FolderPane *p, int idx) {
   auto act = [this, win, idx] { if (idx >= 0 && known(win)) ex_activate(win, idx); };
   p->view()->on_open = [this, win, act](const Entry &e) { act(); open_entry(e, win); };
   p->view()->on_context = [this, win, act] {
@@ -1971,7 +1789,7 @@ void Desktop::setup_pane(NWin *win, FolderPane *p, int idx) {
     int X = Fl::event_x(), Y = Fl::event_y();
     later([this, win, X, Y] { if (known(win)) folder_context_menu(win, X, Y); });
   };
-  p->view()->is_open = [this, win](const std::string &q) { NWin *o = find(q); return o && o != win; };
+  p->view()->is_open = [this, win](const std::string &q) { NirvanaDrawerWindow *o = find(q); return o && o != win; };
   p->view()->on_drag_start = [this, win, act](const std::vector<Entry> &v) { act(); drag_start(win, v); };
   p->view()->on_drag_move = [this](int xr, int yr) { drag_move(xr, yr); };
   p->view()->on_drag_end = [this](int xr, int yr, bool copy) { drag_end(xr, yr, copy); };
@@ -1983,13 +1801,13 @@ void Desktop::setup_pane(NWin *win, FolderPane *p, int idx) {
 }
 
 // The window's menu bar (Window, Icons) and the navigation bar above the folder content.
-void Desktop::build_folder_bars(NWin *win, int X, int Y, int W) {
+void NirvanaDesktopCanvas::build_folder_bars(NirvanaDrawerWindow *win, int X, int Y, int W) {
   win->begin();
   make_folder_menubar(win, X, Y, W);
 
-  auto *nav = new NavBar(X, Y + NWin::MB_H, W, NWin::NAV_H);
-  const int by = Y + NWin::MB_H + 3, bh = NWin::NAV_H - 6, bw = 26;
-  auto button = [&](int bx, const char *sym, const char *tip, void (Desktop::*m)()) {
+  auto *nav = new NavBar(X, Y + NirvanaDrawerWindow::MB_H, W, NirvanaDrawerWindow::NAV_H);
+  const int by = Y + NirvanaDrawerWindow::MB_H + 3, bh = NirvanaDrawerWindow::NAV_H - 6, bw = 26;
+  auto button = [&](int bx, const char *sym, const char *tip, void (NirvanaDesktopCanvas::*m)()) {
     auto *b = new Fl_Button(bx, by, bw, bh, sym);
     b->box(BUTTON_BOX);
     b->color(GRAY);
@@ -1997,19 +1815,19 @@ void Desktop::build_folder_bars(NWin *win, int X, int Y, int W) {
     b->labelcolor(TEXT);
     b->clear_visible_focus();
     b->tooltip(tip);
-    static std::vector<void (Desktop::*)()> ms;
+    static std::vector<void (NirvanaDesktopCanvas::*)()> ms;
     ms.push_back(m);
     b->callback([](Fl_Widget *w, void *d) {
-      auto *nw = (NWin *)w->window();
+      auto *nw = (NirvanaDrawerWindow *)w->window();
       nw->desk->menu_target = nw;
       (nw->desk->*ms[(long)d])();
       nw->desk->menu_target = nullptr;
     }, (void *)(long)(ms.size() - 1));
     return b;
   };
-  win->back_b = button(X + 6, "@<", _("Back"), &Desktop::go_back);
-  win->fwd_b = button(X + 6 + bw + 2, "@>", _("Forward"), &Desktop::go_forward);
-  win->up_b = button(X + 6 + 2 * (bw + 2) + 6, "@8>", _("Open Parent"), &Desktop::open_parent);
+  win->back_b = button(X + 6, "@<", _("Back"), &NirvanaDesktopCanvas::go_back);
+  win->fwd_b = button(X + 6 + bw + 2, "@>", _("Forward"), &NirvanaDesktopCanvas::go_forward);
+  win->up_b = button(X + 6 + 2 * (bw + 2) + 6, "@8>", _("Open Parent"), &NirvanaDesktopCanvas::open_parent);
   int lx = X + 6 + 3 * (bw + 2) + 12;
   auto *in = new Fl_Input(lx, by, std::max(40, X + W - 6 - lx), bh);
   in->box(WELL_BOX);
@@ -2017,7 +1835,7 @@ void Desktop::build_folder_bars(NWin *win, int X, int Y, int W) {
   in->textsize(SIZE_SMALL + 1);
   in->when(FL_WHEN_ENTER_KEY_ALWAYS);
   in->callback([](Fl_Widget *w, void *) {
-    auto *nw = (NWin *)w->window();
+    auto *nw = (NirvanaDrawerWindow *)w->window();
     nw->desk->go_location(nw);
   });
   win->loc = in;
@@ -2026,8 +1844,8 @@ void Desktop::build_folder_bars(NWin *win, int X, int Y, int W) {
   win->end();
 }
 
-Fl_Menu_Bar *Desktop::make_folder_menubar(NWin *win, int X, int Y, int W) {
-  auto *mb = new NirvanaMenuBar(X, Y, W, NWin::MB_H);
+Fl_Menu_Bar *NirvanaDesktopCanvas::make_folder_menubar(NirvanaDrawerWindow *win, int X, int Y, int W) {
+  auto *mb = new NirvanaMenuBar(X, Y, W, NirvanaDrawerWindow::MB_H);
   mb->box(MENUBAR_BOX);
   mb->color(GRAY);
   mb->textfont(FONT_SYSTEM);
@@ -2099,7 +1917,7 @@ static std::string location_text(const std::string &path, const std::string &) {
 
 std::string server_url(const std::string &path);   // explorer.cxx
 
-void Desktop::update_nav(NWin *w) {
+void NirvanaDesktopCanvas::update_nav(NirvanaDrawerWindow *w) {
   if (!w || !w->loc) return;
   std::string arch, inner;
   std::string url = server_url(w->path);   // a server: "sftp://me@host/dir"
@@ -2114,7 +1932,7 @@ void Desktop::update_nav(NWin *w) {
   set(w->up_b, par != w->path && allowed(par) && w->path != root_path_);
 }
 
-void Desktop::navigate(NWin *w, const std::string &target, Nav how) {
+void NirvanaDesktopCanvas::navigate(NirvanaDrawerWindow *w, const std::string &target, Nav how) {
   if (!w || !w->pane || !known(w)) return;
   std::string path = target;
   while (path.size() > 1 && path.back() == '/') path.pop_back();
@@ -2171,19 +1989,19 @@ void Desktop::navigate(NWin *w, const std::string &target, Nav how) {
   w->pane->view()->take_focus();
 }
 
-void Desktop::go_back() {
-  NWin *a = active_folder();
+void NirvanaDesktopCanvas::go_back() {
+  NirvanaDrawerWindow *a = active_folder();
   if (a && !a->back_hist.empty()) navigate(a, a->back_hist.back(), Nav::Back);
 }
 
-void Desktop::go_forward() {
-  NWin *a = active_folder();
+void NirvanaDesktopCanvas::go_forward() {
+  NirvanaDrawerWindow *a = active_folder();
   if (a && !a->fwd_hist.empty()) navigate(a, a->fwd_hist.back(), Nav::Forward);
 }
 
 // Window > Iconify: the window becomes an icon on the desktop (Insight does it)
-void Desktop::iconify_active() {
-  NWin *a = active_folder();
+void NirvanaDesktopCanvas::iconify_active() {
+  NirvanaDrawerWindow *a = active_folder();
   if (a && a->shown()) XIconifyWindow(fl_display, fl_xid(a), fl_screen);
 }
 
@@ -2194,7 +2012,7 @@ static std::string left_out_file() {
   return (x && *x ? std::string(x) : std::string(h ? h : "") + "/.config") + "/nirvana/left-out";
 }
 
-std::vector<std::string> Desktop::left_out() const {
+std::vector<std::string> NirvanaDesktopCanvas::left_out() const {
   std::vector<std::string> v;
   std::ifstream in(left_out_file());
   std::string line;
@@ -2202,13 +2020,13 @@ std::vector<std::string> Desktop::left_out() const {
   return v;
 }
 
-void Desktop::save_left_out(const std::vector<std::string> &v) {
+void NirvanaDesktopCanvas::save_left_out(const std::vector<std::string> &v) {
   std::ofstream out(left_out_file());
   for (auto &p : v) out << p << "\n";
 }
 
-void Desktop::leave_out() {
-  NWin *a = active_folder();
+void NirvanaDesktopCanvas::leave_out() {
+  NirvanaDrawerWindow *a = active_folder();
   if (!a) return;
   auto v = left_out();
   for (auto &e : a->pane->view()->selection())
@@ -2218,7 +2036,7 @@ void Desktop::leave_out() {
   redraw();
 }
 
-void Desktop::put_away_path(const std::string &path) {
+void NirvanaDesktopCanvas::put_away_path(const std::string &path) {
   auto v = left_out();
   v.erase(std::remove(v.begin(), v.end(), path), v.end());
   save_left_out(v);
@@ -2227,24 +2045,24 @@ void Desktop::put_away_path(const std::string &path) {
   redraw();
 }
 
-void Desktop::put_away() {
+void NirvanaDesktopCanvas::put_away() {
   // the selected desktop icon, or the selection of the active window
   if (icon_sel_ >= 0 && icon_sel_ < (int)icons_.size() && icons_[icon_sel_].leftout) {
     put_away_path(icons_[icon_sel_].path);
     return;
   }
-  if (NWin *a = active_folder())
+  if (NirvanaDrawerWindow *a = active_folder())
     for (auto &e : a->pane->view()->selection()) put_away_path(e.path);
 }
 
-void Desktop::new_window() {
-  NWin *a = active_folder();
+void NirvanaDesktopCanvas::new_window() {
+  NirvanaDrawerWindow *a = active_folder();
   open_folder(a ? a->path : root_path_, true, true);
 }
 
 // Enter in the location field: an absolute path, "~/..." or relative to the window's folder.
 // A file: its folder with the file selected.
-void Desktop::go_location(NWin *w) {
+void NirvanaDesktopCanvas::go_location(NirvanaDrawerWindow *w) {
   std::string t = w->loc->value();
   while (!t.empty() && isspace((unsigned char)t.back())) t.pop_back();
   while (!t.empty() && isspace((unsigned char)t.front())) t.erase(0, 1);
@@ -2270,7 +2088,7 @@ void Desktop::go_location(NWin *w) {
   navigate(w, ps);
 }
 
-void Desktop::open_entry(const Entry &e0, NWin *from) {
+void NirvanaDesktopCanvas::open_entry(const Entry &e0, NirvanaDrawerWindow *from) {
   Entry e = e0;
   // the "Nirvana Desktop" window holds links: the disk, Trash... open as themselves
   if (e.path.rfind(backdrop_dir() + "/", 0) == 0) {
@@ -2307,13 +2125,13 @@ void Desktop::open_entry(const Entry &e0, NWin *from) {
   spawn({"xdg-open", e.path});
 }
 
-std::string Desktop::apps_dir() const { return appimage::apps_dir(home_); }
+std::string NirvanaDesktopCanvas::apps_dir() const { return appimage::apps_dir(home_); }
 
 // The Library on the desktop: ~/Biblioteka (~/Library - the name in the interface language)
-std::string Desktop::library_dir() const { return home_ + "/" + _("Library"); }
+std::string NirvanaDesktopCanvas::library_dir() const { return home_ + "/" + _("Library"); }
 
 // "Ram Disk\n0,1 / 7,0 GB": the name and how full it is (refreshed with the menu bar figures)
-std::string Desktop::ramdisk_label() const {
+std::string NirvanaDesktopCanvas::ramdisk_label() const {
   struct statvfs sv;
   if (statvfs((home_ + "/.ramdisk").c_str(), &sv) != 0 || !sv.f_blocks) return "Ram Disk";
   double total = (double)sv.f_blocks * sv.f_frsize, used = total - (double)sv.f_bfree * sv.f_frsize;
@@ -2323,14 +2141,14 @@ std::string Desktop::ramdisk_label() const {
 }
 
 // The Desktop folder: XDG_DESKTOP_DIR, otherwise ~/Pulpit (the name in the interface language)
-std::string Desktop::desktop_dir() const {
+std::string NirvanaDesktopCanvas::desktop_dir() const {
   std::string d = plat::xdg_user_dir("DESKTOP");
   if (d.empty() || !allowed(d)) d = home_ + "/" + _("Desktop");
   return d;
 }
 
 // A change in the Desktop folder: the icons are laid out again
-void Desktop::watch_desktop_dir() {
+void NirvanaDesktopCanvas::watch_desktop_dir() {
   std::string d = desktop_dir();
   std::error_code ec;
   fs::create_directories(d, ec);
@@ -2347,7 +2165,7 @@ void Desktop::watch_desktop_dir() {
     char buf[4096];
     while (read(fd, buf, sizeof buf) > 0) {}
     static auto relayout = [](void *q) {
-      auto *dk = (Desktop *)q;
+      auto *dk = (NirvanaDesktopCanvas *)q;
       dk->layout_icons();
       dk->icon_sel_ = -1;
       dk->redraw();
@@ -2358,9 +2176,9 @@ void Desktop::watch_desktop_dir() {
 }
 
 // Special > Screenshot (Print): the whole screen as a PNG in Pictures, "Screenshot <date>.png"
-void Desktop::screenshot() {
+void NirvanaDesktopCanvas::screenshot() {
   Fl::add_timeout(0.35, [](void *p) {   // after the menu has closed
-    auto *dk = (Desktop *)p;
+    auto *dk = (NirvanaDesktopCanvas *)p;
     Display *d = fl_display;
     Window root = DefaultRootWindow(d);
     XWindowAttributes wa;
@@ -2398,7 +2216,7 @@ void Desktop::screenshot() {
 
 // The Applications icon: a plain Rambler window with the folder structure of the programs
 // (the category folders) - also when the folder windows are explorers
-void Desktop::open_apps() {
+void NirvanaDesktopCanvas::open_apps() {
   for (auto *w : wins_)
     if (w->pane && w->shown() && !w->ex && in_apps(w->path + "/")) {   // already open: to the front
       if (w->shaded()) w->set_shaded(false);
@@ -2409,13 +2227,13 @@ void Desktop::open_apps() {
 }
 
 // Is the file in the applications folder (also in a category subfolder)?
-bool Desktop::in_apps(const std::string &path) const {
+bool NirvanaDesktopCanvas::in_apps(const std::string &path) const {
   std::string a = apps_dir() + "/";
   return path.compare(0, a.size(), a) == 0;
 }
 
 // Destination of an AppImage in the applications folder: the category folder (Games, Graphics...).
-std::string Desktop::app_destination(const std::string &path) const {
+std::string NirvanaDesktopCanvas::app_destination(const std::string &path) const {
   return (fs::path(apps_dir()) / appimage::category_folder(path, home_) / fs::path(path).filename()).string();
 }
 
@@ -2423,7 +2241,7 @@ std::string Desktop::app_destination(const std::string &path) const {
 // just without the store). From the applications folder: run it, extracting it if needed.
 static std::string menu_escape(const std::string &s);
 
-void Desktop::open_appimage(const std::string &path) {
+void NirvanaDesktopCanvas::open_appimage(const std::string &path) {
   if (std::string a = appimage::arch_problem(path); !a.empty()) { guru(a); return; }
   if (in_apps(path)) { run_app(path); return; }
   std::string name = appimage::label(path, home_);
@@ -2474,7 +2292,7 @@ void Desktop::open_appimage(const std::string &path) {
   ic.path = path;
   ic.icon = Icon::Application;
   ic.icon_file = appimage::icon(path, home_);
-  NWin *win = begin_form(_("Installation"), W, H, &ic, plat::fmt(_("Install the application “%1”?"), name), ox, oy);
+  NirvanaDrawerWindow *win = begin_form(_("Installation"), W, H, &ic, plat::fmt(_("Install the application “%1”?"), name), ox, oy);
   auto *ch = new Fl_Choice(ox + 150, oy + 58, W - 166, 22, _("Category:"));
   ch->labelfont(FONT_SYSTEM);
   ch->labelsize(SIZE_SYSTEM);
@@ -2504,7 +2322,7 @@ void Desktop::open_appimage(const std::string &path) {
              }}});
 }
 
-void Desktop::run_app(const std::string &path, const std::vector<std::string> &files) {
+void NirvanaDesktopCanvas::run_app(const std::string &path, const std::vector<std::string> &files) {
   if (std::string a = appimage::arch_problem(path); !a.empty()) { guru(a); return; }
   if (!appimage::is_installed(path, home_)) {
     for (auto *w : wins_) w->cursor(FL_CURSOR_WAIT);
@@ -2576,7 +2394,7 @@ static int run_with_output(const std::vector<std::string> &args, std::string *ou
   return WIFEXITED(st) ? WEXITSTATUS(st) : 127;
 }
 
-void Desktop::ask_missing_libs(const std::string &path, const std::vector<std::string> &missing) {
+void NirvanaDesktopCanvas::ask_missing_libs(const std::string &path, const std::vector<std::string> &missing) {
   std::string h = libs_helper(), out, list, pkgs;
   for (auto &m : missing) list += (list.empty() ? "" : ", ") + m;
   if (!h.empty()) {
@@ -2605,7 +2423,7 @@ void Desktop::ask_missing_libs(const std::string &path, const std::vector<std::s
   dialog(_("Missing Libraries"), text, b);
 }
 
-void Desktop::install_libs(const std::string &path, const std::vector<std::string> &missing) {
+void NirvanaDesktopCanvas::install_libs(const std::string &path, const std::vector<std::string> &missing) {
   std::string h = libs_helper(), out;
   if (h.empty()) { guru(_("nirvana-libs-helper is missing.")); return; }
   for (auto *w : wins_) w->cursor(FL_CURSOR_WAIT);
@@ -2630,13 +2448,13 @@ void Desktop::install_libs(const std::string &path, const std::vector<std::strin
   run_app(path);   // checked again: what is still missing is shown once more
 }
 
-void Desktop::start_tray() {
+void NirvanaDesktopCanvas::start_tray() {
   if (!tray_pending_) return;
   tray_pending_ = false;
   tray::init(this, [this] { layout_bar(); });
 }
 
-void Desktop::restore() {
+void NirvanaDesktopCanvas::restore() {
   spatial_.list_default_once();
   spatial_.apps_icons_once(apps_dir());
   start_tray();
@@ -2666,7 +2484,7 @@ void Desktop::restore() {
 // ---------------------------------------------------------------------------
 // Drawing and events of the desktop
 // ---------------------------------------------------------------------------
-void Desktop::draw() {
+void NirvanaDesktopCanvas::draw() {
   if (wallpaper_) wallpaper_->draw(0, 0);
   else pattern_->draw(0, 0, w(), h());
   fl_font(FONT_SMALL, SIZE_SMALL);
@@ -2675,7 +2493,7 @@ void Desktop::draw() {
     bool sel = i == icon_sel_ || i == icon_drop_;
     Icon shown = ic.icon;
     if (vdragging_ && ic.path == trash_dir()) shown = Icon::Eject;
-    if (ic.dock) continue;   // the dock is drawn by draw_dock(): tiles without labels
+    if (ic.dock) continue;   // the dock is drawn by dock_.draw(): tiles without labels
     if (ic.img) {   // window icon: the program's picture; selected - darkened
       ic.img->draw(ic.x + 24, ic.y);
       if (sel) { fl_color(ICON_SEL); for (int k = 0; k < 32; k += 2) fl_xyline(ic.x + 24, ic.y + k, ic.x + 55); }
@@ -2701,11 +2519,11 @@ void Desktop::draw() {
       ty += fl_height();
     }
   }
-  draw_dock();
+  dock_.draw();
   for (int i = 0; i < children(); i++) draw_child(*child(i));
 }
 
-int Desktop::handle(int e) {
+int NirvanaDesktopCanvas::handle(int e) {
   // dock: names in tooltips, the tab collapses and expands the strip
   if (e == FL_MOVE || e == FL_ENTER) {
     int i = icon_at(Fl::event_x(), Fl::event_y());
@@ -2725,8 +2543,8 @@ int Desktop::handle(int e) {
     tip_icon_ = -1;
     Fl_Tooltip::enter_area(this, 0, 0, 0, 0, nullptr);
   }
-  if (e == FL_PUSH && !dock_.empty() && dock_grip_at(Fl::event_x(), Fl::event_y())) {
-    toggle_dock();
+  if (e == FL_PUSH && !dock_.items.empty() && dock_.grip_at(Fl::event_x(), Fl::event_y())) {
+    dock_.toggle();
     return 1;
   }
   switch (e) {   // files from other programs dropped on the Trash and disk icons
@@ -2766,8 +2584,8 @@ int Desktop::handle(int e) {
     icon_sel_ = i;
     vdrag_icon_ = (i >= 0 && icons_[i].vol >= 0) ? i : -1;   // a disk can be dragged to the Trash
     vpress_x_ = Fl::event_x_root(); vpress_y_ = Fl::event_y_root();
-    dock_press_ = (i >= 0 && icons_[i].dock) ? i : -1;   // dock: a single click
-    if (dock_press_ < 0 && i >= 0 && Fl::event_clicks()) {
+    dock_.press = (i >= 0 && icons_[i].dock) ? i : -1;   // dock: a single click
+    if (dock_.press < 0 && i >= 0 && Fl::event_clicks()) {
       Fl::event_clicks(0);
       vdrag_icon_ = -1;
       if (icons_[i].win) gary::activate(icons_[i].win);   // window icon: restore the window
@@ -2779,7 +2597,7 @@ int Desktop::handle(int e) {
     } else if (i < 0 && Fl::event_clicks() && Fl::event_button() == FL_LEFT_MOUSE) {
       // double-click on the empty desktop (outside the dock): the file manager - the Nirvana HD window
       int dx, dy, dw, dh;
-      dock_rect(dx, dy, dw, dh);
+      dock_.rect(dx, dy, dw, dh);
       if (!Fl::event_inside(dx, dy, dw, dh)) {
         Fl::event_clicks(0);
         open_folder(home_);
@@ -2789,9 +2607,9 @@ int Desktop::handle(int e) {
     redraw();
     return 1;
   }
-  if (e == FL_RELEASE && dock_press_ >= 0) {
-    int i = dock_press_;
-    dock_press_ = -1;
+  if (e == FL_RELEASE && dock_.press >= 0) {
+    int i = dock_.press;
+    dock_.press = -1;
     Fl::event_clicks(0);
     if (icon_at(Fl::event_x(), Fl::event_y()) == i) open_entry(icons_[i].entry);
     return 1;
@@ -2836,14 +2654,14 @@ int Desktop::handle(int e) {
 // ---------------------------------------------------------------------------
 // Dialogs - separate modal windows; Insight gives them a frame without buttons
 // ---------------------------------------------------------------------------
-void Desktop::dialog_cb(Fl_Widget *b, void *idx) {
-  auto *p = (NWin *)b->window();
+void NirvanaDesktopCanvas::dialog_cb(Fl_Widget *b, void *idx) {
+  auto *p = (NirvanaDrawerWindow *)b->window();
   auto action = p->actions[(long)idx];
   p->desk->close(p);
   if (action) action();
 }
 
-void Desktop::guru(const std::string &text) { dialog(GURU_TITLE, text, {{"OK", nullptr}}); }
+void NirvanaDesktopCanvas::guru(const std::string &text) { dialog(GURU_TITLE, text, {{"OK", nullptr}}); }
 
 // The message of an error window: red text in a black box with a blinking red frame,
 // and a guru number below - like the error screens of the 1980s home computers.
@@ -2878,7 +2696,7 @@ struct GuruBox : Fl_Box {
 };
 }  // namespace
 
-void Desktop::dialog(const std::string &title, const std::string &text,
+void NirvanaDesktopCanvas::dialog(const std::string &title, const std::string &text,
                      std::vector<std::pair<std::string, std::function<void()>>> buttons) {
   bool is_guru = title == GURU_TITLE;
   fl_font(FONT_SYSTEM, SIZE_SYSTEM);
@@ -2904,7 +2722,7 @@ void Desktop::dialog(const std::string &title, const std::string &text,
   int X = (w() - W) / 2, Y = (h() - H) / 3;
 
   int ox = csd_mode ? FRAME : 0, oy = csd_mode ? TITLE_H : 0;
-  auto *win = new NWin(this, X - ox, Y - oy, W + 2 * ox, H + oy + ox, title.c_str(), true);
+  auto *win = new NirvanaDrawerWindow(this, X - ox, Y - oy, W + 2 * ox, H + oy + ox, title.c_str(), true);
   win->color(GRAY);
   // logo icon on the left
   struct Logo : Fl_Widget {
@@ -2947,8 +2765,8 @@ void Desktop::dialog(const std::string &title, const std::string &text,
 // ---------------------------------------------------------------------------
 // Desktop::about() is in about.cxx
 
-void Desktop::new_folder() {
-  NWin *a = active_folder();
+void NirvanaDesktopCanvas::new_folder() {
+  NirvanaDrawerWindow *a = active_folder();
   std::string dir = a ? a->path : home_;
   std::string base = dir + "/" + _("untitled folder");
   std::string p = base;
@@ -2958,8 +2776,8 @@ void Desktop::new_folder() {
   refresh_all();
 }
 
-void Desktop::open_selected() {
-  if (NWin *a = active_folder()) {
+void NirvanaDesktopCanvas::open_selected() {
+  if (NirvanaDrawerWindow *a = active_folder()) {
     if (const Entry *e = a->pane->view()->selected()) open_entry(*e, a);
   } else if (icon_sel_ >= 0) {
     if (icons_[icon_sel_].win) gary::activate(icons_[icon_sel_].win);
@@ -2971,7 +2789,7 @@ void Desktop::open_selected() {
   }
 }
 
-void Desktop::close_active() {
+void NirvanaDesktopCanvas::close_active() {
   if (menu_target && known(menu_target)) { close(menu_target); return; }
   Window a = net_active();
   for (auto *w : wins_)
@@ -2984,7 +2802,7 @@ void Desktop::close_active() {
 // (a USB stick) the file is copied and deleted the job's way: with progress, and Cancel stops
 // it between megabytes (fs::copy could not be stopped, and it was done in the interface
 // thread from a drag - the whole desktop waited for the USB stick).
-bool Desktop::trash_move(jobs::Job &j, const std::string &src, std::string &err) {
+bool NirvanaDesktopCanvas::trash_move(jobs::Job &j, const std::string &src, std::string &err) {
   std::string files = trash_dir(), info = home_ + "/.local/share/Trash/info";
   std::error_code ec;
   fs::create_directories(files, ec);
@@ -3013,7 +2831,7 @@ bool Desktop::trash_move(jobs::Job &j, const std::string &src, std::string &err)
 }
 
 // The Trash for any files: always a job in the background (the interface never waits)
-void Desktop::trash_paths(const std::vector<std::string> &paths) {
+void NirvanaDesktopCanvas::trash_paths(const std::vector<std::string> &paths) {
   if (paths.empty()) return;
   auto job = std::make_shared<jobs::Job>();
   job->title = plat::fmt(_("Moving %1 to the Trash"), items_text((int)paths.size()));
@@ -3044,8 +2862,8 @@ void Desktop::trash_paths(const std::vector<std::string> &paths) {
   jobs::start(job);
 }
 
-void Desktop::move_to_trash() {
-  NWin *a = active_folder();
+void NirvanaDesktopCanvas::move_to_trash() {
+  NirvanaDrawerWindow *a = active_folder();
   if (!a) return;
   auto sel = a->pane->view()->selection();
   std::vector<std::string> paths;
@@ -3053,7 +2871,7 @@ void Desktop::move_to_trash() {
   trash_paths(paths);
 }
 
-void Desktop::empty_trash() {
+void NirvanaDesktopCanvas::empty_trash() {
   std::error_code ec;
   int n = 0;
   if (fs::exists(trash_dir(), ec))
@@ -3087,13 +2905,13 @@ void Desktop::empty_trash() {
 // Widgets keep palette indexes, so redrawing them is enough.
 // The wallpaper at the full screen resolution: at 150% scale the image has 1.5 times
 // more pixels than FLTK units, and scale() draws it without blurring.
-Fl_RGB_Image *Desktop::render_wallpaper(int W, int H, bool *ok) {
+Fl_RGB_Image *NirvanaDesktopCanvas::render_wallpaper(int W, int H, bool *ok) {
   Fl_RGB_Image *img = render_desktop(current_appearance(), px(W), px(H), ok);
   if (img && ui_scale() != 1.0f) img->scale(W, H, 0, 1);
   return img;
 }
 
-void Desktop::appearance_changed() {
+void NirvanaDesktopCanvas::appearance_changed() {
   // A new interface scale: the window manager and the desktop have to start again
   // (all Nirvana Desktop programs compute coordinates in the same scale).
   if (std::abs(configured_scale(read_appearance()) - ui_scale()) > 0.01f) {
@@ -3126,7 +2944,7 @@ static std::string alice_exe() {
   if (access(alice.c_str(), X_OK) != 0) alice = "nirvana-alice";   // from PATH
   return alice;
 }
-void Desktop::open_appearance() { spawn({alice_exe(), "appearance"}); }
+void NirvanaDesktopCanvas::open_appearance() { spawn({alice_exe(), "appearance"}); }
 
 static std::string shell_exe() {
   std::string exe = self_exe();
@@ -3134,9 +2952,9 @@ static std::string shell_exe() {
   return access(sh.c_str(), X_OK) == 0 ? sh : "nirvana-shell";
 }
 // A terminal in the active window's folder (or the selected folder), otherwise in home.
-void Desktop::open_terminal() {
+void NirvanaDesktopCanvas::open_terminal() {
   std::string dir = home_;
-  if (NWin *w = active_folder()) {
+  if (NirvanaDrawerWindow *w = active_folder()) {
     dir = w->path;
     if (w->pane) {
       auto sel = w->pane->view()->selection();
@@ -3146,14 +2964,14 @@ void Desktop::open_terminal() {
   if (!allowed(dir)) dir = home_;
   spawn({shell_exe(), "--working-directory", dir});
 }
-void Desktop::open_terminal_home() { spawn({shell_exe(), "--working-directory", home_}); }
-void Desktop::open_network() { spawn({alice_exe(), "network"}); }
-void Desktop::open_power() { spawn({alice_exe(), "power"}); }
+void NirvanaDesktopCanvas::open_terminal_home() { spawn({shell_exe(), "--working-directory", home_}); }
+void NirvanaDesktopCanvas::open_network() { spawn({alice_exe(), "network"}); }
+void NirvanaDesktopCanvas::open_power() { spawn({alice_exe(), "power"}); }
 
 // --- network -------------------------------------------------------------------
 // The network menu is built on every opening from the last known state, and we
 // ask for a new Wi-Fi scan on the way (the results come through net::watch).
-void Desktop::build_net_menu(Fl_Menu_Button *m) {
+void NirvanaDesktopCanvas::build_net_menu(Fl_Menu_Button *m) {
   m->clear();
   g_menu_nets.clear();
   g_menu_ifaces.clear();
@@ -3162,11 +2980,11 @@ void Desktop::build_net_menu(Fl_Menu_Button *m) {
     m->replace(at, text.c_str());   // replace() does not treat "/" as a submenu
     return at;
   };
-  auto self = [](Fl_Widget *w) { return (Desktop *)w->window(); };
+  auto self = [](Fl_Widget *w) { return (NirvanaDesktopCanvas *)w->window(); };
   (void)self;
   if (!net_.available) {
     item(net_.problem.empty() ? _("Network unavailable") : net_.problem, nullptr, 0, FL_MENU_INACTIVE | FL_MENU_DIVIDER);
-    item(_("Network Settings…"), [](Fl_Widget *w, void *) { ((Desktop *)w->window())->open_network(); }, 0, 0);
+    item(_("Network Settings…"), [](Fl_Widget *w, void *) { ((NirvanaDesktopCanvas *)w->window())->open_network(); }, 0, 0);
     return;
   }
   net::rescan();
@@ -3180,10 +2998,10 @@ void Desktop::build_net_menu(Fl_Menu_Button *m) {
     long idx = (long)g_menu_ifaces.size() - 1;
     if (d.state == net::DevState::Connected || d.state == net::DevState::Connecting)
       item(std::string("   ") + _("Disconnect"), [](Fl_Widget *w, void *v) {
-        ((Desktop *)w->window())->net_action(false, g_menu_ifaces[(long)v]); }, idx, FL_MENU_DIVIDER);
+        ((NirvanaDesktopCanvas *)w->window())->net_action(false, g_menu_ifaces[(long)v]); }, idx, FL_MENU_DIVIDER);
     else if (d.state == net::DevState::Disconnected)
       item(std::string("   ") + _("Connect"), [](Fl_Widget *w, void *v) {
-        ((Desktop *)w->window())->net_action(true, g_menu_ifaces[(long)v]); }, idx, FL_MENU_DIVIDER);
+        ((NirvanaDesktopCanvas *)w->window())->net_action(true, g_menu_ifaces[(long)v]); }, idx, FL_MENU_DIVIDER);
     else
       item(std::string("   ") + _("Cable unplugged"), nullptr, 0, FL_MENU_INACTIVE | FL_MENU_DIVIDER);
   }
@@ -3192,7 +3010,7 @@ void Desktop::build_net_menu(Fl_Menu_Button *m) {
     item(!net_.hotspot_ssid.empty() ? plat::fmt(_("Wi-Fi: hotspot “%1”"), net_.hotspot_ssid)
          : net_.wifi_on ? _("Wi-Fi: On") : _("Wi-Fi: Off"), nullptr, 0, FL_MENU_INACTIVE);
     item(net_.wifi_on ? std::string("   ") + _("Turn Wi-Fi Off") : std::string("   ") + _("Turn Wi-Fi On"), [](Fl_Widget *w, void *) {
-      Desktop *d = (Desktop *)w->window();
+      NirvanaDesktopCanvas *d = (NirvanaDesktopCanvas *)w->window();
       net::set_wifi(!d->net_state().wifi_on, [d](bool ok, const std::string &msg) {
         d->net_refresh();
         if (!ok) d->dialog_message(_("Network"), msg);
@@ -3205,7 +3023,7 @@ void Desktop::build_net_menu(Fl_Menu_Button *m) {
         g_menu_nets.push_back(n);
         std::string text = std::string(1, char('0' + net::bars(n.signal))) + (n.secured() ? "1" : "0") + n.ssid;
         int at = item(text, [](Fl_Widget *w, void *v) {
-          ((Desktop *)w->window())->wifi_connect(g_menu_nets[(long)v], "");
+          ((NirvanaDesktopCanvas *)w->window())->wifi_connect(g_menu_nets[(long)v], "");
         }, (long)g_menu_nets.size() - 1, FL_MENU_RADIO | (n.in_use ? FL_MENU_VALUE : 0));
         ((Fl_Menu_Item *)&m->menu()[at])->labeltype(NET_LABEL);
       }
@@ -3214,7 +3032,7 @@ void Desktop::build_net_menu(Fl_Menu_Button *m) {
         if (d.type == "wifi" && d.state == net::DevState::Connected) {
           g_menu_ifaces.push_back(d.iface);
           item(!net_.hotspot_ssid.empty() ? std::string(_("Turn Hotspot Off")) : plat::fmt(_("Disconnect from “%1”"), d.connection), [](Fl_Widget *w, void *v) {
-            ((Desktop *)w->window())->net_action(false, g_menu_ifaces[(long)v]); },
+            ((NirvanaDesktopCanvas *)w->window())->net_action(false, g_menu_ifaces[(long)v]); },
             (long)g_menu_ifaces.size() - 1, 0);
         }
       item(_("Other Network…"), [](Fl_Widget *w, void *) {
@@ -3228,23 +3046,23 @@ void Desktop::build_net_menu(Fl_Menu_Button *m) {
     for (size_t i = 0; i < g_menu_vpns.size(); i++) {
       auto &v = g_menu_vpns[i];
       std::string t = "   " + v.name + (v.activating ? std::string(" ") + _("(connecting…)") : "");
-      item(t, [](Fl_Widget *w, void *d) { ((Desktop *)w->window())->vpn_toggle(g_menu_vpns[(long)d], ""); },
+      item(t, [](Fl_Widget *w, void *d) { ((NirvanaDesktopCanvas *)w->window())->vpn_toggle(g_menu_vpns[(long)d], ""); },
            (long)i, FL_MENU_RADIO | (v.active ? FL_MENU_VALUE : 0) | (i + 1 == g_menu_vpns.size() ? FL_MENU_DIVIDER : 0));
     }
   }
   item(_("Airplane Mode"), [](Fl_Widget *w, void *) {
-    Desktop *d = (Desktop *)w->window();
+    NirvanaDesktopCanvas *d = (NirvanaDesktopCanvas *)w->window();
     net::set_airplane(!d->net_state().airplane(), [d](bool ok, const std::string &m) {
       d->net_refresh();
       if (!ok) d->dialog_message(_("Network"), m);
     });
   }, 0, FL_MENU_TOGGLE | (net_.airplane() ? FL_MENU_VALUE : 0) | FL_MENU_DIVIDER);
-  item(_("Network Settings…"), [](Fl_Widget *w, void *) { ((Desktop *)w->window())->open_network(); }, 0, 0);
+  item(_("Network Settings…"), [](Fl_Widget *w, void *) { ((NirvanaDesktopCanvas *)w->window())->open_network(); }, 0, 0);
 }
 
 // VPN from the network menu: connect or disconnect. The password is asked for only when needed;
 // when the profile has no user name, we point to the Network panel.
-void Desktop::vpn_toggle(const net::Vpn &v, const std::string &msg) {
+void NirvanaDesktopCanvas::vpn_toggle(const net::Vpn &v, const std::string &msg) {
   auto done = [this, v](bool ok, const std::string &m) {
     net_refresh();
     if (ok) return;
@@ -3261,22 +3079,22 @@ void Desktop::vpn_toggle(const net::Vpn &v, const std::string &msg) {
   });
 }
 
-void Desktop::net_refresh() {
+void NirvanaDesktopCanvas::net_refresh() {
   net_ = net::query();
   if (net_menu_) net_menu_->redraw();
 }
 
-void Desktop::net_action(bool connect, const std::string &iface) {
+void NirvanaDesktopCanvas::net_action(bool connect, const std::string &iface) {
   auto done = [this](bool ok, const std::string &msg) { net_refresh(); if (!ok) dialog_message(_("Network"), msg); };
   if (connect) net::connect_device(iface, done);
   else net::disconnect_device(iface, done);
 }
 
-void Desktop::dialog_message(const std::string &title, const std::string &text) {
+void NirvanaDesktopCanvas::dialog_message(const std::string &title, const std::string &text) {
   dialog(title, text, {{"OK", nullptr}});
 }
 
-void Desktop::wifi_connect(const net::Network &n, const std::string &msg) {
+void NirvanaDesktopCanvas::wifi_connect(const net::Network &n, const std::string &msg) {
   if (n.enterprise()) {
     dialog_message(_("Wi-Fi Network"), _("Enterprise networks (WPA Enterprise, 802.1X) are not supported yet.\n"
                                    "Set them up with nmtui or nm-connection-editor."));
@@ -3304,16 +3122,16 @@ void Desktop::wifi_connect(const net::Network &n, const std::string &msg) {
   });
 }
 
-void Desktop::refresh_all() {
+void NirvanaDesktopCanvas::refresh_all() {
   for (auto *w : wins_) if (w->pane) w->pane->refresh();
   layout_icons();
   redraw();
 }
 
-void Desktop::quit() {
+void NirvanaDesktopCanvas::quit() {
   tray::shutdown();   // XEmbed icons go back to their programs, the tray selection is released
   for (auto *w : wins_) if (w->pane) remember(w, true);
-  std::vector<NWin *> all = wins_;
+  std::vector<NirvanaDrawerWindow *> all = wins_;
   for (auto *w : all) w->hide();
   hide();
 }
@@ -3377,14 +3195,14 @@ static Fl_Image *app_icon(const gary::App &a, bool dim) {
   return dim ? it->second.second : it->second.first;
 }
 
-std::vector<NWin *> Desktop::folder_windows() {
-  std::vector<NWin *> v;
+std::vector<NirvanaDrawerWindow *> NirvanaDesktopCanvas::folder_windows() {
+  std::vector<NirvanaDrawerWindow *> v;
   for (auto *w : wins_) if (w->pane && w->shown()) v.push_back(w);
   return v;
 }
 
 // The active application: the window from _NET_ACTIVE_WINDOW; the desktop and Rambler windows = Rambler.
-int Desktop::active_app_index(const std::vector<gary::App> &apps) {
+int NirvanaDesktopCanvas::active_app_index(const std::vector<gary::App> &apps) {
   Window a = gary::active_window();
   if (!a || is_ours(a)) return -1;
   for (int i = 0; i < (int)apps.size(); i++)
@@ -3392,7 +3210,7 @@ int Desktop::active_app_index(const std::vector<gary::App> &apps) {
   return -1;
 }
 
-void Desktop::current_app(std::string &name, Fl_Image *&icon) {
+void NirvanaDesktopCanvas::current_app(std::string &name, Fl_Image *&icon) {
   auto apps = gary::list_apps(is_ours);
   int i = active_app_index(apps);
   if (i < 0) { name = "Rambler"; icon = rambler_icon(false); return; }
@@ -3400,7 +3218,7 @@ void Desktop::current_app(std::string &name, Fl_Image *&icon) {
   icon = app_icon(apps[i], false);
 }
 
-void Desktop::clients_changed() {
+void NirvanaDesktopCanvas::clients_changed() {
   gary::clients_changed();
   if (app_menu_) app_menu_->redraw();
 }
@@ -3409,22 +3227,22 @@ void Desktop::clients_changed() {
 static std::vector<gary::App> g_menu_apps;
 static int g_menu_active = -1;   // -1 = Rambler
 
-static void hide_app(Desktop *d, int i) {
-  if (i < 0) { for (NWin *w : d->folder_windows()) gary::hide(fl_xid(w)); return; }
+static void hide_app(NirvanaDesktopCanvas *d, int i) {
+  if (i < 0) { for (NirvanaDrawerWindow *w : d->folder_windows()) gary::hide(fl_xid(w)); return; }
   for (Window w : g_menu_apps[i].wins) gary::hide(w);
 }
 
-static void show_app(Desktop *d, int i) {
+static void show_app(NirvanaDesktopCanvas *d, int i) {
   if (i < 0) {
     auto f = d->folder_windows();
-    for (NWin *w : f) gary::activate(fl_xid(w));
+    for (NirvanaDrawerWindow *w : f) gary::activate(fl_xid(w));
     if (f.empty()) gary::activate(fl_xid(d));
     return;
   }
   for (Window w : g_menu_apps[i].wins) gary::activate(w);   // the last activated one gets the focus
 }
 
-void Desktop::build_windows_menu(Fl_Menu_Button *m) {
+void NirvanaDesktopCanvas::build_windows_menu(Fl_Menu_Button *m) {
   m->clear();
   static std::vector<std::unique_ptr<Fl_Multi_Label>> labels;
   static std::vector<std::string> texts;
@@ -3446,7 +3264,7 @@ void Desktop::build_windows_menu(Fl_Menu_Button *m) {
     int flags = FL_MENU_RADIO | (active ? FL_MENU_VALUE : 0) | (last ? FL_MENU_DIVIDER : 0);
     int at = m->add("x", 0,
                     [](Fl_Widget *w, void *d) {
-                      auto *self = (Desktop *)w->window();
+                      auto *self = (NirvanaDesktopCanvas *)w->window();
                       show_app(self, (int)(long)d);
                     },
                     (void *)idx, flags);
@@ -3455,7 +3273,7 @@ void Desktop::build_windows_menu(Fl_Menu_Button *m) {
   };
 
   bool rambler_hidden = true;
-  for (NWin *w : folder_windows()) if (!gary::is_hidden(fl_xid(w))) rambler_hidden = false;
+  for (NirvanaDrawerWindow *w : folder_windows()) if (!gary::is_hidden(fl_xid(w))) rambler_hidden = false;
   if (folder_windows().empty()) rambler_hidden = false;
   add_app("Rambler", rambler_icon(rambler_hidden), -1, g_menu_active < 0, g_menu_apps.empty());
   for (int i = 0; i < (int)g_menu_apps.size(); i++)
@@ -3465,17 +3283,17 @@ void Desktop::build_windows_menu(Fl_Menu_Button *m) {
   std::string cur = g_menu_active < 0 ? "Rambler" : g_menu_apps[g_menu_active].name;
   texts.push_back(plat::fmt(_("Hide %1"), menu_escape(cur)));
   m->add(texts.back().c_str(), 0, [](Fl_Widget *w, void *) {
-    hide_app((Desktop *)w->window(), g_menu_active);
+    hide_app((NirvanaDesktopCanvas *)w->window(), g_menu_active);
   }, nullptr, 0);
   m->add(_("Hide Others"), 0, [](Fl_Widget *w, void *) {
-    auto *self = (Desktop *)w->window();
+    auto *self = (NirvanaDesktopCanvas *)w->window();
     if (g_menu_active >= 0) hide_app(self, -1);
     for (int i = 0; i < (int)g_menu_apps.size(); i++) if (i != g_menu_active) hide_app(self, i);
   }, nullptr, 0);
   m->add(_("Show All"), 0, [](Fl_Widget *w, void *) {
-    auto *self = (Desktop *)w->window();
+    auto *self = (NirvanaDesktopCanvas *)w->window();
     Window keep = gary::active_window();
-    for (NWin *f : self->folder_windows())
+    for (NirvanaDrawerWindow *f : self->folder_windows())
       if (gary::is_hidden(fl_xid(f))) gary::activate(fl_xid(f));
     for (auto &a : g_menu_apps)
       for (Window x : a.wins) if (gary::is_hidden(x)) gary::activate(x);
@@ -3487,20 +3305,20 @@ void Desktop::build_windows_menu(Fl_Menu_Button *m) {
   }, nullptr, (g_menu_active < 0 ? FL_MENU_INACTIVE : 0) | FL_MENU_DIVIDER);
 
   // Rambler windows in a submenu
-  std::vector<NWin *> order;
+  std::vector<NirvanaDrawerWindow *> order;
   for (auto it = wins_.rbegin(); it != wins_.rend(); ++it) if ((*it)->pane) order.push_back(*it);
   if (order.empty())
     m->add(plat::tr_path(P_("Rambler Windows/No open windows")).c_str(), 0, nullptr, nullptr, FL_MENU_INACTIVE | FL_MENU_DIVIDER);
   Window a = net_active();
   for (size_t i = 0; i < order.size(); i++) {
-    NWin *w = order[i];
+    NirvanaDrawerWindow *w = order[i];
     int flags = FL_MENU_RADIO | (w->shown() && fl_xid(w) == a ? FL_MENU_VALUE : 0);
     if (i + 1 == order.size()) flags |= FL_MENU_DIVIDER;
     texts.push_back(plat::tr_path(P_("Rambler Windows")) + "/" + menu_escape(w->label()));
     m->add(texts.back().c_str(), 0,
            [](Fl_Widget *mw, void *d) {
-             auto *self = (Desktop *)mw->window();
-             auto *w = (NWin *)d;
+             auto *self = (NirvanaDesktopCanvas *)mw->window();
+             auto *w = (NirvanaDrawerWindow *)d;
              if (!self->known(w)) return;
              if (w->shaded()) w->set_shaded(false);
              w->activate_window();
@@ -3508,18 +3326,18 @@ void Desktop::build_windows_menu(Fl_Menu_Button *m) {
            w, flags);
   }
   int on = order.empty() ? FL_MENU_INACTIVE : 0;
-  m->add(plat::tr_path(P_("Rambler Windows/Collapse All")).c_str(), 0, [](Fl_Widget *w, void *) { ((Desktop *)w->window())->shade_all(true); }, nullptr, on);
-  m->add(plat::tr_path(P_("Rambler Windows/Expand All")).c_str(), 0, [](Fl_Widget *w, void *) { ((Desktop *)w->window())->shade_all(false); }, nullptr, on | FL_MENU_DIVIDER);
-  m->add(plat::tr_path(P_("Rambler Windows/Close All")).c_str(), 0, [](Fl_Widget *w, void *) { ((Desktop *)w->window())->close_all(); }, nullptr, on);
+  m->add(plat::tr_path(P_("Rambler Windows/Collapse All")).c_str(), 0, [](Fl_Widget *w, void *) { ((NirvanaDesktopCanvas *)w->window())->shade_all(true); }, nullptr, on);
+  m->add(plat::tr_path(P_("Rambler Windows/Expand All")).c_str(), 0, [](Fl_Widget *w, void *) { ((NirvanaDesktopCanvas *)w->window())->shade_all(false); }, nullptr, on | FL_MENU_DIVIDER);
+  m->add(plat::tr_path(P_("Rambler Windows/Close All")).c_str(), 0, [](Fl_Widget *w, void *) { ((NirvanaDesktopCanvas *)w->window())->close_all(); }, nullptr, on);
 }
 
-void Desktop::shade_all(bool shade) {
+void NirvanaDesktopCanvas::shade_all(bool shade) {
   for (auto *w : wins_)
     if (w->pane && w->shaded() != shade) w->set_shaded(shade);
 }
 
-void Desktop::close_all() {
-  std::vector<NWin *> v;
+void NirvanaDesktopCanvas::close_all() {
+  std::vector<NirvanaDrawerWindow *> v;
   for (auto *w : wins_) if (w->pane) v.push_back(w);
   for (auto *w : v) close(w);
 }
@@ -3527,26 +3345,26 @@ void Desktop::close_all() {
 // ---------------------------------------------------------------------------
 // Renaming, selection, view
 // ---------------------------------------------------------------------------
-void Desktop::rename_selected() {
-  NWin *a = active_folder();
+void NirvanaDesktopCanvas::rename_selected() {
+  NirvanaDrawerWindow *a = active_folder();
   if (!a) return;
   if (const Entry *e = a->pane->view()->selected())
     a->pane->start_rename(a->pane->view()->index_of(e->path));
 }
 
-void Desktop::select_all() {
-  if (NWin *a = active_folder()) a->pane->view()->select_all();
+void NirvanaDesktopCanvas::select_all() {
+  if (NirvanaDrawerWindow *a = active_folder()) a->pane->view()->select_all();
 }
 
-void Desktop::view_icons() {
-  if (NWin *a = active_folder()) { a->pane->set_mode(FolderView::Icons); remember(a, true); }
+void NirvanaDesktopCanvas::view_icons() {
+  if (NirvanaDrawerWindow *a = active_folder()) { a->pane->set_mode(FolderView::Icons); remember(a, true); }
 }
 
-void Desktop::view_list() {
-  if (NWin *a = active_folder()) { a->pane->set_mode(FolderView::List); remember(a, true); }
+void NirvanaDesktopCanvas::view_list() {
+  if (NirvanaDrawerWindow *a = active_folder()) { a->pane->set_mode(FolderView::List); remember(a, true); }
 }
 
-std::string Desktop::rename_path(const std::string &old, const std::string &name) {
+std::string NirvanaDesktopCanvas::rename_path(const std::string &old, const std::string &name) {
   if (name.find('/') != std::string::npos) return _("A name cannot contain “/”.");
   if (name == "." || name == "..") return _("That name is reserved.");
   fs::path to = fs::path(old).parent_path() / name;
@@ -3556,14 +3374,14 @@ std::string Desktop::rename_path(const std::string &old, const std::string &name
   if (ec) return _("Could not rename:") + std::string("\n") + ec.message();
   path_moved(old, to.string());
   refresh_all();
-  if (NWin *w = find(fs::path(old).parent_path().string())) w->pane->view()->select_path(to.string());
+  if (NirvanaDrawerWindow *w = find(fs::path(old).parent_path().string())) w->pane->view()->select_path(to.string());
   return "";
 }
 
 // A folder (or file) moved: fix the open windows and the position memory.
 // to == "" means deletion (Trash) - windows of this folder and its subfolders are closed.
-void Desktop::path_moved(const std::string &from, const std::string &to) {
-  std::vector<NWin *> to_close;
+void NirvanaDesktopCanvas::path_moved(const std::string &from, const std::string &to) {
+  std::vector<NirvanaDrawerWindow *> to_close;
   for (auto *w : wins_) {
     if (!w->pane) continue;
     bool same = w->path == from, inside = w->path.rfind(from + "/", 0) == 0;
@@ -3579,11 +3397,11 @@ void Desktop::path_moved(const std::string &from, const std::string &to) {
   for (auto *w : to_close) close(w);
   // the dock follows the moved file (e.g. an AppImage installed to Applications/Games)
   bool dock_changed = false;
-  for (auto &p : dock_) {
+  for (auto &p : dock_.items) {
     if (p != from && p.rfind(from + "/", 0) != 0) continue;
     if (!to.empty()) { p = to + p.substr(from.size()); dock_changed = true; }
   }
-  if (dock_changed) { save_dock(); layout_icons(); redraw(); }
+  if (dock_changed) { dock_.save(); layout_icons(); redraw(); }
 }
 
 // ---------------------------------------------------------------------------
@@ -3599,7 +3417,7 @@ static std::string copy_name(const fs::path &dir, const std::string &name) {
   return n;
 }
 
-void Desktop::transfer(const std::vector<Entry> &items, const std::string &dest, bool copy, bool replace) {
+void NirvanaDesktopCanvas::transfer(const std::vector<Entry> &items, const std::string &dest, bool copy, bool replace) {
   if (!allowed(dest)) {
     dialog(GURU_TITLE, _("The destination folder is outside Nirvana HD."), {{"OK", nullptr}});
     return;
@@ -3734,7 +3552,7 @@ static bool is_under(Window top, Window w) {
 
 // The pointer over a window of another program - not a folder window, the desktop, the dock or
 // a menu of Rambler (every window of this program is "ours")
-bool Desktop::pointer_over_foreign() const {
+bool NirvanaDesktopCanvas::pointer_over_foreign() const {
   Window rootret, child = 0;
   int rx, ry, wx, wy;
   unsigned mask;
@@ -3747,9 +3565,9 @@ bool Desktop::pointer_over_foreign() const {
 
 // Files dragged out of Rambler into another program (a file manager, a browser, an editor):
 // our drag ends, the standard one (XDND, text/uri-list) carries the files on
-void Desktop::drag_out() {
+void NirvanaDesktopCanvas::drag_out() {
   std::vector<Entry> items = drag_.items;
-  NWin *src = drag_.src;
+  NirvanaDrawerWindow *src = drag_.src;
   FolderPane *src_pane = drag_.src_pane;
   clear_drop_highlight();
   if (drag_.ghost) { drag_.ghost->hide(); Fl::delete_widget(drag_.ghost); drag_.ghost = nullptr; }
@@ -3769,7 +3587,7 @@ void Desktop::drag_out() {
   Fl::dnd();                                       // until the button is let go
 }
 
-Desktop::DropTarget Desktop::target_at(int xr, int yr) {
+NirvanaDesktopCanvas::DropTarget NirvanaDesktopCanvas::target_at(int xr, int yr) {
   DropTarget t;
   Window rootret, child = 0;
   int rx, ry, wx, wy;
@@ -3796,7 +3614,7 @@ Desktop::DropTarget Desktop::target_at(int xr, int yr) {
   return t;
 }
 
-void Desktop::clear_drop_highlight() {
+void NirvanaDesktopCanvas::clear_drop_highlight() {
   ex_tree_mark(nullptr, "");
   if (drag_.hl_win && known(drag_.hl_win) && drag_.hl_pane) drag_.hl_pane->view()->set_drop_target(-2);
   drag_.hl_win = nullptr;
@@ -3804,7 +3622,7 @@ void Desktop::clear_drop_highlight() {
   if (icon_drop_ >= 0) { icon_drop_ = -1; redraw(); }
 }
 
-void Desktop::drag_start(NWin *src, const std::vector<Entry> &items) {
+void NirvanaDesktopCanvas::drag_start(NirvanaDrawerWindow *src, const std::vector<Entry> &items) {
   if (items.empty()) return;
   drag_.active = true;
   drag_.src = src;
@@ -3817,7 +3635,7 @@ void Desktop::drag_start(NWin *src, const std::vector<Entry> &items) {
   drag_.ghost->show();
 }
 
-void Desktop::drag_move(int xr, int yr) {
+void NirvanaDesktopCanvas::drag_move(int xr, int yr) {
   if (!drag_.active) return;
   // the ghost is offset from the cursor, so it does not cover the target under the cursor
   drag_.ghost->position(xr + 8, yr + 8);
@@ -3836,7 +3654,7 @@ void Desktop::drag_move(int xr, int yr) {
   }
 }
 
-void Desktop::drag_end(int xr, int yr, bool copy) {
+void NirvanaDesktopCanvas::drag_end(int xr, int yr, bool copy) {
   if (!drag_.active) return;
   DropTarget t = target_at(xr, yr);
   clear_drop_highlight();
@@ -3846,7 +3664,7 @@ void Desktop::drag_end(int xr, int yr, bool copy) {
   drag_.ghost = nullptr;
   drag_.active = false;
   std::vector<Entry> items = drag_.items;
-  NWin *src = drag_.src;
+  NirvanaDrawerWindow *src = drag_.src;
 
   std::string dest;
   bool same_pane = t.pane && t.pane == drag_.src_pane;
@@ -3938,15 +3756,15 @@ static std::string uri_encode(const std::string &path) {
   return r;
 }
 
-void Desktop::duplicate() {
-  NWin *a = active_folder();
+void NirvanaDesktopCanvas::duplicate() {
+  NirvanaDrawerWindow *a = active_folder();
   if (!a) return;
   auto items = a->pane->view()->selection();
   if (!items.empty()) transfer(items, a->path, true, false);   // in the same folder -> "copy"
 }
 
-void Desktop::copy_selected() {
-  NWin *a = active_folder();
+void NirvanaDesktopCanvas::copy_selected() {
+  NirvanaDrawerWindow *a = active_folder();
   if (!a) return;
   auto items = a->pane->view()->selection();
   if (items.empty()) return;
@@ -3960,7 +3778,7 @@ void Desktop::copy_selected() {
   Fl::copy(uris.c_str(), (int)uris.size(), 1, Fl::clipboard_plain_text);
 }
 
-void Desktop::paste() {
+void NirvanaDesktopCanvas::paste() {
   std::string dest = active_folder() ? active_folder()->path : home_;
   std::vector<Entry> items;
   std::error_code ec;
@@ -3982,14 +3800,14 @@ static std::string uri_decode(const std::string &s) {
 }
 
 // A program a file can be dropped on: an AppImage or an executable regular file
-bool Desktop::is_program(const std::string &path) const {
+bool NirvanaDesktopCanvas::is_program(const std::string &path) const {
   if (path.empty()) return false;
   struct stat st;
   if (stat(path.c_str(), &st) != 0 || !S_ISREG(st.st_mode)) return false;
   return is_appimage(fs::path(path).filename().string()) || (st.st_mode & S_IXUSR);
 }
 
-void Desktop::drop_uris(const std::string &list, const std::string &dest) {
+void NirvanaDesktopCanvas::drop_uris(const std::string &list, const std::string &dest) {
   std::vector<Entry> items;
   std::error_code ec;
   size_t pos = 0;
@@ -4032,7 +3850,7 @@ void Desktop::drop_uris(const std::string &list, const std::string &dest) {
 // ---------------------------------------------------------------------------
 // Changes: new/removed devices (/dev), mounts (/proc/self/mounts)
 // and every few seconds (an inserted disc creates no new device).
-void Desktop::watch_volumes() {
+void NirvanaDesktopCanvas::watch_volumes() {
   vols_ = vol::scan();
   g_disk_names.clear();
   for (auto &v : vols_)
@@ -4057,14 +3875,14 @@ void Desktop::watch_volumes() {
   Fl::add_timeout(4.0, poll_volumes, this);
 }
 
-void Desktop::poll_volumes(void *d) {
-  ((Desktop *)d)->rescan_volumes();
+void NirvanaDesktopCanvas::poll_volumes(void *d) {
+  ((NirvanaDesktopCanvas *)d)->rescan_volumes();
   Fl::repeat_timeout(4.0, poll_volumes, d);
 }
 
-void Desktop::rescan_later(void *d) { ((Desktop *)d)->rescan_volumes(); }
+void NirvanaDesktopCanvas::rescan_later(void *d) { ((NirvanaDesktopCanvas *)d)->rescan_volumes(); }
 
-void Desktop::rescan_volumes() {
+void NirvanaDesktopCanvas::rescan_volumes() {
   auto now = vol::scan();
   auto sig = [](const std::vector<vol::Volume> &v) {
     std::string s;
@@ -4091,7 +3909,7 @@ void Desktop::rescan_volumes() {
   ex_refresh_trees();   // the explorer windows' trees show the disks too
 }
 
-void Desktop::open_volume(int vi) {
+void NirvanaDesktopCanvas::open_volume(int vi) {
   if (vi < 0 || vi >= (int)vols_.size()) return;
   vol::Volume v = vols_[vi];
   if (v.encrypted && !v.unlocked) { ask_password(v, ""); return; }
@@ -4109,13 +3927,13 @@ void Desktop::open_volume(int vi) {
 
 // Password for a LUKS disk: a separate dialog with a hidden field (Fl_Secret_Input).
 // A general window with a password field (encrypted disk, Wi-Fi network).
-void Desktop::ask_secret(const std::string &title, Icon icon, const std::string &text,
+void NirvanaDesktopCanvas::ask_secret(const std::string &title, Icon icon, const std::string &text,
                          const std::string &msg, const char *ok_label,
                          std::function<void(std::string &)> on_ok) {
   int ox = csd_mode ? FRAME : 0, oy = csd_mode ? TITLE_H : 0;
   int W = 380, H = msg.empty() ? 150 : 170;
   int X = (w() - W) / 2 + x_root(), Y = (h() - H) / 3 + y_root();
-  auto *win = new NWin(this, X - ox, Y - oy, W + 2 * ox, H + oy + ox, "", true);
+  auto *win = new NirvanaDrawerWindow(this, X - ox, Y - oy, W + 2 * ox, H + oy + ox, "", true);
   win->copy_label(title.c_str());
   win->color(GRAY);
   struct Pic : Fl_Widget {
@@ -4177,7 +3995,7 @@ void Desktop::ask_secret(const std::string &title, Icon icon, const std::string 
   pass->take_focus();
 }
 
-void Desktop::ask_password(const vol::Volume &v, const std::string &msg) {
+void NirvanaDesktopCanvas::ask_password(const vol::Volume &v, const std::string &msg) {
   std::string uuid = v.uuid;
   ask_secret(_("Encrypted Disk"), Icon::Encrypted,
              plat::fmt(_("The disk “%1” is encrypted.\nEnter the password to open it."), v.name), msg, _("Open"),
@@ -4201,7 +4019,7 @@ void Desktop::ask_password(const vol::Volume &v, const std::string &msg) {
   });
 }
 
-void Desktop::eject_volume(int vi) {
+void NirvanaDesktopCanvas::eject_volume(int vi) {
   if (vi < 0 || vi >= (int)vols_.size()) return;
   vol::Volume v = vols_[vi];
   // first close the windows with the disk's content
@@ -4214,12 +4032,12 @@ void Desktop::eject_volume(int vi) {
   if (!err.empty()) dialog(GURU_TITLE, err, {{"OK", nullptr}});
 }
 
-void Desktop::eject_selected() {
+void NirvanaDesktopCanvas::eject_selected() {
   if (icon_sel_ >= 0 && icon_sel_ < (int)icons_.size() && icons_[icon_sel_].vol >= 0) {
     eject_volume(icons_[icon_sel_].vol);
     return;
   }
-  if (NWin *a = active_folder()) {   // the active window with the disk's content
+  if (NirvanaDrawerWindow *a = active_folder()) {   // the active window with the disk's content
     int vi = volume_at_path(a->path);
     if (vi >= 0) eject_volume(vi);
   }

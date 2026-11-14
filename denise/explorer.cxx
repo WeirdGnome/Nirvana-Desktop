@@ -101,7 +101,7 @@ struct Explorer {
 };
 
 // the destination pane's folder ("" when the window has one pane)
-std::string ex_other_path(NWin *w) {
+std::string ex_other_path(NirvanaDrawerWindow *w) {
   if (!w || !w->ex || !w->ex->dual) return "";
   return w->ex->panes[1 - w->ex->active]->path();
 }
@@ -110,8 +110,8 @@ static void status_tick(void *d);
 // The window is going away: its timer stops first (it ran with the window as its data -
 // after the window was freed it crashed Rambler, and the session started it again: the
 // desktop "reset" when a folder window was closed)
-void destroy_explorer(Explorer *x, NWin *w);
-void destroy_explorer(Explorer *x, NWin *w) {
+void destroy_explorer(Explorer *x, NirvanaDrawerWindow *w);
+void destroy_explorer(Explorer *x, NirvanaDrawerWindow *w) {
   Fl::remove_timeout(status_tick, w);
   delete x;
 }
@@ -321,11 +321,11 @@ struct TreeRoot { std::string label, path; Icon icon; };   // path "mount:sdb1":
 
 class ExTree : public Fl_Tree {
 public:
-  Desktop *desk;
-  NWin *win;
+  NirvanaDesktopCanvas *desk;
+  NirvanaDrawerWindow *win;
   std::deque<std::string> paths;   // user data of the items (stable addresses)
   bool quiet = false;              // selecting from the program: no navigation
-  ExTree(int X, int Y, int W, int H, Desktop *d, NWin *w) : Fl_Tree(X, Y, W, H), desk(d), win(w) {
+  ExTree(int X, int Y, int W, int H, NirvanaDesktopCanvas *d, NirvanaDrawerWindow *w) : Fl_Tree(X, Y, W, H), desk(d), win(w) {
     showroot(0);
     selectmode(FL_TREE_SELECT_SINGLE);
     connectorstyle(FL_TREE_CONNECTOR_DOTTED);
@@ -388,9 +388,9 @@ public:
       std::string p = path_of(it);
       if (p.rfind("mount:", 0) == 0) {   // a disk that is not mounted: mount it, then show it
         std::string kname = p.substr(6);
-        NWin *w = win;
-        Desktop *d = desk;
-        Desktop::later([d, w, kname] { d->ex_open_volume(w, kname); });
+        NirvanaDrawerWindow *w = win;
+        NirvanaDesktopCanvas *d = desk;
+        NirvanaDesktopCanvas::later([d, w, kname] { d->ex_open_volume(w, kname); });
       } else if (!p.empty()) {
         desk->navigate(win, p);
       }
@@ -439,15 +439,15 @@ public:
       const Fl_Menu_Item *m = items->popup(Fl::event_x(), Fl::event_y());
       if (!m) return 1;
       long what = (long)m->user_data();
-      Desktop *d = desk;
-      NWin *nw = win;
+      NirvanaDesktopCanvas *d = desk;
+      NirvanaDrawerWindow *nw = win;
       if (what == 1) {
-        if (p.rfind("mount:", 0) == 0) Desktop::later([d, nw, p] { d->ex_open_volume(nw, p.substr(6)); });
+        if (p.rfind("mount:", 0) == 0) NirvanaDesktopCanvas::later([d, nw, p] { d->ex_open_volume(nw, p.substr(6)); });
         else d->navigate(nw, p);
       } else if (what == 2) {
         rambler_spawn({rambler_exe("nirvana-shell"), "--working-directory", p});
       } else if (what == 3) {
-        Desktop::later([d] { d->empty_trash(); });
+        NirvanaDesktopCanvas::later([d] { d->empty_trash(); });
       }
       return 1;
     }
@@ -500,7 +500,7 @@ public:
 // ---------------------------------------------------------------------------
 // a path for people: "~/..." for the home folder, "x.zip/..." inside an archive
 std::string server_url(const std::string &path);
-static std::string short_path(Desktop *d, const std::string &p) {
+static std::string short_path(NirvanaDesktopCanvas *d, const std::string &p) {
   std::string arch, inner, s = p;
   if (d->is_archive_cache(p, &arch, &inner)) s = arch + inner;
   std::string url = server_url(s);
@@ -510,10 +510,10 @@ static std::string short_path(Desktop *d, const std::string &p) {
 
 class ExSlot : public Fl_Group {
 public:
-  Desktop *desk;
-  NWin *win;
+  NirvanaDesktopCanvas *desk;
+  NirvanaDrawerWindow *win;
   int idx;
-  ExSlot(int X, int Y, int W, int H, Desktop *d, NWin *w, int i) : Fl_Group(X, Y, W, H), desk(d), win(w), idx(i) {}
+  ExSlot(int X, int Y, int W, int H, NirvanaDesktopCanvas *d, NirvanaDrawerWindow *w, int i) : Fl_Group(X, Y, W, H), desk(d), win(w), idx(i) {}
   bool header() const { return win->ex && win->ex->dual; }
   void draw() override {
     if (header()) {
@@ -551,7 +551,7 @@ struct SlowMeta {
 
 class ExInfo : public Fl_Widget {
 public:
-  NWin *win;
+  NirvanaDrawerWindow *win;
   std::string key, name, kind, size, date, path;
   int count = 0;
   meta::Fields fields;
@@ -559,7 +559,7 @@ public:
   bool slow_added = false;
   Fl_Image *thumb = nullptr;
   Entry entry;
-  ExInfo(int X, int Y, int W, int H, NWin *w) : Fl_Widget(X, Y, W, H), win(w) {}
+  ExInfo(int X, int Y, int W, int H, NirvanaDrawerWindow *w) : Fl_Widget(X, Y, W, H), win(w) {}
   ~ExInfo() override { delete thumb; }
   void set(const std::vector<Entry> &sel, const std::string &folder, int items, uintmax_t total) {
     delete thumb;
@@ -660,8 +660,8 @@ public:
 
 class ExStatus : public Fl_Widget {
 public:
-  NWin *win;
-  ExStatus(int X, int Y, int W, int H, NWin *w) : Fl_Widget(X, Y, W, H), win(w) {}
+  NirvanaDrawerWindow *win;
+  ExStatus(int X, int Y, int W, int H, NirvanaDrawerWindow *w) : Fl_Widget(X, Y, W, H), win(w) {}
   std::string text_left, text_right;
   void draw() override {
     fl_draw_box(FL_FLAT_BOX, x(), y(), w(), h(), GRAY);
@@ -679,10 +679,10 @@ public:
 
 class ExSplitter : public Fl_Widget {   // between the tree and the files
 public:
-  Desktop *desk;
-  NWin *win;
+  NirvanaDesktopCanvas *desk;
+  NirvanaDrawerWindow *win;
   int start_x = 0, start_w = 0;
-  ExSplitter(int X, int Y, int W, int H, Desktop *d, NWin *w) : Fl_Widget(X, Y, W, H), desk(d), win(w) {}
+  ExSplitter(int X, int Y, int W, int H, NirvanaDesktopCanvas *d, NirvanaDrawerWindow *w) : Fl_Widget(X, Y, W, H), desk(d), win(w) {}
   void draw() override { fl_color(GRAY); fl_rectf(x(), y(), w(), h()); }
   int handle(int e) override {
     switch (e) {
@@ -703,15 +703,15 @@ public:
 
 static void status_tick(void *d);
 static bool archive_mounted(const std::string &path);
-class Desktop;
-static void ex_restore_state(Desktop *d, NWin *w, const std::string &path);
+class NirvanaDesktopCanvas;
+static void ex_restore_state(NirvanaDesktopCanvas *d, NirvanaDrawerWindow *w, const std::string &path);
 
 // ---------------------------------------------------------------------------
 // Building the window
 // ---------------------------------------------------------------------------
-std::vector<TreeRoot> ex_tree_roots(Desktop *d);
+std::vector<TreeRoot> ex_tree_roots(NirvanaDesktopCanvas *d);
 
-void Desktop::build_explorer(NWin *win, int ox, int oy, int W, int H, const std::string &path) {
+void NirvanaDesktopCanvas::build_explorer(NirvanaDrawerWindow *win, int ox, int oy, int W, int H, const std::string &path) {
   auto *x = new Explorer;
   win->ex = x;
   win->begin();
@@ -729,73 +729,73 @@ void Desktop::build_explorer(NWin *win, int ox, int oy, int W, int H, const std:
   make_folder_menubar(win, ox, oy, W);
 
   // the button bar
-  x->toolbar = new ExBar(ox, oy + NWin::MB_H, W, TOOL_H);
-  int bx = ox + 4, by = oy + NWin::MB_H + 1, bh = TOOL_H - 2;
-  auto button = [&](ExIcon k, const char *l, int bw, std::function<void(NWin *)> f) {
+  x->toolbar = new ExBar(ox, oy + NirvanaDrawerWindow::MB_H, W, TOOL_H);
+  int bx = ox + 4, by = oy + NirvanaDrawerWindow::MB_H + 1, bh = TOOL_H - 2;
+  auto button = [&](ExIcon k, const char *l, int bw, std::function<void(NirvanaDrawerWindow *)> f) {
     fl_font(FONT_SMALL, SIZE_SMALL);   // wide enough for its label (Polish ones are longer)
     bw = std::max(bw, (int)fl_width(l) + 12);
     auto *b = new ExButton(bx, by, bw, bh, k, l);
     bx += bw + 1;
-    auto *fp = new std::function<void(NWin *)>(std::move(f));   // lives as long as Rambler (a few per window)
+    auto *fp = new std::function<void(NirvanaDrawerWindow *)>(std::move(f));   // lives as long as Rambler (a few per window)
     b->callback([](Fl_Widget *w, void *d) {
-      auto *nw = (NWin *)w->window();
+      auto *nw = (NirvanaDrawerWindow *)w->window();
       nw->desk->menu_target = nw;
-      (*(std::function<void(NWin *)> *)d)(nw);
+      (*(std::function<void(NirvanaDrawerWindow *)> *)d)(nw);
       nw->desk->menu_target = nullptr;
     }, fp);
     return b;
   };
   auto sep = [&] { new ExSep(bx + 2, by, bh); bx += 8; };
-  win->back_b = button(ExIcon::Back, _("Back"), 54, [this](NWin *) { go_back(); });
-  win->fwd_b = button(ExIcon::Forward, _("Forward"), 54, [this](NWin *) { go_forward(); });
-  win->up_b = button(ExIcon::Up, _("Up"), 46, [this](NWin *) { open_parent(); });
+  win->back_b = button(ExIcon::Back, _("Back"), 54, [this](NirvanaDrawerWindow *) { go_back(); });
+  win->fwd_b = button(ExIcon::Forward, _("Forward"), 54, [this](NirvanaDrawerWindow *) { go_forward(); });
+  win->up_b = button(ExIcon::Up, _("Up"), 46, [this](NirvanaDrawerWindow *) { open_parent(); });
   sep();
-  x->b_tree = button(ExIcon::Tree, _("Folders"), 54, [this](NWin *) { ex_toggle_tree(); });
-  x->b_dual = button(ExIcon::Dual, _("Two Panes"), 66, [this](NWin *) { ex_toggle_dual(); });
-  button(ExIcon::Swap, _("Swap"), 50, [this](NWin *) { ex_swap_panes(); });
+  x->b_tree = button(ExIcon::Tree, _("Folders"), 54, [this](NirvanaDrawerWindow *) { ex_toggle_tree(); });
+  x->b_dual = button(ExIcon::Dual, _("Two Panes"), 66, [this](NirvanaDrawerWindow *) { ex_toggle_dual(); });
+  button(ExIcon::Swap, _("Swap"), 50, [this](NirvanaDrawerWindow *) { ex_swap_panes(); });
   sep();
-  x->b_copy = button(ExIcon::CopyTo, _("Copy To"), 62, [this](NWin *) { ex_copy_to_other(); });
-  x->b_move = button(ExIcon::MoveTo, _("Move To"), 62, [this](NWin *) { ex_move_to_other(); });
-  button(ExIcon::Delete, _("Delete"), 50, [this](NWin *) { move_to_trash(); });
+  x->b_copy = button(ExIcon::CopyTo, _("Copy To"), 62, [this](NirvanaDrawerWindow *) { ex_copy_to_other(); });
+  x->b_move = button(ExIcon::MoveTo, _("Move To"), 62, [this](NirvanaDrawerWindow *) { ex_move_to_other(); });
+  button(ExIcon::Delete, _("Delete"), 50, [this](NirvanaDrawerWindow *) { move_to_trash(); });
   sep();
-  button(ExIcon::Views, _("Views"), 50, [this](NWin *nw) {
+  button(ExIcon::Views, _("Views"), 50, [this](NirvanaDrawerWindow *nw) {
     if (nw->pane->view()->mode() == FolderView::List) view_icons(); else view_list();
   });
-  button(ExIcon::Server, _("Server"), 54, [this](NWin *) { connect_server(); });
+  button(ExIcon::Server, _("Server"), 54, [this](NirvanaDrawerWindow *) { connect_server(); });
   sep();
-  button(ExIcon::Search, _("Search"), 50, [this](NWin *) { open_search(); });
-  x->b_info = button(ExIcon::Info, _("Information"), 70, [this](NWin *) { ex_toggle_info(); });
+  button(ExIcon::Search, _("Search"), 50, [this](NirvanaDrawerWindow *) { open_search(); });
+  x->b_info = button(ExIcon::Info, _("Information"), 70, [this](NirvanaDrawerWindow *) { ex_toggle_info(); });
   x->tools_end = bx - ox;
-  x->logo = new ExLogo(ox + W - LOGO_W, oy + NWin::MB_H, LOGO_W, TOOL_H);
+  x->logo = new ExLogo(ox + W - LOGO_W, oy + NirvanaDrawerWindow::MB_H, LOGO_W, TOOL_H);
   x->toolbar->end();
   x->toolbar->resizable(nullptr);
 
   // the address bar
-  x->addr = new ExBar(ox, oy + NWin::MB_H + TOOL_H, W, ADDR_H);
-  x->addr_label = new Fl_Box(ox + 4, oy + NWin::MB_H + TOOL_H + 3, 52, ADDR_H - 6, _("Address"));
+  x->addr = new ExBar(ox, oy + NirvanaDrawerWindow::MB_H + TOOL_H, W, ADDR_H);
+  x->addr_label = new Fl_Box(ox + 4, oy + NirvanaDrawerWindow::MB_H + TOOL_H + 3, 52, ADDR_H - 6, _("Address"));
   x->addr_label->labelsize(SIZE_SMALL + 1);
   x->addr_label->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
-  auto *in = new Fl_Input(ox + 58, oy + NWin::MB_H + TOOL_H + 3, W - 58 - 74, ADDR_H - 6);
+  auto *in = new Fl_Input(ox + 58, oy + NirvanaDrawerWindow::MB_H + TOOL_H + 3, W - 58 - 74, ADDR_H - 6);
   in->box(WELL_BOX);
   in->textfont(FONT_SYSTEM);
   in->textsize(SIZE_SMALL + 1);
   in->when(FL_WHEN_ENTER_KEY_ALWAYS);
-  in->callback([](Fl_Widget *w, void *) { auto *nw = (NWin *)w->window(); nw->desk->go_location(nw); });
+  in->callback([](Fl_Widget *w, void *) { auto *nw = (NirvanaDrawerWindow *)w->window(); nw->desk->go_location(nw); });
   win->loc = in;
-  x->go = new Fl_Button(ox + W - 70, oy + NWin::MB_H + TOOL_H + 3, 66, ADDR_H - 6, _("Go"));
+  x->go = new Fl_Button(ox + W - 70, oy + NirvanaDrawerWindow::MB_H + TOOL_H + 3, 66, ADDR_H - 6, _("Go"));
   x->go->box(BUTTON_BOX);
   x->go->labelsize(SIZE_SMALL + 1);
-  x->go->callback([](Fl_Widget *w, void *) { auto *nw = (NWin *)w->window(); nw->desk->go_location(nw); });
-  x->filter_label = new Fl_Box(ox + W - 260, oy + NWin::MB_H + TOOL_H + 3, 44, ADDR_H - 6, _("Filter"));
+  x->go->callback([](Fl_Widget *w, void *) { auto *nw = (NirvanaDrawerWindow *)w->window(); nw->desk->go_location(nw); });
+  x->filter_label = new Fl_Box(ox + W - 260, oy + NirvanaDrawerWindow::MB_H + TOOL_H + 3, 44, ADDR_H - 6, _("Filter"));
   x->filter_label->labelsize(SIZE_SMALL + 1);
   x->filter_label->align(FL_ALIGN_RIGHT | FL_ALIGN_INSIDE);
-  x->filter = new Fl_Input(ox + W - 212, oy + NWin::MB_H + TOOL_H + 3, 140, ADDR_H - 6);
+  x->filter = new Fl_Input(ox + W - 212, oy + NirvanaDrawerWindow::MB_H + TOOL_H + 3, 140, ADDR_H - 6);
   x->filter->box(WELL_BOX);
   x->filter->textsize(SIZE_SMALL + 1);
   x->filter->tooltip(_("Show only matching files: a part of the name, *.jpg, or a kind - kind:picture, kind:sound, kind:film, kind:archive, kind:document, kind:text, kind:program"));
   x->filter->when(FL_WHEN_CHANGED);
   x->filter->callback([](Fl_Widget *w, void *) {
-    auto *nw = (NWin *)w->window();
+    auto *nw = (NirvanaDrawerWindow *)w->window();
     nw->desk->ex_set_filter(nw, ((Fl_Input *)w)->value());
   });
   x->addr->end();
@@ -819,25 +819,25 @@ void Desktop::build_explorer(NWin *win, int ox, int oy, int W, int H, const std:
   Fl::add_timeout(0.3, status_tick, win);
 }
 
-void Desktop::ex_layout(NWin *w) {
+void NirvanaDesktopCanvas::ex_layout(NirvanaDrawerWindow *w) {
   Explorer *x = w->ex;
   if (!x || !x->toolbar) return;
   int ox = w->ox(), oy = w->oy();
   int W = w->w() - w->extra_w(), H = w->h() - w->extra_h();
-  if (w->menubar) w->menubar->resize(ox, oy, W, NWin::MB_H);
-  x->toolbar->resize(ox, oy + NWin::MB_H, W, TOOL_H);
+  if (w->menubar) w->menubar->resize(ox, oy, W, NirvanaDrawerWindow::MB_H);
+  x->toolbar->resize(ox, oy + NirvanaDrawerWindow::MB_H, W, TOOL_H);
   if (x->logo) {   // at the right end - hidden when the window is too narrow for it
-    x->logo->resize(ox + W - LOGO_W, oy + NWin::MB_H, LOGO_W, TOOL_H);
+    x->logo->resize(ox + W - LOGO_W, oy + NirvanaDrawerWindow::MB_H, LOGO_W, TOOL_H);
     if (W - LOGO_W >= x->tools_end + 4) x->logo->show(); else x->logo->hide();
   }
-  x->addr->resize(ox, oy + NWin::MB_H + TOOL_H, W, ADDR_H);
-  x->addr_label->resize(ox + 4, oy + NWin::MB_H + TOOL_H + 3, 52, ADDR_H - 6);
-  int fy = oy + NWin::MB_H + TOOL_H + 3;
+  x->addr->resize(ox, oy + NirvanaDrawerWindow::MB_H + TOOL_H, W, ADDR_H);
+  x->addr_label->resize(ox + 4, oy + NirvanaDrawerWindow::MB_H + TOOL_H + 3, 52, ADDR_H - 6);
+  int fy = oy + NirvanaDrawerWindow::MB_H + TOOL_H + 3;
   x->filter->resize(ox + W - 150, fy, 146, ADDR_H - 6);
   x->filter_label->resize(ox + W - 198, fy, 44, ADDR_H - 6);
   x->go->resize(ox + W - 268, fy, 66, ADDR_H - 6);
   w->loc->resize(ox + 58, fy, std::max(40, W - 58 - 274), ADDR_H - 6);
-  int top = oy + NWin::MB_H + TOOL_H + ADDR_H + 2;
+  int top = oy + NirvanaDrawerWindow::MB_H + TOOL_H + ADDR_H + 2;
   int bodyh = std::max(40, H - (top - oy) - STATUS_H);
   int px = ox;
   if (x->tree_on || x->info_on) {   // the left column: the tree, the information panel, or both
@@ -882,7 +882,7 @@ void Desktop::ex_layout(NWin *w) {
   w->redraw();
 }
 
-FolderPane *Desktop::ex_pane_at(NWin *w, int lx, int ly) {
+FolderPane *NirvanaDesktopCanvas::ex_pane_at(NirvanaDrawerWindow *w, int lx, int ly) {
   Explorer *x = w->ex;
   if (!x) return nullptr;
   for (int i = 0; i < 2; i++) {
@@ -892,7 +892,7 @@ FolderPane *Desktop::ex_pane_at(NWin *w, int lx, int ly) {
   return nullptr;
 }
 
-void Desktop::ex_activate(NWin *w, int idx) {
+void NirvanaDesktopCanvas::ex_activate(NirvanaDrawerWindow *w, int idx) {
   Explorer *x = w->ex;
   if (!x || idx < 0 || idx > 1 || (idx == 1 && !x->dual)) return;
   if (x->active == idx && w->pane == x->panes[idx]) return;
@@ -909,7 +909,7 @@ void Desktop::ex_activate(NWin *w, int idx) {
   x->slots[1]->redraw();
 }
 
-void Desktop::ex_after_nav(NWin *w) {
+void NirvanaDesktopCanvas::ex_after_nav(NirvanaDrawerWindow *w) {
   Explorer *x = w->ex;
   if (!x) return;
   x->hist[x->active].path = w->path;
@@ -920,7 +920,7 @@ void Desktop::ex_after_nav(NWin *w) {
   later([this] { release_archives(); ex_save_state(); });
 }
 
-bool Desktop::ex_key(NWin *w) {
+bool NirvanaDesktopCanvas::ex_key(NirvanaDrawerWindow *w) {
   Explorer *x = w->ex;
   if (!x || Fl::focus() == w->loc) return false;
   int k = Fl::event_key();
@@ -938,16 +938,16 @@ bool Desktop::ex_key(NWin *w) {
   return done;
 }
 
-void Desktop::ex_toggle_tree() {
-  NWin *w = active_folder();
+void NirvanaDesktopCanvas::ex_toggle_tree() {
+  NirvanaDrawerWindow *w = active_folder();
   if (!w || !w->ex) return;
   w->ex->tree_on = !w->ex->tree_on;
   ex_layout(w);
   if (w->ex->tree_on) w->ex->tree->reveal(w->path);
 }
 
-void Desktop::ex_toggle_dual() {
-  NWin *w = active_folder();
+void NirvanaDesktopCanvas::ex_toggle_dual() {
+  NirvanaDrawerWindow *w = active_folder();
   if (!w || !w->ex) return;
   Explorer *x = w->ex;
   if (x->dual && x->active == 1) ex_activate(w, 0);
@@ -956,23 +956,23 @@ void Desktop::ex_toggle_dual() {
   ex_layout(w);
 }
 
-void Desktop::ex_swap_panes() {   // the other pane becomes the source
-  NWin *w = active_folder();
+void NirvanaDesktopCanvas::ex_swap_panes() {   // the other pane becomes the source
+  NirvanaDrawerWindow *w = active_folder();
   if (!w || !w->ex) return;
   if (!w->ex->dual) { ex_toggle_dual(); return; }
   ex_activate(w, 1 - w->ex->active);
   w->pane->view()->take_focus();
 }
 
-void Desktop::ex_copy_to_other() {
-  NWin *w = active_folder();
+void NirvanaDesktopCanvas::ex_copy_to_other() {
+  NirvanaDrawerWindow *w = active_folder();
   if (!w || !w->ex || !w->ex->dual) return;
   auto sel = w->pane->view()->selection();
   if (sel.empty()) return;
   transfer(sel, w->ex->panes[1 - w->ex->active]->path(), true, false);
 }
-void Desktop::ex_move_to_other() {
-  NWin *w = active_folder();
+void NirvanaDesktopCanvas::ex_move_to_other() {
+  NirvanaDrawerWindow *w = active_folder();
   if (!w || !w->ex || !w->ex->dual) return;
   auto sel = w->pane->view()->selection();
   if (sel.empty()) return;
@@ -981,7 +981,7 @@ void Desktop::ex_move_to_other() {
 
 // the status bar: the items and the selection of the source; source -> destination
 static void status_tick(void *d) {
-  auto *w = (NWin *)d;
+  auto *w = (NirvanaDrawerWindow *)d;
   Explorer *x = w->ex;
   if (!x || !x->status) return;
   FolderView *v = w->pane->view();
@@ -1023,7 +1023,7 @@ static std::string cache_root() {
   return (x && *x ? std::string(x) : std::string(h ? h : "/tmp") + "/.cache") + "/nirvana/archives";
 }
 
-bool Desktop::is_archive_cache(const std::string &path, std::string *archive, std::string *inner) const {
+bool NirvanaDesktopCanvas::is_archive_cache(const std::string &path, std::string *archive, std::string *inner) const {
   static bool scanned = false;
   if (!scanned) {   // after a restart: the unpacked archives are known by their marker files
     scanned = true;
@@ -1052,7 +1052,7 @@ bool Desktop::is_archive_cache(const std::string &path, std::string *archive, st
   return false;
 }
 
-struct Unpack { Desktop *d; NWin *w; std::string dir, archive; pid_t pid; int fd; std::string err; };
+struct Unpack { NirvanaDesktopCanvas *d; NirvanaDrawerWindow *w; std::string dir, archive; pid_t pid; int fd; std::string err; };
 
 static bool have_prog(const char *p);
 
@@ -1086,7 +1086,7 @@ static bool archive_mounted(const std::string &path) {
   return false;
 }
 
-void Desktop::browse_archive(NWin *w, const std::string &archive) {
+void NirvanaDesktopCanvas::browse_archive(NirvanaDrawerWindow *w, const std::string &archive) {
   struct stat st;
   if (stat(archive.c_str(), &st) != 0) return;
   std::string name = fs::path(archive).filename().string();
@@ -1150,15 +1150,15 @@ void Desktop::browse_archive(NWin *w, const std::string &archive) {
 }
 
 // Icons > Pack: the selection into an archive next to it (zip, tar.gz, tar.xz, 7z by the name)
-void Desktop::pack_selected() {
-  NWin *w = active_folder();
+void NirvanaDesktopCanvas::pack_selected() {
+  NirvanaDrawerWindow *w = active_folder();
   if (!w) return;
   auto sel = w->pane->view()->selection();
   if (sel.empty()) return;
   std::string base = sel.size() == 1 ? sel[0].name : fs::path(w->path).filename().string();
   if (base.empty()) base = "archive";
   int W = 440, H = 170, ox, oy;
-  NWin *f = begin_form(_("Pack into an Archive"), W, H, nullptr,
+  NirvanaDrawerWindow *f = begin_form(_("Pack into an Archive"), W, H, nullptr,
                        fmt(_("Pack %1 items into the archive (the ending chooses the kind: .zip, .tar.gz, .tar.xz, .7z):"),
                            std::to_string(sel.size())), ox, oy);
   auto *in = new Fl_Input(ox + 64, oy + 62, W - 80, 24);
@@ -1227,7 +1227,7 @@ std::string server_url(const std::string &path) {
 }
 
 // The other way: an address typed in the location field -> the folder, if that server is connected
-std::string Desktop::server_path(const std::string &url) const {
+std::string NirvanaDesktopCanvas::server_path(const std::string &url) const {
   if (url.find("://") == std::string::npos) return "";
   std::string u = url;
   while (u.size() > 1 && u.back() == '/') u.pop_back();
@@ -1248,7 +1248,7 @@ std::string Desktop::server_path(const std::string &url) const {
   return "";
 }
 
-std::vector<std::pair<std::string, std::string>> Desktop::servers() const {
+std::vector<std::pair<std::string, std::string>> NirvanaDesktopCanvas::servers() const {
   std::vector<std::pair<std::string, std::string>> v;
   std::ifstream m("/proc/mounts");
   std::string dev, dir, type, rest;
@@ -1283,7 +1283,7 @@ std::vector<std::pair<std::string, std::string>> Desktop::servers() const {
   return v;
 }
 
-void Desktop::disconnect_server(const std::string &mp) {
+void NirvanaDesktopCanvas::disconnect_server(const std::string &mp) {
   pid_t pid = fork();
   if (pid == 0) {
     int dn = open("/dev/null", O_WRONLY);
@@ -1457,9 +1457,9 @@ static std::string mount_server(const ServerSpec &sp, const std::string &pw, std
   return "";
 }
 
-void Desktop::connect_server_to(const std::vector<std::string> &spec, const std::string &note) {
+void NirvanaDesktopCanvas::connect_server_to(const std::vector<std::string> &spec, const std::string &note) {
   int W = 500, H = 360, ox, oy;
-  NWin *f = begin_form(_("Connect to a Server"), W, H, nullptr,
+  NirvanaDrawerWindow *f = begin_form(_("Connect to a Server"), W, H, nullptr,
                        note.empty() ? _("The server's folders open like folders on this computer, and the server appears on the desktop like a disk.")
                                     : note.c_str(), ox, oy);
   auto row = [&](int y, const char *l) {
@@ -1533,12 +1533,12 @@ void Desktop::connect_server_to(const std::vector<std::string> &spec, const std:
     std::ofstream out(servers_file());
     for (auto &l : lines) out << l << "\n";
     servers_changed();
-    NWin *w = nullptr;
+    NirvanaDrawerWindow *w = nullptr;
     for (auto *o : wins_) if (o->pane && o->ex) w = o;
     if (w) {
       navigate(w, mp);
       Fl::add_timeout(1.0, [](void *d) {   // a slow server: look once more
-        auto *nw = (NWin *)d;
+        auto *nw = (NirvanaDrawerWindow *)d;
         if (nw->desk->is_known(nw) && nw->pane) nw->pane->refresh();
       }, w);
     } else {
@@ -1553,7 +1553,7 @@ void Desktop::connect_server_to(const std::vector<std::string> &spec, const std:
 // Archives written back: an archive no window shows any more is closed (unmounted) in the
 // background - archivemount writes the changes into the archive file then
 // ---------------------------------------------------------------------------
-void Desktop::release_archives() {
+void NirvanaDesktopCanvas::release_archives() {
   for (auto it = g_archive_mounts.begin(); it != g_archive_mounts.end();) {
     std::string mp = *it;
     bool shown = false;
@@ -1613,10 +1613,10 @@ void Desktop::release_archives() {
   }
 }
 
-void Desktop::show_jobs() { jobs::show_window(); }
+void NirvanaDesktopCanvas::show_jobs() { jobs::show_window(); }
 
-void Desktop::ex_toggle_info() {
-  NWin *w = active_folder();
+void NirvanaDesktopCanvas::ex_toggle_info() {
+  NirvanaDrawerWindow *w = active_folder();
   if (!w || !w->ex) return;
   w->ex->info_on = !w->ex->info_on;
   w->ex->status_key.clear();
@@ -1640,7 +1640,7 @@ static std::string kind_word(std::string w) {
   return w;
 }
 
-void Desktop::ex_set_filter(NWin *w, const std::string &f) {
+void NirvanaDesktopCanvas::ex_set_filter(NirvanaDrawerWindow *w, const std::string &f) {
   if (!w || !w->ex) return;
   Explorer *x = w->ex;
   x->filters[x->active] = f;
@@ -1779,8 +1779,8 @@ public:
 Peek *g_peek;
 }  // namespace
 
-void Desktop::preview_selected() {
-  NWin *w = active_folder();
+void NirvanaDesktopCanvas::preview_selected() {
+  NirvanaDrawerWindow *w = active_folder();
   if (!w || !w->pane) return;
   auto sel = w->pane->view()->selection();
   if (sel.empty() || sel[0].dir) return;
@@ -1817,7 +1817,7 @@ static std::vector<std::string> split_tabs(const std::string &s) {
   return v;
 }
 
-void Desktop::ex_save_state() {
+void NirvanaDesktopCanvas::ex_save_state() {
   std::ostringstream o;
   o << "# Nirvana Desktop - the explorer windows of the last session\n";
   for (auto *w : wins_) {
@@ -1850,7 +1850,7 @@ static std::vector<std::map<std::string, std::string>> g_saved;
 
 // The folders to open at the start in explorer mode: the source pane of every saved window
 // (the list of open folders of the spatial mode would open one window per pane ever shown)
-std::vector<std::string> Desktop::ex_saved_windows() const {
+std::vector<std::string> NirvanaDesktopCanvas::ex_saved_windows() const {
   std::vector<std::string> v;
   std::ifstream in(state_file());
   std::string l, p0, p1;
@@ -1870,7 +1870,7 @@ std::vector<std::string> Desktop::ex_saved_windows() const {
   return v;
 }
 
-static void ex_restore_state(Desktop *d, NWin *w, const std::string &path) {
+static void ex_restore_state(NirvanaDesktopCanvas *d, NirvanaDrawerWindow *w, const std::string &path) {
   static bool loaded = false;
   if (!loaded) {
     loaded = true;
@@ -1930,14 +1930,14 @@ static void ex_restore_state(Desktop *d, NWin *w, const std::string &path) {
 // ---------------------------------------------------------------------------
 // Servers like disks: on the desktop and in the trees; remembered ones connect at the start
 // ---------------------------------------------------------------------------
-void Desktop::servers_changed() {
+void NirvanaDesktopCanvas::servers_changed() {
   layout_icons();
   redraw();
   ex_refresh_trees();
 }
 
 // Files dragged over the explorer's tree: the folder (disk, Trash) under the point - "" outside
-std::string Desktop::ex_tree_target(NWin *w, int lx, int ly) {
+std::string NirvanaDesktopCanvas::ex_tree_target(NirvanaDrawerWindow *w, int lx, int ly) {
   if (!w || !w->ex || !w->ex->tree || !w->ex->tree_on || !w->ex->tree->visible()) return "";
   ExTree *t = w->ex->tree;
   if (lx < t->x() || ly < t->y() || lx >= t->x() + t->w() || ly >= t->y() + t->h()) return "";
@@ -1946,7 +1946,7 @@ std::string Desktop::ex_tree_target(NWin *w, int lx, int ly) {
   return p.rfind("mount:", 0) == 0 ? "" : p;   // a disk not mounted yet: open it first
 }
 // the frame around the target in the trees (path "" - no frame anywhere)
-void Desktop::ex_tree_mark(NWin *w, const std::string &path) {
+void NirvanaDesktopCanvas::ex_tree_mark(NirvanaDrawerWindow *w, const std::string &path) {
   for (auto *o : wins_) {
     if (!o->ex || !o->ex->tree) continue;
     ExTree *t = o->ex->tree;
@@ -1958,12 +1958,12 @@ void Desktop::ex_tree_mark(NWin *w, const std::string &path) {
   }
 }
 
-void Desktop::ex_trash_changed(bool full) {
+void NirvanaDesktopCanvas::ex_trash_changed(bool full) {
   for (auto *w : wins_)
     if (w->ex && w->ex->tree) w->ex->tree->set_trash(full);
 }
 
-void Desktop::ex_refresh_trees() {
+void NirvanaDesktopCanvas::ex_refresh_trees() {
   auto roots = ex_tree_roots(this);
   for (auto *w : wins_)
     if (w->ex && w->ex->tree) {
@@ -1974,7 +1974,7 @@ void Desktop::ex_refresh_trees() {
 
 // The disks for the trees: every volume - a mounted one by its folder, the others to be
 // mounted with a click - then the connected servers
-std::vector<TreeRoot> ex_tree_roots(Desktop *d) {
+std::vector<TreeRoot> ex_tree_roots(NirvanaDesktopCanvas *d) {
   std::vector<TreeRoot> v;
   for (auto &vo : d->volumes())
     v.push_back({vo.name, vo.mountpoint.empty() ? "mount:" + vo.kname : vo.mountpoint, vo.icon});
@@ -1983,7 +1983,7 @@ std::vector<TreeRoot> ex_tree_roots(Desktop *d) {
 }
 
 // A disk clicked in the tree: mounted (or unlocked first - the password window), then shown
-void Desktop::ex_open_volume(NWin *w, const std::string &kname) {
+void NirvanaDesktopCanvas::ex_open_volume(NirvanaDrawerWindow *w, const std::string &kname) {
   for (int i = 0; i < (int)vols_.size(); i++) {
     if (vols_[i].kname != kname) continue;
     vol::Volume v = vols_[i];
@@ -2005,7 +2005,7 @@ void Desktop::ex_open_volume(NWin *w, const std::string &kname) {
 
 
 
-void Desktop::reconnect_servers() {
+void NirvanaDesktopCanvas::reconnect_servers() {
   std::ifstream in(servers_file());
   std::string l;
   auto connected = servers();

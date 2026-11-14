@@ -150,8 +150,39 @@ static Client *g_active = nullptr;
 // only the windows of the shown screen have their frames on the display. EWMH:
 // _NET_NUMBER_OF_DESKTOPS, _NET_CURRENT_DESKTOP, _NET_WM_DESKTOP; Rambler's screen gadget,
 // Win+M / Win+1..9 and pulling the menu bar down switch them.
-static int g_screens = 4, g_screen = 0;
-static bool here(const Client *c) { return c->sticky || c->screen == g_screen; }
+//
+// NirvanaScreen         one virtual screen: its number, its name and the windows living on it
+// NirvanaScreenManager  the set of screens: which is shown, which windows have their frames on
+//                       the display, moving windows between screens, announcing it all (EWMH)
+struct NirvanaScreen {
+  int index = 0;
+  std::string name;                    // "Screen 2" (_NET_DESKTOP_NAMES)
+  std::vector<Client *> windows() const;
+};
+
+class NirvanaScreenManager {
+public:
+  int count() const { return (int)screens_.size(); }
+  int current() const { return current_; }
+  NirvanaScreen &screen(int i) { return screens_[std::clamp(i, 0, count() - 1)]; }
+  NirvanaScreen &shown() { return screens_[current_]; }
+  // a window is on the shown screen (or sticky - on all of them)
+  bool shows(const Client *c) const { return c->sticky || c->screen == current_; }
+  void restore();                      // at the start: the number from the settings, the screen shown before
+  void reread();                       // Preferences > Desktop changed the number
+  void show(int s);                    // shows a screen (wraps around)
+  void next(int step) { show(current_ + step); }
+  void assign(Client *c, int s);       // the window's screen (and its _NET_WM_DESKTOP)
+  void move(Client *c, int s);         // a window to another screen (it leaves the display)
+  void sync_frames();                  // the frames follow the shown screen
+  void publish();                      // _NET_NUMBER_OF_DESKTOPS, _NET_CURRENT_DESKTOP, names
+
+private:
+  void resize_to(int n);
+  std::vector<NirvanaScreen> screens_ = std::vector<NirvanaScreen>(4);
+  int current_ = 0;
+};
+static NirvanaScreenManager g_screens;
 
 // Preferences > Desktop: "Classic 16-bit" windows and outline dragging (desktop.conf)
 static bool g_classic = false, g_outline = false;
@@ -613,29 +644,49 @@ static void set_active_none() {
 static Client *most_recent_visible(Client *except) {
   Client *best = nullptr;
   for (auto &[w, c] : clients)
-    if (c != except && !c->hidden && here(c) && (!best || c->mru > best->mru)) best = c;
+    if (c != except && !c->hidden && g_screens.shows(c) && (!best || c->mru > best->mru)) best = c;
   return best;
 }
 
-static void publish_screens() {
-  long n = g_screens, cur = g_screen;
+void NirvanaScreenManager::publish() {
+  long n = count(), cur = current_;
   XChangeProperty(dpy, root, XInternAtom(dpy, "_NET_NUMBER_OF_DESKTOPS", False), XA_CARDINAL, 32, PropModeReplace,
                   (unsigned char *)&n, 1);
   XChangeProperty(dpy, root, XInternAtom(dpy, "_NET_CURRENT_DESKTOP", False), XA_CARDINAL, 32, PropModeReplace,
                   (unsigned char *)&cur, 1);
+  std::string names;
+  for (auto &sc : screens_) { names += sc.name; names += '\0'; }
+  XChangeProperty(dpy, root, XInternAtom(dpy, "_NET_DESKTOP_NAMES", False), XInternAtom(dpy, "UTF8_STRING", False), 8,
+                  PropModeReplace, (const unsigned char *)names.data(), (int)names.size());
 }
 
-static void set_client_screen(Client *c, int s) {
-  c->screen = std::clamp(s, 0, g_screens - 1);
+std::vector<Client *> NirvanaScreen::windows() const {
+  std::vector<Client *> v;
+  for (auto &[w, c] : clients) if (c->sticky || c->screen == index) v.push_back(c);
+  return v;
+}
+
+void NirvanaScreenManager::resize_to(int n) {
+  n = std::clamp(n, 1, 9);
+  screens_.resize(n);
+  for (int i = 0; i < n; i++) {
+    screens_[i].index = i;
+    screens_[i].name = std::string(_("Screen")) + " " + std::to_string(i + 1);
+  }
+  current_ = std::clamp(current_, 0, n - 1);
+}
+
+void NirvanaScreenManager::assign(Client *c, int s) {
+  c->screen = std::clamp(s, 0, count() - 1);
   long v = c->sticky ? 0xFFFFFFFFL : c->screen;
   XChangeProperty(dpy, c->win, XInternAtom(dpy, "_NET_WM_DESKTOP", False), XA_CARDINAL, 32, PropModeReplace,
                   (unsigned char *)&v, 1);
 }
 
 // The frames of the windows follow the shown screen (a hidden or iconified window stays down)
-static void sync_screen_frames() {
+void NirvanaScreenManager::sync_frames() {
   for (auto &[w, c] : clients) {
-    bool want = here(c);
+    bool want = shows(c);
     if (!want && !c->off) {
       c->off = true;
       if (!c->hidden) XUnmapWindow(dpy, fl_xid(c->frame));
@@ -647,13 +698,13 @@ static void sync_screen_frames() {
 }
 
 static void focus(Client *c, bool raise);
-static void switch_screen(int s) {
-  s = ((s % g_screens) + g_screens) % g_screens;
-  if (s == g_screen) return;
-  g_screen = s;
-  sync_screen_frames();
-  publish_screens();
-  if (g_active && !here(g_active)) g_active = nullptr;
+void NirvanaScreenManager::show(int s) {
+  s = ((s % count()) + count()) % count();
+  if (s == current_) return;
+  current_ = s;
+  sync_frames();
+  publish();
+  if (g_active && !shows(g_active)) g_active = nullptr;
   if (!g_active) {
     if (Client *n = most_recent_visible(nullptr)) focus(n, true);
     else set_active_none();
@@ -662,11 +713,11 @@ static void switch_screen(int s) {
 }
 
 // A window to another screen (Win+Shift+number, _NET_WM_DESKTOP from a program)
-static void move_to_screen(Client *c, int s) {
+void NirvanaScreenManager::move(Client *c, int s) {
   if (!c || c->sticky) return;
-  set_client_screen(c, s);
-  sync_screen_frames();
-  if (g_active == c && !here(c)) {
+  assign(c, s);
+  sync_frames();
+  if (g_active == c && !shows(c)) {
     g_active = nullptr;
     if (Client *n = most_recent_visible(c)) focus(n, true);
     else set_active_none();
@@ -674,14 +725,24 @@ static void move_to_screen(Client *c, int s) {
 }
 
 // Preferences > Desktop: how many screens (windows of a screen that is gone come to the last one)
-static void read_screens() {
+void NirvanaScreenManager::reread() {
   int n = std::clamp(read_desktop().screens, 1, 9);
-  if (n == g_screens) return;
-  g_screens = n;
-  for (auto &[w, c] : clients) if (c->screen >= n) set_client_screen(c, n - 1);
-  if (g_screen >= n) g_screen = n - 1;
-  sync_screen_frames();
-  publish_screens();
+  if (n == count()) return;
+  resize_to(n);
+  for (auto &[w, c] : clients) if (c->screen >= n) assign(c, n - 1);
+  sync_frames();
+  publish();
+}
+
+// At the start: the number of screens from the settings and the screen shown before Reset Nirvana
+void NirvanaScreenManager::restore() {
+  Atom type; int fmt; unsigned long n = 0, after; unsigned char *data = nullptr;
+  if (XGetWindowProperty(dpy, root, XInternAtom(dpy, "_NET_CURRENT_DESKTOP", False), 0, 1, False, XA_CARDINAL,
+                         &type, &fmt, &n, &after, &data) == Success && data && n == 1)
+    current_ = (int)((long *)data)[0];
+  if (data) XFree(data);
+  resize_to(read_desktop().screens);
+  publish();
 }
 
 // _NIRVANA_ICONS on the root window: the iconified windows (in iconify order).
@@ -709,7 +770,7 @@ static bool icon_rect(Window w, Rect &r);
 
 static void show_client(Client *c) {
   // a window from its desktop icon comes to the screen being shown (the icons are on every one)
-  if (c->iconic && !here(c)) { set_client_screen(c, g_screen); c->off = false; }
+  if (c->iconic && !g_screens.shows(c)) { g_screens.assign(c, g_screens.current()); c->off = false; }
   // back from the desktop icon: the outlines fly from the icon to the window
   Rect icon;
   if (c->iconic && c->hidden && icon_rect(c->win, icon)) zoom_rects(icon, c->frame->geom());
@@ -791,7 +852,7 @@ static void iconify_client(Client *c) {
 }
 
 static void focus(Client *c, bool raise) {
-  if (c && !here(c)) switch_screen(c->screen);   // a window of another screen: to its screen
+  if (c && !g_screens.shows(c)) g_screens.show(c->screen);   // a window of another screen: to its screen
   if (c && c->hidden) { show_client(c); raise = true; }
   if (c) c->mru = ++mru_clock;
   Client *old = g_active;
@@ -974,8 +1035,8 @@ static void manage(Window w, bool existing) {
     if (data) XFree(data);
     c->sticky = d == -1 || strcasecmp(cls.c_str(), "nirvana-progress") == 0 ||
                 has_atom(w, A_NET_WM_STATE, XInternAtom(dpy, "_NET_WM_STATE_STICKY", False));
-    set_client_screen(c, existing && d >= 0 ? (int)d : g_screen);
-    if (!here(c)) { c->off = true; XUnmapWindow(dpy, fx); }
+    g_screens.assign(c, existing && d >= 0 ? (int)d : g_screens.current());
+    if (!g_screens.shows(c)) { c->off = true; XUnmapWindow(dpy, fx); }
   }
   c->frame->sync_client();
   // a window that does not want the keyboard (WM_HINTS input = False, or the class
@@ -1180,7 +1241,7 @@ int Switcher::handle(int e) {
 static void alt_tab(int step) {
   if (!cycling) {
     std::vector<Client *> all;
-    for (auto &[w, c] : clients) if (!c->dialog && here(c)) all.push_back(c);   // this screen
+    for (auto &[w, c] : clients) if (!c->dialog && g_screens.shows(c)) all.push_back(c);   // this screen
     if (all.size() < 2) return;
     std::sort(all.begin(), all.end(), [](Client *a, Client *b) { return a->mru > b->mru; });
     cycle_list.clear();
@@ -1350,12 +1411,12 @@ static int x_handler(void *event, void *) {
     // Win+Shift+1..9 the active window to it
     if ((e->xkey.state & Mod4Mask) && !cycling) {
       bool sh = e->xkey.state & ShiftMask;
-      if (ks == XK_m) { switch_screen(g_screen + (sh ? -1 : 1)); return 1; }
+      if (ks == XK_m) { g_screens.next(sh ? -1 : 1); return 1; }
       if (ks >= XK_1 && ks <= XK_9) {
         int n = (int)(ks - XK_1);
-        if (n < g_screens) {
-          if (sh) move_to_screen(g_active, n);
-          else switch_screen(n);
+        if (n < g_screens.count()) {
+          if (sh) g_screens.move(g_active, n);
+          else g_screens.show(n);
         }
         return 1;
       }
@@ -1440,7 +1501,7 @@ static int x_handler(void *event, void *) {
     }
     if (e->xproperty.window == root && e->xproperty.atom == A_DESKTOP) {
       read_window_mode();   // Preferences > Desktop: classic windows / outline dragging
-      read_screens();       // ... and the number of screens
+      g_screens.reread();       // ... and the number of screens
       for (auto &[w, c] : clients) c->frame->redraw();
       return 0;
     }
@@ -1556,14 +1617,14 @@ static int x_handler(void *event, void *) {
       return 1;
     }
     if (e->xclient.message_type == XInternAtom(dpy, "_NET_CURRENT_DESKTOP", False)) {
-      switch_screen((int)e->xclient.data.l[0]);
+      g_screens.show((int)e->xclient.data.l[0]);
       return 1;
     }
     if (e->xclient.message_type == XInternAtom(dpy, "_NET_WM_DESKTOP", False)) {
       if (Client *c = client_of(e->xclient.window)) {
         long d = e->xclient.data.l[0];
-        if ((unsigned long)d == 0xFFFFFFFFUL) { c->sticky = true; set_client_screen(c, g_screen); sync_screen_frames(); }
-        else { c->sticky = false; move_to_screen(c, (int)d); }
+        if ((unsigned long)d == 0xFFFFFFFFUL) { c->sticky = true; g_screens.assign(c, g_screens.current()); g_screens.sync_frames(); }
+        else { c->sticky = false; g_screens.move(c, (int)d); }
       }
       return 1;
     }
@@ -1669,16 +1730,7 @@ int main(int argc, char **argv) {
       for (KeySym k = XK_1; k <= XK_9; k++)
         XGrabKey(dpy, XKeysymToKeycode(dpy, k), Mod4Mask | shift | extra, root, True, GrabModeAsync, GrabModeAsync);
     }
-  {   // the screen shown before Reset Nirvana
-    Atom type; int fmt; unsigned long n = 0, after; unsigned char *data = nullptr;
-    if (XGetWindowProperty(dpy, root, XInternAtom(dpy, "_NET_CURRENT_DESKTOP", False), 0, 1, False, XA_CARDINAL,
-                           &type, &fmt, &n, &after, &data) == Success && data && n == 1)
-      g_screen = (int)((long *)data)[0];
-    if (data) XFree(data);
-    g_screens = std::clamp(read_desktop().screens, 1, 9);
-    g_screen = std::clamp(g_screen, 0, g_screens - 1);
-    publish_screens();
-  }
+  g_screens.restore();   // the screens (and the one shown before Reset Nirvana)
 
   // Take over the windows that already exist.
   // Iconified windows (WM_STATE = Iconic, e.g. after Reset Nirvana) come back as icons.

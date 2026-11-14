@@ -49,7 +49,7 @@ const int FACE = 96;            // the size of the saved picture
 const int N_AVATARS = 8;
 const char *AUTOLOGIN_CONF = "/etc/lightdm/lightdm.conf.d/60-nirvana-autologin.conf";
 
-FrameWindow *g_win;
+NirvanaWindow *g_win;
 Fl_Input *g_name;
 Fl_Check_Button *g_autologin;
 Fl_Box *g_msg;
@@ -532,7 +532,7 @@ std::string change_password(const std::string &cur, const std::string &nw) {
 
 void password_dialog() {
   const int W = 380, H = 200;
-  auto *d = new FrameWindow(W, H, _("Change Password"), true);
+  auto *d = new NirvanaWindow(W, H, _("Change Password"), true);
   auto field = [&](int Y, const char *l) {
     auto *i = new Fl_Secret_Input(170, Y, W - 185, 22, l);
     i->labelsize(SIZE_SMALL + 1);
@@ -627,7 +627,7 @@ int panel_user() {
   fl_register_images();
   read_account();
   const int W = 580, H = 440;
-  g_win = new FrameWindow(W, H, _("User"));
+  g_win = new NirvanaWindow(W, H, _("User"));
   g_win->xclass("nirvana-user");
 
   // --- left: the picture

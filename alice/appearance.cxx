@@ -38,7 +38,7 @@ static std::vector<Scheme> g_schemes;
 static Appearance g_cur;            // settings shown in the panel
 static std::string g_saved_scheme;   // the scheme in use (saved last)
 static int g_scheme = 0;            // index into g_schemes
-static FrameWindow *g_win;
+static NirvanaWindow *g_win;
 static Fl_Hold_Browser *g_list;
 static Fl_Box *g_source;
 static Fl_Choice *g_style, *g_pattern, *g_wall, *g_wall_mode, *g_bg, *g_grad;
@@ -300,7 +300,7 @@ int panel_appearance() {
   g_schemes = list_schemes();
 
   const int W = 600, H = 618;
-  g_win = new FrameWindow(W, H, _("Appearance"));
+  g_win = new NirvanaWindow(W, H, _("Appearance"));
   g_win->xclass("nirvana-alice");
 
   auto *t1 = new Fl_Box(15, 8, 220, 20, _("Color Scheme"));

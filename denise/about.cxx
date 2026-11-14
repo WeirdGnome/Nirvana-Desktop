@@ -557,11 +557,11 @@ Fl_Text_Display *text_pane(int X, int Y, int W, int H, const std::string &text, 
 // ---------------------------------------------------------------------------
 // The window
 // ---------------------------------------------------------------------------
-void Desktop::about() {
+void NirvanaDesktopCanvas::about() {
   const int W = 700, H = 540;
   int X = (w() - W) / 2, Y = std::max(30, (h() - H) / 3);
   int ox = csd_mode ? FRAME : 0, oy = csd_mode ? TITLE_H : 0;
-  auto *win = new NWin(this, X - ox, Y - oy, W + 2 * ox, H + oy + ox, _("About This Computer"), true);
+  auto *win = new NirvanaDrawerWindow(this, X - ox, Y - oy, W + 2 * ox, H + oy + ox, _("About This Computer"), true);
   win->color(GRAY);
 
   // three "tabs" as a row of buttons, the chosen one held down

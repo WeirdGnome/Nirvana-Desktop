@@ -39,7 +39,7 @@ const int ROW = 40;   // a program on the list
 const Fl_Color GREEN = fl_rgb_color(0x2E, 0xA0, 0x44), RED = fl_rgb_color(0xD2, 0x3B, 0x30),
                ORANGE = fl_rgb_color(0xE0, 0x7A, 0x10);
 
-FrameWindow *g_win;
+NirvanaWindow *g_win;
 shield::Status g_st;
 std::vector<shield::Program> g_progs;
 std::set<std::string> g_allowed;
@@ -331,7 +331,7 @@ int panel_shield() {
   static bool reg = false;
   if (!reg) { fl_register_images(); reg = true; }
   g_progs = shield::programs(plat::apps_dir());
-  g_win = new FrameWindow(W, H, "NirvanaSHIELD");
+  g_win = new NirvanaWindow(W, H, "NirvanaSHIELD");
   g_win->xclass("nirvana-shield");
 
   g_banner_shield = new BigShield(16, 12, 48);

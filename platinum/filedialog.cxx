@@ -218,7 +218,7 @@ struct Entry {
 class FileDialogWin;
 std::set<FileDialogWin *> g_open;
 
-class FileDialogWin : public FrameWindow {
+class FileDialogWin : public NirvanaWindow {
 public:
   FileDialogOptions o;
   std::function<void(const std::vector<std::string> &, int)> done;
@@ -241,7 +241,7 @@ public:
   static constexpr int W0 = 660, H0 = 440, SIDE = 150;
 
   FileDialogWin(const FileDialogOptions &opt)
-      : FrameWindow(W0, H0, nullptr, false), o(opt) {
+      : NirvanaWindow(W0, H0, nullptr, false), o(opt) {
     if (o.title.empty())
       o.title = o.mode == FileDialogOptions::Save ? _("Save") : o.mode == FileDialogOptions::Folder ? _("Choose Folder") : _("Open");
     if (o.accept_label.empty())
@@ -379,7 +379,7 @@ public:
   }
 
   void resize(int X, int Y, int W, int H) override {
-    FrameWindow::resize(X, Y, W, H);
+    NirvanaWindow::resize(X, Y, W, H);
     if (list) {
       int rest = list->w() - 24 - col_w[1] - col_w[2];
       col_w[0] = std::max(120, rest);
@@ -620,7 +620,7 @@ public:
       }
       return 1;
     }
-    return FrameWindow::handle(e);
+    return NirvanaWindow::handle(e);
   }
 };
 

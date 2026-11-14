@@ -98,7 +98,7 @@ public:
   }
 };
 
-class AuthWindow : public FrameWindow {
+class AuthWindow : public NirvanaWindow {
 public:
   Fl_Box *title, *text, *prog, *status;
   Fl_Choice *who = nullptr;
@@ -107,7 +107,7 @@ public:
   Fl_Button *cancel, *ok;
   std::string title_s, text_s, prog_s, status_s, who_s;
 
-  AuthWindow(Request *r) : FrameWindow(470, 262, _("Authentication"), true) {
+  AuthWindow(Request *r) : NirvanaWindow(470, 262, _("Authentication"), true) {
     xclass("nirvana-polkit-agent");
     new LockIcon(14, 14);
     bool self = r->identities.size() == 1 && POLKIT_IS_UNIX_USER(r->identities[0]) &&

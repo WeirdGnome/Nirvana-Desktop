@@ -26,7 +26,7 @@ using namespace plat;
 
 namespace {
 
-FrameWindow *g_win;
+NirvanaWindow *g_win;
 power::IdleSettings g_s;
 Fl_Hold_Browser *g_list;
 Fl_Choice *g_start, *g_delay, *g_off;
@@ -142,7 +142,7 @@ int panel_saver() {
   g_s = power::read_idle();
   g_savers = savers::list();
   const int W = 580, H = 456;
-  g_win = new FrameWindow(W, H, _("Screen Saver"));
+  g_win = new NirvanaWindow(W, H, _("Screen Saver"));
   g_win->xclass("nirvana-saver");
 
   g_list = new Fl_Hold_Browser(15, 14, 180, 214);

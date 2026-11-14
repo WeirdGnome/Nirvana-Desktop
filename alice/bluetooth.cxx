@@ -26,7 +26,7 @@ using namespace plat;
 
 namespace {
 
-FrameWindow *g_win;
+NirvanaWindow *g_win;
 bt::State g_st;
 std::unique_ptr<bt::Session> g_ses;
 Fl_Check_Button *g_power, *g_visible;
@@ -172,7 +172,7 @@ Fl_Button *button(int X, int Y, int W, const char *t) {
 
 int panel_bluetooth(bool add) {
   const int W = 600, H = 440;
-  g_win = new FrameWindow(W, H, _("Bluetooth"));
+  g_win = new NirvanaWindow(W, H, _("Bluetooth"));
   g_win->xclass("nirvana-bluetooth");
 
   g_power = new Fl_Check_Button(15, 12, 250, 22, _("Bluetooth on"));

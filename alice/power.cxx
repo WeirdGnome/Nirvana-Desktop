@@ -23,7 +23,7 @@ using namespace plat;
 
 namespace {
 
-FrameWindow *g_win;
+NirvanaWindow *g_win;
 Fl_Choice *g_bat, *g_ac, *g_crit;
 power::IdleSettings g_s;
 
@@ -82,7 +82,7 @@ int panel_power() {
   g_s = power::read_idle();
   power::State st = power::query();
   const int W = 500, H = 380;
-  g_win = new FrameWindow(W, H, _("Power"));
+  g_win = new NirvanaWindow(W, H, _("Power"));
   g_win->xclass("nirvana-power");
   int y = 10;
   heading(15, y, _("Screen"));
@@ -130,7 +130,7 @@ int panel_power() {
   y += 34;
 
   std::string info = _("Presentation mode (battery menu in the menu bar) suspends screen blanking, locking and sleep.");
-  if (!FrameWindow::wm_is_insight())
+  if (!NirvanaWindow::wm_is_insight())
     info += std::string(" ") + _("In a GNOME/KDE session the screen and sleep are managed by that desktop - these settings apply to the Nirvana Desktop session.");
   note(15, y, W - 30, 44, info.c_str());
 

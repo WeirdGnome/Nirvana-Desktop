@@ -5,6 +5,7 @@
 // moving, shading and focus are provided by the window manager (Insight).
 // The menu bar acts on the active window, which we read from _NET_ACTIVE_WINDOW.
 #pragma once
+#include "dock.h"
 #include "openwith.h"
 namespace jobs { struct Job; }
 
@@ -32,7 +33,7 @@ namespace jobs { struct Job; }
 std::string disk_path(const std::string &path);
 std::string real_path(const std::string &text);
 
-class Desktop;
+class NirvanaDesktopCanvas;
 void rambler_spawn(const std::vector<std::string> &args);   // double fork
 std::string rambler_exe(const char *name);                  // np. "nirvana-shell"
 std::string tooltypes(const std::string &path);             // launch arguments (Information)
@@ -41,11 +42,11 @@ std::vector<std::string> split_args(const std::string &s);
 // A top-level Rambler window: a folder or a dialog.
 struct Explorer;   // explorer.cxx: the tree, two panes, the button bar
 
-class NWin : public Fl_Double_Window {
+class NirvanaDrawerWindow : public Fl_Double_Window {
 public:
-  NWin(Desktop *d, int X, int Y, int W, int H, const char *title, bool dialog);
+  NirvanaDrawerWindow(NirvanaDesktopCanvas *d, int X, int Y, int W, int H, const char *title, bool dialog);
 
-  Desktop *desk;
+  NirvanaDesktopCanvas *desk;
   FolderPane *pane = nullptr;                  // nullptr for dialogs; in an explorer: the active pane
   Explorer *ex = nullptr;                      // an explorer window (Preferences > Desktop)
   std::string path;
@@ -73,7 +74,7 @@ public:
   void activate_window();     // raise and give the focus
   plat::Rect frame_rect();   // approximate outline with the frame (for animations)
 
-  ~NWin() override;
+  ~NirvanaDrawerWindow() override;
   int handle(int e) override;   // keyboard shortcuts go to the global menu bar
   void resize(int X, int Y, int W, int H) override;
   void draw() override;
@@ -92,17 +93,17 @@ private:
   int drag_dx_ = 0, drag_dy_ = 0, armed_ = 0, pressed_ = 0;
 };
 
-class Desktop : public Fl_Double_Window {
+class NirvanaDesktopCanvas : public Fl_Double_Window {
 public:
-  Desktop(int W, int H, const std::string &home);
+  NirvanaDesktopCanvas(int W, int H, const std::string &home);
 
   // A folder in a file manager window: by default in the most recently used window
   // (one window that navigates), new_window - always in a new window.
   void open_folder(const std::string &path, bool animate = true, bool new_window = false);
   bool force_simple_ = false;   // the next window: a plain one, also in the explorer mode (Applications)
   enum class Nav { Go, Back, Forward };
-  void navigate(NWin *w, const std::string &path, Nav how = Nav::Go);
-  void update_nav(NWin *w);       // buttons and the location field
+  void navigate(NirvanaDrawerWindow *w, const std::string &path, Nav how = Nav::Go);
+  void update_nav(NirvanaDrawerWindow *w);       // buttons and the location field
   void go_back();
   void go_forward();
   void new_window();
@@ -112,11 +113,11 @@ public:
   void put_away_path(const std::string &path);
   std::vector<std::string> left_out() const;
   void save_left_out(const std::vector<std::string> &v);
-  void go_location(NWin *w);      // Enter in the location field
-  NWin *menu_target = nullptr;    // the window whose menu bar the command was chosen from
+  void go_location(NirvanaDrawerWindow *w);      // Enter in the location field
+  NirvanaDrawerWindow *menu_target = nullptr;    // the window whose menu bar the command was chosen from
   void restore();                 // open the windows remembered from the previous session
-  void close(NWin *w);            // closing a window (frame button, Ctrl+W, dialog)
-  void remember(NWin *w, bool open);
+  void close(NirvanaDrawerWindow *w);            // closing a window (frame button, Ctrl+W, dialog)
+  void remember(NirvanaDrawerWindow *w, bool open);
   void update_global_keys();    // the global shortcuts (Win+letter, XGrabKey)
   void active_changed();
   void screen_changed();
@@ -124,7 +125,7 @@ public:
   void fit_menu_width();          // the window manager changed the active window
   void clients_changed();         // the window list changed (_NET_CLIENT_LIST)
   void current_app(std::string &name, Fl_Image *&icon);   // the active application for the bar
-  std::vector<NWin *> folder_windows();                    // visible folder windows
+  std::vector<NirvanaDrawerWindow *> folder_windows();                    // visible folder windows
   int shortcut();                 // a shortcut from another window -> the menu bar
 
   // Window environment (detected at startup)
@@ -133,7 +134,7 @@ public:
   void desktop_settings_changed();
   bool wm_present = false;        // any EWMH-compliant window manager
   bool wm_moveresize = false;     // the WM supports _NET_WM_MOVERESIZE (moves for us)
-  NWin *manual_active = nullptr;  // the active window when there is no window manager
+  NirvanaDrawerWindow *manual_active = nullptr;  // the active window when there is no window manager
   void redraw_frames();           // refresh the frames (active window change)
   void detect_wm();
   plat::Rect desk_rect() { return {x_root(), y_root(), w(), h()}; }
@@ -181,12 +182,12 @@ public:
   void close_all();
   // --- Nirvana / Window / Icons / Special menus (menus.cxx) ---
   void update_menu();            // active/inactive items before a menu opens
-  void update_menu(Fl_Menu_ *m, NWin *a);   // the same for the given menu bar (folder window)
+  void update_menu(Fl_Menu_ *m, NirvanaDrawerWindow *a);   // the same for the given menu bar (folder window)
   // Context menus (right button) open after the click has been handled, not during it -
   // an FLTK menu opened straight from FL_PUSH could crash when quickly
   // reopened. X, Y - position in the window that was clicked.
   void desk_context_menu(int icon, int X, int Y);
-  void folder_context_menu(NWin *w, int X, int Y);
+  void folder_context_menu(NirvanaDrawerWindow *w, int X, int Y);
   static void later(std::function<void()> f);   // run after the current event
   Fl_Menu_Button *ctx_style_ = nullptr;           // hidden button: the look of the context menus
   bool desk_shortcut();                     // shortcuts of desktop icons (no active window)
@@ -231,23 +232,23 @@ public:
   // or Rambler Advanced (tree, two panes); Preferences > Desktop > Folder Windows
   bool explorer_mode() const { return desk_set_.folder_style == "explorer"; }
   std::string folder_title(const std::string &path) const { return title_for(path); }   // "wakacje.zip", not the cache folder
-  void build_explorer(NWin *win, int ox, int oy, int W, int H, const std::string &path);
-  void ex_layout(NWin *w);
-  void ex_activate(NWin *w, int idx);
-  void ex_after_nav(NWin *w);
-  bool ex_key(NWin *w);
-  FolderPane *ex_pane_at(NWin *w, int lx, int ly);
+  void build_explorer(NirvanaDrawerWindow *win, int ox, int oy, int W, int H, const std::string &path);
+  void ex_layout(NirvanaDrawerWindow *w);
+  void ex_activate(NirvanaDrawerWindow *w, int idx);
+  void ex_after_nav(NirvanaDrawerWindow *w);
+  bool ex_key(NirvanaDrawerWindow *w);
+  FolderPane *ex_pane_at(NirvanaDrawerWindow *w, int lx, int ly);
   void ex_toggle_tree();
   void ex_toggle_dual();
   void ex_copy_to_other();
   void ex_move_to_other();
   void ex_swap_panes();
-  Fl_Menu_Bar *make_folder_menubar(NWin *win, int X, int Y, int W);
-  void setup_pane(NWin *win, FolderPane *p, int idx);   // callbacks of a file list (idx: explorer pane, -1)
+  Fl_Menu_Bar *make_folder_menubar(NirvanaDrawerWindow *win, int X, int Y, int W);
+  void setup_pane(NirvanaDrawerWindow *win, FolderPane *p, int idx);   // callbacks of a file list (idx: explorer pane, -1)
   // --- file types (filetypes.cxx): actions for double click and the context menu ---
-  bool run_filetype(const Entry &e, NWin *from, int action);   // false: no type / no action
+  bool run_filetype(const Entry &e, NirvanaDrawerWindow *from, int action);   // false: no type / no action
   // the type's actions for the context menu of the selection (label, what it does)
-  std::vector<std::pair<std::string, std::function<void()>>> filetype_menu(const std::vector<Entry> &sel, NWin *w);
+  std::vector<std::pair<std::string, std::function<void()>>> filetype_menu(const std::vector<Entry> &sel, NirvanaDrawerWindow *w);
   void edit_filetypes();
   void show_jobs();   // the background jobs window (jobs.cxx)
   // --- search (search.cxx), preview and the information panel (explorer.cxx) ---
@@ -256,22 +257,22 @@ public:
   void copy_found(const std::vector<Entry> &items);
   void preview_selected();   // Space: the type's preview action, or the built-in preview
   void ex_toggle_info();
-  void ex_set_filter(NWin *w, const std::string &f);
+  void ex_set_filter(NirvanaDrawerWindow *w, const std::string &f);
   void ex_save_state();
   void ex_refresh_trees();
   void ex_trash_changed(bool full);
-  std::string ex_tree_target(NWin *w, int lx, int ly);   // a drop on the explorer's tree
-  void ex_tree_mark(NWin *w, const std::string &path);
+  std::string ex_tree_target(NirvanaDrawerWindow *w, int lx, int ly);   // a drop on the explorer's tree
+  void ex_tree_mark(NirvanaDrawerWindow *w, const std::string &path);
   bool trash_is_full() const { return trash_full(); }                                  // the disks changed: the explorer trees again
-  void ex_open_volume(NWin *w, const std::string &kname);   // a disk clicked in the tree
+  void ex_open_volume(NirvanaDrawerWindow *w, const std::string &kname);   // a disk clicked in the tree
   const std::vector<vol::Volume> &volumes() const { return vols_; }
   std::vector<std::string> ex_saved_windows() const;   // explorer mode: the windows to open at the start      // the explorer windows' state (~/.config/nirvana/explorer.conf)
   void release_archives();   // archives no window shows any more: written back and closed
   void reconnect_servers();  // the remembered servers, at the start
   void servers_changed();    // the tree and the desktop icons follow
-  bool run_event(const Entry &e, NWin *from, const std::string &event);   // file type events
+  bool run_event(const Entry &e, NirvanaDrawerWindow *from, const std::string &event);   // file type events
   // --- archives as folders and servers (explorer.cxx) ---
-  void browse_archive(NWin *w, const std::string &archive);
+  void browse_archive(NirvanaDrawerWindow *w, const std::string &archive);
   bool is_archive_cache(const std::string &path, std::string *archive = nullptr, std::string *inner = nullptr) const;
   void pack_selected();
   void connect_server() { connect_server_to({}, ""); }
@@ -281,12 +282,12 @@ public:
   std::vector<std::pair<std::string, std::string>> servers() const;
   std::string server_path(const std::string &url) const;   // "sftp://me@host/dir" -> the folder ("" if not connected)   // (label, mount point)
   mutable std::map<std::string, std::string> archive_dirs_;   // cache folder -> archive file
-  bool is_known(NWin *w) const { return known(w); }
+  bool is_known(NirvanaDrawerWindow *w) const { return known(w); }
   void error_box(const std::string &t) { guru(t); }
   static void set_argv(int argc, char **argv);
-  NWin *begin_form(const std::string &title, int W, int H, const Entry *icon, const std::string &text,
+  NirvanaDrawerWindow *begin_form(const std::string &title, int W, int H, const Entry *icon, const std::string &text,
                    int &ox, int &oy);
-  void end_form(NWin *win, int W, int H, int ox, int oy,
+  void end_form(NirvanaDrawerWindow *win, int W, int H, int ox, int oy,
                 std::vector<std::pair<std::string, std::function<void()>>> buttons);
 
 private:
@@ -308,25 +309,14 @@ private:
     Fl_Image *img = nullptr;    // its picture (from _NET_WM_ICON or the AppImage)
   };
   int icon_cols_ = 1;   // icon columns at the left edge (disks, windows, Trash)
-  // dock: paths in ~/.config/nirvana/dock
-  std::vector<std::string> dock_;
-  bool dock_collapsed_ = false;   // dock collapsed to just the tab
-  int dock_shown_ = 0;            // how many dock icons fit
-  int dock_x_ = 0, dock_w_ = 0;   // the floating dock: where it is
-  std::vector<int> dock_divs_;    // its dividers (x)
-  int dock_space() const;
+  // the dock (dock.h): its items, geometry and drawing; its tiles are icons of the canvas
+  friend class NirvanaDock;
+  NirvanaDock dock_{this};
   std::string backdrop_dir() const;
   void sync_backdrop_folder(const std::vector<std::pair<std::string, std::string>> &items);
   void toggle_backdrop();
-  bool dock_grip_at(int ex, int ey) const;
-  int dock_press_ = -1;           // the pressed dock tile (opens on release)
   int tip_icon_ = -1;             // the tile with a visible tooltip
-  void dock_rect(int &X, int &Y, int &W, int &H) const;
-  void draw_dock();
-  void toggle_dock();
   void save_rambler_conf();
-  void load_dock();
-  void save_dock();
   void format_dialog(int vi);
   std::vector<std::string> targets();   // selected icons (window or desktop)
   void set_icon_size(int s);
@@ -350,9 +340,9 @@ private:
   bool vdragging_ = false;
   Fl_Window *vghost_ = nullptr;
 
-  NWin *find(const std::string &path);
-  bool known(NWin *w) const;
-  NWin *active_folder();          // the active folder window (or nullptr)
+  NirvanaDrawerWindow *find(const std::string &path);
+  bool known(NirvanaDrawerWindow *w) const;
+  NirvanaDrawerWindow *active_folder();          // the active folder window (or nullptr)
   void layout_icons();
 public:
   void iconic_changed() { icon_sel_ = -1; layout_icons(); redraw(); }
@@ -370,8 +360,8 @@ private:
   std::string title_for(const std::string &path) const;
   std::string trash_dir() const;
   bool trash_full() const;
-  void open_entry(const Entry &e, NWin *from = nullptr);   // folder: navigation in the window from
-  void build_folder_bars(NWin *win, int X, int Y, int W);
+  void open_entry(const Entry &e, NirvanaDrawerWindow *from = nullptr);   // folder: navigation in the window from
+  void build_folder_bars(NirvanaDrawerWindow *win, int X, int Y, int W);
   bool desk_target_ = false;      // a command from the desktop context menu
   void open_appimage(const std::string &path);
   void run_app(const std::string &path, const std::vector<std::string> &files = {});   // files: Open With
@@ -393,21 +383,21 @@ private:
   void transfer(const std::vector<Entry> &items, const std::string &dest, bool copy, bool replace);
   void path_moved(const std::string &from, const std::string &to);   // windows and position memory
   // dragging
-  struct DropTarget { NWin *win = nullptr; FolderPane *pane = nullptr; int item = -2; int icon = -1; std::string tree; };
+  struct DropTarget { NirvanaDrawerWindow *win = nullptr; FolderPane *pane = nullptr; int item = -2; int icon = -1; std::string tree; };
   bool pointer_over_foreign() const;   // over a window of another program (not Nirvana's)
   void drag_out();                    // the drag goes on as XDND into that program
   DropTarget target_at(int xr, int yr);
-  void drag_start(NWin *src, const std::vector<Entry> &items);
+  void drag_start(NirvanaDrawerWindow *src, const std::vector<Entry> &items);
   void drag_move(int xr, int yr);
   void drag_end(int xr, int yr, bool copy);
   void clear_drop_highlight();
   struct {
     bool active = false;
-    NWin *src = nullptr;
+    NirvanaDrawerWindow *src = nullptr;
     FolderPane *src_pane = nullptr;
     std::vector<Entry> items;
     Fl_Window *ghost = nullptr;
-    NWin *hl_win = nullptr;
+    NirvanaDrawerWindow *hl_win = nullptr;
     FolderPane *hl_pane = nullptr;
     int px = 0, py = 0;   // where the drag started (screen)
   } drag_;
@@ -420,7 +410,7 @@ private:
 
   std::string home_, root_path_;
   Spatial spatial_;
-  std::vector<NWin *> wins_;      // order: most recently active at the end
+  std::vector<NirvanaDrawerWindow *> wins_;      // order: most recently active at the end
   std::vector<DeskIcon> icons_;
   int icon_sel_ = -1;
   Fl_Menu_Bar *menu_;
