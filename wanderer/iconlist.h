@@ -90,6 +90,7 @@ public:
     TextMode text_mode = TextMode_Outline;
     int label_maxlen = 10;            // ILC_ICONLABEL_MAXLINELEN_DEFAULT
     int label_multiline = 1;
+    bool label_multiline_on_focus = false;   // all the lines only on the focused entry's label
     int hspacing = 5, vspacing = 5;   // ILC_ICON_HORIZONTALMARGIN_DEFAULT ...
     int image_spacing = 1;            // between the image and the label
     int label_hpad = 4, label_vpad = 4, label_border_w = 1, label_border_h = 1;

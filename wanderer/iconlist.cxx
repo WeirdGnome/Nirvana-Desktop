@@ -456,7 +456,10 @@ void IconList::draw_entry_label(IconEntry &e, int lx, int ly) {
     int tyy = ly + label_border_h + label_vpad;
     fl_font(text_mode == TextMode_Outline ? prefs().font_bold : prefs().font, label_font_size());
     int txt_area = lw - (label_border_w + label_hpad) * 2;
-    for (auto &line : e.lines) {
+    size_t shown = label_multiline_on_focus && !e.focus ? 1 : e.lines.size();
+    for (size_t i = 0; i < shown && i < e.lines.size(); i++) {
+        std::string line = e.lines[i];
+        if (shown < e.lines.size() && line.size() > 3) line = line.substr(0, line.size() - 3) + " ..";
         int tw = (int)fl_width(line.c_str());
         int tx = ax + label_border_w + label_hpad + std::max(0, (txt_area - tw) / 2) + outline / 2;
         outlined_text(line.c_str(), tx, tyy + fh - fl_descent() + outline / 2, text_mode, label_pen, label_shadow_pen);
