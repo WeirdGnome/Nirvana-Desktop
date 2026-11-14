@@ -23,7 +23,7 @@ if(NOT FLTK_FOUND)
 endif()
 
 # Zune on FLTK
-add_library(zune STATIC wanderer/zune/pens.cxx wanderer/zune/frame.cxx wanderer/zune/zune.cxx)
+add_library(zune STATIC wanderer/zune/pens.cxx wanderer/zune/frame.cxx wanderer/zune/zune.cxx wanderer/zune/catalog.cxx)
 target_include_directories(zune PUBLIC wanderer/zune)
 target_link_libraries(zune PUBLIC fltk::fltk fltk::images)
 
@@ -57,3 +57,8 @@ install(PROGRAMS session/wanderer-session DESTINATION bin COMPONENT wanderer)
 set(WANDERER_XSESSIONS_DIR "/usr/share/xsessions" CACHE PATH "where display managers look for sessions")
 install(FILES session/wanderer.desktop DESTINATION ${WANDERER_XSESSIONS_DIR} COMPONENT wanderer)
 install(FILES LICENSE README.md DESTINATION share/doc/wanderer-x11 COMPONENT wanderer)
+
+# the catalogs: next to the programs in the build tree, installed into share/wanderer/catalogs
+file(GLOB WANDERER_CATALOGS ${CMAKE_CURRENT_SOURCE_DIR}/catalogs/*.catalog)
+file(COPY ${WANDERER_CATALOGS} DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/catalogs)
+install(FILES ${WANDERER_CATALOGS} DESTINATION share/wanderer/catalogs COMPONENT wanderer)

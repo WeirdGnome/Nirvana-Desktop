@@ -25,6 +25,7 @@
 #pragma once
 #include "frame.h"
 #include "pens.h"
+#include "catalog.h"
 
 #include <FL/Fl_Double_Window.H>
 #include <FL/Fl_Group.H>
@@ -120,7 +121,7 @@ public:
     void same_width(bool s) { same_w_ = s; }
     void same_height(bool s) { same_h_ = s; }
     void columns(int n) { columns_ = n; }
-    void frame_title(const std::string &t) { title_ = t; }
+    void frame_title(const std::string &t) { title_ = tr_text(t); }
     void ask_min_max(int &minw, int &minh, int &defw, int &defh, int &maxw, int &maxh) override;
     void resize(int X, int Y, int W, int H) override;
     void layout();

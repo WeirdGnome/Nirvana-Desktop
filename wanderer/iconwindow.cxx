@@ -254,10 +254,12 @@ void IconWindow::update_status() {
         if (e.type == ST_USERDIR) dirs++;
         else { files++; size += (unsigned long long)e.size; }
     }
+    // the parts come from the catalog ("%s in %d files" ...), no plural forms needed
     std::string s;
-    if (files > 0) s = " " + fmt_size(size) + " in " + std::to_string(files) + " files";
-    if (dirs > 0) s += (s.empty() ? " " : ", ") + std::to_string(dirs) + " drawers";
-    if (hidden > 0) s += " (" + std::to_string(hidden) + " hidden)";
+    char b[256];
+    if (files > 0) { snprintf(b, sizeof b, tr("%s in %d files").c_str(), fmt_size(size).c_str(), files); s = std::string(" ") + b; }
+    if (dirs > 0) { snprintf(b, sizeof b, tr("%d drawers").c_str(), dirs); s += (s.empty() ? " " : ", ") + std::string(b); }
+    if (hidden > 0) { snprintf(b, sizeof b, tr("(%d hidden)").c_str(), hidden); s += std::string(" ") + b; }
     status_text_->contents(s);
 }
 

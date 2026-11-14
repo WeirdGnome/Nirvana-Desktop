@@ -13,6 +13,7 @@
     never growing above its maximum.
 */
 #include "zune.h"
+#include "catalog.h"
 
 #include <FL/Fl.H>
 #include <FL/fl_draw.H>
@@ -411,7 +412,7 @@ void Rectangle::ask_min_max(int &minw, int &minh, int &defw, int &defh, int &max
 // ============================================================================================
 // Text
 // ============================================================================================
-Text::Text(const std::string &t, StdFrame f) : Area(f), text_(t) {
+Text::Text(const std::string &t, StdFrame f) : Area(f), text_(tr_text(t)) {
     if (f == Frame_Text) background(MPEN_BACKGROUND);
 }
 
@@ -588,6 +589,7 @@ int Prop::handle(int e) {
 // Cycle
 // ============================================================================================
 Cycle::Cycle(std::vector<std::string> entries, int active) : Area(Frame_Button), entries_(std::move(entries)) {
+    for (auto &e : entries_) e = tr(e);
     background(MPEN_BACKGROUND);
     active_ = std::clamp(active, 0, std::max(0, (int)entries_.size() - 1));
 }
@@ -800,7 +802,7 @@ void ImageButton::draw_contents() {
 // ============================================================================================
 // Window
 // ============================================================================================
-Window::Window(const std::string &title, Area *r) : Fl_Double_Window(100, 100), title_(title) {
+Window::Window(const std::string &title, Area *r) : Fl_Double_Window(100, 100), title_(tr_text(title)) {
     label(title_.c_str());
     color(pens()[MPEN_BACKGROUND]);
     end();

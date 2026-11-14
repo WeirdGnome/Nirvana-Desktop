@@ -494,6 +494,8 @@ std::vector<Fl_Menu_Item> Wanderer::menu_items(IconWindow *w) {
         }
         v.insert(v.begin() + at, items.begin(), items.end());
     }
+    for (auto &m : v)
+        if (m.text && (intptr_t)m.user_data_ < MEN_TOOL_FIRST) m.text = tr(m.text).c_str();   // tools keep their names
     return v;
 }
 

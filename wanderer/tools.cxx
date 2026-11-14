@@ -58,7 +58,7 @@ int request(const std::string &title, const std::string &text, const std::string
     std::vector<std::string> labels;
     std::stringstream ss(buttons);
     std::string b;
-    while (std::getline(ss, b, '|')) labels.push_back(b);
+    while (std::getline(ss, b, '|')) labels.push_back(tr(b));
     int result = 0;
     bool done = false;
     auto *root = VGroup();

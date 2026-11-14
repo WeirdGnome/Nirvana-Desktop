@@ -1,0 +1,159 @@
+# Wanderer for X11 - polski (Polish). One text per line: English TAB translation; \n is a new line.
+Wanderer	Wanderer
+Window	Okno
+Icon	Ikona
+Tools	Narzędzia
+Backdrop	Tło
+Execute Command...	Wykonaj polecenie...
+Shell	Konsola
+Preferences...	Ustawienia...
+GUI Settings...	Wygląd interfejsu...
+Assigns...	Przypisania...
+About...	O programie...
+Quit...	Zakończ...
+Shutdown...	Wyłącz komputer...
+New Drawer...	Nowa szuflada...
+Open Parent	Otwórz nadrzędną
+Close	Zamknij
+Update	Odśwież
+Select Contents	Zaznacz wszystko
+Clear Selection	Usuń zaznaczenie
+Snapshot	Zapamiętaj położenie
+All	Wszystko
+View	Widok
+as Icons	jako ikony
+as List	jako lista
+All Files	Wszystkie pliki
+Sort Icons	Porządkuj ikony
+Clean Up	Uporządkuj
+Enable Sorting	Sortuj samoczynnie
+by Name	według nazwy
+by Date	według daty
+by Size	według rozmiaru
+by Type	według typu
+Reverse	Odwrotnie
+Drawers First	Najpierw szuflady
+Find...	Szukaj...
+Open	Otwórz
+Copy	Kopiuj
+Rename...	Zmień nazwę...
+Information...	Informacje...
+Unsnapshot	Zapomnij położenie
+Leave Out	Wystaw na tło
+Put Away	Odłóż
+Delete...	Usuń...
+Disk Info...	Informacje o dysku...
+Eject	Wysuń
+Empty Trash	Opróżnij kosz
+Tools Drawer	Szuflada narzędzi
+OK	OK
+Cancel	Anuluj
+Save	Zapisz
+Use	Użyj
+Abort	Przerwij
+Execute	Wykonaj
+Find	Szukaj
+Parent	Nadrzędna
+Volumes	Woluminy
+Add...	Dodaj...
+Remove	Usuń
+Yes	Tak
+No	Nie
+Quit	Zakończ
+Replace	Zastąp
+Replace All	Zastąp wszystkie
+Skip	Pomiń
+Delete	Usuń
+Move to Trash	Do kosza
+Empty	Opróżnij
+Turn Off	Wyłącz
+Restart	Uruchom ponownie
+Rename	Zmień nazwę
+Execute a file	Wykonaj plik
+Wanderer Preferences	Ustawienia Wanderera
+GUI Settings	Wygląd interfejsu
+Disk Info	Informacje o dysku
+Assigns	Przypisania
+New Drawer	Nowa szuflada
+Information	Informacje
+Shutdown	Wyłączanie komputera
+Copying	Kopiowanie
+Moving	Przenoszenie
+Deleting	Usuwanie
+Moving to the trash	Przenoszenie do kosza
+About Wanderer	O Wandererze
+Command:	Polecenie:
+Name:	Nazwa:
+Contents:	Zawartość:
+Comment:	Komentarz:
+Default Tool:	Program domyślny:
+Type:	Typ:
+Size:	Rozmiar:
+Last changed:	Ostatnia zmiana:
+Owner:	Właściciel:
+In:	W:
+Protection	Uprawnienia
+Read	Odczyt
+Write	Zapis
+Owner	Właściciel
+Group	Grupa
+Others	Inni
+Drawer	Szuflada
+File	Plik
+Item:	Element:
+To:	Do:
+Volume:	Wolumin:
+Used:	Zajęte:
+Free:	Wolne:
+Block size:	Rozmiar bloku:
+Icons	Ikony
+Drawer Windows	Okna szuflad
+Background Pictures	Obrazy tła
+Label text:	Podpisy:
+Label lines:	Wiersze podpisu:
+Line length:	Długość wiersza:
+Layout:	Układ:
+Spacing:	Odstępy:
+Tool bar:	Pasek narzędzi:
+Status bar:	Pasek stanu:
+All files:	Wszystkie pliki:
+Drawers first:	Najpierw szuflady:
+Backdrop:	Tło pulpitu:
+Drawers:	Szuflady:
+Screen Colours	Kolory ekranu
+Look	Wygląd
+Scheme:	Zestaw:
+Background:	Tło:
+Shine:	Rozjaśnienie:
+Shadow / text:	Cień / tekst:
+Fill:	Wypełnienie:
+Font:	Czcionka:
+Font size:	Wielkość czcionki:
+Buttons:	Przyciski:
+Groups:	Grupy:
+The colours apply at once, also to the window frames and the screens.	Kolory działają od razu, także w ramkach okien i na ekranach.
+Find the files and drawers whose names match\n(wildcards: * and ?) and, if given, that contain a text	Szuka plików i szuflad o nazwach pasujących do wzorca\n(znaki * i ?) i, jeśli podano, zawierających tekst
+Enter the name of the new drawer:	Podaj nazwę nowej szuflady:
+Do you really want to quit Wanderer?	Czy na pewno zakończyć pracę Wanderera?
+Files are still being copied, moved or deleted.\nQuit Wanderer anyway?	Pliki są wciąż kopiowane, przenoszone lub usuwane.\nZakończyć mimo to?
+Turn the computer off, or restart it?\nPrograms still running are ended.	Wyłączyć komputer czy uruchomić go ponownie?\nDziałające programy zostaną zakończone.
+Files are still being copied, moved or deleted.\nTurn off anyway?	Pliki są wciąż kopiowane, przenoszone lub usuwane.\nWyłączyć mimo to?
+Do you really want to delete\neverything in the trash?\nThis cannot be undone.	Czy na pewno usunąć\nwszystko z kosza?\nTego nie da się cofnąć.
+Give a name first (without '/' or ':').	Najpierw podaj nazwę (bez '/' i ':').
+Outline	Obrys
+Plain	Zwykłe
+Shadow	Cień
+Grid	Siatka
+Free	Swobodnie
+Small	Małe
+Normal	Zwykłe
+Large	Duże
+Tiled	Kafelki
+Scaled	Rozciągnięty
+Centred	Wyśrodkowany
+Sans	Bezszeryfowa
+Serif	Szeryfowa
+Fixed	Stała szerokość
+%s in %d files	%s w plikach: %d
+%d drawers	szuflad: %d
+(%d hidden)	(ukrytych: %d)
