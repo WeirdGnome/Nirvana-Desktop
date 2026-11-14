@@ -522,6 +522,18 @@ void set_fullscreen(Client *c, bool on) {
     publish_state(c);
 }
 
+// A window that has become a "desktop" window: its screen's backdrop
+void make_backdrop(Client *c) {
+    c->backdrop = true;
+    c->zoomed = false;
+    c->x = 0; c->y = BAR_H; c->w = SW; c->h = SH - BAR_H;
+    auto &v = c->screen->clients;
+    v.erase(std::remove(v.begin(), v.end(), c), v.end());
+    v.insert(v.begin(), c);
+    place(c);
+    restack(c->screen);
+}
+
 void manage(Window w, bool existing) {
     if (by_window.count(w) || by_frame.count(w)) return;
     XWindowAttributes wa;
@@ -593,6 +605,8 @@ void manage(Window w, bool existing) {
     set_wm_state(w, NormalState);
     restack(c->screen);
     if (has_state(w, NET_WM_STATE_FULLSCREEN)) set_fullscreen(c, true);
+    // the type may have come between reading it and watching the window's properties
+    if (!c->backdrop && !c->fullscreen && has_type(w, NET_WM_WINDOW_TYPE_DESKTOP)) make_backdrop(c);
     if (!c->backdrop && !c->no_focus) activate(c);
     publish_client_list();
 }
@@ -1490,15 +1504,7 @@ int main(int argc, char **argv) {
                     if (!menu.open) c->screen->draw_bar();
                 } else if (ev.xproperty.atom == NET_WM_WINDOW_TYPE && !c->backdrop && !c->fullscreen &&
                            has_type(c->win, NET_WM_WINDOW_TYPE_DESKTOP)) {
-                    // the type set after mapping: the window becomes its screen's backdrop
-                    c->backdrop = true;
-                    c->zoomed = false;
-                    c->x = 0; c->y = BAR_H; c->w = SW; c->h = SH - BAR_H;
-                    auto &v = c->screen->clients;
-                    v.erase(std::remove(v.begin(), v.end(), c), v.end());
-                    v.insert(v.begin(), c);
-                    place(c);
-                    restack(c->screen);
+                    make_backdrop(c);   // the type set after mapping
                 } else if (ev.xproperty.atom == XA_WM_HINTS || ev.xproperty.atom == WM_PROTOCOLS ||
                            ev.xproperty.atom == XA_WM_NORMAL_HINTS)
                     read_protocols(c);
