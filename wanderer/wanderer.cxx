@@ -55,6 +55,7 @@ std::string snapshot_file(const std::string &location) {
 
 struct Snapshot {
     int x = -1, y = -1, w = 0, h = 0;
+    int display = -1, sort = -1;   // the drawer's view (icons / list, all files) and order
     std::map<std::string, std::pair<int, int>> icons;
 };
 
@@ -64,6 +65,7 @@ Snapshot load_snapshot(const std::string &location) {
     std::string line;
     while (std::getline(in, line)) {
         if (line.rfind("window ", 0) == 0) sscanf(line.c_str() + 7, "%d %d %d %d", &s.x, &s.y, &s.w, &s.h);
+        else if (line.rfind("view ", 0) == 0) sscanf(line.c_str() + 5, "%d %d", &s.display, &s.sort);
         else if (line.rfind("icon ", 0) == 0) {
             int ix, iy, n = 0;
             if (sscanf(line.c_str() + 5, "%d %d %n", &ix, &iy, &n) >= 2 && n) s.icons[line.substr(5 + n)] = {ix, iy};
@@ -77,6 +79,7 @@ void save_snapshot(const std::string &location, const Snapshot &s) {
     fs::create_directories(config_dir() + "/drawers", ec);
     std::ofstream out(snapshot_file(location));
     if (s.w) out << "window " << s.x << ' ' << s.y << ' ' << s.w << ' ' << s.h << '\n';
+    if (s.display >= 0) out << "view " << s.display << ' ' << s.sort << '\n';
     for (auto &[name, p] : s.icons) out << "icon " << p.first << ' ' << p.second << ' ' << name << '\n';
 }
 
@@ -212,6 +215,16 @@ void Wanderer::setup(IconWindow *w) {
 void Wanderer::apply_snapshot(IconWindow *w) {
     Snapshot s = load_snapshot(w->location());
     if (s.w > 0) w->resize(s.x, s.y, s.w, s.h);
+    if (s.display >= 0 && !w->is_root()) {
+        // the drawer's own view: icons or list, all files or not, its order
+        IconList *l = w->iconlist();
+        bool hidden_was = l->display_flags & Disp_ShowHidden;
+        l->display_flags = s.display;
+        l->sort_flags = s.sort;
+        if (hidden_was != bool(l->display_flags & Disp_ShowHidden)) l->update();
+        else { l->sort(); l->rethink(); }
+        w->update_status();
+    }
     if (!s.icons.empty()) {
         for (auto &e : w->iconlist()->entries()) {
             auto it = s.icons.find(fs::path(e.path).filename().string());
@@ -663,6 +676,8 @@ void Wanderer::menu_action(IconWindow *w, int id) {
     case MEN_WINDOW_SNAP_ALL: {
         Snapshot s = load_snapshot(w->location());
         s.x = w->x(); s.y = w->y(); s.w = w->w(); s.h = w->h();
+        s.display = l->display_flags;
+        s.sort = l->sort_flags;
         if (id == MEN_WINDOW_SNAP_ALL)
             for (auto &e : l->entries())
                 s.icons[w->is_root() ? e.path : fs::path(e.path).filename().string()] = {e.x, e.y};
