@@ -52,8 +52,10 @@ void run_startup();
 struct ToolItem { std::string label, command; };
 std::vector<ToolItem> tool_items();
 
+// a command line with its volume paths and assigns turned into the drawers they name
+std::string volume_paths_in_command(const std::string &cmd);
 // runs a command line; what it prints shows in an output window (none without output)
-void run_with_output(const std::string &command, const std::string &dir);
+void run_with_output(const std::string &command, const std::string &dir, const std::string &title = "");
 
 // starts a program / opens a file with the system's handler, detached
 void launch(const std::vector<std::string> &argv, const std::string &dir);

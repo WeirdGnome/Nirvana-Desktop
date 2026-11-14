@@ -189,7 +189,7 @@ void output_ready(int fd, void *d) {
 
 }  // namespace
 
-void run_with_output(const std::string &command, const std::string &dir) {
+void run_with_output(const std::string &command, const std::string &dir, const std::string &title) {
     int p[2];
     if (pipe(p) != 0) { launch({"/bin/sh", "-c", command}, dir); return; }
     pid_t pid = fork();
@@ -210,10 +210,36 @@ void run_with_output(const std::string &command, const std::string &dir) {
     if (pid > 0) { int st; waitpid(pid, &st, 0); }
     auto *r = new OutputRun;
     r->fd = p[0];
-    r->title = command;
+    r->title = title.empty() ? command : title;
     r->dir = dir;
     fcntl(r->fd, F_SETFD, FD_CLOEXEC);
     Fl::add_fd(r->fd, FL_READ, output_ready, r);
+}
+
+// Words of a command line that are volume paths or assigns ("Docs:list.txt", "RAM:") become
+// the drawers they name (quoted for the shell); everything else stays as it was typed
+std::string volume_paths_in_command(const std::string &cmd) {
+    std::string out, word;
+    char quote = 0;
+    auto flush = [&] {
+        if (word.empty()) return;
+        auto colon = word.find(':');
+        std::string real = colon != std::string::npos && colon > 0 && word.find('/') > colon ? from_volume_path(word) : word;
+        if (real != word) {
+            std::string q = "'";
+            for (char c : real) q += c == '\'' ? std::string("'\\''") : std::string(1, c);
+            out += q + "'";
+        } else out += word;
+        word.clear();
+    };
+    for (char c : cmd) {
+        if (quote) { out += c; if (c == quote) quote = 0; continue; }
+        if (c == '"' || c == '\'') { flush(); quote = c; out += c; continue; }
+        if (isspace((unsigned char)c) || strchr(";|&<>()", c)) { flush(); out += c; continue; }
+        word += c;
+    }
+    flush();
+    return out;
 }
 
 // --------------------------------------------------------------------------------------------
@@ -247,7 +273,7 @@ void execute_command(const std::string &dir) {
     command = cmd->value();
     w->hide();
     Fl::delete_widget(w);
-    if (run && !command.empty()) { last = command; run_with_output(command, dir); }
+    if (run && !command.empty()) { last = command; run_with_output(volume_paths_in_command(command), dir, command); }
 }
 
 // --------------------------------------------------------------------------------------------
