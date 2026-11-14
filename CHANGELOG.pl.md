@@ -1,5 +1,14 @@
 # Lista zmian
 
+## 0.6.2 – 2026-11-14
+
+- **Okna szuflad nadążają za dyskiem** (inotify): pliki i szuflady utworzone, usunięte,
+  przemianowane albo zapisane pojawiają się po chwili. Zaznaczenie, widok i miejsce okna
+  zostają zachowane.
+- **Tytuły okien**: okno szuflady pokazuje jej nazwę, a okno woluminu jego zajętość, np.
+  „System  6% full, 26G free, 16G in use”.
+- *Window > Open Parent* w oknie woluminu wysuwa główne okno z woluminami.
+
 ## 0.6.1 – 2026-11-14
 
 - **Okno wyjścia**: to, co wypisze polecenie uruchomione przez *Execute Command*, pojawia

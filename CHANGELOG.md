@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.6.2 – 2026-11-14
+
+- **Drawer windows follow the disk** (inotify): files and drawers that are made,
+  removed, renamed or written show a moment later. The selection, the view and the
+  window's place are kept.
+- **Window titles**: a drawer's window shows the drawer's name. A volume's window shows
+  how full it is, e.g. "System  6% full, 26G free, 16G in use".
+- *Window > Open Parent* of a volume brings up the root window with the volumes.
+
 ## 0.6.1 – 2026-11-14
 
 - **Output window**: what a command started by *Execute Command* prints shows in a window
