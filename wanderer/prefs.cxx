@@ -82,10 +82,10 @@ static Text *label(const char *t) { return new Text(std::string("\033r") + t); }
 void edit_prefs(const WandererPrefs &current, std::function<void(const WandererPrefs &)> apply) {
     if (g_editor) { g_editor->show(); return; }
     auto *root = VGroup();
-    auto *columns = HGroup();
+    // the pages of the editor (a register, as the preferences programs have)
+    auto *reg = new Register({"Icons", "Drawer Windows", "Screen", "Background Pictures"});
     // -- Icons
-    auto *icons = new Group(Group::Vertical, Frame_Group);
-    icons->frame_title("Icons");
+    auto *icons = new Group(Group::Vertical);
     icons->columns(2);
     label("Label text:");
     auto *mode = new Cycle({"Outline", "Plain", "Shadow"}, current.text_mode);
@@ -108,8 +108,7 @@ void edit_prefs(const WandererPrefs &current, std::function<void(const WandererP
     auto *spacing = new Cycle({"Small", "Normal", "Large"}, current.hspacing <= 3 ? 0 : current.hspacing >= 10 ? 2 : 1);
     icons->end();
     // -- Windows
-    auto *wins = new Group(Group::Vertical, Frame_Group);
-    wins->frame_title("Drawer Windows");
+    auto *wins = new Group(Group::Vertical);
     wins->columns(2);
     label("Tool bar:");
     auto *tb = new Checkmark(current.toolbar);
@@ -124,10 +123,8 @@ void edit_prefs(const WandererPrefs &current, std::function<void(const WandererP
     label("Dropped icons:");
     auto *drop = new Cycle({"Move", "Copy"}, current.drop_mode);
     wins->end();
-    columns->end();
     // -- Screen title
-    auto *scr = new Group(Group::Vertical, Frame_Group);
-    scr->frame_title("Screen");
+    auto *scr = new Group(Group::Vertical);
     scr->columns(2);
     label("Screen title:");
     auto *stitle = new String(current.screen_title, 256);
@@ -140,8 +137,7 @@ void edit_prefs(const WandererPrefs &current, std::function<void(const WandererP
     auto *hidden_vols = new String(hv, 1024);
     scr->end();
     // -- Background pictures
-    auto *pics = new Group(Group::Vertical, Frame_Group);
-    pics->frame_title("Background Pictures");
+    auto *pics = new Group(Group::Vertical);
     pics->columns(4);
     label("Backdrop:");
     auto *bimg = new String(current.backdrop_image, 1024);
@@ -158,6 +154,7 @@ void edit_prefs(const WandererPrefs &current, std::function<void(const WandererP
     bpick->on_press = [bimg] { std::string p = bimg->value(); if (file_request(tr("Choose the backdrop picture"), p)) bimg->value(p); };
     dpick->on_press = [dimg] { std::string p = dimg->value(); if (file_request(tr("Choose the drawers' picture"), p)) dimg->value(p); };
     pics->end();
+    reg->end();
     // -- Save / Use / Cancel
     auto *buttons = HGroup();
     buttons->same_width(true);
