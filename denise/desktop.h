@@ -416,7 +416,7 @@ private:
   Fl_Menu_Bar *menu_;
   Fl_Widget *app_menu_ = nullptr;   // gary: the application menu in the top right corner
   int active_app_index(const std::vector<gary::App> &apps);
-  Fl_Widget *extras_;
+  Fl_Widget *extras_ = nullptr;
   Fl_Widget *screens_w_ = nullptr;   // the virtual screens gadget
   Fl_Widget *vol_w_ = nullptr, *pow_w_ = nullptr, *upd_w_ = nullptr, *prn_w_ = nullptr, *bt_w_ = nullptr, *clip_w_ = nullptr, *bell_w_ = nullptr, *shield_w_ = nullptr, *tray_w_ = nullptr, *mem_w_ = nullptr;
   bool tray_pending_ = false;

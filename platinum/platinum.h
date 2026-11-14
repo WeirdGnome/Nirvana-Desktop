@@ -69,6 +69,9 @@ struct DesktopSettings {
   // a size gadget in the corner; a click activates a window without raising it
   bool classic = false;
   bool outline = false;      // move and resize with an XOR outline (the window jumps on release)
+  // Nirvana's own programs, projects and menu bar applets (off: only the core - the window
+  // manager, the desktop and Preferences; while the Wanderer port is being made)
+  bool extras = false;
   std::string folder_style = "rambler";   // folder windows: "rambler" - drawers (a window per folder), "explorer" - Rambler Advanced
 };
 DesktopSettings read_desktop();

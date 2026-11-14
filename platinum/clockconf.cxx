@@ -144,6 +144,7 @@ DesktopSettings read_desktop() {
     else if (line.rfind("outline_drag=", 0) == 0) d.outline = line.substr(13) == "1";
     // folder_windows= (0.0.69): drawers by default; the older folder_style= (always "explorer"
     // in 0.0.62-0.0.68, when there was no choice) is not read any more
+    else if (line.rfind("extras=", 0) == 0) d.extras = line.substr(7) == "1";
     else if (line.rfind("folder_windows=", 0) == 0) d.folder_style = line.substr(15) == "explorer" ? "explorer" : "rambler";
   }
   return d;
@@ -159,6 +160,7 @@ bool write_desktop(const DesktopSettings &d) {
       << "icon_margin=" << d.icon_margin << "\ndock_room=" << d.dock_room << "\ndock_size=" << d.dock_size << "\nscreens=" << d.screens << "\ndock_floating=" << d.dock_floating
       << "\ntitle_dclick=" << d.title_dclick << "\nbackdrop=" << d.backdrop << "\n"
       << "classic_windows=" << d.classic << "\noutline_drag=" << d.outline << "\n"
+      << "extras=" << (d.extras ? 1 : 0) << "\n"
       << "folder_windows=" << (d.folder_style == "explorer" ? "explorer" : "drawers") << "\n";
   return (bool)out;
 }

@@ -555,8 +555,13 @@ void NirvanaDesktopCanvas::rebuild_global_menu() {
     {P_("Special/Force Quit a Window…"), FL_META + 'k', &NirvanaDesktopCanvas::force_quit, 0},
   };
 
-  for (auto &it : items)
+  // without extras (the core only): no entries for Nirvana's own programs
+  static const std::set<std::string> extra_paths = {"logo/Nirvana Shell", "logo/Open System Log", "Special/Screenshot",
+                                                    "Special/File Types…"};
+  for (auto &it : items) {
+    if (!desk_set_.extras && extra_paths.count(it.path)) continue;
     menu_->add(plat::tr_path(it.path).c_str(), it.shortcut, global_menu_cb, (void *)&it, it.flags);
+  }
   g_global_items = &items;
   std::function<void(const appmenu::Item &, const std::string &)> add = [&](const appmenu::Item &m,
                                                                            const std::string &parent) {
@@ -633,6 +638,7 @@ NirvanaDesktopCanvas::NirvanaDesktopCanvas(int W, int H, const std::string &home
     return fltk_handler ? fltk_handler(d, e) : 0;
   });
   box(FL_NO_BOX);
+  desk_set_ = plat::read_desktop();   // (extras: whether Nirvana's own applets are made)
   warm_small_icons();   // outside draw() - see appearance_changed()
   pattern_.reset(make_pattern());
   if (!current_appearance().wallpaper.empty() || current_appearance().background != "pattern") {
@@ -657,27 +663,30 @@ NirvanaDesktopCanvas::NirvanaDesktopCanvas(int W, int H, const std::string &home
   // Right side, from the edge: gary, clock, network, volume, power, tray -
   // tightly, without gaps. The menu bar ends after the last title; between it and
   // the applets there is the memory and disk usage. layout_bar() computes the positions.
-  extras_ = applets::make_clock(MENUBAR_H, [this] { layout_bar(); });
-  if (net::installed()) {
-    auto *nm = new NetMenu(0, 0, 26, MENUBAR_H);
-    net_menu_ = nm;
-    nm->selection_color(SEL);
-    nm->on_open = [this](NetMenu *m) { build_net_menu(m); };
-    nm->summary = [this] { return net::summary(net_); };
-  }
-  bt_w_ = applets::make_bluetooth(0, 0, 22, MENUBAR_H);
-  vol_w_ = applets::make_volume(0, 0, 26, MENUBAR_H);
-  pow_w_ = applets::make_power(0, 0, 54, MENUBAR_H);
-  if (applets::updates_supported()) upd_w_ = applets::make_updates(0, 0, 30, MENUBAR_H);
-  prn_w_ = applets::make_printer(0, 0, 24, MENUBAR_H);
-  clip_w_ = applets::make_clipboard(0, 0, 22, MENUBAR_H);
-  bell_w_ = applets::make_notifications(0, 0, 24, MENUBAR_H);
-  shield_w_ = applets::make_shield(0, 0, 22, MENUBAR_H);
-  applets::clipboard_hotkey();
+  // Nirvana's own applets only with extras=1 (Preferences > Desktop); the core has none
+  if (desk_set_.extras) {
+    extras_ = applets::make_clock(MENUBAR_H, [this] { layout_bar(); });
+    if (net::installed()) {
+      auto *nm = new NetMenu(0, 0, 26, MENUBAR_H);
+      net_menu_ = nm;
+      nm->selection_color(SEL);
+      nm->on_open = [this](NetMenu *m) { build_net_menu(m); };
+      nm->summary = [this] { return net::summary(net_); };
+    }
+    bt_w_ = applets::make_bluetooth(0, 0, 22, MENUBAR_H);
+    vol_w_ = applets::make_volume(0, 0, 26, MENUBAR_H);
+    pow_w_ = applets::make_power(0, 0, 54, MENUBAR_H);
+    if (applets::updates_supported()) upd_w_ = applets::make_updates(0, 0, 30, MENUBAR_H);
+    prn_w_ = applets::make_printer(0, 0, 24, MENUBAR_H);
+    clip_w_ = applets::make_clipboard(0, 0, 22, MENUBAR_H);
+    bell_w_ = applets::make_notifications(0, 0, 24, MENUBAR_H);
+    shield_w_ = applets::make_shield(0, 0, 22, MENUBAR_H);
+    applets::clipboard_hotkey();
+}
   tray_w_ = tray::make(0, 0, MENUBAR_H);
   screens_w_ = screens::make_gadget(0, 0, 26, MENUBAR_H);
   fit_menu_width();
-  mem_w_ = new MemInfo(menu_->w(), 0, 1, MENUBAR_H, W, home_);
+  if (desk_set_.extras) mem_w_ = new MemInfo(menu_->w(), 0, 1, MENUBAR_H, W, home_);
   // the menus of other programs (global menu): after Nirvana's own ones
   appmenu::start([this] { rebuild_global_menu(); fit_menu_width(); layout_bar(); });
   layout_bar();
@@ -786,7 +795,7 @@ void NirvanaDesktopCanvas::layout_bar() {
     wd->resize(rx, 0, ww, MENUBAR_H);
   };
   put(screens_w_, 26);   // the screen gadget: right of the clock, next to the applications
-  put(extras_, extras_->w());
+  if (extras_) put(extras_, extras_->w());
   put(bell_w_, 24);
   put(shield_w_, 22);
   put(net_menu_, 24);
