@@ -209,7 +209,7 @@ int Area::handle(int e) {
 // ============================================================================================
 // Group
 // ============================================================================================
-Group::Group(Dir d, StdFrame f) : Area(f), dir_(d), hs_(prefs().group_hspacing), vs_(prefs().group_vspacing) {
+Group::Group(Dir d, StdFrame f) : Area(f), dir_(d), hs_(-1), vs_(-1) {
     background(-1);   // a group shows its parent's background unless framed
     begin();          // the children follow (end() closes it)
 }
@@ -244,8 +244,8 @@ void Group::ask_min_max(int &minw, int &minh, int &defw, int &defh, int &maxw, i
         maxw = maxh = 0;
         for (int c = 0; c < cols; c++) { minw += cminw[c]; defw += cdefw[c]; maxw += std::max(cmaxw[c], cminw[c]); }
         for (int r = 0; r < rows; r++) { minh += rminh[r]; defh += rdefh[r]; maxh += std::max(rmaxh[r], rminh[r]); }
-        minw += hs_ * (cols - 1); defw += hs_ * (cols - 1); maxw += hs_ * (cols - 1);
-        minh += vs_ * (rows - 1); defh += vs_ * (rows - 1); maxh += vs_ * (rows - 1);
+        minw += hsp() * (cols - 1); defw += hsp() * (cols - 1); maxw += hsp() * (cols - 1);
+        minh += vsp() * (rows - 1); defh += vsp() * (rows - 1); maxh += vsp() * (rows - 1);
     } else {
         bool horiz = dir_ == Horizontal;
         int along_min = 0, along_def = 0, along_max = 0, across_min = 0, across_def = 0, across_max = MAXMAX;
@@ -265,7 +265,7 @@ void Group::ask_min_max(int &minw, int &minh, int &defw, int &defh, int &maxw, i
             along_min = same_min * (int)kids.size();
             along_def = same_def * (int)kids.size();
         }
-        int sp = (horiz ? hs_ : vs_) * ((int)kids.size() - 1);
+        int sp = (horiz ? hsp() : vsp()) * ((int)kids.size() - 1);
         along_min += sp; along_def += sp; along_max = std::min(MAXMAX, along_max + sp);
         across_max = std::max(across_max, across_min);
         across_def = std::clamp(across_def, across_min, across_max);
@@ -330,7 +330,7 @@ void Group::layout_line(bool horiz) {
         int m = *std::max_element(mins.begin(), mins.end());
         for (auto &v : mins) v = m;
     }
-    int sp = horiz ? hs_ : vs_;
+    int sp = horiz ? hsp() : vsp();
     int total = (horiz ? W : H) - sp * ((int)n - 1);
     int need = 0;
     for (int v : mins) need += v;
@@ -363,7 +363,7 @@ void Group::layout_columns() {
     }
     for (int c = 0; c < cols; c++) cmax[c] = std::max(cmax[c], cmin[c]);
     for (int r = 0; r < rows; r++) rmax[r] = std::max(rmax[r], rmin[r]);
-    int W = mwidth() - hs_ * (cols - 1), H = mheight() - title_h() - vs_ * (rows - 1);
+    int W = mwidth() - hsp() * (cols - 1), H = mheight() - title_h() - vsp() * (rows - 1);
     int needw = 0, needh = 0;
     for (int v : cmin) needw += v;
     for (int v : rmin) needh += v;
@@ -381,9 +381,9 @@ void Group::layout_columns() {
                 int cwid = std::max(std::min(e, ws[c]), a), chei = std::max(std::min(f, hs[r]), b);
                 kids[i]->resize(x + (ws[c] - cwid) / 2, y + (hs[r] - chei) / 2, cwid, chei);
             }
-            x += ws[c] + hs_;
+            x += ws[c] + hsp();
         }
-        y += hs[r] + vs_;
+        y += hs[r] + vsp();
     }
 }
 

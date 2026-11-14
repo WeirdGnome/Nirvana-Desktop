@@ -130,7 +130,9 @@ public:
 
 protected:
     Dir dir_;
-    int hs_, vs_, columns_ = 0;
+    int hs_, vs_, columns_ = 0;   // the spacing (-1: the preferences')
+    int hsp() const { return hs_ < 0 ? prefs().group_hspacing : hs_; }
+    int vsp() const { return vs_ < 0 ? prefs().group_vspacing : vs_; }
     bool same_w_ = false, same_h_ = false;
     std::string title_;
     int title_h() const;
