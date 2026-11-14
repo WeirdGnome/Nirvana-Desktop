@@ -1,5 +1,40 @@
 # Lista zmian
 
+## 0.10.0 – 2026-11-14
+
+- **Preferencje Wanderera** ułożone jak w oryginalnym programie preferencji, w trzech
+  stronach.
+  - *General*: nawigacja, okno główne, tytuł ekranu.
+  - *Appearance*: przycisk z obrazkiem dla okna głównego i dla szuflad oraz opcje
+    **Advanced** ze stronami Icons, Labels i Background, w tym domyślne sortowanie.
+  - *Toolbar*: paski, z podglądem.
+- **Preferencje Zune** jak program preferencji Zune: lista stron (Windows, Groups,
+  Buttons, Cycles, Strings, Listviews, Scrollbars, Palette). Można wybrać każdy
+  standardowy rodzaj ramki, odstępy okien i grup oraz ustawienia menu cykli.
+- **Nowe klasy Zune**
+  - **Slider**: uchwyt z liczbą w środku.
+  - **Scale**: podziałka procentowa pod wskaźnikiem.
+  - **Przyciski pop-up** (obrazki pliku, szuflady i listy).
+  - **Menu cyklu**: naciśnięcie na tekście otwiera listę pozycji.
+- **Okno dostępu do plików** jak w oryginale: wskaźnik obiektów, nazwa pliku i wskaźnik
+  bajtów, każdy wskaźnik z podziałką, oraz przycisk Stop.
+- **Menu**
+  - Wielokrotny wybór: lewy przycisk wybiera pozycję, a prawy trzyma menu otwarte.
+  - Znaczniki i wyszarzenie zmieniają się, gdy menu jest otwarte.
+- **Ikony**
+  - Shift + dwuklik przekazuje narzędziu, albo domyślnemu narzędziu projektu, ikony
+    zaznaczone we wszystkich oknach jako argumenty.
+  - Otwarcie pliku, którego nic nie otwiera, pokazuje Execute Command z jego nazwą.
+- **Zapytania**: Super+V odpowiada tak, Super+B lub Escape odpowiada nie.
+- **Kółko myszy** w oknach ikon działa jak w oryginale: przewija w bok, gdy nie ma czego
+  przewijać w dół albo z wciśniętym Altem. Ctrl skacze do krawędzi, Shift przewija o
+  stronę.
+- **Execute Command** ma przycisk wyboru pliku.
+- **Poprawki**
+  - Tło potrafiło otworzyć się jako zwykłe okno na starcie sesji.
+  - Awaria przy podglądzie obrazka w preferencjach.
+  - Licznik obiektów liczył plik jako skończony, zanim był.
+
 ## 0.9.0 – 2026-11-14
 
 - **Dostęp do sieci**: ikona w oknie głównym otwiera okno z zamontowanymi sieciowymi

@@ -1,5 +1,39 @@
 # Changelog
 
+## 0.10.0 – 2026-11-14
+
+- **Wanderer preferences** laid out like the original preferences program, with three pages.
+  - *General*: navigation, the root window, the screen title.
+  - *Appearance*: a picture button for the root window and for drawers, and **Advanced**
+    options with Icons, Labels and Background pages, including a default sort order.
+  - *Toolbar*: the bars, with a preview.
+- **Zune preferences** as the Zune preferences program: a page list (Windows, Groups,
+  Buttons, Cycles, Strings, Listviews, Scrollbars, Palette). Every standard frame kind can
+  be chosen, with window and group spacing and the cycle menu settings.
+- **New Zune classes**
+  - **Slider**: a knob with the number in it.
+  - **Scale**: percent marks under a gauge.
+  - **Pop-up buttons** (file, drawer, pop-up images).
+  - **Cycle pop-up menu**: a press on the text opens the entries.
+- **File access window** as in the original: an objects gauge, the file name and a bytes
+  gauge, each gauge with a scale, and Stop.
+- **Menus**
+  - Multiple selection: the left button picks an item while the right button keeps the
+    menus open.
+  - Ticks and ghosting change while the menus are open.
+- **Icons**
+  - Shift + double click passes the icons selected in every window to the tool, or to
+    the project's default tool, as arguments.
+  - Opening a file that no program opens shows Execute Command with its name.
+- **Requesters**: Super+V answers yes, Super+B or Escape answers no.
+- **Wheel** in icon windows works as in the original: sideways when there is nothing to
+  scroll down or with Alt held. Ctrl jumps to the edge, Shift scrolls a page.
+- **Execute Command** has a file requester button.
+- **Fixes**
+  - The backdrop could open as a normal window at session start.
+  - A crash in the preferences' picture preview.
+  - The objects counter counted a file as done before it was.
+
 ## 0.9.0 – 2026-11-14
 
 - **Network Access**: an icon on the root window opens a window with the mounted network
