@@ -419,7 +419,14 @@ void Wanderer::open_entry(IconWindow *w, IconEntry &e) {
         std::vector<std::string> argv = {"/bin/sh", "-c", tool + " \"$@\"", "sh", e.path};
         argv.insert(argv.end(), args.begin(), args.end());
         launch(argv, dir);
-    } else launch({"xdg-open", e.path}, dir);
+    } else if (has_opener(e.path)) launch({"xdg-open", e.path}, dir);
+    else {
+        // nothing opens this kind of file: Execute Command with its name, to be given the
+        // program to open it with (execute_open_with_command)
+        std::string name = fs::path(e.path).filename().string();
+        bool plain = name.find_first_of(" '\"\\$`!*?&;|<>()") == std::string::npos;
+        execute_command(dir, plain ? name : "'" + name + "'");
+    }
 }
 
 IconWindow *Wanderer::window_at(int xr, int yr, IconWindow *except) {

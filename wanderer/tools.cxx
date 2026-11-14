@@ -272,13 +272,38 @@ std::string volume_paths_in_command(const std::string &cmd) {
 
 // --------------------------------------------------------------------------------------------
 // Execute Command: a command line, run in the drawer's directory
-void execute_command(const std::string &dir) {
+bool has_opener(const std::string &path) {
+    auto out = [](const std::vector<std::string> &argv) {
+        std::string cmd;
+        for (auto &a : argv) {
+            cmd += "'";
+            for (char c : a) cmd += c == '\'' ? std::string("'\\''") : std::string(1, c);
+            cmd += "' ";
+        }
+        cmd += "2>/dev/null";
+        std::string r;
+        if (FILE *p = popen(cmd.c_str(), "r")) {
+            char b[512];
+            while (fgets(b, sizeof b, p)) r += b;
+            pclose(p);
+        }
+        while (!r.empty() && isspace((unsigned char)r.back())) r.pop_back();
+        return r;
+    };
+    if (system("command -v xdg-mime >/dev/null 2>&1") != 0) return true;   // no database to ask: xdg-open tries
+    std::string type = out({"xdg-mime", "query", "filetype", path});
+    if (type.empty()) return true;
+    return !out({"xdg-mime", "query", "default", type}).empty();
+}
+
+void execute_command(const std::string &dir, const std::string &initial) {
     static std::string last;   // the command given last time is offered again
     bool done = false, run = false;
     auto *root = VGroup();
     auto *row = HGroup();
     new Text("Command:");
-    auto *cmd = new String(last, 1024);
+    auto *cmd = new String(initial.empty() ? last : initial, 1024);
+    if (!initial.empty()) cmd->input()->insert_position(0);   // the program's name goes before the file's
     cmd->weight(300);
     auto *pop = PopButton(Pop_File);   // the Popasl of executecommand.c
     row->end();

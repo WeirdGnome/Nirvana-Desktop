@@ -18,7 +18,10 @@ namespace wanderer {
 // like EasyRequest: the first is 1, ..., the last is 0
 int request(const std::string &title, const std::string &text, const std::string &buttons);
 
-void execute_command(const std::string &dir);              // Tools/ExecuteCommand
+// Tools/ExecuteCommand; initial: the string to start with (else the command given last)
+void execute_command(const std::string &dir, const std::string &initial = "");
+// can the desktop's MIME database open the file? (a program set for its type)
+bool has_opener(const std::string &path);
 bool new_drawer(const std::string &dir, std::string &made); // Tools/WBNewDrawer
 bool rename_entry(const std::string &path, std::string &renamed);   // Tools/WBRename
 void information(const std::string &path);                  // Tools/Info
