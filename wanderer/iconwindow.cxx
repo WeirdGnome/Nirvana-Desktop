@@ -161,7 +161,14 @@ void IconWindow::update_status() {
     status_text_->contents(s);
 }
 
+void IconWindow::show() {
+    Window::show();
+    if (on_shown) on_shown(this);
+}
+
 int IconWindow::handle(int e) {
+    if (e == FL_SHORTCUT && on_shortcut && on_shortcut(this)) return 1;
+    if (e == FL_KEYBOARD && (Fl::event_state() & FL_META) && on_shortcut && on_shortcut(this)) return 1;
     if (e == FL_FOCUS || (e == FL_PUSH && on_activate)) {
         if (on_activate) on_activate(this);
     }

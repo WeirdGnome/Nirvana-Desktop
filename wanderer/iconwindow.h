@@ -50,6 +50,9 @@ public:
     std::function<void(IconWindow *)> on_search;
     std::function<void(IconWindow *)> on_activate;
     std::function<void(IconWindow *)> on_close;
+    std::function<bool(IconWindow *)> on_shortcut;   // a menu shortcut pressed
+    std::function<void(IconWindow *)> on_shown;      // mapped (the window has its X id)
+    void show() override;
     int handle(int e) override;
 
 private:

@@ -84,6 +84,10 @@ public:
     IconWindow *open_drawer(const std::string &path);
     void open_entry(IconWindow *w, IconEntry &e);
     void show_menu(IconWindow *w, int x_root, int y_root);
+    std::vector<Fl_Menu_Item> menu_items(IconWindow *w);
+    void publish_menu(IconWindow *w);
+    void pick(IconWindow *w, int id);
+    bool shortcut(IconWindow *w);
 
 private:
     IconWindow *root_ = nullptr;
@@ -157,6 +161,9 @@ void Wanderer::setup(IconWindow *w) {
         if (fs::is_directory(loc, ec)) open_drawer(loc);
     };
     w->iconlist()->on_context_menu = [this, w](int x, int y) { show_menu(w, x, y); };
+    w->iconlist()->on_selection_changed = [this, w] { w->update_status(); publish_menu(w); };
+    w->on_shortcut = [this](IconWindow *win) { return shortcut(win); };
+    w->on_shown = [this](IconWindow *win) { publish_menu(win); };
     w->iconlist()->on_drop = [this, w](std::vector<IconEntry *> &entries, IconEntry *target) { drop(w, entries, target); };
     w->callback([](Fl_Widget *win, void *d) { ((Wanderer *)d)->close((IconWindow *)win); }, this);
 }
@@ -272,8 +279,7 @@ void Wanderer::drop(IconWindow *from, std::vector<IconEntry *> &entries, IconEnt
 // --------------------------------------------------------------------------------------------
 // The menus
 // --------------------------------------------------------------------------------------------
-void Wanderer::show_menu(IconWindow *w, int xr, int yr) {
-    active_ = w;
+std::vector<Fl_Menu_Item> Wanderer::menu_items(IconWindow *w) {
     IconList *l = w->iconlist();
     bool sel = !l->selection().empty();
     bool drawer = !w->is_root();
@@ -335,10 +341,69 @@ void Wanderer::show_menu(IconWindow *w, int xr, int yr) {
         m.labelfont(prefs().font);
         m.labelsize(prefs().font_size);
     }
-    Fl_Menu_Item proto;
-    const Fl_Menu_Item *picked = menu->popup(xr - w->x(), yr - w->y(), nullptr, nullptr, nullptr);
-    (void)proto;
+    return std::vector<Fl_Menu_Item>(menu, menu + sizeof menu / sizeof menu[0]);
+}
+
+// Without the window manager's screen bar: the menus as a pop-up under the pointer
+void Wanderer::show_menu(IconWindow *w, int xr, int yr) {
+    active_ = w;
+    auto items = menu_items(w);
+    const Fl_Menu_Item *picked = items.data()->popup(xr - w->x(), yr - w->y(), nullptr, nullptr, nullptr);
     if (picked && picked->user_data()) menu_action(w, (int)(intptr_t)picked->user_data());
+    publish_menu(w);
+}
+
+// The menus for the window manager: it shows them in the screen's title bar while the right
+// mouse button is held over the window (as Intuition does) and sends back the item picked.
+// _WANDERER_MENU on the window, one line per item: depth TAB id TAB flags TAB label TAB key;
+// flags: 1 disabled, 2 check mark item, 4 checked, 8 a line after it
+void Wanderer::publish_menu(IconWindow *w) {
+    if (!w->shown()) return;
+    auto items = menu_items(w);
+    std::string out;
+    int depth = 0;
+    for (auto &m : items) {
+        if (!m.text) { if (depth > 0) depth--; continue; }
+        int f = 0;
+        if (m.flags & FL_MENU_INACTIVE) f |= 1;
+        if (m.flags & (FL_MENU_TOGGLE | FL_MENU_RADIO)) f |= 2;
+        if (m.flags & FL_MENU_VALUE) f |= 4;
+        if (m.flags & FL_MENU_DIVIDER) f |= 8;
+        std::string key;
+        if (m.shortcut_ & FL_META) key = std::string("Super+") + (char)toupper(m.shortcut_ & 0xff);
+        out += std::to_string(depth) + "\t" + std::to_string((intptr_t)m.user_data_) + "\t" + std::to_string(f) + "\t" +
+               m.text + "\t" + key + "\n";
+        if (m.flags & FL_SUBMENU) depth++;
+    }
+    Atom prop = XInternAtom(fl_display, "_WANDERER_MENU", False);
+    Atom utf8 = XInternAtom(fl_display, "UTF8_STRING", False);
+    XChangeProperty(fl_display, fl_xid(w), prop, utf8, 8, PropModeReplace, (const unsigned char *)out.data(), (int)out.size());
+}
+
+// The item picked in the screen bar (a client message from the window manager)
+static int x_events(void *event, void *) {
+    XEvent *e = (XEvent *)event;
+    static Atom pick = XInternAtom(fl_display, "_WANDERER_MENU_PICK", False);
+    if (e->type != ClientMessage || e->xclient.message_type != pick) return 0;
+    Fl_Window *fw = fl_find(e->xclient.window);
+    if (auto *w = dynamic_cast<IconWindow *>(fw)) g_wanderer.pick(w, (int)e->xclient.data.l[0]);
+    return 1;
+}
+
+void Wanderer::pick(IconWindow *w, int id) {
+    active_ = w;
+    menu_action(w, id);
+    for (auto *o : windows_) publish_menu(o);
+    if (root_) publish_menu(root_);
+}
+
+// The keyboard shortcuts of the menus (Super+key)
+bool Wanderer::shortcut(IconWindow *w) {
+    auto items = menu_items(w);
+    const Fl_Menu_Item *m = items.data()->test_shortcut();
+    if (!m || !m->user_data() || !m->active()) return false;
+    pick(w, (int)(intptr_t)m->user_data());
+    return true;
 }
 
 void Wanderer::menu_action(IconWindow *w, int id) {
@@ -445,6 +510,7 @@ int main(int argc, char **argv) {
         if (!strcmp(argv[i], "--backdrop")) backdrop = true;
     Fl::visual(FL_DOUBLE | FL_INDEX);
     Fl::get_system_colors();
+    Fl::add_system_handler(x_events, nullptr);
     g_wanderer.start(backdrop);
     return run();
 }

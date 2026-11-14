@@ -557,6 +557,301 @@ void screen_moved(WScreen *s) {
 // --------------------------------------------------------------------------------------------
 // Dragging: a window (move / size) or a screen
 // --------------------------------------------------------------------------------------------
+
+// --------------------------------------------------------------------------------------------
+// Menus: while the right mouse button is held over a window that has menus
+// (_WANDERER_MENU), the screen's title bar shows the menu titles of that window; the menu
+// under the pointer drops down, a sub-menu opens beside its item; releasing the button over
+// an item picks it (_WANDERER_MENU_PICK is sent to the window).
+// --------------------------------------------------------------------------------------------
+Atom WANDERER_MENU, WANDERER_MENU_PICK;
+
+struct MenuItem {
+    int id = 0, flags = 0;               // 1 disabled, 2 check mark item, 4 checked, 8 line after
+    std::string label, key;
+    std::vector<MenuItem> children;
+    bool disabled() const { return flags & 1; }
+};
+
+struct MenuState {
+    bool open = false;
+    Client *c = nullptr;
+    WScreen *s = nullptr;
+    std::vector<MenuItem> titles;
+    std::vector<int> title_x, title_w;
+    int title = -1;                      // the menu dropped down
+    Window box = 0, sub = 0;             // the drop-down box and a sub-menu's box
+    int box_x = 0, box_y = 0, box_w = 0, box_h = 0;
+    int sub_x = 0, sub_y = 0, sub_w = 0, sub_h = 0;
+    int item = -1, sub_item = -1, sub_of = -1;
+} menu;
+
+const int ITEM_H = 18, MENU_PAD = 4;
+
+bool read_menu(Client *c, std::vector<MenuItem> &out) {
+    Atom type;
+    int fmt;
+    unsigned long n, after;
+    unsigned char *data = nullptr;
+    out.clear();
+    if (XGetWindowProperty(dpy, c->win, WANDERER_MENU, 0, 1 << 16, False, UTF8_STRING, &type, &fmt, &n, &after, &data) != Success || !data)
+        return false;
+    std::string all((char *)data, n);
+    XFree(data);
+    std::vector<std::vector<MenuItem> *> stack = {&out};
+    size_t pos = 0;
+    while (pos < all.size()) {
+        size_t nl = all.find('\n', pos);
+        std::string line = all.substr(pos, nl == std::string::npos ? std::string::npos : nl - pos);
+        pos = nl == std::string::npos ? all.size() : nl + 1;
+        std::vector<std::string> f;
+        size_t a = 0, t;
+        while ((t = line.find('\t', a)) != std::string::npos) { f.push_back(line.substr(a, t - a)); a = t + 1; }
+        f.push_back(line.substr(a));
+        if (f.size() < 5) continue;
+        int depth = atoi(f[0].c_str());
+        if (depth < 0 || depth >= (int)stack.size()) continue;
+        stack.resize(depth + 1);
+        MenuItem m;
+        m.id = atoi(f[1].c_str());
+        m.flags = atoi(f[2].c_str());
+        m.label = f[3];
+        m.key = f[4];
+        stack[depth]->push_back(m);
+        stack.push_back(&stack[depth]->back().children);
+    }
+    return !out.empty();
+}
+
+void menu_box_size(const std::vector<MenuItem> &items, int &w, int &h) {
+    int lw = 0, kw = 0;
+    h = 2 * MENU_PAD;
+    for (auto &m : items) {
+        lw = std::max(lw, text_width(m.label));
+        if (!m.key.empty()) kw = std::max(kw, text_width(m.key));
+        h += ITEM_H + ((m.flags & 8) ? 6 : 0);
+    }
+    w = 2 * MENU_PAD + 18 + lw + (kw ? kw + 24 : 0) + 18;
+}
+
+int item_y(const std::vector<MenuItem> &items, int i) {
+    int y = MENU_PAD;
+    for (int k = 0; k < i; k++) y += ITEM_H + ((items[k].flags & 8) ? 6 : 0);
+    return y;
+}
+
+int item_at(const std::vector<MenuItem> &items, int y) {
+    for (int i = 0; i < (int)items.size(); i++) {
+        int iy = item_y(items, i);
+        if (y >= iy && y < iy + ITEM_H) return i;
+    }
+    return -1;
+}
+
+void draw_menu_box(Window w, const std::vector<MenuItem> &items, int bw, int bh, int hi) {
+    GC gc = gc_for(w);
+    // BARBLOCK (white) with a BARDETAIL (black) outline, items in BARDETAIL; the item under
+    // the pointer in the fill pen (FILLTEXT on it)
+    fill(w, gc, pen_white, 0, 0, bw, bh);
+    XSetForeground(dpy, gc, pen_black);
+    XDrawRectangle(dpy, w, gc, 0, 0, bw - 1, bh - 1);
+    for (int i = 0; i < (int)items.size(); i++) {
+        auto &m = items[i];
+        int y = item_y(items, i);
+        bool lit = i == hi && !m.disabled();
+        if (lit) fill(w, gc, pen_blue, 2, y, bw - 4, ITEM_H);
+        XftColor *col = &xft_black;
+        int ty = y + (ITEM_H + font->ascent - font->descent) / 2;
+        if ((m.flags & 2) && (m.flags & 4)) {   // the check mark
+            XSetForeground(dpy, gc, pen_black);
+            XSegment seg[2] = {{(short)(MENU_PAD + 2), (short)(y + 9), (short)(MENU_PAD + 6), (short)(y + 13)},
+                               {(short)(MENU_PAD + 6), (short)(y + 13), (short)(MENU_PAD + 13), (short)(y + 4)}};
+            XSetLineAttributes(dpy, gc, 2, LineSolid, CapRound, JoinRound);
+            XDrawSegments(dpy, w, gc, seg, 2);
+            XSetLineAttributes(dpy, gc, 0, LineSolid, CapButt, JoinMiter);
+        }
+        draw_text(w, MENU_PAD + 18, ty, bw - MENU_PAD * 2 - 18, m.label, col);
+        if (!m.key.empty()) draw_text(w, bw - MENU_PAD - 12 - text_width(m.key), ty, text_width(m.key) + 2, m.key, col);
+        if (!m.children.empty()) {   // a sub-menu: an arrow
+            XSetForeground(dpy, gc, pen_black);
+            XPoint tri[3] = {{(short)(bw - 12), (short)(y + 5)}, {(short)(bw - 7), (short)(y + 9)}, {(short)(bw - 12), (short)(y + 13)}};
+            XFillPolygon(dpy, w, gc, tri, 3, Convex, CoordModeOrigin);
+        }
+        if (m.disabled()) {
+            // ghosted: a pattern of the block pen over it
+            static const char stip[] = {0x05, 0x0a};
+            Pixmap pm = XCreateBitmapFromData(dpy, w, stip, 4, 2);
+            XSetStipple(dpy, gc, pm);
+            XSetFillStyle(dpy, gc, FillStippled);
+            XSetForeground(dpy, gc, pen_white);
+            XFillRectangle(dpy, w, gc, 2, y, bw - 4, ITEM_H);
+            XSetFillStyle(dpy, gc, FillSolid);
+            XFreePixmap(dpy, pm);
+        }
+        if (m.flags & 8) {
+            XSetForeground(dpy, gc, pen_black);
+            XDrawLine(dpy, w, gc, 4, y + ITEM_H + 2, bw - 5, y + ITEM_H + 2);
+        }
+    }
+    XFreeGC(dpy, gc);
+}
+
+Window make_box(int x, int y, int w, int h) {
+    XSetWindowAttributes a = {};
+    a.override_redirect = True;
+    a.background_pixel = pen_white;
+    a.save_under = True;
+    a.event_mask = ExposureMask;
+    Window b = XCreateWindow(dpy, root, x, y, w, h, 0, CopyFromParent, InputOutput, CopyFromParent,
+                             CWOverrideRedirect | CWBackPixel | CWSaveUnder | CWEventMask, &a);
+    XMapRaised(dpy, b);
+    return b;
+}
+
+void draw_menu_bar() {
+    WScreen *s = menu.s;
+    GC gc = gc_for(s->win);
+    fill(s->win, gc, pen_white, 0, 0, SW, BAR_H - 1);
+    fill(s->win, gc, pen_black, 0, BAR_H - 1, SW, 1);
+    menu.title_x.clear();
+    menu.title_w.clear();
+    int x = 8;
+    for (int i = 0; i < (int)menu.titles.size(); i++) {
+        int w = text_width(menu.titles[i].label) + 16;
+        menu.title_x.push_back(x);
+        menu.title_w.push_back(w);
+        bool lit = i == menu.title;
+        if (lit) fill(s->win, gc, pen_blue, x, 0, w, BAR_H - 1);
+        draw_text(s->win, x + 8, (BAR_H - 1 + font->ascent - font->descent) / 2, w, menu.titles[i].label, &xft_black);
+        if (menu.titles[i].disabled()) {
+            static const char stip[] = {0x05, 0x0a};
+            Pixmap pm = XCreateBitmapFromData(dpy, s->win, stip, 4, 2);
+            XSetStipple(dpy, gc, pm);
+            XSetFillStyle(dpy, gc, FillStippled);
+            XSetForeground(dpy, gc, pen_white);
+            XFillRectangle(dpy, s->win, gc, x, 0, w, BAR_H - 1);
+            XSetFillStyle(dpy, gc, FillSolid);
+            XFreePixmap(dpy, pm);
+        }
+        x += w;
+    }
+    XFreeGC(dpy, gc);
+}
+
+void close_sub() {
+    if (menu.sub) XDestroyWindow(dpy, menu.sub);
+    menu.sub = 0;
+    menu.sub_of = menu.sub_item = -1;
+}
+
+void close_box() {
+    close_sub();
+    if (menu.box) XDestroyWindow(dpy, menu.box);
+    menu.box = 0;
+    menu.item = -1;
+}
+
+void open_title(int t) {
+    if (t == menu.title) return;
+    close_box();
+    menu.title = t;
+    draw_menu_bar();
+    if (t < 0 || menu.titles[t].disabled() || menu.titles[t].children.empty()) return;
+    menu_box_size(menu.titles[t].children, menu.box_w, menu.box_h);
+    menu.box_x = std::min(menu.title_x[t], SW - menu.box_w);
+    menu.box_y = menu.s->y + BAR_H - 1;
+    menu.box = make_box(menu.box_x, menu.box_y, menu.box_w, menu.box_h);
+    draw_menu_box(menu.box, menu.titles[t].children, menu.box_w, menu.box_h, -1);
+}
+
+void open_sub(int item) {
+    if (menu.sub_of == item) return;
+    close_sub();
+    auto &items = menu.titles[menu.title].children;
+    if (item < 0 || items[item].children.empty() || items[item].disabled()) return;
+    menu.sub_of = item;
+    menu_box_size(items[item].children, menu.sub_w, menu.sub_h);
+    menu.sub_x = menu.box_x + menu.box_w - 8;
+    if (menu.sub_x + menu.sub_w > SW) menu.sub_x = std::max(0, menu.box_x - menu.sub_w + 8);
+    menu.sub_y = menu.box_y + item_y(items, item) - MENU_PAD;
+    menu.sub = make_box(menu.sub_x, menu.sub_y, menu.sub_w, menu.sub_h);
+    draw_menu_box(menu.sub, items[item].children, menu.sub_w, menu.sub_h, -1);
+}
+
+bool menu_begin(Client *c) {
+    if (!c || !read_menu(c, menu.titles)) return false;
+    menu.open = true;
+    menu.c = c;
+    menu.s = c->screen;
+    menu.title = -1;
+    draw_menu_bar();
+    XGrabPointer(dpy, root, False, ButtonReleaseMask | PointerMotionMask | ButtonPressMask, GrabModeAsync,
+                 GrabModeAsync, None, None, CurrentTime);
+    return true;
+}
+
+void menu_motion(int xr, int yr) {
+    // over the bar: the title under the pointer drops down
+    if (yr >= menu.s->y && yr < menu.s->y + BAR_H) {
+        for (int i = 0; i < (int)menu.titles.size(); i++)
+            if (xr >= menu.title_x[i] && xr < menu.title_x[i] + menu.title_w[i]) { open_title(i); break; }
+        if (menu.box && menu.item != -1) { menu.item = -1; draw_menu_box(menu.box, menu.titles[menu.title].children, menu.box_w, menu.box_h, -1); }
+        return;
+    }
+    // over a sub-menu
+    if (menu.sub && xr >= menu.sub_x && xr < menu.sub_x + menu.sub_w && yr >= menu.sub_y && yr < menu.sub_y + menu.sub_h) {
+        auto &items = menu.titles[menu.title].children[menu.sub_of].children;
+        int it = item_at(items, yr - menu.sub_y);
+        if (it != menu.sub_item) { menu.sub_item = it; draw_menu_box(menu.sub, items, menu.sub_w, menu.sub_h, it); }
+        return;
+    }
+    if (menu.sub && menu.sub_item != -1) {
+        menu.sub_item = -1;
+        draw_menu_box(menu.sub, menu.titles[menu.title].children[menu.sub_of].children, menu.sub_w, menu.sub_h, -1);
+    }
+    // over the drop-down box
+    if (menu.box && xr >= menu.box_x && xr < menu.box_x + menu.box_w && yr >= menu.box_y && yr < menu.box_y + menu.box_h) {
+        auto &items = menu.titles[menu.title].children;
+        int it = item_at(items, yr - menu.box_y);
+        if (it != menu.item) {
+            menu.item = it;
+            draw_menu_box(menu.box, items, menu.box_w, menu.box_h, it);
+            open_sub(it);
+        }
+        return;
+    }
+    if (menu.box && menu.item != -1 && !menu.sub) {
+        menu.item = -1;
+        draw_menu_box(menu.box, menu.titles[menu.title].children, menu.box_w, menu.box_h, -1);
+    }
+}
+
+void menu_end(bool pick) {
+    int id = 0;
+    if (pick && menu.title >= 0) {
+        auto &items = menu.titles[menu.title].children;
+        if (menu.sub && menu.sub_item >= 0) {
+            auto &m = items[menu.sub_of].children[menu.sub_item];
+            if (!m.disabled()) id = m.id;
+        } else if (menu.item >= 0 && items[menu.item].children.empty() && !items[menu.item].disabled()) id = items[menu.item].id;
+    }
+    close_box();
+    XUngrabPointer(dpy, CurrentTime);
+    WScreen *s = menu.s;
+    Client *c = menu.c;
+    menu = MenuState{};
+    s->draw_bar();
+    if (id && by_window.count(c->win)) {
+        XEvent e = {};
+        e.xclient.type = ClientMessage;
+        e.xclient.window = c->win;
+        e.xclient.message_type = WANDERER_MENU_PICK;
+        e.xclient.format = 32;
+        e.xclient.data.l[0] = id;
+        XSendEvent(dpy, c->win, False, NoEventMask, &e);
+    }
+}
+
 enum DragKind { D_NONE, D_MOVE, D_SIZE, D_SCREEN, D_GADGET };
 struct Drag {
     DragKind kind = D_NONE;
@@ -594,6 +889,7 @@ WScreen *screen_of(Window w) {
 }
 
 void button_press(XButtonEvent &e) {
+    if (menu.open) return;
     if (drag.kind != D_NONE) {
         if (e.button == Button3) cancel_drag();   // the right button cancels a drag
         return;
@@ -603,6 +899,11 @@ void button_press(XButtonEvent &e) {
         Client *c = by_window[e.window];
         if (c->screen != front_screen() && c->screen->y == 0) screen_to_front(c->screen);
         if (!c->backdrop) activate(c);
+        // the right button over a window with menus: the screen bar shows them
+        if (e.button == Button3 && menu_begin(c)) {
+            XAllowEvents(dpy, AsyncPointer, CurrentTime);
+            return;
+        }
         XAllowEvents(dpy, ReplayPointer, CurrentTime);
         return;
     }
@@ -620,6 +921,11 @@ void button_press(XButtonEvent &e) {
             drag.py = e.y_root;
             drag.oy = s->y;
             begin_grab();
+        } else if (e.button == Button3) {
+            // the right button over the screen: the active window's menus (or the backdrop's)
+            Client *c = active && active->screen == s ? active : nullptr;
+            if (!c) for (auto *k : s->clients) if (k->backdrop) c = k;
+            menu_begin(c);
         } else if (s != front_screen()) screen_to_front(s);
         return;
     }
@@ -627,6 +933,7 @@ void button_press(XButtonEvent &e) {
     Client *c = by_frame[e.window];
     if (c->screen != front_screen()) screen_to_front(c->screen);
     activate(c);
+    if (e.button == Button3) { menu_begin(c); return; }
     if (e.button != Button1) return;
     Gadget g = gadget_at(c, e.x, e.y);
     drag.c = c;
@@ -640,6 +947,11 @@ void button_press(XButtonEvent &e) {
 }
 
 void motion(XMotionEvent &e) {
+    if (menu.open) {
+        while (XCheckTypedEvent(dpy, MotionNotify, (XEvent *)&e)) {}
+        menu_motion(e.x_root, e.y_root);
+        return;
+    }
     while (XCheckTypedEvent(dpy, MotionNotify, (XEvent *)&e)) {}
     int dx = e.x_root - drag.px, dy = e.y_root - drag.py;
     switch (drag.kind) {
@@ -668,6 +980,10 @@ void motion(XMotionEvent &e) {
 }
 
 void button_release(XButtonEvent &e) {
+    if (menu.open) {
+        if (e.button == Button3) menu_end(true);
+        return;
+    }
     Drag d = drag;
     if (d.kind == D_NONE || e.button != Button1) return;
     end_grab();
@@ -744,6 +1060,8 @@ int main(int argc, char **argv) {
     NET_SUPPORTING_WM_CHECK = atom("_NET_SUPPORTING_WM_CHECK");
     NET_WM_STATE = atom("_NET_WM_STATE");
     NET_WM_STATE_FULLSCREEN = atom("_NET_WM_STATE_FULLSCREEN");
+    WANDERER_MENU = atom("_WANDERER_MENU");
+    WANDERER_MENU_PICK = atom("_WANDERER_MENU_PICK");
 
     pen_grey = alloc("#AAAAAA");
     pen_black = alloc("#000000");
@@ -837,11 +1155,13 @@ int main(int argc, char **argv) {
         case Expose:
             if (ev.xexpose.count == 0) {
                 if (by_frame.count(ev.xexpose.window)) draw_frame(by_frame[ev.xexpose.window]);
-                else if (WScreen *s = screen_of(ev.xexpose.window)) s->draw_bar();
+                else if (WScreen *s = screen_of(ev.xexpose.window)) { if (menu.open && menu.s == s) draw_menu_bar(); else s->draw_bar(); }
+                else if (menu.box && ev.xexpose.window == menu.box) draw_menu_box(menu.box, menu.titles[menu.title].children, menu.box_w, menu.box_h, menu.item);
+                else if (menu.sub && ev.xexpose.window == menu.sub) draw_menu_box(menu.sub, menu.titles[menu.title].children[menu.sub_of].children, menu.sub_w, menu.sub_h, menu.sub_item);
             }
             break;
         case ButtonPress: button_press(ev.xbutton); break;
-        case MotionNotify: if (drag.kind != D_NONE) motion(ev.xmotion); break;
+        case MotionNotify: if (drag.kind != D_NONE || menu.open) motion(ev.xmotion); break;
         case ButtonRelease: button_release(ev.xbutton); break;
         case KeyPress: key_press(ev.xkey); break;
         }
