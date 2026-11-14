@@ -15,6 +15,18 @@
     </defaults>
     <annotate key="org.freedesktop.policykit.exec.path">/usr/libexec/nirvana-update-helper</annotate>
   </action>
+  <action id="org.nirvana-desktop.ramdisk">
+    <description>Mount the Ram Disk</description>
+    <description xml:lang="pl">Montowanie Ram Disku</description>
+    <message>Authentication is required to mount the Ram Disk</message>
+    <message xml:lang="pl">Montowanie Ram Disku wymaga uwierzytelnienia</message>
+    <defaults>
+      <allow_any>no</allow_any>
+      <allow_inactive>no</allow_inactive>
+      <allow_active>yes</allow_active>
+    </defaults>
+    <annotate key="org.freedesktop.policykit.exec.path">/usr/libexec/nirvana-ramdisk-helper</annotate>
+  </action>
   <action id="org.nirvana-desktop.power-profile">
     <description>Change the power profile</description>
     <description xml:lang="pl">Zmiana profilu zasilania</description>

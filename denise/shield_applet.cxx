@@ -40,7 +40,7 @@ std::string home() { const char *h = getenv("HOME"); return h ? h : "/"; }
 
 const std::vector<shield::Program> &progs() {
   if (time(nullptr) - g_progs_time > 60) {   // the menus change rarely
-    g_progs = shield::programs(home() + "/.nirvana-apps");
+    g_progs = shield::programs(plat::apps_dir());
     g_progs_time = time(nullptr);
   }
   return g_progs;

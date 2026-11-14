@@ -51,9 +51,9 @@ std::string category_dir_name(const std::string &home, const char *category);
 int category_of_folder(const std::string &name);
 std::string category_folder(const std::string &path, const std::string &home);   // detected
 
-// The applications folder: ~/.nirvana-apps (hidden - applications are opened with the desktop icon).
+// The applications folder: ~/Aplikacje (plat::apps_dir).
 std::string apps_dir(const std::string &home);
-// Moves the former ~/Applications (~/Aplikacje) to ~/.nirvana-apps. Returns the old path
+// Moves the hidden ~/.nirvana-apps of 0.0.38-0.0.68 to ~/Aplikacje. Returns the old path
 // (to fix remembered paths, e.g. of the dock) or "" when nothing was moved.
 std::string migrate_apps_dir(const std::string &home);
 

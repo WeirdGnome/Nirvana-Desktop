@@ -9,8 +9,8 @@ Lekkie środowisko graficzne dla Linuksa (baza: minimalny Devuan) w duchu
 Napisane w C++ i FLTK 1.4.
 
 - **Tryb prosty**: użytkownik widzi tylko swój dysk Nirvana HD (czyli `$HOME`), jak w Androidzie.
-  Aplikacje to pliki AppImage w ukrytym `~/.nirvana-apps`, otwieranym ikoną **Aplikacje**
-  na biurku; instalacja = otwarcie albo przeciągnięcie pliku.
+  Aplikacje to pliki AppImage w folderze `~/Aplikacje` na Nirvana HD; instalacja = otwarcie
+  albo przeciągnięcie pliku.
 - **Rambler, menedżer plików** (komponent `nirvana-denise`): jedno okno, w którym przechodzi się
   między folderami (wstecz, dalej, folder nadrzędny, pole położenia), z własnym menu Okno i Ikony.
 
@@ -40,7 +40,7 @@ Co się zmieniło w każdej wersji: [CHANGELOG.pl.md](CHANGELOG.pl.md).
 
 Rozpakuj źródła i uruchom instalator:
 
-    tar xzf nirvana-desktop-0.0.68.tar.gz && cd nirvana-desktop
+    tar xzf nirvana-desktop-0.0.69.tar.gz && cd nirvana-desktop
     sudo ./install.sh                 # albo: sudo ./install.sh --login-screen
 
 Instalator:
@@ -131,6 +131,12 @@ Inną czcionkę systemową (np. wolną, w stylu bitmapowym) można podać przez 
 - przyciski: zamknij (z lewej, uprzejmie przez `WM_DELETE_WINDOW`), ikonizuj i zoom (z prawej),
   w kolorach schematu, z kontrastową obwódką i symbolami wypełnionymi kolorem akcentu
   (w stylu gadżetów okien starych komputerów domowych), widoczne także w oknach nieaktywnych
+- **Ram Disk:** szybki dysk w pamięci, `~/.ramdisk` – tmpfs o rozmiarze najwyżej 90% pamięci.
+  Przy logowaniu sesja prosi `nirvana-ramdisk-helper` (przez pkexec, akcja polkit
+  `org.nirvana-desktop.ramdisk`: aktywna sesja lokalna, bez hasła) o zamontowanie go jako root
+  w `/run/nirvana-ramdisk/UID` – nigdy na ścieżce, którą kontroluje użytkownik – i linkuje do
+  niego `~/.ramdisk`; bez pomocnika to folder w `/dev/shm`. Jego ikona na biurku (moduł pamięci)
+  pokazuje zajętość. Wszystko na nim znika po wyłączeniu komputera.
 - **Folder Pulpit na biurku:** pliki i foldery z `~/Pulpit` (`XDG_DESKTOP_DIR`, jeśli jest ustawiony;
   tworzony, gdy go nie ma) są ikonami w lewej kolumnie – zawsze pod dyskami i urządzeniami,
   a nad zminimalizowanymi oknami, najpierw foldery. Dwuklik je otwiera, prawy przycisk daje
@@ -179,13 +185,12 @@ Inną czcionkę systemową (np. wolną, w stylu bitmapowym) można podać przez 
   nie ma wersji, Rambler bierze ją z `X-AppImage-Version` w pliku .desktop. Dzięki temu kilka
   wersji tego samego programu da się rozróżnić i mieć zainstalowane jednocześnie.
   Ikony i dane z .desktop są zapamiętywane w `~/.cache/nirvana/icons`.
-- **Gdzie są aplikacje**: w ukrytym folderze `~/.nirvana-apps`, żeby nie zaśmiecały Nirvana HD.
-  Otwiera go ikona **Aplikacje** na biurku – w zwykłym oknie Ramblera (bez drzewa i paneli –
-  jedynym takim; każdy inny folder otwiera się w Ramblerze zaawansowanym), z folderami kategorii;
-  w adresie widać *Aplikacje*, a przejście w górę otwiera Nirvana HD w Ramblerze zaawansowanym; programy są dużymi ikonami, jak w oknie Preferencji (lista – `Ctrl+2`). Prawy przycisk na aplikacji i **Połóż na doku**
+- **Gdzie są aplikacje**: w folderze `~/Aplikacje` na Nirvana HD (nazwa w języku pierwszego
+  uruchomienia, zapamiętana w `~/.config/nirvana/apps-folder`), z folderami kategorii; programy
+  są dużymi ikonami, jak w oknie Preferencji (lista – `Ctrl+2`). Ukryty `~/.nirvana-apps`
+  z wersji 0.0.38–0.0.69 jest tam przenoszony przy pierwszym uruchomieniu, razem z wpisami doku
+  i zapamiętanymi oknami. Prawy przycisk na aplikacji i **Połóż na doku**
   trzyma ją pod ręką; prawy przycisk na kafelku doku daje **Otwórz** i **Odepnij z doku**.
-  Dawny folder `~/Aplikacje` (`~/Applications`) jest przenoszony tam automatycznie, razem
-  z wpisami doku i zapamiętanymi oknami.
 - **Instalacja**: otwarcie AppImage spoza folderu Aplikacje (np. z Pobranych) pyta, czy
   zainstalować i **do jakiej kategorii** (Gry, Internet, Biuro, Grafika, Multimedia,
   Programowanie, Edukacja, Nauka, System, Akcesoria, Inne). Kategoria z AppImage jest
@@ -305,8 +310,9 @@ okno biurka nie przyjmuje fokusu, żeby klik w pasek menu nie zmieniał aktywnej
 
 ## Rambler zaawansowany (dwa panele)
 
-Każde okno folderu to **Rambler zaawansowany** (dawnego Ramblera uproszczonego już nie ma; zwykłe
-zostało tylko okno Aplikacji) – okno w stylu klasycznych
+**Preferencje > Pulpit > Okna folderów** wybiera między **Szufladami** (domyślnie: każdy folder
+otwiera własne okno, które pamięta swoje miejsce, rozmiar i widok – `Ctrl` + dwuklik pokazuje
+folder w tym samym oknie) a **Ramblerem zaawansowanym** – oknem w stylu klasycznych
 eksploratorów z końca lat 90. ze sposobem pracy dwupanelowych menedżerów plików z pulpitów
 16-bitowych:
 
@@ -414,10 +420,17 @@ eksploratorów z końca lat 90. ze sposobem pracy dwupanelowych menedżerów pli
   i widzi go w swojej piaskownicy – oraz **Inny program…**: dowolny plik programu albo AppImage
   wybrany w oknie plików (AppImage spoza folderu Aplikacje najpierw proponuje instalację). Kilka
   zaznaczonych plików trafia do jednego programu (`%F`/`%U`) albo po kolei (`%f`/`%u`).
-- **Więcej okien**: **Okno > Nowe okno** (`Ctrl+Shift+N`) albo `Ctrl` + dwuklik na folderze.
+- **Więcej okien**: **Okno > Klonuj** (`Ctrl+Shift+N`: ten folder w drugim oknie); w Ramblerze
+  zaawansowanym także `Ctrl` + dwuklik na folderze. **Okno > Nowa szuflada** (`Ctrl+N`) tworzy
+  folder, **Okno > Ikonifikuj** (`Ctrl+M`) zamienia okno w ikonę na biurku.
+- **Wyciągnij na pulpit / Odłóż** (menu Ikony): **Wyciągnij na pulpit** kładzie zaznaczone pliki
+  i foldery na biurku jako ikony (zostają na swoim miejscu; pamiętane w
+  `~/.config/nirvana/left-out`), **Odłóż** – z menu albo z menu podręcznego ikony – zdejmuje je.
+- **Upuszczanie na program**: pliki upuszczone na AppImage albo plik wykonywalny – w oknie, na
+  biurku albo na doku – uruchamiają go z tymi plikami jako argumentami.
   Ikony biurka (Nirvana HD, dyski, Kosz) otwierają się w ostatnio używanym oknie.
-- **Ikony biurka** w lewej kolumnie: Nirvana HD, **Aplikacje**, **Preferencje**, dyski,
-  zikonizowane okna; **Kosz** stoi zawsze w tym samym miejscu na dole, nad dokiem – dodanie
+- **Ikony biurka** w lewej kolumnie: Nirvana HD, **Ram Disk**, **Preferencje**, **Biblioteka**
+  (`~/Biblioteka`), dyski, pliki z Pulpitu, wyciągnięte pliki, zikonizowane okna; **Kosz** stoi zawsze w tym samym miejscu na dole, nad dokiem – dodanie
   czegoś do doku ani jego opróżnienie go nie przesuwa.
 - **Menu podręczne** (prawy przycisk myszy):
   - ikony biurka: Otwórz, Informacje, Wysuń, Formatuj dysk, Opróżnij kosz (z dźwiękiem
@@ -553,14 +566,17 @@ Logo Nirvana Desktop → **Panele sterowania → Wygląd…** otwiera panel z li
 kolorów i podglądem. Klik na schemacie zmienia od razu sam panel, a **Zastosuj**/**OK**
 przestawia cały system: Rambler i Insight przeładowują paletę bez restartu.
 
-- **Schemat kolorów**: wbudowane *Platinum*, *Grafit* (ciemny), *Retro niebieski*
+- **Schemat kolorów**: wbudowane *Nirvana Default* (jasnoszary, niebieskie paski z gradientem –
+  domyślny dla nowego konta), *Slate* (ciemny grafit i turkus), *Ice & Silver* (jasna platyna
+  z lodowym błękitem), *Platinum*, *Grafit* (ciemny), *Retro niebieski*
   (szary z niebieskim akcentem) i *Lodowiec* (chłodne srebrne okna, szklane paski tytułu w głębokim
   błękicie – najlepiej z tapetą *Glacier*) oraz ponad 40 schematów z
   [Redmond97 SE](https://codeberg.org/Sliver_X/Redmond97-SE) (GPL-3.0).
-- **Retro 16** – pięć schematów w duchu pulpitów 16-bitowych komputerów domowych, nazwanych
-  od epok: *1.3* (niebieskie biurko, białe paski, pomarańczowe wyróżnienia), *2.1* (jasnoszary,
-  niebieskie paski), *3.1* (ośmiokolorowa szarość, stalowy błękit i beż), *3.9* (paski
-  z gradientem, ciepły akcent) i *4.1* (szklane paski, głęboki granat). Przynoszą też klasyczne
+- **Nirvana Classic** – sześć schematów w duchu pulpitów 16- i 32-bitowych komputerów domowych,
+  nazwanych od epok: *Classic 1.3* (niebieskie biurko, białe paski, pomarańczowe wyróżnienia),
+  *Classic 2.1* (jasnoszary, niebieskie paski), *Classic 3.1* (ośmiokolorowa szarość, stalowy
+  błękit i beż), *Classic 3.2* (średnioszare tło, kobaltowe paski, ostre fazy), *Classic 3.9*
+  (paski z gradientem, ciepły akcent) i *NextGen 4.1* (szklane paski, głęboki granat). Przynoszą też klasyczne
   gadżety okien 16-bit (zamykanie po lewej, powiększenie i głębia po prawej, gadżet rozmiaru
   w rogu): wybranie w Wyglądzie schematu z `window_style=classic` włącza **Preferencje > Pulpit >
   Klasyczne okna 16-bit** (inne schematy je wyłączają) – a ten przełącznik można potem zmienić

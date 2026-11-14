@@ -131,10 +131,10 @@ std::string packages(const std::string &home) {
   int flat = count_dirs("/var/lib/flatpak/app") + count_dirs(home + "/.local/share/flatpak/app");
   if (flat) parts.push_back(std::to_string(flat) + " (flatpak)");
   int apps = 0;   // AppImages installed with Nirvana Desktop: one per program folder
-  if (DIR *d = opendir((home + "/.nirvana-apps").c_str())) {
+  if (DIR *d = opendir(plat::apps_dir(home).c_str())) {
     while (dirent *e = readdir(d)) {
       if (e->d_name[0] == '.') continue;
-      std::string sub = home + "/.nirvana-apps/" + e->d_name;
+      std::string sub = plat::apps_dir(home) + "/" + e->d_name;
       if (DIR *c = opendir(sub.c_str())) {   // a category folder
         while (dirent *f = readdir(c)) if (f->d_name[0] != '.') apps++;
         closedir(c);

@@ -330,7 +330,7 @@ Fl_Button *button(int X, int Y, int W, int H, const char *t, int size = SIZE_SMA
 int panel_shield() {
   static bool reg = false;
   if (!reg) { fl_register_images(); reg = true; }
-  g_progs = shield::programs(home_dir() + "/.nirvana-apps");
+  g_progs = shield::programs(plat::apps_dir());
   g_win = new FrameWindow(W, H, "NirvanaSHIELD");
   g_win->xclass("nirvana-shield");
 

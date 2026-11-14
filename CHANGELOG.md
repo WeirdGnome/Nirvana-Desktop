@@ -1,6 +1,31 @@
 # Changelog
 All notable changes to Nirvana Desktop, newest first. Polish: [CHANGELOG.pl.md](CHANGELOG.pl.md).
 
+## 0.0.69 – 2026-11-14
+
+The first stage of the rework in the style of the classic spatial desktop.
+
+- **Spatial drawers are the default**: every folder opens its own window, which remembers its place, size and view. `Ctrl` + double-click shows the folder in the same window. Rambler Advanced is chosen in *Preferences > Desktop > Folder Windows*. The earlier forced "advanced" setting is not carried over.
+- **New colour schemes**:
+  - *Nirvana Default* – light gray with blue gradient bars, the default of a new account;
+  - *Slate* – dark graphite and teal;
+  - *Ice & Silver* – light platinum with icy blue;
+  - *Nirvana Classic 3.2* – medium gray canvas, cobalt bars.
+- **New names for the Retro 16 schemes**: Nirvana Classic 1.3, 2.1, 3.1 and 3.9 and Nirvana NextGen 4.1. No trademarked names.
+- **The desktop**:
+  - its icons are Nirvana HD, **Ram Disk**, Preferences and **Library**;
+  - the Applications icon is gone from the desktop, and the applications are the ordinary folder `~/Aplikacje`;
+  - the hidden `~/.nirvana-apps` moves there by itself, together with the dock and remembered windows.
+- **Ram Disk** (`~/.ramdisk`):
+  - a tmpfs of at most 90% of the memory;
+  - mounted at login by the new helper `nirvana-ramdisk-helper` (pkexec, no password in an active session), in `/run/nirvana-ramdisk/UID`;
+  - without the helper it is a folder in `/dev/shm`;
+  - its icon is a green memory module showing how full it is.
+- **New commands**:
+  - *Window > Clone* (`Ctrl+Shift+N`), *New Drawer* (`Ctrl+N`) and *Iconify* (`Ctrl+M`);
+  - *Icons > Leave Out* and *Put Away* – a file or folder as an icon on the desktop, put away also from the icon's context menu.
+- **Dropping files onto a program** (an AppImage or an executable file, in a window, on the desktop and on the dock) starts it with those files.
+
 ## 0.0.68 – 2026-11-14
 
 - **Fixed moving to the Trash from an external disk hanging**, which over time hung the whole interface. There were three causes:

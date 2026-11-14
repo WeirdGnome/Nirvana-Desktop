@@ -1,6 +1,31 @@
 # Lista zmian
 Wszystkie ważniejsze zmiany w Nirvana Desktop, od najnowszych. English: [CHANGELOG.md](CHANGELOG.md).
 
+## 0.0.69 – 2026-11-14
+
+Pierwszy etap przebudowy w stylu klasycznego pulpitu przestrzennego.
+
+- **Szuflady przestrzenne są domyślne**: każdy folder otwiera się we własnym oknie, które pamięta swoje miejsce, rozmiar i widok. `Ctrl` + dwuklik pokazuje folder w tym samym oknie. Ramblera zaawansowanego wybiera się w *Preferencjach > Pulpit > Okna folderów*. Wcześniejsze wymuszone ustawienie „zaawansowany” nie jest przenoszone.
+- **Nowe schematy kolorów**:
+  - *Nirvana Default* – jasnoszary z niebieskimi paskami z gradientem, domyślny dla nowego konta;
+  - *Slate* – ciemny grafit i turkus;
+  - *Ice & Silver* – jasna platyna z lodowym błękitem;
+  - *Nirvana Classic 3.2* – średnioszare tło, kobaltowe paski.
+- **Nowe nazwy schematów Retro 16**: Nirvana Classic 1.3, 2.1, 3.1 i 3.9 oraz Nirvana NextGen 4.1. Zastrzeżonych nazw nie ma.
+- **Biurko**:
+  - ikony to Nirvana HD, **Ram Disk**, Preferencje i **Biblioteka**;
+  - ikony Aplikacje na biurku już nie ma, a aplikacje są w zwykłym folderze `~/Aplikacje`;
+  - ukryty `~/.nirvana-apps` przenosi się tam sam, razem z dokiem i zapamiętanymi oknami.
+- **Ram Disk** (`~/.ramdisk`):
+  - tmpfs o rozmiarze najwyżej 90% pamięci;
+  - montuje go przy logowaniu nowy pomocnik `nirvana-ramdisk-helper` (pkexec, bez hasła w aktywnej sesji), w `/run/nirvana-ramdisk/UID`;
+  - bez pomocnika powstaje folder w `/dev/shm`;
+  - ikona to zielony moduł pamięci z zajętością.
+- **Nowe polecenia**:
+  - *Okno > Klonuj* (`Ctrl+Shift+N`), *Nowa szuflada* (`Ctrl+N`) i *Ikonifikuj* (`Ctrl+M`);
+  - *Ikony > Wyciągnij na pulpit* i *Odłóż* – plik albo folder jako ikona na biurku, odłożenie także z menu podręcznego ikony.
+- **Upuszczanie plików na program** (AppImage albo plik wykonywalny, w oknie, na biurku i na doku) uruchamia go z tymi plikami.
+
 ## 0.0.68 – 2026-11-14
 
 - **Naprawione zawieszanie przy przenoszeniu do Kosza z dysku zewnętrznego**, które z czasem zawieszało cały interfejs. Przyczyny były trzy:

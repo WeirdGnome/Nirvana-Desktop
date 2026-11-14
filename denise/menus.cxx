@@ -333,6 +333,7 @@ void Desktop::desk_context_menu(int i, int X, int Y) {
       open_folder(desktop_dir());
       if (NWin *w = find(desktop_dir())) w->pane->view()->select_path(en.path);
     });
+    if (icons_[i].leftout) dm.add(_("Put Away"), 0, [this, en] { put_away_path(en.path); });
     dm.add(_("Delete"), 0, [this, en] { trash_paths({en.path}); });
   } else if (i >= 0) {
     const DeskIcon &ic = icons_[i];
@@ -649,7 +650,7 @@ void Desktop::force_quit_pick() {
 // ---------------------------------------------------------------------------
 // The history (~/.config/nirvana/run-history, the last 50 commands, newest first) and, while
 // the first word is typed, the programs from $PATH and the user's AppImages
-// (~/.nirvana-apps). Up/Down choose in the list, Tab or a click puts the suggestion into the
+// (~/Aplikacje). Up/Down choose in the list, Tab or a click puts the suggestion into the
 // field, a double click or Enter runs it.
 namespace {
 

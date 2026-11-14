@@ -429,6 +429,26 @@ static void hard_disk(int x, int y, bool sel) {
   fl_color(DARK); fl_rect(x + 2, y + 10, 28, 15);
 }
 
+// Ram Disk: a green memory module with gold contacts, black chips and a light check mark
+static void ram_disk(int x, int y, bool sel) {
+  col(0x1E7A3C, sel); fl_rectf(x + 1, y + 9, 30, 14);                // board
+  col(0x3FA85E, sel); fl_xyline(x + 2, y + 10, x + 29);              // its lit edge
+  col(0x111111, sel);                                                // chips
+  for (int i = 0; i < 3; i++) fl_rectf(x + 4 + i * 9, y + 12, 6, 6);
+  col(0x3A3A3A, sel);
+  for (int i = 0; i < 3; i++) fl_xyline(x + 5 + i * 9, y + 13, x + 8 + i * 9);
+  col(0xE8B830, sel);                                                // gold contacts
+  for (int i = 0; i < 13; i++) fl_rectf(x + 3 + i * 2, y + 20, 1, 3);
+  fl_color(DARK);
+  fl_rect(x + 1, y + 9, 30, 14);
+  fl_rectf(x + 15, y + 21, 2, 2);                                    // the notch
+  col(0xFFFFFF, sel);                                                // check mark (ready)
+  fl_line_style(FL_SOLID, 2);
+  fl_line(x + 22, y + 5, x + 25, y + 8);
+  fl_line(x + 25, y + 8, x + 30, y + 2);
+  fl_line_style(0);
+}
+
 // USB stick: a body with a USB plug
 static void removable(int x, int y, bool sel) {
   col(0xC0C0C0, sel); fl_rectf(x + 20, y + 12, 8, 9);              // plug
@@ -949,6 +969,7 @@ void draw_icon(Icon icon, int x, int y, bool sel) {
   case Icon::Preferences: preferences_icon(x, y, sel); break;
   case Icon::Applications: applications_icon(x, y, sel); break;
   case Icon::Terminal:    terminal_icon(x, y, sel); break;
+  case Icon::RamDisk:     ram_disk(x, y, sel); break;
   default:
     if (icon >= Icon::CatGames && icon <= Icon::CatOther) {   // a folder with the category emblem
       folder(x, y, sel, false);

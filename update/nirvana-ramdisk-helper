@@ -1,0 +1,33 @@
+#!/bin/sh
+# Nirvana Desktop - the Ram Disk: a tmpfs for the user who asks, at most 90% of the memory.
+# Runs as root through pkexec (polkit action org.nirvana-desktop.ramdisk: an active local
+# session, no password). Takes no arguments - the user comes from PKEXEC_UID:
+#
+#   nirvana-ramdisk-helper            mounts /run/nirvana-ramdisk/UID (once), owned by the user
+#
+# It never mounts on a path the user controls (a symbolic link put there could point the
+# mount anywhere): the mount point is made by root in /run; the session links ~/.ramdisk to it.
+set -u
+PATH=/usr/sbin:/usr/bin:/sbin:/bin
+export PATH
+[ "$(id -u)" = 0 ] || { echo "must run as root"; exit 1; }
+uid="${PKEXEC_UID:-}"
+case "$uid" in ''|*[!0-9]*) echo "no user"; exit 2 ;; esac
+[ "$uid" -ge 1000 ] || { echo "not for system users"; exit 2; }
+gid=$(getent passwd "$uid" | cut -d: -f4)
+[ -n "$gid" ] || { echo "unknown user"; exit 2; }
+base=/run/nirvana-ramdisk
+dir="$base/$uid"
+mkdir -p "$base" && chmod 755 "$base" && chown root:root "$base"
+if mountpoint -q "$dir" 2>/dev/null; then
+  echo "$dir"
+  exit 0
+fi
+# a leftover non-directory (or a link) is not used
+if [ -e "$dir" ] || [ -L "$dir" ]; then
+  [ -d "$dir" ] && [ ! -L "$dir" ] || { echo "bad mount point"; exit 1; }
+else
+  mkdir "$dir" || exit 1
+fi
+mount -t tmpfs -o "size=90%,mode=0700,uid=$uid,gid=$gid,nosuid,nodev" nirvana-ramdisk "$dir" || exit 1
+echo "$dir"

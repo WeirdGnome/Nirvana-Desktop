@@ -57,6 +57,29 @@ if command -v dbus-update-activation-environment >/dev/null 2>&1; then
   dbus-update-activation-environment XCURSOR_PATH XCURSOR_THEME XCURSOR_SIZE 2>/dev/null
 fi
 
+# The Ram Disk: ~/.ramdisk - a tmpfs of at most 90% of the memory, mounted by root in
+# /run/nirvana-ramdisk/UID (pkexec, polkit action org.nirvana-desktop.ramdisk: an active local
+# session, no password) and linked here. Without the helper: a folder in /dev/shm (a tmpfs
+# too, sized by the system). A real folder ~/.ramdisk made by the user stays as it is.
+ramdisk() {
+  rd="$HOME/.ramdisk"
+  [ -e "$rd" ] && [ ! -L "$rd" ] && return 0
+  dir=""
+  # (only the path the polkit action names: another one would ask for a password)
+  for h in /usr/libexec/nirvana-ramdisk-helper; do
+    if [ -x "$h" ] && command -v pkexec >/dev/null 2>&1; then
+      dir=$(pkexec "$h" 2>/dev/null | tail -n 1)
+      break
+    fi
+  done
+  if [ -z "$dir" ] || [ ! -d "$dir" ]; then
+    dir="/dev/shm/nirvana-ramdisk-$(id -u)"
+    mkdir -p "$dir" && chmod 700 "$dir"
+  fi
+  ln -sfn "$dir" "$rd"
+}
+ramdisk &
+
 "$BIN/nirvana-insight" &
 INSIGHT=$!
 

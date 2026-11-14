@@ -62,7 +62,7 @@ int main(int argc, char **argv) {
   plat::init();
   FolderView::set_home(home);
   {
-    // ~/Applications -> ~/.nirvana-apps; remembered paths (dock, windows, icons) follow it
+    // ~/.nirvana-apps -> ~/Aplikacje; remembered paths (dock, windows, icons) follow it
     std::string old = appimage::migrate_apps_dir(home);
     if (!old.empty()) {
       const char *x = getenv("XDG_CONFIG_HOME");

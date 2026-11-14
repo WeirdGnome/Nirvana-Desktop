@@ -65,7 +65,7 @@ struct DesktopSettings {
   // a size gadget in the corner; a click activates a window without raising it
   bool classic = false;
   bool outline = false;      // move and resize with an XOR outline (the window jumps on release)
-  std::string folder_style = "explorer";   // kept in the file; Rambler always uses explorer windows now
+  std::string folder_style = "rambler";   // folder windows: "rambler" - drawers (a window per folder), "explorer" - Rambler Advanced
 };
 DesktopSettings read_desktop();
 bool write_desktop(const DesktopSettings &d);
@@ -95,7 +95,7 @@ std::string weekday_letters(int d);     // "We" (calendar header)
 std::string clock_text(const ClockSettings &c, time_t t, bool with_seconds);   // "Wed 11 Nov 15:07"
 
 struct Appearance {                 // ~/.config/nirvana/wyglad.conf
-  std::string scheme = "redmond97-se/in-tenebris";   // In Tenebris by default
+  std::string scheme = "nirvana-default";   // Nirvana Default (a new account)
   int style = -1;                   // -1: as in the scheme, otherwise (int)TitleStyle
   int desk = -1;                    // -1: the scheme's desktop color
   std::string background = "pattern";  // pattern, color (solid), gradient
@@ -157,6 +157,10 @@ std::string pictures_dir();                         // XDG_PICTURES_DIR (user-di
 // An XDG user folder (~/.config/user-dirs.dirs, key e.g. "DESKTOP"); empty when it is not set
 // (or is the home folder itself)
 std::string xdg_user_dir(const char *key);
+// The applications folder: ~/Aplikacje (~/Applications - the name in the language of the
+// first start, remembered in ~/.config/nirvana/apps-folder, so a change of language does not
+// lose it). home: "" - $HOME.
+std::string apps_dir(const std::string &home = "");
 std::vector<std::string> wallpaper_candidates();    // Nirvana Desktop, system ones, the Pictures folder
 std::string wallpaper_title(const std::string &path);   // "Mountains" from ".../Mountains.jpg"
 // Desktop W x H: the pattern in the scheme colors, the wallpaper on top (if set and loadable).
@@ -204,6 +208,7 @@ void init();
 // ---- Icons (32x32, vector drawn) ------------------------------------------
 enum class Icon { Folder, OpenFolder, Document, Application, Home, Trash, TrashFull, Image, Music,
                   HardDisk, Removable, Optical, Encrypted, Eject, Network, Wifi, Preferences, Applications, Terminal,
+                  RamDisk,   // a memory module (the Ram Disk)
                   // category folders in the Applications folder (a folder with an emblem),
                   // in the order of appimage::categories()
                   CatGames, CatInternet, CatOffice, CatGraphics, CatMultimedia, CatDevelopment,

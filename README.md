@@ -9,8 +9,8 @@ of the **classic desktops of the 1990s**: bevelled gray windows, a menu bar at t
 on the desktop. Written in C++ and FLTK 1.4.
 
 - **Simple mode**: the user only sees their own Nirvana HD disk (that is `$HOME`), as on Android.
-  Applications are AppImage files in the hidden `~/.nirvana-apps`, opened with the
-  **Applications** icon on the desktop; installing means opening or dragging a file.
+  Applications are AppImage files in the folder `~/Aplikacje` (`~/Applications`) of Nirvana HD;
+  installing means opening or dragging a file.
 - **Rambler, a file manager** (component `nirvana-denise`): a single window that browses folders
   (back, forward, parent folder, location field), with its own Window and Icons menus.
 - **English by default**, Polish when the system locale is Polish (see [Languages](#languages)).
@@ -41,7 +41,7 @@ What changed in each version: [CHANGELOG.md](CHANGELOG.md).
 
 Unpack the sources and run the installer:
 
-    tar xzf nirvana-desktop-0.0.68.tar.gz && cd nirvana-desktop
+    tar xzf nirvana-desktop-0.0.69.tar.gz && cd nirvana-desktop
     sudo ./install.sh                 # or: sudo ./install.sh --login-screen
 
 The installer:
@@ -130,6 +130,12 @@ Another system font (for example a free bitmap-style one) can be set with `NIRVA
 - buttons: close (on the left, politely via `WM_DELETE_WINDOW`), iconify and zoom (on the right),
   in the scheme colors, with a contrasting rim and accent-filled glyphs
   (in the style of old home-computer window gadgets), also shown in inactive windows
+- **Ram Disk:** a fast disk in memory, `~/.ramdisk` – a tmpfs of at most 90% of the memory.
+  At login the session asks `nirvana-ramdisk-helper` (through pkexec, polkit action
+  `org.nirvana-desktop.ramdisk`: an active local session, no password) to mount it as root in
+  `/run/nirvana-ramdisk/UID` – never on a path the user controls – and links `~/.ramdisk` to it;
+  without the helper it is a folder in `/dev/shm`. Its desktop icon (a memory module) shows how
+  full it is. Everything on it is gone after shutting down.
 - **The Desktop folder on the desktop:** the files and folders of `~/Pulpit` (`~/Desktop` in English;
   `XDG_DESKTOP_DIR` when set; made when missing) are icons in the left column – always below the
   disks and devices and above the minimized windows, folders first. A double click opens them,
@@ -181,15 +187,13 @@ Another system font (for example a free bitmap-style one) can be set with `NIRVA
   name has no version, Rambler takes it from `X-AppImage-Version` in the .desktop file. That way
   several versions of the same program can be told apart and installed side by side.
   Icons and .desktop data are cached in `~/.cache/nirvana/icons`.
-- **Where applications live**: in the hidden folder `~/.nirvana-apps`, so they do not clutter
-  Nirvana HD. The **Applications** icon on the desktop opens it in a plain Rambler
-  window (without the tree and the panes - the only one; every other folder opens in Rambler
-  Advanced) with the category folders; its address reads *Applications*, and going up from it
-  opens Nirvana HD in Rambler Advanced; the programs are shown as big icons, like the Preferences
-  window (a list with `Ctrl+2`). Right-click an application
+- **Where applications live**: in the folder `~/Aplikacje` of Nirvana HD (`~/Applications` – the
+  name in the language of the first start, remembered in `~/.config/nirvana/apps-folder`), with
+  its category folders; the programs are shown as big icons, like the Preferences window (a list
+  with `Ctrl+2`). The hidden `~/.nirvana-apps` of 0.0.38–0.0.69 is moved there at the first
+  start, together with dock entries and remembered windows. Right-click an application
   there and choose **Put on Dock** to keep it at hand; right-click a dock tile for **Open** and
-  **Unpin from Dock**. An old `~/Applications` (`~/Aplikacje`) folder is moved there
-  automatically, together with dock entries and remembered windows.
+  **Unpin from Dock**.
 - **Installation**: opening an AppImage from outside the Applications folder (e.g. from
   Downloads) asks whether to install it and **in which category** (Games, Internet, Office,
   Graphics, Multimedia, Development, Education, Science, System, Accessories, Other). The
@@ -309,8 +313,9 @@ desktop window does not take focus, so clicking the menu bar does not change the
 
 ## Rambler Advanced (two panes)
 
-Every folder window is **Rambler Advanced** (the former Rambler Simple style is gone; only the
-Applications window stays plain), a window in the
+**Preferences > Desktop > Folder Windows** chooses between **Drawers** (the default: every
+folder opens its own window, which remembers its place, size and view – `Ctrl` + double-click
+shows the folder in the same window) and **Rambler Advanced**, a window in the
 style of the classic explorers of the late 1990s with the working style of the two-pane file
 managers of the 16-bit desktops:
 
@@ -412,7 +417,14 @@ managers of the 16-bit desktops:
   programs** (another file manager, a browser, an editor): leaving Nirvana's windows the drag
   goes on as standard drag and drop (XDND, a list of `file://` addresses). Files from other
   programs can be dropped into Rambler as before.
-- **More windows**: **Window > New Window** (`Ctrl+Shift+N`) or `Ctrl` + double-click on a folder.
+- **More windows**: **Window > Clone** (`Ctrl+Shift+N`: this folder in a second window); in
+  Rambler Advanced also `Ctrl` + double-click on a folder. **Window > New Drawer** (`Ctrl+N`)
+  makes a folder, **Window > Iconify** (`Ctrl+M`) turns the window into a desktop icon.
+- **Leave Out / Put Away** (Icons menu): **Leave Out** puts the selected files and folders on the
+  desktop as icons (they stay where they are; remembered in `~/.config/nirvana/left-out`), **Put
+  Away** – from the menu or the icon's context menu – takes them off again.
+- **Dropping onto a program**: files dropped on an AppImage or an executable file – in a window,
+  on the desktop or on the dock – start it with the files as its arguments.
   Desktop icons (Nirvana HD, disks, Trash) open in the most recently used window.
 - **Opening**: double-click or Enter. An AppImage from another folder offers installation.
 - **Open With** (the context menu of files): the programs of the menus that declare the file's
@@ -423,8 +435,8 @@ managers of the 16-bit desktops:
   first). Several selected files go to one program (`%F`/`%U`) or one by one (`%f`/`%u`).
 - **Double-clicking the empty desktop** opens the file manager (the Nirvana HD window); if it
   is already open, it is brought to the front.
-- **Desktop icons** in the left column: Nirvana HD, **Applications**, **Preferences**, disks,
-  iconified windows; the **Trash** always stays in the same place at the bottom, above the
+- **Desktop icons** in the left column: Nirvana HD, **Ram Disk**, **Preferences**, **Library**
+  (`~/Biblioteka`), disks, the Desktop folder's files, left-out files, iconified windows; the **Trash** always stays in the same place at the bottom, above the
   dock – adding to or emptying the dock does not move it.
 - **Context menus** (right mouse button):
   - desktop icons: Open, Information, Eject, Format Disk, Empty Trash (with the sound of paper
@@ -560,14 +572,17 @@ Nirvana logo → **Preferences… → Appearance** opens a panel with the list o
 preview. Clicking a scheme changes the panel itself right away, and **Apply**/**OK** switches
 the whole system: Rambler and Insight reload the palette without a restart.
 
-- **Colour scheme**: built-in *Platinum*, *Graphite* (dark), *Retro Blue* (gray with a blue
+- **Colour scheme**: built-in *Nirvana Default* (light gray, blue gradient title bars – the
+  default of a new account), *Slate* (dark graphite and teal), *Ice & Silver* (light platinum
+  with icy blue), *Platinum*, *Graphite* (dark), *Retro Blue* (gray with a blue
   accent) and *Glacier* (cool silver windows, glass title bars in deep blue – best with the
   *Glacier* wallpaper), plus over 40 schemes from
   [Redmond97 SE](https://codeberg.org/Sliver_X/Redmond97-SE) (GPL-3.0).
-- **Retro 16** – five schemes in the spirit of the 16-bit home computer desktops, named after
-  their eras: *1.3* (blue desktop, white bars, orange highlights), *2.1* (light gray, blue bars),
-  *3.1* (eight-color gray, steel blue and beige), *3.9* (gradient bars, warm accent) and *4.1*
-  (glass bars, deep blue). They also bring the classic 16-bit window gadgets (close on the left,
+- **Nirvana Classic** – six schemes in the spirit of the 16- and 32-bit home computer desktops,
+  named after their eras: *Classic 1.3* (blue desktop, white bars, orange highlights), *Classic
+  2.1* (light gray, blue bars), *Classic 3.1* (eight-color gray, steel blue and beige), *Classic
+  3.2* (medium gray canvas, cobalt blue bars, crisp bevels), *Classic 3.9* (gradient bars, warm
+  accent) and *NextGen 4.1* (glass bars, deep blue). They also bring the classic 16-bit window gadgets (close on the left,
   zoom and depth on the right, size gadget in the corner): choosing a scheme with
   `window_style=classic` in Appearance turns on **Preferences > Desktop > Classic 16-bit windows**
   (the other schemes turn it off) – and that switch can be changed afterwards either way. No product names on purpose, the colors and gadgets are Nirvana's own.

@@ -552,6 +552,8 @@ bool FolderView::label_rect(int i, Rect &out) const {
 int FolderView::drop_target_at(int ex, int ey) const {
   int i = index_at(ex, ey);
   if (i >= 0 && entries_[i].dir && !sel_[i]) return i;   // onto a folder (not onto itself)
+  // onto a program (an AppImage, an executable file): it starts with the files
+  if (i >= 0 && !sel_[i] && (is_appimage(entries_[i].name) || entries_[i].icon == Icon::Application)) return i;
   return -1;                                                // into this folder
 }
 

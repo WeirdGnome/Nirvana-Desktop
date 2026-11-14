@@ -456,8 +456,9 @@ static void window_menu_cb(Fl_Widget *w, void *d) {
 static const std::vector<MenuDef> &window_menu_defs() {
   static const std::vector<MenuDef> defs = {
     // --- Window: this file manager window ---
-    {P_("Window/New Window"), FL_COMMAND + FL_SHIFT + 'n', &Desktop::new_window, 0},
-    {P_("Window/New Folder"), FL_COMMAND + 'n', &Desktop::new_folder, FL_MENU_DIVIDER},
+    {P_("Window/Clone"), FL_COMMAND + FL_SHIFT + 'n', &Desktop::new_window, 0},   // this folder in a second window
+    {P_("Window/New Drawer"), FL_COMMAND + 'n', &Desktop::new_folder, 0},
+    {P_("Window/Iconify"), FL_COMMAND + 'm', &Desktop::iconify_active, FL_MENU_DIVIDER},
     {P_("Window/Back"), FL_ALT + FL_Left, &Desktop::go_back, 0},
     {P_("Window/Forward"), FL_ALT + FL_Right, &Desktop::go_forward, 0},
     {P_("Window/Open Parent"), FL_COMMAND + FL_Up, &Desktop::open_parent, FL_MENU_DIVIDER},
@@ -492,6 +493,8 @@ static const std::vector<MenuDef> &window_menu_defs() {
     {P_("Icons/Set as Wallpaper"), 0, &Desktop::set_as_wallpaper, FL_MENU_DIVIDER},
     {P_("Icons/Snapshot"), FL_COMMAND + 's', &Desktop::snapshot, 0},
     {P_("Icons/Unsnapshot"), 0, &Desktop::unsnapshot, FL_MENU_DIVIDER},
+    {P_("Icons/Leave Out"), 0, &Desktop::leave_out, 0},
+    {P_("Icons/Put Away"), 0, &Desktop::put_away, FL_MENU_DIVIDER},
     {P_("Icons/Put on Dock"), FL_COMMAND + 'l', &Desktop::dock_add, 0},
     {P_("Icons/Remove from Dock"), FL_COMMAND + 'k', &Desktop::dock_remove, 0},
   };
@@ -627,6 +630,19 @@ Desktop::Desktop(int W, int H, const std::string &home)
   load_dock();
   watch_desktop_dir();   // (creates ~/Pulpit when there is none)
   layout_icons();
+  // the Ram Disk's fill in its label - and the icon itself, once the session has mounted it
+  static Fl_Timeout_Handler ramdisk_tick = [](void *p) {
+    auto *dk = (Desktop *)p;
+    bool has = false, changed = false;
+    std::string lbl = dk->ramdisk_label();
+    for (auto &ic : dk->icons_)
+      if (ic.ramdisk) { has = true; if (ic.name != lbl) { ic.name = lbl; changed = true; } }
+    std::error_code ec;
+    if (!has && fs::is_directory(dk->home_ + "/.ramdisk", ec)) { dk->layout_icons(); changed = true; }
+    if (changed) dk->redraw();
+    Fl::repeat_timeout(5.0, ramdisk_tick, p);
+  };
+  Fl::add_timeout(3.0, ramdisk_tick, this);
   watch_trash();
   watch_volumes();
   {
@@ -782,13 +798,27 @@ void Desktop::layout_icons() {
     icons_.push_back(d);
     iy += ROW;
   };
+  // Nirvana HD, the Ram Disk, Preferences and the Library; the applications are the folder
+  // ~/Aplikacje in Nirvana HD (no icon of their own on the desktop)
   place({"Nirvana HD", home_, Icon::Home, 0, 0});
-  // applications (hidden ~/.nirvana-apps) and the Preferences panel
-  place({_("Applications"), apps_dir(), Icon::Applications, 0, 0});
+  {
+    std::error_code ec;
+    if (fs::is_directory(home_ + "/.ramdisk", ec)) {
+      DeskIcon r{ramdisk_label(), home_ + "/.ramdisk", Icon::RamDisk, 0, 0};
+      r.ramdisk = true;
+      place(r);
+    }
+  }
   {
     DeskIcon p{_("Preferences"), "", Icon::Preferences, 0, 0};
     p.prefs = true;
     place(p);
+  }
+  {
+    std::string lib = library_dir();
+    std::error_code ec;
+    fs::create_directories(lib, ec);
+    place({fs::path(lib).filename().string(), lib, Icon::Folder, 0, 0});
   }
   // disks and discs below Nirvana HD
   for (int i = 0; i < (int)vols_.size(); i++) {
@@ -819,6 +849,17 @@ void Desktop::layout_icons() {
     for (auto &e : files) {
       DeskIcon d{e.label, e.path, e.icon, 0, 0};
       d.deskfile = true;
+      d.entry = e;
+      place(d);
+    }
+    // left out (Icons > Leave Out): after the Desktop folder's own files
+    for (auto &p : left_out()) {
+      std::error_code ec2;
+      if (!fs::exists(p, ec2)) continue;
+      Entry e = entry_for(p);
+      DeskIcon d{e.label, e.path, e.icon, 0, 0};
+      d.deskfile = true;
+      d.leftout = true;
       d.entry = e;
       place(d);
     }
@@ -1568,6 +1609,8 @@ void Desktop::open_folder(const std::string &path, bool animate, bool new_window
   // the applications (with their category folders): a plain window also in the explorer mode
   bool apps = path == apps_dir() || in_apps(path + "/");
   if (apps && explorer_mode()) force_simple_ = true;
+  // drawers: every folder its own window (the one already open was brought forward above)
+  if (!explorer_mode()) new_window = true;
   if (!new_window) {
     NWin *recent = nullptr;
     // most recently active at the end - in the explorer mode an explorer window, for the
@@ -1757,9 +1800,10 @@ std::string disk_path(const std::string &path) {
     if (path.rfind(mp + "/", 0) == 0) return name + path.substr(mp.size());
   }
   if (home.empty() || home == "/") return path;
-  std::string apps = home + "/.nirvana-apps";   // the applications by the name of their icon
-  if (path == apps) return _("Applications");
-  if (path.rfind(apps + "/", 0) == 0) return _("Applications") + path.substr(apps.size());
+  // the Ram Disk by its name (~/.ramdisk is a link to /run/nirvana-ramdisk/UID)
+  std::string rd = home + "/.ramdisk";
+  if (path == rd) return "Ram Disk";
+  if (path.rfind(rd + "/", 0) == 0) return "Ram Disk" + path.substr(rd.size());
   if (path == home) return "Nirvana HD";
   if (path.rfind(home + "/", 0) == 0) return "Nirvana HD" + path.substr(home.size());
   return path;
@@ -1772,9 +1816,8 @@ std::string real_path(const std::string &text) {
   std::string tn = _("Trash");
   if (text == tn) return trash_files();
   if (text.rfind(tn + "/", 0) == 0) return trash_files() + text.substr(tn.size());
-  std::string an = _("Applications");
-  if (text == an) return home + "/.nirvana-apps";
-  if (text.rfind(an + "/", 0) == 0) return home + "/.nirvana-apps" + text.substr(an.size());
+  if (text == "Ram Disk") return home + "/.ramdisk";
+  if (text.rfind("Ram Disk/", 0) == 0) return home + "/.ramdisk" + text.substr(8);
   if (text == disk || text == "~") return home;
   if (text.rfind(disk + "/", 0) == 0) return home + text.substr(disk.size());
   if (text.rfind("~/", 0) == 0) return home + text.substr(1);
@@ -1871,6 +1914,62 @@ void Desktop::go_forward() {
   if (a && !a->fwd_hist.empty()) navigate(a, a->fwd_hist.back(), Nav::Forward);
 }
 
+// Window > Iconify: the window becomes an icon on the desktop (Insight does it)
+void Desktop::iconify_active() {
+  NWin *a = active_folder();
+  if (a && a->shown()) XIconifyWindow(fl_display, fl_xid(a), fl_screen);
+}
+
+// Leave Out: files and folders put on the desktop as icons (they stay where they are);
+// remembered in ~/.config/nirvana/left-out, a path per line. Put Away takes them back off.
+static std::string left_out_file() {
+  const char *x = getenv("XDG_CONFIG_HOME"), *h = getenv("HOME");
+  return (x && *x ? std::string(x) : std::string(h ? h : "") + "/.config") + "/nirvana/left-out";
+}
+
+std::vector<std::string> Desktop::left_out() const {
+  std::vector<std::string> v;
+  std::ifstream in(left_out_file());
+  std::string line;
+  while (std::getline(in, line)) if (!line.empty()) v.push_back(line);
+  return v;
+}
+
+void Desktop::save_left_out(const std::vector<std::string> &v) {
+  std::ofstream out(left_out_file());
+  for (auto &p : v) out << p << "\n";
+}
+
+void Desktop::leave_out() {
+  NWin *a = active_folder();
+  if (!a) return;
+  auto v = left_out();
+  for (auto &e : a->pane->view()->selection())
+    if (std::find(v.begin(), v.end(), e.path) == v.end()) v.push_back(e.path);
+  save_left_out(v);
+  layout_icons();
+  redraw();
+}
+
+void Desktop::put_away_path(const std::string &path) {
+  auto v = left_out();
+  v.erase(std::remove(v.begin(), v.end(), path), v.end());
+  save_left_out(v);
+  layout_icons();
+  icon_sel_ = -1;
+  redraw();
+}
+
+void Desktop::put_away() {
+  // the selected desktop icon, or the selection of the active window
+  if (icon_sel_ >= 0 && icon_sel_ < (int)icons_.size() && icons_[icon_sel_].leftout) {
+    put_away_path(icons_[icon_sel_].path);
+    return;
+  }
+  if (NWin *a = active_folder())
+    for (auto &e : a->pane->view()->selection()) put_away_path(e.path);
+}
+
 void Desktop::new_window() {
   NWin *a = active_folder();
   open_folder(a ? a->path : root_path_, true, true);
@@ -1906,8 +2005,11 @@ void Desktop::go_location(NWin *w) {
 
 void Desktop::open_entry(const Entry &e, NWin *from) {
   if (e.dir) {
-    // Ctrl + double-click: the folder in a new window
-    bool new_win = (Fl::event_state() & FL_CTRL) != 0;
+    // drawers: every folder opens its own window (Ctrl + double-click: in the same one); Rambler
+    // Advanced: in the same window (Ctrl + double-click: a new one)
+    bool ctrl = (Fl::event_state() & FL_CTRL) != 0;
+    bool new_win = explorer_mode() ? ctrl : !ctrl;
+    if (from && !explorer_mode() && !ctrl) { open_folder(e.path, true, false); return; }
     if (from && !new_win && known(from)) navigate(from, e.path);
     else open_folder(e.path, true, new_win);
     return;
@@ -1930,6 +2032,19 @@ void Desktop::open_entry(const Entry &e, NWin *from) {
 }
 
 std::string Desktop::apps_dir() const { return appimage::apps_dir(home_); }
+
+// The Library on the desktop: ~/Biblioteka (~/Library - the name in the interface language)
+std::string Desktop::library_dir() const { return home_ + "/" + _("Library"); }
+
+// "Ram Disk\n0,1 / 7,0 GB": the name and how full it is (refreshed with the menu bar figures)
+std::string Desktop::ramdisk_label() const {
+  struct statvfs sv;
+  if (statvfs((home_ + "/.ramdisk").c_str(), &sv) != 0 || !sv.f_blocks) return "Ram Disk";
+  double total = (double)sv.f_blocks * sv.f_frsize, used = total - (double)sv.f_bfree * sv.f_frsize;
+  char b[64];
+  snprintf(b, sizeof b, "%.1f/%.1f GB", used / 1e9, total / 1e9);
+  return "Ram Disk " + plat::decimal(b);
+}
 
 // The Desktop folder: XDG_DESKTOP_DIR, otherwise ~/Pulpit (the name in the interface language)
 std::string Desktop::desktop_dir() const {
@@ -3480,6 +3595,14 @@ void Desktop::drag_end(int xr, int yr, bool copy) {
     }
   }
 
+  // Dropping on a program (an AppImage, an executable file - in a window, on the desktop or
+  // the dock): it starts with the dropped files as its arguments
+  if (is_program(dest)) {
+    std::vector<std::string> files;
+    for (auto &e : items) if (e.path != dest) files.push_back(e.path);
+    open_with_program(dest, files);
+    return;
+  }
   // Dropping on the background of the same window in icon view: moving the icons
   if (same_pane && t.item < 0 && !copy && known(src) &&
       src->pane->view()->mode() == FolderView::Icons) {
@@ -3582,6 +3705,14 @@ static std::string uri_decode(const std::string &s) {
   return r;
 }
 
+// A program a file can be dropped on: an AppImage or an executable regular file
+bool Desktop::is_program(const std::string &path) const {
+  if (path.empty()) return false;
+  struct stat st;
+  if (stat(path.c_str(), &st) != 0 || !S_ISREG(st.st_mode)) return false;
+  return is_appimage(fs::path(path).filename().string()) || (st.st_mode & S_IXUSR);
+}
+
 void Desktop::drop_uris(const std::string &list, const std::string &dest) {
   std::vector<Entry> items;
   std::error_code ec;
@@ -3604,6 +3735,12 @@ void Desktop::drop_uris(const std::string &list, const std::string &dest) {
     if (fs::exists(path, ec)) items.push_back(entry_for(path));
   }
   if (items.empty()) return;
+  if (is_program(dest)) {   // onto a program: it starts with the files
+    std::vector<std::string> files;
+    for (auto &e : items) files.push_back(e.path);
+    open_with_program(dest, files);
+    return;
+  }
   if (dest == trash_dir()) {
     std::vector<std::string> paths;
     for (auto &e : items) paths.push_back(e.path);

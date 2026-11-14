@@ -411,7 +411,7 @@ public:
     named("PICTURES", "Pictures", _("Pictures"), Icon::Image);
     named("MUSIC", "Music", _("Music"), Icon::Music);
     named("VIDEOS", "Videos", _("Videos"), Icon::Folder);
-    add(_("Applications"), home_dir() + "/.nirvana-apps", Icon::Applications);
+    add(_("Applications"), apps_dir(), Icon::Applications);
     add(_("File system"), "/", Icon::HardDisk);
     // mounted disks and sticks
     std::ifstream m("/proc/mounts");

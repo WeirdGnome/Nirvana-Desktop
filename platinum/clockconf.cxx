@@ -138,7 +138,9 @@ DesktopSettings read_desktop() {
     }
     else if (line.rfind("classic_windows=", 0) == 0) d.classic = line.substr(16) == "1";
     else if (line.rfind("outline_drag=", 0) == 0) d.outline = line.substr(13) == "1";
-    else if (line.rfind("folder_style=", 0) == 0) d.folder_style = line.substr(13) == "explorer" ? "explorer" : "rambler";
+    // folder_windows= (0.0.69): drawers by default; the older folder_style= (always "explorer"
+    // in 0.0.62-0.0.68, when there was no choice) is not read any more
+    else if (line.rfind("folder_windows=", 0) == 0) d.folder_style = line.substr(15) == "explorer" ? "explorer" : "rambler";
   }
   return d;
 }
@@ -152,7 +154,7 @@ bool write_desktop(const DesktopSettings &d) {
   out << "# Nirvana Desktop - the desktop (Preferences > Desktop)\n"
       << "icon_margin=" << d.icon_margin << "\ndock_room=" << d.dock_room << "\ndock_size=" << d.dock_size << "\n"
       << "classic_windows=" << d.classic << "\noutline_drag=" << d.outline << "\n"
-      << "folder_style=" << d.folder_style << "\n";
+      << "folder_windows=" << (d.folder_style == "explorer" ? "explorer" : "drawers") << "\n";
   return (bool)out;
 }
 

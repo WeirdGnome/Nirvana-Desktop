@@ -106,6 +106,12 @@ public:
   void go_back();
   void go_forward();
   void new_window();
+  void iconify_active();
+  void leave_out();
+  void put_away();
+  void put_away_path(const std::string &path);
+  std::vector<std::string> left_out() const;
+  void save_left_out(const std::vector<std::string> &v);
   void go_location(NWin *w);      // Enter in the location field
   NWin *menu_target = nullptr;    // the window whose menu bar the command was chosen from
   void restore();                 // open the windows remembered from the previous session
@@ -183,7 +189,9 @@ public:
   bool desk_shortcut();                     // shortcuts of desktop icons (no active window)
   void open_preferences();
   void open_apps();
-  std::string desktop_dir() const;   // ~/Pulpit (XDG_DESKTOP_DIR): its files and folders are on the desktop
+  std::string desktop_dir() const;
+  std::string library_dir() const;
+  std::string ramdisk_label() const;   // ~/Pulpit (XDG_DESKTOP_DIR): its files and folders are on the desktop
   void watch_desktop_dir();
   int desk_ino_ = -1;
   void screenshot();                 // Special > Screenshot (Print): the screen into Pictures   // the Applications icon: always a plain (simple) Rambler window
@@ -216,9 +224,9 @@ public:
   void format_disk();
   void reset_nirvana();
   // --- the explorer (explorer.cxx): folder tree, one or two panes (source/destination) ---
-  // folder windows: always Rambler Advanced (tree, two panes) - only the Applications window
-  // is a plain one (force_simple_)
-  bool explorer_mode() const { return true; }
+  // folder windows: drawers (each folder its own window, remembering its place - the default)
+  // or Rambler Advanced (tree, two panes); Preferences > Desktop > Folder Windows
+  bool explorer_mode() const { return desk_set_.folder_style == "explorer"; }
   std::string folder_title(const std::string &path) const { return title_for(path); }   // "wakacje.zip", not the cache folder
   void build_explorer(NWin *win, int ox, int oy, int W, int H, const std::string &path);
   void ex_layout(NWin *w);
@@ -290,7 +298,10 @@ private:
     bool prefs = false;         // the Preferences icon (opens the panel, not a folder)
     bool server = false;        // a connected server (SFTP, FTP, SMB) - like a disk
     bool deskfile = false;      // a file or folder of the Desktop folder (~/Pulpit), in .entry
-    bool no_drop() const { return win || prefs || (deskfile && !entry.dir); }   // files cannot be dropped here
+    bool leftout = false;       // left out from a folder (Icons > Leave Out), Put Away takes it back
+    bool ramdisk = false;       // the Ram Disk (~/.ramdisk), its label shows how full it is
+    // files cannot be dropped here (a program on the desktop takes them: it starts with them)
+    bool no_drop() const { return win || prefs || (deskfile && !entry.dir && entry.icon != plat::Icon::Application); }
     Fl_Image *img = nullptr;    // its picture (from _NET_WM_ICON or the AppImage)
   };
   int icon_cols_ = 1;   // icon columns at the left edge (disks, windows, Trash)
@@ -358,6 +369,7 @@ private:
   std::vector<std::string> open_with_files(const std::vector<Entry> &sel);
   void open_with_app(const openwith::App &a, const std::vector<std::string> &files);
   void open_with_program(const std::string &prog, const std::vector<std::string> &files);
+  bool is_program(const std::string &path) const;   // an AppImage or an executable file (a drop starts it)
   void ask_missing_libs(const std::string &path, const std::vector<std::string> &missing);
   void install_libs(const std::string &path, const std::vector<std::string> &missing);
   std::set<std::string> libs_ok_;   // applications started even though libraries are missing

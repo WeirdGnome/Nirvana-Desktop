@@ -4,6 +4,7 @@
 // The pattern shows in the bars with the "Fit" layout, around a small "Center" image
 // and below the transparent parts of a PNG.
 #include "platinum.h"
+#include "i18n.h"
 
 #include <FL/Fl.H>
 #include <FL/Fl_RGB_Image.H>
@@ -90,6 +91,24 @@ std::string xdg_user_dir(const char *key) {
     if (!v.empty() && v[0] == '/' && v != home()) return v;
   }
   return "";
+}
+
+std::string apps_dir(const std::string &h) {
+  std::string home_ = h.empty() ? home() : h;
+  const char *x = getenv("XDG_CONFIG_HOME");
+  std::string cfg = (x && *x ? std::string(x) : home_ + "/.config") + "/nirvana";
+  std::string name;
+  {
+    std::ifstream in(cfg + "/apps-folder");
+    std::getline(in, name);
+  }
+  if (name.empty() || name.find('/') != std::string::npos || name[0] == '.') {
+    name = _("Applications");
+    std::error_code ec;
+    std::filesystem::create_directories(cfg, ec);
+    std::ofstream(cfg + "/apps-folder") << name << "\n";
+  }
+  return home_ + "/" + name;
 }
 
 std::string pictures_dir() {
