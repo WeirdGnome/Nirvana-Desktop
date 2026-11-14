@@ -132,6 +132,7 @@ DesktopSettings read_desktop() {
   while (std::getline(in, line)) {
     if (line.rfind("icon_margin=", 0) == 0) d.icon_margin = line.substr(12) != "0";
     else if (line.rfind("dock_room=", 0) == 0) d.dock_room = line.substr(10) != "0";
+    else if (line.rfind("screens=", 0) == 0) d.screens = std::clamp(atoi(line.substr(8).c_str()), 1, 9);
     else if (line.rfind("dock_size=", 0) == 0) {
       int v = atoi(line.substr(10).c_str());
       d.dock_size = v == 24 || v == 48 || v == 64 ? v : 32;
@@ -152,7 +153,7 @@ bool write_desktop(const DesktopSettings &d) {
   mkdir(dir.c_str(), 0755);
   std::ofstream out(f);
   out << "# Nirvana Desktop - the desktop (Preferences > Desktop)\n"
-      << "icon_margin=" << d.icon_margin << "\ndock_room=" << d.dock_room << "\ndock_size=" << d.dock_size << "\n"
+      << "icon_margin=" << d.icon_margin << "\ndock_room=" << d.dock_room << "\ndock_size=" << d.dock_size << "\nscreens=" << d.screens << "\n"
       << "classic_windows=" << d.classic << "\noutline_drag=" << d.outline << "\n"
       << "folder_windows=" << (d.folder_style == "explorer" ? "explorer" : "drawers") << "\n";
   return (bool)out;

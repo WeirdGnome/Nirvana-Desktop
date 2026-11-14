@@ -40,7 +40,7 @@ Co się zmieniło w każdej wersji: [CHANGELOG.pl.md](CHANGELOG.pl.md).
 
 Rozpakuj źródła i uruchom instalator:
 
-    tar xzf nirvana-desktop-0.0.70.tar.gz && cd nirvana-desktop
+    tar xzf nirvana-desktop-0.0.71.tar.gz && cd nirvana-desktop
     sudo ./install.sh                 # albo: sudo ./install.sh --login-screen
 
 Instalator:
@@ -141,6 +141,17 @@ Inną czcionkę systemową (np. wolną, w stylu bitmapowym) można podać przez 
   tworzony, gdy go nie ma) są ikonami w lewej kolumnie – zawsze pod dyskami i urządzeniami,
   a nad zminimalizowanymi oknami, najpierw foldery. Dwuklik je otwiera, prawy przycisk daje
   Otwórz, Pokaż w folderze i Usuń (do kosza); zmiana w folderze widać od razu.
+- **Wirtualne ekrany** (Preferencje > Pulpit > Ekrany, 1–9, domyślnie 4): każde okno żyje na
+  jednym ekranie, na wyświetlaczu są tylko okna pokazanego (ikony biurka, dok i pasek menu są na
+  wszystkich; okno Zadania też). **Gadżet ekranów** na prawym końcu paska menu pokazuje numer
+  bieżącego ekranu: klik pokazuje następny, prawy przycisk listę wszystkich. **Ściągnięcie paska
+  menu w dół** (jego pustego środka albo gadżetu) ściąga pokazany ekran jak kartkę i odsłania
+  następny pod spodem – puszczenie poniżej ćwierci wysokości zostawia następny ekran, wyżej
+  ekran wraca. `Win+M` / `Win+Shift+M` następny / poprzedni ekran, `Win+1`…`Win+9` wybrany,
+  `Win+Shift+1`…`9` przenosi tam aktywne okno. Alt+Tab przełącza okna pokazanego ekranu; okno
+  włączone skądinąd (jego ikona, menu aplikacji) przywołuje swój ekran. EWMH
+  (`_NET_NUMBER_OF_DESKTOPS`, `_NET_CURRENT_DESKTOP`, `_NET_WM_DESKTOP`), więc działają też
+  pagery i `wmctrl`.
 - **ikonizacja na biurko:** okno znika, a na biurku (w lewej kolumnie, pod
   dyskami i plikami z Pulpitu) pojawia się jego ikona – obrazek programu z `_NET_WM_ICON` i tytuł okna na żółtym
   tle, więc zminimalizowane okna odróżniają się od dysków i plików. Kontury przelatują z okna do jego ikony, a przy przywracaniu dwuklikiem z ikony z powrotem do okna. Tak samo działa „minimalizuj” w samym programie
@@ -188,7 +199,7 @@ Inną czcionkę systemową (np. wolną, w stylu bitmapowym) można podać przez 
 - **Gdzie są aplikacje**: w folderze `~/Aplikacje` na Nirvana HD (nazwa w języku pierwszego
   uruchomienia, zapamiętana w `~/.config/nirvana/apps-folder`), z folderami kategorii; programy
   są dużymi ikonami, jak w oknie Preferencji (lista – `Ctrl+2`). Ukryty `~/.nirvana-apps`
-  z wersji 0.0.38–0.0.70 jest tam przenoszony przy pierwszym uruchomieniu, razem z wpisami doku
+  z wersji 0.0.38–0.0.71 jest tam przenoszony przy pierwszym uruchomieniu, razem z wpisami doku
   i zapamiętanymi oknami. Prawy przycisk na aplikacji i **Połóż na doku**
   trzyma ją pod ręką; prawy przycisk na kafelku doku daje **Otwórz** i **Odepnij z doku**.
 - **Instalacja**: otwarcie AppImage spoza folderu Aplikacje (np. z Pobranych) pyta, czy

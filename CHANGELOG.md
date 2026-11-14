@@ -1,6 +1,20 @@
 # Changelog
 All notable changes to Nirvana Desktop, newest first. Polish: [CHANGELOG.pl.md](CHANGELOG.pl.md).
 
+## 0.0.71 – 2026-11-14
+
+The third stage of the rework: virtual screens.
+
+- **Virtual screens**: 4 by default, 1 to 9 in *Preferences > Desktop > Screens*. Every window lives on its own screen. The desktop icons, the dock, the menu bar and the Jobs window are on all of them.
+- **The screen gadget** at the right end of the menu bar shows the number of the current screen. A click switches to the next one, and the right button shows the list of screens.
+- **Pulling the screen**: dragging the menu bar down slides the current screen down like a sheet and reveals the next one. Let go low, it stays on the next screen; let go high, it springs back.
+- **Shortcuts**:
+  - `Win+M` and `Win+Shift+M` – the next and previous screen;
+  - `Win+1`…`9` – a chosen screen;
+  - `Win+Shift+1`…`9` – moves the active window there.
+- Alt+Tab covers the windows of the current screen. A window activated from its icon or the application menu switches to its screen. A window restored from its desktop icon comes to the current screen.
+- EWMH compatible, so external pagers and `wmctrl` work too. After *Reset Nirvana* the windows stay on their screens.
+
 ## 0.0.70 – 2026-11-14
 
 The second stage of the rework: the icons.

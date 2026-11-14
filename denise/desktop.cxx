@@ -1,6 +1,7 @@
 // Nirvana Desktop - denise: the desktop, the menu bar and the file manager windows
 #include "desktop.h"
 #include "jobs.h"
+#include "screens.h"
 #include "sounds.h"
 #include "applets.h"
 #include "appimage.h"
@@ -81,6 +82,15 @@ public:
     Fl::add_timeout(3.0, tick, this);
   }
   ~MemInfo() override { Fl::remove_timeout(tick, this); }
+  // the empty middle of the menu bar: pulling it down reveals the next screen
+  int handle(int e) override {
+    switch (e) {
+    case FL_PUSH: if (Fl::event_button() != FL_LEFT_MOUSE) return 0; screens::pull_begin(Fl::event_y_root()); return 1;
+    case FL_DRAG: screens::pull_move(Fl::event_y_root()); return 1;
+    case FL_RELEASE: screens::pull_end(); return 1;
+    }
+    return Fl_Widget::handle(e);
+  }
 
   static std::string group(unsigned long long v) {   // 1234567 -> "1 234 567"
     std::string d = std::to_string(v), r;
@@ -584,6 +594,7 @@ Desktop::Desktop(int W, int H, const std::string &home)
   shield_w_ = applets::make_shield(0, 0, 22, MENUBAR_H);
   applets::clipboard_hotkey();
   tray_w_ = tray::make(0, 0, MENUBAR_H);
+  screens_w_ = screens::make_gadget(0, 0, 26, MENUBAR_H);
   {
     // width of the menu titles - computed the same way as in Fl_Menu_Bar::draw()
     int mx = 6;
@@ -680,6 +691,7 @@ void Desktop::layout_bar() {
     rx -= ww;
     wd->resize(rx, 0, ww, MENUBAR_H);
   };
+  put(screens_w_, 26);   // the screen gadget: right of the clock, next to the applications
   put(extras_, extras_->w());
   put(bell_w_, 24);
   put(shield_w_, 22);
@@ -1179,6 +1191,8 @@ static int x_watch(void *event, void *) {
     else if (e->xproperty.atom == atom("_NET_CLIENT_LIST")) g_desk->clients_changed();
     else if (e->xproperty.atom == atom(APPEARANCE_ATOM)) g_desk->appearance_changed();
     else if (e->xproperty.atom == atom(DESKTOP_ATOM)) g_desk->desktop_settings_changed();   // Preferences > Desktop
+    else if (e->xproperty.atom == atom("_NET_CURRENT_DESKTOP") || e->xproperty.atom == atom("_NET_NUMBER_OF_DESKTOPS"))
+      g_desk->screen_changed();
   }
   return 0;
 }
@@ -1516,6 +1530,11 @@ int Desktop::shortcut() {
   // Note: Fl_Menu_::test_shortcut() calls the action of the found item itself.
   update_menu();
   return menu_->test_shortcut() ? 1 : 0;
+}
+
+// Insight showed another screen: the gadget's number; the folder windows of that screen
+void Desktop::screen_changed() {
+  if (screens_w_) screens_w_->redraw();
 }
 
 void Desktop::active_changed() {

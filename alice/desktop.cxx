@@ -24,7 +24,7 @@ namespace {
 
 DesktopSettings g_d;
 Fl_Check_Button *g_margin, *g_dock, *g_classic, *g_outline;
-Fl_Choice *g_dsize;
+Fl_Choice *g_dsize, *g_screens;
 Fl_Round_Button *g_style_r, *g_style_e;
 
 // Two overlapping windows in the chosen style: the active one in front.
@@ -99,6 +99,7 @@ Preview *g_preview;
 void changed(Fl_Widget *, void *) {
   g_d.icon_margin = g_margin->value();
   g_d.dock_room = g_dock->value();
+  g_d.screens = g_screens->value() + 1;
   { static const int sizes[] = {24, 32, 48, 64}; int i = g_dsize->value(); g_d.dock_size = sizes[i >= 0 && i < 4 ? i : 1]; }
   g_d.classic = g_classic->value();
   g_d.outline = g_outline->value();
@@ -150,6 +151,16 @@ int panel_desktop() {
   }
   g_dsize->value(g_d.dock_size == 24 ? 0 : g_d.dock_size == 48 ? 2 : g_d.dock_size == 64 ? 3 : 1);
   g_dsize->callback(changed);
+  auto *scl = new Fl_Box(320, 200, 60, 22, _("Screens:"));
+  scl->labelsize(SIZE_SMALL + 1);
+  scl->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
+  g_screens = new Fl_Choice(385, 200, 60, 22);
+  g_screens->textsize(SIZE_SMALL + 1);
+  g_screens->add("1|2|3|4|5|6|7|8|9");
+  g_screens->value(std::clamp(g_d.screens, 1, 9) - 1);
+  g_screens->callback(changed);
+  g_screens->tooltip(_("Virtual screens: Win+M shows the next one, Win+1..9 a chosen one, Win+Shift+number moves "
+                       "the active window there; pulling the menu bar down reveals the next screen."));
   g_preview = new Preview(320, 38, 165, 110);
   note(320, 152, 165, 40, _("Preview of a zoomed window."));
   auto *sep = new Fl_Box(15, 234, W - 30, 2);

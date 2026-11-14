@@ -41,7 +41,7 @@ What changed in each version: [CHANGELOG.md](CHANGELOG.md).
 
 Unpack the sources and run the installer:
 
-    tar xzf nirvana-desktop-0.0.70.tar.gz && cd nirvana-desktop
+    tar xzf nirvana-desktop-0.0.71.tar.gz && cd nirvana-desktop
     sudo ./install.sh                 # or: sudo ./install.sh --login-screen
 
 The installer:
@@ -141,6 +141,17 @@ Another system font (for example a free bitmap-style one) can be set with `NIRVA
   disks and devices and above the minimized windows, folders first. A double click opens them,
   the right button gives Open, Show in Folder and Delete (to the Trash); a change in the folder
   shows at once.
+- **Virtual screens** (Preferences > Desktop > Screens, 1–9, 4 by default): every window lives on
+  one screen, only the windows of the shown one are on the display (the desktop icons, the dock
+  and the menu bar are on all of them; the Jobs window too). The **screen gadget** at the right
+  end of the menu bar shows the number of the shown screen: a click shows the next one, the right
+  button lists them all. **Pulling the menu bar down** (its empty middle or the gadget) pulls the
+  shown screen down like a sheet and reveals the next one behind it – let go below a quarter of
+  the height and the next screen stays, higher it springs back. `Win+M` / `Win+Shift+M` the next
+  / previous screen, `Win+1`…`Win+9` a chosen one, `Win+Shift+1`…`9` moves the active window
+  there. Alt+Tab switches between the windows of the shown screen; a window activated from
+  elsewhere (its icon, the application menu) brings its screen. EWMH (`_NET_NUMBER_OF_DESKTOPS`,
+  `_NET_CURRENT_DESKTOP`, `_NET_WM_DESKTOP`), so pagers and `wmctrl` work too.
 - **Iconification to the desktop:** the window disappears and its icon appears on the
   desktop (in the left column, below the disks and the Desktop folder's files) – the program's picture from `_NET_WM_ICON`
   and the window title on a yellow label, so minimized windows stand out from disks and
@@ -190,7 +201,7 @@ Another system font (for example a free bitmap-style one) can be set with `NIRVA
 - **Where applications live**: in the folder `~/Aplikacje` of Nirvana HD (`~/Applications` – the
   name in the language of the first start, remembered in `~/.config/nirvana/apps-folder`), with
   its category folders; the programs are shown as big icons, like the Preferences window (a list
-  with `Ctrl+2`). The hidden `~/.nirvana-apps` of 0.0.38–0.0.70 is moved there at the first
+  with `Ctrl+2`). The hidden `~/.nirvana-apps` of 0.0.38–0.0.71 is moved there at the first
   start, together with dock entries and remembered windows. Right-click an application
   there and choose **Put on Dock** to keep it at hand; right-click a dock tile for **Open** and
   **Unpin from Dock**.

@@ -1,6 +1,20 @@
 # Lista zmian
 Wszystkie ważniejsze zmiany w Nirvana Desktop, od najnowszych. English: [CHANGELOG.md](CHANGELOG.md).
 
+## 0.0.71 – 2026-11-14
+
+Trzeci etap przebudowy: wirtualne ekrany.
+
+- **Wirtualne ekrany**: domyślnie 4, od 1 do 9 w *Preferencjach > Pulpit > Ekrany*. Każde okno żyje na swoim ekranie. Ikony biurka, dok, pasek menu i okno Zadania są na wszystkich.
+- **Gadżet ekranów** na prawym końcu paska menu pokazuje numer bieżącego ekranu. Klik przełącza na następny, a prawy przycisk pokazuje listę ekranów.
+- **Ściąganie ekranu**: przeciągnięcie paska menu w dół zsuwa bieżący ekran jak kartkę i odsłania następny. Puszczony nisko zostaje na następnym ekranie, a puszczony wysoko wraca.
+- **Skróty**:
+  - `Win+M` i `Win+Shift+M` – następny i poprzedni ekran;
+  - `Win+1`…`9` – wybrany ekran;
+  - `Win+Shift+1`…`9` – przenosi tam aktywne okno.
+- Alt+Tab obejmuje okna bieżącego ekranu. Okno włączone z ikony albo z menu aplikacji przełącza na swój ekran. Okno przywrócone z ikony na biurku pojawia się na bieżącym ekranie.
+- Zgodne z EWMH, więc działają też zewnętrzne pagery i `wmctrl`. Po *Resetuj Nirvanę* okna zostają na swoich ekranach.
+
 ## 0.0.70 – 2026-11-14
 
 Drugi etap przebudowy: ikony.

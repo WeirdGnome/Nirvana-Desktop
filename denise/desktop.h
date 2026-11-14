@@ -118,7 +118,8 @@ public:
   void close(NWin *w);            // closing a window (frame button, Ctrl+W, dialog)
   void remember(NWin *w, bool open);
   void update_global_keys();    // the global shortcuts (Win+letter, XGrabKey)
-  void active_changed();          // the window manager changed the active window
+  void active_changed();
+  void screen_changed();          // the window manager changed the active window
   void clients_changed();         // the window list changed (_NET_CLIENT_LIST)
   void current_app(std::string &name, Fl_Image *&icon);   // the active application for the bar
   std::vector<NWin *> folder_windows();                    // visible folder windows
@@ -417,6 +418,7 @@ private:
   Fl_Widget *app_menu_ = nullptr;   // gary: the application menu in the top right corner
   int active_app_index(const std::vector<gary::App> &apps);
   Fl_Widget *extras_;
+  Fl_Widget *screens_w_ = nullptr;   // the virtual screens gadget
   Fl_Widget *vol_w_ = nullptr, *pow_w_ = nullptr, *upd_w_ = nullptr, *prn_w_ = nullptr, *bt_w_ = nullptr, *clip_w_ = nullptr, *bell_w_ = nullptr, *shield_w_ = nullptr, *tray_w_ = nullptr, *mem_w_ = nullptr;
   bool tray_pending_ = false;
 public:
