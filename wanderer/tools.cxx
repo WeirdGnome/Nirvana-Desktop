@@ -17,6 +17,7 @@
 #include <functional>
 #include <ctime>
 #include <filesystem>
+#include <map>
 #include <grp.h>
 #include <pwd.h>
 #include <sstream>
@@ -102,11 +103,12 @@ void launch(const std::vector<std::string> &argv, const std::string &dir) {
 // --------------------------------------------------------------------------------------------
 // Execute Command: a command line, run in the drawer's directory
 void execute_command(const std::string &dir) {
+    static std::string last;   // the command given last time is offered again
     bool done = false, run = false;
     auto *root = VGroup();
     auto *row = HGroup();
     new Text("Command:");
-    auto *cmd = new String("", 1024);
+    auto *cmd = new String(last, 1024);
     cmd->weight(300);
     row->end();
     auto *buttons = HGroup();
@@ -129,7 +131,7 @@ void execute_command(const std::string &dir) {
     command = cmd->value();
     w->hide();
     Fl::delete_widget(w);
-    if (run && !command.empty()) launch({"/bin/sh", "-c", command}, dir);
+    if (run && !command.empty()) { last = command; launch({"/bin/sh", "-c", command}, dir); }
 }
 
 // --------------------------------------------------------------------------------------------
@@ -434,6 +436,129 @@ void empty_trash() {
             std::error_code e2;
             fs::remove_all(it->path(), e2);
         }
+}
+
+// --------------------------------------------------------------------------------------------
+// .desktop files (the programs' descriptions on Linux): Name, Exec without its field codes
+bool read_desktop_entry(const std::string &file, DesktopEntry &e) {
+    FILE *f = fopen(file.c_str(), "r");
+    if (!f) return false;
+    char line[4096];
+    bool in_entry = false;
+    e = DesktopEntry{};
+    while (fgets(line, sizeof line, f)) {
+        std::string l(line);
+        while (!l.empty() && (l.back() == '\n' || l.back() == '\r')) l.pop_back();
+        if (!l.empty() && l[0] == '[') { in_entry = l == "[Desktop Entry]"; continue; }
+        if (!in_entry) continue;
+        auto eq = l.find('=');
+        if (eq == std::string::npos) continue;
+        std::string k = l.substr(0, eq), v = l.substr(eq + 1);
+        if (k == "Name") e.name = v;
+        else if (k == "Exec") e.exec = v;
+        else if (k == "TryExec") e.try_exec = v;
+        else if (k == "Hidden") e.hidden = v == "true";
+        else if (k == "NoDisplay") e.no_display = v == "true";
+        else if (k == "OnlyShowIn") e.only_show_in = v;
+        else if (k == "NotShowIn") e.not_show_in = v;
+        else if (k == "Terminal") e.terminal = v == "true";
+    }
+    fclose(f);
+    // field codes (%f %F %u %U %i %c %k ...) are left out; %% is a percent sign
+    std::string ex;
+    for (size_t i = 0; i < e.exec.size(); i++) {
+        if (e.exec[i] == '%' && i + 1 < e.exec.size()) {
+            if (e.exec[i + 1] == '%') ex += '%';
+            i++;
+            continue;
+        }
+        ex += e.exec[i];
+    }
+    e.exec = ex;
+    return !e.exec.empty();
+}
+
+static bool in_path(const std::string &prog) {
+    if (prog.empty()) return true;
+    if (prog[0] == '/') return access(prog.c_str(), X_OK) == 0;
+    const char *path = getenv("PATH");
+    std::string p = path ? path : "/usr/bin:/bin";
+    size_t a = 0;
+    while (a <= p.size()) {
+        size_t b = p.find(':', a);
+        std::string d = p.substr(a, b == std::string::npos ? std::string::npos : b - a);
+        if (!d.empty() && access((d + "/" + prog).c_str(), X_OK) == 0) return true;
+        if (b == std::string::npos) break;
+        a = b + 1;
+    }
+    return false;
+}
+
+static bool listed(const std::string &list, const char *name) {
+    size_t a = 0;
+    while (a < list.size()) {
+        size_t b = list.find(';', a);
+        if (list.substr(a, b == std::string::npos ? std::string::npos : b - a) == name) return true;
+        if (b == std::string::npos) break;
+        a = b + 1;
+    }
+    return false;
+}
+
+// The programs started with Wanderer: everything in the Startup drawer (~/.config/wanderer/startup:
+// programs, scripts, .desktop files - in the order of their names), then the autostart
+// entries of the system and the user (XDG autostart) meant for this desktop
+void run_startup() {
+    const char *x = getenv("XDG_CONFIG_HOME");
+    std::string conf = x && *x ? x : std::string(getenv("HOME") ? getenv("HOME") : "/tmp") + "/.config";
+    std::string startup = conf + "/wanderer/startup";
+    std::error_code ec;
+    fs::create_directories(startup, ec);
+    std::vector<fs::path> items;
+    for (auto it = fs::directory_iterator(startup, ec); !ec && it != fs::directory_iterator(); it.increment(ec))
+        items.push_back(it->path());
+    std::sort(items.begin(), items.end());
+    for (auto &p : items) {
+        DesktopEntry e;
+        if (p.extension() == ".desktop") {
+            if (read_desktop_entry(p.string(), e) && !e.hidden) launch({"/bin/sh", "-c", e.exec}, getenv("HOME") ? getenv("HOME") : "/");
+        } else if (fs::is_regular_file(p, ec) && access(p.c_str(), X_OK) == 0)
+            launch({p.string()}, getenv("HOME") ? getenv("HOME") : "/");
+    }
+    // XDG autostart: the user's entries hide the system's of the same name
+    std::map<std::string, std::string> entries;
+    for (std::string dir : {std::string("/etc/xdg/autostart"), conf + "/autostart"})
+        for (auto it = fs::directory_iterator(dir, ec); !ec && it != fs::directory_iterator(); it.increment(ec))
+            if (it->path().extension() == ".desktop") entries[it->path().filename().string()] = it->path().string();
+    for (auto &[name, file] : entries) {
+        DesktopEntry e;
+        if (!read_desktop_entry(file, e) || e.hidden) continue;
+        if (!e.only_show_in.empty() && !listed(e.only_show_in, "Wanderer")) continue;
+        if (listed(e.not_show_in, "Wanderer")) continue;
+        if (!in_path(e.try_exec)) continue;
+        launch({"/bin/sh", "-c", e.exec}, getenv("HOME") ? getenv("HOME") : "/");
+    }
+}
+
+// The Tools menu: the programs, scripts and .desktop files in ~/.config/wanderer/tools
+std::vector<ToolItem> tool_items() {
+    const char *x = getenv("XDG_CONFIG_HOME");
+    std::string dir = (x && *x ? std::string(x) : std::string(getenv("HOME") ? getenv("HOME") : "/tmp") + "/.config") +
+                      "/wanderer/tools";
+    std::error_code ec;
+    fs::create_directories(dir, ec);
+    std::vector<ToolItem> v;
+    for (auto it = fs::directory_iterator(dir, ec); !ec && it != fs::directory_iterator(); it.increment(ec)) {
+        auto &p = it->path();
+        DesktopEntry e;
+        if (p.extension() == ".desktop") {
+            if (read_desktop_entry(p.string(), e) && !e.hidden && !e.no_display)
+                v.push_back({e.name.empty() ? p.stem().string() : e.name, e.exec});
+        } else if (fs::is_regular_file(p, ec) && access(p.c_str(), X_OK) == 0)
+            v.push_back({p.filename().string(), "'" + p.string() + "'"});
+    }
+    std::sort(v.begin(), v.end(), [](auto &a, auto &b) { return strcasecmp(a.label.c_str(), b.label.c_str()) < 0; });
+    return v;
 }
 
 // --------------------------------------------------------------------------------------------

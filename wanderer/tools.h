@@ -36,6 +36,20 @@ bool ask_find(std::string &pattern);
 // Drawer and File fields, OK / Volumes / Parent / Cancel. Returns the path chosen.
 bool file_request(const std::string &title, std::string &path);
 
+// .desktop files
+struct DesktopEntry {
+    std::string name, exec, try_exec, only_show_in, not_show_in;
+    bool hidden = false, no_display = false, terminal = false;
+};
+bool read_desktop_entry(const std::string &file, DesktopEntry &e);
+
+// the Startup drawer and XDG autostart (when Wanderer starts)
+void run_startup();
+
+// the Tools menu: label and the command (for /bin/sh -c)
+struct ToolItem { std::string label, command; };
+std::vector<ToolItem> tool_items();
+
 // starts a program / opens a file with the system's handler, detached
 void launch(const std::vector<std::string> &argv, const std::string &dir);
 

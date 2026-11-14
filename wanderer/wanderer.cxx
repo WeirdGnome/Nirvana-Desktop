@@ -89,6 +89,7 @@ public:
     void show_menu(IconWindow *w, int x_root, int y_root);
     std::vector<Fl_Menu_Item> menu_items(IconWindow *w);
     void publish_menu(IconWindow *w);
+    std::vector<ToolItem> tools_;   // the Tools menu
     void publish_title(IconWindow *w);
     static void tick(void *d);
     static void watch_volumes(void *d);
@@ -127,7 +128,8 @@ enum MenuId {
     MEN_WINDOW_SORT_SIZE, MEN_WINDOW_SORT_TYPE, MEN_WINDOW_SORT_REVERSE, MEN_WINDOW_SORT_TOPDRAWERS,
     MEN_WINDOW_FIND, MEN_ICON_OPEN, MEN_ICON_RENAME, MEN_ICON_INFORMATION, MEN_ICON_SNAPSHOT,
     MEN_ICON_UNSNAPSHOT, MEN_ICON_DELETE, MEN_ICON_DISKINFO, MEN_WANDERER_PREFS,
-    MEN_ICON_LEAVEOUT, MEN_ICON_PUTAWAY, MEN_ICON_EMPTYTRASH, MEN_WANDERER_GUISETTINGS, MEN_ICON_EJECT, MEN_ICON_COPY
+    MEN_ICON_LEAVEOUT, MEN_ICON_PUTAWAY, MEN_ICON_EMPTYTRASH, MEN_WANDERER_GUISETTINGS, MEN_ICON_EJECT, MEN_ICON_COPY, MEN_TOOLS_DRAWER,
+    MEN_TOOL_FIRST = 1000
 };
 
 // The preferences on a window: the labels, the layout, the bars, the filter, the order
@@ -439,7 +441,8 @@ std::vector<Fl_Menu_Item> Wanderer::menu_items(IconWindow *w) {
             {"Eject", FL_META + 'j', nullptr, (void *)MEN_ICON_EJECT, eject_sel ? 0 : dis},
             {"Empty Trash", 0, nullptr, (void *)MEN_ICON_EMPTYTRASH, trash_sel ? 0 : dis},
             {nullptr},
-        {"Tools", 0, nullptr, nullptr, FL_SUBMENU | FL_MENU_INACTIVE},
+        {"Tools", 0, nullptr, nullptr, FL_SUBMENU},
+            {"Tools Drawer", 0, nullptr, (void *)MEN_TOOLS_DRAWER},
             {nullptr},
         {nullptr}};
     // the menus look like the screen's: the window's pens, the screen font
@@ -448,7 +451,27 @@ std::vector<Fl_Menu_Item> Wanderer::menu_items(IconWindow *w) {
         m.labelfont(prefs().font);
         m.labelsize(prefs().font_size);
     }
-    return std::vector<Fl_Menu_Item>(menu, menu + sizeof menu / sizeof menu[0]);
+    std::vector<Fl_Menu_Item> v(menu, menu + sizeof menu / sizeof menu[0]);
+    // the Tools menu: the user's tools (~/.config/wanderer/tools), then its drawer
+    tools_ = tool_items();
+    size_t at = 0;
+    for (size_t i = 0; i < v.size(); i++)
+        if (v[i].text && !strcmp(v[i].text, "Tools Drawer")) { at = i; break; }
+    if (at) {
+        if (!tools_.empty()) v[at].flags |= 0;
+        std::vector<Fl_Menu_Item> items;
+        for (size_t i = 0; i < tools_.size(); i++) {
+            Fl_Menu_Item m = {};
+            m.text = tools_[i].label.c_str();
+            m.user_data_ = (void *)(intptr_t)(MEN_TOOL_FIRST + (int)i);
+            m.labelfont_ = prefs().font;
+            m.labelsize_ = prefs().font_size;
+            if (i + 1 == tools_.size()) m.flags = FL_MENU_DIVIDER;
+            items.push_back(m);
+        }
+        v.insert(v.begin() + at, items.begin(), items.end());
+    }
+    return v;
 }
 
 // Without the window manager's screen bar: the menus as a pop-up under the pointer
@@ -565,6 +588,15 @@ bool Wanderer::shortcut(IconWindow *w) {
 }
 
 void Wanderer::menu_action(IconWindow *w, int id) {
+    if (id >= MEN_TOOL_FIRST) {
+        // a tool: started in the window's drawer, with the selected icons' paths as arguments
+        size_t i = id - MEN_TOOL_FIRST;
+        if (i >= tools_.size()) return;
+        std::vector<std::string> argv = {"/bin/sh", "-c", tools_[i].command + " \"$@\"", "sh"};
+        for (auto *e : w->iconlist()->selection()) argv.push_back(e->path);
+        launch(argv, w->is_root() ? (getenv("HOME") ? getenv("HOME") : "/") : w->location());
+        return;
+    }
     IconList *l = w->iconlist();
     auto resort = [l, w] { l->sort(); for (auto &e : l->entries()) e.provided_x = e.provided_y = NO_ICON_POSITION; l->rethink(); w->update_status(); };
     switch (id) {
@@ -668,6 +700,12 @@ void Wanderer::menu_action(IconWindow *w, int id) {
         }
         break;
     }
+    case MEN_TOOLS_DRAWER: {
+        const char *x = getenv("XDG_CONFIG_HOME");
+        std::string base = x && *x ? x : std::string(getenv("HOME") ? getenv("HOME") : "/tmp") + "/.config";
+        open_drawer(base + "/wanderer/tools");
+        break;
+    }
     case MEN_ICON_COPY: {
         std::vector<std::string> paths;
         for (auto *e : l->selection()) paths.push_back(e->path);
@@ -721,6 +759,31 @@ void Wanderer::menu_action(IconWindow *w, int id) {
 
 }  // namespace
 
+// The first Wanderer of this X session? (the window manager's check window names the session;
+// a marker in the runtime directory remembers it)
+static bool first_in_session() {
+    Atom check = XInternAtom(fl_display, "_NET_SUPPORTING_WM_CHECK", False), type;
+    int fmt;
+    unsigned long n = 0, after;
+    unsigned char *data = nullptr;
+    unsigned long id = 0;
+    if (XGetWindowProperty(fl_display, RootWindow(fl_display, fl_screen), check, 0, 1, False, XA_WINDOW, &type, &fmt, &n,
+                           &after, &data) == Success && data && n == 1)
+        id = ((::Window *)data)[0];
+    if (data) XFree(data);
+    const char *rt = getenv("XDG_RUNTIME_DIR");
+    const char *disp = getenv("DISPLAY");
+    std::string marker = std::string(rt && *rt ? rt : "/tmp") + "/wanderer-startup-" + std::to_string(getuid()) + "-" +
+                         (disp ? disp : "") ;
+    std::string want = std::to_string(id);
+    std::ifstream in(marker);
+    std::string have;
+    std::getline(in, have);
+    if (id && have == want) return false;
+    std::ofstream(marker) << want << "\n";
+    return true;
+}
+
 int main(int argc, char **argv) {
     bool backdrop = false;
     for (int i = 1; i < argc; i++)
@@ -729,7 +792,9 @@ int main(int argc, char **argv) {
     Fl::get_system_colors();
     Fl::add_system_handler(x_events, nullptr);
     zune::load_prefs();
+    fl_open_display();
     g_wanderer.start(backdrop);
+    if (backdrop && first_in_session()) run_startup();   // once per session (not again after a restart)
     Fl::add_timeout(5.0, Wanderer::tick, &g_wanderer);
     Fl::add_timeout(0.5, Wanderer::watch_volumes, &g_wanderer);
     return run();
