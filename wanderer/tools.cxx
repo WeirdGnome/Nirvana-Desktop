@@ -55,6 +55,29 @@ static void centre(Window *w) {
 }
 
 // --------------------------------------------------------------------------------------------
+// The requester's window: the keys of a system requester - Super+V the leftmost button
+// (positive), Super+B the rightmost (negative); Escape too (negative). Return does not
+// answer: a requester asking to delete or format is not answered by a stray key
+namespace {
+class RequesterWindow : public Window {
+public:
+    RequesterWindow(const std::string &title, Area *root, std::function<void(bool)> key)
+        : Window(title, root), key_(std::move(key)) {}
+    int handle(int e) override {
+        if (e == FL_KEYBOARD || e == FL_SHORTCUT) {
+            int k = Fl::event_key();
+            bool super = Fl::event_state() & FL_META;
+            if (super && k == 'v') { key_(true); return 1; }
+            if ((super && k == 'b') || k == FL_Escape) { key_(false); return 1; }
+        }
+        return Window::handle(e);
+    }
+
+private:
+    std::function<void(bool)> key_;
+};
+}  // namespace
+
 int request(const std::string &title, const std::string &text, const std::string &buttons) {
     std::vector<std::string> labels;
     std::stringstream ss(buttons);
@@ -79,7 +102,11 @@ int request(const std::string &title, const std::string &text, const std::string
         row->end();
     }
     root->end();
-    auto *w = new Window(title, root);
+    int n = (int)labels.size();
+    auto *w = new RequesterWindow(title, root, [&result, &done, n](bool positive) {
+        result = positive && n > 1 ? 1 : 0;
+        done = true;
+    });
     centre(w);
     run_modal(w, done);
     return result;
