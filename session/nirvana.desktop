@@ -1,7 +1,0 @@
-[Desktop Entry]
-Name=Nirvana Desktop
-Comment=Lightweight desktop in the spirit of the classic 1990s desktops
-Comment[pl]=Lekkie środowisko w duchu klasycznych pulpitów lat 90.
-Exec=nirvana-session
-Type=Application
-DesktopNames=Nirvana
