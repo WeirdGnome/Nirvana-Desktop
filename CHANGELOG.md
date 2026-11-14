@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.6.4 – 2026-11-14
+
+- **Ram Disk**: a volume in memory, always on the root window.
+  - Its files live on the memory file system (`/dev/shm/ramdisk-USER`, readable only by
+    its owner).
+  - It takes only the memory they need and is empty after a restart.
+  - Its window shows how full it is.
+
 ## 0.6.3 – 2026-11-14
 
 - **Find by contents**: besides a name pattern, a text the files must contain (no case,

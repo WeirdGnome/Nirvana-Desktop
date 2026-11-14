@@ -1,5 +1,13 @@
 # Lista zmian
 
+## 0.6.4 – 2026-11-14
+
+- **Ram Disk**: wolumin w pamięci, zawsze widoczny na głównym oknie.
+  - Pliki leżą w systemie plików w pamięci (`/dev/shm/ramdisk-UŻYTKOWNIK`, dostępne tylko
+    dla właściciela).
+  - Zajmuje tyle pamięci, ile potrzebują pliki, i po restarcie komputera jest pusty.
+  - Jego okno pokazuje zajętość.
+
 ## 0.6.3 – 2026-11-14
 
 - **Find po zawartości**: oprócz wzorca nazwy można podać tekst, który pliki muszą
