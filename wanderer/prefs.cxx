@@ -37,6 +37,7 @@ WandererPrefs WandererPrefs::load() {
         std::string k = line.substr(0, eq);
         if (k == "backdrop_image") { p.backdrop_image = line.substr(eq + 1); continue; }
         if (k == "drawer_image") { p.drawer_image = line.substr(eq + 1); continue; }
+        if (k == "screen_title") { p.screen_title = line.substr(eq + 1); continue; }
         int v = atoi(line.c_str() + eq + 1);
         if (k == "text_mode") p.text_mode = std::clamp(v, 0, 2);
         else if (k == "label_lines") p.label_lines = std::clamp(v, 1, 5);
@@ -62,7 +63,7 @@ void WandererPrefs::save() const {
         << "\nlist_mode=" << list_mode << "\ntoolbar=" << toolbar << "\nstatusbar=" << statusbar
         << "\nshow_hidden=" << show_hidden << "\ndrawers_first=" << drawers_first << "\nhspacing=" << hspacing
         << "\nvspacing=" << vspacing << "\nbackdrop_image=" << backdrop_image << "\nbackdrop_mode=" << backdrop_mode
-        << "\ndrawer_image=" << drawer_image << "\ndrawer_mode=" << drawer_mode << "\n";
+        << "\ndrawer_image=" << drawer_image << "\ndrawer_mode=" << drawer_mode << "\nscreen_title=" << screen_title << "\n";
 }
 
 // --------------------------------------------------------------------------------------------
@@ -107,6 +108,16 @@ void edit_prefs(const WandererPrefs &current, std::function<void(const WandererP
     VSpace();
     wins->end();
     columns->end();
+    // -- Screen title
+    auto *scr = new Group(Group::Vertical, Frame_Group);
+    scr->frame_title("Screen");
+    scr->columns(2);
+    label("Screen title:");
+    auto *stitle = new String(current.screen_title, 256);
+    stitle->weight(300);
+    label("");
+    new Text("%wv version  %os system  %ov kernel  %pc %pf %pt memory");
+    scr->end();
     // -- Background pictures
     auto *pics = new Group(Group::Vertical, Frame_Group);
     pics->frame_title("Background Pictures");
@@ -153,6 +164,7 @@ void edit_prefs(const WandererPrefs &current, std::function<void(const WandererP
         p.backdrop_mode = bmode->active();
         p.drawer_image = dimg->value();
         p.drawer_mode = dmode->active();
+        p.screen_title = stitle->value();
         return p;
     };
     auto *w = new Window("Wanderer Preferences", root);

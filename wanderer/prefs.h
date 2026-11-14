@@ -27,6 +27,9 @@ struct WandererPrefs {
     int hspacing = 5, vspacing = 5;
     std::string backdrop_image, drawer_image;   // background pictures ("" - none)
     int backdrop_mode = 1, drawer_mode = 0;     // 0 tiled, 1 scaled, 2 centred
+    // The user screen title: %wv / %wb Wanderer version, %ov OS version, %os OS release,
+    // %pc available, %pf free, %pt total memory ("" - the default title)
+    std::string screen_title;
 
     static WandererPrefs load();
     void save() const;

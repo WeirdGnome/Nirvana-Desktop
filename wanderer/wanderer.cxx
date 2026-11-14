@@ -29,6 +29,7 @@
 #include <fstream>
 #include <map>
 #include <sys/stat.h>
+#include <sys/utsname.h>
 #include <unistd.h>
 
 namespace fs = std::filesystem;
@@ -512,24 +513,66 @@ void Wanderer::show_menu(IconWindow *w, int xr, int yr) {
 
 // The screen's title while a Wanderer window is active: the version and the free memory
 // (as Wanderer shows on its screen); _WANDERER_SCREEN_TITLE, read by the window manager
-static std::string screen_title() {
+static std::string mem_text(long kb) {
+    char b[64];
+    if (kb < 0) return "?";
+    if (kb >= 10 * 1024 * 1024) snprintf(b, sizeof b, "%.1f GB", kb / 1048576.0);
+    else snprintf(b, sizeof b, "%.1f MB", kb / 1024.0);
+    return b;
+}
+
+static std::string os_release() {
+    std::ifstream in("/etc/os-release");
+    std::string line;
+    while (std::getline(in, line))
+        if (line.rfind("PRETTY_NAME=", 0) == 0) {
+            std::string v = line.substr(12);
+            if (v.size() >= 2 && (v[0] == '"' || v[0] == '\'')) v = v.substr(1, v.size() - 2);
+            return v;
+        }
+    return "Linux";
+}
+
+// ProcessUserScreenTitle (wandererprefs.c): the tokens of the user's screen title
+static std::string screen_title(const std::string &tmpl) {
     std::ifstream m("/proc/meminfo");
-    std::string k;
-    long v = 0, avail = -1;
-    std::string unit;
-    while (m >> k >> v >> unit) if (k == "MemAvailable:") { avail = v; break; }
-    std::string t = "Wanderer " WANDERER_VERSION;
-    if (avail >= 0) {
-        char b[64];
-        snprintf(b, sizeof b, "    %.1f MB free", avail / 1024.0);
-        t += b;
+    std::string k, unit;
+    long v = 0, avail = -1, mfree = -1, total = -1;
+    while (m >> k >> v >> unit) {
+        if (k == "MemAvailable:") avail = v;
+        else if (k == "MemFree:") mfree = v;
+        else if (k == "MemTotal:") total = v;
     }
-    return t;
+    if (tmpl.empty()) {
+        std::string t = "Wanderer " WANDERER_VERSION;
+        if (avail >= 0) t += "    " + mem_text(avail) + " " + tr("free");
+        return t;
+    }
+    struct utsname u {};
+    uname(&u);
+    std::string out;
+    for (size_t i = 0; i < tmpl.size(); i++) {
+        if (tmpl[i] == '%' && i + 2 < tmpl.size()) {
+            std::string tok = tmpl.substr(i + 1, 2);
+            std::string r;
+            bool hit = true;
+            if (tok == "wv" || tok == "wb") r = WANDERER_VERSION;
+            else if (tok == "ov") r = u.release;
+            else if (tok == "os") r = os_release();
+            else if (tok == "pc") r = mem_text(avail);
+            else if (tok == "pf") r = mem_text(mfree);
+            else if (tok == "pt") r = mem_text(total);
+            else hit = false;
+            if (hit) { out += r; i += 2; continue; }
+        }
+        out += tmpl[i];
+    }
+    return out;
 }
 
 void Wanderer::publish_title(IconWindow *w) {
     if (!w || !w->shown()) return;
-    std::string t = screen_title();
+    std::string t = screen_title(prefs_.screen_title);
     Atom prop = XInternAtom(fl_display, "_WANDERER_SCREEN_TITLE", False);
     Atom utf8 = XInternAtom(fl_display, "UTF8_STRING", False);
     XChangeProperty(fl_display, fl_xid(w), prop, utf8, 8, PropModeReplace, (const unsigned char *)t.data(), (int)t.size());
@@ -642,6 +685,7 @@ void Wanderer::menu_action(IconWindow *w, int id) {
             prefs_ = p;
             for (auto *o : windows_) { apply_prefs(o); o->update(); apply_snapshot(o); }
             if (root_) { apply_prefs(root_); root_->update(); apply_snapshot(root_); }
+            if (root_) publish_title(root_);
         });
         break;
     case MEN_WANDERER_GUISETTINGS: edit_gui_settings(); break;
