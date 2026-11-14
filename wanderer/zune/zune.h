@@ -44,7 +44,7 @@ constexpr int MAXMAX = 10000;   // MUI_MAXMAX
 struct Prefs {
     // the screen's palette (MUI pens come from it) and the frames of buttons and groups
     unsigned background = 0xAAAAAA, shadow = 0x000000, shine = 0xFFFFFF, fill = 0x6688BB;
-    std::string button_frame = "202211", group_frame = "314444";
+    std::string frame[Frame_Count];   // the frames of the standard kinds ("" - the built-in one)
     int font_family = 0;         // 0 sans, 1 serif, 2 fixed
     int group_hspacing = 6, group_vspacing = 3;
     int window_left = 4, window_right = 4, window_top = 3, window_bottom = 3;
@@ -139,7 +139,8 @@ protected:
 };
 
 // Register (classes/register.c): a page group with a row of tabs on top; only the active
-// page shows. The pages are the children, one for each title.
+// page shows. The pages are the children, one for each title. Without titles: a page group
+// (MUIA_Group_PageMode) - the pages without tabs or frame.
 class Register : public Group {
 public:
     explicit Register(const std::vector<std::string> &titles);

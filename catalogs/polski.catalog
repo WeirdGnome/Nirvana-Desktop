@@ -223,3 +223,41 @@ External Classes:	Klasy zewnętrzne:
 X11 port: Wanderer X11 contributors	Port na X11: autorzy Wanderer X11
 Network Access..	Dostęp do sieci..
 Network Access:	Dostęp do sieci:
+Zune Preferences	Preferencje Zune
+Windows	Okna
+Groups	Grupy
+Buttons	Przyciski
+Strings	Pola tekstowe
+Listviews	Listy
+Scrollbars	Suwaki
+Palette	Paleta
+Fonts	Czcionki
+Normal:	Zwykła:
+Spacing	Odstępy
+Frame	Ramka
+Virtual:	Wirtualna:
+Horizontal:	Poziomo:
+Vertical:	Pionowo:
+Text Buttons	Przyciski tekstowe
+Image Buttons	Przyciski obrazkowe
+Texts	Teksty
+Frame:	Ramka:
+Strings:	Pola tekstowe:
+Pop-ups:	Rozwijane:
+Frames	Ramki
+Input list:	Lista wyboru:
+Read list:	Lista do odczytu:
+Scrollbar:	Suwak:
+Gauge:	Wskaźnik:
+None	Brak
+Rectangle	Prostokąt
+Bevel	Faza
+Thin border	Cienka ramka
+Thick border	Gruba ramka
+Round bevel	Okrągła faza
+Window bevel	Faza okna
+Round thick border	Okrągła gruba ramka
+Round thin border	Okrągła cienka ramka
+Grey border	Szara ramka
+Semi-round bevel	Półokrągła faza
+Rounded	Zaokrąglona

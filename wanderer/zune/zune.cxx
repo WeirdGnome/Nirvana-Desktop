@@ -54,8 +54,18 @@ void load_prefs() {
             else if (k == "shadow") p.shadow = (unsigned)strtoul(v.c_str(), nullptr, 16);
             else if (k == "shine") p.shine = (unsigned)strtoul(v.c_str(), nullptr, 16);
             else if (k == "fill") p.fill = (unsigned)strtoul(v.c_str(), nullptr, 16);
-            else if (k == "button_frame" && v.size() == 6) p.button_frame = v;
-            else if (k == "group_frame" && v.size() == 6) p.group_frame = v;
+            else if (k == "button_frame" && v.size() == 6) p.frame[Frame_Button] = p.frame[Frame_ImageButton] = v;
+            else if (k == "group_frame" && v.size() == 6) p.frame[Frame_Group] = v;
+            else if (k.rfind("frame_", 0) == 0 && v.size() == 6) {
+                int i = atoi(k.c_str() + 6);
+                if (i > 0 && i < Frame_Count) p.frame[i] = v;
+            }
+            else if (k == "group_hspacing") p.group_hspacing = std::clamp(atoi(v.c_str()), 0, 20);
+            else if (k == "group_vspacing") p.group_vspacing = std::clamp(atoi(v.c_str()), 0, 20);
+            else if (k == "window_left") p.window_left = std::clamp(atoi(v.c_str()), 0, 20);
+            else if (k == "window_right") p.window_right = std::clamp(atoi(v.c_str()), 0, 20);
+            else if (k == "window_top") p.window_top = std::clamp(atoi(v.c_str()), 0, 20);
+            else if (k == "window_bottom") p.window_bottom = std::clamp(atoi(v.c_str()), 0, 20);
             else if (k == "font_size") p.font_size = std::clamp(atoi(v.c_str()), 9, 24);
             else if (k == "font_family") p.font_family = std::clamp(atoi(v.c_str()), 0, 2);
         }
@@ -73,10 +83,12 @@ void save_prefs() {
         if (i == dir.size() || dir[i] == '/') mkdir(dir.substr(0, i).c_str(), 0755);
     FILE *f = fopen(path.c_str(), "w");
     if (!f) return;
-    fprintf(f, "background=%06X\nshadow=%06X\nshine=%06X\nfill=%06X\nbutton_frame=%s\ngroup_frame=%s\n"
-               "font_size=%d\nfont_family=%d\n",
-            p.background, p.shadow, p.shine, p.fill, p.button_frame.c_str(), p.group_frame.c_str(), p.font_size,
-            p.font_family);
+    fprintf(f, "background=%06X\nshadow=%06X\nshine=%06X\nfill=%06X\nfont_size=%d\nfont_family=%d\n"
+               "group_hspacing=%d\ngroup_vspacing=%d\nwindow_left=%d\nwindow_right=%d\nwindow_top=%d\nwindow_bottom=%d\n",
+            p.background, p.shadow, p.shine, p.fill, p.font_size, p.font_family, p.group_hspacing, p.group_vspacing,
+            p.window_left, p.window_right, p.window_top, p.window_bottom);
+    for (int i = 1; i < Frame_Count; i++)
+        if (!p.frame[i].empty()) fprintf(f, "frame_%d=%s\n", i, p.frame[i].c_str());
     fclose(f);
 }
 
@@ -87,9 +99,7 @@ void apply_prefs() {
     static const Fl_Font fams[3][2] = {{FL_HELVETICA, FL_HELVETICA_BOLD}, {FL_TIMES, FL_TIMES_BOLD}, {FL_COURIER, FL_COURIER_BOLD}};
     p.font = fams[p.font_family][0];
     p.font_bold = fams[p.font_family][1];
-    set_std_frame(Frame_Button, p.button_frame);
-    set_std_frame(Frame_ImageButton, p.button_frame);
-    set_std_frame(Frame_Group, p.group_frame);
+    for (int i = 1; i < Frame_Count; i++) set_std_frame((StdFrame)i, p.frame[i].empty() ? default_frame((StdFrame)i) : p.frame[i]);
     // the window manager takes the colours too (its frames, the screens' title bars)
     if (fl_display) {
         char v[64];
@@ -416,10 +426,11 @@ Register::Register(const std::vector<std::string> &titles) : Group(Group::Vertic
     background(MPEN_BACKGROUND);   // the register's own background inside its frame
 }
 
-int Register::tab_h() const { return prefs().font_size + REGISTERTAB_EXTRA_HEIGHT; }
+int Register::tab_h() const { return titles_.empty() ? 0 : prefs().font_size + REGISTERTAB_EXTRA_HEIGHT; }
 
 // SetHardCoord: the page sits inside the frame, below the tabs
 void Register::hard_coord() {
+    if (titles_.empty()) { inner(0, 0, 0, 0); return; }   // a page group: no tabs, no frame
     const FrameSpec &g = std_frame(Frame_Group);
     inner(g.inner_left + 1, g.inner_right + 1, tab_h() + g.inner_top, g.inner_bottom + 1);
 }
@@ -455,6 +466,7 @@ void Register::ask_min_max(int &minw, int &minh, int &defw, int &defh, int &maxw
     }
     maxw = std::max(maxw, minw);
     maxh = MAXMAX;
+    if (titles_.empty()) return;
     // the tabs: room for every title (register_truncate_titles off)
     int n = std::max(1, (int)titles_.size());
     int total_hspacing = (n + 1) * INTERTAB - 2;
@@ -549,6 +561,11 @@ void Register::draw() {
         (void)pa;
         fl_color(pens()[MPEN_BACKGROUND]);
         fl_rectf(x(), y(), w(), h());
+        if (titles_.empty()) {   // a page group
+            for (int i = 0; i < children(); i++) if (child(i)->visible()) child(i)->damage(FL_DAMAGE_ALL);
+            draw_children();
+            return;
+        }
         const Pens &P = pens();
         int th = tab_h();
         int fw = w(), fh = h() - th;
@@ -566,7 +583,7 @@ void Register::draw() {
 }
 
 int Register::handle(int e) {
-    if (e == FL_PUSH && Fl::event_button() == FL_LEFT_MOUSE && Fl::event_y() < y() + tab_h()) {
+    if (e == FL_PUSH && !titles_.empty() && Fl::event_button() == FL_LEFT_MOUSE && Fl::event_y() < y() + tab_h()) {
         for (int i = 0; i < (int)titles_.size(); i++) {
             int x1, x2;
             tab_x(i, x1, x2);

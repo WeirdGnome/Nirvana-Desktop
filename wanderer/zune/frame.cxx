@@ -289,6 +289,26 @@ FrameSpec FrameSpec::parse(const std::string &s) {
 static FrameSpec table[Frame_Count];
 static bool ready = false;
 
+static const char *const DEFAULT_SPECS[Frame_Count] = {
+    "000000",   // None
+    "202211",   // Button
+    "202211",   // ImageButton
+    "212211",   // Text
+    "302211",   // String
+    "212211",   // ReadList
+    "202211",   // InputList
+    "202211",   // Prop
+    "210000",   // Gauge
+    "314444",   // Group
+    "112211",   // PopUp
+    "212211",   // Virtual
+    "400000",   // Slider
+    "202211",   // Knob
+    "300000",   // Drag
+};
+
+const char *default_frame(StdFrame which) { return DEFAULT_SPECS[which < 0 || which >= Frame_Count ? 0 : which]; }
+
 void set_std_frame(StdFrame which, const std::string &spec) {
     std_frame(which);   // the defaults first
     if (which >= 0 && which < Frame_Count) table[which] = FrameSpec::parse(spec);
@@ -296,24 +316,7 @@ void set_std_frame(StdFrame which, const std::string &spec) {
 
 const FrameSpec &std_frame(StdFrame which) {
     if (!ready) {
-        static const char *specs[Frame_Count] = {
-            "000000",   // None
-            "202211",   // Button
-            "202211",   // ImageButton
-            "212211",   // Text
-            "302211",   // String
-            "212211",   // ReadList
-            "202211",   // InputList
-            "202211",   // Prop
-            "210000",   // Gauge
-            "314444",   // Group
-            "112211",   // PopUp
-            "212211",   // Virtual
-            "400000",   // Slider
-            "202211",   // Knob
-            "300000",   // Drag
-        };
-        for (int i = 0; i < Frame_Count; i++) table[i] = FrameSpec::parse(specs[i]);
+        for (int i = 0; i < Frame_Count; i++) table[i] = FrameSpec::parse(DEFAULT_SPECS[i]);
         ready = true;
     }
     return table[which < 0 || which >= Frame_Count ? 0 : which];

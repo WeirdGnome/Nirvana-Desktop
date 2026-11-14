@@ -46,5 +46,6 @@ enum StdFrame {
 };
 const FrameSpec &std_frame(StdFrame which);
 void set_std_frame(StdFrame which, const std::string &spec);   // the preferences
+const char *default_frame(StdFrame which);                      // the built-in spec
 
 }  // namespace zune
