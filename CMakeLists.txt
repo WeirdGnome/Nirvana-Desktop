@@ -28,3 +28,10 @@ add_executable(zune-frames wanderer/zune/test_frames.cxx)
 target_link_libraries(zune-frames zune)
 add_executable(zune-test wanderer/zune/test_zune.cxx)
 target_link_libraries(zune-test zune)
+
+# Wanderer
+add_library(wanderer-classes STATIC wanderer/iconlist.cxx)
+target_include_directories(wanderer-classes PUBLIC wanderer)
+target_link_libraries(wanderer-classes PUBLIC zune)
+add_executable(iconlist-test wanderer/test_iconlist.cxx)
+target_link_libraries(iconlist-test wanderer-classes)
