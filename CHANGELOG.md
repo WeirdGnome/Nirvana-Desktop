@@ -1,5 +1,41 @@
 # Changelog
 
+## 0.6.0 – 2026-11-14
+
+- **Copying, moving and deleting in the background** (also moving to the trash):
+  - a progress window (item, destination, a gauge in bytes or items, Abort) when the
+    work takes longer than a moment;
+  - names that exist already are asked about (Replace, Replace All, Skip, Abort);
+  - no half-copied files are left behind;
+  - Quit asks again while the work is running.
+- **Volumes follow the drives**: removable devices that are not mounted show as
+  ghosted volumes, and opening one mounts it (udisks). *Icon > Eject* (Super+J)
+  unmounts a volume and powers its drive off.
+- **Information** can be changed: the protection (read, write, execute for the owner,
+  the group and others), the file's comment (kept in `user.comment`) and a project's
+  **Default Tool**, the program that opens it.
+- **List view**: Protection and Comment columns.
+- **Startup drawer** (`~/.config/wanderer/startup`) and XDG autostart, run once per
+  session.
+- **Tools menu** with the user's tools from `~/.config/wanderer/tools`.
+- *Icon > Copy* (Super+C): "Copy of NAME" beside the original.
+- **Cursor keys** move between icons (Shift extends the selection, Space toggles,
+  Return opens).
+- Files dragged in from other programs (XDND) are moved within a volume and copied onto
+  another one.
+- **wanderer-wm**:
+  - **Super + left button drags a screen from anywhere**;
+  - the GUI settings' colours apply to the frames and bars at once;
+  - full screen (`_NET_WM_STATE_FULLSCREEN`) and maximised windows;
+  - no frames for docks, notifications, splash screens, tooltips and windows asking for
+    none;
+  - resize increments and maximum sizes;
+  - `_NET_WORKAREA`, `_NET_FRAME_EXTENTS`, `_NET_CLOSE_WINDOW`.
+- **Fixes**:
+  - the window manager no longer lets go of windows that were already shown when it
+    started;
+  - Execute Command remembers the last command.
+
 ## 0.5.0 – 2026-11-14
 
 - **GUI settings** (*Wanderer > GUI Settings…*), with Save, Use and Cancel. They are the

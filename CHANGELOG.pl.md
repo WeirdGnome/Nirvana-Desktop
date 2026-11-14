@@ -1,5 +1,40 @@
 # Lista zmian
 
+## 0.6.0 – 2026-11-14
+
+- **Kopiowanie, przenoszenie i usuwanie w tle** (także do kosza):
+  - okno postępu (element, cel, pasek w bajtach lub elementach, Abort), gdy praca trwa
+    dłużej niż chwilę;
+  - pytanie o nazwy, które już istnieją (Replace, Replace All, Skip, Abort);
+  - nie zostają żadne niedokończone kopie;
+  - Quit pyta ponownie, gdy praca jeszcze trwa.
+- **Woluminy podążają za napędami**: niezamontowane nośniki wymienne widać jako
+  wyszarzone woluminy, a otwarcie takiego woluminu go montuje (udisks). *Icon > Eject*
+  (Super+J) odmontowuje wolumin i wyłącza napęd.
+- **Information** pozwala na zmiany: uprawnienia (odczyt, zapis, wykonanie dla
+  właściciela, grupy i pozostałych), komentarz pliku (w `user.comment`) i **Default Tool**
+  projektu, czyli program, którym się go otwiera.
+- **Widok listy**: kolumny Protection i Comment.
+- **Szuflada Startup** (`~/.config/wanderer/startup`) i autostart XDG, uruchamiane raz na
+  sesję.
+- **Menu Tools** z narzędziami użytkownika z `~/.config/wanderer/tools`.
+- *Icon > Copy* (Super+C): „Copy of NAZWA” obok oryginału.
+- **Strzałki** przechodzą między ikonami (Shift rozszerza zaznaczenie, Spacja przełącza,
+  Enter otwiera).
+- Pliki przeciągnięte z innych programów (XDND) są przenoszone w obrębie woluminu, a na
+  inny wolumin kopiowane.
+- **wanderer-wm**:
+  - **Super + lewy przycisk przeciąga ekran z dowolnego miejsca**;
+  - kolory z GUI Settings od razu obejmują ramki i paski;
+  - pełny ekran (`_NET_WM_STATE_FULLSCREEN`) i okna zmaksymalizowane;
+  - brak ramek dla doków, powiadomień, ekranów startowych, podpowiedzi i okien, które
+    o to proszą;
+  - kroki zmiany rozmiaru i rozmiary maksymalne;
+  - `_NET_WORKAREA`, `_NET_FRAME_EXTENTS`, `_NET_CLOSE_WINDOW`.
+- **Poprawki**:
+  - menedżer okien nie gubi już okien, które były otwarte w chwili jego startu;
+  - Execute Command pamięta ostatnie polecenie.
+
 ## 0.5.0 – 2026-11-14
 
 - **Ustawienia GUI** (*Wanderer > GUI Settings…*), z przyciskami Save, Use i Cancel. To
