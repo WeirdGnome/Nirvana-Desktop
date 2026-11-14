@@ -148,7 +148,7 @@ bool copy_any(Job &j, const fs::path &from, const fs::path &to) {
     struct stat st;
     if (lstat(from.c_str(), &st) != 0) { error(j, from.string() + ": " + strerror(errno)); return false; }
     set_current(j, from.filename().string());
-    j.items_done++;
+    struct Done { Job &j; ~Done() { j.items_done++; } } done{j};   // counted once it is over
     if (S_ISLNK(st.st_mode)) {
         fs::copy_symlink(from, to, ec);
         if (ec) { error(j, from.string() + ": " + ec.message()); return false; }
@@ -177,9 +177,9 @@ bool remove_any(Job &j, const fs::path &p) {
         for (auto it = fs::directory_iterator(p, ec); !ec && it != fs::directory_iterator(); it.increment(ec))
             if (!remove_any(j, it->path())) return false;
     set_current(j, p.filename().string());
-    j.items_done++;
     if (S_ISREG(st.st_mode)) j.bytes_done += st.st_size;
     fs::remove(p, ec);
+    j.items_done++;
     if (ec) { error(j, p.string() + ": " + ec.message()); return false; }
     return true;
 }
@@ -205,7 +205,7 @@ void work(Job &j) {
             set_current(j, from.filename().string());
             std::string err;
             if (!move_to_trash(src, err)) error(j, src + ": " + err);
-            j.items_done++;
+            j.items_done++;   // after the move
             continue;
         }
         fs::path to = fs::path(j.dest) / from.filename();
