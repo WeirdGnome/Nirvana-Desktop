@@ -2588,51 +2588,78 @@ void Desktop::close_active() {
 }
 
 // A Trash following the freedesktop.org specification
-bool Desktop::trash_path(const std::string &src, std::string &err) {
+// Moving one file or folder to the Trash - in a job's thread: it touches no window (the
+// windows follow in on_done, from j.moved). Within one disk it is a rename; from another disk
+// (a USB stick) the file is copied and deleted the job's way: with progress, and Cancel stops
+// it between megabytes (fs::copy could not be stopped, and it was done in the interface
+// thread from a drag - the whole desktop waited for the USB stick).
+bool Desktop::trash_move(jobs::Job &j, const std::string &src, std::string &err) {
   std::string files = trash_dir(), info = home_ + "/.local/share/Trash/info";
   std::error_code ec;
   fs::create_directories(files, ec);
   fs::create_directories(info, ec);
   std::string base = fs::path(src).filename().string(), name = base, dest = files + "/" + name;
-  for (int i = 2; fs::exists(dest, ec); i++) { name = base + "." + std::to_string(i); dest = files + "/" + name; }
-  fs::rename(src, dest, ec);
-  if (ec) {   // another file system: copy and delete
-    ec.clear();
-    fs::copy(src, dest, fs::copy_options::recursive | fs::copy_options::copy_symlinks, ec);
-    if (!ec) fs::remove_all(src, ec);
+  for (int i = 2; fs::exists(dest, ec) || fs::exists(info + "/" + name + ".trashinfo", ec); i++) {
+    name = base + "." + std::to_string(i);
+    dest = files + "/" + name;
   }
-  if (ec) { err = "“" + base + "”: " + ec.message(); return false; }
+  // the information first (the specification): a file in the Trash always knows where it came from
   char date[32];
   time_t now = time(nullptr);
   strftime(date, sizeof date, "%Y-%m-%dT%H:%M:%S", localtime(&now));
-  std::ofstream(info + "/" + name + ".trashinfo")
-      << "[Trash Info]\nPath=" << src << "\nDeletionDate=" << date << "\n";
-  path_moved(src, "");
+  std::string info_file = info + "/" + name + ".trashinfo";
+  std::ofstream(info_file) << "[Trash Info]\nPath=" << src << "\nDeletionDate=" << date << "\n";
+  std::string e;
+  if (!jobs::move_tree(j, src, dest, e)) {
+    // canceled or failed: whatever was copied goes away, the original stays where it was
+    if (fs::exists(src, ec)) { fs::remove_all(dest, ec); fs::remove(info_file, ec); }
+    if (!j.cancel) err = "“" + base + "”: " + (e.empty() ? std::string(_("unknown error")) : e);
+    return false;
+  }
+  std::lock_guard<std::mutex> l(j.m);
+  j.moved.push_back({src, ""});
   return true;
+}
+
+// The Trash for any files: always a job in the background (the interface never waits)
+void Desktop::trash_paths(const std::vector<std::string> &paths) {
+  if (paths.empty()) return;
+  auto job = std::make_shared<jobs::Job>();
+  job->title = plat::fmt(_("Moving %1 to the Trash"), items_text((int)paths.size()));
+  job->work = [this, paths](jobs::Job &j) {
+    // the size only for what really has to be copied (another disk)
+    struct stat ts;
+    dev_t trash_dev = stat(trash_dir().c_str(), &ts) == 0 ? ts.st_dev : 0;
+    for (auto &p : paths) {
+      struct stat st;
+      int f = 0;
+      if (lstat(p.c_str(), &st) == 0 && st.st_dev != trash_dev) j.total += jobs::measure(p, f);
+      j.files_total += std::max(f, 1);
+    }
+    for (auto &p : paths) {
+      if (!j.check()) break;
+      j.set_current(fs::path(p).filename().string());
+      std::string err;
+      if (!trash_move(j, p, err) && !err.empty()) j.error(err);
+    }
+  };
+  job->on_done = [this](jobs::Job &j) {
+    std::vector<std::pair<std::string, std::string>> moved;
+    { std::lock_guard<std::mutex> l(j.m); moved = j.moved; }
+    for (auto &[from, to] : moved) path_moved(from, to);
+    refresh_all();
+    if (!j.errors.empty()) dialog(GURU_TITLE, _("Could not move to the Trash:") + std::string("\n") + j.errors, {{"OK", nullptr}});
+  };
+  jobs::start(job);
 }
 
 void Desktop::move_to_trash() {
   NWin *a = active_folder();
   if (!a) return;
   auto sel = a->pane->view()->selection();
-  if (sel.empty()) return;
-  auto job = std::make_shared<jobs::Job>();   // in the background (another disk = copying)
-  job->title = plat::fmt(_("Moving %1 to the Trash"), items_text((int)sel.size()));
-  job->files_total = (int)sel.size();
-  job->work = [this, sel](jobs::Job &j) {
-    for (auto &e : sel) {
-      if (!j.check()) break;
-      j.set_current(e.name);
-      std::string err;
-      if (!trash_path(e.path, err)) j.error(err);
-      j.files_done++;
-    }
-  };
-  job->on_done = [this](jobs::Job &j) {
-    refresh_all();
-    if (!j.errors.empty()) dialog(GURU_TITLE, _("Could not move to the Trash:") + std::string("\n") + j.errors, {{"OK", nullptr}});
-  };
-  jobs::start(job);
+  std::vector<std::string> paths;
+  for (auto &e : sel) paths.push_back(e.path);
+  trash_paths(paths);
 }
 
 void Desktop::empty_trash() {
@@ -3475,13 +3502,9 @@ void Desktop::drag_end(int xr, int yr, bool copy) {
     return;
   }
   if (dest == trash_dir()) {
-    std::string errors;
-    for (auto &e : items) {
-      std::string err;
-      if (!trash_path(e.path, err)) errors += err + "\n";
-    }
-    refresh_all();
-    if (!errors.empty()) dialog(GURU_TITLE, _("Could not move to the Trash:") + std::string("\n") + errors, {{"OK", nullptr}});
+    std::vector<std::string> paths;
+    for (auto &e : items) paths.push_back(e.path);
+    trash_paths(paths);
     return;
   }
   transfer(items, dest, copy, false);
@@ -3582,10 +3605,9 @@ void Desktop::drop_uris(const std::string &list, const std::string &dest) {
   }
   if (items.empty()) return;
   if (dest == trash_dir()) {
-    std::string errors;
-    for (auto &e : items) { std::string err; if (!trash_path(e.path, err)) errors += err + "\n"; }
-    refresh_all();
-    if (!errors.empty()) dialog(GURU_TITLE, _("Could not move to the Trash:") + std::string("\n") + errors, {{"OK", nullptr}});
+    std::vector<std::string> paths;
+    for (auto &e : items) paths.push_back(e.path);
+    trash_paths(paths);
     return;
   }
   // from another program: we copy (like dragging between disks)

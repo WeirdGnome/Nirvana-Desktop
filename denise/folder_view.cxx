@@ -20,6 +20,7 @@
 #include <sys/stat.h>
 #include <sys/inotify.h>
 #include <sys/statvfs.h>
+#include <thread>
 #include <unistd.h>
 
 #include "appimage.h"
@@ -224,13 +225,16 @@ static void snap_save() {
 
 FolderView::FolderView(int X, int Y, int W, int H) : Fl_Widget(X, Y, W, H) {}
 
-void FolderView::load(const std::string &path, bool show_hidden) {
-  entries_.clear();
+// The reading part of load(): no FLTK, no shared state without a lock (sniff has its own) -
+// it runs in a worker thread. AppImage names and pictures (their cache) are filled later, in
+// the interface thread.
+void scan_folder(FolderScan &sc) {
+  std::vector<Entry> out;
   std::error_code ec;
   int sniffed = 0;
-  for (auto &de : fs::directory_iterator(path, fs::directory_options::skip_permission_denied, ec)) {
+  for (auto &de : fs::directory_iterator(sc.path, fs::directory_options::skip_permission_denied, ec)) {
     std::string name = de.path().filename().string();
-    if (!show_hidden && !name.empty() && name[0] == '.') continue;
+    if (!sc.hidden && !name.empty() && name[0] == '.') continue;
     Entry e;
     e.name = name;
     e.path = de.path().string();
@@ -255,8 +259,30 @@ void FolderView::load(const std::string &path, bool show_hidden) {
         else if (k.mime == "application/vnd.appimage" || k.mime == "application/x-executable") e.icon = Icon::Application;
       }
     }
-    if (!e.dir && is_appimage(name)) {
-      e.label = !g_home.empty() ? appimage::label(e.path, g_home) : appimage::display_name(name);
+    out.push_back(std::move(e));
+  }
+  // tests only: NIRVANA_SCAN_SLOW=ms - every folder reads that long (a slow disk)
+  static const int slow = getenv("NIRVANA_SCAN_SLOW") ? atoi(getenv("NIRVANA_SCAN_SLOW")) : 0;
+  if (slow > 0) usleep(slow * 1000);
+  struct statvfs sv;
+  if (statvfs(sc.path.c_str(), &sv) == 0) sc.free_gb = (double)sv.f_bavail * sv.f_frsize / 1e9;
+  sc.entries = std::move(out);
+  sc.done = true;
+}
+
+void FolderView::load(const std::string &path, bool show_hidden) {
+  FolderScan sc;
+  sc.path = path;
+  sc.hidden = show_hidden;
+  scan_folder(sc);
+  load_entries(std::move(sc.entries));
+}
+
+void FolderView::load_entries(std::vector<Entry> &&all) {
+  entries_.clear();
+  for (auto &e : all) {
+    if (!e.dir && is_appimage(e.name)) {
+      e.label = !g_home.empty() ? appimage::label(e.path, g_home) : appimage::display_name(e.name);
       if (!g_home.empty()) e.icon_file = appimage::icon(e.path, g_home);
     }
     if (filter && !e.dir && !filter(e)) continue;   // the explorer's filter
@@ -838,12 +864,9 @@ FolderPane::FolderPane(int X, int Y, int W, int H, const std::string &path, bool
 }
 
 void FolderPane::update_info() {
-  struct statvfs st;
   char buf[64] = "";
-  if (statvfs(path_.c_str(), &st) == 0) {
-    double gb = (double)st.f_bavail * st.f_frsize / 1e9;
-    snprintf(buf, sizeof buf, "%.1f GB", gb);
-  }
+  if (free_gb_ >= 0) snprintf(buf, sizeof buf, "%.1f GB", free_gb_);   // (from the scan: no disk access here)
+  if (loading_) { info_ = _("Loading…"); return; }
   info_ = items_text(view_->count()) + (buf[0] ? ", " + plat::fmt(_("%1 free"), plat::decimal(buf)) : "");
 }
 
@@ -874,20 +897,72 @@ void FolderPane::refresh_later(void *d) {
 void pane_redraw_later(void *pane);
 FolderPane::~FolderPane() {
   Fl::remove_timeout(refresh_later, this);
+  Fl::remove_timeout(scan_poll, this);   // (a scan still running only fills its own FolderScan)
   Fl::remove_timeout(pane_redraw_later, this);
   if (ino_fd_ >= 0) { Fl::remove_fd(ino_fd_); close(ino_fd_); }
 }
 
+// Refreshing reads the folder in a worker thread. The interface waits for it 150 ms at most -
+// a folder on the computer's own disk is there by then and shows at once, as before; a slow or
+// busy one (a USB stick during copying, a network folder) shows "Loading…" and comes when it
+// is read - the windows, menus and the desktop go on meanwhile. A folder changed during
+// reading is read once more afterwards (never two threads for one window).
 void FolderPane::refresh() {
   cancel_rename();
   // keep the selection after a refresh (e.g. after renaming another file)
-  std::vector<std::string> keep;
-  for (auto &e : view_->selection()) keep.push_back(e.path);
-  view_->load(path_, hidden_);
-  view_->select_paths(keep);
+  if (!loading_) {
+    keep_sel_.clear();
+    for (auto &e : view_->selection()) keep_sel_.push_back(e.path);
+  }
+  if (scan_) { rescan_ = true; return; }   // being read: once more after it
+  start_scan();
+}
+
+void FolderPane::start_scan() {
+  auto sc = std::make_shared<FolderScan>();
+  sc->path = path_;
+  sc->hidden = hidden_;
+  scan_ = sc;
+  rescan_ = false;
+  struct timespec ts;
+  clock_gettime(CLOCK_MONOTONIC, &ts);
+  sc->started = ts.tv_sec + ts.tv_nsec / 1e9;
+  std::thread([sc] { scan_folder(*sc); }).detach();
+  // a short wait - not while the folder is known to be slow (copying to a USB stick refreshes
+  // its window every quarter of a second: the desktop would wait most of the time)
+  for (int i = 0; i < (slow_ ? 0 : 150) && !sc->done; i++) usleep(1000);
+  if (sc->done) { apply_scan(); return; }
+  if (!loading_) {
+    loading_ = true;
+    update_info();
+    redraw();
+  }
+  Fl::add_timeout(0.05, scan_poll, this);
+}
+
+void FolderPane::scan_poll(void *d) {
+  auto *p = (FolderPane *)d;
+  if (p->scan_ && p->scan_->done) p->apply_scan();
+  else Fl::repeat_timeout(0.05, scan_poll, d);
+}
+
+void FolderPane::apply_scan() {
+  auto sc = scan_;
+  scan_.reset();
+  Fl::remove_timeout(scan_poll, this);
+  if (!sc) return;
+  if (sc->path != path_ || sc->hidden != hidden_) { start_scan(); return; }   // another folder meanwhile
+  struct timespec ts;
+  clock_gettime(CLOCK_MONOTONIC, &ts);
+  slow_ = ts.tv_sec + ts.tv_nsec / 1e9 - sc->started > 0.15;
+  loading_ = false;
+  free_gb_ = sc->free_gb;
+  view_->load_entries(std::move(sc->entries));
+  view_->select_paths(keep_sel_);
   update_info();
   resize(x(), y(), w(), h());
   redraw();
+  if (rescan_) { rescan_ = false; refresh(); }
 }
 
 void FolderPane::go(const std::string &p) {
@@ -896,7 +971,17 @@ void FolderPane::go(const std::string &p) {
   path_ = p;
   watch();
   view_->select_paths({});
+  keep_sel_.clear();
+  loading_ = false;
   scroll_->scroll_to(0, 0);
+  if (scan_) {   // the old folder is still being read: the new one after it (apply_scan sees the change)
+    rescan_ = false;
+    view_->load_entries({});
+    loading_ = true;
+    update_info();
+    redraw();
+    return;
+  }
   refresh();
 }
 

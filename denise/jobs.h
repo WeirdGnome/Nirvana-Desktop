@@ -28,6 +28,8 @@ struct Job {
   std::function<void(Job &)> work;       // in the job's thread
   std::function<void(Job &)> on_done;    // in the interface thread, after the work
   double started = 0;
+  double canceled_at = 0;   // (the interface thread) when Cancel was clicked
+  bool abandoned = false;   // (the interface thread) given up: its thread hangs on a disk
   // filled by the work, read after it (or under the lock)
   std::mutex m;
   std::string current, errors;

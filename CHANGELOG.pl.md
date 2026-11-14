@@ -1,6 +1,20 @@
 # Lista zmian
 Wszystkie ważniejsze zmiany w Nirvana Desktop, od najnowszych. English: [CHANGELOG.md](CHANGELOG.md).
 
+## 0.0.68 – 2026-11-14
+
+- **Naprawione zawieszanie przy przenoszeniu do Kosza z dysku zewnętrznego**, które z czasem zawieszało cały interfejs. Przyczyny były trzy:
+  - zadanie w tle zamykało i odświeżało okna z własnego wątku, co jest niedozwolone w FLTK;
+  - kopiowanie z innego dysku szło w jednym kawałku, którego nie dało się przerwać;
+  - przeciągnięcie na Kosz kopiowało w wątku interfejsu.
+- **Kosz zawsze w tle**: menu, przeciąganie, pliki z Pulpitu. Z pendrive’a kopiuje z postępem i daje się anulować, a po anulowaniu nic nie zostaje w połowie. Okna nadążają dopiero po zakończeniu, już w wątku interfejsu.
+- **Okno Zadania**:
+  - zadanie, którego dysk przestał odpowiadać, jest puszczane 3 s po *Anuluj*, a reszta biurka działa dalej;
+  - przycisk zmienia się w *Anulowanie…*;
+  - zamknięcie okna chowa je do następnego zadania.
+- **Foldery czytane w osobnym wątku**: wolny albo zajęty dysk pokazuje *Wczytywanie…* zamiast zatrzymywać okna, a dysk komputera wyświetla się od razu jak dotąd. Wolne miejsce na dysku też liczy się w tle.
+- Potoki, gniazda i urządzenia nie są kopiowane, bo czytanie potoku bez nadawcy czekałoby w nieskończoność. Rozmiar takich plików nie psuje już licznika.
+
 ## 0.0.67 – 2026-11-12
 
 - **Otwórz z** w menu podręcznym plików w Ramblerze, w trzech częściach:

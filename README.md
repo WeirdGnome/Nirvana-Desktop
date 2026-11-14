@@ -41,7 +41,7 @@ What changed in each version: [CHANGELOG.md](CHANGELOG.md).
 
 Unpack the sources and run the installer:
 
-    tar xzf nirvana-desktop-0.0.67.tar.gz && cd nirvana-desktop
+    tar xzf nirvana-desktop-0.0.68.tar.gz && cd nirvana-desktop
     sudo ./install.sh                 # or: sudo ./install.sh --login-screen
 
 The installer:
@@ -362,6 +362,13 @@ managers of the 16-bit desktops:
   first runs. **Window > Jobs…** (it also opens by itself when a job takes longer than a moment, in
   the lower right corner, without taking the keyboard): progress, speed, time left, **Pause**/
   **Resume** and **Cancel** per job (no half-copied files stay). The status bar shows `Jobs: N`.
+  The Trash from another disk (a USB stick) copies with progress and can be canceled; a job whose
+  disk stopped answering is let go 3 s after Cancel, so the desktop never waits for it. Closing the
+  Jobs window only hides it until the next job.
+- **Folders are read in the background:** a window reads its folder in a worker thread and waits
+  for it 150 ms at most – the computer's own disk shows at once as before, a slow or busy one (a
+  USB stick during copying, a network folder) shows *Loading…* and fills in when read, while the
+  windows, menus and the desktop keep working.
 - **Events per file type** (Special > File Types…): *Double click*, *Shift + double click* and
   *Space (preview)* can each run their own command – a script, a player, an editor – or
   `@preview`, the built-in quick look.

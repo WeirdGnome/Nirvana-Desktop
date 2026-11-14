@@ -1,6 +1,20 @@
 # Changelog
 All notable changes to Nirvana Desktop, newest first. Polish: [CHANGELOG.pl.md](CHANGELOG.pl.md).
 
+## 0.0.68 – 2026-11-14
+
+- **Fixed moving to the Trash from an external disk hanging**, which over time hung the whole interface. There were three causes:
+  - the background job closed and refreshed windows from its own thread, which FLTK does not allow;
+  - copying from another disk ran in one piece that could not be stopped;
+  - a drag to the Trash copied in the interface thread.
+- **The Trash always in the background**: menu, drag, Desktop folder files. From a USB stick it copies with progress and can be canceled, and nothing is left half-done after canceling. The windows follow only when it is finished, in the interface thread.
+- **The Jobs window**:
+  - a job whose disk stopped answering is let go 3 s after *Cancel*, and the rest of the desktop goes on;
+  - the button turns into *Canceling…*;
+  - closing the window hides it until the next job.
+- **Folders read in a worker thread**: a slow or busy disk shows *Loading…* instead of stopping the windows, and the computer's own disk shows at once as before. The free space of the disk is also read in the background.
+- Pipes, sockets and devices are not copied, since reading a pipe with no writer would wait forever. Their size no longer breaks the counter.
+
 ## 0.0.67 – 2026-11-12
 
 - **Open With** in Rambler's context menu of files, in three parts:

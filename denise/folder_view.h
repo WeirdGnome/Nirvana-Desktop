@@ -1,5 +1,7 @@
 // Nirvana Desktop - denise: the folder view (icons or list) with an information bar
 #pragma once
+#include <atomic>
+#include <memory>
 
 #include <FL/Fl_Group.H>
 #include <FL/Fl_Image.H>
@@ -60,6 +62,8 @@ public:
 
   FolderView(int x, int y, int w, int h);
   void load(const std::string &path, bool show_hidden);
+  // the contents read elsewhere (scan_folder, a worker thread): only shown here
+  void load_entries(std::vector<Entry> &&entries);
   void relayout(int avail_w, int min_h);
   void set_mode(Mode m) { mode_ = m; }
   Mode mode() const { return mode_; }
@@ -151,6 +155,18 @@ private:
   int band_x_ = 0, band_y_ = 0;
 };
 
+// Reading a folder: names, types (from the first bytes), sizes - touches no window, so it can
+// run in a worker thread (a slow or busy disk then never stops the desktop)
+struct FolderScan {
+  std::string path;
+  bool hidden = false;
+  std::vector<Entry> entries;
+  double free_gb = -1;
+  std::atomic<bool> done{false};
+  double started = 0;
+};
+void scan_folder(FolderScan &s);
+
 class FolderPane : public Fl_Group {
 public:
   FolderPane(int x, int y, int w, int h, const std::string &path, bool show_hidden);
@@ -191,6 +207,16 @@ private:
   static void inotify_cb(int fd, void *d);
   static void refresh_later(void *d);
   int ino_fd_ = -1;
+  // reading the folder in a worker thread: the interface waits for it a moment at most
+  std::shared_ptr<FolderScan> scan_;   // being read
+  bool rescan_ = false;                // changed again while being read
+  bool loading_ = false;               // "Loading…" shown
+  std::vector<std::string> keep_sel_;  // the selection to restore when it arrives
+  double free_gb_ = -1;
+  bool slow_ = false;                  // the last reading took long: do not wait for the next one
+  void start_scan();
+  void apply_scan();
+  static void scan_poll(void *d);
   bool growing_ = false;
   int grow_dx_ = 0, grow_dy_ = 0;
 };

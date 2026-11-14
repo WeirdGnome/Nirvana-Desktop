@@ -23,6 +23,7 @@ using namespace plat;
 namespace jobs {
 
 static std::vector<std::shared_ptr<Job>> g_jobs;
+static bool g_closed = false;   // the Jobs window closed by the user: not opened again by itself
 
 static double now() {
   struct timespec t;
@@ -40,7 +41,12 @@ uint64_t measure(const fs::path &p, int &files) {
   auto st = fs::symlink_status(p, ec);
   if (ec) return 0;
   if (fs::is_symlink(st)) { files++; return 0; }
-  if (!fs::is_directory(st)) { files++; return fs::file_size(p, ec); }
+  if (!fs::is_directory(st)) {   // (a pipe or a device has no size to copy)
+    files++;
+    if (!fs::is_regular_file(st)) return 0;
+    auto n = fs::file_size(p, ec);
+    return ec ? 0 : n;
+  }
   uint64_t sum = 0;
   for (auto it = fs::recursive_directory_iterator(p, fs::directory_options::skip_permission_denied, ec);
        !ec && it != fs::recursive_directory_iterator(); it.increment(ec)) {
@@ -98,7 +104,11 @@ bool copy_tree(Job &j, const fs::path &src, const fs::path &dst, std::string &er
     j.files_done++;
     return true;
   }
-  if (!fs::is_directory(st)) return copy_file(j, src, dst, err);
+  if (!fs::is_directory(st)) {
+    // a pipe, a socket, a device: reading it could wait forever (a pipe with no writer)
+    if (!fs::is_regular_file(st)) { err = src.filename().string() + ": " + _("not a regular file - not copied"); return false; }
+    return copy_file(j, src, dst, err);
+  }
   fs::create_directory(dst, src, ec);
   if (ec && !fs::is_directory(dst)) { err = dst.filename().string() + ": " + ec.message(); return false; }
   for (auto it = fs::directory_iterator(src, fs::directory_options::skip_permission_denied, ec); !ec && it != fs::directory_iterator(); it.increment(ec)) {
@@ -162,8 +172,17 @@ public:
     pause = new Fl_Button(X + W - 176, Y + 22, 80, 22);
     cancel = new Fl_Button(X + W - 90, Y + 22, 80, 22, _("Cancel"));
     for (auto *b : {pause, cancel}) { b->box(BUTTON_BOX); b->down_box(BUTTON_DOWN); b->labelsize(SIZE_SMALL + 1); }
+    if (job->canceled_at > 0) { cancel->label(_("Canceling…")); cancel->deactivate(); pause->deactivate(); }
     pause->callback([](Fl_Widget *w, void *) { auto *r = (Row *)w->parent(); r->job->pause = !r->job->pause; r->redraw(); });
-    cancel->callback([](Fl_Widget *w, void *) { auto *r = (Row *)w->parent(); r->job->cancel = true; r->job->pause = false; });
+    cancel->callback([](Fl_Widget *w, void *) {
+      auto *r = (Row *)w->parent();
+      r->job->cancel = true;
+      r->job->pause = false;
+      if (!r->job->canceled_at) r->job->canceled_at = now();
+      w->label(_("Canceling…"));
+      w->deactivate();
+      r->pause->deactivate();
+    });
     end();
   }
   void draw() override {
@@ -214,6 +233,8 @@ public:
     end();
     resizable(scroll);
     xclass("nirvana-progress");   // Insight: shown on top without taking the keyboard
+    // closing: the jobs go on without the window (it comes back with the next job)
+    callback([](Fl_Widget *w, void *) { g_closed = true; w->hide(); });
   }
   void sync() {
     std::vector<Job *> now_jobs;
@@ -251,13 +272,33 @@ static void tick(void *) {
   // finished jobs: their on_done in this (the interface) thread
   for (size_t i = 0; i < g_jobs.size();) {
     auto j = g_jobs[i];
-    if (j->finished) {
+    // canceled, but its thread does not come back (a USB stick that stopped answering - the
+    // system call waits in the kernel): after 3 s the job is given up, the window lets it go
+    // and the rest of the desktop goes on; the thread ends by itself when the disk answers
+    // (or is pulled out) and touches nothing of the interface then
+    bool give_up = !j->finished && j->canceled_at > 0 && now() - j->canceled_at > 3;
+    if (j->finished || give_up) {
       g_jobs.erase(g_jobs.begin() + (long)i);
-      if (j->on_done) j->on_done(*j);
+      if (give_up) {
+        // the thread may still write into the job: on_done gets a copy of what is done so far
+        auto snap = std::make_shared<Job>();
+        snap->title = j->title;
+        snap->abandoned = true;
+        snap->cancel = true;
+        {
+          std::lock_guard<std::mutex> l(j->m);
+          snap->moved = j->moved;
+          snap->made = j->made;
+          snap->errors = j->errors;
+        }
+        if (j->on_done) j->on_done(*snap);
+      } else if (j->on_done) {
+        j->on_done(*j);
+      }
       continue;
     }
     // a job longer than a moment: the window opens
-    if (now() - j->started > 0.7 && (!g_win || !g_win->shown())) show_window();
+    if (now() - j->started > 0.7 && !g_closed && (!g_win || !g_win->shown())) show_window();
     i++;
   }
   if (g_win && g_win->shown()) {
@@ -271,6 +312,7 @@ void start(std::shared_ptr<Job> j) {
   j->started = now();
   bool was_idle = g_jobs.empty();
   g_jobs.push_back(j);
+  g_closed = false;   // a new job: the window may open again
   std::thread([j] {
     j->work(*j);
     j->finished = true;

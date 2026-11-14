@@ -333,10 +333,7 @@ void Desktop::desk_context_menu(int i, int X, int Y) {
       open_folder(desktop_dir());
       if (NWin *w = find(desktop_dir())) w->pane->view()->select_path(en.path);
     });
-    dm.add(_("Delete"), 0, [this, en] {
-      std::string err;
-      if (!trash_path(en.path, err)) guru(std::string(_("Could not move to the Trash:")) + " " + err);
-    });
+    dm.add(_("Delete"), 0, [this, en] { trash_paths({en.path}); });
   } else if (i >= 0) {
     const DeskIcon &ic = icons_[i];
     unsigned long win = ic.win;

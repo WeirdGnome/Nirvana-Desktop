@@ -40,7 +40,7 @@ Co się zmieniło w każdej wersji: [CHANGELOG.pl.md](CHANGELOG.pl.md).
 
 Rozpakuj źródła i uruchom instalator:
 
-    tar xzf nirvana-desktop-0.0.67.tar.gz && cd nirvana-desktop
+    tar xzf nirvana-desktop-0.0.68.tar.gz && cd nirvana-desktop
     sudo ./install.sh                 # albo: sudo ./install.sh --login-screen
 
 Instalator:
@@ -357,7 +357,13 @@ eksploratorów z końca lat 90. ze sposobem pracy dwupanelowych menedżerów pli
   **Okno > Zadania…** (otwiera się też samo, gdy zadanie trwa dłużej niż chwilę, w prawym dolnym
   rogu, bez zabierania klawiatury): postęp, prędkość, pozostały czas, **Wstrzymaj**/**Wznów**
   i **Anuluj** dla każdego zadania (nie zostają pół-skopiowane pliki). Pasek stanu pokazuje
-  `Zadania: N`.
+  `Zadania: N`. Kosz z innego dysku (pendrive) kopiuje z postępem i da się go anulować; zadanie,
+  którego dysk przestał odpowiadać, jest puszczane 3 s po Anuluj, więc biurko nigdy na nie nie
+  czeka. Zamknięcie okna Zadania tylko je chowa do następnego zadania.
+- **Foldery czytane w tle:** okno czyta swój folder w osobnym wątku i czeka na niego najwyżej
+  150 ms – dysk komputera pokazuje się od razu jak dotąd, a wolny albo zajęty (pendrive w trakcie
+  kopiowania, folder sieciowy) pokazuje *Wczytywanie…* i wypełnia się po odczycie, a okna, menu
+  i biurko działają dalej.
 - **Zdarzenia dla typów plików** (Narzędzia > Typy plików…): *Dwuklik*, *Shift + dwuklik* i *Spacja
   (podgląd)* mogą każde uruchamiać własne polecenie – skrypt, odtwarzacz, edytor – albo
   `@preview`, wbudowany szybki podgląd.

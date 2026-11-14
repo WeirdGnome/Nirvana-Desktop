@@ -6,6 +6,7 @@
 // The menu bar acts on the active window, which we read from _NET_ACTIVE_WINDOW.
 #pragma once
 #include "openwith.h"
+namespace jobs { struct Job; }
 
 #include <FL/Fl_Button.H>
 #include <FL/Fl_Double_Window.H>
@@ -365,7 +366,8 @@ private:
   std::string app_destination(const std::string &path) const;
   // file operations
   std::string rename_path(const std::string &old, const std::string &name);
-  bool trash_path(const std::string &path, std::string &err);
+  bool trash_move(jobs::Job &j, const std::string &path, std::string &err);   // in a job's thread
+  void trash_paths(const std::vector<std::string> &paths);                     // a job in the background
   void transfer(const std::vector<Entry> &items, const std::string &dest, bool copy, bool replace);
   void path_moved(const std::string &from, const std::string &to);   // windows and position memory
   // dragging
