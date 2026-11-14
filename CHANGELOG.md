@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.3.0 – 2026-11-14
+
+- **Trash** (the freedesktop.org trash, shared with other programs):
+  - the trash can on the root window;
+  - icons dropped on the trash are moved to it;
+  - *Icon > Delete…* asks whether to move to the trash or delete for good;
+  - *Icon > Empty Trash*.
+- **Leave Out / Put Away**: icons of drawers placed on the root window (and taken back
+  off it); the list is kept in `~/.config/wanderer/leftout`.
+- **Find** (*Window > Find…*, Super+F): finds the files and drawers whose names match a
+  pattern (`*` and `?`, case-insensitive) under the drawer, and shows the results in a
+  window of their own.
+- *Icon > Disk Info* is available only for volumes.
+
 ## 0.2.0 – 2026-11-14
 
 - **Icons**: original images for drawers, hard disks, removable, optical and RAM disks,

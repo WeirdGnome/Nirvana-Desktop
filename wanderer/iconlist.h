@@ -53,6 +53,8 @@ struct IconEntry {
     time_t mtime = 0;
     bool selected = false, focus = false, visible = true;
     bool executable = false;          // a tool (the x bit)
+    bool left_out = false;            // on the root window by Leave Out
+    bool trash = false;               // the trash can
     int provided_x = NO_ICON_POSITION, provided_y = NO_ICON_POSITION;   // a snapshot position
     // computed (iconlist.c: ie_IconX/Y, ie_AreaWidth/Height, ie_IconWidth/Height ...)
     int x = 0, y = 0, area_w = 0, area_h = 0, icon_w = 0, icon_h = 0;
@@ -149,6 +151,22 @@ public:
 private:
     std::string dir_;
 };
+
+// IconSearchList: the entries found by Find (a name pattern, under a directory)
+class IconSearchList : public IconList {
+public:
+    IconSearchList(const std::string &dir, const std::string &pattern) : dir_(dir), pattern_(pattern) {}
+    void update() override;
+    int found() const { return (int)entries_.size(); }
+
+private:
+    std::string dir_, pattern_;
+};
+
+// The places the root window shows besides the volumes
+std::string trash_dir();                       // ~/.local/share/Trash/files
+std::vector<std::string> left_out_paths();     // ~/.config/wanderer/leftout
+void set_left_out(const std::vector<std::string> &paths);
 
 // IconVolumeList: the mounted volumes (the desktop's root window)
 class IconVolumeList : public IconList {

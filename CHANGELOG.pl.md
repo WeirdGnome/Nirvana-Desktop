@@ -1,5 +1,19 @@
 # Lista zmian
 
+## 0.3.0 – 2026-11-14
+
+- **Kosz** (kosz freedesktop.org, wspólny z innymi programami):
+  - kosz na głównym oknie;
+  - ikony upuszczone na kosz trafiają do niego;
+  - *Icon > Delete…* pyta, czy przenieść do kosza, czy usunąć na zawsze;
+  - *Icon > Empty Trash*.
+- **Leave Out / Put Away**: ikony z szuflad można wystawić na główne okno (i z niego
+  zabrać); lista jest zapisywana w `~/.config/wanderer/leftout`.
+- **Find** (*Window > Find…*, Super+F): szuka plików i szuflad o nazwach pasujących do
+  wzorca (`*` i `?`, bez rozróżniania wielkości liter) wewnątrz szuflady i pokazuje wyniki
+  w osobnym oknie.
+- *Icon > Disk Info* jest dostępne tylko dla woluminów.
+
 ## 0.2.0 – 2026-11-14
 
 - **Ikony**: własne obrazki szuflad, dysków twardych, nośników wymiennych, płyt, RAM-dysku i

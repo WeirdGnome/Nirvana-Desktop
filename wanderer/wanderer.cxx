@@ -117,7 +117,8 @@ enum MenuId {
     MEN_WINDOW_VIEW_ALL, MEN_WINDOW_SORT_NOW, MEN_WINDOW_SORT_ENABLE, MEN_WINDOW_SORT_NAME, MEN_WINDOW_SORT_DATE,
     MEN_WINDOW_SORT_SIZE, MEN_WINDOW_SORT_TYPE, MEN_WINDOW_SORT_REVERSE, MEN_WINDOW_SORT_TOPDRAWERS,
     MEN_WINDOW_FIND, MEN_ICON_OPEN, MEN_ICON_RENAME, MEN_ICON_INFORMATION, MEN_ICON_SNAPSHOT,
-    MEN_ICON_UNSNAPSHOT, MEN_ICON_DELETE, MEN_ICON_DISKINFO, MEN_WANDERER_PREFS
+    MEN_ICON_UNSNAPSHOT, MEN_ICON_DELETE, MEN_ICON_DISKINFO, MEN_WANDERER_PREFS,
+    MEN_ICON_LEAVEOUT, MEN_ICON_PUTAWAY, MEN_ICON_EMPTYTRASH
 };
 
 // The preferences on a window: the labels, the layout, the bars, the filter, the order
@@ -274,6 +275,17 @@ void Wanderer::drop(IconWindow *from, std::vector<IconEntry *> &entries, IconEnt
             dest = onto && onto->is_drawer() ? onto->path : to->location();
         }
     }
+    if (dest == trash_dir()) {
+        std::vector<std::string> sources;
+        for (auto *e : entries) if (!e->trash && e->type != ST_ROOT) sources.push_back(e->path);
+        for (auto &src : sources) {
+            std::string err;
+            if (!move_to_trash(src, err)) request("Wanderer", "Could not move '" + fs::path(src).filename().string() + "' to the trash:\n" + err, "OK");
+        }
+        from->update();
+        update_all(trash_dir());
+        return;
+    }
     struct stat sd, ss;
     if (stat(dest.c_str(), &sd) != 0) return;
     std::vector<std::string> sources;
@@ -305,6 +317,12 @@ std::vector<Fl_Menu_Item> Wanderer::menu_items(IconWindow *w) {
     IconList *l = w->iconlist();
     bool sel = !l->selection().empty();
     bool drawer = !w->is_root();
+    bool left_out_sel = false, trash_sel = w->location() == trash_dir(), volume_sel = false;
+    for (auto *e : l->selection()) {
+        if (e->left_out) left_out_sel = true;
+        if (e->trash) trash_sel = true;
+        if (e->type == ST_ROOT) volume_sel = true;
+    }
     int sf = l->sort_flags, df = l->display_flags;
     auto chk = [](bool on) { return FL_MENU_RADIO | (on ? FL_MENU_VALUE : 0); };
     auto tog = [](bool on) { return FL_MENU_TOGGLE | (on ? FL_MENU_VALUE : 0); };
@@ -344,16 +362,19 @@ std::vector<Fl_Menu_Item> Wanderer::menu_items(IconWindow *w) {
                 {"Reverse", 0, nullptr, (void *)MEN_WINDOW_SORT_REVERSE, tog(sf & Sort_Reverse)},
                 {"Drawers First", 0, nullptr, (void *)MEN_WINDOW_SORT_TOPDRAWERS, tog(!(sf & (Sort_DrawersMixed | Sort_DrawersLast)))},
                 {nullptr},
-            {"Find...", FL_META + 'f', nullptr, (void *)MEN_WINDOW_FIND, dis},
+            {"Find...", FL_META + 'f', nullptr, (void *)MEN_WINDOW_FIND, drawer ? 0 : dis},
             {nullptr},
         {"Icon", 0, nullptr, nullptr, FL_SUBMENU},
             {"Open", FL_META + 'o', nullptr, (void *)MEN_ICON_OPEN, sel ? 0 : dis},
             {"Rename...", FL_META + 'r', nullptr, (void *)MEN_ICON_RENAME, sel && drawer ? 0 : dis},
             {"Information...", FL_META + 'i', nullptr, (void *)MEN_ICON_INFORMATION, sel ? 0 : dis},
             {"Snapshot", FL_META + 's', nullptr, (void *)MEN_ICON_SNAPSHOT, sel ? 0 : dis},
-            {"Unsnapshot", FL_META + 'u', nullptr, (void *)MEN_ICON_UNSNAPSHOT, (sel ? 0 : dis) | FL_MENU_DIVIDER},
+            {"Unsnapshot", FL_META + 'u', nullptr, (void *)MEN_ICON_UNSNAPSHOT, sel ? 0 : dis},
+            {"Leave Out", FL_META + 'l', nullptr, (void *)MEN_ICON_LEAVEOUT, sel && drawer ? 0 : dis},
+            {"Put Away", FL_META + 'p', nullptr, (void *)MEN_ICON_PUTAWAY, (left_out_sel ? 0 : dis) | FL_MENU_DIVIDER},
             {"Delete...", 0, nullptr, (void *)MEN_ICON_DELETE, sel && drawer ? 0 : dis},
-            {"Disk Info...", 0, nullptr, (void *)MEN_ICON_DISKINFO, sel && !drawer ? 0 : dis},
+            {"Disk Info...", 0, nullptr, (void *)MEN_ICON_DISKINFO, volume_sel ? 0 : dis},
+            {"Empty Trash", 0, nullptr, (void *)MEN_ICON_EMPTYTRASH, trash_sel ? 0 : dis},
             {nullptr},
         {"Tools", 0, nullptr, nullptr, FL_SUBMENU | FL_MENU_INACTIVE},
             {nullptr},
@@ -518,17 +539,62 @@ void Wanderer::menu_action(IconWindow *w, int id) {
     case MEN_ICON_DELETE: {
         auto sel = l->selection();
         std::string what = sel.size() == 1 ? "'" + sel[0]->label + "'" : std::to_string(sel.size()) + " icons";
-        if (request("Delete", "Do you really want to delete\n" + what + "?\nThis cannot be undone.", "Delete|Cancel") == 1) {
+        int r = request("Delete", "Delete " + what + "?\nMove to Trash keeps them until the trash is emptied;\n"
+                        "Delete removes them for good.", "Move to Trash|Delete|Cancel");
+        if (r == 1 || r == 2) {
             for (auto *e : sel) {
                 std::error_code ec;
-                fs::remove_all(e->path, ec);
-                if (ec) request("Delete", "Could not delete '" + e->label + "':\n" + ec.message(), "OK");
+                std::string err;
+                if (r == 1 && w->location() != trash_dir()) {
+                    if (!move_to_trash(e->path, err)) request("Delete", "Could not move '" + e->label + "' to the trash:\n" + err, "OK");
+                } else {
+                    fs::remove_all(e->path, ec);
+                    if (ec) request("Delete", "Could not delete '" + e->label + "':\n" + ec.message(), "OK");
+                }
             }
             w->update();
+            update_all(trash_dir());
         }
         break;
     }
-    case MEN_ICON_DISKINFO: for (auto *e : l->selection()) disk_info(e->path); break;
+    case MEN_ICON_DISKINFO: for (auto *e : l->selection()) if (e->type == ST_ROOT) disk_info(e->path); break;
+    case MEN_ICON_LEAVEOUT: {
+        // the icons go onto the root window (they stay where they are on the disk)
+        auto v = left_out_paths();
+        for (auto *e : l->selection())
+            if (std::find(v.begin(), v.end(), e->path) == v.end()) v.push_back(e->path);
+        set_left_out(v);
+        if (root_) root_->update();
+        break;
+    }
+    case MEN_ICON_PUTAWAY: {
+        auto v = left_out_paths();
+        for (auto *e : l->selection())
+            if (e->left_out) v.erase(std::remove(v.begin(), v.end(), e->path), v.end());
+        set_left_out(v);
+        if (root_) root_->update();
+        break;
+    }
+    case MEN_ICON_EMPTYTRASH:
+        if (request("Empty Trash", "Do you really want to delete\neverything in the trash?\nThis cannot be undone.",
+                    "Empty|Cancel") == 1) {
+            empty_trash();
+            update_all(trash_dir());
+        }
+        break;
+    case MEN_WINDOW_FIND: {
+        std::string pattern;
+        if (!ask_find(pattern)) break;
+        auto *list = new IconSearchList(w->location(), pattern);
+        auto *fw = new IconWindow("Find: " + pattern + " in " + w->location(), false, list);
+        setup(fw);
+        fw->show_toolbar(false);
+        windows_.push_back(fw);
+        fw->position(w->x() + 30, w->y() + 30);
+        fw->show();
+        fw->update();
+        break;
+    }
     }
 }
 

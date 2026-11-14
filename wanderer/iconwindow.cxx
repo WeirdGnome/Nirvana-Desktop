@@ -90,7 +90,7 @@ static std::string fmt_size(unsigned long long num) {
 // ============================================================================================
 // IconWindow
 // ============================================================================================
-IconWindow::IconWindow(const std::string &location, bool backdrop)
+IconWindow::IconWindow(const std::string &location, bool backdrop, IconList *list)
     : Window(location.empty() ? "Wanderer" : location), location_(location), backdrop_(backdrop) {
     // the window contents (OM_NEW): the top panel, the view, the bottom panel
     auto *root = new Group(Group::Vertical);
@@ -109,7 +109,8 @@ IconWindow::IconWindow(const std::string &location, bool backdrop)
         up->on_press = [this] { if (on_parent) on_parent(this); };
         search->on_press = [this] { if (on_search) on_search(this); };
 
-        if (location_.empty()) list_ = new IconVolumeList();
+        if (list) list_ = list;
+        else if (location_.empty()) list_ = new IconVolumeList();
         else list_ = new IconDrawerList(location_);
         Fl_Group::current(nullptr);
         root->begin();

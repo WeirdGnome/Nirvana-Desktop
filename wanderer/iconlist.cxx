@@ -21,6 +21,7 @@
 #include <fstream>
 #include <sstream>
 #include <sys/stat.h>
+#include <fnmatch.h>
 
 namespace fs = std::filesystem;
 using namespace zune;
@@ -363,6 +364,7 @@ void IconList::draw_icon_image(IconEntry &e, int x, int y, bool sel) {
     if (display_flags & Disp_NoIcons) return;
     IconKind k = icon_kind(e.path, e.is_drawer() && e.type != ST_ROOT, e.type == ST_ROOT, e.executable);
     if (e.type == ST_LINKFILE) k = IconKind::Link;
+    if (e.trash) k = IconKind::Trash;
     draw_icon(k, x, y, sel);
 }
 
@@ -706,6 +708,95 @@ void IconVolumeList::update() {
         if (mnt.rfind("/media/", 0) != 0 && mnt.rfind("/mnt/", 0) != 0 && mnt.rfind("/run/media/", 0) != 0) continue;
         add_vol(mnt, fs::path(mnt).filename().string());
     }
+    // the trash can
+    {
+        std::error_code ec;
+        fs::create_directories(trash_dir(), ec);
+        IconEntry e;
+        e.path = trash_dir();
+        e.label = "Trash";
+        e.type = ST_USERDIR;
+        e.trash = true;
+        add(std::move(e));
+    }
+    // the icons left out
+    for (auto &p : left_out_paths()) {
+        struct stat st;
+        if (stat(p.c_str(), &st) != 0) continue;
+        IconEntry e;
+        e.path = p;
+        e.label = fs::path(p).filename().string();
+        e.type = S_ISDIR(st.st_mode) ? ST_USERDIR : ST_FILE;
+        e.size = st.st_size;
+        e.mtime = st.st_mtime;
+        e.executable = S_ISREG(st.st_mode) && (st.st_mode & S_IXUSR);
+        e.left_out = true;
+        add(std::move(e));
+    }
+    rethink();
+}
+
+// ============================================================================================
+// The trash can and the icons left out
+// ============================================================================================
+static std::string config_path(const char *name) {
+    const char *x = getenv("XDG_CONFIG_HOME");
+    std::string base = x && *x ? x : std::string(getenv("HOME") ? getenv("HOME") : "/tmp") + "/.config";
+    return base + "/wanderer/" + name;
+}
+
+std::string trash_dir() {
+    const char *x = getenv("XDG_DATA_HOME");
+    std::string base = x && *x ? x : std::string(getenv("HOME") ? getenv("HOME") : "/tmp") + "/.local/share";
+    return base + "/Trash/files";
+}
+
+std::vector<std::string> left_out_paths() {
+    std::vector<std::string> v;
+    std::ifstream in(config_path("leftout"));
+    std::string line;
+    while (std::getline(in, line)) if (!line.empty()) v.push_back(line);
+    return v;
+}
+
+void set_left_out(const std::vector<std::string> &paths) {
+    std::error_code ec;
+    fs::create_directories(fs::path(config_path("leftout")).parent_path(), ec);
+    std::ofstream out(config_path("leftout"));
+    for (auto &p : paths) out << p << "\n";
+}
+
+// ============================================================================================
+// IconSearchList: Find - the names matching a pattern (wildcards * ?, no case) under a
+// directory; the interface stays alive while it searches
+// ============================================================================================
+void IconSearchList::update() {
+    clear();
+    std::error_code ec;
+    int seen = 0;
+    auto it = fs::recursive_directory_iterator(dir_, fs::directory_options::skip_permission_denied, ec);
+    for (; !ec && it != fs::recursive_directory_iterator(); it.increment(ec)) {
+        if (++seen % 300 == 0) Fl::check();
+        std::string name = it->path().filename().string();
+        if (!(display_flags & Disp_ShowHidden) && !name.empty() && name[0] == '.') {
+            if (it->is_directory(ec)) it.disable_recursion_pending();
+            continue;
+        }
+        if (fnmatch(pattern_.c_str(), name.c_str(), FNM_CASEFOLD) != 0) continue;
+        IconEntry e;
+        e.path = it->path().string();
+        e.label = name;
+        struct stat st;
+        if (lstat(e.path.c_str(), &st) == 0) {
+            e.mtime = st.st_mtime;
+            e.size = st.st_size;
+            e.type = S_ISDIR(st.st_mode) ? ST_USERDIR : ST_FILE;
+            e.executable = S_ISREG(st.st_mode) && (st.st_mode & S_IXUSR);
+        }
+        add(std::move(e));
+        if (entries_.size() >= 2000) break;   // enough to show
+    }
+    sort();
     rethink();
 }
 

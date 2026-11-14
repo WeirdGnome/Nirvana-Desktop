@@ -8,6 +8,7 @@
 */
 #include "tools.h"
 #include "zune.h"
+#include "iconlist.h"
 
 #include <FL/Fl.H>
 
@@ -26,6 +27,8 @@ namespace fs = std::filesystem;
 using namespace zune;
 
 namespace wanderer {
+
+static std::string trash_files() { return trash_dir(); }
 
 // Runs a window until `done` is set (or the window is closed)
 static void run_modal(Window *w, bool &done) {
@@ -269,6 +272,90 @@ void disk_info(const std::string &volume) {
     auto *w = new Window("Disk Info", root);
     centre(w);
     run_modal(w, done);
+}
+
+// --------------------------------------------------------------------------------------------
+bool move_to_trash(const std::string &path, std::string &error) {
+    fs::path files = fs::path(trash_files());
+    fs::path info = files.parent_path() / "info";
+    std::error_code ec;
+    fs::create_directories(files, ec);
+    fs::create_directories(info, ec);
+    std::string name = fs::path(path).filename().string(), base = name;
+    for (int i = 2; fs::exists(files / name, ec) || fs::exists(info / (name + ".trashinfo"), ec); i++)
+        name = base + "." + std::to_string(i);
+    char date[32];
+    time_t t = time(nullptr);
+    struct tm tm;
+    localtime_r(&t, &tm);
+    strftime(date, sizeof date, "%Y-%m-%dT%H:%M:%S", &tm);
+    {
+        FILE *f = fopen((info / (name + ".trashinfo")).c_str(), "w");
+        if (f) {
+            // the path as a URI path: unsafe characters escaped
+            std::string esc;
+            for (unsigned char c : fs::absolute(path).string()) {
+                if (isalnum(c) || strchr("/-_.~", c)) esc += (char)c;
+                else { char b[4]; snprintf(b, sizeof b, "%%%02X", c); esc += b; }
+            }
+            fprintf(f, "[Trash Info]\nPath=%s\nDeletionDate=%s\n", esc.c_str(), date);
+            fclose(f);
+        }
+    }
+    fs::rename(path, files / name, ec);
+    if (ec) {
+        // another file system: copied, then removed
+        fs::copy(path, files / name, fs::copy_options::recursive | fs::copy_options::copy_symlinks, ec);
+        if (!ec) fs::remove_all(path, ec);
+    }
+    if (ec) {
+        fs::remove(info / (name + ".trashinfo"));
+        error = ec.message();
+        return false;
+    }
+    return true;
+}
+
+void empty_trash() {
+    fs::path files = fs::path(trash_files());
+    std::error_code ec;
+    for (auto &dir : {files, files.parent_path() / "info"})
+        for (auto it = fs::directory_iterator(dir, ec); !ec && it != fs::directory_iterator(); it.increment(ec)) {
+            std::error_code e2;
+            fs::remove_all(it->path(), e2);
+        }
+}
+
+bool ask_find(std::string &pattern) {
+    bool done = false, ok = false;
+    auto *root = VGroup();
+    new Text("\033cFind the files and drawers whose names match\n(wildcards: * and ?)");
+    auto *row = HGroup();
+    new Text("Name:");
+    auto *s = new String(pattern, 255);
+    s->weight(300);
+    row->end();
+    auto *buttons = HGroup();
+    auto *bok = new Button("Find");
+    HSpace();
+    auto *bc = new Button("Cancel");
+    buttons->end();
+    root->end();
+    auto *w = new Window("Find", root);
+    w->size(std::max(w->w(), 360), w->h());
+    bok->on_press = [&] { ok = done = true; };
+    s->on_acknowledge = [&] { ok = done = true; };
+    bc->on_press = [&] { done = true; };
+    centre(w);
+    w->set_modal();
+    w->show();
+    Fl::focus(s->input());
+    while (!done && w->shown()) Fl::wait();
+    pattern = s->value();
+    w->hide();
+    Fl::delete_widget(w);
+    if (ok && !pattern.empty() && pattern.find_first_of("*?") == std::string::npos) pattern = "*" + pattern + "*";
+    return ok && !pattern.empty();
 }
 
 }  // namespace wanderer

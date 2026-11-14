@@ -34,7 +34,7 @@ private:
 class IconWindow : public zune::Window {
 public:
     // location: a directory; "" - the root window (the volumes)
-    IconWindow(const std::string &location, bool backdrop = false);
+    IconWindow(const std::string &location, bool backdrop = false, IconList *list = nullptr);
     const std::string &location() const { return location_; }
     IconList *iconlist() const { return list_; }
     bool is_root() const { return location_.empty(); }

@@ -23,6 +23,12 @@ bool rename_entry(const std::string &path, std::string &renamed);   // Tools/WBR
 void information(const std::string &path);                  // Tools/Info
 void disk_info(const std::string &volume);                  // Tools/DiskInfo
 
+// the trash can (the freedesktop.org trash: files/ and info/*.trashinfo)
+bool move_to_trash(const std::string &path, std::string &error);
+void empty_trash();
+// Find: a pattern asked for; false - cancelled
+bool ask_find(std::string &pattern);
+
 // starts a program / opens a file with the system's handler, detached
 void launch(const std::vector<std::string> &argv, const std::string &dir);
 
