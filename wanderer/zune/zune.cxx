@@ -1415,7 +1415,18 @@ static void chain(Fl_Group *g, std::vector<Fl_Widget *> &out) {
     }
 }
 
+Window::~Window() = default;
+
 int Window::handle(int e) {
+    if (Fl::focus() && Fl::focus() != this && Fl::focus()->inside(this) &&
+        (!last_focus_ || last_focus_->widget() != Fl::focus()))
+        last_focus_ = std::make_unique<Fl_Widget_Tracker>(Fl::focus());
+    if (e == FL_FOCUS && (!Fl::focus() || !Fl::focus()->inside(this)) && last_focus_ && last_focus_->exists() &&
+        last_focus_->widget()->visible_r()) {
+        // back to the window: its active object again
+        last_focus_->widget()->take_focus();
+        return 1;
+    }
     if (e == FL_KEYBOARD && Fl::event_key() == FL_Tab && Fl::focus() == this) {
         // no active object yet: Tab takes the first, Shift+Tab the last
         std::vector<Fl_Widget *> c;

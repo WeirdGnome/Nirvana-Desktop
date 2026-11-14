@@ -33,6 +33,7 @@
 
 #include <algorithm>
 #include <functional>
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -379,6 +380,7 @@ protected:
 class Window : public Fl_Double_Window {
 public:
     Window(const std::string &title, Area *root = nullptr);
+    ~Window() override;
     void root(Area *r);
     Area *root() const { return root_; }
     // the size from the root object's default size (MUIA_Window_Width/Height default)
@@ -390,6 +392,7 @@ public:
 private:
     Area *root_ = nullptr;
     std::string title_;
+    std::unique_ptr<class Fl_Widget_Tracker> last_focus_;   // the active object when the window was left
 };
 
 int run();   // the Application's event loop
