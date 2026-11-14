@@ -364,6 +364,11 @@ void Wanderer::eject(const std::string &device) {
 
 void Wanderer::open_entry(IconWindow *w, IconEntry &e) {
     if (e.unmounted) { mount_and_open(e.device); return; }
+    if (e.app_window) {
+        // an AppIcon opened: its program gets a message without paths
+        app_message({e.app_window, e.app_id, e.label}, "_WANDERER_APPICON_MESSAGE", "_WANDERER_APPICON_ARGS", {});
+        return;
+    }
     if (e.is_drawer()) {
         // a new window from the root window or with classic navigation, else the same window
         if (w && !w->is_root() && prefs_.navigation == 1 && dynamic_cast<IconDrawerList *>(w->iconlist())) navigate(w, e.path);
@@ -397,12 +402,22 @@ IconWindow *Wanderer::window_at(int xr, int yr, IconWindow *except) {
 // are copied (Wanderer's rule).
 void Wanderer::drop(IconWindow *from, std::vector<IconEntry *> &entries, IconEntry *target) {
     std::string dest;
+    if (target && target->app_window) {
+        // icons dropped onto an AppIcon: its program gets their paths (an AppMessage)
+        std::vector<std::string> paths;
+        for (auto *e : entries) if (!e->app_window && !e->path.empty() && e->path[0] == '/') paths.push_back(e->path);
+        from->iconlist()->rethink();
+        app_message({target->app_window, target->app_id, target->label}, "_WANDERER_APPICON_MESSAGE",
+                    "_WANDERER_APPICON_ARGS", paths);
+        return;
+    }
     if (target) dest = target->path;
     else {
         IconWindow *to = window_at(Fl::event_x_root(), Fl::event_y_root(), from);
         if (!to || to->is_root()) {
             if (to && to->is_root()) {
                 IconEntry *vol = to->iconlist()->entry_at(Fl::event_x_root() - to->x(), Fl::event_y_root() - to->y());
+                if (vol && vol->app_window) { drop(from, entries, vol); return; }
                 if (vol) dest = vol->path;
             }
             if (dest.empty()) { from->iconlist()->rethink(); return; }
@@ -412,7 +427,7 @@ void Wanderer::drop(IconWindow *from, std::vector<IconEntry *> &entries, IconEnt
         }
     }
     std::vector<std::string> sources;
-    for (auto *e : entries) if (!e->trash && e->type != ST_ROOT) sources.push_back(e->path);
+    for (auto *e : entries) if (!e->trash && e->type != ST_ROOT && !e->app_window) sources.push_back(e->path);
     from->iconlist()->rethink();
     drop_paths(sources, dest);
 }
@@ -446,70 +461,22 @@ void Wanderer::drop_paths(const std::vector<std::string> &sources, const std::st
 // --------------------------------------------------------------------------------------------
 static std::vector<ToolItem> app_menu_items() {
     std::vector<ToolItem> items;
-    Display *d = fl_display;
-    if (!d) return items;
-    Atom clients = XInternAtom(d, "_NET_CLIENT_LIST", False), prop = XInternAtom(d, "_WANDERER_APPMENU", False);
-    Atom type;
-    int format;
-    unsigned long n = 0, after;
-    unsigned char *data = nullptr;
-    if (XGetWindowProperty(d, RootWindow(d, fl_screen), clients, 0, 4096, False, XA_WINDOW, &type, &format, &n,
-                           &after, &data) != Success || !data)
-        return items;
-    std::vector<::Window> wins((::Window *)data, (::Window *)data + n);
-    XFree(data);
-    for (::Window w : wins) {
-        unsigned char *p = nullptr;
-        unsigned long len = 0;
-        if (XGetWindowProperty(d, w, prop, 0, 16384, False, AnyPropertyType, &type, &format, &len, &after, &p) !=
-                Success || !p)
-            continue;
-        if (format == 8) {
-            std::string all((char *)p, len);
-            long id = 0;
-            size_t at = 0;
-            while (at < all.size()) {
-                size_t z = all.find('\0', at);
-                if (z == std::string::npos) z = all.size();
-                std::string label = all.substr(at, z - at);
-                if (!label.empty()) {
-                    ToolItem t;
-                    t.label = label;
-                    t.app_window = w;
-                    t.app_id = id;
-                    items.push_back(t);
-                }
-                id++;
-                at = z + 1;
-            }
-        }
-        XFree(p);
+    for (auto &a : app_items("_WANDERER_APPMENU")) {
+        ToolItem t;
+        t.label = a.label;
+        t.app_window = a.window;
+        t.app_id = a.id;
+        items.push_back(t);
     }
     return items;
 }
 
-static std::string app_menu_state() {
+// both kinds: a change shows in the menus and on the root window
+static std::string app_state() {
     std::string s;
-    for (auto &t : app_menu_items()) s += std::to_string(t.app_window) + ":" + t.label + "\n";
+    for (auto &a : app_items("_WANDERER_APPMENU")) s += "m" + std::to_string(a.window) + ":" + a.label + "\n";
+    for (auto &a : app_items("_WANDERER_APPICON")) s += "i" + std::to_string(a.window) + ":" + a.label + "\n";
     return s;
-}
-
-static void app_menu_pick(const ToolItem &t, const std::vector<std::string> &paths) {
-    Display *d = fl_display;
-    std::string args;
-    for (auto &p : paths) { args += p; args += '\0'; }
-    XChangeProperty(d, t.app_window, XInternAtom(d, "_WANDERER_APPMENU_ARGS", False),
-                    XInternAtom(d, "UTF8_STRING", False), 8, PropModeReplace, (const unsigned char *)args.data(),
-                    (int)args.size());
-    XEvent e = {};
-    e.xclient.type = ClientMessage;
-    e.xclient.window = t.app_window;
-    e.xclient.message_type = XInternAtom(d, "_WANDERER_APPMENU_PICK", False);
-    e.xclient.format = 32;
-    e.xclient.data.l[0] = t.app_id;
-    e.xclient.data.l[1] = (long)paths.size();
-    XSendEvent(d, t.app_window, False, NoEventMask, &e);
-    XFlush(d);
 }
 
 std::vector<Fl_Menu_Item> Wanderer::menu_items(IconWindow *w) {
@@ -712,9 +679,10 @@ void Wanderer::watch_volumes(void *d) {
         if (!first && self->root_) { self->root_->update(); self->apply_snapshot(self->root_); }
     }
     // the programs' menu items: the menus again when they change
-    std::string apps = app_menu_state();
+    std::string apps = app_state();
     if (apps != self->appmenu_state_) {
         self->appmenu_state_ = apps;
+        if (self->root_) { self->root_->update(); self->apply_snapshot(self->root_); }
         for (auto *o : self->windows_) self->publish_menu(o);
         if (self->root_) self->publish_menu(self->root_);
     }
@@ -789,7 +757,8 @@ void Wanderer::menu_action(IconWindow *w, int id) {
         if (tools_[i].app_window) {
             std::vector<std::string> paths;
             for (auto *e : w->iconlist()->selection()) paths.push_back(e->path);
-            app_menu_pick(tools_[i], paths);
+            app_message({tools_[i].app_window, tools_[i].app_id, tools_[i].label}, "_WANDERER_APPMENU_PICK",
+                        "_WANDERER_APPMENU_ARGS", paths);
             return;
         }
         std::vector<std::string> argv = {"/bin/sh", "-c", tools_[i].command + " \"$@\"", "sh"};

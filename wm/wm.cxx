@@ -1485,6 +1485,17 @@ int main(int argc, char **argv) {
                 } else if (ev.xproperty.atom == WANDERER_SCREEN_TITLE) {
                     c->screen_title = utf8_prop(c->win, WANDERER_SCREEN_TITLE);
                     if (!menu.open) c->screen->draw_bar();
+                } else if (ev.xproperty.atom == NET_WM_WINDOW_TYPE && !c->backdrop && !c->fullscreen &&
+                           has_type(c->win, NET_WM_WINDOW_TYPE_DESKTOP)) {
+                    // the type set after mapping: the window becomes its screen's backdrop
+                    c->backdrop = true;
+                    c->zoomed = false;
+                    c->x = 0; c->y = BAR_H; c->w = SW; c->h = SH - BAR_H;
+                    auto &v = c->screen->clients;
+                    v.erase(std::remove(v.begin(), v.end(), c), v.end());
+                    v.insert(v.begin(), c);
+                    place(c);
+                    restack(c->screen);
                 } else if (ev.xproperty.atom == XA_WM_HINTS || ev.xproperty.atom == WM_PROTOCOLS ||
                            ev.xproperty.atom == XA_WM_NORMAL_HINTS)
                     read_protocols(c);

@@ -59,6 +59,8 @@ struct IconEntry {
     bool trash = false;               // the trash can
     std::string device;               // a volume: its block device (/dev/sdb1)
     bool unmounted = false;           // a volume not mounted yet (ghosted; opening mounts it)
+    unsigned long app_window = 0;     // an AppIcon: the program's window
+    long app_id = 0;                  // and the icon's number there
     int provided_x = NO_ICON_POSITION, provided_y = NO_ICON_POSITION;   // a snapshot position
     // computed (iconlist.c: ie_IconX/Y, ie_AreaWidth/Height, ie_IconWidth/Height ...)
     int x = 0, y = 0, area_w = 0, area_h = 0, icon_w = 0, icon_h = 0;
@@ -205,6 +207,12 @@ void set_left_out(const std::vector<std::string> &paths);
 // The volumes the root window does not show (~/.config/wanderer/hiddenvolumes, one a line:
 // a volume name - a trailing colon allowed, no case -, its device or its mount point)
 std::vector<std::string> hidden_volumes();
+// Programs' AppIcons / AppMenuItems: the names in a property (UTF8_STRING, NUL-separated)
+// on the top-level windows (_NET_CLIENT_LIST); a message back with the paths it concerns
+struct AppItem { unsigned long window; long id; std::string label; };
+std::vector<AppItem> app_items(const char *property);
+void app_message(const AppItem &item, const char *message, const char *args_property,
+                 const std::vector<std::string> &paths);
 void set_hidden_volumes(const std::vector<std::string> &names);
 
 // IconVolumeList: the mounted volumes (the desktop's root window)

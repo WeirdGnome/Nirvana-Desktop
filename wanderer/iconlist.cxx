@@ -16,6 +16,7 @@
 #include <FL/fl_draw.H>
 #include <FL/Fl_Shared_Image.H>
 #include <FL/platform.H>
+#include <X11/Xatom.h>
 
 #include <algorithm>
 #include <cstring>
@@ -814,7 +815,7 @@ int IconList::handle(int ev) {
             // they were put (their positions become their snapshot positions)
             IconEntry *target = nullptr;
             for (auto &o : entries_) {
-                if (o.selected || !o.visible || !o.is_drawer()) continue;
+                if (o.selected || !o.visible || !(o.is_drawer() || o.app_window)) continue;   // AppIcons take drops
                 int vx = Fl::event_x() - mleft() + view_x_, vy = Fl::event_y() - mtop() + view_y_;
                 if (vx >= o.x && vx < o.x + o.area_w && vy >= o.y && vy < o.y + o.area_h) { target = &o; break; }
             }
@@ -1014,7 +1015,74 @@ void IconVolumeList::update() {
         e.left_out = true;
         add(std::move(e));
     }
+    // the programs' AppIcons (AddAppIcon): _WANDERER_APPICON on their windows
+    for (auto &a : app_items("_WANDERER_APPICON")) {
+        IconEntry e;
+        e.path = "appicon:" + a.label;   // stable, for the snapshot's positions
+        e.label = a.label;
+        e.type = ST_FILE;
+        e.executable = true;
+        e.app_window = a.window;
+        e.app_id = a.id;
+        add(std::move(e));
+    }
     rethink();
+}
+
+std::vector<AppItem> app_items(const char *property) {
+    std::vector<AppItem> items;
+    Display *d = fl_display;
+    if (!d) return items;
+    Atom clients = XInternAtom(d, "_NET_CLIENT_LIST", False), prop = XInternAtom(d, property, False);
+    Atom type;
+    int format;
+    unsigned long n = 0, after;
+    unsigned char *data = nullptr;
+    if (XGetWindowProperty(d, RootWindow(d, fl_screen), clients, 0, 4096, False, XA_WINDOW, &type, &format, &n,
+                           &after, &data) != Success || !data)
+        return items;
+    std::vector<::Window> wins((::Window *)data, (::Window *)data + n);
+    XFree(data);
+    for (::Window w : wins) {
+        unsigned char *p = nullptr;
+        unsigned long len = 0;
+        if (XGetWindowProperty(d, w, prop, 0, 16384, False, AnyPropertyType, &type, &format, &len, &after, &p) !=
+                Success || !p)
+            continue;
+        if (format == 8) {
+            std::string all((char *)p, len);
+            long id = 0;
+            size_t at = 0;
+            while (at < all.size()) {
+                size_t z = all.find('\0', at);
+                if (z == std::string::npos) z = all.size();
+                std::string label = all.substr(at, z - at);
+                if (!label.empty()) items.push_back({w, id, label});
+                id++;
+                at = z + 1;
+            }
+        }
+        XFree(p);
+    }
+    return items;
+}
+
+void app_message(const AppItem &item, const char *message, const char *args_property,
+                 const std::vector<std::string> &paths) {
+    Display *d = fl_display;
+    std::string args;
+    for (auto &p : paths) { args += p; args += '\0'; }
+    XChangeProperty(d, item.window, XInternAtom(d, args_property, False), XInternAtom(d, "UTF8_STRING", False), 8,
+                    PropModeReplace, (const unsigned char *)args.data(), (int)args.size());
+    XEvent e = {};
+    e.xclient.type = ClientMessage;
+    e.xclient.window = item.window;
+    e.xclient.message_type = XInternAtom(d, message, False);
+    e.xclient.format = 32;
+    e.xclient.data.l[0] = item.id;
+    e.xclient.data.l[1] = (long)paths.size();
+    XSendEvent(d, item.window, False, NoEventMask, &e);
+    XFlush(d);
 }
 
 // ============================================================================================

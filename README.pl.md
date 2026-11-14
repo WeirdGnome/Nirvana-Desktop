@@ -70,6 +70,15 @@ znakiem NUL). Po wybraniu pozycji Wanderer:
 
 Pozycje znikają, gdy okno się zamknie albo właściwość zostanie usunięta.
 
+## Ikony programów w oknie głównym
+
+Program może też położyć ikonę w oknie głównym (jak AddAppIcon): właściwość
+`_WANDERER_APPICON` (`UTF8_STRING`, po jednej nazwie na ikonę, rozdzielone znakiem NUL) na
+swoim głównym oknie. Otwarcie ikony albo upuszczenie na nią innych ikon wysyła do okna
+ClientMessage `_WANDERER_APPICON_MESSAGE` (`l[0]` numer ikony, `l[1]` liczba ścieżek);
+ścieżki upuszczonych ikon są we właściwości `_WANDERER_APPICON_ARGS` (rozdzielone znakiem
+NUL).
+
 ## Języki
 
 Interfejs mówi językiem użytkownika (`LANGUAGE`, `LC_ALL`, `LC_MESSAGES`, `LANG`).

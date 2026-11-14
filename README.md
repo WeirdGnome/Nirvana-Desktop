@@ -87,6 +87,14 @@ top-level window. When an item is picked, Wanderer:
 
 The items go away when the window closes or the property is deleted.
 
+## Programs' icons on the root window
+
+A program can also put an icon on the root window (as AddAppIcon does): the property
+`_WANDERER_APPICON` (`UTF8_STRING`, one name for each icon, separated by NUL) on its
+top-level window. Opening the icon, or dropping icons onto it, sends the window a
+ClientMessage `_WANDERER_APPICON_MESSAGE` (`l[0]` the icon's number, `l[1]` the number of
+paths); the dropped icons' paths are in `_WANDERER_APPICON_ARGS` (separated by NUL).
+
 ## Languages
 
 The interface follows the user's language (`LANGUAGE`, `LC_ALL`, `LC_MESSAGES`, `LANG`).
