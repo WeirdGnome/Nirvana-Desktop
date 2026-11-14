@@ -41,12 +41,21 @@ constexpr int MAXMAX = 10000;   // MUI_MAXMAX
 
 // configdata.c defaults
 struct Prefs {
+    // the screen's palette (MUI pens come from it) and the frames of buttons and groups
+    unsigned background = 0xAAAAAA, shadow = 0x000000, shine = 0xFFFFFF, fill = 0x6688BB;
+    std::string button_frame = "202211", group_frame = "314444";
+    int font_family = 0;         // 0 sans, 1 serif, 2 fixed
     int group_hspacing = 6, group_vspacing = 3;
     int window_left = 4, window_right = 4, window_top = 3, window_bottom = 3;
     int font_size = 13;          // the screen font (topaz-like 8 pt is too small on today's screens)
     Fl_Font font = FL_HELVETICA, font_bold = FL_HELVETICA_BOLD, font_fixed = FL_COURIER;
 };
 Prefs &prefs();
+// ~/.config/wanderer/zune.prefs: read at the start, written by the settings editor;
+// apply() puts them into effect in every window at once
+void load_prefs();
+void save_prefs();
+void apply_prefs();
 
 enum InputMode { Input_None, Input_RelVerify, Input_Immediate, Input_Toggle };
 
@@ -55,9 +64,10 @@ class Area : public Fl_Group {
 public:
     Area(StdFrame frame = Frame_None);
     // the frame: a standard one or a spec ("202211")
-    void frame(StdFrame f) { frame_ = std_frame(f); }
-    void frame(const std::string &spec) { frame_ = FrameSpec::parse(spec); }
-    const FrameSpec &frame_spec() const { return frame_; }
+    // (a standard frame follows the preferences: changed there, it changes here)
+    void frame(StdFrame f) { std_ = f; }
+    void frame(const std::string &spec) { own_ = FrameSpec::parse(spec); std_ = Frame_Count; }
+    const FrameSpec &frame_spec() const { return std_ < Frame_Count ? std_frame(std_) : own_; }
     // the background: a pen (MPEN_BACKGROUND by default) or none (the parent's shows through)
     void background(int pen) { bg_pen_ = pen; }
     void inner(int l, int r, int t, int b) { il_ = l; ir_ = r; it_ = t; ib_ = b; inner_set_ = true; }
@@ -87,7 +97,8 @@ public:
 protected:
     virtual void draw_contents() {}   // MUIM_Draw of the subclass
     virtual void draw_background(int X, int Y, int W, int H);
-    FrameSpec frame_;
+    StdFrame std_ = Frame_None;
+    FrameSpec own_;
     int bg_pen_ = MPEN_BACKGROUND;
     int il_ = 0, ir_ = 0, it_ = 0, ib_ = 0;
     bool inner_set_ = false;

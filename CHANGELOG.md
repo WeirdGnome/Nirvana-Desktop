@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.5.0 – 2026-11-14
+
+- **GUI settings** (*Wanderer > GUI Settings…*), with Save, Use and Cancel. They are the
+  Zune preferences:
+  - the screen's colours: background, shine, shadow and text, fill, with the schemes
+    Default, Warm, Cool, Green and Contrast;
+  - the font (sans, serif, fixed) and its size;
+  - the frames of buttons (bevel, window bevel, semi-round, round, thick border);
+  - the frames of groups (thin border, bevel, grey border, rounded, round thin border).
+
+  Use and Save change every open window at once. The settings are kept in
+  `~/.config/wanderer/zune.prefs`.
+- **wanderer-wm** takes the screen's colours from the GUI settings when it starts.
+- **Zune**: an object with a standard frame follows the preferences, so changing a
+  frame kind changes it everywhere.
+
 ## 0.4.1 – 2026-11-14
 
 - **File requester** in the style of the system's file requester:

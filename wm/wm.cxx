@@ -1083,11 +1083,37 @@ int main(int argc, char **argv) {
     WANDERER_SCREEN_TITLE = atom("_WANDERER_SCREEN_TITLE");
     WANDERER_MENU_PICK = atom("_WANDERER_MENU_PICK");
 
-    pen_grey = alloc("#AAAAAA");
-    pen_black = alloc("#000000");
-    pen_white = alloc("#FFFFFF");
-    pen_blue = alloc("#6688BB");
-    pen_halfshadow = alloc("#555555");
+    // the palette: the GUI settings' (~/.config/wanderer/zune.prefs), else the default
+    std::string bg = "AAAAAA", sd = "000000", sh = "FFFFFF", fl = "6688BB";
+    {
+        const char *x = getenv("XDG_CONFIG_HOME");
+        std::string base = x && *x ? x : std::string(getenv("HOME") ? getenv("HOME") : "/tmp") + "/.config";
+        if (FILE *f = fopen((base + "/wanderer/zune.prefs").c_str(), "r")) {
+            char line[256];
+            while (fgets(line, sizeof line, f)) {
+                std::string l(line);
+                while (!l.empty() && (l.back() == '\n' || l.back() == '\r')) l.pop_back();
+                auto eq = l.find('=');
+                if (eq == std::string::npos || l.size() - eq - 1 != 6) continue;
+                std::string k = l.substr(0, eq), v = l.substr(eq + 1);
+                if (k == "background") bg = v; else if (k == "shadow") sd = v;
+                else if (k == "shine") sh = v; else if (k == "fill") fl = v;
+            }
+            fclose(f);
+        }
+    }
+    pen_grey = alloc(("#" + bg).c_str());
+    pen_black = alloc(("#" + sd).c_str());
+    pen_white = alloc(("#" + sh).c_str());
+    pen_blue = alloc(("#" + fl).c_str());
+    {
+        // half way between the background and the shadow
+        unsigned b = (unsigned)strtoul(bg.c_str(), nullptr, 16), d = (unsigned)strtoul(sd.c_str(), nullptr, 16);
+        char hs[8];
+        snprintf(hs, sizeof hs, "#%02X%02X%02X", (((b >> 16) & 255) + ((d >> 16) & 255)) / 2,
+                 (((b >> 8) & 255) + ((d >> 8) & 255)) / 2, ((b & 255) + (d & 255)) / 2);
+        pen_halfshadow = alloc(hs);
+    }
     font = XftFontOpenName(dpy, scr, "sans-10");
     XftColorAllocName(dpy, DefaultVisual(dpy, scr), DefaultColormap(dpy, scr), "#000000", &xft_black);
     XftColorAllocName(dpy, DefaultVisual(dpy, scr), DefaultColormap(dpy, scr), "#FFFFFF", &xft_white);

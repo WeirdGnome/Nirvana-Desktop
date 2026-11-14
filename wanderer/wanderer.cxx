@@ -15,6 +15,7 @@
 #include "iconwindow.h"
 #include "tools.h"
 #include "prefs.h"
+#include "guisettings.h"
 
 #include <FL/Fl.H>
 #include <FL/Fl_Menu_Item.H>
@@ -120,7 +121,7 @@ enum MenuId {
     MEN_WINDOW_SORT_SIZE, MEN_WINDOW_SORT_TYPE, MEN_WINDOW_SORT_REVERSE, MEN_WINDOW_SORT_TOPDRAWERS,
     MEN_WINDOW_FIND, MEN_ICON_OPEN, MEN_ICON_RENAME, MEN_ICON_INFORMATION, MEN_ICON_SNAPSHOT,
     MEN_ICON_UNSNAPSHOT, MEN_ICON_DELETE, MEN_ICON_DISKINFO, MEN_WANDERER_PREFS,
-    MEN_ICON_LEAVEOUT, MEN_ICON_PUTAWAY, MEN_ICON_EMPTYTRASH
+    MEN_ICON_LEAVEOUT, MEN_ICON_PUTAWAY, MEN_ICON_EMPTYTRASH, MEN_WANDERER_GUISETTINGS
 };
 
 // The preferences on a window: the labels, the layout, the bars, the filter, the order
@@ -337,6 +338,7 @@ std::vector<Fl_Menu_Item> Wanderer::menu_items(IconWindow *w) {
             {"Execute Command...", FL_META + 'e', nullptr, (void *)MEN_WANDERER_EXECUTE},
             {"Shell", FL_META + 'w', nullptr, (void *)MEN_WANDERER_SHELL},
             {"Preferences...", 0, nullptr, (void *)MEN_WANDERER_PREFS},
+            {"GUI Settings...", 0, nullptr, (void *)MEN_WANDERER_GUISETTINGS},
             {"About...", 0, nullptr, (void *)MEN_WANDERER_ABOUT},
             {"Quit...", FL_META + 'q', nullptr, (void *)MEN_WANDERER_QUIT},
             {nullptr},
@@ -507,6 +509,7 @@ void Wanderer::menu_action(IconWindow *w, int id) {
             if (root_) { apply_prefs(root_); root_->update(); apply_snapshot(root_); }
         });
         break;
+    case MEN_WANDERER_GUISETTINGS: edit_gui_settings(); break;
     case MEN_WANDERER_ABOUT:
         request("About Wanderer",
                 "Wanderer for X11 " WANDERER_VERSION "\n\nA port of the AROS desktop and file manager.\n"
@@ -643,6 +646,7 @@ int main(int argc, char **argv) {
     Fl::visual(FL_DOUBLE | FL_INDEX);
     Fl::get_system_colors();
     Fl::add_system_handler(x_events, nullptr);
+    zune::load_prefs();
     g_wanderer.start(backdrop);
     Fl::add_timeout(5.0, Wanderer::tick, &g_wanderer);
     return run();

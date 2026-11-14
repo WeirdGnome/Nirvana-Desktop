@@ -18,12 +18,82 @@
 #include <FL/fl_draw.H>
 
 #include <algorithm>
+#include <cstdio>
+#include <cstdlib>
+#include <sys/stat.h>
 
 namespace zune {
 
 Prefs &prefs() {
     static Prefs p;
     return p;
+}
+
+static std::string prefs_path() {
+    const char *x = getenv("XDG_CONFIG_HOME");
+    std::string base = x && *x ? x : std::string(getenv("HOME") ? getenv("HOME") : "/tmp") + "/.config";
+    return base + "/wanderer/zune.prefs";
+}
+
+void load_prefs() {
+    Prefs &p = prefs();
+    FILE *f = fopen(prefs_path().c_str(), "r");
+    if (f) {
+        char line[512];
+        while (fgets(line, sizeof line, f)) {
+            std::string l(line);
+            while (!l.empty() && (l.back() == '\n' || l.back() == '\r')) l.pop_back();
+            auto eq = l.find('=');
+            if (eq == std::string::npos) continue;
+            std::string k = l.substr(0, eq), v = l.substr(eq + 1);
+            if (k == "background") p.background = (unsigned)strtoul(v.c_str(), nullptr, 16);
+            else if (k == "shadow") p.shadow = (unsigned)strtoul(v.c_str(), nullptr, 16);
+            else if (k == "shine") p.shine = (unsigned)strtoul(v.c_str(), nullptr, 16);
+            else if (k == "fill") p.fill = (unsigned)strtoul(v.c_str(), nullptr, 16);
+            else if (k == "button_frame" && v.size() == 6) p.button_frame = v;
+            else if (k == "group_frame" && v.size() == 6) p.group_frame = v;
+            else if (k == "font_size") p.font_size = std::clamp(atoi(v.c_str()), 9, 24);
+            else if (k == "font_family") p.font_family = std::clamp(atoi(v.c_str()), 0, 2);
+        }
+        fclose(f);
+    }
+    apply_prefs();
+}
+
+void save_prefs() {
+    Prefs &p = prefs();
+    std::string path = prefs_path();
+    std::string dir = path.substr(0, path.rfind('/'));
+    std::string cmd;
+    for (size_t i = 1; i <= dir.size(); i++)
+        if (i == dir.size() || dir[i] == '/') mkdir(dir.substr(0, i).c_str(), 0755);
+    FILE *f = fopen(path.c_str(), "w");
+    if (!f) return;
+    fprintf(f, "background=%06X\nshadow=%06X\nshine=%06X\nfill=%06X\nbutton_frame=%s\ngroup_frame=%s\n"
+               "font_size=%d\nfont_family=%d\n",
+            p.background, p.shadow, p.shine, p.fill, p.button_frame.c_str(), p.group_frame.c_str(), p.font_size,
+            p.font_family);
+    fclose(f);
+}
+
+void apply_prefs() {
+    Prefs &p = prefs();
+    auto col = [](unsigned rgb) { return fl_rgb_color((rgb >> 16) & 255, (rgb >> 8) & 255, rgb & 255); };
+    set_palette(col(p.background), col(p.shadow), col(p.shine), col(p.fill));
+    static const Fl_Font fams[3][2] = {{FL_HELVETICA, FL_HELVETICA_BOLD}, {FL_TIMES, FL_TIMES_BOLD}, {FL_COURIER, FL_COURIER_BOLD}};
+    p.font = fams[p.font_family][0];
+    p.font_bold = fams[p.font_family][1];
+    set_std_frame(Frame_Button, p.button_frame);
+    set_std_frame(Frame_ImageButton, p.button_frame);
+    set_std_frame(Frame_Group, p.group_frame);
+    // every window: laid out again (sizes depend on the font and frames) and drawn
+    for (Fl_Window *w = Fl::first_window(); w; w = Fl::next_window(w)) {
+        if (auto *zw = dynamic_cast<Window *>(w)) {
+            zw->color(pens()[MPEN_BACKGROUND]);
+            zw->resize(zw->x(), zw->y(), zw->w(), zw->h());
+        }
+        w->redraw();
+    }
 }
 
 // ============================================================================================
@@ -42,10 +112,10 @@ void Area::selected(bool s) {
 }
 
 // the inner spacing: set by the object, or the frame spec's
-int Area::add_left() const { return frame_borders(frame_.type, frame_.down).left + (inner_set_ ? il_ : frame_.inner_left); }
-int Area::add_right() const { return frame_borders(frame_.type, frame_.down).right + (inner_set_ ? ir_ : frame_.inner_right); }
-int Area::add_top() const { return frame_borders(frame_.type, frame_.down).top + (inner_set_ ? it_ : frame_.inner_top); }
-int Area::add_bottom() const { return frame_borders(frame_.type, frame_.down).bottom + (inner_set_ ? ib_ : frame_.inner_bottom); }
+int Area::add_left() const { return frame_borders(frame_spec().type, frame_spec().down).left + (inner_set_ ? il_ : frame_spec().inner_left); }
+int Area::add_right() const { return frame_borders(frame_spec().type, frame_spec().down).right + (inner_set_ ? ir_ : frame_spec().inner_right); }
+int Area::add_top() const { return frame_borders(frame_spec().type, frame_spec().down).top + (inner_set_ ? it_ : frame_spec().inner_top); }
+int Area::add_bottom() const { return frame_borders(frame_spec().type, frame_spec().down).bottom + (inner_set_ ? ib_ : frame_spec().inner_bottom); }
 
 void Area::ask_min_max(int &minw, int &minh, int &defw, int &defh, int &maxw, int &maxh) {
     minw = minh = defw = defh = 0;
@@ -75,7 +145,7 @@ void Area::draw_background(int X, int Y, int W, int H) {
 void Area::draw() {
     if (damage() & ~FL_DAMAGE_CHILD) {
         draw_background(x(), y(), w(), h());
-        draw_frame(frame_, x(), y(), w(), h(), selected_ && (input_ == Input_RelVerify || input_ == Input_Immediate));
+        draw_frame(frame_spec(), x(), y(), w(), h(), selected_ && (input_ == Input_RelVerify || input_ == Input_Immediate));
         fl_push_clip(mleft(), mtop(), mwidth(), mheight());
         draw_contents();
         fl_pop_clip();
@@ -297,11 +367,11 @@ void Group::draw() {
         // a framed group draws its background (configdata: MUII_GroupBack); the title sits on
         // the top edge of the frame, centred
         int th = title_h();
-        if (bg_pen_ >= 0 || frame_.type != FST_NONE) {
+        if (bg_pen_ >= 0 || frame_spec().type != FST_NONE) {
             fl_color(pens()[bg_pen_ >= 0 ? bg_pen_ : MPEN_BACKGROUND]);
             fl_rectf(x(), y(), w(), h());
         }
-        draw_frame(frame_, x(), y() + th / 2, w(), h() - th / 2);
+        draw_frame(frame_spec(), x(), y() + th / 2, w(), h() - th / 2);
         if (th) {
             fl_font(prefs().font_bold, prefs().font_size);
             int tw = (int)fl_width(title_.c_str()) + 8;

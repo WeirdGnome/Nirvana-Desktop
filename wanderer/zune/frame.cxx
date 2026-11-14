@@ -286,9 +286,15 @@ FrameSpec FrameSpec::parse(const std::string &s) {
 }
 
 // configdata.c: the default frame of every standard frame kind
+static FrameSpec table[Frame_Count];
+static bool ready = false;
+
+void set_std_frame(StdFrame which, const std::string &spec) {
+    std_frame(which);   // the defaults first
+    if (which >= 0 && which < Frame_Count) table[which] = FrameSpec::parse(spec);
+}
+
 const FrameSpec &std_frame(StdFrame which) {
-    static FrameSpec table[Frame_Count];
-    static bool ready = false;
     if (!ready) {
         static const char *specs[Frame_Count] = {
             "000000",   // None

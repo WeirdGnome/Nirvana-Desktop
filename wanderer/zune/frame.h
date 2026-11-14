@@ -45,5 +45,6 @@ enum StdFrame {
     Frame_Slider, Frame_Knob, Frame_Drag, Frame_Count
 };
 const FrameSpec &std_frame(StdFrame which);
+void set_std_frame(StdFrame which, const std::string &spec);   // the preferences
 
 }  // namespace zune

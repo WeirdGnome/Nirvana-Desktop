@@ -1,5 +1,21 @@
 # Lista zmian
 
+## 0.5.0 – 2026-11-14
+
+- **Ustawienia GUI** (*Wanderer > GUI Settings…*), z przyciskami Save, Use i Cancel. To
+  preferencje Zune:
+  - kolory ekranu: tło, rozjaśnienie, cień i tekst, wypełnienie, z gotowymi schematami
+    Default, Warm, Cool, Green i Contrast;
+  - czcionka (bezszeryfowa, szeryfowa, stałej szerokości) i jej rozmiar;
+  - ramki przycisków (bevel, window bevel, semi-round, round, thick border);
+  - ramki grup (thin border, bevel, grey border, rounded, round thin border).
+
+  Use i Save od razu zmieniają wszystkie otwarte okna. Ustawienia są zapisywane w
+  `~/.config/wanderer/zune.prefs`.
+- **wanderer-wm** bierze kolory ekranu z ustawień GUI przy starcie.
+- **Zune**: element ze standardową ramką podąża za preferencjami, więc zmiana rodzaju ramki
+  działa wszędzie.
+
 ## 0.4.1 – 2026-11-14
 
 - **Okno wyboru pliku** w stylu systemowego okna wyboru plików:
