@@ -157,3 +157,26 @@ Fixed	Stała szerokość
 %s in %d files	%s w plikach: %d
 %d drawers	szuflad: %d
 (%d hidden)	(ukrytych: %d)
+Replace it?	Zastąpić?
+Some items could not be handled:	Nie udało się obsłużyć niektórych elementów:
+'%s' already exists in\n%s.	'%s' już istnieje w\n%s.
+'%s' already exists.	'%s' już istnieje.
+Could not create '%s':	Nie udało się utworzyć '%s':
+Could not rename:	Nie udało się zmienić nazwy:
+Not everything could be changed:	Nie wszystko udało się zmienić:
+The drawer for %s:	Szuflada dla %s:
+Could not mount %s:	Nie udało się zamontować %s:
+Could not unmount %s:	Nie udało się odmontować %s:
+%s icons	ikony: %s
+Delete %s?\nMove to Trash keeps them until the trash is emptied;\nDelete removes them for good.	Usunąć %s?\n„Do kosza” zachowa je do opróżnienia kosza,\n„Usuń” usunie je na zawsze.
+The computer could not be turned off from here:	Nie udało się stąd wyłączyć komputera:
+(the user may need the right to do it - elogind or polkit)	(użytkownik może potrzebować uprawnień - elogind albo polkit)
+A port of the AROS desktop and file manager.	Port pulpitu i menedżera plików systemu AROS.
+Find: %s in %s	Szukaj: %s w %s
+ containing "%s"	 zawierające „%s”
+Output:	Wyjście:
+Enter a new name for '%s':	Podaj nową nazwę dla '%s':
+Choose the backdrop picture	Wybierz obraz tła pulpitu
+Choose the drawers' picture	Wybierz obraz tła szuflad
+Names of your own for drawers, usable in every volume path ("Docs:Listy")	Własne nazwy szuflad, do użycia w każdej ścieżce woluminu („Docs:Listy”)
+Enter command and its arguments:	Podaj polecenie i jego argumenty:

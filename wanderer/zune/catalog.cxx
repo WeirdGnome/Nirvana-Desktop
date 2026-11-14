@@ -95,6 +95,16 @@ std::string tr_text(const std::string &text) {
     return &t == &rest ? text : text.substr(0, i) + t;
 }
 
+std::string trs(const std::string &english, const std::string &a, const std::string &b) {
+    std::string t = tr(english), out;
+    int n = 0;
+    for (size_t i = 0; i < t.size(); i++) {
+        if (t[i] == '%' && i + 1 < t.size() && t[i + 1] == 's') { out += n++ == 0 ? a : b; i++; }
+        else out += t[i];
+    }
+    return out;
+}
+
 const char *language_name() {
     if (!g_loaded) load();
     return g_lang.c_str();

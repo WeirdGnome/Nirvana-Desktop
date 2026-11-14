@@ -283,7 +283,7 @@ void Wanderer::mount_and_open(const std::string &device) {
     while (fgets(buf, sizeof buf, p)) out += buf;
     int rc = pclose(p);
     if (rc != 0) {
-        request("Wanderer", "Could not mount " + device + ":\n" + out, "OK");
+        request("Wanderer", trs("Could not mount %s:", device) + "\n" + out, "OK");
         return;
     }
     // "Mounted /dev/sdb1 at /media/user/LABEL"
@@ -317,7 +317,7 @@ void Wanderer::eject(const std::string &device) {
     char buf[512];
     while (p && fgets(buf, sizeof buf, p)) out += buf;
     int rc = p ? pclose(p) : 1;
-    if (rc != 0) { request("Eject", "Could not unmount " + device + ":\n" + out, "OK"); return; }
+    if (rc != 0) { request("Eject", trs("Could not unmount %s:", device) + "\n" + out, "OK"); return; }
     // the whole drive off (a memory stick can then be pulled out); not possible for some
     std::string disk = device;
     while (!disk.empty() && isdigit((unsigned char)disk.back())) disk.pop_back();
@@ -660,14 +660,14 @@ void Wanderer::menu_action(IconWindow *w, int id) {
         char buf[256];
         while (p && fgets(buf, sizeof buf, p)) out += buf;
         if (!p || pclose(p) != 0)
-            request("Shutdown", "The computer could not be turned off from here:\n" + out +
-                                    "\n(the user may need the right to do it - elogind or polkit)", "OK");
+            request("Shutdown", tr("The computer could not be turned off from here:") + "\n" + out +
+                                    "\n" + tr("(the user may need the right to do it - elogind or polkit)"), "OK");
         break;
     }
     case MEN_WANDERER_ABOUT:
         request("About Wanderer",
-                "Wanderer for X11 " WANDERER_VERSION "\n\nA port of the AROS desktop and file manager.\n"
-                "AROS Public License 1.1 - The AROS Development Team.",
+                "Wanderer for X11 " WANDERER_VERSION "\n\n" + tr("A port of the AROS desktop and file manager.") +
+                    "\nAROS Public License 1.1 - The AROS Development Team.",
                 "OK");
         break;
     case MEN_WANDERER_QUIT:
@@ -734,9 +734,9 @@ void Wanderer::menu_action(IconWindow *w, int id) {
     }
     case MEN_ICON_DELETE: {
         auto sel = l->selection();
-        std::string what = sel.size() == 1 ? "'" + sel[0]->label + "'" : std::to_string(sel.size()) + " icons";
-        int r = request("Delete", "Delete " + what + "?\nMove to Trash keeps them until the trash is emptied;\n"
-                        "Delete removes them for good.", "Move to Trash|Delete|Cancel");
+        std::string what = sel.size() == 1 ? "'" + sel[0]->label + "'" : trs("%s icons", std::to_string(sel.size()));
+        int r = request("Delete", trs("Delete %s?\nMove to Trash keeps them until the trash is emptied;\nDelete removes them for good.", what),
+                        "Move to Trash|Delete|Cancel");
         if (r == 1 || r == 2) {
             std::vector<std::string> paths;
             for (auto *e : sel) paths.push_back(e->path);
@@ -794,8 +794,8 @@ void Wanderer::menu_action(IconWindow *w, int id) {
         static std::string contents;
         if (!ask_find(pattern, contents)) break;
         auto *list = new IconSearchList(w->location(), pattern, contents);
-        std::string what = pattern + (contents.empty() ? "" : " containing \"" + contents + "\"");
-        auto *fw = new IconWindow("Find: " + what + " in " + w->location(), false, list);
+        std::string what = pattern + (contents.empty() ? "" : trs(" containing \"%s\"", contents));
+        auto *fw = new IconWindow(trs("Find: %s in %s", what, to_volume_path(w->location())), false, list);
         setup(fw);
         fw->show_toolbar(false);
         windows_.push_back(fw);

@@ -213,7 +213,7 @@ void work(Job &j) {
         std::string fs_ = fs::weakly_canonical(from, ec).string(), ts = fs::weakly_canonical(j.dest, ec).string();
         if (ts == fs_ || ts.rfind(fs_ + "/", 0) == 0) { error(j, from.filename().string() + ": cannot go into itself"); continue; }
         if (fs::exists(fs::symlink_status(to, ec))) {
-            int a = ask(j, "'" + to.filename().string() + "' already exists in\n" + j.dest + ".");
+            int a = ask(j, trs("'%s' already exists in\n%s.", to.filename().string(), j.dest));
             if (a == 0) { j.abort = true; break; }
             if (a == 3) continue;
             remove_any(j, to);
@@ -279,7 +279,7 @@ void poll(void *d) {
         q = j->question;
     }
     if (!q.empty() && j->answer < 0) {
-        int r = request(verb(j->kind), q + "\nReplace it?", "Replace|Replace All|Skip|Abort");
+        int r = request(tr(verb(j->kind)), q + "\n" + tr("Replace it?"), "Replace|Replace All|Skip|Abort");
         {
             std::lock_guard<std::mutex> l(j->m);
             j->answer = r == 1 ? 1 : r == 2 ? 2 : r == 3 ? 3 : 0;
@@ -298,7 +298,7 @@ void poll(void *d) {
             std::string t;
             for (size_t i = 0; i < errs.size() && i < 8; i++) t += errs[i] + "\n";
             if (errs.size() > 8) t += "... and " + std::to_string(errs.size() - 8) + " more\n";
-            request(verb(j->kind), "Some items could not be handled:\n" + t, "OK");
+            request(tr(verb(j->kind)), tr("Some items could not be handled:") + "\n" + t, "OK");
         }
         if (j->done) j->done();
         g_running--;

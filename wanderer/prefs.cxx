@@ -123,8 +123,8 @@ void edit_prefs(const WandererPrefs &current, std::function<void(const WandererP
     auto *dpick = new Button("?");
     dpick->fixed_width(16);
     auto *dmode = new Cycle({"Tiled", "Scaled", "Centred"}, current.drawer_mode);
-    bpick->on_press = [bimg] { std::string p = bimg->value(); if (file_request("Choose the backdrop picture", p)) bimg->value(p); };
-    dpick->on_press = [dimg] { std::string p = dimg->value(); if (file_request("Choose the drawers' picture", p)) dimg->value(p); };
+    bpick->on_press = [bimg] { std::string p = bimg->value(); if (file_request(tr("Choose the backdrop picture"), p)) bimg->value(p); };
+    dpick->on_press = [dimg] { std::string p = dimg->value(); if (file_request(tr("Choose the drawers' picture"), p)) dimg->value(p); };
     pics->end();
     // -- Save / Use / Cancel
     auto *buttons = HGroup();

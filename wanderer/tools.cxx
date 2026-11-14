@@ -159,7 +159,7 @@ void output_window(OutputRun *r) {
     auto *close = new Button("Close");
     row->end();
     root->end();
-    r->win = new Window("Output: " + r->title, root);
+    r->win = new Window(tr("Output:") + " " + r->title, root);
     Window *w = r->win;
     close->on_press = [w] { w->hide(); };
     int sx, sy, sw, sh;
@@ -316,9 +316,9 @@ bool new_drawer(const std::string &dir, std::string &made) {
     while (ask_name("New Drawer", "Enter the name of the new drawer:", name, "OK")) {
         std::error_code ec;
         fs::path p = fs::path(dir) / name;
-        if (fs::exists(p, ec)) { request("New Drawer", "'" + name + "' already exists.", "OK"); continue; }
+        if (fs::exists(p, ec)) { request("New Drawer", trs("'%s' already exists.", name), "OK"); continue; }
         if (fs::create_directory(p, ec)) { made = p.string(); return true; }
-        request("New Drawer", "Could not create '" + name + "':\n" + ec.message(), "OK");
+        request("New Drawer", trs("Could not create '%s':", name) + "\n" + ec.message(), "OK");
         return false;
     }
     return false;
@@ -327,14 +327,14 @@ bool new_drawer(const std::string &dir, std::string &made) {
 bool rename_entry(const std::string &path, std::string &renamed) {
     fs::path p(path);
     std::string name = p.filename().string();
-    while (ask_name("Rename", "Enter a new name for '" + name + "':", name, "Rename")) {
+    while (ask_name("Rename", trs("Enter a new name for '%s':", name), name, "Rename")) {
         if (name == p.filename().string()) return false;
         std::error_code ec;
         fs::path to = p.parent_path() / name;
-        if (fs::exists(to, ec)) { request("Rename", "'" + name + "' already exists.", "OK"); continue; }
+        if (fs::exists(to, ec)) { request("Rename", trs("'%s' already exists.", name), "OK"); continue; }
         fs::rename(p, to, ec);
         if (!ec) { renamed = to.string(); return true; }
-        request("Rename", "Could not rename:\n" + ec.message(), "OK");
+        request("Rename", tr("Could not rename:") + "\n" + ec.message(), "OK");
         return false;
     }
     return false;
@@ -473,7 +473,7 @@ void information(const std::string &path) {
         bc->on_press = [&] { done = true; };
     }
     root->end();
-    auto *w = new Window(fs::path(path).filename().string() + " - Information", root);
+    auto *w = new Window(fs::path(path).filename().string() + " - " + tr("Information"), root);
     w->size(std::max(w->w(), 380), w->h());
     centre(w);
     w->set_modal();
@@ -491,7 +491,7 @@ void information(const std::string &path) {
         if (comment->value() != file_comment(path) && !set_file_comment(path, comment->value(), err))
             errors += "Comment: " + err + "\n";
         if (tool) set_default_tool(path, tool->value());
-        if (!errors.empty()) request("Information", "Not everything could be changed:\n" + errors, "OK");
+        if (!errors.empty()) request("Information", tr("Not everything could be changed:") + "\n" + errors, "OK");
     }
     w->hide();
     Fl::delete_widget(w);
@@ -861,7 +861,7 @@ void edit_assigns() {
             return;
         }
         std::string dir = getenv("HOME") ? getenv("HOME") : "/";
-        if (!file_request("The drawer for " + n + ":", dir)) return;
+        if (!file_request(trs("The drawer for %s:", n), dir)) return;
         std::error_code ec;
         if (!fs::is_directory(dir, ec)) dir = fs::path(dir).parent_path().string();
         for (auto &a : list_v) if (strcasecmp(a.first.c_str(), n.c_str()) == 0) { a.second = dir; fill(); return; }
