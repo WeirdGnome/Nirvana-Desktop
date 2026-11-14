@@ -53,12 +53,7 @@ Cycle *frame_cycle(StdFrame kind) {
     return new Cycle(names, std_frame(kind).type);
 }
 
-String *number(int v) { return new String(std::to_string(v), 2); }
-int number_of(String *s, int def, int lo, int hi) {
-    char *end = nullptr;
-    long v = strtol(s->value(), &end, 10);
-    return end && *end == 0 && *s->value() ? std::clamp((int)v, lo, hi) : def;
-}
+Slider *number(int v) { return new Slider(0, 20, v); }   // the spacing: sliders as in the prefs program
 
 std::string hex(unsigned v) { char b[8]; snprintf(b, sizeof b, "%06X", v); return b; }
 
@@ -90,7 +85,7 @@ void edit_gui_settings() {
     pageframe->inner(6, 6, 6, 6);
     auto *book = new Register({});
     // -- Windows: the fonts, the spacing (windowp.c)
-    String *wl, *wr, *wt, *wb;
+    Slider *wl, *wr, *wt, *wb;
     Cycle *fam, *size;
     {
         auto *pg = VGroup();
@@ -116,7 +111,7 @@ void edit_gui_settings() {
         pg->end();
     }
     // -- Groups: the frame, the spacing (groupsp.c)
-    String *gh, *gv;
+    Slider *gh, *gv;
     {
         auto *pg = VGroup();
         auto *fr = new Group(Group::Vertical, Frame_Group);
@@ -259,12 +254,12 @@ void edit_gui_settings() {
         p.fill = parse(cfl, p.fill);
         p.font_family = fam->active();
         p.font_size = SIZES[size->active()];
-        p.window_left = number_of(wl, p.window_left, 0, 20);
-        p.window_right = number_of(wr, p.window_right, 0, 20);
-        p.window_top = number_of(wt, p.window_top, 0, 20);
-        p.window_bottom = number_of(wb, p.window_bottom, 0, 20);
-        p.group_hspacing = number_of(gh, p.group_hspacing, 0, 20);
-        p.group_vspacing = number_of(gv, p.group_vspacing, 0, 20);
+        p.window_left = wl->value();
+        p.window_right = wr->value();
+        p.window_top = wt->value();
+        p.window_bottom = wb->value();
+        p.group_hspacing = gh->value();
+        p.group_vspacing = gv->value();
     };
     // a scheme fills the four colours in
     scheme->on_change = [=](int i) {

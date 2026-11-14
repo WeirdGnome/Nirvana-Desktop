@@ -102,7 +102,7 @@ void edit_prefs(const WandererPrefs &current, std::function<void(const WandererP
     label("Font size:");
     auto *ifsize = new Cycle({"Screen", "9", "10", "11", "12", "13", "14", "16", "18", "20"}, isi);
     label("Line length:");
-    auto *maxlen = new String(std::to_string(current.label_maxlen), 3);
+    auto *maxlen = new Slider(4, 64, current.label_maxlen);
     label("Layout:");
     auto *layout = new Cycle({"Grid", "Free"}, current.list_mode);
     label("Spacing:");
@@ -173,7 +173,7 @@ void edit_prefs(const WandererPrefs &current, std::function<void(const WandererP
         WandererPrefs p;
         p.text_mode = mode->active();
         p.label_lines = lines->active() + 1;
-        p.label_maxlen = std::clamp(atoi(maxlen->value()), 4, 64);
+        p.label_maxlen = maxlen->value();
         p.list_mode = layout->active();
         int sp[] = {2, 5, 12};
         p.hspacing = p.vspacing = sp[spacing->active()];

@@ -953,6 +953,103 @@ int List::handle(int e) {
 // ============================================================================================
 // Gauge
 // ============================================================================================
+// ============================================================================================
+// Slider
+// ============================================================================================
+Slider::Slider(int min, int max, int value) : Area(Frame_Slider), min_(min), max_(std::max(min, max)) {
+    value_ = std::clamp(value, min_, max_);
+    background(MPEN_BACKGROUND);   // MUII_SliderBack "0:128"
+}
+
+void Slider::value(int v) {
+    v = std::clamp(v, min_, max_);
+    if (v == value_) return;
+    value_ = v;
+    redraw();
+    if (on_change) on_change(v);
+}
+
+// CalcKnobDimensions: as wide as the widest number, with the knob frame around it
+int Slider::knob_w() const {
+    fl_font(prefs().font, prefs().font_size);
+    int wmax = std::max((int)fl_width(std::to_string(min_).c_str()), (int)fl_width(std::to_string(max_).c_str()));
+    const FrameSpec &k = std_frame(Frame_Knob);
+    FrameBorders b = frame_borders(k.type, k.down);
+    return wmax + b.left + b.right + k.inner_left + k.inner_right;
+}
+
+int Slider::knob_h() const {
+    const FrameSpec &k = std_frame(Frame_Knob);
+    FrameBorders b = frame_borders(k.type, k.down);
+    return prefs().font_size + 2 + b.top + b.bottom + k.inner_top + k.inner_bottom;
+}
+
+// MUIM_Numeric_ValueToScale
+int Slider::knob_x() const {
+    int scale = mwidth() - knob_w();
+    if (max_ == min_ || scale <= 0) return mleft();
+    return mleft() + (int)((long)scale * (value_ - min_) / (max_ - min_));
+}
+
+void Slider::ask_min_max(int &minw, int &minh, int &defw, int &defh, int &maxw, int &maxh) {
+    minw = knob_w() + 1;
+    defw = knob_w() * 4 + 2;
+    maxw = MAXMAX;
+    minh = defh = maxh = knob_h();
+}
+
+void Slider::draw_contents() {
+    int kx = knob_x(), ky = mtop(), kw = knob_w(), kh = mheight();
+    const FrameSpec &k = std_frame(Frame_Knob);
+    fl_color(pens()[MPEN_BACKGROUND]);   // MUII_SliderKnob
+    fl_rectf(kx, ky, kw, kh);
+    draw_frame(k.type, k.down != dragging_, kx, ky, kw, kh);
+    fl_font(prefs().font, prefs().font_size);
+    fl_color(pens()[MPEN_TEXT]);
+    fl_draw(std::to_string(value_).c_str(), kx, ky, kw, kh, FL_ALIGN_CENTER);
+}
+
+int Slider::handle(int e) {
+    if (disabled_) return Fl_Group::handle(e);
+    switch (e) {
+    case FL_PUSH: {
+        if (Fl::event_button() != FL_LEFT_MOUSE) return 0;
+        take_focus();
+        int kx = knob_x();
+        if (Fl::event_x() >= kx && Fl::event_x() < kx + knob_w()) {
+            // on the knob: dragging starts
+            dragging_ = true;
+            grab_dx_ = Fl::event_x() - kx;
+            redraw();
+        } else value(value_ + (Fl::event_x() < kx ? -1 : 1));   // beside it: a step towards the click
+        return 1;
+    }
+    case FL_DRAG:
+        if (dragging_) {
+            int scale = mwidth() - knob_w();
+            if (scale > 0) {
+                int pos = std::clamp(Fl::event_x() - grab_dx_ - mleft(), 0, scale);
+                value(min_ + (int)(((long)pos * (max_ - min_) + scale / 2) / scale));
+            }
+        }
+        return 1;
+    case FL_RELEASE:
+        if (dragging_) { dragging_ = false; redraw(); }
+        return 1;
+    case FL_FOCUS: case FL_UNFOCUS: return 1;
+    case FL_KEYBOARD:
+        if (Fl::event_key() == FL_Left || Fl::event_key() == FL_Down) { value(value_ - 1); return 1; }
+        if (Fl::event_key() == FL_Right || Fl::event_key() == FL_Up) { value(value_ + 1); return 1; }
+        if (Fl::event_key() == FL_Home) { value(min_); return 1; }
+        if (Fl::event_key() == FL_End) { value(max_); return 1; }
+        return 0;
+    case FL_MOUSEWHEEL:
+        value(value_ - Fl::event_dy());
+        return 1;
+    }
+    return Area::handle(e);
+}
+
 Gauge::Gauge() : Area(Frame_Gauge) {
     background(MPEN_BACKGROUND);
     inner(1, 1, 1, 1);

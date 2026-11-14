@@ -295,6 +295,27 @@ protected:
 };
 
 // Gauge: a bar filled in the fill pen to the current value, a text in its middle
+// Slider (classes/slider.c, numeric.c): a value between min and max, a knob with the number
+// in it inside a recessed frame; dragging the knob, clicks beside it and the cursor keys
+// change it
+class Slider : public Area {
+public:
+    Slider(int min, int max, int value);
+    int value() const { return value_; }
+    void value(int v);
+    std::function<void(int)> on_change;
+    void ask_min_max(int &minw, int &minh, int &defw, int &defh, int &maxw, int &maxh) override;
+    int handle(int e) override;
+
+protected:
+    void draw_contents() override;
+    int knob_w() const, knob_h() const;
+    int knob_x() const;
+    int min_, max_, value_;
+    bool dragging_ = false;
+    int grab_dx_ = 0;
+};
+
 class Gauge : public Area {
 public:
     Gauge();
