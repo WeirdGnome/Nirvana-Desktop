@@ -6,6 +6,7 @@
 */
 #include "icons.h"
 #include "zune.h"
+#include "iconlist.h"
 
 #include <FL/fl_draw.H>
 
@@ -223,6 +224,7 @@ bool ends(const std::string &s, const char *suffix) {
 IconKind icon_kind(const std::string &path, bool is_dir, bool is_volume, bool executable) {
     std::string name = path.substr(path.find_last_of('/') + 1);
     if (is_volume) {
+        if (path == ramdisk_dir()) return IconKind::RamDisk;
         if (path == "/" || (getenv("HOME") && path == getenv("HOME"))) return IconKind::Harddisk;
         if (path.find("cdrom") != std::string::npos || path.find("dvd") != std::string::npos) return IconKind::Optical;
         if (path.rfind("/dev/shm", 0) == 0 || path.find("ram") != std::string::npos) return IconKind::RamDisk;

@@ -218,10 +218,11 @@ void IconWindow::update_title() {
     if (name.empty()) name = location_;
     struct stat a, b;
     const char *home = getenv("HOME");
-    bool volume = location_ == "/" || (home && location_ == home) ||
+    bool volume = location_ == "/" || (home && location_ == home) || location_ == ramdisk_dir() ||
                   (stat(location_.c_str(), &a) == 0 && stat(p.parent_path().c_str(), &b) == 0 && a.st_dev != b.st_dev);
     if (location_ == "/") name = "System";
     else if (home && location_ == home) name = "Home";
+    else if (location_ == ramdisk_dir()) name = "Ram Disk";
     std::string t = name;
     struct statvfs sv;
     if (volume && statvfs(location_.c_str(), &sv) == 0 && sv.f_blocks) {

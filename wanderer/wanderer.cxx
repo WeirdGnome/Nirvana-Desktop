@@ -197,7 +197,7 @@ void Wanderer::setup(IconWindow *w) {
         fs::path p = fs::path(loc).parent_path();
         struct stat a, b;
         const char *home = getenv("HOME");
-        bool volume = loc == "/" || (home && loc == home) ||
+        bool volume = loc == "/" || (home && loc == home) || loc == ramdisk_dir() ||
                       (stat(loc.c_str(), &a) == 0 && stat(p.c_str(), &b) == 0 && a.st_dev != b.st_dev);
         if (volume) { if (root_) root_->show(); return; }
         if (p.string() != loc) open_drawer(p.string());

@@ -185,6 +185,7 @@ std::vector<BlockVolume> removable_volumes();
 
 // The places the root window shows besides the volumes
 std::string trash_dir();                       // ~/.local/share/Trash/files
+std::string ramdisk_dir();                     // the Ram Disk (/dev/shm/ramdisk-USER)
 std::vector<std::string> left_out_paths();     // ~/.config/wanderer/leftout
 void set_left_out(const std::vector<std::string> &paths);
 

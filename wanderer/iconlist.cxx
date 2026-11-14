@@ -24,6 +24,7 @@
 #include <string_view>
 #include <sstream>
 #include <sys/stat.h>
+#include <unistd.h>
 #include <sys/xattr.h>
 #include <fnmatch.h>
 
@@ -873,6 +874,11 @@ void IconVolumeList::update() {
     };
     // the system volume and the home volume, then the mounted devices
     add_vol("/", "System");
+    // the Ram Disk: always there, in memory, empty after a restart of the computer
+    {
+        std::string ram = ramdisk_dir();
+        if (!ram.empty()) add_vol(ram, "Ram Disk");
+    }
     if (const char *h = getenv("HOME")) add_vol(h, "Home");
     std::ifstream m("/proc/self/mounts");
     std::string line;
@@ -965,6 +971,27 @@ static std::string config_path(const char *name) {
     const char *x = getenv("XDG_CONFIG_HOME");
     std::string base = x && *x ? x : std::string(getenv("HOME") ? getenv("HOME") : "/tmp") + "/.config";
     return base + "/wanderer/" + name;
+}
+
+// The Ram Disk: a drawer of the user's own on the memory file system (/dev/shm, tmpfs) - it
+// takes only the memory its files need and is emptied when the computer restarts, as the
+// system's RAM: volume; made at the first use, readable only by its owner
+std::string ramdisk_dir() {
+    static std::string dir;
+    if (!dir.empty()) return dir;
+    const char *base = "/dev/shm";
+    struct stat st;
+    if (stat(base, &st) != 0 || !S_ISDIR(st.st_mode)) {
+        const char *rt = getenv("XDG_RUNTIME_DIR");   // elsewhere: the user's runtime directory
+        if (!rt || !*rt) return "";
+        base = rt;
+    }
+    const char *user = getenv("USER");
+    std::string d = std::string(base) + "/ramdisk-" + (user && *user ? user : std::to_string(getuid()));
+    mkdir(d.c_str(), 0700);
+    if (stat(d.c_str(), &st) != 0 || st.st_uid != getuid()) return "";   // someone else's: not used
+    dir = d;
+    return dir;
 }
 
 std::string trash_dir() {
