@@ -1,5 +1,17 @@
 # Lista zmian
 
+## 0.3.1 – 2026-11-14
+
+- **Instalator buduje paczkę Debiana** (`wanderer-x11_WERSJA_ARCH.deb`, z zależnościami
+  wyliczonymi z bibliotek używanych przez programy) i instaluje ją przez apt.
+- Przed instalacją instalator usuwa pliki instalacji zrobionej bez paczki (starszym
+  `install.sh` albo `cmake --install`). Usuwa tylko pliki, które nie należą do żadnej
+  paczki.
+- Programy są instalowane do `/usr/bin`.
+- Nowe opcje instalatora:
+  - `--package-only` tylko buduje paczkę;
+  - `--uninstall` usuwa paczkę i pliki zainstalowane bez niej.
+
 ## 0.3.0 – 2026-11-14
 
 - **Kosz** (kosz freedesktop.org, wspólny z innymi programami):

@@ -13,21 +13,35 @@ Parts of the port:
 * **window manager** (`wm`, later) – what Intuition does on AROS: window frames and
   gadgets, screens, screen dragging.
 
-Version: **0.3.0**
+Version: **0.3.1**
 
 ## Installing
 
 ```sh
-tar xzf wanderer-x11-0.3.0.tar.gz
+tar xzf wanderer-x11-0.3.1.tar.gz
 cd wanderer-x11
 ./install.sh
 ```
 
-The installer installs the packages needed for building (apt), builds the programs (FLTK
-1.4 is downloaded and built with them if the system has none) and installs them into
-`/usr/local`. It also installs the session file `/usr/share/xsessions/wanderer.desktop`,
-so **Wanderer** appears among the sessions of the display manager (LightDM, SDDM, GDM,
-XDM …). Options: `--prefix DIR`, `--no-deps`, `--uninstall`.
+The installer:
+
+1. installs the packages needed for building (apt);
+2. builds the programs (FLTK 1.4 is downloaded and built in if the system has none);
+3. **makes a Debian package** `wanderer-x11_VERSION_ARCH.deb`;
+4. removes the files of an earlier installation that is not from the package (e.g. an
+   older `install.sh` into `/usr/local`) - only files that no package owns;
+5. installs the package with apt.
+
+The package puts the programs into `/usr/bin` and the session into
+`/usr/share/xsessions/wanderer.desktop`, so **Wanderer** appears among the sessions of
+the display manager (LightDM, SDDM, GDM, XDM …).
+
+Options:
+
+* `--package-only` - only builds the `.deb`;
+* `--no-deps` - does not install the build dependencies;
+* `--uninstall` - removes the package and any files installed without it (or
+  `sudo apt remove wanderer-x11`).
 
 The session (`wanderer-session`) starts the window manager `wanderer-wm`, then
 `wanderer --backdrop`. Choosing *Wanderer > Quit…* ends the session. The number of

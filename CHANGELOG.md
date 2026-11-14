@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.3.1 – 2026-11-14
+
+- **The installer builds a Debian package** (`wanderer-x11_VERSION_ARCH.deb`, with its
+  dependencies worked out from the libraries the programs use) and installs it with apt.
+- Before installing, the installer removes the files of an installation that is not from
+  the package (an older `install.sh` or `cmake --install`). Only files that no package
+  owns are removed.
+- The programs are installed into `/usr/bin`.
+- New installer options:
+  - `--package-only` builds only the package;
+  - `--uninstall` removes the package and any files installed without it.
+
 ## 0.3.0 – 2026-11-14
 
 - **Trash** (the freedesktop.org trash, shared with other programs):

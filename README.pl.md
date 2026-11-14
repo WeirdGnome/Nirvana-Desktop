@@ -4,25 +4,34 @@ Port **Wanderera**, pulpitu i menedżera plików systemu AROS, na Linuksa i X11.
 działa na FLTK, a okna obsługuje własny menedżer okien `wanderer-wm`, który przejmuje
 rolę Intuition: ekrany, ramki okien, gadżety i menu na pasku ekranu.
 
-Wersja: **0.3.0**. Dotychczasowa Nirvana Desktop jest na gałęzi `nirvana-legacy`.
+Wersja: **0.3.1**. Dotychczasowa Nirvana Desktop jest na gałęzi `nirvana-legacy`.
 
 ## Instalacja
 
 ```sh
-tar xzf wanderer-x11-0.3.0.tar.gz
+tar xzf wanderer-x11-0.3.1.tar.gz
 cd wanderer-x11
 ./install.sh
 ```
 
-Instalator robi kolejno:
+Instalator:
 
-1. doinstalowuje przez apt pakiety potrzebne do budowania;
-2. buduje programy (jeśli w systemie nie ma FLTK 1.4, pobiera je i buduje razem z nimi);
-3. instaluje je do `/usr/local`;
-4. dodaje plik sesji `/usr/share/xsessions/wanderer.desktop`.
+1. doinstalowuje pakiety potrzebne do budowania (apt);
+2. buduje programy (jeśli w systemie nie ma FLTK 1.4, pobiera je i wkompilowuje);
+3. **tworzy paczkę Debiana** `wanderer-x11_WERSJA_ARCH.deb`;
+4. usuwa pliki wcześniejszej instalacji zrobionej bez paczki (np. starszym `install.sh` do
+   `/usr/local`), ale tylko te, które nie należą do żadnej paczki;
+5. instaluje paczkę przez apt.
 
-Dzięki temu na ekranie logowania (LightDM, SDDM, GDM, XDM…) pojawia się sesja
-**Wanderer**. Opcje instalatora: `--prefix KATALOG`, `--no-deps`, `--uninstall`.
+Paczka umieszcza programy w `/usr/bin`, a sesję w `/usr/share/xsessions/wanderer.desktop`,
+więc na ekranie logowania (LightDM, SDDM, GDM, XDM…) pojawia się sesja **Wanderer**.
+
+Opcje:
+
+* `--package-only` – tylko buduje paczkę `.deb`;
+* `--no-deps` – nie doinstalowuje pakietów do budowania;
+* `--uninstall` – usuwa paczkę i pliki zainstalowane bez niej (można też użyć
+  `sudo apt remove wanderer-x11`).
 
 Sesja uruchamia najpierw `wanderer-wm`, a potem `wanderer --backdrop`. Polecenie
 *Wanderer > Quit…* kończy sesję. Liczbę ekranów ustawisz w
