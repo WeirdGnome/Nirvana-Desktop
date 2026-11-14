@@ -55,7 +55,11 @@ bool read_desktop_entry(const std::string &file, DesktopEntry &e);
 void run_startup();
 
 // the Tools menu: label and the command (for /bin/sh -c)
-struct ToolItem { std::string label, command; };
+struct ToolItem {
+    std::string label, command;
+    unsigned long app_window = 0;   // an item a program added (AppMenuItem): its window
+    long app_id = 0;                // and its number there
+};
 std::vector<ToolItem> tool_items();
 
 // a command line with its volume paths and assigns turned into the drawers they name

@@ -74,6 +74,19 @@ wanderer-wm & wanderer --backdrop
   empty space. Dragging icons to another window moves them within a volume and copies
   them across volumes.
 
+## Programs' items in the Tools menu
+
+A program can add items to Wanderer's Tools menu (as AddAppMenuItem does). It sets the
+property `_WANDERER_APPMENU` (type `UTF8_STRING`, the item names separated by NUL) on its
+top-level window. When an item is picked, Wanderer:
+
+1. puts the paths of the selected icons into the window's property
+   `_WANDERER_APPMENU_ARGS` (separated by NUL);
+2. sends the window a ClientMessage `_WANDERER_APPMENU_PICK`, with `l[0]` the item's
+   number and `l[1]` the number of paths.
+
+The items go away when the window closes or the property is deleted.
+
 ## Languages
 
 The interface follows the user's language (`LANGUAGE`, `LC_ALL`, `LC_MESSAGES`, `LANG`).

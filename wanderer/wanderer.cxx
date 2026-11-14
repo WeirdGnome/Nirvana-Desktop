@@ -22,6 +22,7 @@
 #include <FL/Fl_Menu_Item.H>
 #include <FL/fl_draw.H>
 #include <FL/platform.H>
+#include <X11/Xatom.h>
 
 #include <algorithm>
 #include <cstring>
@@ -101,6 +102,7 @@ public:
     void mount_and_open(const std::string &device);
     void eject(const std::string &device);
     std::string volumes_state_;
+    std::string appmenu_state_;     // the programs' menu items, as last read
     void pick(IconWindow *w, int id);
     bool shortcut(IconWindow *w);
 
@@ -435,6 +437,81 @@ void Wanderer::drop_paths(const std::vector<std::string> &sources, const std::st
 // --------------------------------------------------------------------------------------------
 // The menus
 // --------------------------------------------------------------------------------------------
+// --------------------------------------------------------------------------------------------
+// AppMenuItems (appobjects.c, AddAppMenuItem): a program puts items into the Tools menu with
+// the property _WANDERER_APPMENU on its top-level window (UTF8_STRING, the item names
+// separated by NUL). Picked, an item is a ClientMessage _WANDERER_APPMENU_PICK to that window
+// (l[0] the item's number, l[1] how many paths); the selected icons' paths are in the
+// window's property _WANDERER_APPMENU_ARGS (NUL-separated), as an AppMessage carries them.
+// --------------------------------------------------------------------------------------------
+static std::vector<ToolItem> app_menu_items() {
+    std::vector<ToolItem> items;
+    Display *d = fl_display;
+    if (!d) return items;
+    Atom clients = XInternAtom(d, "_NET_CLIENT_LIST", False), prop = XInternAtom(d, "_WANDERER_APPMENU", False);
+    Atom type;
+    int format;
+    unsigned long n = 0, after;
+    unsigned char *data = nullptr;
+    if (XGetWindowProperty(d, RootWindow(d, fl_screen), clients, 0, 4096, False, XA_WINDOW, &type, &format, &n,
+                           &after, &data) != Success || !data)
+        return items;
+    std::vector<::Window> wins((::Window *)data, (::Window *)data + n);
+    XFree(data);
+    for (::Window w : wins) {
+        unsigned char *p = nullptr;
+        unsigned long len = 0;
+        if (XGetWindowProperty(d, w, prop, 0, 16384, False, AnyPropertyType, &type, &format, &len, &after, &p) !=
+                Success || !p)
+            continue;
+        if (format == 8) {
+            std::string all((char *)p, len);
+            long id = 0;
+            size_t at = 0;
+            while (at < all.size()) {
+                size_t z = all.find('\0', at);
+                if (z == std::string::npos) z = all.size();
+                std::string label = all.substr(at, z - at);
+                if (!label.empty()) {
+                    ToolItem t;
+                    t.label = label;
+                    t.app_window = w;
+                    t.app_id = id;
+                    items.push_back(t);
+                }
+                id++;
+                at = z + 1;
+            }
+        }
+        XFree(p);
+    }
+    return items;
+}
+
+static std::string app_menu_state() {
+    std::string s;
+    for (auto &t : app_menu_items()) s += std::to_string(t.app_window) + ":" + t.label + "\n";
+    return s;
+}
+
+static void app_menu_pick(const ToolItem &t, const std::vector<std::string> &paths) {
+    Display *d = fl_display;
+    std::string args;
+    for (auto &p : paths) { args += p; args += '\0'; }
+    XChangeProperty(d, t.app_window, XInternAtom(d, "_WANDERER_APPMENU_ARGS", False),
+                    XInternAtom(d, "UTF8_STRING", False), 8, PropModeReplace, (const unsigned char *)args.data(),
+                    (int)args.size());
+    XEvent e = {};
+    e.xclient.type = ClientMessage;
+    e.xclient.window = t.app_window;
+    e.xclient.message_type = XInternAtom(d, "_WANDERER_APPMENU_PICK", False);
+    e.xclient.format = 32;
+    e.xclient.data.l[0] = t.app_id;
+    e.xclient.data.l[1] = (long)paths.size();
+    XSendEvent(d, t.app_window, False, NoEventMask, &e);
+    XFlush(d);
+}
+
 std::vector<Fl_Menu_Item> Wanderer::menu_items(IconWindow *w) {
     IconList *l = w->iconlist();
     bool sel = !l->selection().empty();
@@ -519,6 +596,7 @@ std::vector<Fl_Menu_Item> Wanderer::menu_items(IconWindow *w) {
     std::vector<Fl_Menu_Item> v(menu, menu + sizeof menu / sizeof menu[0]);
     // the Tools menu: the user's tools (~/.config/wanderer/tools), then its drawer
     tools_ = tool_items();
+    for (auto &t : app_menu_items()) tools_.push_back(t);
     size_t at = 0;
     for (size_t i = 0; i < v.size(); i++)
         if (v[i].text && !strcmp(v[i].text, "Tools Drawer")) { at = i; break; }
@@ -633,6 +711,13 @@ void Wanderer::watch_volumes(void *d) {
         self->volumes_state_ = state;
         if (!first && self->root_) { self->root_->update(); self->apply_snapshot(self->root_); }
     }
+    // the programs' menu items: the menus again when they change
+    std::string apps = app_menu_state();
+    if (apps != self->appmenu_state_) {
+        self->appmenu_state_ = apps;
+        for (auto *o : self->windows_) self->publish_menu(o);
+        if (self->root_) self->publish_menu(self->root_);
+    }
     Fl::repeat_timeout(2.0, watch_volumes, d);
 }
 
@@ -701,6 +786,12 @@ void Wanderer::menu_action(IconWindow *w, int id) {
         // a tool: started in the window's drawer, with the selected icons' paths as arguments
         size_t i = id - MEN_TOOL_FIRST;
         if (i >= tools_.size()) return;
+        if (tools_[i].app_window) {
+            std::vector<std::string> paths;
+            for (auto *e : w->iconlist()->selection()) paths.push_back(e->path);
+            app_menu_pick(tools_[i], paths);
+            return;
+        }
         std::vector<std::string> argv = {"/bin/sh", "-c", tools_[i].command + " \"$@\"", "sh"};
         for (auto *e : w->iconlist()->selection()) argv.push_back(e->path);
         launch(argv, w->is_root() ? (getenv("HOME") ? getenv("HOME") : "/") : w->location());

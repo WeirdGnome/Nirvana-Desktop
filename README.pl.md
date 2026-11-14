@@ -57,6 +57,19 @@ Sesja uruchamia najpierw `wanderer-wm`, a potem `wanderer --backdrop`. Polecenie
   miejscu zaznacza lassem. Ikony przeciągnięte do innego okna są przenoszone w obrębie
   dysku i kopiowane między dyskami.
 
+## Pozycje programów w menu Tools
+
+Program może dodać pozycje do menu Tools Wanderera (jak AddAppMenuItem). Ustawia na swoim
+głównym oknie właściwość `_WANDERER_APPMENU` (typ `UTF8_STRING`, nazwy pozycji rozdzielone
+znakiem NUL). Po wybraniu pozycji Wanderer:
+
+1. wpisuje ścieżki zaznaczonych ikon do właściwości okna `_WANDERER_APPMENU_ARGS`
+   (rozdzielone znakiem NUL);
+2. wysyła do okna ClientMessage `_WANDERER_APPMENU_PICK`, gdzie `l[0]` to numer pozycji, a
+   `l[1]` liczba ścieżek.
+
+Pozycje znikają, gdy okno się zamknie albo właściwość zostanie usunięta.
+
 ## Języki
 
 Interfejs mówi językiem użytkownika (`LANGUAGE`, `LC_ALL`, `LC_MESSAGES`, `LANG`).
