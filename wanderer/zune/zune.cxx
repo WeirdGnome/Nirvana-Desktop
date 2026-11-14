@@ -182,11 +182,45 @@ void Area::draw() {
         fl_pop_clip();
     }
     draw_children();
+    if (Fl::focus() == this && accepts_focus()) draw_active_outline();
+}
+
+// _zune_focus_new: a line pattern 0xCCCC in the shine and shadow pens, one pixel outside
+void Area::draw_active_outline() {
+    int x1 = x() - 1, y1 = y() - 1, x2 = x() + w(), y2 = y() + h();
+    fl_push_no_clip();
+    int n = 0;
+    auto dot = [&](int X, int Y) {
+        fl_color((0xCCCC >> (15 - (n & 15))) & 1 ? pens()[MPEN_SHINE] : pens()[MPEN_SHADOW]);
+        fl_point(X, Y);
+        n++;
+    };
+    for (int X = x1; X <= x2; X++) dot(X, y1);
+    for (int Y = y1 + 1; Y <= y2; Y++) dot(x2, Y);
+    for (int X = x2 - 1; X >= x1; X--) dot(X, y2);
+    for (int Y = y2 - 1; Y > y1; Y--) dot(x1, Y);
+    fl_pop_clip();
+}
+
+// the outline lies outside the object: its parent draws that strip again
+void Area::focus_changed() {
+    redraw();
+    if (parent()) parent()->damage(FL_DAMAGE_ALL, x() - 1, y() - 1, w() + 2, h() + 2);
+    if (window()) window()->damage(FL_DAMAGE_ALL, x() - 1, y() - 1, w() + 2, h() + 2);
 }
 
 int Area::handle(int e) {
+    if ((e == FL_FOCUS || e == FL_UNFOCUS) && accepts_focus() && children() == 0) { focus_changed(); return 1; }
     if (input_ == Input_None || disabled_) return Fl_Group::handle(e);
     switch (e) {
+    case FL_KEYBOARD:
+        // the active object: Space (and Return) press it
+        if (Fl::focus() == this && (Fl::event_key() == ' ' || Fl::event_key() == FL_Enter)) {
+            if (input_ == Input_Toggle) { selected(!selected_); if (on_press) on_press(); }
+            else if (on_press) on_press();
+            return 1;
+        }
+        return 0;
     case FL_PUSH:
         if (Fl::event_button() != FL_LEFT_MOUSE) return 0;
         pressed_ = true;
@@ -882,6 +916,19 @@ void Cycle::close_popup() {
 
 int Cycle::handle(int e) {
     switch (e) {
+    case FL_KEYBOARD:
+        // the active object: Space / Down the next entry, Up the one before (wrapping)
+        if (Fl::focus() == this && !entries_.empty()) {
+            int n = (int)entries_.size(), k = Fl::event_key();
+            if (k == ' ' || k == FL_Down || k == FL_Up) {
+                bool back = k == FL_Up || Fl::event_state(FL_SHIFT);
+                active_ = (active_ + (back ? n - 1 : 1)) % n;
+                redraw();
+                if (on_change) on_change(active_);
+                return 1;
+            }
+        }
+        return 0;
     case FL_PUSH: {
         if (Fl::event_button() != FL_LEFT_MOUSE) return 0;
         // a press right of the cycle image opens the pop-up, if there are entries enough
@@ -1043,7 +1090,7 @@ int List::handle(int e) {
         layout_prop();
         redraw();
         return 1;
-    case FL_FOCUS: case FL_UNFOCUS: return 1;
+    case FL_FOCUS: case FL_UNFOCUS: focus_changed(); return 1;
     case FL_KEYBOARD: {
         int k = Fl::event_key();
         if (k == FL_Down || k == FL_Up) {
@@ -1144,7 +1191,7 @@ int Slider::handle(int e) {
     case FL_RELEASE:
         if (dragging_) { dragging_ = false; redraw(); }
         return 1;
-    case FL_FOCUS: case FL_UNFOCUS: return 1;
+    case FL_FOCUS: case FL_UNFOCUS: focus_changed(); return 1;
     case FL_KEYBOARD:
         if (Fl::event_key() == FL_Left || Fl::event_key() == FL_Down) { value(value_ - 1); return 1; }
         if (Fl::event_key() == FL_Right || Fl::event_key() == FL_Up) { value(value_ + 1); return 1; }

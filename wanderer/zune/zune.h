@@ -98,9 +98,14 @@ public:
     int mheight() const { return h() - add_top() - add_bottom(); }
     void draw() override;
     int handle(int e) override;
+    // the keyboard's active object (MUIA_CycleChain): Tab moves it, Space presses it; the
+    // object has the dashed outline of _zune_focus_new around it
+    virtual bool accepts_focus() const { return input_ != Input_None && !disabled_; }
 
 protected:
     virtual void draw_contents() {}   // MUIM_Draw of the subclass
+    void draw_active_outline();
+    void focus_changed();
     virtual void draw_background(int X, int Y, int W, int H);
     StdFrame std_ = Frame_None;
     FrameSpec own_;
@@ -244,6 +249,7 @@ protected:
 // Cycle: a button that steps through its entries (the right part shows the cycle mark)
 class Cycle : public Area {
 public:
+    bool accepts_focus() const override { return !disabled_; }
     explicit Cycle(std::vector<std::string> entries, int active = 0);
     int active() const { return active_; }
     void active(int a) { active_ = std::clamp(a, 0, (int)entries_.size() - 1); redraw(); }
@@ -280,6 +286,7 @@ protected:
 // scroller at the right
 class List : public Area {
 public:
+    bool accepts_focus() const override { return !disabled_; }
     struct Line { std::string text, info; bool highlight = false; };
     List();
     void clear() { lines_.clear(); active_ = -1; top_ = 0; redraw(); }
@@ -310,6 +317,7 @@ protected:
 // change it
 class Slider : public Area {
 public:
+    bool accepts_focus() const override { return !disabled_; }
     Slider(int min, int max, int value);
     int value() const { return value_; }
     void value(int v);
