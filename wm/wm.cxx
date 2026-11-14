@@ -53,6 +53,7 @@ int SW, SH;
 unsigned long pen_grey, pen_black, pen_white, pen_blue, pen_halfshadow;
 XftFont *font;
 XftColor xft_black, xft_white;
+bool xft_ready = false;
 XftDraw *xft_for(Drawable d) {
     return XftDrawCreate(dpy, d, DefaultVisual(dpy, scr), DefaultColormap(dpy, scr));
 }
@@ -80,7 +81,7 @@ const int SIZE_W = 16, SIZE_H = 16;
 
 Atom WM_PROTOCOLS, WM_DELETE_WINDOW, WM_STATE, WM_TAKE_FOCUS, NET_WM_NAME, UTF8_STRING, NET_WM_WINDOW_TYPE,
     NET_WM_WINDOW_TYPE_DESKTOP, NET_WM_WINDOW_TYPE_DOCK, NET_SUPPORTED, NET_ACTIVE_WINDOW, NET_CLIENT_LIST,
-    NET_SUPPORTING_WM_CHECK, NET_WM_STATE, NET_WM_STATE_FULLSCREEN, WANDERER_SCREEN_TITLE;
+    NET_SUPPORTING_WM_CHECK, NET_WM_STATE, NET_WM_STATE_FULLSCREEN, WANDERER_SCREEN_TITLE, WANDERER_PALETTE;
 
 struct WScreen;
 
@@ -1051,6 +1052,45 @@ int on_error(Display *, XErrorEvent *e) {
 
 Atom atom(const char *n) { return XInternAtom(dpy, n, False); }
 
+// The pens from four colours (hex RRGGBB): the background, the shadow (and text), the shine,
+// the fill; HALFSHADOW half way between the background and the shadow
+void apply_palette(const std::string &bg, const std::string &sd, const std::string &sh, const std::string &fl) {
+    pen_grey = alloc(("#" + bg).c_str());
+    pen_black = alloc(("#" + sd).c_str());
+    pen_white = alloc(("#" + sh).c_str());
+    pen_blue = alloc(("#" + fl).c_str());
+    unsigned b = (unsigned)strtoul(bg.c_str(), nullptr, 16), d = (unsigned)strtoul(sd.c_str(), nullptr, 16);
+    char hs[8];
+    snprintf(hs, sizeof hs, "#%02X%02X%02X", (((b >> 16) & 255) + ((d >> 16) & 255)) / 2,
+             (((b >> 8) & 255) + ((d >> 8) & 255)) / 2, ((b & 255) + (d & 255)) / 2);
+    pen_halfshadow = alloc(hs);
+    if (xft_ready) {
+        XftColorFree(dpy, DefaultVisual(dpy, scr), DefaultColormap(dpy, scr), &xft_black);
+        XftColorFree(dpy, DefaultVisual(dpy, scr), DefaultColormap(dpy, scr), &xft_white);
+    }
+    XftColorAllocName(dpy, DefaultVisual(dpy, scr), DefaultColormap(dpy, scr), ("#" + sd).c_str(), &xft_black);
+    XftColorAllocName(dpy, DefaultVisual(dpy, scr), DefaultColormap(dpy, scr), ("#" + sh).c_str(), &xft_white);
+    xft_ready = true;
+}
+
+// The GUI settings changed the colours (Wanderer sets _WANDERER_PALETTE on the root window):
+// the pens again, every frame and screen bar drawn again
+void palette_changed() {
+    std::string v = utf8_prop(root, WANDERER_PALETTE);
+    char a[8] = {}, b[8] = {}, c[8] = {}, d[8] = {};
+    if (sscanf(v.c_str(), "%6s %6s %6s %6s", a, b, c, d) != 4) return;
+    apply_palette(a, b, c, d);   // background, shadow, shine, fill
+    for (auto *s : screens) {
+        XSetWindowBackground(dpy, s->win, pen_grey);
+        XClearWindow(dpy, s->win);
+        s->draw_bar();
+        for (auto *cl : s->clients) {
+            XSetWindowBackground(dpy, cl->frame, pen_grey);
+            draw_frame(cl);
+        }
+    }
+}
+
 }  // namespace
 
 int main(int argc, char **argv) {
@@ -1061,7 +1101,7 @@ int main(int argc, char **argv) {
     SW = DisplayWidth(dpy, scr);
     SH = DisplayHeight(dpy, scr);
     XSetErrorHandler(on_error);
-    XSelectInput(dpy, root, SubstructureRedirectMask | SubstructureNotifyMask | KeyPressMask);
+    XSelectInput(dpy, root, SubstructureRedirectMask | SubstructureNotifyMask | KeyPressMask | PropertyChangeMask);
     XSync(dpy, False);
 
     WM_PROTOCOLS = atom("WM_PROTOCOLS");
@@ -1081,6 +1121,7 @@ int main(int argc, char **argv) {
     NET_WM_STATE_FULLSCREEN = atom("_NET_WM_STATE_FULLSCREEN");
     WANDERER_MENU = atom("_WANDERER_MENU");
     WANDERER_SCREEN_TITLE = atom("_WANDERER_SCREEN_TITLE");
+    WANDERER_PALETTE = atom("_WANDERER_PALETTE");
     WANDERER_MENU_PICK = atom("_WANDERER_MENU_PICK");
 
     // the palette: the GUI settings' (~/.config/wanderer/zune.prefs), else the default
@@ -1102,21 +1143,8 @@ int main(int argc, char **argv) {
             fclose(f);
         }
     }
-    pen_grey = alloc(("#" + bg).c_str());
-    pen_black = alloc(("#" + sd).c_str());
-    pen_white = alloc(("#" + sh).c_str());
-    pen_blue = alloc(("#" + fl).c_str());
-    {
-        // half way between the background and the shadow
-        unsigned b = (unsigned)strtoul(bg.c_str(), nullptr, 16), d = (unsigned)strtoul(sd.c_str(), nullptr, 16);
-        char hs[8];
-        snprintf(hs, sizeof hs, "#%02X%02X%02X", (((b >> 16) & 255) + ((d >> 16) & 255)) / 2,
-                 (((b >> 8) & 255) + ((d >> 8) & 255)) / 2, ((b & 255) + (d & 255)) / 2);
-        pen_halfshadow = alloc(hs);
-    }
+    apply_palette(bg, sd, sh, fl);
     font = XftFontOpenName(dpy, scr, "sans-10");
-    XftColorAllocName(dpy, DefaultVisual(dpy, scr), DefaultColormap(dpy, scr), "#000000", &xft_black);
-    XftColorAllocName(dpy, DefaultVisual(dpy, scr), DefaultColormap(dpy, scr), "#FFFFFF", &xft_white);
     XDefineCursor(dpy, root, XCreateFontCursor(dpy, XC_left_ptr));
 
     // EWMH: who manages the windows, what is supported
@@ -1180,7 +1208,8 @@ int main(int argc, char **argv) {
             if (by_window.count(ev.xdestroywindow.window)) unmanage(by_window[ev.xdestroywindow.window], true);
             break;
         case PropertyNotify:
-            if (by_window.count(ev.xproperty.window)) {
+            if (ev.xproperty.window == root && ev.xproperty.atom == WANDERER_PALETTE) palette_changed();
+            else if (by_window.count(ev.xproperty.window)) {
                 Client *c = by_window[ev.xproperty.window];
                 if (ev.xproperty.atom == XA_WM_NAME || ev.xproperty.atom == NET_WM_NAME) {
                     c->title = window_title(c->win);

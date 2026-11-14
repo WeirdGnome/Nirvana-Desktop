@@ -89,7 +89,7 @@ void edit_gui_settings() {
     VSpace();
     look->end();
     cols->end();
-    new Text("\033cThe window manager takes the colours when the session starts again.");
+    new Text("\033cThe colours apply at once, also to the window frames and the screens.");
     auto *buttons = HGroup();
     buttons->same_width(true);
     auto *save = new Button("Save");

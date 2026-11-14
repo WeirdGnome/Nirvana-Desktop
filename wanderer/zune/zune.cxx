@@ -16,6 +16,9 @@
 
 #include <FL/Fl.H>
 #include <FL/fl_draw.H>
+#include <FL/platform.H>
+
+#include <cstring>
 
 #include <algorithm>
 #include <cstdio>
@@ -86,6 +89,17 @@ void apply_prefs() {
     set_std_frame(Frame_Button, p.button_frame);
     set_std_frame(Frame_ImageButton, p.button_frame);
     set_std_frame(Frame_Group, p.group_frame);
+    // the window manager takes the colours too (its frames, the screens' title bars)
+    if (fl_display) {
+        char v[64];
+        snprintf(v, sizeof v, "%06X %06X %06X %06X", p.background & 0xFFFFFF, p.shadow & 0xFFFFFF, p.shine & 0xFFFFFF,
+                 p.fill & 0xFFFFFF);
+        Atom prop = XInternAtom(fl_display, "_WANDERER_PALETTE", False);
+        Atom utf8 = XInternAtom(fl_display, "UTF8_STRING", False);
+        XChangeProperty(fl_display, RootWindow(fl_display, fl_screen), prop, utf8, 8, PropModeReplace, (unsigned char *)v,
+                        (int)strlen(v));
+        XFlush(fl_display);
+    }
     // every window: laid out again (sizes depend on the font and frames) and drawn
     for (Fl_Window *w = Fl::first_window(); w; w = Fl::next_window(w)) {
         if (auto *zw = dynamic_cast<Window *>(w)) {
