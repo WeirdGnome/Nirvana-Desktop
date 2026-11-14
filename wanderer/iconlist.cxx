@@ -27,6 +27,7 @@
 #include <unistd.h>
 #include <sys/xattr.h>
 #include <fnmatch.h>
+#include <strings.h>
 
 namespace fs = std::filesystem;
 using namespace zune;
@@ -867,12 +868,21 @@ static std::string unescape_mount(const std::string &s) {
 
 void IconVolumeList::update() {
     clear();
-    auto add_vol = [&](const std::string &path, const std::string &name) {
+    auto hidden = hidden_volumes();
+    auto is_hidden = [&](const std::string &path, const std::string &name, const std::string &dev) {
+        for (auto &h : hidden)
+            if (!strcasecmp(h.c_str(), name.c_str()) || h == path || (!dev.empty() && h == dev)) return true;
+        return false;
+    };
+    auto add_vol = [&](const std::string &path, const std::string &name, const std::string &dev = "") {
+        if (is_hidden(path, name, dev)) return false;
         IconEntry e;
         e.path = path;
         e.label = name + ":";   // volumes end with a colon (trimmed on the label)
         e.type = ST_ROOT;
+        e.device = dev;
         add(std::move(e));
+        return true;
     };
     // the system volume and the home volume, then the mounted devices
     add_vol("/", "System");
@@ -893,13 +903,13 @@ void IconVolumeList::update() {
         if (dev.rfind("/dev/", 0) == 0) mounted_devs.push_back(dev);
         if (dev.rfind("/dev/", 0) != 0 || mnt == "/" || mnt.rfind("/boot", 0) == 0) continue;
         if (mnt.rfind("/media/", 0) != 0 && mnt.rfind("/mnt/", 0) != 0 && mnt.rfind("/run/media/", 0) != 0) continue;
-        add_vol(mnt, fs::path(mnt).filename().string());
-        entries_.back().device = dev;
+        add_vol(mnt, fs::path(mnt).filename().string(), dev);
     }
     // removable devices not mounted yet: ghosted volumes; opening one mounts it (as a disk
     // put into a drive shows its icon)
     for (auto &v : removable_volumes()) {
         if (std::find(mounted_devs.begin(), mounted_devs.end(), v.device) != mounted_devs.end()) continue;
+        if (is_hidden(v.device, v.label.empty() ? fs::path(v.device).filename().string() : v.label, v.device)) continue;
         IconEntry e;
         e.path = v.device;
         e.device = v.device;
@@ -1097,6 +1107,26 @@ void set_left_out(const std::vector<std::string> &paths) {
     fs::create_directories(fs::path(config_path("leftout")).parent_path(), ec);
     std::ofstream out(config_path("leftout"));
     for (auto &p : paths) out << p << "\n";
+}
+
+std::vector<std::string> hidden_volumes() {
+    std::vector<std::string> v;
+    std::ifstream in(config_path("hiddenvolumes"));
+    std::string line;
+    while (std::getline(in, line)) {
+        // surrounding blanks and a trailing colon tolerated (VolumeIsHidden)
+        while (!line.empty() && (line.back() == ':' || isspace((unsigned char)line.back()))) line.pop_back();
+        size_t b = line.find_first_not_of(" \t");
+        if (b != std::string::npos) v.push_back(line.substr(b));
+    }
+    return v;
+}
+
+void set_hidden_volumes(const std::vector<std::string> &names) {
+    std::error_code ec;
+    fs::create_directories(fs::path(config_path("hiddenvolumes")).parent_path(), ec);
+    std::ofstream out(config_path("hiddenvolumes"));
+    for (auto &n : names) out << n << "\n";
 }
 
 // ============================================================================================

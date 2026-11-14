@@ -9,6 +9,7 @@
 #include "prefs.h"
 #include "zune.h"
 #include "tools.h"
+#include "iconlist.h"
 
 #include <FL/Fl.H>
 
@@ -124,6 +125,10 @@ void edit_prefs(const WandererPrefs &current, std::function<void(const WandererP
     stitle->weight(300);
     label("");
     new Text("%wv version  %os system  %ov kernel  %pc %pf %pt memory");
+    label("Hidden volumes:");
+    std::string hv;
+    for (auto &n : hidden_volumes()) hv += (hv.empty() ? "" : ", ") + n;
+    auto *hidden_vols = new String(hv, 1024);
     scr->end();
     // -- Background pictures
     auto *pics = new Group(Group::Vertical, Frame_Group);
@@ -180,8 +185,22 @@ void edit_prefs(const WandererPrefs &current, std::function<void(const WandererP
     auto *w = new Window("Wanderer Preferences", root);
     g_editor = w;
     auto close = [w] { w->hide(); Fl::delete_widget(w); g_editor = nullptr; };
-    save->on_press = [=] { auto p = collect(); p.save(); apply(p); close(); };
-    use->on_press = [=] { apply(collect()); close(); };
+    // the hidden volumes: their own file (hiddenvolumes.prefs in the sources), names by commas here
+    auto store_hidden = [hidden_vols] {
+        std::vector<std::string> v;
+        std::string all = hidden_vols->value(), cur;
+        all += ',';
+        for (char c : all) {
+            if (c == ',') {
+                size_t b = cur.find_first_not_of(' '), e = cur.find_last_not_of(' ');
+                if (b != std::string::npos) v.push_back(cur.substr(b, e - b + 1));
+                cur.clear();
+            } else cur += c;
+        }
+        set_hidden_volumes(v);
+    };
+    save->on_press = [=] { auto p = collect(); p.save(); store_hidden(); apply(p); close(); };
+    use->on_press = [=] { store_hidden(); apply(collect()); close(); };
     cancel->on_press = [=] { close(); };
     w->callback([](Fl_Widget *win, void *) { win->hide(); Fl::delete_widget(win); g_editor = nullptr; });
     int sx, sy, sw, sh;

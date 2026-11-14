@@ -195,6 +195,10 @@ std::string from_volume_path(const std::string &path);
 std::vector<std::pair<std::string, std::string>> assigns();
 std::vector<std::string> left_out_paths();     // ~/.config/wanderer/leftout
 void set_left_out(const std::vector<std::string> &paths);
+// The volumes the root window does not show (~/.config/wanderer/hiddenvolumes, one a line:
+// a volume name - a trailing colon allowed, no case -, its device or its mount point)
+std::vector<std::string> hidden_volumes();
+void set_hidden_volumes(const std::vector<std::string> &names);
 
 // IconVolumeList: the mounted volumes (the desktop's root window)
 class IconVolumeList : public IconList {
