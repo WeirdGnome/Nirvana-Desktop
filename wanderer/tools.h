@@ -29,6 +29,8 @@ void disk_info(const std::string &volume);                  // Tools/DiskInfo
 // the trash can (the freedesktop.org trash: files/ and info/*.trashinfo)
 bool move_to_trash(const std::string &path, std::string &error);
 void empty_trash();
+// the assigns' editor (~/.config/wanderer/assigns)
+void edit_assigns();
 // Find: a pattern asked for; false - cancelled
 bool ask_find(std::string &pattern, std::string &contents);   // contents: "" - names only
 

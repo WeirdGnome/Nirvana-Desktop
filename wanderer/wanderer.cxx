@@ -131,7 +131,7 @@ enum MenuId {
     MEN_WINDOW_SORT_SIZE, MEN_WINDOW_SORT_TYPE, MEN_WINDOW_SORT_REVERSE, MEN_WINDOW_SORT_TOPDRAWERS,
     MEN_WINDOW_FIND, MEN_ICON_OPEN, MEN_ICON_RENAME, MEN_ICON_INFORMATION, MEN_ICON_SNAPSHOT,
     MEN_ICON_UNSNAPSHOT, MEN_ICON_DELETE, MEN_ICON_DISKINFO, MEN_WANDERER_PREFS,
-    MEN_ICON_LEAVEOUT, MEN_ICON_PUTAWAY, MEN_ICON_EMPTYTRASH, MEN_WANDERER_GUISETTINGS, MEN_ICON_EJECT, MEN_ICON_COPY, MEN_TOOLS_DRAWER, MEN_WANDERER_SHUTDOWN,
+    MEN_ICON_LEAVEOUT, MEN_ICON_PUTAWAY, MEN_ICON_EMPTYTRASH, MEN_WANDERER_GUISETTINGS, MEN_ICON_EJECT, MEN_ICON_COPY, MEN_TOOLS_DRAWER, MEN_WANDERER_SHUTDOWN, MEN_WANDERER_ASSIGNS,
     MEN_TOOL_FIRST = 1000
 };
 
@@ -417,6 +417,7 @@ std::vector<Fl_Menu_Item> Wanderer::menu_items(IconWindow *w) {
             {"Shell", FL_META + 'w', nullptr, (void *)MEN_WANDERER_SHELL},
             {"Preferences...", 0, nullptr, (void *)MEN_WANDERER_PREFS},
             {"GUI Settings...", 0, nullptr, (void *)MEN_WANDERER_GUISETTINGS},
+            {"Assigns...", 0, nullptr, (void *)MEN_WANDERER_ASSIGNS},
             {"About...", 0, nullptr, (void *)MEN_WANDERER_ABOUT},
             {"Quit...", FL_META + 'q', nullptr, (void *)MEN_WANDERER_QUIT},
             {"Shutdown...", 0, nullptr, (void *)MEN_WANDERER_SHUTDOWN},
@@ -640,6 +641,7 @@ void Wanderer::menu_action(IconWindow *w, int id) {
         });
         break;
     case MEN_WANDERER_GUISETTINGS: edit_gui_settings(); break;
+    case MEN_WANDERER_ASSIGNS: edit_assigns(); break;
     case MEN_WANDERER_SHUTDOWN: {
         int r = request("Shutdown", "Turn the computer off, or restart it?\nPrograms still running are ended.",
                         "Turn Off|Restart|Cancel");

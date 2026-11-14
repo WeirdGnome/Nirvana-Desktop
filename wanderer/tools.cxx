@@ -797,6 +797,78 @@ bool file_request(const std::string &title, std::string &path) {
     return ok;
 }
 
+// --------------------------------------------------------------------------------------------
+// The assigns' editor: the list of names and their drawers; Add (a name and a drawer from the
+// file requester), Remove; Save writes ~/.config/wanderer/assigns
+void edit_assigns() {
+    auto list_v = assigns();
+    bool done = false, save = false;
+    auto *root = VGroup();
+    new Text("\033cNames of your own for drawers, usable in every volume path (\"Docs:Listy\")");
+    auto *list = new List();
+    list->weight(300);
+    auto fill = [&] {
+        list->clear();
+        for (auto &[n, p] : list_v) list->add({n + ":", to_volume_path(p), false});
+        list->done();
+    };
+    auto *row = HGroup();
+    new Text("Name:");
+    auto *name = new String("", 64);
+    name->weight(100);
+    auto *add = new Button("Add...");
+    auto *rem = new Button("Remove");
+    row->end();
+    auto *buttons = HGroup();
+    buttons->same_width(true);
+    auto *bs = new Button("Save");
+    HSpace();
+    auto *bc = new Button("Cancel");
+    buttons->end();
+    root->end();
+    fill();
+    add->on_press = [&] {
+        std::string n = name->value();
+        while (!n.empty() && (n.back() == ':' || n.back() == ' ')) n.pop_back();
+        if (n.empty() || n.find_first_of("/:") != std::string::npos) {
+            request("Assigns", "Give a name first (without '/' or ':').", "OK");
+            return;
+        }
+        std::string dir = getenv("HOME") ? getenv("HOME") : "/";
+        if (!file_request("The drawer for " + n + ":", dir)) return;
+        std::error_code ec;
+        if (!fs::is_directory(dir, ec)) dir = fs::path(dir).parent_path().string();
+        for (auto &a : list_v) if (strcasecmp(a.first.c_str(), n.c_str()) == 0) { a.second = dir; fill(); return; }
+        list_v.push_back({n, dir});
+        fill();
+        name->value("");
+    };
+    rem->on_press = [&] {
+        int i = list->active();
+        if (i >= 0 && i < (int)list_v.size()) { list_v.erase(list_v.begin() + i); fill(); }
+    };
+    bs->on_press = [&] { save = done = true; };
+    bc->on_press = [&] { done = true; };
+    auto *w = new Window("Assigns", root);
+    w->size(std::max(w->w(), 420), std::max(w->h(), 300));
+    centre(w);
+    w->set_modal();
+    w->show();
+    while (!done && w->shown()) Fl::wait();
+    w->hide();
+    Fl::delete_widget(w);
+    if (!save) return;
+    const char *x = getenv("XDG_CONFIG_HOME");
+    std::string base = x && *x ? x : std::string(getenv("HOME") ? getenv("HOME") : "/tmp") + "/.config";
+    std::error_code ec;
+    fs::create_directories(base + "/wanderer", ec);
+    if (FILE *f = fopen((base + "/wanderer/assigns").c_str(), "w")) {
+        fprintf(f, "# Wanderer's assigns: NAME = drawer (usable as NAME: in volume paths)\n");
+        for (auto &[n, p] : list_v) fprintf(f, "%s = %s\n", n.c_str(), p.c_str());
+        fclose(f);
+    }
+}
+
 bool ask_find(std::string &pattern, std::string &contents) {
     bool done = false, ok = false;
     auto *root = VGroup();

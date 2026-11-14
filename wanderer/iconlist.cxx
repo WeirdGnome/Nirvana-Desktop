@@ -1030,6 +1030,33 @@ std::string to_volume_path(const std::string &path) {
     return best_name + ":" + rest;
 }
 
+// Assigns: names of the user's own for drawers (~/.config/wanderer/assigns, one per line:
+// "Docs = ~/Dokumenty"), as the system's logical device names - usable in every volume
+// path ("Docs:Listy")
+std::vector<std::pair<std::string, std::string>> assigns() {
+    std::vector<std::pair<std::string, std::string>> v;
+    const char *x = getenv("XDG_CONFIG_HOME");
+    std::string base = x && *x ? x : std::string(getenv("HOME") ? getenv("HOME") : "/tmp") + "/.config";
+    std::ifstream in(base + "/wanderer/assigns");
+    std::string line;
+    auto trim = [](std::string t) {
+        while (!t.empty() && isspace((unsigned char)t.back())) t.pop_back();
+        while (!t.empty() && isspace((unsigned char)t[0])) t.erase(0, 1);
+        return t;
+    };
+    while (std::getline(in, line)) {
+        if (line.empty() || line[0] == '#') continue;
+        auto eq = line.find('=');
+        if (eq == std::string::npos) continue;
+        std::string name = trim(line.substr(0, eq)), path = trim(line.substr(eq + 1));
+        if (!name.empty() && name.back() == ':') name.pop_back();
+        if (!path.empty() && path[0] == '~' && getenv("HOME")) path = getenv("HOME") + path.substr(1);
+        while (path.size() > 1 && path.back() == '/') path.pop_back();
+        if (!name.empty() && !path.empty()) v.push_back({name, path});
+    }
+    return v;
+}
+
 std::string from_volume_path(const std::string &p) {
     if (p.empty() || p[0] == '/' || p[0] == '~') {
         if (!p.empty() && p[0] == '~' && getenv("HOME")) return getenv("HOME") + p.substr(1);
@@ -1043,6 +1070,7 @@ std::string from_volume_path(const std::string &p) {
     if (eq(vol, "RAM")) mnt = ramdisk_dir();
     else if (eq(vol, "SYS")) mnt = "/";
     else for (auto &[name, m] : volume_names()) if (eq(vol, name)) { mnt = m; break; }
+    if (mnt.empty()) for (auto &[name, m] : assigns()) if (eq(vol, name)) { mnt = m; break; }
     if (mnt.empty()) return p;
     if (rest.empty()) return mnt;
     return (mnt == "/" ? "" : mnt) + "/" + rest;
