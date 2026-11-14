@@ -31,6 +31,8 @@
 #include <X11/Xutil.h>
 #include <X11/cursorfont.h>
 #include <X11/keysym.h>
+#include <X11/XKBlib.h>
+#include <poll.h>
 
 #include <algorithm>
 #include <cstdio>
@@ -1168,6 +1170,25 @@ int on_error(Display *, XErrorEvent *e) {
 
 Atom atom(const char *n) { return XInternAtom(dpy, n, False); }
 
+// The bell (a program's XBell, a mistake typed): the front screen flashes in the fill pen for
+// a moment, as the system flashes the screen when it beeps
+int xkb_event = -1;
+void display_beep() {
+    WScreen *s = screens.empty() ? nullptr : screens.back();
+    int y = s ? s->y : 0;
+    XSetWindowAttributes a = {};
+    a.override_redirect = True;
+    a.background_pixel = pen_blue;
+    Window f = XCreateWindow(dpy, root, 0, y, SW, SH - y, 0, CopyFromParent, InputOutput, CopyFromParent,
+                             CWOverrideRedirect | CWBackPixel, &a);
+    XMapRaised(dpy, f);
+    XFlush(dpy);
+    struct pollfd none = {-1, 0, 0};
+    poll(&none, 0, 120);
+    XDestroyWindow(dpy, f);
+    XFlush(dpy);
+}
+
 // The pens from four colours (hex RRGGBB): the background, the shadow (and text), the shine,
 // the fill; HALFSHADOW half way between the background and the shadow
 void apply_palette(const std::string &bg, const std::string &sd, const std::string &sh, const std::string &fl) {
@@ -1314,9 +1335,23 @@ int main(int argc, char **argv) {
         if (kids) XFree(kids);
     }
 
+    // the bell: told by the keyboard extension; the sound itself is switched off (the flash is it)
+    {
+        int opcode, error, major = XkbMajorVersion, minor = XkbMinorVersion;
+        if (XkbQueryExtension(dpy, &opcode, &xkb_event, &error, &major, &minor)) {
+            XkbSelectEvents(dpy, XkbUseCoreKbd, XkbBellNotifyMask, XkbBellNotifyMask);
+            unsigned int aud = XkbAudibleBellMask;
+            XkbChangeEnabledControls(dpy, XkbUseCoreKbd, aud, 0);
+        }
+    }
+
     XEvent ev;
     for (;;) {
         XNextEvent(dpy, &ev);
+        if (xkb_event >= 0 && ev.type == xkb_event && ((XkbAnyEvent *)&ev)->xkb_type == XkbBellNotify) {
+            display_beep();
+            continue;
+        }
         switch (ev.type) {
         case MapRequest: manage(ev.xmaprequest.window, false); break;
         case ConfigureRequest: {
