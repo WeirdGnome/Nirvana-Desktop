@@ -121,6 +121,16 @@ struct WScreen {
 };
 
 std::vector<WScreen *> screens;               // back to front
+WScreen *main_screen = nullptr;               // the Wanderer Screen (the default public screen)
+
+// AppIcons: the icons programs put out (the system tray, XEmbed) sit in the main screen's
+// title bar, left of its depth gadget
+std::vector<Window> tray_icons;
+Window tray_owner = 0;
+Atom NET_SYSTEM_TRAY_S, NET_SYSTEM_TRAY_OPCODE, XEMBED, MANAGER, XEMBED_INFO;
+const int TRAY_SIZE = 18, TRAY_GAP = 4;
+int tray_width() { return tray_icons.empty() ? 0 : (int)tray_icons.size() * (TRAY_SIZE + TRAY_GAP) + TRAY_GAP; }
+bool is_tray_icon(Window w) { return std::find(tray_icons.begin(), tray_icons.end(), w) != tray_icons.end(); }
 std::map<Window, Client *> by_window, by_frame;
 Client *active = nullptr;
 Window check_win;
@@ -230,7 +240,8 @@ void WScreen::draw_bar() {
     std::string t = title;
     if (active && active->screen == this && !active->screen_title.empty()) t = active->screen_title;
     else for (auto *c : clients) if (c->backdrop && !c->screen_title.empty()) t = c->screen_title;
-    draw_text(win, 6, (BAR_H - 1 + font->ascent - font->descent) / 2, SW - GADGET_W - 12, t, &xft_black);
+    int room = SW - GADGET_W - 12 - (this == main_screen ? tray_width() : 0);
+    draw_text(win, 6, (BAR_H - 1 + font->ascent - font->descent) / 2, room, t, &xft_black);
     // the depth gadget
     int gx = SW - GADGET_W;
     fill(win, gc, pen_white, gx, 0, GADGET_W, BAR_H - 1);
@@ -1170,6 +1181,72 @@ int on_error(Display *, XErrorEvent *e) {
 
 Atom atom(const char *n) { return XInternAtom(dpy, n, False); }
 
+void tray_layout() {
+    if (!main_screen) return;
+    int x = SW - GADGET_W - TRAY_GAP - TRAY_SIZE;
+    for (Window w : tray_icons) {
+        XMoveResizeWindow(dpy, w, x, (BAR_H - 1 - TRAY_SIZE) / 2, TRAY_SIZE, TRAY_SIZE);
+        x -= TRAY_SIZE + TRAY_GAP;
+    }
+    main_screen->draw_bar();
+}
+
+void tray_dock(Window icon) {
+    if (!main_screen || is_tray_icon(icon)) return;
+    XSelectInput(dpy, icon, StructureNotifyMask | PropertyChangeMask);
+    XSetWindowBackgroundPixmap(dpy, icon, ParentRelative);
+    XReparentWindow(dpy, icon, main_screen->win, 0, 0);
+    XAddToSaveSet(dpy, icon);
+    tray_icons.push_back(icon);
+    // XEMBED_EMBEDDED_NOTIFY: the icon knows it is in its place
+    XEvent e = {};
+    e.xclient.type = ClientMessage;
+    e.xclient.window = icon;
+    e.xclient.message_type = XEMBED;
+    e.xclient.format = 32;
+    e.xclient.data.l[0] = CurrentTime;
+    e.xclient.data.l[1] = 0;
+    e.xclient.data.l[3] = main_screen->win;
+    e.xclient.data.l[4] = 0;
+    XSendEvent(dpy, icon, False, NoEventMask, &e);
+    tray_layout();
+    XMapRaised(dpy, icon);
+}
+
+void tray_remove(Window icon) {
+    auto it = std::find(tray_icons.begin(), tray_icons.end(), icon);
+    if (it == tray_icons.end()) return;
+    tray_icons.erase(it);
+    tray_layout();
+}
+
+// The tray's owner: the selection _NET_SYSTEM_TRAY_Sn and the MANAGER announcement
+void tray_start() {
+    char name[32];
+    snprintf(name, sizeof name, "_NET_SYSTEM_TRAY_S%d", scr);
+    NET_SYSTEM_TRAY_S = atom(name);
+    NET_SYSTEM_TRAY_OPCODE = atom("_NET_SYSTEM_TRAY_OPCODE");
+    XEMBED = atom("_XEMBED");
+    XEMBED_INFO = atom("_XEMBED_INFO");
+    MANAGER = atom("MANAGER");
+    if (XGetSelectionOwner(dpy, NET_SYSTEM_TRAY_S) != None) return;   // another tray runs
+    tray_owner = XCreateSimpleWindow(dpy, root, -1, -1, 1, 1, 0, 0, 0);
+    long orient = 0;   // horizontal
+    XChangeProperty(dpy, tray_owner, atom("_NET_SYSTEM_TRAY_ORIENTATION"), XA_CARDINAL, 32, PropModeReplace,
+                    (unsigned char *)&orient, 1);
+    XSetSelectionOwner(dpy, NET_SYSTEM_TRAY_S, tray_owner, CurrentTime);
+    if (XGetSelectionOwner(dpy, NET_SYSTEM_TRAY_S) != tray_owner) return;
+    XEvent e = {};
+    e.xclient.type = ClientMessage;
+    e.xclient.window = root;
+    e.xclient.message_type = MANAGER;
+    e.xclient.format = 32;
+    e.xclient.data.l[0] = CurrentTime;
+    e.xclient.data.l[1] = NET_SYSTEM_TRAY_S;
+    e.xclient.data.l[2] = tray_owner;
+    XSendEvent(dpy, root, False, StructureNotifyMask, &e);
+}
+
 // The bell (a program's XBell, a mistake typed): the front screen flashes in the fill pen for
 // a moment, as the system flashes the screen when it beeps
 int xkb_event = -1;
@@ -1318,7 +1395,9 @@ int main(int argc, char **argv) {
         if (!strcmp(argv[i], "--screens")) nscreens = std::clamp(atoi(argv[i + 1]), 1, 8);
     for (int i = nscreens - 1; i >= 0; i--)
         open_screen(i == 0 ? "Wanderer Screen" : "Screen " + std::to_string(i + 1));
+    main_screen = screens.back();
     restack_screens();
+    tray_start();
 
     XGrabKey(dpy, XKeysymToKeycode(dpy, XK_m), Mod4Mask, root, True, GrabModeAsync, GrabModeAsync);
     // Super + the left button: dragging screens (also with Caps Lock or Num Lock on)
@@ -1353,8 +1432,12 @@ int main(int argc, char **argv) {
             continue;
         }
         switch (ev.type) {
-        case MapRequest: manage(ev.xmaprequest.window, false); break;
+        case MapRequest:
+            if (is_tray_icon(ev.xmaprequest.window)) XMapRaised(dpy, ev.xmaprequest.window);
+            else manage(ev.xmaprequest.window, false);
+            break;
         case ConfigureRequest: {
+            if (is_tray_icon(ev.xconfigurerequest.window)) { tray_layout(); break; }   // its place is ours
             auto &cr = ev.xconfigurerequest;
             if (by_window.count(cr.window)) {
                 Client *c = by_window[cr.window];
@@ -1376,6 +1459,11 @@ int main(int argc, char **argv) {
             }
             break;
         }
+        case ReparentNotify:
+            // an icon taken away by its program (or by another tray)
+            if (is_tray_icon(ev.xreparent.window) && main_screen && ev.xreparent.parent != main_screen->win)
+                tray_remove(ev.xreparent.window);
+            break;
         case UnmapNotify:
             if (by_window.count(ev.xunmap.window) && ev.xunmap.event != root) {
                 Client *c = by_window[ev.xunmap.window];
@@ -1384,6 +1472,7 @@ int main(int argc, char **argv) {
             }
             break;
         case DestroyNotify:
+            if (is_tray_icon(ev.xdestroywindow.window)) { tray_remove(ev.xdestroywindow.window); break; }
             if (by_window.count(ev.xdestroywindow.window)) unmanage(by_window[ev.xdestroywindow.window], true);
             break;
         case PropertyNotify:
@@ -1402,6 +1491,10 @@ int main(int argc, char **argv) {
             }
             break;
         case ClientMessage:
+            if (ev.xclient.message_type == NET_SYSTEM_TRAY_OPCODE && ev.xclient.data.l[1] == 0) {   // REQUEST_DOCK
+                tray_dock((Window)ev.xclient.data.l[2]);
+                break;
+            }
             if (ev.xclient.message_type == NET_WM_STATE && by_window.count(ev.xclient.window)) {
                 // data: action (0 remove, 1 add, 2 toggle), the first and the second state
                 Client *c = by_window[ev.xclient.window];
