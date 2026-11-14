@@ -119,7 +119,9 @@ public:
   void remember(NWin *w, bool open);
   void update_global_keys();    // the global shortcuts (Win+letter, XGrabKey)
   void active_changed();
-  void screen_changed();          // the window manager changed the active window
+  void screen_changed();
+  void rebuild_global_menu();   // Nirvana's menus + those of the active program (global menu)
+  void fit_menu_width();          // the window manager changed the active window
   void clients_changed();         // the window list changed (_NET_CLIENT_LIST)
   void current_app(std::string &name, Fl_Image *&icon);   // the active application for the bar
   std::vector<NWin *> folder_windows();                    // visible folder windows

@@ -1,6 +1,22 @@
 # Changelog
 All notable changes to Nirvana Desktop, newest first. Polish: [CHANGELOG.pl.md](CHANGELOG.pl.md).
 
+## 0.0.73 – 2026-11-14
+
+The fifth stage of the rework: the global menu and extensible Preferences.
+
+- **The menus of other programs in the menu bar**:
+  - Rambler is the registrar of application menus (`com.canonical.AppMenu.Registrar`);
+  - Qt programs, GTK with `appmenu-gtk-module`, LibreOffice and Electron hide their own menu bar, and their menus stand in the top bar after Nirvana's menus;
+  - the bar shows submenus, check items, disabled items, dividers and the program's shortcuts;
+  - a click runs the item in the program, and changes in the program's menus show at once;
+  - after switching to another window the program's menus are gone.
+  `NIRVANA_GLOBAL_MENU=0` turns the registrar off.
+- **Extensible Preferences**:
+  - your own panels from `.desktop` files in `~/.local/share/nirvana/preferences`, also replacing a built-in panel (`Replaces=`);
+  - the right button on a panel gives *Hide This Panel* and *Remove This Panel…*;
+  - the right button on the background gives *Add a Panel…* (a name and a command) and *Show Hidden Panels*.
+
 ## 0.0.72 – 2026-11-14
 
 The fourth stage of the rework: the dock, the backdrop and title bars.

@@ -1,6 +1,22 @@
 # Lista zmian
 Wszystkie ważniejsze zmiany w Nirvana Desktop, od najnowszych. English: [CHANGELOG.md](CHANGELOG.md).
 
+## 0.0.73 – 2026-11-14
+
+Piąty etap przebudowy: globalne menu i rozszerzalne Preferencje.
+
+- **Menu innych programów na pasku menu**:
+  - Rambler jest rejestratorem menu programów (`com.canonical.AppMenu.Registrar`);
+  - programy Qt, GTK z `appmenu-gtk-module`, LibreOffice i Electron chowają swój pasek menu, a ich menu stoi na górnym pasku po menu Nirvany;
+  - na pasku są podmenu, pola wyboru, pozycje nieaktywne, separatory i skróty programu;
+  - klik wykonuje pozycję w programie, a zmiany w menu programu widać od razu;
+  - po przejściu do innego okna menu programu znika.
+  `NIRVANA_GLOBAL_MENU=0` wyłącza rejestrator.
+- **Rozszerzalne Preferencje**:
+  - własne panele z plików `.desktop` w `~/.local/share/nirvana/preferences`, także zastępujące wbudowany panel (`Replaces=`);
+  - prawy przycisk na panelu daje *Ukryj ten panel* i *Usuń ten panel…*;
+  - prawy przycisk na tle daje *Dodaj panel…* (nazwa i polecenie) oraz *Pokaż ukryte panele*.
+
 ## 0.0.72 – 2026-11-14
 
 Czwarty etap przebudowy: dok, tło pulpitu i paski tytułu.

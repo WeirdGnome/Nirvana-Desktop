@@ -2,6 +2,7 @@
 #include "desktop.h"
 #include "jobs.h"
 #include "screens.h"
+#include "appmenu.h"
 #include "sounds.h"
 #include "applets.h"
 #include "appimage.h"
@@ -516,6 +517,117 @@ static const std::vector<MenuDef> &window_menu_defs() {
 }
 
 // ---------------------------------------------------------------------------
+
+// Global bar: Nirvana, System, Special. Every file manager window has its own Window and Icons
+// menus (window_menu_defs).
+
+static void app_item_cb(Fl_Widget *, void *d) { appmenu::activate((int)(long)d); }
+
+// a program's label in a menu path: "/" would start a submenu, "&" a shortcut mark
+static std::string menu_label(const std::string &s) {
+  std::string o;
+  for (char c : s) {
+    if (c == '/' || c == '\\') o += '\\';
+    if (c == '&') o += '&';
+    o += c;
+  }
+  return o;
+}
+
+// The menu bar: Nirvana's own menus, then those of the active program (if it has registered them)
+void Desktop::rebuild_global_menu() {
+  menu_->clear();
+  static const std::vector<MenuDef> items = {
+    // --- Nirvana: the whole system ---
+    {P_("logo/About This Computer…"), 0, &Desktop::about, FL_MENU_DIVIDER},
+    {P_("logo/Preferences…"), 0, &Desktop::open_preferences, 0},
+    {P_("logo/Execute Command…"), FL_META + 'e', &Desktop::execute_command, 0},
+    {P_("logo/Nirvana Shell"), FL_META + 't', &Desktop::open_terminal, 0},
+    {P_("logo/Backdrop"), FL_META + 'b', &Desktop::toggle_backdrop, FL_MENU_TOGGLE},
+    {P_("logo/Open System Log"), 0, &Desktop::open_log, FL_MENU_DIVIDER},
+    {P_("logo/Reset Nirvana"), 0, &Desktop::reset_nirvana, 0},
+    // --- System: session and computer (formerly in the power applet) ---
+    {P_("System/Lock Screen"), 0, &Desktop::system_lock, 0},
+    {P_("System/Sleep"), 0, &Desktop::system_sleep, 0},
+    {P_("System/Hibernate"), 0, &Desktop::system_hibernate, FL_MENU_DIVIDER},
+    {P_("System/Log Out…"), FL_META + 'q', &Desktop::system_logout, 0},
+    {P_("System/Restart…"), 0, &Desktop::system_restart, 0},
+    {P_("System/Shut Down…"), 0, &Desktop::system_shutdown, 0},
+    // --- Special ---
+    {P_("Special/Format Disk…"), 0, &Desktop::format_disk, 0},
+    {P_("Special/Empty Trash…"), 0, &Desktop::empty_trash, 0},
+    {P_("Special/File Types…"), 0, &Desktop::edit_filetypes, FL_MENU_DIVIDER},
+    {P_("Special/Screenshot"), FL_Print, &Desktop::screenshot, FL_MENU_DIVIDER},
+    {P_("Special/Force Quit a Window…"), FL_META + 'k', &Desktop::force_quit, 0},
+  };
+
+  for (auto &it : items)
+    menu_->add(plat::tr_path(it.path).c_str(), it.shortcut, global_menu_cb, (void *)&it, it.flags);
+  g_global_items = &items;
+  std::function<void(const appmenu::Item &, const std::string &)> add = [&](const appmenu::Item &m,
+                                                                           const std::string &parent) {
+    int last = -1;
+    for (auto &c : m.children) {
+      if (c.separator) {
+        if (last >= 0) {
+          Fl_Menu_Item *mi = (Fl_Menu_Item *)&menu_->menu()[last];
+          mi->flags |= FL_MENU_DIVIDER;
+        }
+        continue;
+      }
+      if (c.label.empty()) continue;
+      std::string path = parent + "/" + menu_label(c.label);
+      if (!c.children.empty()) {
+        add(c, path);
+        last = menu_->find_index(path.c_str());
+        if (last >= 0 && !c.enabled) ((Fl_Menu_Item *)&menu_->menu()[last])->deactivate();
+        continue;
+      }
+      int flags = (c.enabled ? 0 : FL_MENU_INACTIVE) | (c.toggle == 1 ? FL_MENU_TOGGLE : c.toggle == 2 ? FL_MENU_RADIO : 0) |
+                  (c.checked ? FL_MENU_VALUE : 0);
+      // the program's shortcut shown next to the item ("Ctrl+S"); the program handles the keys
+      int sc = 0;
+      {
+        std::string k = c.shortcut;
+        size_t p;
+        while ((p = k.find('+')) != std::string::npos && p + 1 < k.size()) {
+          std::string mod = k.substr(0, p);
+          if (mod == "Ctrl") sc |= FL_CTRL;
+          else if (mod == "Shift") sc |= FL_SHIFT;
+          else if (mod == "Alt") sc |= FL_ALT;
+          else if (mod == "Win") sc |= FL_META;
+          k = k.substr(p + 1);
+        }
+        if (k.size() == 1) sc |= tolower((unsigned char)k[0]);
+        else if (k.size() >= 2 && (k[0] == 'F') && isdigit((unsigned char)k[1])) sc |= FL_F + atoi(k.c_str() + 1);
+        else if (k == "Delete") sc |= FL_Delete;
+        else sc = 0;
+      }
+      last = menu_->add(path.c_str(), sc, app_item_cb, (void *)(long)c.id, flags);
+    }
+  };
+  for (auto &top : appmenu::menus()) {
+    std::string path = menu_label(top.label);
+    if (top.children.empty()) {
+      menu_->add(path.c_str(), 0, app_item_cb, (void *)(long)top.id, top.enabled ? 0 : FL_MENU_INACTIVE);
+      continue;
+    }
+    add(top, path);
+  }
+  logo_item_ = (Fl_Menu_Item *)menu_->find_item("logo");
+  set_logo();
+}
+
+// The width of the menu titles - computed the same way as in Fl_Menu_Bar::draw()
+void Desktop::fit_menu_width() {
+  int mx = 6;
+  for (const Fl_Menu_Item *m = menu_->menu(); m && m->label(); m = m->next())
+    if (m->visible()) mx += m->measure(nullptr, menu_) + 16;
+  mx += 8;
+  menu_->size(mx, MENUBAR_H);
+  redraw();
+}
+
 Desktop::Desktop(int W, int H, const std::string &home)
     : Fl_Double_Window(0, 0, W, H, "Nirvana Desktop"),
       home_(home), root_path_(home), spatial_(home) {
@@ -545,38 +657,8 @@ Desktop::Desktop(int W, int H, const std::string &home)
   menu_->down_box(FL_FLAT_BOX);
   menu_->selection_color(SEL);
 
-  // Global bar: Nirvana, System, Special. Every file manager window has
-  // its own Window and Icons menus (window_menu_defs).
-  static const std::vector<MenuDef> items = {
-    // --- Nirvana: the whole system ---
-    {P_("logo/About This Computer…"), 0, &Desktop::about, FL_MENU_DIVIDER},
-    {P_("logo/Preferences…"), 0, &Desktop::open_preferences, 0},
-    {P_("logo/Execute Command…"), FL_META + 'e', &Desktop::execute_command, 0},
-    {P_("logo/Nirvana Shell"), FL_META + 't', &Desktop::open_terminal, 0},
-    {P_("logo/Backdrop"), FL_META + 'b', &Desktop::toggle_backdrop, FL_MENU_TOGGLE},
-    {P_("logo/Open System Log"), 0, &Desktop::open_log, FL_MENU_DIVIDER},
-    {P_("logo/Reset Nirvana"), 0, &Desktop::reset_nirvana, 0},
-    // --- System: session and computer (formerly in the power applet) ---
-    {P_("System/Lock Screen"), 0, &Desktop::system_lock, 0},
-    {P_("System/Sleep"), 0, &Desktop::system_sleep, 0},
-    {P_("System/Hibernate"), 0, &Desktop::system_hibernate, FL_MENU_DIVIDER},
-    {P_("System/Log Out…"), FL_META + 'q', &Desktop::system_logout, 0},
-    {P_("System/Restart…"), 0, &Desktop::system_restart, 0},
-    {P_("System/Shut Down…"), 0, &Desktop::system_shutdown, 0},
-    // --- Special ---
-    {P_("Special/Format Disk…"), 0, &Desktop::format_disk, 0},
-    {P_("Special/Empty Trash…"), 0, &Desktop::empty_trash, 0},
-    {P_("Special/File Types…"), 0, &Desktop::edit_filetypes, FL_MENU_DIVIDER},
-    {P_("Special/Screenshot"), FL_Print, &Desktop::screenshot, FL_MENU_DIVIDER},
-    {P_("Special/Force Quit a Window…"), FL_META + 'k', &Desktop::force_quit, 0},
-  };
-  for (auto &it : items) {
-    menu_->add(plat::tr_path(it.path).c_str(), it.shortcut, global_menu_cb, (void *)&it, it.flags);
-  }
-  g_global_items = &items;
+  rebuild_global_menu();
   update_global_keys();
-  logo_item_ = (Fl_Menu_Item *)menu_->find_item("logo");
-  set_logo();
 
   // Right side, from the edge: gary, clock, network, volume, power, tray -
   // tightly, without gaps. The menu bar ends after the last title; between it and
@@ -600,15 +682,10 @@ Desktop::Desktop(int W, int H, const std::string &home)
   applets::clipboard_hotkey();
   tray_w_ = tray::make(0, 0, MENUBAR_H);
   screens_w_ = screens::make_gadget(0, 0, 26, MENUBAR_H);
-  {
-    // width of the menu titles - computed the same way as in Fl_Menu_Bar::draw()
-    int mx = 6;
-    for (const Fl_Menu_Item *m = menu_->menu(); m && m->label(); m = m->next())
-      if (m->visible()) mx += m->measure(nullptr, menu_) + 16;
-    mx += 8;
-    menu_->size(mx, MENUBAR_H);
-    mem_w_ = new MemInfo(mx, 0, 1, MENUBAR_H, W, home_);
-  }
+  fit_menu_width();
+  mem_w_ = new MemInfo(menu_->w(), 0, 1, MENUBAR_H, W, home_);
+  // the menus of other programs (global menu): after Nirvana's own ones
+  appmenu::start([this] { rebuild_global_menu(); fit_menu_width(); layout_bar(); });
   layout_bar();
   // Context menus of the desktop and windows: a hidden menu button as the "owner" (looks
   // like the menu bar). Not the menu bar itself - FLTK treats menu bar menus differently.
@@ -1707,6 +1784,7 @@ void Desktop::screen_changed() {
 
 void Desktop::active_changed() {
   if (g_global_keys.empty()) update_global_keys();   // (the display was not open yet at the start)
+  appmenu::set_active(net_active());   // the active program's menus in the menu bar
   if (app_menu_) app_menu_->redraw();   // name and icon of the active application in the bar
   Window a = net_active();
   for (auto it = wins_.begin(); it != wins_.end(); ++it) {

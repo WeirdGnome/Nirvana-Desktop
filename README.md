@@ -41,7 +41,7 @@ What changed in each version: [CHANGELOG.md](CHANGELOG.md).
 
 Unpack the sources and run the installer:
 
-    tar xzf nirvana-desktop-0.0.72.tar.gz && cd nirvana-desktop
+    tar xzf nirvana-desktop-0.0.73.tar.gz && cd nirvana-desktop
     sudo ./install.sh                 # or: sudo ./install.sh --login-screen
 
 The installer:
@@ -141,6 +141,14 @@ Another system font (for example a free bitmap-style one) can be set with `NIRVA
   disks and devices and above the minimized windows, folders first. A double click opens them,
   the right button gives Open, Show in Folder and Delete (to the Trash); a change in the folder
   shows at once.
+- **The menus of other programs in the menu bar (global menu):** Rambler is the registrar of
+  application menus (`com.canonical.AppMenu.Registrar` on the session bus). Programs that find it
+  – Qt 5/6 by themselves, GTK with `appmenu-gtk-module`, LibreOffice, many Electron programs –
+  hide the menu bar in their window and register it; while such a window is active its menus
+  (`com.canonical.dbusmenu`) stand in the menu bar after Nirvana, System and Special: submenus,
+  check and radio items, disabled items, dividers and the program's shortcuts. A click sends the
+  item back to the program; changes in the program's menus show at once. Programs without it keep
+  their own menu bar. `NIRVANA_GLOBAL_MENU=0` turns the registrar off.
 - **The floating dock** (Preferences > Desktop > *Floating dock in the middle*, on by default): a
   bevelled tray centered above the bottom edge, a grip on its left (a click folds the dock to
   the grip and back) and dividers between groups – folders, each applications category, other
@@ -212,7 +220,7 @@ Another system font (for example a free bitmap-style one) can be set with `NIRVA
 - **Where applications live**: in the folder `~/Aplikacje` of Nirvana HD (`~/Applications` – the
   name in the language of the first start, remembered in `~/.config/nirvana/apps-folder`), with
   its category folders; the programs are shown as big icons, like the Preferences window (a list
-  with `Ctrl+2`). The hidden `~/.nirvana-apps` of 0.0.38–0.0.72 is moved there at the first
+  with `Ctrl+2`). The hidden `~/.nirvana-apps` of 0.0.38–0.0.73 is moved there at the first
   start, together with dock entries and remembered windows. Right-click an application
   there and choose **Put on Dock** to keep it at hand; right-click a dock tile for **Open** and
   **Unpin from Dock**.
@@ -947,6 +955,17 @@ sight with the window closed. When time is up a sound plays (the freedesktop sou
 for the next phase (or the next phase starts by itself, if so set).
 
 ![The clock with the calendar and the pomodoro](docs/img/clock.png)
+
+### Adding your own panels to Preferences
+
+The Preferences window can be extended. Every `.desktop` file in
+`~/.local/share/nirvana/preferences` (or `<prefix>/share/nirvana/preferences` for everybody) is a
+panel: `Name=` (and `Name[pl]=`…), `Exec=` – the command, `Icon=` – a PNG file or the name of one
+of Nirvana's icons (`harddisk`, `network`, `prefs`…), `Replaces=` – a built-in panel it takes the
+place of (`appearance`, `desktop`, `network`, `power`, `saver`, `datetime`, `printers`, `user`,
+`bluetooth`, `shield`, `shader`). The right button on a panel: **Open**, **Hide This Panel**,
+**Remove This Panel…** (one you added); on the empty background: **Add a Panel…** (a name and a
+command) and **Show Hidden Panels**. Hidden panels are kept in `~/.config/nirvana/preferences.conf`.
 
 ### Date & Time (Preferences)
 

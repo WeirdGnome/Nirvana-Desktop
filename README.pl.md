@@ -40,7 +40,7 @@ Co się zmieniło w każdej wersji: [CHANGELOG.pl.md](CHANGELOG.pl.md).
 
 Rozpakuj źródła i uruchom instalator:
 
-    tar xzf nirvana-desktop-0.0.72.tar.gz && cd nirvana-desktop
+    tar xzf nirvana-desktop-0.0.73.tar.gz && cd nirvana-desktop
     sudo ./install.sh                 # albo: sudo ./install.sh --login-screen
 
 Instalator:
@@ -141,6 +141,14 @@ Inną czcionkę systemową (np. wolną, w stylu bitmapowym) można podać przez 
   tworzony, gdy go nie ma) są ikonami w lewej kolumnie – zawsze pod dyskami i urządzeniami,
   a nad zminimalizowanymi oknami, najpierw foldery. Dwuklik je otwiera, prawy przycisk daje
   Otwórz, Pokaż w folderze i Usuń (do kosza); zmiana w folderze widać od razu.
+- **Menu innych programów na pasku menu (globalne menu):** Rambler jest rejestratorem menu
+  programów (`com.canonical.AppMenu.Registrar` na szynie sesji). Programy, które go znajdą – Qt 5/6
+  same, GTK z `appmenu-gtk-module`, LibreOffice, wiele programów Electron – chowają pasek menu
+  w swoim oknie i go rejestrują; gdy takie okno jest aktywne, jego menu (`com.canonical.dbusmenu`)
+  stoją na pasku menu po Nirvanie, Systemie i Narzędziach: podmenu, pola wyboru i opcje, pozycje
+  nieaktywne, separatory i skróty programu. Klik odsyła pozycję do programu; zmiany w menu programu
+  widać od razu. Programy bez tej obsługi zachowują własny pasek menu. `NIRVANA_GLOBAL_MENU=0`
+  wyłącza rejestrator.
 - **Pływający dok** (Preferencje > Pulpit > *Pływający dok pośrodku*, domyślnie włączony):
   fazowana tacka pośrodku nad dolną krawędzią, uchwyt po lewej (klik zwija dok do uchwytu
   i z powrotem) i przegródki między grupami – foldery, każda kategoria aplikacji, inne programy
@@ -211,7 +219,7 @@ Inną czcionkę systemową (np. wolną, w stylu bitmapowym) można podać przez 
 - **Gdzie są aplikacje**: w folderze `~/Aplikacje` na Nirvana HD (nazwa w języku pierwszego
   uruchomienia, zapamiętana w `~/.config/nirvana/apps-folder`), z folderami kategorii; programy
   są dużymi ikonami, jak w oknie Preferencji (lista – `Ctrl+2`). Ukryty `~/.nirvana-apps`
-  z wersji 0.0.38–0.0.72 jest tam przenoszony przy pierwszym uruchomieniu, razem z wpisami doku
+  z wersji 0.0.38–0.0.73 jest tam przenoszony przy pierwszym uruchomieniu, razem z wpisami doku
   i zapamiętanymi oknami. Prawy przycisk na aplikacji i **Połóż na doku**
   trzyma ją pod ręką; prawy przycisk na kafelku doku daje **Otwórz** i **Odepnij z doku**.
 - **Instalacja**: otwarcie AppImage spoza folderu Aplikacje (np. z Pobranych) pyta, czy
@@ -944,6 +952,17 @@ przez `paplay`/`pw-play`, a bez nich dzwonek) i pojawia się okno – przy pomod
 następnej fazy (albo następna faza rusza sama, jeśli tak ustawiono).
 
 ![Zegar z kalendarzem i pomodoro](docs/img/clock.png)
+
+### Własne panele w Preferencjach
+
+Okno Preferencji da się rozszerzać. Każdy plik `.desktop` w `~/.local/share/nirvana/preferences`
+(albo `<prefix>/share/nirvana/preferences` dla wszystkich) jest panelem: `Name=` (i `Name[pl]=`…),
+`Exec=` – polecenie, `Icon=` – plik PNG albo nazwa jednej z ikon Nirvany (`harddisk`, `network`,
+`prefs`…), `Replaces=` – wbudowany panel, którego miejsce zajmuje (`appearance`, `desktop`,
+`network`, `power`, `saver`, `datetime`, `printers`, `user`, `bluetooth`, `shield`, `shader`).
+Prawy przycisk na panelu: **Otwórz**, **Ukryj ten panel**, **Usuń ten panel…** (dodany przez
+ciebie); na pustym tle: **Dodaj panel…** (nazwa i polecenie) i **Pokaż ukryte panele**. Ukryte
+panele są zapisane w `~/.config/nirvana/preferences.conf`.
 
 ### Data i czas (Preferencje)
 

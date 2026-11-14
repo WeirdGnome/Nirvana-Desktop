@@ -147,7 +147,7 @@ add_executable(nirvana-denise
   denise/shield_applet.cxx
   denise/explorer.cxx
   denise/filetypes.cxx
-  denise/jobs.cxx denise/sounds.cxx denise/openwith.cxx denise/screens.cxx
+  denise/jobs.cxx denise/sounds.cxx denise/openwith.cxx denise/screens.cxx denise/appmenu.cxx
   denise/sniff.cxx
   denise/metadata.cxx
   denise/search.cxx)
