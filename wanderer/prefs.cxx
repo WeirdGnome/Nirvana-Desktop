@@ -62,6 +62,7 @@ WandererPrefs WandererPrefs::load() {
         else if (k == "label_vpad") p.label_vpad = std::clamp(v, 0, 20);
         else if (k == "label_border_w") p.label_border_w = std::clamp(v, 0, 10);
         else if (k == "label_border_h") p.label_border_h = std::clamp(v, 0, 10);
+        else if (k == "auto_sort") p.auto_sort = v;
         else if (k == "default_sort") p.default_sort = std::clamp(v, 0, 2);
         else if (k == "drop_mode") p.drop_mode = std::clamp(v, 0, 1);
         else if (k == "show_network") p.show_network = v;
@@ -79,7 +80,7 @@ void WandererPrefs::save() const {
         << "\nlist_mode=" << list_mode << "\ntoolbar=" << toolbar << "\nstatusbar=" << statusbar
         << "\nshow_hidden=" << show_hidden << "\ndrawers_first=" << drawers_first << "\nhspacing=" << hspacing
         << "\nvspacing=" << vspacing << "\nbackdrop_image=" << backdrop_image << "\nbackdrop_mode=" << backdrop_mode
-        << "\ndrawer_image=" << drawer_image << "\ndrawer_mode=" << drawer_mode << "\nnavigation=" << navigation << "\nshow_network=" << show_network << "\ndrop_mode=" << drop_mode << "\ndefault_sort=" << default_sort << "\nimage_spacing=" << image_spacing << "\nlabel_hpad=" << label_hpad << "\nlabel_vpad=" << label_vpad << "\nlabel_border_w=" << label_border_w << "\nlabel_border_h=" << label_border_h << "\nlines_on_focus=" << lines_on_focus << "\nicon_font=" << icon_font << "\nicon_font_size=" << icon_font_size << "\nscreen_title=" << screen_title << "\n";
+        << "\ndrawer_image=" << drawer_image << "\ndrawer_mode=" << drawer_mode << "\nnavigation=" << navigation << "\nshow_network=" << show_network << "\ndrop_mode=" << drop_mode << "\ndefault_sort=" << default_sort << "\nauto_sort=" << auto_sort << "\nimage_spacing=" << image_spacing << "\nlabel_hpad=" << label_hpad << "\nlabel_vpad=" << label_vpad << "\nlabel_border_w=" << label_border_w << "\nlabel_border_h=" << label_border_h << "\nlines_on_focus=" << lines_on_focus << "\nicon_font=" << icon_font << "\nicon_font_size=" << icon_font_size << "\nscreen_title=" << screen_title << "\n";
 }
 
 // --------------------------------------------------------------------------------------------
@@ -132,6 +133,8 @@ static void advanced_options(const std::string &view, std::shared_ptr<WandererPr
     auto *isp = new Slider(0, 20, c.image_spacing);
     label("Drawers first:");
     auto *first = new Checkmark(c.drawers_first);
+    label("Icon auto-sort enabled:");
+    auto *asort = new Checkmark(c.auto_sort);
     label("Default sort mode:");
     auto *sortm = new Cycle({"By Name", "By Date", "By Size"}, c.default_sort);
     label("Default view mode:");
@@ -203,6 +206,7 @@ static void advanced_options(const std::string &view, std::shared_ptr<WandererPr
         p.vspacing = vsp->value();
         p.drawers_first = first->on();
         p.default_sort = sortm->active();
+        p.auto_sort = asort->on();
         p.show_hidden = viewm->active() == 1;
         p.text_mode = mode->active();
         p.icon_font = ifont->active() - 1;

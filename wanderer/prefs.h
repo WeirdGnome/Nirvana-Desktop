@@ -27,6 +27,7 @@ struct WandererPrefs {
     bool statusbar = true;       //                 the status bar
     bool show_hidden = false;    // all files
     bool drawers_first = true;
+    bool auto_sort = false;      // new drawer windows sort their icons (no free positions)
     int default_sort = 0;        // a drawer's order without a snapshot: 0 name, 1 date, 2 size
     int hspacing = 5, vspacing = 5;
     // the label's padding and frame (ILC_ICONLABEL_*_DEFAULT) and the image-label space

@@ -165,6 +165,7 @@ void Wanderer::apply_prefs(IconWindow *w) {
         if (prefs_.show_hidden) l->display_flags |= Disp_ShowHidden; else l->display_flags &= ~Disp_ShowHidden;
         static const int orders[3] = {Sort_ByName, Sort_ByDate, Sort_BySize};
         l->sort_flags = (l->sort_flags & ~Sort_Orders) | orders[std::clamp(prefs_.default_sort, 0, 2)];
+        if (prefs_.auto_sort) l->sort_flags |= Sort_AutoSort; else l->sort_flags &= ~Sort_AutoSort;
         if (prefs_.drawers_first) l->sort_flags &= ~(Sort_DrawersMixed | Sort_DrawersLast);
         else l->sort_flags |= Sort_DrawersMixed;
         w->show_toolbar(prefs_.toolbar);
