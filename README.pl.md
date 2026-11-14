@@ -26,6 +26,11 @@ Instalator:
 Paczka umieszcza programy w `/usr/bin`, a sesję w `/usr/share/xsessions/wanderer.desktop`,
 więc na ekranie logowania (LightDM, SDDM, GDM, XDM…) pojawia się sesja **Wanderer**.
 
+Paczka powstaje dla systemu, na którym jest budowana (jego bibliotek): buduj ją na
+każdym systemie przez `./install.sh` zamiast instalować `.deb` zrobiony gdzie indziej.
+Gdy Wanderer nie może się uruchomić, sesja mówi dlaczego, zamiast od razu wylogować;
+jej dziennik to `~/.cache/wanderer/session.log`.
+
 Opcje:
 
 * `--package-only` – tylko buduje paczkę `.deb`;

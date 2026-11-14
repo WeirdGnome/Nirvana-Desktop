@@ -36,6 +36,11 @@ The package puts the programs into `/usr/bin` and the session into
 `/usr/share/xsessions/wanderer.desktop`, so **Wanderer** appears among the sessions of
 the display manager (LightDM, SDDM, GDM, XDM …).
 
+The package is made for the system it is built on (its libraries): build it on each
+system with `./install.sh` rather than installing a `.deb` made elsewhere. If Wanderer
+cannot start, the session says why instead of logging out at once; its log is
+`~/.cache/wanderer/session.log`.
+
 Options:
 
 * `--package-only` - only builds the `.deb`;

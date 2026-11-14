@@ -21,6 +21,34 @@ fi
 # the X resources and the keyboard of the user
 [ -r "$HOME/.Xresources" ] && command -v xrdb >/dev/null 2>&1 && xrdb -merge "$HOME/.Xresources"
 
+# what the programs say goes to a log (the display manager's own log is hard to find)
+LOG="${XDG_CACHE_HOME:-$HOME/.cache}/wanderer/session.log"
+mkdir -p "$(dirname "$LOG")" 2>/dev/null && { [ -f "$LOG" ] && mv -f "$LOG" "$LOG.old"; exec >>"$LOG" 2>&1; }
+echo "Wanderer session $(date)"
+
+# Wanderer cannot run (a library missing - a package built on another system): the
+# session does not end at once; it says why and gives a shell to put it right
+cannot_run() {
+    msg="Wanderer could not be started.
+
+$1
+
+The session log: $LOG
+Build the package on this system: ./install.sh in the sources."
+    echo "$msg"
+    if command -v xmessage >/dev/null 2>&1; then
+        xmessage -center -buttons "Shell:2,Log out:0" "$msg"
+        [ $? -eq 2 ] && { for t in x-terminal-emulator xterm; do command -v $t >/dev/null 2>&1 && { $t; break; }; done; }
+    else
+        for t in x-terminal-emulator xterm; do command -v $t >/dev/null 2>&1 && { $t; break; }; done
+    fi
+}
+for p in wanderer-wm wanderer; do
+    if ! command -v $p >/dev/null 2>&1; then cannot_run "$p is not installed."; exit 1; fi
+    missing=$(ldd "$(command -v $p)" 2>&1 | grep -E "not found|version .* not found")
+    if [ -n "$missing" ]; then cannot_run "$p: $missing"; exit 1; fi
+done
+
 wanderer-wm --screens "${WANDERER_SCREENS:-2}" &
 WM=$!
 sleep 0.3
@@ -32,7 +60,10 @@ while :; do
     [ "$status" -eq 0 ] && break
     # crashed: again, unless it keeps crashing at once
     now=$(date +%s)
-    if [ -n "$last" ] && [ $((now - last)) -lt 5 ]; then break; fi
+    if [ -n "$last" ] && [ $((now - last)) -lt 5 ]; then
+        cannot_run "wanderer keeps stopping at once (exit status $status)."
+        break
+    fi
     last=$now
 done
 
