@@ -994,6 +994,60 @@ std::string ramdisk_dir() {
     return dir;
 }
 
+// --------------------------------------------------------------------------------------------
+// Volume paths: "Home:Dokumenty/list.txt", "Ram Disk:", "System:etc" - a volume's name, a
+// colon, the path inside it (as the system names its files); both ways
+// --------------------------------------------------------------------------------------------
+static std::vector<std::pair<std::string, std::string>> volume_names() {
+    std::vector<std::pair<std::string, std::string>> v;   // name, mount point (most specific first)
+    std::ifstream m("/proc/self/mounts");
+    std::string line;
+    while (std::getline(m, line)) {
+        std::istringstream ls(line);
+        std::string dev, mnt;
+        ls >> dev >> mnt;
+        mnt = unescape_mount(mnt);
+        if (dev.rfind("/dev/", 0) != 0) continue;
+        if (mnt.rfind("/media/", 0) != 0 && mnt.rfind("/mnt/", 0) != 0 && mnt.rfind("/run/media/", 0) != 0) continue;
+        v.push_back({fs::path(mnt).filename().string(), mnt});
+    }
+    if (!ramdisk_dir().empty()) v.push_back({"Ram Disk", ramdisk_dir()});
+    v.push_back({"Trash", trash_dir()});
+    if (const char *h = getenv("HOME")) v.push_back({"Home", h});
+    v.push_back({"System", "/"});
+    return v;
+}
+
+std::string to_volume_path(const std::string &path) {
+    std::string best_name, best_mnt;
+    for (auto &[name, mnt] : volume_names()) {
+        bool inside = path == mnt || mnt == "/" || path.rfind(mnt + "/", 0) == 0;
+        if (inside && mnt.size() > best_mnt.size()) { best_name = name; best_mnt = mnt; }
+        if (inside && best_mnt.empty()) { best_name = name; best_mnt = mnt; }
+    }
+    if (best_name.empty()) return path;
+    std::string rest = path.size() > best_mnt.size() ? path.substr(best_mnt == "/" ? 1 : best_mnt.size() + 1) : "";
+    return best_name + ":" + rest;
+}
+
+std::string from_volume_path(const std::string &p) {
+    if (p.empty() || p[0] == '/' || p[0] == '~') {
+        if (!p.empty() && p[0] == '~' && getenv("HOME")) return getenv("HOME") + p.substr(1);
+        return p;
+    }
+    auto colon = p.find(':');
+    if (colon == std::string::npos || p.find('/') < colon) return p;
+    std::string vol = p.substr(0, colon), rest = p.substr(colon + 1);
+    auto eq = [](std::string a, std::string b) { return strcasecmp(a.c_str(), b.c_str()) == 0; };
+    std::string mnt;
+    if (eq(vol, "RAM")) mnt = ramdisk_dir();
+    else if (eq(vol, "SYS")) mnt = "/";
+    else for (auto &[name, m] : volume_names()) if (eq(vol, name)) { mnt = m; break; }
+    if (mnt.empty()) return p;
+    if (rest.empty()) return mnt;
+    return (mnt == "/" ? "" : mnt) + "/" + rest;
+}
+
 std::string trash_dir() {
     const char *x = getenv("XDG_DATA_HOME");
     std::string base = x && *x ? x : std::string(getenv("HOME") ? getenv("HOME") : "/tmp") + "/.local/share";

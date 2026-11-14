@@ -104,12 +104,12 @@ IconWindow::IconWindow(const std::string &location, bool backdrop, IconList *lis
         toolbar_ = HGroup();
         toolbar_->spacing(3);
         toolbar_->inner(2, 2, 2, 2);
-        loc_string_ = new String(location_, 1024);
+        loc_string_ = new String(location_.empty() ? "" : to_volume_path(location_), 1024);
         loc_string_->weight(100);
         auto *up = new ImageButton(20, 18, draw_dirup);
         auto *search = new ImageButton(20, 18, draw_search);
         toolbar_->end();
-        loc_string_->on_acknowledge = [this] { if (on_location) on_location(this, loc_string_->value()); };
+        loc_string_->on_acknowledge = [this] { if (on_location) on_location(this, from_volume_path(loc_string_->value())); };
         up->on_press = [this] { if (on_parent) on_parent(this); };
         search->on_press = [this] { if (on_search) on_search(this); };
 
