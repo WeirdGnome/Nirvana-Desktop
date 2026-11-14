@@ -6,6 +6,7 @@
 */
 #include "fileops.h"
 #include "tools.h"
+#include "iconlist.h"
 #include "zune.h"
 
 #include <FL/Fl.H>
@@ -54,7 +55,7 @@ struct Job {
     // the interface
     Window *win = nullptr;
     Text *what = nullptr, *where = nullptr;
-    Gauge *gauge = nullptr;
+    Gauge *gauge = nullptr, *items = nullptr;   // the bytes, the objects (CreateCopyDisplay)
     double started = 0;
     std::thread thread;
 };
@@ -242,26 +243,32 @@ std::string human(long long b) {
     return s;
 }
 
+// CreateCopyDisplay: the objects' gauge with its scale, the object's name, the bytes'
+// gauge with its scale, Stop
 void make_window(Job *j) {
     auto *root = VGroup();
-    auto *g = new Group(Group::Vertical, Frame_Group);
-    g->columns(2);
-    new Text("\033rItem:");
-    j->what = new Text("", Frame_Text);
+    auto *ng = new Group(Group::Vertical, Frame_Text);
+    j->items = new Gauge();
+    j->items->info(tr("Processing..."));
+    new Scale();
+    ng->end();
+    j->what = new Text("\033c---", Frame_Text);
     j->what->weight(300);
-    new Text("\033rTo:");
-    j->where = new Text(j->kind == FileOpKind::Delete ? "-" : j->kind == FileOpKind::Trash ? "Trash"
-                        : j->kind == FileOpKind::Duplicate ? "(the same drawer)" : j->dest, Frame_Text);
-    g->end();
+    auto *g = new Group(Group::Vertical, Frame_Text);
     j->gauge = new Gauge();
+    j->gauge->info(tr("Processing..."));
+    new Scale();
+    g->end();
     auto *row = HGroup();
     HSpace();
-    auto *abort = new Button("Abort");
+    auto *abort = new Button("Stop");
     HSpace();
     row->end();
     root->end();
     abort->on_press = [j] { j->abort = true; j->cv.notify_all(); };
-    j->win = new Window(verb(j->kind), root);
+    std::string to = j->kind == FileOpKind::Delete || j->kind == FileOpKind::Trash || j->kind == FileOpKind::Duplicate
+                         ? "" : "  \u2192 " + to_volume_path(j->dest);
+    j->win = new Window(tr(verb(j->kind)) + to, root);
     j->win->size(std::max(j->win->w(), 420), j->win->h());
     j->win->callback([](Fl_Widget *, void *d) { auto *jj = (Job *)d; jj->abort = true; jj->cv.notify_all(); }, j);
     int sx, sy, sw, sh;
@@ -314,16 +321,18 @@ void poll(void *d) {
             std::lock_guard<std::mutex> l(j->m);
             cur = j->current;
         }
-        j->what->contents(cur);
+        j->what->contents("\033c" + (cur.empty() ? std::string("---") : fs::path(cur).filename().string()));
+        int it = std::max(1, (int)j->items_total);
+        j->items->set(j->items_done, it);
+        j->items->info(std::to_string((int)j->items_done) + " / " + std::to_string((int)j->items_total));
         long long tot = j->bytes_total, done = j->bytes_done;
-        if (j->kind == FileOpKind::Copy || j->kind == FileOpKind::Move || j->kind == FileOpKind::Duplicate) {
-            if (tot > 0) {
-                j->gauge->set(done, tot);
-                j->gauge->info(human(done) + " of " + human(tot));
-            } else j->gauge->set(j->items_done, std::max(1, (int)j->items_total));
+        bool bytes = (j->kind == FileOpKind::Copy || j->kind == FileOpKind::Move || j->kind == FileOpKind::Duplicate) && tot > 0;
+        if (bytes) {
+            j->gauge->set(done, tot);
+            j->gauge->info(human(done) + " / " + human(tot));
         } else {
-            j->gauge->set(j->items_done, std::max(1, (int)j->items_total));
-            j->gauge->info(std::to_string((int)j->items_done) + " of " + std::to_string((int)j->items_total));
+            j->gauge->set(j->items_done, it);
+            j->gauge->info(tr("Processing..."));
         }
     }
     Fl::repeat_timeout(0.1, poll, d);

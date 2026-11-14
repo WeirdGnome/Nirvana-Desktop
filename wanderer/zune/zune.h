@@ -326,6 +326,16 @@ protected:
     int grab_dx_ = 0;
 };
 
+// Scale (classes/scale.c): the percent marks under a gauge
+class Scale : public Area {
+public:
+    Scale();
+    void ask_min_max(int &minw, int &minh, int &defw, int &defh, int &maxw, int &maxh) override;
+
+protected:
+    void draw_contents() override;
+};
+
 class Gauge : public Area {
 public:
     Gauge();

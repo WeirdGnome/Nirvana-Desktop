@@ -1158,6 +1158,60 @@ int Slider::handle(int e) {
     return Area::handle(e);
 }
 
+// ============================================================================================
+// Scale
+// ============================================================================================
+Scale::Scale() : Area(Frame_None) { background(-1); }
+
+void Scale::ask_min_max(int &minw, int &minh, int &defw, int &defh, int &maxw, int &maxh) {
+    fl_font(prefs().font, prefs().font_size);
+    minw = defw = (int)fl_width("0%100%");   // minlabel
+    maxw = MAXMAX;
+    minh = defh = maxh = prefs().font_size + 4;
+}
+
+void Scale::draw_contents() {
+    int L = mleft(), T = mtop(), W = mwidth(), R = L + W - 1;
+    fl_font(prefs().font, prefs().font_size);
+    fl_color(pens()[MPEN_TEXT]);
+    fl_xyline(L, T + 3, R);   // the main bar
+    // the layout: 0..100, 0..50..100, ... as many divisions as the labels allow
+    int i;
+    char buf[16];
+    for (i = 2; i < W; i *= 2) {
+        int total = 0;
+        bool too_big = false;
+        for (int j = 0; j <= i; j++) {
+            snprintf(buf, sizeof buf, "%d%%", j);
+            total += (int)fl_width(buf);
+            if (total > 3 * W / 8) { too_big = true; break; }
+        }
+        if (too_big) break;
+    }
+    int ty = T + 4 + fl_height() - fl_descent();
+    bool drawpct = true;
+    for (int k = 0; k <= i; k++) {
+        int x = L + W * k / i;
+        if (k == 0) {
+            fl_draw("0%", L, ty);
+            fl_yxline(L, T, T + 3);
+            drawpct = false;
+        } else if (k == i) {
+            fl_draw("100%", R + 1 - (int)fl_width("100%"), ty);
+            fl_yxline(R, T, T + 3);
+            drawpct = false;
+        } else if (drawpct) {
+            snprintf(buf, sizeof buf, "%d%%", k * 100 / i);
+            fl_draw(buf, x - (int)fl_width(buf) / 2, ty);
+            fl_yxline(x, T, T + 3);
+            drawpct = false;
+        } else {
+            fl_yxline(x, T + 1, T + 3);
+            drawpct = true;
+        }
+    }
+}
+
 Gauge::Gauge() : Area(Frame_Gauge) {
     background(MPEN_BACKGROUND);
     inner(1, 1, 1, 1);
