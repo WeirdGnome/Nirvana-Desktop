@@ -30,7 +30,7 @@ void disk_info(const std::string &volume);                  // Tools/DiskInfo
 bool move_to_trash(const std::string &path, std::string &error);
 void empty_trash();
 // Find: a pattern asked for; false - cancelled
-bool ask_find(std::string &pattern);
+bool ask_find(std::string &pattern, std::string &contents);   // contents: "" - names only
 
 // A file requester (as the system's ASL file requester): the list of the drawer, the
 // Drawer and File fields, OK / Volumes / Parent / Cancel. Returns the path chosen.

@@ -169,12 +169,13 @@ private:
 // IconSearchList: the entries found by Find (a name pattern, under a directory)
 class IconSearchList : public IconList {
 public:
-    IconSearchList(const std::string &dir, const std::string &pattern) : dir_(dir), pattern_(pattern) {}
+    IconSearchList(const std::string &dir, const std::string &pattern, const std::string &contents = "")
+        : dir_(dir), pattern_(pattern), contents_(contents) {}
     void update() override;
     int found() const { return (int)entries_.size(); }
 
 private:
-    std::string dir_, pattern_;
+    std::string dir_, pattern_, contents_;
 };
 
 // Removable block devices with a file system (lsblk)

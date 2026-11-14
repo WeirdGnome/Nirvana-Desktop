@@ -21,6 +21,7 @@
 #include <filesystem>
 #include <fstream>
 #include <map>
+#include <string_view>
 #include <sstream>
 #include <sys/stat.h>
 #include <sys/xattr.h>
@@ -967,6 +968,30 @@ void set_left_out(const std::vector<std::string> &paths) {
 // IconSearchList: Find - the names matching a pattern (wildcards * ?, no case) under a
 // directory; the interface stays alive while it searches
 // ============================================================================================
+// Does a regular file (up to 64 MB) contain the text? (no case; read in pieces)
+static bool file_contains(const std::string &path, const std::string &text) {
+    struct stat st;
+    if (stat(path.c_str(), &st) != 0 || !S_ISREG(st.st_mode) || st.st_size > (64LL << 20)) return false;
+    FILE *f = fopen(path.c_str(), "rb");
+    if (!f) return false;
+    std::string want;
+    for (char c : text) want += (char)tolower((unsigned char)c);
+    std::string buf(65536 + want.size(), '\0');
+    size_t keep = 0;
+    bool found = false;
+    for (;;) {
+        size_t n = fread(&buf[keep], 1, 65536, f);
+        if (n == 0) break;
+        size_t len = keep + n;
+        for (size_t i = keep; i < len; i++) buf[i] = (char)tolower((unsigned char)buf[i]);
+        if (std::string_view(buf.data(), len).find(want) != std::string_view::npos) { found = true; break; }
+        keep = std::min(len, want.size() - 1);
+        memmove(&buf[0], &buf[len - keep], keep);
+    }
+    fclose(f);
+    return found;
+}
+
 void IconSearchList::update() {
     clear();
     std::error_code ec;
@@ -980,6 +1005,7 @@ void IconSearchList::update() {
             continue;
         }
         if (fnmatch(pattern_.c_str(), name.c_str(), FNM_CASEFOLD) != 0) continue;
+        if (!contents_.empty() && !file_contains(it->path().string(), contents_)) continue;
         IconEntry e;
         e.path = it->path().string();
         e.label = name;

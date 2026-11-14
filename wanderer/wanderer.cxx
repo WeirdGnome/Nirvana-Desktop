@@ -787,9 +787,11 @@ void Wanderer::menu_action(IconWindow *w, int id) {
         break;
     case MEN_WINDOW_FIND: {
         std::string pattern;
-        if (!ask_find(pattern)) break;
-        auto *list = new IconSearchList(w->location(), pattern);
-        auto *fw = new IconWindow("Find: " + pattern + " in " + w->location(), false, list);
+        static std::string contents;
+        if (!ask_find(pattern, contents)) break;
+        auto *list = new IconSearchList(w->location(), pattern, contents);
+        std::string what = pattern + (contents.empty() ? "" : " containing \"" + contents + "\"");
+        auto *fw = new IconWindow("Find: " + what + " in " + w->location(), false, list);
         setup(fw);
         fw->show_toolbar(false);
         windows_.push_back(fw);

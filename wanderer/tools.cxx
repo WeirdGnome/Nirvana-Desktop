@@ -791,15 +791,19 @@ bool file_request(const std::string &title, std::string &path) {
     return ok;
 }
 
-bool ask_find(std::string &pattern) {
+bool ask_find(std::string &pattern, std::string &contents) {
     bool done = false, ok = false;
     auto *root = VGroup();
-    new Text("\033cFind the files and drawers whose names match\n(wildcards: * and ?)");
-    auto *row = HGroup();
-    new Text("Name:");
+    new Text("\033cFind the files and drawers whose names match\n(wildcards: * and ?) and, if given, that contain a text");
+    auto *g = new Group(Group::Vertical);
+    g->columns(2);
+    new Text("\033rName:");
     auto *s = new String(pattern, 255);
     s->weight(300);
-    row->end();
+    new Text("\033rContents:");
+    auto *c = new String(contents, 255);
+    c->weight(300);
+    g->end();
     auto *buttons = HGroup();
     auto *bok = new Button("Find");
     HSpace();
@@ -807,9 +811,10 @@ bool ask_find(std::string &pattern) {
     buttons->end();
     root->end();
     auto *w = new Window("Find", root);
-    w->size(std::max(w->w(), 360), w->h());
+    w->size(std::max(w->w(), 380), w->h());
     bok->on_press = [&] { ok = done = true; };
     s->on_acknowledge = [&] { ok = done = true; };
+    c->on_acknowledge = [&] { ok = done = true; };
     bc->on_press = [&] { done = true; };
     centre(w);
     w->set_modal();
@@ -817,8 +822,10 @@ bool ask_find(std::string &pattern) {
     Fl::focus(s->input());
     while (!done && w->shown()) Fl::wait();
     pattern = s->value();
+    contents = c->value();
     w->hide();
     Fl::delete_widget(w);
+    if (pattern.empty() && !contents.empty()) pattern = "*";
     if (ok && !pattern.empty() && pattern.find_first_of("*?") == std::string::npos) pattern = "*" + pattern + "*";
     return ok && !pattern.empty();
 }
