@@ -211,7 +211,7 @@ IconWindow::~IconWindow() {
 
 void IconWindow::update() {
     // the drawer is watched from the first reading on (not the root window, not Find)
-    if (notify_fd_ < 0 && !location_.empty() && !dynamic_cast<IconSearchList *>(list_)) {
+    if (notify_fd_ < 0 && dynamic_cast<IconDrawerList *>(list_)) {
         notify_fd_ = inotify_init1(IN_NONBLOCK | IN_CLOEXEC);
         if (notify_fd_ >= 0) {
             inotify_add_watch(notify_fd_, location_.c_str(),
@@ -228,7 +228,7 @@ void IconWindow::update() {
 // The title: a drawer's name; a volume's name with how full it is
 // ("System  45% full, 12.3G free, 20.1G in use", as the system shows on a disk's window)
 void IconWindow::update_title() {
-    if (location_.empty() || dynamic_cast<IconSearchList *>(list_)) return;   // the root window, Find
+    if (!dynamic_cast<IconDrawerList *>(list_)) return;   // the root window, Find, Network Access
     fs::path p(location_);
     std::string name = p.filename().string();
     if (name.empty()) name = location_;
@@ -267,7 +267,7 @@ void IconWindow::update_status() {
     unsigned long long size = 0;
     for (auto &e : list_->entries()) {
         if (!e.visible) { hidden++; continue; }
-        if (e.type == ST_USERDIR) dirs++;
+        if (e.is_drawer()) dirs++;   // drawers, volumes, links to drawers
         else { files++; size += (unsigned long long)e.size; }
     }
     // the parts come from the catalog ("%s in %d files" ...), no plural forms needed

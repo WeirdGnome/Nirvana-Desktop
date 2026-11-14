@@ -60,6 +60,8 @@ struct IconEntry {
     std::string device;               // a volume: its block device (/dev/sdb1)
     bool unmounted = false;           // a volume not mounted yet (ghosted; opening mounts it)
     unsigned long app_window = 0;     // an AppIcon: the program's window
+    bool network = false;             // the Network Access icon of the root window
+    bool network_volume = false;      // a network file system (NFS, SMB, SSHFS ...)
     long app_id = 0;                  // and the icon's number there
     int provided_x = NO_ICON_POSITION, provided_y = NO_ICON_POSITION;   // a snapshot position
     // computed (iconlist.c: ie_IconX/Y, ie_AreaWidth/Height, ie_IconWidth/Height ...)
@@ -220,6 +222,16 @@ class IconVolumeList : public IconList {
 public:
     IconVolumeList();
     void update() override;
+    bool show_network = true;   // the Network Access icon (NetworkBrowser_Show)
 };
+
+// The Network Access window (iconwindow_networkbrowserlist.c): the mounted network file
+// systems as volumes
+class IconNetworkList : public IconList {
+public:
+    void update() override;
+};
+bool is_network_fs(const std::string &type);
+extern const char *const NETWORK_BROWSER;   // the Network Access icon's path
 
 }  // namespace wanderer

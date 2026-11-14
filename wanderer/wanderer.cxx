@@ -28,6 +28,7 @@
 #include <cstring>
 #include <filesystem>
 #include <fstream>
+#include <sstream>
 #include <map>
 #include <sys/stat.h>
 #include <sys/utsname.h>
@@ -91,6 +92,7 @@ public:
     void start(bool backdrop);
     IconWindow *open_drawer(const std::string &path);
     void navigate(IconWindow *w, const std::string &path);   // another drawer in the same window
+    void open_network();   // the Network Access window
     void open_entry(IconWindow *w, IconEntry &e);
     void show_menu(IconWindow *w, int x_root, int y_root);
     std::vector<Fl_Menu_Item> menu_items(IconWindow *w);
@@ -150,6 +152,7 @@ void Wanderer::apply_prefs(IconWindow *w) {
     l->label_maxlen = prefs_.label_maxlen;
     l->hspacing = prefs_.hspacing;
     l->vspacing = prefs_.vspacing;
+    if (auto *vl = dynamic_cast<IconVolumeList *>(l)) vl->show_network = prefs_.show_network;
     if (w->is_root()) l->backfill(prefs_.backdrop_image, prefs_.backdrop_mode);
     else l->backfill(prefs_.drawer_image, prefs_.drawer_mode);
     if (!w->is_root()) {
@@ -283,6 +286,20 @@ IconWindow *Wanderer::open_drawer(const std::string &path) {
     return w;
 }
 
+// Network Access: one window with the network file systems that are mounted
+void Wanderer::open_network() {
+    for (auto *o : windows_)
+        if (dynamic_cast<IconNetworkList *>(o->iconlist())) { o->show(); return; }
+    auto *list = new IconNetworkList();
+    auto *nw = new IconWindow(tr("Network Access.."), false, list);
+    setup(nw);
+    nw->show_toolbar(false);
+    windows_.push_back(nw);
+    if (root_) nw->position(root_->x() + 120, root_->y() + 80);
+    nw->show();
+    nw->update();
+}
+
 void Wanderer::navigate(IconWindow *w, const std::string &path) {
     if (w->location() == path) return;
     apply_prefs(w);   // the defaults, then the drawer's own view
@@ -364,6 +381,7 @@ void Wanderer::eject(const std::string &device) {
 
 void Wanderer::open_entry(IconWindow *w, IconEntry &e) {
     if (e.unmounted) { mount_and_open(e.device); return; }
+    if (e.network) { open_network(); return; }
     if (e.app_window) {
         // an AppIcon opened: its program gets a message without paths
         app_message({e.app_window, e.app_id, e.label}, "_WANDERER_APPICON_MESSAGE", "_WANDERER_APPICON_ARGS", {});
@@ -670,13 +688,21 @@ void Wanderer::watch_volumes(void *d) {
     {
         std::ifstream m("/proc/self/mounts");
         std::string line;
-        while (std::getline(m, line)) if (line.rfind("/dev/", 0) == 0) state += line + "\n";
+        while (std::getline(m, line)) {
+            std::istringstream ls(line);
+            std::string dev, mnt, type;
+            ls >> dev >> mnt >> type;
+            if (line.rfind("/dev/", 0) == 0 || is_network_fs(type)) state += line + "\n";
+        }
     }
     for (auto &v : removable_volumes()) state += v.device + "|" + v.mountpoint + "\n";
     if (state != self->volumes_state_) {
         bool first = self->volumes_state_.empty();
         self->volumes_state_ = state;
         if (!first && self->root_) { self->root_->update(); self->apply_snapshot(self->root_); }
+        if (!first)
+            for (auto *o : self->windows_)
+                if (dynamic_cast<IconNetworkList *>(o->iconlist())) o->update();
     }
     // the programs' menu items: the menus again when they change
     std::string apps = app_state();

@@ -128,6 +128,33 @@ void ramdisk(int x, int y) {
     fl_draw("RAM", x + 15, y + 24);
 }
 
+void network(int x, int y) {
+    // two computers joined by a cable
+    auto computer = [](int cx, int cy) {
+        box3d(cx, cy, 20, 15, 0xAAAAAA, 0xE6E6E6, 0x5E5E5E);
+        rect(cx + 3, cy + 3, 14, 9, 0x3A5A8A);
+        box3d(cx + 4, cy + 16, 12, 3, 0xAAAAAA, 0xE6E6E6, 0x5E5E5E);
+    };
+    fl_color(C(0x202020));
+    fl_line_style(FL_SOLID, 2);
+    fl_line(x + 12, y + 30, x + 12, y + 38);
+    fl_line(x + 12, y + 38, x + 36, y + 38);
+    fl_line(x + 36, y + 38, x + 36, y + 24);
+    fl_line_style(0);
+    computer(x + 2, y + 12);
+    computer(x + 26, y + 2);
+}
+
+void network_disk(int x, int y) {
+    // a drive with a blue light, on a cable
+    harddisk(x, y - 4, 0x4080FF);
+    fl_color(C(0x202020));
+    fl_line_style(FL_SOLID, 2);
+    fl_line(x + 24, y + 32, x + 24, y + 40);
+    fl_line(x + 10, y + 40, x + 38, y + 40);
+    fl_line_style(0);
+}
+
 void trash(int x, int y) {
     poly(0x9AA5A9, {x + 10, y + 12, x + 38, y + 12, x + 35, y + 40, x + 13, y + 40});    // can
     box3d(x + 7, y + 7, 34, 6, 0xB8C2C6, 0xE4EAEC, 0x5A6468);                           // lid
@@ -263,6 +290,8 @@ void draw_icon(IconKind k, int x, int y, bool selected) {
     case IconKind::Optical: optical(x, y); break;
     case IconKind::RamDisk: ramdisk(x, y); break;
     case IconKind::Trash: trash(x, y); break;
+    case IconKind::Network: network(x, y); break;
+    case IconKind::NetworkDisk: network_disk(x, y); break;
     default: project(k, x, y); break;
     }
     g_sel = false;

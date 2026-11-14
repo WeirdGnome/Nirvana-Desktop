@@ -11,6 +11,7 @@
 */
 #include "iconlist.h"
 #include "icons.h"
+#include "catalog.h"
 
 #include <FL/Fl.H>
 #include <FL/fl_draw.H>
@@ -454,6 +455,8 @@ void IconList::draw_icon_image(IconEntry &e, int x, int y, bool sel) {
     if (e.type == ST_LINKFILE) k = IconKind::Link;
     if (e.trash) k = IconKind::Trash;
     if (e.unmounted) k = IconKind::Removable;
+    if (e.network) k = IconKind::Network;
+    if (e.network_volume) k = IconKind::NetworkDisk;
     draw_icon(k, x, y, sel);
     if (e.unmounted) {
         // ghosted: every other pixel in the background pen (as a disabled gadget)
@@ -1015,6 +1018,15 @@ void IconVolumeList::update() {
         e.left_out = true;
         add(std::move(e));
     }
+    // Network Access (the network browser icon, after the special drawers)
+    if (show_network) {
+        IconEntry e;
+        e.path = NETWORK_BROWSER;
+        e.label = zune::tr("Network Access..");
+        e.type = ST_USERDIR;
+        e.network = true;
+        add(std::move(e));
+    }
     // the programs' AppIcons (AddAppIcon): _WANDERER_APPICON on their windows
     for (auto &a : app_items("_WANDERER_APPICON")) {
         IconEntry e;
@@ -1024,6 +1036,37 @@ void IconVolumeList::update() {
         e.executable = true;
         e.app_window = a.window;
         e.app_id = a.id;
+        add(std::move(e));
+    }
+    rethink();
+}
+
+const char *const NETWORK_BROWSER = "?wanderer.networkbrowse?";
+
+bool is_network_fs(const std::string &type) {
+    static const char *net[] = {"nfs", "nfs4", "cifs", "smb3", "smbfs", "ncpfs", "afs", "9p", "ceph", "glusterfs",
+                                "davfs", "fuse.sshfs", "sshfs", "fuse.rclone", "fuse.davfs2", "fuse.curlftpfs",
+                                "fuse.s3fs", "fuse.smbnetfs", "fuse.gvfsd-fuse"};
+    for (auto *n : net) if (type == n) return true;
+    return false;
+}
+
+void IconNetworkList::update() {
+    clear();
+    std::ifstream m("/proc/self/mounts");
+    std::string line;
+    while (std::getline(m, line)) {
+        std::istringstream ls(line);
+        std::string dev, mnt, type;
+        ls >> dev >> mnt >> type;
+        if (!is_network_fs(type)) continue;
+        mnt = unescape_mount(mnt);
+        IconEntry e;
+        e.path = mnt;
+        e.label = fs::path(mnt).filename().string() + ":";
+        e.type = ST_ROOT;
+        e.device = dev;          // server:/share, //server/share, user@host:
+        e.network_volume = true;
         add(std::move(e));
     }
     rethink();
@@ -1155,9 +1198,10 @@ static std::vector<std::pair<std::string, std::string>> volume_names() {
     std::string line;
     while (std::getline(m, line)) {
         std::istringstream ls(line);
-        std::string dev, mnt;
-        ls >> dev >> mnt;
+        std::string dev, mnt, type;
+        ls >> dev >> mnt >> type;
         mnt = unescape_mount(mnt);
+        if (is_network_fs(type)) { v.push_back({fs::path(mnt).filename().string(), mnt}); continue; }   // Network Access
         if (dev.rfind("/dev/", 0) != 0) continue;
         if (mnt.rfind("/media/", 0) != 0 && mnt.rfind("/mnt/", 0) != 0 && mnt.rfind("/run/media/", 0) != 0) continue;
         v.push_back({fs::path(mnt).filename().string(), mnt});

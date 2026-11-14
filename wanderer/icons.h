@@ -14,7 +14,8 @@ namespace wanderer {
 
 enum class IconKind {
     Drawer, OpenDrawer, Harddisk, Removable, Optical, RamDisk, Trash,
-    Project, Text, Picture, Sound, Movie, Archive, Document, Tool, Script, Link
+    Project, Text, Picture, Sound, Movie, Archive, Document, Tool, Script, Link,
+    Network, NetworkDisk
 };
 
 // the kind of a file or directory (by type and name)
