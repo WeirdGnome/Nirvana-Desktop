@@ -9,6 +9,7 @@
 #include "tools.h"
 #include "zune.h"
 #include "iconlist.h"
+#include "icons.h"
 
 #include <FL/Fl.H>
 #include <FL/Fl_Text_Buffer.H>
@@ -404,13 +405,59 @@ static bool set_file_comment(const std::string &path, const std::string &c, std:
 // Information: the name, type, size, date, owner; the protection (read, write, execute -
 // for the owner, the group and the others), the comment, the default tool of a project;
 // Save puts the changes into effect
+// The tool types of a file (the extended attribute user.tooltypes, one a line): the
+// settings a tool reads from its icon
+std::vector<std::string> tool_types(const std::string &path) {
+    std::vector<std::string> v;
+    char buf[8192];
+    ssize_t n = lgetxattr(path.c_str(), "user.tooltypes", buf, sizeof buf);
+    if (n <= 0) return v;
+    std::string all(buf, n), line;
+    std::istringstream in(all);
+    while (std::getline(in, line)) if (!line.empty()) v.push_back(line);
+    return v;
+}
+
+static bool set_tool_types(const std::string &path, const std::vector<std::string> &v, std::string &err) {
+    std::string all;
+    for (auto &t : v) if (!t.empty()) all += t + "\n";
+    int r = all.empty() ? lremovexattr(path.c_str(), "user.tooltypes")
+                        : lsetxattr(path.c_str(), "user.tooltypes", all.data(), all.size(), 0);
+    if (r != 0 && !(all.empty() && errno == ENODATA)) { err = strerror(errno); return false; }
+    return true;
+}
+
+// The version string of a file: "$VER: name 1.2 (1.1.2026)" in its first megabyte
+static std::string file_version(const std::string &path) {
+    FILE *f = fopen(path.c_str(), "rb");
+    if (!f) return "";
+    std::string data(1 << 20, '\0');
+    size_t n = fread(&data[0], 1, data.size(), f);
+    fclose(f);
+    data.resize(n);
+    size_t at = data.find("$VER: ");
+    if (at == std::string::npos) return "";
+    std::string v;
+    for (size_t i = at + 6; i < data.size() && v.size() < 120; i++) {
+        unsigned char c = data[i];
+        if (c == 0 || c == '\n' || c == '\r') break;
+        v += (char)c;
+    }
+    return v;
+}
+
+std::function<void(const std::string &)> open_drawer_hook;
+
+// Tools/Info: the icon and the name above a register - Information (type, date, version,
+// size, path, default tool, comment), Protection, Tool Types; Save puts the changes into effect
 void information(const std::string &path) {
     struct stat st;
     if (lstat(path.c_str(), &st) != 0) return;
     bool done = false, save = false;
     bool is_dir = S_ISDIR(st.st_mode), is_link = S_ISLNK(st.st_mode);
     bool project = S_ISREG(st.st_mode) && !(st.st_mode & S_IXUSR);
-    std::string type = is_dir ? "Drawer" : is_link ? "Link" : (st.st_mode & S_IXUSR) ? "Tool" : "Project";
+    bool tool_file = S_ISREG(st.st_mode) && (st.st_mode & S_IXUSR);
+    std::string type = is_dir ? "Drawer" : is_link ? "Link" : tool_file ? "Tool" : "Project";
     char date[64];
     struct tm tm;
     localtime_r(&st.st_mtime, &tm);
@@ -418,51 +465,145 @@ void information(const std::string &path) {
     struct passwd *pw = getpwuid(st.st_uid);
     struct group *gr = getgrgid(st.st_gid);
     Checkmark *bits[9];
-    String *comment, *tool = nullptr;
+    String *comment, *tool = nullptr, *tt_string;
+    List *tt_list;
+    std::vector<std::string> types = tool_types(path);
+    int tt_active = -1;
+    std::string parent = fs::path(path).parent_path().string();
+    IconKind kind = icon_kind(path, is_dir, false, tool_file);
     auto *root = VGroup();
     {
-        auto *top = new Group(Group::Vertical, Frame_Group);
-        top->columns(2);
-        new Text("\033rName:");
-        new Text(fs::path(path).filename().string(), Frame_Text);
-        new Text("\033rIn:");
-        new Text(to_volume_path(fs::path(path).parent_path().string()), Frame_Text);
-        new Text("\033rType:");
-        new Text(type, Frame_Text);
-        new Text("\033rSize:");
-        new Text(std::to_string((long long)st.st_size) + " bytes", Frame_Text);
-        new Text("\033rLast changed:");
-        new Text(date, Frame_Text);
-        new Text("\033rOwner:");
-        new Text(std::string(pw ? pw->pw_name : "?") + " / " + (gr ? gr->gr_name : "?"), Frame_Text);
-        new Text("\033rComment:");
-        comment = new String(file_comment(path), 512);
-        if (project) {
-            new Text("\033rDefault Tool:");
-            tool = new String(default_tool(path), 1024);
-        }
-        top->end();
-        auto *prot = new Group(Group::Vertical, Frame_Group);
-        prot->frame_title("Protection");
-        prot->columns(4);
-        new Text("");
-        new Text("\033cRead");
-        new Text("\033cWrite");
-        new Text("\033cExecute");
-        static const mode_t m[9] = {S_IRUSR, S_IWUSR, S_IXUSR, S_IRGRP, S_IWGRP, S_IXGRP, S_IROTH, S_IWOTH, S_IXOTH};
-        const char *who[3] = {"\033rOwner", "\033rGroup", "\033rOthers"};
-        for (int r = 0; r < 3; r++) {
-            new Text(who[r]);
-            for (int c = 0; c < 3; c++) {
-                auto *row = HGroup();
-                HSpace();
-                bits[r * 3 + c] = new Checkmark(st.st_mode & m[r * 3 + c]);
-                HSpace();
-                row->end();
+        auto *head = HGroup();
+        auto *img = new ImageButton(ICON_W, ICON_H, [kind](int x, int y, int, int, bool sel) { draw_icon(kind, x, y, sel); });
+        img->frame(Frame_None);
+        img->input_mode(Input_Toggle);
+        auto *name = new Text("\033l" + fs::path(path).filename().string(), Frame_Text);
+        name->weight(300);
+        head->end();
+
+        auto *reg = new Register({"Information", "Protection", "Tool Types"});
+        // -- Information
+        auto *info = VGroup();
+        {
+            auto *cols = new Group(Group::Vertical);
+            cols->columns(2);
+            new Text("\033rType:");
+            new Text("\033r" + tr(type), Frame_Text);
+            new Text("\033rDate:");
+            new Text(std::string("\033r") + date, Frame_Text);
+            new Text("\033rVersion:");
+            std::string ver = S_ISREG(st.st_mode) ? file_version(path) : "";
+            new Text("\033r" + (ver.empty() ? tr("N/A") : ver), Frame_Text);
+            new Text("\033rSize:");
+            new Text("\033r" + (is_dir ? tr("N/A") : std::to_string((long long)st.st_size) + " " + tr("bytes")), Frame_Text);
+            new Text("\033rPath:");
+            auto *prow = HGroup();
+            auto *ps = new String(to_volume_path(parent), 1024);
+            ps->weight(150);
+            ps->input()->readonly(1);
+            auto *open = new Button("Open");
+            prow->end();
+            open->on_press = [parent] { if (open_drawer_hook) open_drawer_hook(parent); };
+            cols->end();
+            HVSpace();
+            if (project) {
+                auto *trow = HGroup();
+                new Text("Default Tool:");
+                tool = new String(default_tool(path), 1024);
+                tool->weight(300);
+                auto *pick = new Button("?");
+                pick->fixed_width(16);
+                trow->end();
+                String *t = tool;
+                pick->on_press = [t] { std::string p = t->value(); if (file_request(tr("Default Tool"), p)) t->value(p); };
             }
+            auto *crow = HGroup();
+            new Text("Comment:");
+            comment = new String(file_comment(path), 512);
+            comment->weight(300);
+            crow->end();
         }
-        prot->end();
+        info->end();
+        // -- Protection: read, write, execute for the owner, the group, the others
+        auto *protp = HGroup();
+        {
+            HVSpace();
+            auto *pv = VGroup();
+            HVSpace();
+            auto *prot = new Group(Group::Vertical);
+            prot->columns(4);
+            new Text("");
+            new Text("\033cRead");
+            new Text("\033cWrite");
+            new Text("\033cExecute");
+            static const mode_t m[9] = {S_IRUSR, S_IWUSR, S_IXUSR, S_IRGRP, S_IWGRP, S_IXGRP, S_IROTH, S_IWOTH, S_IXOTH};
+            const char *who[3] = {"\033rOwner", "\033rGroup", "\033rOthers"};
+            for (int r = 0; r < 3; r++) {
+                new Text(who[r]);
+                for (int c = 0; c < 3; c++) bits[r * 3 + c] = new Checkmark(st.st_mode & m[r * 3 + c]);
+            }
+            prot->end();
+            new Text("\033c" + std::string(pw ? pw->pw_name : "?") + " / " + (gr ? gr->gr_name : "?"));
+            HVSpace();
+            pv->end();
+            HVSpace();
+        }
+        protp->end();
         if (is_link) for (auto *b : bits) b->disabled(true);   // links have no protection of their own
+        // -- Tool Types: the list, the string to edit the active one, New / Delete
+        auto *ttp = VGroup();
+        {
+            auto *lg = VGroup();
+            lg->spacing(0);
+            tt_list = new List();
+            tt_string = new String("", 1024);
+            tt_string->disabled(true);
+            lg->end();
+            auto *bg = HGroup();
+            bg->same_width(true);
+            auto *newk = new Button("New");
+            auto *delk = new Button("Delete");
+            bg->end();
+            auto refill = [tt_list, &types] {
+                tt_list->clear();
+                for (auto &t : types) tt_list->add({t});
+                tt_list->done();
+            };
+            refill();
+            tt_list->on_active = [&, tt_string](int i) {
+                tt_active = i;
+                tt_string->disabled(false);
+                tt_string->value(i >= 0 && i < (int)types.size() ? types[i] : "");
+                Fl::focus(tt_string->input());
+            };
+            tt_string->on_acknowledge = [&, tt_list, tt_string, refill] {
+                if (tt_active < 0 || tt_active >= (int)types.size()) return;
+                types[tt_active] = tt_string->value();
+                int a = tt_active;
+                refill();
+                tt_list->active(a);
+            };
+            newk->on_press = [&, tt_list, tt_string, refill] {
+                types.push_back("");
+                refill();
+                tt_active = (int)types.size() - 1;
+                tt_list->active(tt_active);
+                tt_string->disabled(false);
+                tt_string->value("");
+                Fl::focus(tt_string->input());
+            };
+            delk->on_press = [&, tt_list, tt_string, refill] {
+                if (tt_active < 0 || tt_active >= (int)types.size()) return;
+                types.erase(types.begin() + tt_active);
+                tt_active = -1;
+                refill();
+                tt_string->value("");
+                tt_string->disabled(true);
+            };
+        }
+        ttp->end();
+        reg->end();
+
         auto *buttons = HGroup();
         buttons->same_width(true);
         auto *bs = new Button("Save");
@@ -480,6 +621,8 @@ void information(const std::string &path) {
     w->show();
     while (!done && w->shown()) Fl::wait();
     if (save) {
+        // an edit not yet acknowledged counts too
+        if (tt_active >= 0 && tt_active < (int)types.size()) types[tt_active] = tt_string->value();
         std::string errors, err;
         if (!is_link) {
             static const mode_t m[9] = {S_IRUSR, S_IWUSR, S_IXUSR, S_IRGRP, S_IWGRP, S_IXGRP, S_IROTH, S_IWOTH, S_IXOTH};
@@ -490,6 +633,8 @@ void information(const std::string &path) {
         }
         if (comment->value() != file_comment(path) && !set_file_comment(path, comment->value(), err))
             errors += "Comment: " + err + "\n";
+        if (types != tool_types(path) && !set_tool_types(path, types, err))
+            errors += "Tool Types: " + err + "\n";
         if (tool) set_default_tool(path, tool->value());
         if (!errors.empty()) request("Information", tr("Not everything could be changed:") + "\n" + errors, "OK");
     }

@@ -138,6 +138,29 @@ protected:
     void layout_columns();
 };
 
+// Register (classes/register.c): a page group with a row of tabs on top; only the active
+// page shows. The pages are the children, one for each title.
+class Register : public Group {
+public:
+    explicit Register(const std::vector<std::string> &titles);
+    int active() const { return active_; }
+    void active(int i);
+    std::function<void(int)> on_change;
+    void ask_min_max(int &minw, int &minh, int &defw, int &defh, int &maxw, int &maxh) override;
+    void resize(int X, int Y, int W, int H) override;
+    void draw() override;
+    int handle(int e) override;
+    void end();
+
+private:
+    std::vector<std::string> titles_;
+    int active_ = 0;
+    int tab_h() const;
+    void hard_coord();
+    void tab_x(int i, int &x1, int &x2) const;
+    void draw_tab(int i);
+};
+
 inline Group *VGroup() { return new Group(Group::Vertical); }
 inline Group *HGroup() { return new Group(Group::Horizontal); }
 

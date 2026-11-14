@@ -9,6 +9,7 @@
 */
 #pragma once
 #include <string>
+#include <functional>
 #include <vector>
 
 namespace wanderer {
@@ -21,6 +22,8 @@ void execute_command(const std::string &dir);              // Tools/ExecuteComma
 bool new_drawer(const std::string &dir, std::string &made); // Tools/WBNewDrawer
 bool rename_entry(const std::string &path, std::string &renamed);   // Tools/WBRename
 void information(const std::string &path);                  // Tools/Info
+std::vector<std::string> tool_types(const std::string &path);    // the tool types of a file
+extern std::function<void(const std::string &)> open_drawer_hook;  // Info's "Open" (the path)
 std::string default_tool(const std::string &path);          // a project's default tool ("" - none)
 void set_default_tool(const std::string &path, const std::string &tool);
 std::string file_comment(const std::string &path);

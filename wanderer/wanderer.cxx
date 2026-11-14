@@ -163,6 +163,7 @@ void Wanderer::apply_prefs(IconWindow *w) {
 // --------------------------------------------------------------------------------------------
 void Wanderer::start(bool backdrop) {
     backdrop_ = backdrop;
+    open_drawer_hook = [this](const std::string &p) { open_drawer(p); };
     root_ = new IconWindow("", backdrop);
     setup(root_);
     root_->update();

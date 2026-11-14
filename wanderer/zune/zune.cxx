@@ -407,6 +407,177 @@ void Group::draw() {
 }
 
 // ============================================================================================
+// Register
+// ============================================================================================
+static const int INTERTAB = 4, TEXTSPACING = 4, REGISTERTAB_EXTRA_HEIGHT = 7;
+
+Register::Register(const std::vector<std::string> &titles) : Group(Group::Vertical) {
+    for (auto &t : titles) titles_.push_back(tr_text(t));
+    background(MPEN_BACKGROUND);   // the register's own background inside its frame
+}
+
+int Register::tab_h() const { return prefs().font_size + REGISTERTAB_EXTRA_HEIGHT; }
+
+// SetHardCoord: the page sits inside the frame, below the tabs
+void Register::hard_coord() {
+    const FrameSpec &g = std_frame(Frame_Group);
+    inner(g.inner_left + 1, g.inner_right + 1, tab_h() + g.inner_top, g.inner_bottom + 1);
+}
+
+void Register::end() {
+    Group::end();
+    hard_coord();
+    for (int i = 0; i < children(); i++) if (i != active_) child(i)->hide();
+}
+
+void Register::active(int i) {
+    if (i < 0 || i >= children() || i == active_) return;
+    child(active_)->hide();
+    active_ = i;
+    child(i)->show();
+    resize(x(), y(), w(), h());
+    redraw();
+    if (on_change) on_change(i);
+}
+
+void Register::ask_min_max(int &minw, int &minh, int &defw, int &defh, int &maxw, int &maxh) {
+    // a page group: as big as the biggest page (all pages, shown or not)
+    minw = minh = defw = defh = 0;
+    maxw = maxh = MAXMAX;
+    for (int i = 0; i < children(); i++) {
+        auto *a = dynamic_cast<Area *>(child(i));
+        if (!a) continue;
+        int mw, mh, dw, dh, xw, xh;
+        a->min_max(mw, mh, dw, dh, xw, xh);
+        minw = std::max(minw, mw); minh = std::max(minh, mh);
+        defw = std::max(defw, dw); defh = std::max(defh, dh);
+        maxw = std::min(maxw, xw); maxh = std::min(maxh, xh);
+    }
+    maxw = std::max(maxw, minw);
+    maxh = MAXMAX;
+    // the tabs: room for every title (register_truncate_titles off)
+    int n = std::max(1, (int)titles_.size());
+    int total_hspacing = (n + 1) * INTERTAB - 2;
+    fl_font(prefs().font, prefs().font_size);
+    int textmax = 0;
+    for (auto &t : titles_) textmax = std::max(textmax, (int)fl_width(t.c_str()));
+    int tabs_def = total_hspacing + (textmax + TEXTSPACING + 1) * n - add_left() - add_right();
+    minw = std::max(minw, total_hspacing * 3 - add_left() - add_right());
+    defw = std::max(defw, tabs_def);
+    maxw = std::max(maxw, defw);
+    minw = std::max(minw, tabs_def);   // the titles are not cut
+}
+
+void Register::resize(int X, int Y, int W, int H) {
+    Fl_Widget::resize(X, Y, W, H);
+    for (int i = 0; i < children(); i++) child(i)->resize(mleft(), mtop(), mwidth(), mheight());
+}
+
+// LayoutTabItems (one row)
+void Register::tab_x(int i, int &x1, int &x2) const {
+    int n = std::max(1, (int)titles_.size());
+    int total_hspacing = (n + 1) * INTERTAB - 2;
+    int item_w = (w() - total_hspacing) / n, extra = (w() - total_hspacing) % n;
+    int xx = INTERTAB - 1;
+    for (int k = 0; k <= i; k++) {
+        x1 = xx;
+        x2 = x1 + item_w - 1;
+        if (extra > 0) { x2++; extra--; }
+        xx += (x2 - x1 + 1) + INTERTAB;
+    }
+}
+
+// RenderRegisterTabItem
+void Register::draw_tab(int i) {
+    int x1, x2;
+    tab_x(i, x1, x2);
+    const Pens &P = pens();
+    int top, bottom, left, right;
+    if (i == active_) {
+        top = y(); bottom = y() + tab_h() - 1 - 2;
+        left = x() + x1 - 1; right = x() + x2 + 1;
+        fl_color(P[MPEN_BACKGROUND]);
+        int bw = right - left + 1;
+        fl_rectf(left, top + 4, bw, tab_h() - 4);
+        fl_rectf(left + 2, top + 2, bw - 4, 2);
+        fl_rectf(left + 4, top + 1, bw - 8, 1);
+    } else {
+        top = y() + 2; bottom = y() + tab_h() - 1 - 1;
+        left = x() + x1; right = x() + x2;
+        fl_color(P[MPEN_BACKGROUND]);
+        fl_rectf(left, top + 4, right - left + 1, bottom - top - 3);
+        fl_rectf(left + 2, top + 2, right - left - 3, 2);
+        fl_rectf(left + 4, top + 1, right - left - 7, 1);
+    }
+    auto px = [](int X, int Y) { fl_point(X, Y); };
+    fl_color(P[MPEN_SHINE]);
+    fl_xyline(left + 4, top, right - 4);                // top
+    fl_yxline(left, top + 4, bottom);                   // left
+    px(left + 1, top + 3); px(left + 1, top + 2); px(left + 2, top + 1); px(left + 3, top + 1);
+    fl_color(P[MPEN_HALFSHINE]);
+    px(left + 3, top); px(left + 4, top + 1); px(left + 2, top + 2); px(left + 3, top + 2);
+    px(left + 2, top + 3); px(left, top + 3); px(left + 1, top + 4);
+    if (i == active_) {
+        fl_color(P[MPEN_SHINE]);
+        px(left - 1, bottom + 1);
+        fl_color(P[MPEN_SHADOW]);
+        px(right + 1, bottom + 1);
+        fl_color(P[MPEN_BACKGROUND]);   // the frame's top line opens under the active tab
+        fl_xyline(left - 1, bottom + 2, right + 1);
+    }
+    fl_color(P[MPEN_SHADOW]);
+    px(right - 1, top + 2);
+    fl_yxline(right, top + 4, bottom);
+    fl_color(P[MPEN_HALFSHADOW]);
+    px(right - 2, top + 1); px(right - 1, top + 3); px(right, top + 3);
+    fl_color(P[MPEN_BACKGROUND]);
+    px(right - 3, top + 1);
+    // the title
+    int fit = right - left + 1 - TEXTSPACING;
+    fl_font(prefs().font, prefs().font_size);
+    fl_color(P[MPEN_TEXT]);
+    fl_push_clip(left + TEXTSPACING / 2, top, fit, bottom - top + 1);
+    fl_draw(titles_[i].c_str(), left + TEXTSPACING / 2, top + TEXTSPACING - 1, fit, prefs().font_size + 2, FL_ALIGN_CENTER);
+    fl_pop_clip();
+}
+
+void Register::draw() {
+    if (damage() & ~FL_DAMAGE_CHILD) {
+        // the parent's background behind the tabs, the register's inside the frame
+        Fl_Widget *p = parent();
+        auto *pa = dynamic_cast<Area *>(p);
+        (void)pa;
+        fl_color(pens()[MPEN_BACKGROUND]);
+        fl_rectf(x(), y(), w(), h());
+        const Pens &P = pens();
+        int th = tab_h();
+        int fw = w(), fh = h() - th;
+        fl_color(P[MPEN_SHINE]);
+        fl_yxline(x(), y() + th - 1, y() + th + fh - 1);
+        fl_xyline(x() + 1, y() + th - 1, x() + fw - 2);
+        fl_color(P[MPEN_SHADOW]);
+        fl_yxline(x() + fw - 1, y() + th - 1, y() + th + fh - 1);
+        fl_xyline(x() + 1, y() + th + fh - 1, x() + fw - 2);
+        for (int i = 0; i < (int)titles_.size(); i++) draw_tab(i);
+        // the page draws itself entirely
+        for (int i = 0; i < children(); i++) if (child(i)->visible()) child(i)->damage(FL_DAMAGE_ALL);
+    }
+    draw_children();
+}
+
+int Register::handle(int e) {
+    if (e == FL_PUSH && Fl::event_button() == FL_LEFT_MOUSE && Fl::event_y() < y() + tab_h()) {
+        for (int i = 0; i < (int)titles_.size(); i++) {
+            int x1, x2;
+            tab_x(i, x1, x2);
+            if (Fl::event_x() >= x() + x1 && Fl::event_x() <= x() + x2) { active(i); return 1; }
+        }
+        return 1;
+    }
+    return Group::handle(e);
+}
+
+// ============================================================================================
 // Rectangle
 // ============================================================================================
 void Rectangle::ask_min_max(int &minw, int &minh, int &defw, int &defh, int &maxw, int &maxh) {
