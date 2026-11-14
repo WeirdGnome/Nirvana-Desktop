@@ -51,7 +51,7 @@ struct Job {
     std::string question;              // non-empty: waiting
     std::string qbuttons;              // its answers (yes | all | no | abort)
     int answer = -1;                   // 1 replace, 2 replace all, 3 skip, 0 abort
-    bool replace_all = false, unprotect_all = false;
+    bool replace_all = false, unprotect_all = false, skip_all = false;
 
     // the interface
     Window *win = nullptr;
@@ -116,9 +116,18 @@ int ask(Job &j, const std::string &q) {
     return ask(j, q + "\n" + tr("Replace it?"), "Replace|Replace All|Skip|Abort", j.replace_all);
 }
 
+// no access to a file or a drawer (MSG_NOFILEACCESS / MSG_NODRAWERACCESS): Skip, Skip All
+// or Abort; false: the whole operation stops
+bool no_access(Job &j, const fs::path &p, bool drawer, int err) {
+    std::string q = trs(drawer ? "No access to the drawer '%s' in" : "No access to the file '%s' in", p.filename().string()) +
+                    "\n" + to_volume_path(p.parent_path().string()) + "\n(" + strerror(err) + ")";
+    if (ask(j, q, "Skip|Skip All|Abort", j.skip_all) == 0) { j.abort = true; return false; }
+    return true;
+}
+
 bool copy_file(Job &j, const fs::path &from, const fs::path &to) {
     int in = open(from.c_str(), O_RDONLY);
-    if (in < 0) { error(j, from.string() + ": " + strerror(errno)); return false; }
+    if (in < 0) { no_access(j, from, false, errno); return false; }
     struct stat st;
     fstat(in, &st);
     int out = open(to.c_str(), O_WRONLY | O_CREAT | O_TRUNC, st.st_mode & 07777);
@@ -162,6 +171,7 @@ bool copy_any(Job &j, const fs::path &from, const fs::path &to) {
         return true;
     }
     if (S_ISDIR(st.st_mode)) {
+        if (access(from.c_str(), R_OK | X_OK) != 0) { no_access(j, from, true, errno); return false; }
         fs::create_directory(to, ec);
         if (ec) { error(j, to.string() + ": " + ec.message()); return false; }
         bool ok = true;

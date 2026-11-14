@@ -326,3 +326,6 @@ Y offset:	Przesunięcie Y:
 The file '%s' in	Plik '%s' w
 is protected from deletion. Delete it anyway?	jest chroniony przed usunięciem. Usunąć mimo to?
 All	Wszystkie
+No access to the drawer '%s' in	Brak dostępu do szuflady '%s' w
+No access to the file '%s' in	Brak dostępu do pliku '%s' w
+Skip All	Pomiń wszystkie
