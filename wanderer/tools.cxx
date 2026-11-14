@@ -374,6 +374,7 @@ bool new_drawer(const std::string &dir, std::string &made) {
     std::string name = "Unnamed1";
     for (int i = 2; fs::exists(fs::path(dir) / name); i++) name = "Unnamed" + std::to_string(i);
     while (ask_name("New Drawer", "Enter the name of the new drawer:", name, "OK")) {
+        if (!name_ok("New Drawer", name)) continue;
         std::error_code ec;
         fs::path p = fs::path(dir) / name;
         if (fs::exists(p, ec)) { request("New Drawer", trs("'%s' already exists.", name), "OK"); continue; }
@@ -384,11 +385,20 @@ bool new_drawer(const std::string &dir, std::string &made) {
     return false;
 }
 
+// a name the drawers can hold: not empty, no "/" and no ":" (the volume paths use it), as
+// WBRename's illegal_chars
+static bool name_ok(const std::string &title, const std::string &name) {
+    if (!name.empty() && name.find_first_of("/:") == std::string::npos && name != "." && name != "..") return true;
+    request(title, trs("'%s' contains illegal characters (/ or :).", name), "OK");
+    return false;
+}
+
 bool rename_entry(const std::string &path, std::string &renamed) {
     fs::path p(path);
     std::string name = p.filename().string();
     while (ask_name("Rename", trs("Enter a new name for '%s':", name), name, "Rename")) {
         if (name == p.filename().string()) return false;
+        if (!name_ok("Rename", name)) continue;
         std::error_code ec;
         fs::path to = p.parent_path() / name;
         if (fs::exists(to, ec)) { request("Rename", trs("'%s' already exists.", name), "OK"); continue; }

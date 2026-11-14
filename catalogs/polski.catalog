@@ -341,3 +341,4 @@ Status:	Stan:
 Read only	Tylko do odczytu
 Read/Write	Odczyt i zapis
 Disk Info	Informacje o dysku
+'%s' contains illegal characters (/ or :).	'%s' zawiera niedozwolone znaki (/ lub :).
