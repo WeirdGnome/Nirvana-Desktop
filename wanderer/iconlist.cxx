@@ -845,6 +845,25 @@ int IconList::handle(int ev) {
         }
         if (k == 'a' && Fl::event_state(FL_META | FL_ALT)) { select_all(); return 1; }
         if (k == FL_Left || k == FL_Right || k == FL_Up || k == FL_Down) { move_focus(k, Fl::event_state(FL_SHIFT)); return 1; }
+        if (k == FL_Page_Up || k == FL_Page_Down) {
+            // a view's height up or down (RAWKEY_PAGEUP / PAGEDOWN)
+            if (content_h_ > mheight()) {
+                int ny = view_y_ + (k == FL_Page_Up ? -mheight() : mheight());
+                scroll_to(view_x_, std::clamp(ny, 0, content_h_ - mheight()));
+            }
+            return 1;
+        }
+        if (k == FL_Home || k == FL_End) {
+            // the focus to the first / last visible entry (RAWKEY_HOME / END)
+            IconEntry *t = nullptr;
+            for (auto &e : entries_) {
+                e.focus = false;
+                if (e.visible && (k == FL_End || !t)) t = &e;
+            }
+            if (t) t->focus = true;
+            redraw();
+            return 1;
+        }
         if (k == ' ') {
             for (auto &e : entries_) if (e.focus) { e.selected = !e.selected; break; }
             redraw();

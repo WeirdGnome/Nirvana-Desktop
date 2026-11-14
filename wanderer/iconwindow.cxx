@@ -280,7 +280,10 @@ void IconWindow::update_status() {
 }
 
 void IconWindow::show() {
+    bool first = !shown();
     Window::show();
+    // the keys go to the icons, not to the location field (the field takes them when clicked)
+    if (first) list_->take_focus();
     if (on_shown) on_shown(this);
 }
 
