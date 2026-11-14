@@ -499,6 +499,8 @@ void IconList::draw_list_mode() {
         wdate = (int)fl_width("00-00-00 00:00") + 12;
     int wname = std::max(80, (W - wsize - wprot - wdate) * 55 / 100);
     int cname = X, csize = cname + wname, cprot = csize + wsize, cdate = cprot + wprot, ccom = cdate + wdate;
+    int cols[6] = {cname, csize, cprot, cdate, ccom, X + W};
+    std::copy(cols, cols + 6, col_x_);
     for (auto &e : entries_) {
         if (!e.visible) continue;
         int y = Y + e.y - view_y_;
@@ -525,6 +527,14 @@ void IconList::draw_list_mode() {
         draw_frame(FST_BEVEL, false, cx, Y, cw, fh);
         fl_color(p[MPEN_TEXT]);
         fl_draw(t, cx + 4, Y, cw - 8, fh, (Fl_Align)(FL_ALIGN_LEFT | FL_ALIGN_CLIP));
+        // the order: a small arrow on the column sorted by (down: reversed)
+        bool by = (!strcmp(t, "Name") && !(sort_flags & (Sort_ByDate | Sort_BySize | Sort_ByType))) ||
+                  (!strcmp(t, "Size") && (sort_flags & Sort_BySize)) || (!strcmp(t, "Date") && (sort_flags & Sort_ByDate));
+        if (by && cw > 30) {
+            int ax = cx + cw - 12, ay = Y + fh / 2;
+            if (sort_flags & Sort_Reverse) fl_polygon(ax, ay - 2, ax + 7, ay - 2, ax + 3, ay + 3);
+            else fl_polygon(ax, ay + 2, ax + 7, ay + 2, ax + 3, ay - 3);
+        }
     }
 }
 
@@ -646,6 +656,20 @@ int IconList::handle(int ev) {
     case FL_FOCUS: case FL_UNFOCUS: return 1;
     case FL_PUSH: {
         take_focus();
+        // the list's header: a click sorts by that column (again: the other way round)
+        if ((display_flags & Disp_ModeMask) == Disp_ModeList && Fl::event_button() == FL_LEFT_MOUSE &&
+            Fl::event_y() >= mtop() && Fl::event_y() < mtop() + label_font_size() + 6) {
+            int col = -1;
+            for (int i = 0; i < 5; i++) if (Fl::event_x() >= col_x_[i] && Fl::event_x() < col_x_[i + 1]) col = i;
+            int order = col == 1 ? Sort_BySize : col == 3 ? Sort_ByDate : Sort_ByName;
+            if ((sort_flags & Sort_Orders) == order || (order == Sort_ByName && !(sort_flags & (Sort_ByDate | Sort_BySize | Sort_ByType))))
+                sort_flags ^= Sort_Reverse;
+            else sort_flags = (sort_flags & ~(Sort_Orders | Sort_Reverse)) | order;
+            sort();
+            rethink();
+            if (on_selection_changed) on_selection_changed();   // (the menus show the order)
+            return 1;
+        }
         if (Fl::event_button() == FL_RIGHT_MOUSE) {
             // the menus are the screen's (the right button over a window shows them)
             if (on_context_menu) on_context_menu(Fl::event_x_root(), Fl::event_y_root());

@@ -140,6 +140,7 @@ protected:
     void area_rect(IconEntry &e);
     void position_icons();
     void draw_list_mode();
+    int col_x_[6] = {0, 0, 0, 0, 0, 0};   // the list's columns (from its last drawing)
 
     std::vector<IconEntry> entries_;
     int view_x_ = 0, view_y_ = 0, content_w_ = 0, content_h_ = 0;
