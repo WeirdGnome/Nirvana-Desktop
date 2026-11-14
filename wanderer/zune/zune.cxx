@@ -1004,7 +1004,7 @@ void Window::fit() {
 }
 
 void Window::resize(int X, int Y, int W, int H) {
-    Fl_Widget::resize(X, Y, W, H);
+    Fl_Double_Window::resize(X, Y, W, H);   // the X window too (and the asked-for position)
     if (root_) {
         auto &p = prefs();
         root_->resize(p.window_left, p.window_top, W - p.window_left - p.window_right, H - p.window_top - p.window_bottom);
