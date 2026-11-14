@@ -64,6 +64,7 @@ const char *verb(FileOpKind k) {
     case FileOpKind::Copy: return "Copying";
     case FileOpKind::Move: return "Moving";
     case FileOpKind::Delete: return "Deleting";
+    case FileOpKind::Duplicate: return "Copying";
     default: return "Moving to the trash";
     }
 }
@@ -190,6 +191,15 @@ void work(Job &j) {
         fs::path from(src);
         std::error_code ec;
         if (j.kind == FileOpKind::Delete) { remove_any(j, from); continue; }
+        if (j.kind == FileOpKind::Duplicate) {
+            // beside it: "Copy of NAME", "Copy 2 of NAME" ...
+            fs::path dir = from.parent_path();
+            std::string name = from.filename().string();
+            fs::path to = dir / ("Copy of " + name);
+            for (int n = 2; fs::exists(fs::symlink_status(to, ec)); n++) to = dir / ("Copy " + std::to_string(n) + " of " + name);
+            copy_any(j, from, to);
+            continue;
+        }
         if (j.kind == FileOpKind::Trash) {
             set_current(j, from.filename().string());
             std::string err;
@@ -240,7 +250,8 @@ void make_window(Job *j) {
     j->what = new Text("", Frame_Text);
     j->what->weight(300);
     new Text("\033rTo:");
-    j->where = new Text(j->kind == FileOpKind::Delete ? "-" : j->kind == FileOpKind::Trash ? "Trash" : j->dest, Frame_Text);
+    j->where = new Text(j->kind == FileOpKind::Delete ? "-" : j->kind == FileOpKind::Trash ? "Trash"
+                        : j->kind == FileOpKind::Duplicate ? "(the same drawer)" : j->dest, Frame_Text);
     g->end();
     j->gauge = new Gauge();
     auto *row = HGroup();
@@ -305,7 +316,7 @@ void poll(void *d) {
         }
         j->what->contents(cur);
         long long tot = j->bytes_total, done = j->bytes_done;
-        if (j->kind == FileOpKind::Copy || j->kind == FileOpKind::Move) {
+        if (j->kind == FileOpKind::Copy || j->kind == FileOpKind::Move || j->kind == FileOpKind::Duplicate) {
             if (tot > 0) {
                 j->gauge->set(done, tot);
                 j->gauge->info(human(done) + " of " + human(tot));

@@ -127,7 +127,7 @@ enum MenuId {
     MEN_WINDOW_SORT_SIZE, MEN_WINDOW_SORT_TYPE, MEN_WINDOW_SORT_REVERSE, MEN_WINDOW_SORT_TOPDRAWERS,
     MEN_WINDOW_FIND, MEN_ICON_OPEN, MEN_ICON_RENAME, MEN_ICON_INFORMATION, MEN_ICON_SNAPSHOT,
     MEN_ICON_UNSNAPSHOT, MEN_ICON_DELETE, MEN_ICON_DISKINFO, MEN_WANDERER_PREFS,
-    MEN_ICON_LEAVEOUT, MEN_ICON_PUTAWAY, MEN_ICON_EMPTYTRASH, MEN_WANDERER_GUISETTINGS, MEN_ICON_EJECT
+    MEN_ICON_LEAVEOUT, MEN_ICON_PUTAWAY, MEN_ICON_EMPTYTRASH, MEN_WANDERER_GUISETTINGS, MEN_ICON_EJECT, MEN_ICON_COPY
 };
 
 // The preferences on a window: the labels, the layout, the bars, the filter, the order
@@ -427,6 +427,7 @@ std::vector<Fl_Menu_Item> Wanderer::menu_items(IconWindow *w) {
             {nullptr},
         {"Icon", 0, nullptr, nullptr, FL_SUBMENU},
             {"Open", FL_META + 'o', nullptr, (void *)MEN_ICON_OPEN, sel ? 0 : dis},
+            {"Copy", FL_META + 'c', nullptr, (void *)MEN_ICON_COPY, sel && drawer ? 0 : dis},
             {"Rename...", FL_META + 'r', nullptr, (void *)MEN_ICON_RENAME, sel && drawer ? 0 : dis},
             {"Information...", FL_META + 'i', nullptr, (void *)MEN_ICON_INFORMATION, sel ? 0 : dis},
             {"Snapshot", FL_META + 's', nullptr, (void *)MEN_ICON_SNAPSHOT, sel ? 0 : dis},
@@ -665,6 +666,12 @@ void Wanderer::menu_action(IconWindow *w, int id) {
                 if (root_) root_->update();
             });
         }
+        break;
+    }
+    case MEN_ICON_COPY: {
+        std::vector<std::string> paths;
+        for (auto *e : l->selection()) paths.push_back(e->path);
+        file_operation(FileOpKind::Duplicate, paths, "", [this, w] { w->update(); apply_snapshot(w); });
         break;
     }
     case MEN_ICON_EJECT:

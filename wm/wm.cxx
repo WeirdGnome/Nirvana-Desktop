@@ -1008,6 +1008,21 @@ void button_press(XButtonEvent &e) {
         if (e.button == Button3) cancel_drag();   // the right button cancels a drag
         return;
     }
+    // Super + the left button anywhere: the screen under the pointer is dragged (as the
+    // left system key with the mouse button drags a screen on the original system)
+    if (e.window == root && e.button == Button1 && (e.state & Mod4Mask)) {
+        WScreen *s = nullptr;
+        for (auto it = screens.rbegin(); it != screens.rend(); ++it)
+            if (e.y_root >= (*it)->y) { s = *it; break; }   // the front-most screen there
+        if (!s) return;
+        if (s != front_screen()) screen_to_front(s);
+        drag.kind = D_SCREEN;
+        drag.s = s;
+        drag.py = e.y_root;
+        drag.oy = s->y;
+        begin_grab();
+        return;
+    }
     // a click inside a program's window: activate it, let the click through
     if (by_window.count(e.window)) {
         Client *c = by_window[e.window];
@@ -1285,6 +1300,10 @@ int main(int argc, char **argv) {
     restack_screens();
 
     XGrabKey(dpy, XKeysymToKeycode(dpy, XK_m), Mod4Mask, root, True, GrabModeAsync, GrabModeAsync);
+    // Super + the left button: dragging screens (also with Caps Lock or Num Lock on)
+    for (unsigned extra : {0u, (unsigned)LockMask, (unsigned)Mod2Mask, (unsigned)(LockMask | Mod2Mask)})
+        XGrabButton(dpy, Button1, Mod4Mask | extra, root, False, ButtonPressMask | ButtonReleaseMask | PointerMotionMask,
+                    GrabModeAsync, GrabModeAsync, None, None);
     XGrabKey(dpy, XKeysymToKeycode(dpy, XK_n), Mod4Mask, root, True, GrabModeAsync, GrabModeAsync);
 
     // the windows already there

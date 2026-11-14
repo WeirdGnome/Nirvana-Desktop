@@ -14,7 +14,7 @@
 
 namespace wanderer {
 
-enum class FileOpKind { Copy, Move, Delete, Trash };
+enum class FileOpKind { Copy, Move, Delete, Trash, Duplicate };   // Duplicate: "Copy of NAME" beside it
 
 // starts the operation; done() is called in the interface when it has finished (or was
 // aborted) - to update the windows
