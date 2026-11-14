@@ -53,6 +53,8 @@ struct IconEntry {
     time_t mtime = 0;
     bool selected = false, focus = false, visible = true;
     bool executable = false;          // a tool (the x bit)
+    unsigned mode = 0;                // the protection (st_mode)
+    std::string comment;              // the file's comment (user.comment)
     bool left_out = false;            // on the root window by Leave Out
     bool trash = false;               // the trash can
     std::string device;               // a volume: its block device (/dev/sdb1)
@@ -113,6 +115,8 @@ public:
     // icons dropped somewhere: onto an entry of this list (target), or elsewhere (nullptr)
     std::function<void(std::vector<IconEntry *> &, IconEntry *target)> on_drop;
     std::function<void()> on_view_changed;               // scrolled / contents resized
+    // files dropped from another program (XDND): their paths, the drawer under the pointer
+    std::function<void(const std::vector<std::string> &, IconEntry *target)> on_external_drop;
 
     void ask_min_max(int &minw, int &minh, int &defw, int &defh, int &maxw, int &maxh) override;
     void resize(int X, int Y, int W, int H) override;

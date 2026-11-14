@@ -23,6 +23,7 @@
 #include <map>
 #include <sstream>
 #include <sys/stat.h>
+#include <sys/xattr.h>
 #include <fnmatch.h>
 
 namespace fs = std::filesystem;
@@ -479,34 +480,50 @@ void IconList::draw_entry(IconEntry &e) {
     draw_entry_label(e, ex, ly);
 }
 
+// the protection as ls shows it: d / l / -, then rwx for the owner, the group, the others
+static std::string protection(unsigned m) {
+    std::string r = S_ISDIR(m) ? "d" : S_ISLNK(m) ? "l" : "-";
+    const char *c = "rwxrwxrwx";
+    for (int i = 0; i < 9; i++) r += (m & (0400 >> i)) ? c[i] : '-';
+    return r;
+}
+
 void IconList::draw_list_mode() {
-    // the list view: a header (Name, Size, Date) and one line per entry
+    // the list view: a header and one line per entry - Name, Size, Protection, Date, Comment
     const Pens &p = pens();
     int fh = label_font_size() + 6;
     int X = mleft(), Y = mtop(), W = mwidth();
-    int cname = X + 4, csize = X + W * 55 / 100, cdate = X + W * 72 / 100;
     fl_font(prefs().font, label_font_size());
+    int wsize = (int)fl_width("0000000000") + 8, wprot = (int)fl_width("drwxrwxrwx") + 12,
+        wdate = (int)fl_width("00-00-00 00:00") + 12;
+    int wname = std::max(80, (W - wsize - wprot - wdate) * 55 / 100);
+    int cname = X, csize = cname + wname, cprot = csize + wsize, cdate = cprot + wprot, ccom = cdate + wdate;
     for (auto &e : entries_) {
         if (!e.visible) continue;
         int y = Y + e.y - view_y_;
         if (y + fh < Y || y > Y + mheight()) continue;
         if (e.selected) { fl_color(p[MPEN_FILL]); fl_rectf(X, y, W, fh); }
         fl_color(e.selected ? p[MPEN_SHINE] : p[MPEN_TEXT]);
-        fl_draw(e.label.c_str(), cname, y, csize - cname - 4, fh, (Fl_Align)(FL_ALIGN_LEFT | FL_ALIGN_CLIP));
+        fl_draw(e.label.c_str(), cname + 4, y, wname - 8, fh, (Fl_Align)(FL_ALIGN_LEFT | FL_ALIGN_CLIP));
         std::string s = e.is_drawer() ? "Drawer" : std::to_string(e.size);
-        fl_draw(s.c_str(), csize, y, cdate - csize - 8, fh, (Fl_Align)(FL_ALIGN_RIGHT | FL_ALIGN_CLIP));
+        fl_draw(s.c_str(), csize, y, wsize - 6, fh, (Fl_Align)(FL_ALIGN_RIGHT | FL_ALIGN_CLIP));
+        if (e.mode) fl_draw(protection(e.mode).c_str(), cprot + 6, y, wprot - 8, fh, (Fl_Align)(FL_ALIGN_LEFT | FL_ALIGN_CLIP));
         char b[32];
         struct tm tm;
         localtime_r(&e.mtime, &tm);
         strftime(b, sizeof b, "%d-%m-%y %H:%M", &tm);
-        fl_draw(b, cdate, y, X + W - cdate, fh, (Fl_Align)(FL_ALIGN_LEFT | FL_ALIGN_CLIP));
+        fl_draw(b, cdate + 6, y, wdate - 8, fh, (Fl_Align)(FL_ALIGN_LEFT | FL_ALIGN_CLIP));
+        if (!e.comment.empty())
+            fl_draw(e.comment.c_str(), ccom + 6, y, X + W - ccom - 8, fh, (Fl_Align)(FL_ALIGN_LEFT | FL_ALIGN_CLIP));
     }
     // the header on top
     fl_draw_box(FL_FLAT_BOX, X, Y, W, fh, p[MPEN_BACKGROUND]);
-    for (auto [cx, cw, t] : {std::tuple{X, csize - X, "Name"}, {csize, cdate - csize, "Size"}, {cdate, X + W - cdate, "Date"}}) {
+    for (auto [cx, cw, t] : {std::tuple{cname, wname, "Name"}, {csize, wsize, "Size"}, {cprot, wprot, "Protection"},
+                             {cdate, wdate, "Date"}, {ccom, std::max(0, X + W - ccom), "Comment"}}) {
+        if (cw <= 0) continue;
         draw_frame(FST_BEVEL, false, cx, Y, cw, fh);
         fl_color(p[MPEN_TEXT]);
-        fl_draw(t, cx + 4, Y, cw - 8, fh, FL_ALIGN_LEFT);
+        fl_draw(t, cx + 4, Y, cw - 8, fh, (Fl_Align)(FL_ALIGN_LEFT | FL_ALIGN_CLIP));
     }
 }
 
@@ -596,6 +613,35 @@ IconEntry *IconList::entry_at(int ex, int ey) {
 
 int IconList::handle(int ev) {
     switch (ev) {
+    // files dragged here from another program
+    case FL_DND_ENTER: case FL_DND_DRAG: case FL_DND_LEAVE: return on_external_drop ? 1 : 0;
+    case FL_DND_RELEASE: return on_external_drop ? 1 : 0;
+    case FL_PASTE: {
+        if (!on_external_drop || !Fl::event_text()) return 0;
+        std::vector<std::string> paths;
+        std::istringstream in(Fl::event_text());
+        std::string line;
+        while (std::getline(in, line)) {
+            while (!line.empty() && (line.back() == '\r' || line.back() == '\n')) line.pop_back();
+            if (line.empty() || line[0] == '#') continue;
+            if (line.rfind("file://", 0) == 0) {
+                line = line.substr(7);
+                if (line.rfind("localhost", 0) == 0) line = line.substr(9);
+                std::string dec;   // %20 and friends
+                for (size_t i = 0; i < line.size(); i++) {
+                    if (line[i] == '%' && i + 2 < line.size()) { dec += (char)std::stoi(line.substr(i + 1, 2), nullptr, 16); i += 2; }
+                    else dec += line[i];
+                }
+                line = dec;
+            }
+            if (!line.empty() && line[0] == '/') paths.push_back(line);
+        }
+        if (paths.empty()) return 0;
+        IconEntry *target = entry_at(Fl::event_x(), Fl::event_y());
+        if (target && !target->is_drawer()) target = nullptr;
+        on_external_drop(paths, target);
+        return 1;
+    }
     case FL_FOCUS: case FL_UNFOCUS: return 1;
     case FL_PUSH: {
         take_focus();
@@ -753,6 +799,10 @@ void IconDrawerList::update() {
         if (lstat(e.path.c_str(), &st) == 0) {
             e.mtime = st.st_mtime;
             e.size = st.st_size;
+            e.mode = st.st_mode;
+            char cbuf[512];
+            ssize_t cn = lgetxattr(e.path.c_str(), "user.comment", cbuf, sizeof cbuf);
+            if (cn > 0) e.comment.assign(cbuf, cn);
             if (S_ISLNK(st.st_mode)) {
                 struct stat t;
                 bool dir = stat(e.path.c_str(), &t) == 0 && S_ISDIR(t.st_mode);

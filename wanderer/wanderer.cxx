@@ -112,6 +112,7 @@ private:
     void update_all(const std::string &dir);
     IconWindow *window_at(int x_root, int y_root, IconWindow *except);
     void drop(IconWindow *from, std::vector<IconEntry *> &entries, IconEntry *target);
+    void drop_paths(const std::vector<std::string> &sources, const std::string &dest);
     void menu_action(IconWindow *w, int id);
 };
 
@@ -198,6 +199,11 @@ void Wanderer::setup(IconWindow *w) {
     w->on_shortcut = [this](IconWindow *win) { return shortcut(win); };
     w->on_shown = [this](IconWindow *win) { publish_menu(win); publish_title(win); };
     w->iconlist()->on_drop = [this, w](std::vector<IconEntry *> &entries, IconEntry *target) { drop(w, entries, target); };
+    w->iconlist()->on_external_drop = [this, w](const std::vector<std::string> &paths, IconEntry *target) {
+        std::string dest = target ? target->path : w->location();
+        if (dest.empty()) return;   // the root window: no drawer of its own
+        drop_paths(paths, dest);
+    };
     w->callback([](Fl_Widget *win, void *d) { ((Wanderer *)d)->close((IconWindow *)win); }, this);
 }
 
@@ -344,11 +350,15 @@ void Wanderer::drop(IconWindow *from, std::vector<IconEntry *> &entries, IconEnt
     std::vector<std::string> sources;
     for (auto *e : entries) if (!e->trash && e->type != ST_ROOT) sources.push_back(e->path);
     from->iconlist()->rethink();
+    drop_paths(sources, dest);
+}
+
+// Files into a drawer: to the trash; within one volume moved, onto another copied
+void Wanderer::drop_paths(const std::vector<std::string> &sources, const std::string &dest) {
     auto refresh = [this, dest] { update_all(dest); for (auto *w : windows_) w->update(); if (root_) root_->update(); };
     if (dest == trash_dir()) { file_operation(FileOpKind::Trash, sources, dest, refresh); return; }
     struct stat sd;
     if (stat(dest.c_str(), &sd) != 0) return;
-    // Wanderer's rule: within one volume the icons move, onto another volume they are copied
     std::vector<std::string> move, copy;
     for (auto &src : sources) {
         struct stat ss;
