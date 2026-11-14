@@ -1392,7 +1392,43 @@ void Window::resize(int X, int Y, int W, int H) {
     }
 }
 
+// the first text field inside (MUIA_Window_ActiveObject of a window with a string)
+static Fl_Widget *first_input(Fl_Group *g) {
+    for (int i = 0; i < g->children(); i++) {
+        Fl_Widget *c = g->child(i);
+        if (!c->visible() || !c->active()) continue;
+        if (auto *in = dynamic_cast<Fl_Input *>(c)) { if (!in->readonly()) return c; continue; }
+        if (auto *cg = c->as_group())
+            if (Fl_Widget *f = first_input(cg)) return f;
+    }
+    return nullptr;
+}
+
+// the objects the keyboard can go to, in order (the cycle chain)
+static void chain(Fl_Group *g, std::vector<Fl_Widget *> &out) {
+    for (int i = 0; i < g->children(); i++) {
+        Fl_Widget *c = g->child(i);
+        if (!c->visible() || !c->active()) continue;
+        if (auto *a = dynamic_cast<Area *>(c); a && a->accepts_focus() && a->children() == 0) { out.push_back(c); continue; }
+        if (dynamic_cast<Fl_Input *>(c)) { out.push_back(c); continue; }
+        if (auto *cg = c->as_group()) chain(cg, out);
+    }
+}
+
 int Window::handle(int e) {
+    if (e == FL_KEYBOARD && Fl::event_key() == FL_Tab && Fl::focus() == this) {
+        // no active object yet: Tab takes the first, Shift+Tab the last
+        std::vector<Fl_Widget *> c;
+        chain(this, c);
+        if (!c.empty()) { (Fl::event_state(FL_SHIFT) ? c.back() : c.front())->take_focus(); return 1; }
+    }
+    if (e == FL_FOCUS && (!Fl::focus() || !Fl::focus()->inside(this))) {
+        // a window coming active has no active object, unless it has a text field: the
+        // keyboard goes to that one (a requester's buttons are not pressed by a stray key)
+        if (Fl_Widget *f = first_input(this)) { f->take_focus(); return 1; }
+        Fl::focus(this);
+        return 1;
+    }
     int r = Fl_Double_Window::handle(e);
     if (getenv("ZUNE_DEBUG") && (e == FL_PUSH || e == FL_RELEASE || e == FL_ENTER || e == FL_LEAVE))
         fprintf(stderr, "[%s] ev %d at %d,%d -> %d pushed=%p below=%p grab=%p modal=%p\n", label(), e, Fl::event_x(), Fl::event_y(), r,
