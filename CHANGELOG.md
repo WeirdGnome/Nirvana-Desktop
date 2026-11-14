@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.6.5 – 2026-11-14
+
+- **Volume paths**: a drawer's location field shows the volume's name and the path inside
+  it (`Home:Dokumenty`, `Ram Disk:`, `System:etc`).
+  - Typed in, such a path opens its drawer.
+  - Volume names: System / SYS, Ram Disk / RAM, Home, Trash and the names of mounted
+    drives, in any case.
+  - A Linux path or `~` still works.
+  - The file requester's Drawer field uses them too, and Information shows where an icon
+    is.
+
 ## 0.6.4 – 2026-11-14
 
 - **Ram Disk**: a volume in memory, always on the root window.

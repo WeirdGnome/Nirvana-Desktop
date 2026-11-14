@@ -1,5 +1,16 @@
 # Lista zmian
 
+## 0.6.5 – 2026-11-14
+
+- **Ścieżki woluminów**: pole lokalizacji szuflady pokazuje nazwę woluminu i ścieżkę w
+  nim (`Home:Dokumenty`, `Ram Disk:`, `System:etc`).
+  - Wpisana tak ścieżka otwiera szufladę.
+  - Nazwy woluminów: System / SYS, Ram Disk / RAM, Home, Trash i nazwy zamontowanych
+    napędów, bez rozróżniania wielkości liter.
+  - Ścieżka linuksowa i `~` nadal działają.
+  - Z tych ścieżek korzysta też pole Drawer w oknie wyboru pliku, a Information pokazuje,
+    gdzie leży ikona.
+
 ## 0.6.4 – 2026-11-14
 
 - **Ram Disk**: wolumin w pamięci, zawsze widoczny na głównym oknie.
