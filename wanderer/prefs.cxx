@@ -62,6 +62,10 @@ WandererPrefs WandererPrefs::load() {
         else if (k == "label_vpad") p.label_vpad = std::clamp(v, 0, 20);
         else if (k == "label_border_w") p.label_border_w = std::clamp(v, 0, 10);
         else if (k == "label_border_h") p.label_border_h = std::clamp(v, 0, 10);
+        else if (k == "backdrop_ox") p.backdrop_ox = std::clamp(v, 0, 1024);
+        else if (k == "backdrop_oy") p.backdrop_oy = std::clamp(v, 0, 1024);
+        else if (k == "drawer_ox") p.drawer_ox = std::clamp(v, 0, 1024);
+        else if (k == "drawer_oy") p.drawer_oy = std::clamp(v, 0, 1024);
         else if (k == "auto_sort") p.auto_sort = v;
         else if (k == "default_sort") p.default_sort = std::clamp(v, 0, 2);
         else if (k == "drop_mode") p.drop_mode = std::clamp(v, 0, 1);
@@ -80,7 +84,7 @@ void WandererPrefs::save() const {
         << "\nlist_mode=" << list_mode << "\ntoolbar=" << toolbar << "\nstatusbar=" << statusbar
         << "\nshow_hidden=" << show_hidden << "\ndrawers_first=" << drawers_first << "\nhspacing=" << hspacing
         << "\nvspacing=" << vspacing << "\nbackdrop_image=" << backdrop_image << "\nbackdrop_mode=" << backdrop_mode
-        << "\ndrawer_image=" << drawer_image << "\ndrawer_mode=" << drawer_mode << "\nnavigation=" << navigation << "\nshow_network=" << show_network << "\ndrop_mode=" << drop_mode << "\ndefault_sort=" << default_sort << "\nauto_sort=" << auto_sort << "\nimage_spacing=" << image_spacing << "\nlabel_hpad=" << label_hpad << "\nlabel_vpad=" << label_vpad << "\nlabel_border_w=" << label_border_w << "\nlabel_border_h=" << label_border_h << "\nlines_on_focus=" << lines_on_focus << "\nicon_font=" << icon_font << "\nicon_font_size=" << icon_font_size << "\nscreen_title=" << screen_title << "\n";
+        << "\ndrawer_image=" << drawer_image << "\ndrawer_mode=" << drawer_mode << "\nnavigation=" << navigation << "\nshow_network=" << show_network << "\ndrop_mode=" << drop_mode << "\ndefault_sort=" << default_sort << "\nauto_sort=" << auto_sort << "\nbackdrop_ox=" << backdrop_ox << "\nbackdrop_oy=" << backdrop_oy << "\ndrawer_ox=" << drawer_ox << "\ndrawer_oy=" << drawer_oy << "\nimage_spacing=" << image_spacing << "\nlabel_hpad=" << label_hpad << "\nlabel_vpad=" << label_vpad << "\nlabel_border_w=" << label_border_w << "\nlabel_border_h=" << label_border_h << "\nlines_on_focus=" << lines_on_focus << "\nicon_font=" << icon_font << "\nicon_font_size=" << icon_font_size << "\nscreen_title=" << screen_title << "\n";
 }
 
 // --------------------------------------------------------------------------------------------
@@ -185,6 +189,11 @@ static void advanced_options(const std::string &view, std::shared_ptr<WandererPr
     auto *draw = new Cycle({"Tiled", "Scaled", "Centred"}, bmode == 3 ? 0 : bmode);
     label("Tile mode:");
     auto *tile = new Cycle({"Floating", "Fixed"}, bmode == 3 ? 1 : 0);
+    int &box = backdrop ? c.backdrop_ox : c.drawer_ox, &boy = backdrop ? c.backdrop_oy : c.drawer_oy;
+    label("X offset:");
+    auto *tox = new Slider(0, 256, box);
+    label("Y offset:");
+    auto *toy = new Slider(0, 256, boy);
     bg->end();
     VSpace();
     bp->end();
@@ -199,7 +208,7 @@ static void advanced_options(const std::string &view, std::shared_ptr<WandererPr
     auto *w = new Window(tr("Advanced Options") + " - " + view, root);
     g_advanced = w;
     auto close = [w] { w->hide(); Fl::delete_widget(w); g_advanced = nullptr; };
-    use->on_press = [=, &bmode] {
+    use->on_press = [=, &bmode, &box, &boy] {
         WandererPrefs &p = *work;
         p.list_mode = layout->active();
         p.hspacing = hsp->value();
@@ -220,6 +229,8 @@ static void advanced_options(const std::string &view, std::shared_ptr<WandererPr
         p.label_border_w = lbw->value();
         p.label_border_h = lbh->value();
         bmode = draw->active() == 0 && tile->active() == 1 ? 3 : draw->active();
+        box = tox->value();
+        boy = toy->value();
         close();
     };
     cancel->on_press = [=] { close(); };

@@ -158,6 +158,8 @@ void Wanderer::apply_prefs(IconWindow *w) {
     l->label_border_h = prefs_.label_border_h;
     l->vspacing = prefs_.vspacing;
     if (auto *vl = dynamic_cast<IconVolumeList *>(l)) vl->show_network = prefs_.show_network;
+    l->tile_x_offset = w->is_root() ? prefs_.backdrop_ox : prefs_.drawer_ox;
+    l->tile_y_offset = w->is_root() ? prefs_.backdrop_oy : prefs_.drawer_oy;
     if (w->is_root()) l->backfill(prefs_.backdrop_image, prefs_.backdrop_mode);
     else l->backfill(prefs_.drawer_image, prefs_.drawer_mode);
     if (!w->is_root()) {

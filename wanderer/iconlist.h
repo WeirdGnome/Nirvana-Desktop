@@ -106,6 +106,7 @@ public:
     // the background picture (iconwindowbackfill.c): a PNG/JPEG/GIF/BMP file; 0 tiled,
     // 1 scaled to the view, 2 centred; "" - the background pen
     void backfill(const std::string &path, int mode);
+    int tile_x_offset = 0, tile_y_offset = 0;   // where the tiles start
 
     void sort();                      // MUIM_IconList_Sort
     void rethink();                   // MUIM_IconList_RethinkDimensions + PositionIcons

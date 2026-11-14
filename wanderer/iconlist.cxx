@@ -121,8 +121,10 @@ void IconList::draw_background(int X, int Y, int W, int H) {
     } else {
         int tw = backfill_->w(), th = backfill_->h();
         // TileMode_Float: the tiles move with the view; TileMode_Fixed (mode 3): they stay
-        int sx = X - (view_x_ % tw), sy = Y - (view_y_ % th);
-        if (backfill_mode_ == 3) { sx = X; sy = Y; }
+        // and the offsets of the first tile (BGXOffset / BGYOffset)
+        auto mod = [](int a, int m) { return ((a % m) + m) % m; };
+        int bx = backfill_mode_ == 3 ? 0 : view_x_, by = backfill_mode_ == 3 ? 0 : view_y_;
+        int sx = X - mod(bx - tile_x_offset, tw), sy = Y - mod(by - tile_y_offset, th);
         for (int ty = sy; ty < Y + H; ty += th)
             for (int tx = sx; tx < X + W; tx += tw) backfill_->draw(tx, ty);
     }

@@ -36,7 +36,8 @@ struct WandererPrefs {
     bool show_network = true;    // the Network Access icon on the root window
     int navigation = 0;          // a drawer opens in: 0 a new window (classic), 1 the same window (enhanced)
     std::string backdrop_image, drawer_image;   // background pictures ("" - none)
-    int backdrop_mode = 1, drawer_mode = 0;     // 0 tiled, 1 scaled, 2 centred, 3 fixed tiles
+    int backdrop_mode = 1, drawer_mode = 0;
+    int backdrop_ox = 0, backdrop_oy = 0, drawer_ox = 0, drawer_oy = 0;   // the tiles' offsets     // 0 tiled, 1 scaled, 2 centred, 3 fixed tiles
     // The user screen title: %wv / %wb Wanderer version, %ov OS version, %os OS release,
     // %pc available, %pf free, %pt total memory ("" - the default title)
     std::string screen_title;
