@@ -428,6 +428,97 @@ void String::resize(int X, int Y, int W, int H) {
 }
 
 // ============================================================================================
+// Prop
+// ============================================================================================
+Prop::Prop(bool horiz) : Area(Frame_Prop), horiz_(horiz) {
+    background(MPEN_HALFSHADOW);   // the track
+    inner(1, 1, 1, 1);
+}
+
+void Prop::set(int entries, int visible, int first) {
+    entries_ = std::max(1, entries);
+    visible_ = std::clamp(visible, 1, entries_);
+    first_ = std::clamp(first, 0, entries_ - visible_);
+    redraw();
+}
+
+void Prop::ask_min_max(int &minw, int &minh, int &defw, int &defh, int &maxw, int &maxh) {
+    if (horiz_) { minw = 20; defw = 100; maxw = MAXMAX; minh = defh = maxh = 10; }
+    else { minh = 20; defh = 100; maxh = MAXMAX; minw = defw = maxw = 10; }
+}
+
+void Prop::knob(int &kx, int &ky, int &kw, int &kh) const {
+    int len = horiz_ ? mwidth() : mheight();
+    int kl = std::max(8, (int)((long long)len * visible_ / entries_));
+    int range = entries_ - visible_;
+    int kp = range > 0 ? (int)((long long)(len - kl) * first_ / range) : 0;
+    if (horiz_) { kx = mleft() + kp; ky = mtop(); kw = kl; kh = mheight(); }
+    else { kx = mleft(); ky = mtop() + kp; kw = mwidth(); kh = kl; }
+}
+
+void Prop::draw_contents() {
+    int kx, ky, kw, kh;
+    knob(kx, ky, kw, kh);
+    fl_color(pens()[MPEN_BACKGROUND]);
+    fl_rectf(kx, ky, kw, kh);
+    draw_frame(FST_BEVEL, grab_ >= 0, kx, ky, kw, kh);
+}
+
+int Prop::handle(int e) {
+    int pos = horiz_ ? Fl::event_x() : Fl::event_y();
+    switch (e) {
+    case FL_PUSH: {
+        int kx, ky, kw, kh;
+        knob(kx, ky, kw, kh);
+        int ks = horiz_ ? kx : ky, kl = horiz_ ? kw : kh;
+        if (pos >= ks && pos < ks + kl) { grab_ = pos; grab_first_ = first_; redraw(); }
+        else {   // a click in the track: a page towards it
+            int nf = first_ + (pos < ks ? -visible_ : visible_);
+            set(entries_, visible_, nf);
+            if (on_change) on_change(first_);
+        }
+        return 1;
+    }
+    case FL_DRAG:
+        if (grab_ >= 0) {
+            int len = (horiz_ ? mwidth() : mheight());
+            int kl = std::max(8, (int)((long long)len * visible_ / entries_));
+            int range = entries_ - visible_;
+            if (len > kl && range > 0) {
+                int nf = grab_first_ + (int)((long long)(pos - grab_) * range / (len - kl));
+                int old = first_;
+                set(entries_, visible_, nf);
+                if (first_ != old && on_change) on_change(first_);
+            }
+        }
+        return 1;
+    case FL_RELEASE:
+        grab_ = -1;
+        redraw();
+        return 1;
+    }
+    return Area::handle(e);
+}
+
+// ============================================================================================
+// ImageButton
+// ============================================================================================
+ImageButton::ImageButton(int w, int h, std::function<void(int, int, int, int, bool)> image)
+    : Area(Frame_ImageButton), iw_(w), ih_(h), image_(std::move(image)) {
+    background(MPEN_BACKGROUND);
+    input_mode(Input_RelVerify);
+}
+
+void ImageButton::ask_min_max(int &minw, int &minh, int &defw, int &defh, int &maxw, int &maxh) {
+    minw = defw = maxw = iw_;
+    minh = defh = maxh = ih_;
+}
+
+void ImageButton::draw_contents() {
+    if (image_) image_(mleft(), mtop(), mwidth(), mheight(), selected_);
+}
+
+// ============================================================================================
 // Window
 // ============================================================================================
 Window::Window(const std::string &title, Area *r) : Fl_Double_Window(100, 100), title_(title) {

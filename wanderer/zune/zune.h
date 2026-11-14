@@ -180,6 +180,37 @@ private:
 };
 
 // ---------------------------------------------------------------------------------------------
+// Prop: a proportional gadget (a scroller) - a knob in a recessed track
+class Prop : public Area {
+public:
+    explicit Prop(bool horiz);
+    void set(int entries, int visible, int first);   // MUIA_Prop_Entries / Visible / First
+    int first() const { return first_; }
+    std::function<void(int first)> on_change;
+    void ask_min_max(int &minw, int &minh, int &defw, int &defh, int &maxw, int &maxh) override;
+    int handle(int e) override;
+
+protected:
+    void draw_contents() override;
+    void knob(int &kx, int &ky, int &kw, int &kh) const;
+    bool horiz_;
+    int entries_ = 1, visible_ = 1, first_ = 0;
+    int grab_ = -1, grab_first_ = 0;
+};
+
+// ImageButton: a button showing a picture drawn by a function (the theme's gadget images)
+class ImageButton : public Area {
+public:
+    ImageButton(int w, int h, std::function<void(int x, int y, int w, int h, bool selected)> image);
+    void ask_min_max(int &minw, int &minh, int &defw, int &defh, int &maxw, int &maxh) override;
+
+protected:
+    void draw_contents() override;
+    int iw_, ih_;
+    std::function<void(int, int, int, int, bool)> image_;
+};
+
+// ---------------------------------------------------------------------------------------------
 class Window : public Fl_Double_Window {
 public:
     Window(const std::string &title, Area *root = nullptr);
