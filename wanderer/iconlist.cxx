@@ -20,6 +20,7 @@
 #include <cstring>
 #include <filesystem>
 #include <fstream>
+#include <map>
 #include <sstream>
 #include <sys/stat.h>
 #include <fnmatch.h>
@@ -408,7 +409,14 @@ void IconList::draw_icon_image(IconEntry &e, int x, int y, bool sel) {
     IconKind k = icon_kind(e.path, e.is_drawer() && e.type != ST_ROOT, e.type == ST_ROOT, e.executable);
     if (e.type == ST_LINKFILE) k = IconKind::Link;
     if (e.trash) k = IconKind::Trash;
+    if (e.unmounted) k = IconKind::Removable;
     draw_icon(k, x, y, sel);
+    if (e.unmounted) {
+        // ghosted: every other pixel in the background pen (as a disabled gadget)
+        fl_color(pens()[MPEN_BACKGROUND]);
+        for (int gy = y; gy < y + ICON_H; gy++)
+            for (int gx = x + (gy & 1); gx < x + ICON_W; gx += 2) fl_point(gx, gy);
+    }
 }
 
 static void outlined_text(const char *s, int tx, int ty, TextMode mode, Fl_Color pen, Fl_Color shadow) {
@@ -519,6 +527,50 @@ void IconList::draw_contents() {
 // ---------------------------------------------------------------------------------------------
 // Input (MUIM_HandleEvent): click, Shift-click, double click, lasso, moving icons, keys
 // ---------------------------------------------------------------------------------------------
+// The cursor keys: the focus goes to the nearest icon in that direction (selected alone, or
+// added to the selection with Shift); kept in view
+void IconList::move_focus(int key, bool extend) {
+    IconEntry *cur = nullptr;
+    for (auto &e : entries_) if (e.focus && e.visible) cur = &e;
+    IconEntry *best = nullptr;
+    if (!cur) {
+        for (auto &e : entries_) if (e.visible) { best = &e; break; }
+    } else {
+        long bestd = 0;
+        int cx = cur->x + cur->area_w / 2, cy = cur->y + cur->area_h / 2;
+        for (auto &e : entries_) {
+            if (!e.visible || &e == cur) continue;
+            int ex = e.x + e.area_w / 2, ey = e.y + e.area_h / 2, dx = ex - cx, dy = ey - cy;
+            bool ok = (key == FL_Left && dx < 0 && std::abs(dy) <= std::abs(dx) * 2) ||
+                      (key == FL_Right && dx > 0 && std::abs(dy) <= std::abs(dx) * 2) ||
+                      (key == FL_Up && dy < 0 && std::abs(dx) <= std::abs(dy) * 2) ||
+                      (key == FL_Down && dy > 0 && std::abs(dx) <= std::abs(dy) * 2);
+            if (!ok) continue;
+            // along the direction counts once, across it four times
+            long along = (key == FL_Left || key == FL_Right) ? std::abs(dx) : std::abs(dy);
+            long across = (key == FL_Left || key == FL_Right) ? std::abs(dy) : std::abs(dx);
+            long d = along + across * 4;
+            if (!best || d < bestd) { best = &e; bestd = d; }
+        }
+    }
+    if (!best) return;
+    for (auto &e : entries_) {
+        e.focus = false;
+        if (!extend) e.selected = false;
+    }
+    best->focus = true;
+    best->selected = true;
+    // in view
+    int vx = view_x_, vy = view_y_;
+    if (best->x < vx) vx = best->x - hspacing;
+    if (best->x + best->area_w > vx + mwidth()) vx = best->x + best->area_w - mwidth() + hspacing;
+    if (best->y < vy) vy = best->y - vspacing;
+    if (best->y + best->area_h > vy + mheight()) vy = best->y + best->area_h - mheight() + vspacing;
+    scroll_to(vx, vy);
+    redraw();
+    if (on_selection_changed) on_selection_changed();
+}
+
 IconEntry *IconList::entry_at(int ex, int ey) {
     int vx = ex - mleft() + view_x_, vy = ey - mtop() + view_y_;
     if ((display_flags & Disp_ModeMask) == Disp_ModeList) {
@@ -664,6 +716,13 @@ int IconList::handle(int ev) {
             return 1;
         }
         if (k == 'a' && Fl::event_state(FL_META | FL_ALT)) { select_all(); return 1; }
+        if (k == FL_Left || k == FL_Right || k == FL_Up || k == FL_Down) { move_focus(k, Fl::event_state(FL_SHIFT)); return 1; }
+        if (k == ' ') {
+            for (auto &e : entries_) if (e.focus) { e.selected = !e.selected; break; }
+            redraw();
+            if (on_selection_changed) on_selection_changed();
+            return 1;
+        }
         return 0;
     }
     }
@@ -742,14 +801,29 @@ void IconVolumeList::update() {
     if (const char *h = getenv("HOME")) add_vol(h, "Home");
     std::ifstream m("/proc/self/mounts");
     std::string line;
+    std::vector<std::string> mounted_devs;
     while (std::getline(m, line)) {
         std::istringstream ls(line);
         std::string dev, mnt, type;
         ls >> dev >> mnt >> type;
         mnt = unescape_mount(mnt);
+        if (dev.rfind("/dev/", 0) == 0) mounted_devs.push_back(dev);
         if (dev.rfind("/dev/", 0) != 0 || mnt == "/" || mnt.rfind("/boot", 0) == 0) continue;
         if (mnt.rfind("/media/", 0) != 0 && mnt.rfind("/mnt/", 0) != 0 && mnt.rfind("/run/media/", 0) != 0) continue;
         add_vol(mnt, fs::path(mnt).filename().string());
+        entries_.back().device = dev;
+    }
+    // removable devices not mounted yet: ghosted volumes; opening one mounts it (as a disk
+    // put into a drive shows its icon)
+    for (auto &v : removable_volumes()) {
+        if (std::find(mounted_devs.begin(), mounted_devs.end(), v.device) != mounted_devs.end()) continue;
+        IconEntry e;
+        e.path = v.device;
+        e.device = v.device;
+        e.label = (v.label.empty() ? fs::path(v.device).filename().string() : v.label) + ":";
+        e.type = ST_ROOT;
+        e.unmounted = true;
+        add(std::move(e));
     }
     // the trash can
     {
@@ -777,6 +851,36 @@ void IconVolumeList::update() {
         add(std::move(e));
     }
     rethink();
+}
+
+// ============================================================================================
+// Removable devices (lsblk): partitions with a file system on a removable or hot-plugged disk
+// ============================================================================================
+std::vector<BlockVolume> removable_volumes() {
+    std::vector<BlockVolume> v;
+    FILE *p = popen("lsblk -P -p -o NAME,LABEL,FSTYPE,MOUNTPOINT,RM,HOTPLUG,TYPE 2>/dev/null", "r");
+    if (!p) return v;
+    char buf[1024];
+    while (fgets(buf, sizeof buf, p)) {
+        std::map<std::string, std::string> f;
+        std::string l(buf);
+        size_t i = 0;
+        while (i < l.size()) {
+            size_t eq = l.find("=\"", i);
+            if (eq == std::string::npos) break;
+            std::string key = l.substr(i, eq - i);
+            while (!key.empty() && key[0] == ' ') key.erase(0, 1);
+            size_t end = l.find('"', eq + 2);
+            if (end == std::string::npos) break;
+            f[key] = l.substr(eq + 2, end - eq - 2);
+            i = end + 1;
+        }
+        if (f["FSTYPE"].empty() || f["FSTYPE"] == "swap" || (f["TYPE"] != "part" && f["TYPE"] != "disk")) continue;
+        if (f["RM"] != "1" && f["HOTPLUG"] != "1") continue;
+        v.push_back({f["NAME"], f["LABEL"], f["MOUNTPOINT"]});
+    }
+    pclose(p);
+    return v;
 }
 
 // ============================================================================================

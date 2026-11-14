@@ -55,6 +55,8 @@ struct IconEntry {
     bool executable = false;          // a tool (the x bit)
     bool left_out = false;            // on the root window by Leave Out
     bool trash = false;               // the trash can
+    std::string device;               // a volume: its block device (/dev/sdb1)
+    bool unmounted = false;           // a volume not mounted yet (ghosted; opening mounts it)
     int provided_x = NO_ICON_POSITION, provided_y = NO_ICON_POSITION;   // a snapshot position
     // computed (iconlist.c: ie_IconX/Y, ie_AreaWidth/Height, ie_IconWidth/Height ...)
     int x = 0, y = 0, area_w = 0, area_h = 0, icon_w = 0, icon_h = 0;
@@ -116,6 +118,7 @@ public:
     void resize(int X, int Y, int W, int H) override;
     int handle(int e) override;
     IconEntry *entry_at(int ex, int ey);
+    void move_focus(int key, bool extend);
 
 protected:
     void draw_contents() override;
@@ -169,6 +172,10 @@ public:
 private:
     std::string dir_, pattern_;
 };
+
+// Removable block devices with a file system (lsblk)
+struct BlockVolume { std::string device, label, mountpoint; };
+std::vector<BlockVolume> removable_volumes();
 
 // The places the root window shows besides the volumes
 std::string trash_dir();                       // ~/.local/share/Trash/files

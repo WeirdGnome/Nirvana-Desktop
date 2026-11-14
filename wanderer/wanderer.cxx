@@ -91,6 +91,10 @@ public:
     void publish_menu(IconWindow *w);
     void publish_title(IconWindow *w);
     static void tick(void *d);
+    static void watch_volumes(void *d);
+    void mount_and_open(const std::string &device);
+    void eject(const std::string &device);
+    std::string volumes_state_;
     void pick(IconWindow *w, int id);
     bool shortcut(IconWindow *w);
 
@@ -122,7 +126,7 @@ enum MenuId {
     MEN_WINDOW_SORT_SIZE, MEN_WINDOW_SORT_TYPE, MEN_WINDOW_SORT_REVERSE, MEN_WINDOW_SORT_TOPDRAWERS,
     MEN_WINDOW_FIND, MEN_ICON_OPEN, MEN_ICON_RENAME, MEN_ICON_INFORMATION, MEN_ICON_SNAPSHOT,
     MEN_ICON_UNSNAPSHOT, MEN_ICON_DELETE, MEN_ICON_DISKINFO, MEN_WANDERER_PREFS,
-    MEN_ICON_LEAVEOUT, MEN_ICON_PUTAWAY, MEN_ICON_EMPTYTRASH, MEN_WANDERER_GUISETTINGS
+    MEN_ICON_LEAVEOUT, MEN_ICON_PUTAWAY, MEN_ICON_EMPTYTRASH, MEN_WANDERER_GUISETTINGS, MEN_ICON_EJECT
 };
 
 // The preferences on a window: the labels, the layout, the bars, the filter, the order
@@ -227,7 +231,8 @@ IconWindow *Wanderer::open_drawer(const std::string &path) {
 
 void Wanderer::close(IconWindow *w) {
     if (w == root_) {
-        if (request("Wanderer", "Do you really want to quit Wanderer?", "Quit|Cancel") == 1) exit(0);
+        if (request("Wanderer", file_operations_running() ? "Files are still being copied, moved or deleted.\nQuit Wanderer anyway?"
+                                                         : "Do you really want to quit Wanderer?", "Quit|Cancel") == 1) exit(0);
         return;
     }
     windows_.erase(std::remove(windows_.begin(), windows_.end(), w), windows_.end());
@@ -240,7 +245,60 @@ void Wanderer::update_all(const std::string &dir) {
     for (auto *w : windows_) if (w->location() == dir) w->update();
 }
 
+// A volume not mounted yet: mounted (udisks, as the user), then opened
+void Wanderer::mount_and_open(const std::string &device) {
+    std::string out;
+    FILE *p = popen(("udisksctl mount --no-user-interaction -b '" + device + "' 2>&1").c_str(), "r");
+    if (!p) return;
+    char buf[512];
+    while (fgets(buf, sizeof buf, p)) out += buf;
+    int rc = pclose(p);
+    if (rc != 0) {
+        request("Wanderer", "Could not mount " + device + ":\n" + out, "OK");
+        return;
+    }
+    // "Mounted /dev/sdb1 at /media/user/LABEL"
+    auto at = out.find(" at ");
+    if (root_) root_->update();
+    if (at != std::string::npos) {
+        std::string mnt = out.substr(at + 4);
+        while (!mnt.empty() && (mnt.back() == '\n' || mnt.back() == '.' || mnt.back() == ' ')) mnt.pop_back();
+        open_drawer(mnt);
+    }
+}
+
+// Icon > Eject: the volume unmounted, the drive powered off if it can be
+void Wanderer::eject(const std::string &device) {
+    for (auto *w : std::vector<IconWindow *>(windows_)) {
+        // the volume's windows close first (their files would keep it busy)
+        struct stat a, b;
+        if (stat(w->location().c_str(), &a) == 0) {
+            FILE *p = popen(("findmnt -n -o SOURCE --target '" + w->location() + "' 2>/dev/null").c_str(), "r");
+            char src[256] = {};
+            if (p) { if (!fgets(src, sizeof src, p)) src[0] = 0; pclose(p); }
+            std::string s(src);
+            while (!s.empty() && s.back() == '\n') s.pop_back();
+            if (s == device) close(w);
+            (void)b;
+        }
+    }
+    std::string cmd = "udisksctl unmount --no-user-interaction -b '" + device + "' 2>&1";
+    std::string out;
+    FILE *p = popen(cmd.c_str(), "r");
+    char buf[512];
+    while (p && fgets(buf, sizeof buf, p)) out += buf;
+    int rc = p ? pclose(p) : 1;
+    if (rc != 0) { request("Eject", "Could not unmount " + device + ":\n" + out, "OK"); return; }
+    // the whole drive off (a memory stick can then be pulled out); not possible for some
+    std::string disk = device;
+    while (!disk.empty() && isdigit((unsigned char)disk.back())) disk.pop_back();
+    if (disk.size() > 2 && disk.compare(disk.size() - 1, 1, "p") == 0 && disk.find("nvme") != std::string::npos) disk.pop_back();
+    if (system(("udisksctl power-off --no-user-interaction -b '" + disk + "' >/dev/null 2>&1").c_str()) != 0) {}
+    if (root_) root_->update();
+}
+
 void Wanderer::open_entry(IconWindow *, IconEntry &e) {
+    if (e.unmounted) { mount_and_open(e.device); return; }
     if (e.is_drawer()) { open_drawer(e.path); return; }
     struct stat st;
     std::string dir = fs::path(e.path).parent_path().string();
@@ -306,11 +364,12 @@ std::vector<Fl_Menu_Item> Wanderer::menu_items(IconWindow *w) {
     IconList *l = w->iconlist();
     bool sel = !l->selection().empty();
     bool drawer = !w->is_root();
-    bool left_out_sel = false, trash_sel = w->location() == trash_dir(), volume_sel = false;
+    bool left_out_sel = false, trash_sel = w->location() == trash_dir(), volume_sel = false, eject_sel = false;
     for (auto *e : l->selection()) {
         if (e->left_out) left_out_sel = true;
         if (e->trash) trash_sel = true;
         if (e->type == ST_ROOT) volume_sel = true;
+        if (e->type == ST_ROOT && !e->device.empty() && !e->unmounted) eject_sel = true;
     }
     int sf = l->sort_flags, df = l->display_flags;
     auto chk = [](bool on) { return FL_MENU_RADIO | (on ? FL_MENU_VALUE : 0); };
@@ -364,6 +423,7 @@ std::vector<Fl_Menu_Item> Wanderer::menu_items(IconWindow *w) {
             {"Put Away", FL_META + 'p', nullptr, (void *)MEN_ICON_PUTAWAY, (left_out_sel ? 0 : dis) | FL_MENU_DIVIDER},
             {"Delete...", 0, nullptr, (void *)MEN_ICON_DELETE, sel && drawer ? 0 : dis},
             {"Disk Info...", 0, nullptr, (void *)MEN_ICON_DISKINFO, volume_sel ? 0 : dis},
+            {"Eject", FL_META + 'j', nullptr, (void *)MEN_ICON_EJECT, eject_sel ? 0 : dis},
             {"Empty Trash", 0, nullptr, (void *)MEN_ICON_EMPTYTRASH, trash_sel ? 0 : dis},
             {nullptr},
         {"Tools", 0, nullptr, nullptr, FL_SUBMENU | FL_MENU_INACTIVE},
@@ -410,6 +470,25 @@ void Wanderer::publish_title(IconWindow *w) {
     Atom prop = XInternAtom(fl_display, "_WANDERER_SCREEN_TITLE", False);
     Atom utf8 = XInternAtom(fl_display, "UTF8_STRING", False);
     XChangeProperty(fl_display, fl_xid(w), prop, utf8, 8, PropModeReplace, (const unsigned char *)t.data(), (int)t.size());
+}
+
+// Disks put in or taken out, mounted or unmounted: the root window follows (every 2 seconds
+// the mounts and the removable devices are compared with what it shows)
+void Wanderer::watch_volumes(void *d) {
+    auto *self = (Wanderer *)d;
+    std::string state;
+    {
+        std::ifstream m("/proc/self/mounts");
+        std::string line;
+        while (std::getline(m, line)) if (line.rfind("/dev/", 0) == 0) state += line + "\n";
+    }
+    for (auto &v : removable_volumes()) state += v.device + "|" + v.mountpoint + "\n";
+    if (state != self->volumes_state_) {
+        bool first = self->volumes_state_.empty();
+        self->volumes_state_ = state;
+        if (!first && self->root_) { self->root_->update(); self->apply_snapshot(self->root_); }
+    }
+    Fl::repeat_timeout(2.0, watch_volumes, d);
 }
 
 void Wanderer::tick(void *d) {
@@ -501,7 +580,8 @@ void Wanderer::menu_action(IconWindow *w, int id) {
                 "OK");
         break;
     case MEN_WANDERER_QUIT:
-        if (request("Wanderer", "Do you really want to quit Wanderer?", "Quit|Cancel") == 1) exit(0);
+        if (request("Wanderer", file_operations_running() ? "Files are still being copied, moved or deleted.\nQuit Wanderer anyway?"
+                                                         : "Do you really want to quit Wanderer?", "Quit|Cancel") == 1) exit(0);
         break;
     case MEN_WINDOW_NEW_DRAWER: {
         std::string made;
@@ -575,7 +655,11 @@ void Wanderer::menu_action(IconWindow *w, int id) {
         }
         break;
     }
-    case MEN_ICON_DISKINFO: for (auto *e : l->selection()) if (e->type == ST_ROOT) disk_info(e->path); break;
+    case MEN_ICON_EJECT:
+        for (auto *e : l->selection())
+            if (e->type == ST_ROOT && !e->device.empty() && !e->unmounted) { eject(e->device); break; }
+        break;
+    case MEN_ICON_DISKINFO: for (auto *e : l->selection()) if (e->type == ST_ROOT && !e->unmounted) disk_info(e->path); break;
     case MEN_ICON_LEAVEOUT: {
         // the icons go onto the root window (they stay where they are on the disk)
         auto v = left_out_paths();
@@ -628,5 +712,6 @@ int main(int argc, char **argv) {
     zune::load_prefs();
     g_wanderer.start(backdrop);
     Fl::add_timeout(5.0, Wanderer::tick, &g_wanderer);
+    Fl::add_timeout(0.5, Wanderer::watch_volumes, &g_wanderer);
     return run();
 }
