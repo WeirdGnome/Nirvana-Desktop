@@ -300,26 +300,37 @@ bool has_opener(const std::string &path) {
 void execute_command(const std::string &dir, const std::string &initial) {
     static std::string last;   // the command given last time is offered again
     bool done = false, run = false;
+    // executecommand.c: the label above the string with its Popasl; the buttons together at
+    // the right, of one size
     auto *root = VGroup();
+    auto *top = VGroup();
+    new Text("\033lEnter Command and its Arguments:");
     auto *row = HGroup();
-    new Text("Command:");
+    row->spacing(0);
     auto *cmd = new String(initial.empty() ? last : initial, 1024);
     if (!initial.empty()) cmd->input()->insert_position(0);   // the program's name goes before the file's
     cmd->weight(300);
-    auto *pop = PopButton(Pop_File);   // the Popasl of executecommand.c
+    auto *pop = PopButton(Pop_File);
     row->end();
+    top->end();
     pop->on_press = [cmd, dir] {
         std::string p = cmd->value();
         if (p.empty()) p = dir + "/";
         if (file_request(tr("Execute a File"), p)) cmd->value(p);
     };
+    auto *brow = HGroup();
+    brow->spacing(0);
+    brow->inner(0, 0, 0, 0);
+    HVSpace();
     auto *buttons = HGroup();
+    buttons->same_width(true);
+    buttons->weight(0);
     auto *ok = new Button("Execute");
-    HSpace();
     auto *cancel = new Button("Cancel");
     buttons->end();
+    brow->end();
     root->end();
-    auto *w = new Window("Execute a file", root);
+    auto *w = new Window("Execute Command", root);
     w->size(std::max(w->w(), 420), w->h());
     ok->on_press = [&] { run = done = true; };
     cmd->on_acknowledge = [&] { run = done = true; };

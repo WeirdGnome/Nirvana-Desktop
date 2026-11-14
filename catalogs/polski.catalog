@@ -342,3 +342,5 @@ Read only	Tylko do odczytu
 Read/Write	Odczyt i zapis
 Disk Info	Informacje o dysku
 '%s' contains illegal characters (/ or :).	'%s' zawiera niedozwolone znaki (/ lub :).
+Enter Command and its Arguments:	Podaj polecenie i jego argumenty:
+Execute Command	Wykonaj polecenie
