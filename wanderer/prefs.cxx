@@ -50,13 +50,13 @@ WandererPrefs WandererPrefs::load() {
         else if (k == "drawers_first") p.drawers_first = v;
         else if (k == "hspacing") p.hspacing = std::clamp(v, 0, 40);
         else if (k == "vspacing") p.vspacing = std::clamp(v, 0, 40);
-        else if (k == "backdrop_mode") p.backdrop_mode = std::clamp(v, 0, 2);
+        else if (k == "backdrop_mode") p.backdrop_mode = std::clamp(v, 0, 3);
         else if (k == "icon_font") p.icon_font = std::clamp(v, -1, 2);
         else if (k == "icon_font_size") p.icon_font_size = std::clamp(v, 0, 48);
         else if (k == "lines_on_focus") p.lines_on_focus = v;
         else if (k == "drop_mode") p.drop_mode = std::clamp(v, 0, 1);
         else if (k == "navigation") p.navigation = std::clamp(v, 0, 1);
-        else if (k == "drawer_mode") p.drawer_mode = std::clamp(v, 0, 2);
+        else if (k == "drawer_mode") p.drawer_mode = std::clamp(v, 0, 3);
     }
     return p;
 }
@@ -148,13 +148,13 @@ void edit_prefs(const WandererPrefs &current, std::function<void(const WandererP
     bimg->weight(300);
     auto *bpick = new Button("?");
     bpick->fixed_width(16);
-    auto *bmode = new Cycle({"Tiled", "Scaled", "Centred"}, current.backdrop_mode);
+    auto *bmode = new Cycle({"Tiled", "Scaled", "Centred", "Fixed tiles"}, current.backdrop_mode);
     label("Drawers:");
     auto *dimg = new String(current.drawer_image, 1024);
     dimg->weight(300);
     auto *dpick = new Button("?");
     dpick->fixed_width(16);
-    auto *dmode = new Cycle({"Tiled", "Scaled", "Centred"}, current.drawer_mode);
+    auto *dmode = new Cycle({"Tiled", "Scaled", "Centred", "Fixed tiles"}, current.drawer_mode);
     bpick->on_press = [bimg] { std::string p = bimg->value(); if (file_request(tr("Choose the backdrop picture"), p)) bimg->value(p); };
     dpick->on_press = [dimg] { std::string p = dimg->value(); if (file_request(tr("Choose the drawers' picture"), p)) dimg->value(p); };
     pics->end();

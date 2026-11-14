@@ -81,7 +81,9 @@ void IconList::draw_background(int X, int Y, int W, int H) {
         backfill_->draw(X + (W - backfill_->w()) / 2, Y + (H - backfill_->h()) / 2);
     } else {
         int tw = backfill_->w(), th = backfill_->h();
+        // TileMode_Float: the tiles move with the view; TileMode_Fixed (mode 3): they stay
         int sx = X - (view_x_ % tw), sy = Y - (view_y_ % th);
+        if (backfill_mode_ == 3) { sx = X; sy = Y; }
         for (int ty = sy; ty < Y + H; ty += th)
             for (int tx = sx; tx < X + W; tx += tw) backfill_->draw(tx, ty);
     }
