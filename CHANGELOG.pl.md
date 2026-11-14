@@ -1,5 +1,14 @@
 # Lista zmian
 
+## 0.7.0 – 2026-11-14
+
+- **Katalogi**: interfejs w języku użytkownika (według `LANG` i pozostałych zmiennych
+  locale). Menu, okna zapytań, tytuły okien, etykiety, opcje do wyboru i pasek stanu
+  pochodzą z katalogu, łącznie z komunikatami zawierającymi nazwy. W paczce jest **język
+  polski**. Kolejne języki dodaje się jako `share/wanderer/catalogs/<język>.catalog`.
+- **wanderer-wm**: sygnał dźwiękowy (XBell, błąd przy pisaniu) **błyska ekranem** zamiast
+  piszczeć, jak systemowe mignięcie ekranu.
+
 ## 0.6.6 – 2026-11-14
 
 - **Przypisania (assigns)**: własne nazwy dla szuflad, zapisane w

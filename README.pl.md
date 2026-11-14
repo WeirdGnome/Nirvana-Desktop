@@ -4,12 +4,12 @@ Port **Wanderera**, pulpitu i menedżera plików systemu AROS, na Linuksa i X11.
 działa na FLTK, a okna obsługuje własny menedżer okien `wanderer-wm`, który przejmuje
 rolę Intuition: ekrany, ramki okien, gadżety i menu na pasku ekranu.
 
-Wersja: **0.6.6**. Dotychczasowa Nirvana Desktop jest na gałęzi `nirvana-legacy`.
+Wersja: **0.7.0**. Dotychczasowa Nirvana Desktop jest na gałęzi `nirvana-legacy`.
 
 ## Instalacja
 
 ```sh
-tar xzf wanderer-x11-0.6.6.tar.gz
+tar xzf wanderer-x11-0.7.0.tar.gz
 cd wanderer-x11
 ./install.sh
 ```
@@ -51,6 +51,13 @@ Sesja uruchamia najpierw `wanderer-wm`, a potem `wanderer --backdrop`. Polecenie
 * **Ikony**: dwuklik otwiera. Shift dodaje do zaznaczenia. Przeciągnięcie po pustym
   miejscu zaznacza lassem. Ikony przeciągnięte do innego okna są przenoszone w obrębie
   dysku i kopiowane między dyskami.
+
+## Języki
+
+Interfejs mówi językiem użytkownika (`LANGUAGE`, `LC_ALL`, `LC_MESSAGES`, `LANG`).
+Teksty pochodzą z katalogów w `share/wanderer/catalogs`, po jednym w wierszu: tekst
+angielski, TAB, tłumaczenie. W paczce jest polski (`polski.catalog`). Tekst bez
+tłumaczenia pokazuje się po angielsku.
 
 ## Licencja
 

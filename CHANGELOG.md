@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.7.0 – 2026-11-14
+
+- **Catalogs**: the interface in the user's language (from `LANG` and the other locale
+  variables). Menus, requesters, window titles, labels, choices and the status bar all
+  come from the catalog, including messages with names in them. **Polish** is included.
+  More languages are added as `share/wanderer/catalogs/<language>.catalog`.
+- **wanderer-wm**: the bell (XBell, a mistake typed) **flashes the screen** instead of
+  beeping, as the system's screen flash.
+
 ## 0.6.6 – 2026-11-14
 
 - **Assigns**: names of your own for drawers, kept in `~/.config/wanderer/assigns`

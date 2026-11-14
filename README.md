@@ -13,12 +13,12 @@ Parts of the port:
 * **window manager** (`wm`, later) – what Intuition does on AROS: window frames and
   gadgets, screens, screen dragging.
 
-Version: **0.6.6**
+Version: **0.7.0**
 
 ## Installing
 
 ```sh
-tar xzf wanderer-x11-0.6.6.tar.gz
+tar xzf wanderer-x11-0.7.0.tar.gz
 cd wanderer-x11
 ./install.sh
 ```
@@ -68,6 +68,13 @@ wanderer-wm & wanderer --backdrop
 * **Icons**: a double click opens; Shift adds to the selection; a lasso selects in the
   empty space. Dragging icons to another window moves them within a volume and copies
   them across volumes.
+
+## Languages
+
+The interface follows the user's language (`LANGUAGE`, `LC_ALL`, `LC_MESSAGES`, `LANG`).
+The texts come from catalogs in `share/wanderer/catalogs`, one line per text: the English
+text, a TAB, the translation. Polish (`polski.catalog`) is included. A text without a
+translation shows in English.
 
 ## Licence
 
