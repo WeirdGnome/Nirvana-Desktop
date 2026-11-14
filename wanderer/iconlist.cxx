@@ -15,6 +15,7 @@
 #include <FL/Fl.H>
 #include <FL/fl_draw.H>
 #include <FL/Fl_Shared_Image.H>
+#include <FL/platform.H>
 
 #include <algorithm>
 #include <cstring>
@@ -47,6 +48,42 @@ IconList::IconList() {
 IconList::~IconList() {
     if (backfill_scaled_) backfill_scaled_->release();
     if (backfill_) backfill_->release();
+}
+
+
+// Is the pointer over a window of another program? (the deepest window under it and its
+// parents: none of them one of ours - the backdrop counts as ours)
+static bool pointer_over_foreign_window() {
+    Display *d = fl_display;
+    ::Window root = RootWindow(d, fl_screen), w = root, child = 0;
+    int rx, ry, wx, wy;
+    unsigned mask;
+    ::Window r, c;
+    if (!XQueryPointer(d, root, &r, &c, &rx, &ry, &wx, &wy, &mask)) return false;
+    bool any = false;
+    for (int depth = 0; depth < 32; depth++) {
+        int x, y;
+        if (!XTranslateCoordinates(d, root, w, rx, ry, &x, &y, &child) || !child) break;
+        w = child;
+        any = true;
+        if (fl_find(w)) return false;   // one of ours
+    }
+    return any;
+}
+
+// The selected icons as a list of file URIs (text/uri-list, lines ending in CR LF)
+static std::string uri_list(const std::vector<IconEntry *> &sel) {
+    std::string out;
+    for (auto *e : sel) {
+        if (e->unmounted || e->path.empty() || e->path[0] != '/') continue;
+        out += "file://";
+        for (unsigned char c : e->path) {
+            if (isalnum(c) || strchr("/-_.~", c)) out += (char)c;
+            else { char b[4]; snprintf(b, sizeof b, "%%%02X", c); out += b; }
+        }
+        out += "\r\n";
+    }
+    return out;
 }
 
 void IconList::backfill(const std::string &path, int mode) {
@@ -738,6 +775,19 @@ int IconList::handle(int ev) {
             return 1;
         }
         if (dragging_ && (std::abs(vx - press_x_) > 3 || std::abs(vy - press_y_) > 3)) moved_ = true;
+        if (moved_ && pointer_over_foreign_window()) {
+            // out over another program's window: the files go on as a drag and drop of
+            // file URIs (XDND), the icons go back to their places
+            std::string uris = uri_list(selection());
+            moved_ = dragging_ = false;
+            position_icons();
+            redraw();
+            if (!uris.empty()) {
+                Fl::copy(uris.c_str(), (int)uris.size(), 0);
+                Fl::dnd();
+            }
+            return 1;
+        }
         if (moved_) {
             // the selected icons follow the pointer (MUIM_CreateDragImage in the sources)
             int dx = vx - press_x_, dy = vy - press_y_;
