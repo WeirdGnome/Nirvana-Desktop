@@ -641,6 +641,16 @@ void Rectangle::ask_min_max(int &minw, int &minh, int &defw, int &defh, int &max
     minw = minh = defw = defh = 0;
     maxw = kind_ == 'v' ? 0 : MAXMAX;
     maxh = kind_ == 'h' ? 0 : MAXMAX;
+    if (kind_ == 'H') { minh = defh = maxh = 2; }
+}
+
+void Rectangle::draw_contents() {
+    if (kind_ != 'H') return;
+    int yy = mtop() + mheight() / 2 - 1;
+    fl_color(pens()[MPEN_SHADOW]);
+    fl_xyline(mleft(), yy, mleft() + mwidth() - 1);
+    fl_color(pens()[MPEN_SHINE]);
+    fl_xyline(mleft(), yy + 1, mleft() + mwidth() - 1);
 }
 
 // ============================================================================================

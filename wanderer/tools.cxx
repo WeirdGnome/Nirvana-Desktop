@@ -338,23 +338,38 @@ void execute_command(const std::string &dir, const std::string &initial) {
 
 // --------------------------------------------------------------------------------------------
 // One line of text asked for: New Drawer, Rename
+// a name the drawers can hold: not empty, no "/" and no ":" (the volume paths use it), as
+// WBRename's illegal_chars
+static bool name_ok(const std::string &title, const std::string &name) {
+    if (!name.empty() && name.find_first_of("/:") == std::string::npos && name != "." && name != "..") return true;
+    request(title, trs("'%s' contains illegal characters (/ or :).", name), "OK");
+    return false;
+}
+
 static bool ask_name(const std::string &title, const std::string &prompt, std::string &name, const std::string &okl) {
+    // WBRename / WBNewDrawer: the line, Name: and the string in a group frame, a bar, the buttons
     bool done = false, ok = false;
-    auto *root = VGroup();
-    new Text("\033c" + prompt);
+    auto *root = new Group(Group::Vertical, Frame_Group);
+    auto *top = HGroup();
+    HVSpace();
+    new Text("\033r" + prompt);
+    top->end();
     auto *row = HGroup();
     new Text("Name:");
     auto *s = new String(name, 255);
     s->weight(300);
     row->end();
+    HBar();
     auto *buttons = HGroup();
+    buttons->same_width(true);
     auto *bok = new Button(okl);
-    HSpace();
     auto *bc = new Button("Cancel");
     buttons->end();
     root->end();
     auto *w = new Window(title, root);
-    w->size(std::max(w->w(), 380), w->h());
+    int sx, sy, sw, sh;
+    Fl::screen_work_area(sx, sy, sw, sh);
+    w->size(std::max(w->w(), sw / 3), w->h());   // MUIV_Window_Width_Visible(33)
     bok->on_press = [&] { ok = done = true; };
     s->on_acknowledge = [&] { ok = done = true; };
     bc->on_press = [&] { done = true; };
@@ -382,14 +397,6 @@ bool new_drawer(const std::string &dir, std::string &made) {
         request("New Drawer", trs("Could not create '%s':", name) + "\n" + ec.message(), "OK");
         return false;
     }
-    return false;
-}
-
-// a name the drawers can hold: not empty, no "/" and no ":" (the volume paths use it), as
-// WBRename's illegal_chars
-static bool name_ok(const std::string &title, const std::string &name) {
-    if (!name.empty() && name.find_first_of("/:") == std::string::npos && name != "." && name != "..") return true;
-    request(title, trs("'%s' contains illegal characters (/ or :).", name), "OK");
     return false;
 }
 

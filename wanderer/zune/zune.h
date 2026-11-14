@@ -180,13 +180,17 @@ inline Group *HGroup() { return new Group(Group::Horizontal); }
 // ---------------------------------------------------------------------------------------------
 class Rectangle : public Area {
 public:
-    // 0: both ways, 'h': only horizontally (fixed height 0), 'v': only vertically
+    // 0: both ways, 'h': only horizontally (fixed height 0), 'v': only vertically,
+    // 'H': a horizontal bar (MUIA_Rectangle_HBar: a groove across, 2 pixels high)
     explicit Rectangle(char kind = 0) : kind_(kind) {}
     void ask_min_max(int &minw, int &minh, int &defw, int &defh, int &maxw, int &maxh) override;
+protected:
+    void draw_contents() override;
 private:
     char kind_;
 };
 inline Rectangle *HVSpace() { return new Rectangle(0); }
+inline Rectangle *HBar() { return new Rectangle('H'); }
 inline Rectangle *HSpace(int w = 0) { auto *r = new Rectangle('h'); if (w) r->fixed_width(w); return r; }
 inline Rectangle *VSpace(int h = 0) { auto *r = new Rectangle('v'); if (h) r->fixed_height(h); return r; }
 

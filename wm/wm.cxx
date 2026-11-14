@@ -1189,8 +1189,32 @@ void button_release(XButtonEvent &e) {
     }
 }
 
+// Is the right Super key (and not the left one) held? The left one is the system's, the right
+// one the programs' (as the left and the right Amiga keys)
+bool right_super_only() {
+    char keys[32];
+    XQueryKeymap(dpy, keys);
+    auto down = [&](KeySym s) {
+        KeyCode c = XKeysymToKeycode(dpy, s);
+        return c && (keys[c / 8] & (1 << (c % 8)));
+    };
+    return down(XK_Super_R) && !down(XK_Super_L);
+}
+
 void key_press(XKeyEvent &e) {
     KeySym k = XLookupKeysym(&e, 0);
+    if ((e.state & Mod4Mask) && (k == XK_m || k == XK_n)) {
+        // the screen keys belong to the left Super key; with the right one the key goes on to
+        // the active window (a program's Super+N, Super+M)
+        if (getenv("WM_DEBUG")) {
+            char keys[32];
+            XQueryKeymap(dpy, keys);
+            for (int c = 0; c < 256; c++) if (keys[c / 8] & (1 << (c % 8))) fprintf(stderr, "down %d ", c);
+            fprintf(stderr, "L=%d R=%d right only=%d\n", XKeysymToKeycode(dpy, XK_Super_L), XKeysymToKeycode(dpy, XK_Super_R), (int)right_super_only());
+        }
+        if (drag.kind == D_NONE && right_super_only()) { XAllowEvents(dpy, ReplayKeyboard, e.time); return; }
+        XAllowEvents(dpy, AsyncKeyboard, e.time);
+    }
     if (drag.kind != D_NONE) {
         if (k == XK_Escape) cancel_drag();
         return;
@@ -1432,12 +1456,12 @@ int main(int argc, char **argv) {
     restack_screens();
     tray_start();
 
-    XGrabKey(dpy, XKeysymToKeycode(dpy, XK_m), Mod4Mask, root, True, GrabModeAsync, GrabModeAsync);
+    XGrabKey(dpy, XKeysymToKeycode(dpy, XK_m), Mod4Mask, root, True, GrabModeAsync, GrabModeSync);
     // Super + the left button: dragging screens (also with Caps Lock or Num Lock on)
     for (unsigned extra : {0u, (unsigned)LockMask, (unsigned)Mod2Mask, (unsigned)(LockMask | Mod2Mask)})
         XGrabButton(dpy, Button1, Mod4Mask | extra, root, False, ButtonPressMask | ButtonReleaseMask | PointerMotionMask,
                     GrabModeAsync, GrabModeAsync, None, None);
-    XGrabKey(dpy, XKeysymToKeycode(dpy, XK_n), Mod4Mask, root, True, GrabModeAsync, GrabModeAsync);
+    XGrabKey(dpy, XKeysymToKeycode(dpy, XK_n), Mod4Mask, root, True, GrabModeAsync, GrabModeSync);
 
     // the windows already there
     Window r, p, *kids;
