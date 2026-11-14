@@ -111,7 +111,7 @@ private:
     bool backdrop_ = false;
 
     void setup(IconWindow *w);
-    void apply_snapshot(IconWindow *w);
+    void apply_snapshot(IconWindow *w, bool place = true);   // place: the window's size and view too
     void close(IconWindow *w);
     void update_all(const std::string &dir);
     IconWindow *window_at(int x_root, int y_root, IconWindow *except);
@@ -203,6 +203,7 @@ void Wanderer::setup(IconWindow *w) {
     w->iconlist()->on_selection_changed = [this, w] { w->update_status(); publish_menu(w); };
     w->on_shortcut = [this](IconWindow *win) { return shortcut(win); };
     w->on_shown = [this](IconWindow *win) { publish_menu(win); publish_title(win); };
+    w->on_changed = [this](IconWindow *win) { apply_snapshot(win, false); publish_menu(win); };
     w->iconlist()->on_drop = [this, w](std::vector<IconEntry *> &entries, IconEntry *target) { drop(w, entries, target); };
     w->iconlist()->on_external_drop = [this, w](const std::vector<std::string> &paths, IconEntry *target) {
         std::string dest = target ? target->path : w->location();
@@ -212,10 +213,10 @@ void Wanderer::setup(IconWindow *w) {
     w->callback([](Fl_Widget *win, void *d) { ((Wanderer *)d)->close((IconWindow *)win); }, this);
 }
 
-void Wanderer::apply_snapshot(IconWindow *w) {
+void Wanderer::apply_snapshot(IconWindow *w, bool place) {
     Snapshot s = load_snapshot(w->location());
-    if (s.w > 0) w->resize(s.x, s.y, s.w, s.h);
-    if (s.display >= 0 && !w->is_root()) {
+    if (place && s.w > 0) w->resize(s.x, s.y, s.w, s.h);
+    if (place && s.display >= 0 && !w->is_root()) {
         // the drawer's own view: icons or list, all files or not, its order
         IconList *l = w->iconlist();
         bool hidden_was = l->display_flags & Disp_ShowHidden;

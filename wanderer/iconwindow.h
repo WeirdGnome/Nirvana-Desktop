@@ -52,6 +52,9 @@ public:
     std::function<void(IconWindow *)> on_search;
     std::function<void(IconWindow *)> on_activate;
     std::function<void(IconWindow *)> on_close;
+    std::function<void(IconWindow *)> on_changed;    // the drawer changed on the disk (after refresh)
+    void refresh();                                  // read again, keeping the selection and the view
+    ~IconWindow() override;
     std::function<bool(IconWindow *)> on_shortcut;   // a menu shortcut pressed
     std::function<void(IconWindow *)> on_shown;      // mapped (the window has its X id)
     void show() override;
@@ -59,6 +62,10 @@ public:
 
 private:
     std::string location_, title_text_;
+    int notify_fd_ = -1;              // inotify: the drawer's changes
+    bool refresh_pending_ = false;
+    static void notified(int fd, void *d);
+    static void refresh_cb(void *d);
     bool backdrop_;
     IconList *list_ = nullptr;
     IconListview *view_ = nullptr;

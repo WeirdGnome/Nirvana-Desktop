@@ -14,6 +14,8 @@
 #include <FL/fl_draw.H>
 
 #include <algorithm>
+#include <sys/inotify.h>
+#include <unistd.h>
 #include <sys/stat.h>
 #include <sys/statvfs.h>
 #include <filesystem>
@@ -148,7 +150,59 @@ void IconWindow::show_statusbar(bool on) {
     resize(x(), y(), w(), h());
 }
 
+// Changes on the disk (files made, removed, renamed, written): the window reads the drawer
+// again a moment later (several changes at once read it once), as the system tells a
+// drawer's window of changes
+void IconWindow::notified(int fd, void *d) {
+    auto *w = (IconWindow *)d;
+    char buf[4096];
+    while (read(fd, buf, sizeof buf) > 0) {}
+    if (!w->refresh_pending_) {
+        w->refresh_pending_ = true;
+        Fl::add_timeout(0.3, refresh_cb, w);
+    }
+}
+
+void IconWindow::refresh_cb(void *d) {
+    auto *w = (IconWindow *)d;
+    w->refresh_pending_ = false;
+    w->refresh();
+}
+
+void IconWindow::refresh() {
+    std::vector<std::string> sel;
+    std::string focus;
+    for (auto &e : list_->entries()) {
+        if (e.selected) sel.push_back(e.path);
+        if (e.focus) focus = e.path;
+    }
+    int vx = list_->view_left(), vy = list_->view_top();
+    update();
+    for (auto &e : list_->entries()) {
+        e.selected = std::find(sel.begin(), sel.end(), e.path) != sel.end();
+        e.focus = e.path == focus;
+    }
+    if (on_changed) on_changed(this);
+    list_->scroll_to(vx, vy);
+    list_->redraw();
+    update_status();
+}
+
+IconWindow::~IconWindow() {
+    if (notify_fd_ >= 0) { Fl::remove_fd(notify_fd_); close(notify_fd_); }
+    Fl::remove_timeout(refresh_cb, this);
+}
+
 void IconWindow::update() {
+    // the drawer is watched from the first reading on (not the root window, not Find)
+    if (notify_fd_ < 0 && !location_.empty() && !dynamic_cast<IconSearchList *>(list_)) {
+        notify_fd_ = inotify_init1(IN_NONBLOCK | IN_CLOEXEC);
+        if (notify_fd_ >= 0) {
+            inotify_add_watch(notify_fd_, location_.c_str(),
+                              IN_CREATE | IN_DELETE | IN_MOVED_FROM | IN_MOVED_TO | IN_CLOSE_WRITE | IN_ATTRIB);
+            Fl::add_fd(notify_fd_, FL_READ, notified, this);
+        }
+    }
     list_->update();
     view_->update_props();
     update_status();
