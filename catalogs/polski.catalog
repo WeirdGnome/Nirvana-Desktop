@@ -323,3 +323,6 @@ Label frame height:	Wysokość ramki etykiety:
 Icon auto-sort enabled:	Automatyczne sortowanie:
 X offset:	Przesunięcie X:
 Y offset:	Przesunięcie Y:
+The file '%s' in	Plik '%s' w
+is protected from deletion. Delete it anyway?	jest chroniony przed usunięciem. Usunąć mimo to?
+All	Wszystkie

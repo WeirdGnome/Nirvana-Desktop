@@ -49,8 +49,9 @@ struct Job {
     // a question to the user: the worker waits for the answer
     std::condition_variable cv;
     std::string question;              // non-empty: waiting
+    std::string qbuttons;              // its answers (yes | all | no | abort)
     int answer = -1;                   // 1 replace, 2 replace all, 3 skip, 0 abort
-    bool replace_all = false;
+    bool replace_all = false, unprotect_all = false;
 
     // the interface
     Window *win = nullptr;
@@ -97,16 +98,22 @@ void error(Job &j, const std::string &s) {
 }
 
 // asks the interface; returns the answer (1 replace, 3 skip, 0 abort)
-int ask(Job &j, const std::string &q) {
-    if (j.replace_all) return 1;
+// a question for the user (AskChoice2): 1 yes, 3 no, 0 abort; "all" answers yes from then on
+int ask(Job &j, const std::string &q, const std::string &buttons, bool &all) {
+    if (all) return 1;
     std::unique_lock<std::mutex> l(j.m);
     j.question = q;
+    j.qbuttons = buttons;
     j.answer = -1;
     j.cv.wait(l, [&] { return j.answer >= 0 || j.abort; });
     j.question.clear();
     if (j.abort) return 0;
-    if (j.answer == 2) { j.replace_all = true; return 1; }
+    if (j.answer == 2) { all = true; return 1; }
     return j.answer;
+}
+
+int ask(Job &j, const std::string &q) {
+    return ask(j, q + "\n" + tr("Replace it?"), "Replace|Replace All|Skip|Abort", j.replace_all);
 }
 
 bool copy_file(Job &j, const fs::path &from, const fs::path &to) {
@@ -177,6 +184,15 @@ bool remove_any(Job &j, const fs::path &p) {
         for (auto it = fs::directory_iterator(p, ec); !ec && it != fs::directory_iterator(); it.increment(ec))
             if (!remove_any(j, it->path())) return false;
     set_current(j, p.filename().string());
+    // a file without its write bit is protected from deletion (the original's d bit): asked
+    // first (MSG_REQU_FILEUNPROTECT)
+    if (!S_ISDIR(st.st_mode) && !S_ISLNK(st.st_mode) && !(st.st_mode & S_IWUSR)) {
+        int a = ask(j, trs("The file '%s' in", p.filename().string()) + "\n" + to_volume_path(p.parent_path().string()) +
+                           "\n" + tr("is protected from deletion. Delete it anyway?"),
+                    "Delete|All|Skip|Abort", j.unprotect_all);
+        if (a == 0) { j.abort = true; return false; }
+        if (a == 3) { j.items_done++; return true; }
+    }
     if (S_ISREG(st.st_mode)) j.bytes_done += st.st_size;
     fs::remove(p, ec);
     j.items_done++;
@@ -286,7 +302,12 @@ void poll(void *d) {
         q = j->question;
     }
     if (!q.empty() && j->answer < 0) {
-        int r = request(tr(verb(j->kind)), q + "\n" + tr("Replace it?"), "Replace|Replace All|Skip|Abort");
+        std::string buttons;
+        {
+            std::lock_guard<std::mutex> l(j->m);
+            buttons = j->qbuttons;
+        }
+        int r = request(tr(verb(j->kind)), q, buttons);
         {
             std::lock_guard<std::mutex> l(j->m);
             j->answer = r == 1 ? 1 : r == 2 ? 2 : r == 3 ? 3 : 0;
