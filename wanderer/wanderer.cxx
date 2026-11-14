@@ -151,6 +151,11 @@ void Wanderer::apply_prefs(IconWindow *w) {
     l->icon_font_size = prefs_.icon_font_size;
     l->label_maxlen = prefs_.label_maxlen;
     l->hspacing = prefs_.hspacing;
+    l->image_spacing = prefs_.image_spacing;
+    l->label_hpad = prefs_.label_hpad;
+    l->label_vpad = prefs_.label_vpad;
+    l->label_border_w = prefs_.label_border_w;
+    l->label_border_h = prefs_.label_border_h;
     l->vspacing = prefs_.vspacing;
     if (auto *vl = dynamic_cast<IconVolumeList *>(l)) vl->show_network = prefs_.show_network;
     if (w->is_root()) l->backfill(prefs_.backdrop_image, prefs_.backdrop_mode);

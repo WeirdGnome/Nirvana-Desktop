@@ -29,6 +29,8 @@ struct WandererPrefs {
     bool drawers_first = true;
     int default_sort = 0;        // a drawer's order without a snapshot: 0 name, 1 date, 2 size
     int hspacing = 5, vspacing = 5;
+    // the label's padding and frame (ILC_ICONLABEL_*_DEFAULT) and the image-label space
+    int image_spacing = 1, label_hpad = 4, label_vpad = 4, label_border_w = 1, label_border_h = 1;
     int drop_mode = 0;           // icons dropped: 0 moved within a volume (else copied), 1 always copied
     bool show_network = true;    // the Network Access icon on the root window
     int navigation = 0;          // a drawer opens in: 0 a new window (classic), 1 the same window (enhanced)

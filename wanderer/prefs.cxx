@@ -57,6 +57,11 @@ WandererPrefs WandererPrefs::load() {
         else if (k == "icon_font") p.icon_font = std::clamp(v, -1, 2);
         else if (k == "icon_font_size") p.icon_font_size = std::clamp(v, 0, 48);
         else if (k == "lines_on_focus") p.lines_on_focus = v;
+        else if (k == "image_spacing") p.image_spacing = std::clamp(v, 0, 20);
+        else if (k == "label_hpad") p.label_hpad = std::clamp(v, 0, 20);
+        else if (k == "label_vpad") p.label_vpad = std::clamp(v, 0, 20);
+        else if (k == "label_border_w") p.label_border_w = std::clamp(v, 0, 10);
+        else if (k == "label_border_h") p.label_border_h = std::clamp(v, 0, 10);
         else if (k == "default_sort") p.default_sort = std::clamp(v, 0, 2);
         else if (k == "drop_mode") p.drop_mode = std::clamp(v, 0, 1);
         else if (k == "show_network") p.show_network = v;
@@ -74,7 +79,7 @@ void WandererPrefs::save() const {
         << "\nlist_mode=" << list_mode << "\ntoolbar=" << toolbar << "\nstatusbar=" << statusbar
         << "\nshow_hidden=" << show_hidden << "\ndrawers_first=" << drawers_first << "\nhspacing=" << hspacing
         << "\nvspacing=" << vspacing << "\nbackdrop_image=" << backdrop_image << "\nbackdrop_mode=" << backdrop_mode
-        << "\ndrawer_image=" << drawer_image << "\ndrawer_mode=" << drawer_mode << "\nnavigation=" << navigation << "\nshow_network=" << show_network << "\ndrop_mode=" << drop_mode << "\ndefault_sort=" << default_sort << "\nlines_on_focus=" << lines_on_focus << "\nicon_font=" << icon_font << "\nicon_font_size=" << icon_font_size << "\nscreen_title=" << screen_title << "\n";
+        << "\ndrawer_image=" << drawer_image << "\ndrawer_mode=" << drawer_mode << "\nnavigation=" << navigation << "\nshow_network=" << show_network << "\ndrop_mode=" << drop_mode << "\ndefault_sort=" << default_sort << "\nimage_spacing=" << image_spacing << "\nlabel_hpad=" << label_hpad << "\nlabel_vpad=" << label_vpad << "\nlabel_border_w=" << label_border_w << "\nlabel_border_h=" << label_border_h << "\nlines_on_focus=" << lines_on_focus << "\nicon_font=" << icon_font << "\nicon_font_size=" << icon_font_size << "\nscreen_title=" << screen_title << "\n";
 }
 
 // --------------------------------------------------------------------------------------------
@@ -123,6 +128,8 @@ static void advanced_options(const std::string &view, std::shared_ptr<WandererPr
     auto *hsp = new Slider(0, 40, c.hspacing);
     label("Vertical spacing:");
     auto *vsp = new Slider(0, 40, c.vspacing);
+    label("Image-label spacing:");
+    auto *isp = new Slider(0, 20, c.image_spacing);
     label("Drawers first:");
     auto *first = new Checkmark(c.drawers_first);
     label("Default sort mode:");
@@ -154,6 +161,14 @@ static void advanced_options(const std::string &view, std::shared_ptr<WandererPr
     auto *onfocus = new Checkmark(c.lines_on_focus);
     label("No. of lines to display:");
     auto *lines = new Slider(2, 5, std::max(2, c.label_lines));
+    label("Horizontal text padding:");
+    auto *lhp = new Slider(0, 20, c.label_hpad);
+    label("Vertical text padding:");
+    auto *lvp = new Slider(0, 20, c.label_vpad);
+    label("Label frame width:");
+    auto *lbw = new Slider(0, 10, c.label_border_w);
+    label("Label frame height:");
+    auto *lbh = new Slider(0, 10, c.label_border_h);
     lg->end();
     VSpace();
     lp->end();
@@ -195,6 +210,11 @@ static void advanced_options(const std::string &view, std::shared_ptr<WandererPr
         p.label_maxlen = maxlen->value();
         p.label_lines = multi->on() ? lines->value() : 1;
         p.lines_on_focus = onfocus->on();
+        p.image_spacing = isp->value();
+        p.label_hpad = lhp->value();
+        p.label_vpad = lvp->value();
+        p.label_border_w = lbw->value();
+        p.label_border_h = lbh->value();
         bmode = draw->active() == 0 && tile->active() == 1 ? 3 : draw->active();
         close();
     };
