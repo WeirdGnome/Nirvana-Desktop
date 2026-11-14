@@ -25,7 +25,7 @@ endif()
 # Zune on FLTK
 add_library(zune STATIC wanderer/zune/pens.cxx wanderer/zune/frame.cxx wanderer/zune/zune.cxx)
 target_include_directories(zune PUBLIC wanderer/zune)
-target_link_libraries(zune PUBLIC fltk::fltk)
+target_link_libraries(zune PUBLIC fltk::fltk fltk::images)
 
 # a test window with every built-in frame
 add_executable(zune-frames wanderer/zune/test_frames.cxx)

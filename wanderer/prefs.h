@@ -25,6 +25,8 @@ struct WandererPrefs {
     bool show_hidden = false;    // all files
     bool drawers_first = true;
     int hspacing = 5, vspacing = 5;
+    std::string backdrop_image, drawer_image;   // background pictures ("" - none)
+    int backdrop_mode = 1, drawer_mode = 0;     // 0 tiled, 1 scaled, 2 centred
 
     static WandererPrefs load();
     void save() const;

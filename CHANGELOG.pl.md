@@ -1,5 +1,14 @@
 # Lista zmian
 
+## 0.4.0 – 2026-11-14
+
+- **Obrazy tła** dla pulpitu i okien szuflad (PNG, JPEG, GIF albo BMP): kafelkowane,
+  rozciągnięte albo wyśrodkowane. Kafelki przesuwają się razem z widokiem. Ustawia się je
+  w *Wanderer > Preferences… > Background Pictures*.
+- **Tytuł ekranu**: gdy aktywne jest okno Wanderera, pasek ekranu pokazuje wersję
+  Wanderera i ilość wolnej pamięci, odświeżane co 5 sekund. Inne programy mogą ustawić ten
+  tytuł właściwością `_WANDERER_SCREEN_TITLE`.
+
 ## 0.3.1 – 2026-11-14
 
 - **Instalator buduje paczkę Debiana** (`wanderer-x11_WERSJA_ARCH.deb`, z zależnościami

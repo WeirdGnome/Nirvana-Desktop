@@ -14,6 +14,7 @@
 
 #include <FL/Fl.H>
 #include <FL/fl_draw.H>
+#include <FL/Fl_Shared_Image.H>
 
 #include <algorithm>
 #include <cstring>
@@ -38,7 +39,49 @@ IconList::IconList() {
     info_pen = pens()[MPEN_SHINE];
 }
 
-IconList::~IconList() = default;
+IconList::~IconList() {
+    if (backfill_scaled_) backfill_scaled_->release();
+    if (backfill_) backfill_->release();
+}
+
+void IconList::backfill(const std::string &path, int mode) {
+    if (path == backfill_path_ && mode == backfill_mode_) return;
+    static bool registered = false;
+    if (!registered) { fl_register_images(); registered = true; }
+    if (backfill_scaled_) { backfill_scaled_->release(); backfill_scaled_ = nullptr; }
+    if (backfill_) { backfill_->release(); backfill_ = nullptr; }
+    backfill_path_ = path;
+    backfill_mode_ = mode;
+    if (!path.empty()) {
+        backfill_ = Fl_Shared_Image::get(path.c_str());
+        if (backfill_ && (backfill_->w() <= 0 || backfill_->h() <= 0)) { backfill_->release(); backfill_ = nullptr; }
+    }
+    redraw();
+}
+
+// The background: the picture tiled (moving with the view, as Wanderer's backfill does),
+// scaled to the view or centred on the background pen
+void IconList::draw_background(int X, int Y, int W, int H) {
+    if (!backfill_) { Area::draw_background(X, Y, W, H); return; }
+    fl_push_clip(X, Y, W, H);
+    if (backfill_mode_ == 1) {
+        if (!backfill_scaled_ || backfill_scaled_->w() != W || backfill_scaled_->h() != H) {
+            if (backfill_scaled_) backfill_scaled_->release();
+            backfill_scaled_ = (Fl_Shared_Image *)backfill_->copy(W, H);
+        }
+        backfill_scaled_->draw(X, Y);
+    } else if (backfill_mode_ == 2) {
+        fl_color(pens()[MPEN_BACKGROUND]);
+        fl_rectf(X, Y, W, H);
+        backfill_->draw(X + (W - backfill_->w()) / 2, Y + (H - backfill_->h()) / 2);
+    } else {
+        int tw = backfill_->w(), th = backfill_->h();
+        int sx = X - (view_x_ % tw), sy = Y - (view_y_ % th);
+        for (int ty = sy; ty < Y + H; ty += th)
+            for (int tx = sx; tx < X + W; tx += tw) backfill_->draw(tx, ty);
+    }
+    fl_pop_clip();
+}
 
 void IconList::clear() {
     entries_.clear();

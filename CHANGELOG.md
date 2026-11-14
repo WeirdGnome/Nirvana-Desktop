@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.4.0 – 2026-11-14
+
+- **Background pictures** for the backdrop and for drawer windows (PNG, JPEG, GIF or BMP),
+  tiled, scaled or centred. Tiled pictures move with the view. Set them in
+  *Wanderer > Preferences… > Background Pictures*.
+- **The screen's title**: while a Wanderer window is active, the screen's title bar shows
+  the Wanderer version and the free memory, updated every 5 seconds. Other programs
+  can set it with the `_WANDERER_SCREEN_TITLE` property.
+
 ## 0.3.1 – 2026-11-14
 
 - **The installer builds a Debian package** (`wanderer-x11_VERSION_ARCH.deb`, with its

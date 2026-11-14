@@ -80,7 +80,7 @@ const int SIZE_W = 16, SIZE_H = 16;
 
 Atom WM_PROTOCOLS, WM_DELETE_WINDOW, WM_STATE, WM_TAKE_FOCUS, NET_WM_NAME, UTF8_STRING, NET_WM_WINDOW_TYPE,
     NET_WM_WINDOW_TYPE_DESKTOP, NET_WM_WINDOW_TYPE_DOCK, NET_SUPPORTED, NET_ACTIVE_WINDOW, NET_CLIENT_LIST,
-    NET_SUPPORTING_WM_CHECK, NET_WM_STATE, NET_WM_STATE_FULLSCREEN;
+    NET_SUPPORTING_WM_CHECK, NET_WM_STATE, NET_WM_STATE_FULLSCREEN, WANDERER_SCREEN_TITLE;
 
 struct WScreen;
 
@@ -88,6 +88,7 @@ struct Client {
     Window win = 0, frame = 0;
     WScreen *screen = nullptr;
     std::string title;
+    std::string screen_title;                 // _WANDERER_SCREEN_TITLE: the screen's title while active
     int x = 0, y = 0, w = 100, h = 100;       // the frame, on its screen
     int alt_x = 0, alt_y = 0, alt_w = 0, alt_h = 0;   // the other size (zoom)
     bool backdrop = false, active = false, zoomed = false;
@@ -212,6 +213,8 @@ void WScreen::draw_bar() {
     fill(win, gc, pen_black, 0, BAR_H - 1, SW, 1);
     // the active window's screen title, else the screen's own
     std::string t = title;
+    if (active && active->screen == this && !active->screen_title.empty()) t = active->screen_title;
+    else for (auto *c : clients) if (c->backdrop && !c->screen_title.empty()) t = c->screen_title;
     draw_text(win, 6, (BAR_H - 1 + font->ascent - font->descent) / 2, SW - GADGET_W - 12, t, &xft_black);
     // the depth gadget
     int gx = SW - GADGET_W;
@@ -242,6 +245,19 @@ std::string window_title(Window w) {
     }
     char *name = nullptr;
     if (XFetchName(dpy, w, &name) && name) { t = name; XFree(name); }
+    return t;
+}
+
+std::string utf8_prop(Window w, Atom a) {
+    Atom type;
+    int fmt;
+    unsigned long n, after;
+    unsigned char *data = nullptr;
+    std::string t;
+    if (XGetWindowProperty(dpy, w, a, 0, 1024, False, UTF8_STRING, &type, &fmt, &n, &after, &data) == Success && data) {
+        t.assign((char *)data, n);
+        XFree(data);
+    }
     return t;
 }
 
@@ -351,6 +367,8 @@ void activate(Client *c) {
             XSendEvent(dpy, c->win, False, NoEventMask, &e);
         }
     } else XSetInputFocus(dpy, PointerRoot, RevertToPointerRoot, CurrentTime);
+    if (old && old->screen && (!c || old->screen != c->screen)) old->screen->draw_bar();
+    if (c && c->screen) c->screen->draw_bar();
     publish_client_list();
 }
 
@@ -417,6 +435,7 @@ void manage(Window w, bool existing) {
     c->win = w;
     c->screen = front_screen();
     c->title = window_title(w);
+    c->screen_title = utf8_prop(w, WANDERER_SCREEN_TITLE);
     c->backdrop = has_type(w, NET_WM_WINDOW_TYPE_DESKTOP);
     read_protocols(c);
     if (c->backdrop) {
@@ -1061,6 +1080,7 @@ int main(int argc, char **argv) {
     NET_WM_STATE = atom("_NET_WM_STATE");
     NET_WM_STATE_FULLSCREEN = atom("_NET_WM_STATE_FULLSCREEN");
     WANDERER_MENU = atom("_WANDERER_MENU");
+    WANDERER_SCREEN_TITLE = atom("_WANDERER_SCREEN_TITLE");
     WANDERER_MENU_PICK = atom("_WANDERER_MENU_PICK");
 
     pen_grey = alloc("#AAAAAA");
@@ -1139,6 +1159,9 @@ int main(int argc, char **argv) {
                 if (ev.xproperty.atom == XA_WM_NAME || ev.xproperty.atom == NET_WM_NAME) {
                     c->title = window_title(c->win);
                     draw_frame(c);
+                } else if (ev.xproperty.atom == WANDERER_SCREEN_TITLE) {
+                    c->screen_title = utf8_prop(c->win, WANDERER_SCREEN_TITLE);
+                    if (!menu.open) c->screen->draw_bar();
                 } else if (ev.xproperty.atom == XA_WM_HINTS || ev.xproperty.atom == WM_PROTOCOLS ||
                            ev.xproperty.atom == XA_WM_NORMAL_HINTS)
                     read_protocols(c);

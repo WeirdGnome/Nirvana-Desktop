@@ -86,7 +86,7 @@ public:
 
 protected:
     virtual void draw_contents() {}   // MUIM_Draw of the subclass
-    void draw_background(int X, int Y, int W, int H);
+    virtual void draw_background(int X, int Y, int W, int H);
     FrameSpec frame_;
     int bg_pen_ = MPEN_BACKGROUND;
     int il_ = 0, ir_ = 0, it_ = 0, ib_ = 0;

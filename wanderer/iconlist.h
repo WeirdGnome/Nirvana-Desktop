@@ -92,6 +92,9 @@ public:
     int border_overlap = 10;
     bool trim_volume_names = true;
     Fl_Color label_pen, label_shadow_pen, info_pen;
+    // the background picture (iconwindowbackfill.c): a PNG/JPEG/GIF/BMP file; 0 tiled,
+    // 1 scaled to the view, 2 centred; "" - the background pen
+    void backfill(const std::string &path, int mode);
 
     void sort();                      // MUIM_IconList_Sort
     void rethink();                   // MUIM_IconList_RethinkDimensions + PositionIcons
@@ -116,6 +119,10 @@ public:
 
 protected:
     void draw_contents() override;
+    void draw_background(int X, int Y, int W, int H) override;
+    std::string backfill_path_;
+    int backfill_mode_ = 0;
+    class Fl_Shared_Image *backfill_ = nullptr, *backfill_scaled_ = nullptr;
     void draw_entry(IconEntry &e);
     void draw_entry_label(IconEntry &e, int lx, int ly);
     virtual void draw_icon_image(IconEntry &e, int x, int y, bool selected);

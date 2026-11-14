@@ -34,6 +34,8 @@ WandererPrefs WandererPrefs::load() {
         auto eq = line.find('=');
         if (eq == std::string::npos) continue;
         std::string k = line.substr(0, eq);
+        if (k == "backdrop_image") { p.backdrop_image = line.substr(eq + 1); continue; }
+        if (k == "drawer_image") { p.drawer_image = line.substr(eq + 1); continue; }
         int v = atoi(line.c_str() + eq + 1);
         if (k == "text_mode") p.text_mode = std::clamp(v, 0, 2);
         else if (k == "label_lines") p.label_lines = std::clamp(v, 1, 5);
@@ -45,6 +47,8 @@ WandererPrefs WandererPrefs::load() {
         else if (k == "drawers_first") p.drawers_first = v;
         else if (k == "hspacing") p.hspacing = std::clamp(v, 0, 40);
         else if (k == "vspacing") p.vspacing = std::clamp(v, 0, 40);
+        else if (k == "backdrop_mode") p.backdrop_mode = std::clamp(v, 0, 2);
+        else if (k == "drawer_mode") p.drawer_mode = std::clamp(v, 0, 2);
     }
     return p;
 }
@@ -56,7 +60,8 @@ void WandererPrefs::save() const {
     out << "text_mode=" << text_mode << "\nlabel_lines=" << label_lines << "\nlabel_maxlen=" << label_maxlen
         << "\nlist_mode=" << list_mode << "\ntoolbar=" << toolbar << "\nstatusbar=" << statusbar
         << "\nshow_hidden=" << show_hidden << "\ndrawers_first=" << drawers_first << "\nhspacing=" << hspacing
-        << "\nvspacing=" << vspacing << "\n";
+        << "\nvspacing=" << vspacing << "\nbackdrop_image=" << backdrop_image << "\nbackdrop_mode=" << backdrop_mode
+        << "\ndrawer_image=" << drawer_image << "\ndrawer_mode=" << drawer_mode << "\n";
 }
 
 // --------------------------------------------------------------------------------------------
@@ -101,6 +106,19 @@ void edit_prefs(const WandererPrefs &current, std::function<void(const WandererP
     VSpace();
     wins->end();
     columns->end();
+    // -- Background pictures
+    auto *pics = new Group(Group::Vertical, Frame_Group);
+    pics->frame_title("Background Pictures");
+    pics->columns(3);
+    label("Backdrop:");
+    auto *bimg = new String(current.backdrop_image, 1024);
+    bimg->weight(300);
+    auto *bmode = new Cycle({"Tiled", "Scaled", "Centred"}, current.backdrop_mode);
+    label("Drawers:");
+    auto *dimg = new String(current.drawer_image, 1024);
+    dimg->weight(300);
+    auto *dmode = new Cycle({"Tiled", "Scaled", "Centred"}, current.drawer_mode);
+    pics->end();
     // -- Save / Use / Cancel
     auto *buttons = HGroup();
     buttons->same_width(true);
@@ -124,6 +142,10 @@ void edit_prefs(const WandererPrefs &current, std::function<void(const WandererP
         p.statusbar = sb->on();
         p.show_hidden = hidden->on();
         p.drawers_first = first->on();
+        p.backdrop_image = bimg->value();
+        p.backdrop_mode = bmode->active();
+        p.drawer_image = dimg->value();
+        p.drawer_mode = dmode->active();
         return p;
     };
     auto *w = new Window("Wanderer Preferences", root);

@@ -87,6 +87,8 @@ public:
     void show_menu(IconWindow *w, int x_root, int y_root);
     std::vector<Fl_Menu_Item> menu_items(IconWindow *w);
     void publish_menu(IconWindow *w);
+    void publish_title(IconWindow *w);
+    static void tick(void *d);
     void pick(IconWindow *w, int id);
     bool shortcut(IconWindow *w);
 
@@ -129,6 +131,8 @@ void Wanderer::apply_prefs(IconWindow *w) {
     l->label_maxlen = prefs_.label_maxlen;
     l->hspacing = prefs_.hspacing;
     l->vspacing = prefs_.vspacing;
+    if (w->is_root()) l->backfill(prefs_.backdrop_image, prefs_.backdrop_mode);
+    else l->backfill(prefs_.drawer_image, prefs_.drawer_mode);
     if (!w->is_root()) {
         l->list_mode = (ListMode)prefs_.list_mode;
         if (prefs_.show_hidden) l->display_flags |= Disp_ShowHidden; else l->display_flags &= ~Disp_ShowHidden;
@@ -186,7 +190,7 @@ void Wanderer::setup(IconWindow *w) {
     w->iconlist()->on_context_menu = [this, w](int x, int y) { show_menu(w, x, y); };
     w->iconlist()->on_selection_changed = [this, w] { w->update_status(); publish_menu(w); };
     w->on_shortcut = [this](IconWindow *win) { return shortcut(win); };
-    w->on_shown = [this](IconWindow *win) { publish_menu(win); };
+    w->on_shown = [this](IconWindow *win) { publish_menu(win); publish_title(win); };
     w->iconlist()->on_drop = [this, w](std::vector<IconEntry *> &entries, IconEntry *target) { drop(w, entries, target); };
     w->callback([](Fl_Widget *win, void *d) { ((Wanderer *)d)->close((IconWindow *)win); }, this);
 }
@@ -395,6 +399,38 @@ void Wanderer::show_menu(IconWindow *w, int xr, int yr) {
     const Fl_Menu_Item *picked = items.data()->popup(xr - w->x(), yr - w->y(), nullptr, nullptr, nullptr);
     if (picked && picked->user_data()) menu_action(w, (int)(intptr_t)picked->user_data());
     publish_menu(w);
+}
+
+// The screen's title while a Wanderer window is active: the version and the free memory
+// (as Wanderer shows on its screen); _WANDERER_SCREEN_TITLE, read by the window manager
+static std::string screen_title() {
+    std::ifstream m("/proc/meminfo");
+    std::string k;
+    long v = 0, avail = -1;
+    std::string unit;
+    while (m >> k >> v >> unit) if (k == "MemAvailable:") { avail = v; break; }
+    std::string t = "Wanderer " WANDERER_VERSION;
+    if (avail >= 0) {
+        char b[64];
+        snprintf(b, sizeof b, "    %.1f MB free", avail / 1024.0);
+        t += b;
+    }
+    return t;
+}
+
+void Wanderer::publish_title(IconWindow *w) {
+    if (!w || !w->shown()) return;
+    std::string t = screen_title();
+    Atom prop = XInternAtom(fl_display, "_WANDERER_SCREEN_TITLE", False);
+    Atom utf8 = XInternAtom(fl_display, "UTF8_STRING", False);
+    XChangeProperty(fl_display, fl_xid(w), prop, utf8, 8, PropModeReplace, (const unsigned char *)t.data(), (int)t.size());
+}
+
+void Wanderer::tick(void *d) {
+    auto *self = (Wanderer *)d;
+    for (auto *w : self->windows_) self->publish_title(w);
+    self->publish_title(self->root_);
+    Fl::repeat_timeout(5.0, tick, d);
 }
 
 // The menus for the window manager: it shows them in the screen's title bar while the right
@@ -608,5 +644,6 @@ int main(int argc, char **argv) {
     Fl::get_system_colors();
     Fl::add_system_handler(x_events, nullptr);
     g_wanderer.start(backdrop);
+    Fl::add_timeout(5.0, Wanderer::tick, &g_wanderer);
     return run();
 }
