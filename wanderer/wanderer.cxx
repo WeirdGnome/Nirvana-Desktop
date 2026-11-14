@@ -128,7 +128,7 @@ enum MenuId {
     MEN_WINDOW_SORT_SIZE, MEN_WINDOW_SORT_TYPE, MEN_WINDOW_SORT_REVERSE, MEN_WINDOW_SORT_TOPDRAWERS,
     MEN_WINDOW_FIND, MEN_ICON_OPEN, MEN_ICON_RENAME, MEN_ICON_INFORMATION, MEN_ICON_SNAPSHOT,
     MEN_ICON_UNSNAPSHOT, MEN_ICON_DELETE, MEN_ICON_DISKINFO, MEN_WANDERER_PREFS,
-    MEN_ICON_LEAVEOUT, MEN_ICON_PUTAWAY, MEN_ICON_EMPTYTRASH, MEN_WANDERER_GUISETTINGS, MEN_ICON_EJECT, MEN_ICON_COPY, MEN_TOOLS_DRAWER,
+    MEN_ICON_LEAVEOUT, MEN_ICON_PUTAWAY, MEN_ICON_EMPTYTRASH, MEN_WANDERER_GUISETTINGS, MEN_ICON_EJECT, MEN_ICON_COPY, MEN_TOOLS_DRAWER, MEN_WANDERER_SHUTDOWN,
     MEN_TOOL_FIRST = 1000
 };
 
@@ -398,6 +398,7 @@ std::vector<Fl_Menu_Item> Wanderer::menu_items(IconWindow *w) {
             {"GUI Settings...", 0, nullptr, (void *)MEN_WANDERER_GUISETTINGS},
             {"About...", 0, nullptr, (void *)MEN_WANDERER_ABOUT},
             {"Quit...", FL_META + 'q', nullptr, (void *)MEN_WANDERER_QUIT},
+            {"Shutdown...", 0, nullptr, (void *)MEN_WANDERER_SHUTDOWN},
             {nullptr},
         {"Window", 0, nullptr, nullptr, FL_SUBMENU},
             {"New Drawer...", FL_META + 'n', nullptr, (void *)MEN_WINDOW_NEW_DRAWER, drawer ? 0 : dis},
@@ -618,6 +619,26 @@ void Wanderer::menu_action(IconWindow *w, int id) {
         });
         break;
     case MEN_WANDERER_GUISETTINGS: edit_gui_settings(); break;
+    case MEN_WANDERER_SHUTDOWN: {
+        int r = request("Shutdown", "Turn the computer off, or restart it?\nPrograms still running are ended.",
+                        "Turn Off|Restart|Cancel");
+        if (r == 0) break;
+        if (file_operations_running() &&
+            request("Shutdown", "Files are still being copied, moved or deleted.\nTurn off anyway?", "Yes|No") != 1)
+            break;
+        // elogind / logind (as the user, through the login manager), else the init system's tools
+        std::string what = r == 1 ? "poweroff" : "reboot";
+        std::string cmd = "loginctl " + what + " 2>/dev/null || systemctl " + what + " 2>/dev/null || " +
+                          (r == 1 ? "shutdown -h now" : "shutdown -r now") + " 2>&1";
+        FILE *p = popen(cmd.c_str(), "r");
+        std::string out;
+        char buf[256];
+        while (p && fgets(buf, sizeof buf, p)) out += buf;
+        if (!p || pclose(p) != 0)
+            request("Shutdown", "The computer could not be turned off from here:\n" + out +
+                                    "\n(the user may need the right to do it - elogind or polkit)", "OK");
+        break;
+    }
     case MEN_WANDERER_ABOUT:
         request("About Wanderer",
                 "Wanderer for X11 " WANDERER_VERSION "\n\nA port of the AROS desktop and file manager.\n"
