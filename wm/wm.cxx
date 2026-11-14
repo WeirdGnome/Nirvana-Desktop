@@ -1515,6 +1515,21 @@ int main(int argc, char **argv) {
                 if (ev.xproperty.atom == XA_WM_NAME || ev.xproperty.atom == NET_WM_NAME) {
                     c->title = window_title(c->win);
                     draw_frame(c);
+                } else if (ev.xproperty.atom == WANDERER_MENU && menu.open && menu.c == c) {
+                    // the program changed its menus while they are open (an item picked with the
+                    // left button): the ticks and the ghosting show at once, if the shape is the same
+                    std::vector<MenuItem> fresh;
+                    auto same_shape = [](const std::vector<MenuItem> &a, const std::vector<MenuItem> &b, auto &&self) -> bool {
+                        if (a.size() != b.size()) return false;
+                        for (size_t i = 0; i < a.size(); i++)
+                            if (!self(a[i].children, b[i].children, self)) return false;
+                        return true;
+                    };
+                    if (read_menu(c, fresh) && same_shape(fresh, menu.titles, same_shape)) {
+                        menu.titles = fresh;
+                        if (menu.box) draw_menu_box(menu.box, menu.titles[menu.title].children, menu.box_w, menu.box_h, menu.item);
+                        if (menu.sub) draw_menu_box(menu.sub, menu.titles[menu.title].children[menu.sub_of].children, menu.sub_w, menu.sub_h, menu.sub_item);
+                    }
                 } else if (ev.xproperty.atom == WANDERER_SCREEN_TITLE) {
                     c->screen_title = utf8_prop(c->win, WANDERER_SCREEN_TITLE);
                     if (!menu.open) c->screen->draw_bar();
