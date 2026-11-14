@@ -24,7 +24,8 @@ namespace {
 
 DesktopSettings g_d;
 Fl_Check_Button *g_margin, *g_dock, *g_classic, *g_outline;
-Fl_Choice *g_dsize, *g_screens;
+Fl_Choice *g_dsize, *g_screens, *g_tdclick;
+Fl_Check_Button *g_float, *g_backdrop;
 Fl_Round_Button *g_style_r, *g_style_e;
 
 // Two overlapping windows in the chosen style: the active one in front.
@@ -100,6 +101,9 @@ void changed(Fl_Widget *, void *) {
   g_d.icon_margin = g_margin->value();
   g_d.dock_room = g_dock->value();
   g_d.screens = g_screens->value() + 1;
+  g_d.dock_floating = g_float->value();
+  g_d.backdrop = g_backdrop->value();
+  g_d.title_dclick = g_tdclick->value();
   { static const int sizes[] = {24, 32, 48, 64}; int i = g_dsize->value(); g_d.dock_size = sizes[i >= 0 && i < 4 ? i : 1]; }
   g_d.classic = g_classic->value();
   g_d.outline = g_outline->value();
@@ -121,7 +125,7 @@ Fl_Box *note(int X, int Y, int W, int H, const char *t) {
 
 int panel_desktop() {
   g_d = read_desktop();
-  const int W = 500, H = 614;
+  const int W = 500, H = 694;
   auto *win = new FrameWindow(W, H, _("Desktop"));
   win->xclass("nirvana-desktop-panel");
   auto *h = new Fl_Box(15, 10, 300, 20, _("Room for Windows"));
@@ -182,13 +186,41 @@ int panel_desktop() {
   g_outline->callback(changed);
   note(35, 432, 270, 30, _("The window jumps to its new place when the mouse button is released."));
   g_sample = new WindowSample(320, 272, 165, 150);
-  auto *sep2 = new Fl_Box(15, 470, W - 30, 2);
+  auto *sep3 = new Fl_Box(15, 470, W - 30, 2);
+  sep3->box(FL_ENGRAVED_BOX);
+  auto *h4 = new Fl_Box(15, 478, 300, 20, _("Dock, Backdrop and Title Bars"));
+  h4->labelfont(FONT_SYSTEM);
+  h4->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
+  g_float = new Fl_Check_Button(15, 500, 230, 20, _("Floating dock in the middle"));
+  g_float->labelsize(SIZE_SMALL + 1);
+  g_float->value(g_d.dock_floating);
+  g_float->callback(changed);
+  g_float->tooltip(_("On: the dock floats centered above the bottom edge, with a grip and dividers between groups. "
+                     "Off: a strip in the bottom left corner."));
+  g_backdrop = new Fl_Check_Button(250, 500, 235, 20, _("Desktop as the backdrop"));
+  g_backdrop->labelsize(SIZE_SMALL + 1);
+  g_backdrop->value(g_d.backdrop);
+  g_backdrop->callback(changed);
+  g_backdrop->tooltip(_("Off: the desktop icons are in the window \"Nirvana Desktop\", moved and stacked like any "
+                        "other (also Nirvana > Backdrop, Win+B)."));
+  auto *tdl = new Fl_Box(15, 524, 200, 22, _("Double click on a title bar:"));
+  tdl->labelsize(SIZE_SMALL + 1);
+  tdl->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
+  g_tdclick = new Fl_Choice(220, 524, 200, 22);
+  g_tdclick->textsize(SIZE_SMALL + 1);
+  for (const char *n : {_("Iconify to the desktop"), _("Zoom"), _("Shade (roll up)"), _("Depth (front / back)")}) {
+    int k = g_tdclick->add("x");
+    g_tdclick->replace(k, n);
+  }
+  g_tdclick->value(std::clamp(g_d.title_dclick, 0, 3));
+  g_tdclick->callback(changed);
+  auto *sep2 = new Fl_Box(15, 550, W - 30, 2);
   sep2->box(FL_ENGRAVED_BOX);
-  auto *h3 = new Fl_Box(15, 478, 300, 20, _("Folder Windows"));
+  auto *h3 = new Fl_Box(15, 558, 300, 20, _("Folder Windows"));
   h3->labelfont(FONT_SYSTEM);
   h3->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
-  g_style_r = new Fl_Round_Button(15, 502, W - 30, 20, _("Drawers: every folder in its own window, which remembers its place"));
-  g_style_e = new Fl_Round_Button(15, 522, W - 30, 20, _("Rambler Advanced: folder tree, two panes, jobs, search"));
+  g_style_r = new Fl_Round_Button(15, 582, W - 30, 20, _("Drawers: every folder in its own window, which remembers its place"));
+  g_style_e = new Fl_Round_Button(15, 602, W - 30, 20, _("Rambler Advanced: folder tree, two panes, jobs, search"));
   for (auto *b : {g_style_r, g_style_e}) {
     b->type(FL_RADIO_BUTTON);
     b->labelsize(SIZE_SMALL + 1);

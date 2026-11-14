@@ -283,9 +283,12 @@ void FolderView::load(const std::string &path, bool show_hidden) {
   load_entries(std::move(sc.entries));
 }
 
+std::function<bool(const std::string &, Icon &)> FolderView::icon_override;
+
 void FolderView::load_entries(std::vector<Entry> &&all) {
   entries_.clear();
   for (auto &e : all) {
+    if (icon_override) icon_override(e.path, e.icon);
     if (!e.dir && is_appimage(e.name)) {
       e.label = !g_home.empty() ? appimage::label(e.path, g_home) : appimage::display_name(e.name);
       if (!g_home.empty()) e.icon_file = appimage::icon(e.path, g_home);

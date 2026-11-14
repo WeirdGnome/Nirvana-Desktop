@@ -40,7 +40,7 @@ Co się zmieniło w każdej wersji: [CHANGELOG.pl.md](CHANGELOG.pl.md).
 
 Rozpakuj źródła i uruchom instalator:
 
-    tar xzf nirvana-desktop-0.0.71.tar.gz && cd nirvana-desktop
+    tar xzf nirvana-desktop-0.0.72.tar.gz && cd nirvana-desktop
     sudo ./install.sh                 # albo: sudo ./install.sh --login-screen
 
 Instalator:
@@ -141,6 +141,18 @@ Inną czcionkę systemową (np. wolną, w stylu bitmapowym) można podać przez 
   tworzony, gdy go nie ma) są ikonami w lewej kolumnie – zawsze pod dyskami i urządzeniami,
   a nad zminimalizowanymi oknami, najpierw foldery. Dwuklik je otwiera, prawy przycisk daje
   Otwórz, Pokaż w folderze i Usuń (do kosza); zmiana w folderze widać od razu.
+- **Pływający dok** (Preferencje > Pulpit > *Pływający dok pośrodku*, domyślnie włączony):
+  fazowana tacka pośrodku nad dolną krawędzią, uchwyt po lewej (klik zwija dok do uchwytu
+  i z powrotem) i przegródki między grupami – foldery, każda kategoria aplikacji, inne programy
+  i pliki. Wyłączony: pasek w lewym dolnym rogu jak dotąd.
+- **Tło pulpitu** (Nirvana > Tło pulpitu, `Win+B`, albo Preferencje > Pulpit > *Pulpit jako
+  tło*): wyłączone przenosi własne ikony pulpitu (Nirvana HD, Ram Disk, Biblioteka, dyski, pliki
+  z Pulpitu, Kosz) do okna **Nirvana Desktop** – przesuwanego, zmienianego, układanego
+  i ikonifikowanego jak każde inne; na tle zostają tylko ikony zminimalizowanych okien i dok.
+  Po ponownym włączeniu okno się zamyka, a ikony wracają.
+- **Dwuklik na pasku tytułu** (Preferencje > Pulpit): *Ikonifikuj na biurko* (domyślnie),
+  *Powiększ*, *Zwiń do paska* albo *Głębia (na wierzch / pod spód)* – dla okien wszystkich
+  programów.
 - **Wirtualne ekrany** (Preferencje > Pulpit > Ekrany, 1–9, domyślnie 4): każde okno żyje na
   jednym ekranie, na wyświetlaczu są tylko okna pokazanego (ikony biurka, dok i pasek menu są na
   wszystkich; okno Zadania też). **Gadżet ekranów** na prawym końcu paska menu pokazuje numer
@@ -199,7 +211,7 @@ Inną czcionkę systemową (np. wolną, w stylu bitmapowym) można podać przez 
 - **Gdzie są aplikacje**: w folderze `~/Aplikacje` na Nirvana HD (nazwa w języku pierwszego
   uruchomienia, zapamiętana w `~/.config/nirvana/apps-folder`), z folderami kategorii; programy
   są dużymi ikonami, jak w oknie Preferencji (lista – `Ctrl+2`). Ukryty `~/.nirvana-apps`
-  z wersji 0.0.38–0.0.71 jest tam przenoszony przy pierwszym uruchomieniu, razem z wpisami doku
+  z wersji 0.0.38–0.0.72 jest tam przenoszony przy pierwszym uruchomieniu, razem z wpisami doku
   i zapamiętanymi oknami. Prawy przycisk na aplikacji i **Połóż na doku**
   trzyma ją pod ręką; prawy przycisk na kafelku doku daje **Otwórz** i **Odepnij z doku**.
 - **Instalacja**: otwarcie AppImage spoza folderu Aplikacje (np. z Pobranych) pyta, czy

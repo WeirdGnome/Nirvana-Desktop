@@ -187,6 +187,7 @@ void Desktop::update_menu(Fl_Menu_ *m, NWin *a) {
     act(p, a != nullptr);
   act(P_("Window/Clean Up"), icons_mode);
   mark(P_("Window/Show Hidden Files"), show_hidden_);
+  mark(P_("logo/Backdrop"), desk_set_.backdrop);
   if (a) {
     FolderView *v = a->pane->view();
     mark(P_("Window/View as/Icons"), v->mode() == FolderView::Icons);

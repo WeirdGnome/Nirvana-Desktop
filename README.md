@@ -41,7 +41,7 @@ What changed in each version: [CHANGELOG.md](CHANGELOG.md).
 
 Unpack the sources and run the installer:
 
-    tar xzf nirvana-desktop-0.0.71.tar.gz && cd nirvana-desktop
+    tar xzf nirvana-desktop-0.0.72.tar.gz && cd nirvana-desktop
     sudo ./install.sh                 # or: sudo ./install.sh --login-screen
 
 The installer:
@@ -141,6 +141,17 @@ Another system font (for example a free bitmap-style one) can be set with `NIRVA
   disks and devices and above the minimized windows, folders first. A double click opens them,
   the right button gives Open, Show in Folder and Delete (to the Trash); a change in the folder
   shows at once.
+- **The floating dock** (Preferences > Desktop > *Floating dock in the middle*, on by default): a
+  bevelled tray centered above the bottom edge, a grip on its left (a click folds the dock to
+  the grip and back) and dividers between groups – folders, each applications category, other
+  programs and files. Off: the strip in the bottom left corner as before.
+- **Backdrop** (Nirvana > Backdrop, `Win+B`, or Preferences > Desktop > *Desktop as the
+  backdrop*): off, the desktop's own icons (Nirvana HD, Ram Disk, Library, disks, Desktop folder
+  files, the Trash) move into the window **Nirvana Desktop** – moved, sized, stacked and
+  iconified like any other; only the icons of minimized windows and the dock stay on the
+  backdrop. On again, the window closes and the icons come back.
+- **A double click on a title bar** (Preferences > Desktop): *Iconify to the desktop* (the
+  default), *Zoom*, *Shade (roll up)* or *Depth (front / back)* – for the windows of all programs.
 - **Virtual screens** (Preferences > Desktop > Screens, 1–9, 4 by default): every window lives on
   one screen, only the windows of the shown one are on the display (the desktop icons, the dock
   and the menu bar are on all of them; the Jobs window too). The **screen gadget** at the right
@@ -201,7 +212,7 @@ Another system font (for example a free bitmap-style one) can be set with `NIRVA
 - **Where applications live**: in the folder `~/Aplikacje` of Nirvana HD (`~/Applications` – the
   name in the language of the first start, remembered in `~/.config/nirvana/apps-folder`), with
   its category folders; the programs are shown as big icons, like the Preferences window (a list
-  with `Ctrl+2`). The hidden `~/.nirvana-apps` of 0.0.38–0.0.71 is moved there at the first
+  with `Ctrl+2`). The hidden `~/.nirvana-apps` of 0.0.38–0.0.72 is moved there at the first
   start, together with dock entries and remembered windows. Right-click an application
   there and choose **Put on Dock** to keep it at hand; right-click a dock tile for **Open** and
   **Unpin from Dock**.

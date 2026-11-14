@@ -64,6 +64,8 @@ public:
   void load(const std::string &path, bool show_hidden);
   // the contents read elsewhere (scan_folder, a worker thread): only shown here
   void load_entries(std::vector<Entry> &&entries);
+  // another picture for some entries (the links of the "Nirvana Desktop" window): true - icon set
+  static std::function<bool(const std::string &path, plat::Icon &icon)> icon_override;
   void relayout(int avail_w, int min_h);
   void set_mode(Mode m) { mode_ = m; }
   Mode mode() const { return mode_; }

@@ -310,6 +310,13 @@ private:
   std::vector<std::string> dock_;
   bool dock_collapsed_ = false;   // dock collapsed to just the tab
   int dock_shown_ = 0;            // how many dock icons fit
+  int dock_x_ = 0, dock_w_ = 0;   // the floating dock: where it is
+  std::vector<int> dock_divs_;    // its dividers (x)
+  int dock_space() const;
+  std::string backdrop_dir() const;
+  void sync_backdrop_folder(const std::vector<std::pair<std::string, std::string>> &items);
+  void toggle_backdrop();
+  bool dock_grip_at(int ex, int ey) const;
   int dock_press_ = -1;           // the pressed dock tile (opens on release)
   int tip_icon_ = -1;             // the tile with a visible tooltip
   void dock_rect(int &X, int &Y, int &W, int &H) const;

@@ -1,6 +1,18 @@
 # Changelog
 All notable changes to Nirvana Desktop, newest first. Polish: [CHANGELOG.pl.md](CHANGELOG.pl.md).
 
+## 0.0.72 – 2026-11-14
+
+The fourth stage of the rework: the dock, the backdrop and title bars.
+
+- **A floating dock**, the default:
+  - a bevelled tray centered above the bottom edge;
+  - a grip on the left – a click folds the dock to the grip and unfolds it again;
+  - dividers between groups: folders, applications categories and other programs or files.
+  The old strip in the left corner can be brought back in *Preferences > Desktop*.
+- **Backdrop** (*Nirvana > Backdrop*, `Win+B` or *Preferences > Desktop*): turned off, the desktop icons move into an ordinary window "Nirvana Desktop". The Trash, disks, Ram Disk and Nirvana HD have their own pictures there and open as they do from the desktop. Only the icons of minimized windows and the dock stay on the backdrop.
+- **A double click on a title bar** is chosen in *Preferences > Desktop*: iconify (the default), zoom, shade or depth. It works for the windows of all programs, also in classic windows, where it did nothing before.
+
 ## 0.0.71 – 2026-11-14
 
 The third stage of the rework: virtual screens.

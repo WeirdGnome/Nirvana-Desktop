@@ -391,6 +391,10 @@ static Entry entry_for(const std::string &path);
 // names in tooltips. A collapse tab on the left, a rounded end on the right.
 #define DOCK_TILE (desk_set_.dock_size + 8)   // tile: the icon (Preferences > Desktop > Dock size) + frame
 static const int DOCK_TAB = 14;    // collapse tab
+static const int DOCK_GRIP = 10;   // the grip of the floating dock
+static const int DOCK_DIV = 8;     // a divider between groups
+static const int DOCK_PAD = 4;     // the floating dock around its tiles
+static const int DOCK_LIFT = 6;    // ... and above the bottom edge
 static const int DOCK_END = 12;    // rounded end of the strip
 static std::vector<net::Network> g_menu_nets;
 static std::vector<net::Vpn> g_menu_vpns;
@@ -549,6 +553,7 @@ Desktop::Desktop(int W, int H, const std::string &home)
     {P_("logo/Preferences…"), 0, &Desktop::open_preferences, 0},
     {P_("logo/Execute Command…"), FL_META + 'e', &Desktop::execute_command, 0},
     {P_("logo/Nirvana Shell"), FL_META + 't', &Desktop::open_terminal, 0},
+    {P_("logo/Backdrop"), FL_META + 'b', &Desktop::toggle_backdrop, FL_MENU_TOGGLE},
     {P_("logo/Open System Log"), 0, &Desktop::open_log, FL_MENU_DIVIDER},
     {P_("logo/Reset Nirvana"), 0, &Desktop::reset_nirvana, 0},
     // --- System: session and computer (formerly in the power applet) ---
@@ -639,8 +644,26 @@ Desktop::Desktop(int W, int H, const std::string &home)
     }
   }
   load_dock();
+  // the "Nirvana Desktop" window (backdrop off): its links have the pictures of the desktop icons
+  FolderView::icon_override = [this](const std::string &path, Icon &icon) {
+    if (path.rfind(backdrop_dir() + "/", 0) != 0) return false;
+    std::error_code ec;
+    if (!fs::is_symlink(path, ec)) return false;
+    std::string t = fs::read_symlink(path, ec).string();
+    if (t == home_) icon = Icon::Home;
+    else if (t == trash_dir()) icon = trash_full() ? Icon::TrashFull : Icon::Trash;
+    else if (t == home_ + "/.ramdisk") icon = Icon::RamDisk;
+    else if (int v = volume_at_path(t); v >= 0 && vols_[v].mountpoint == t) icon = vols_[v].icon;
+    else return false;
+    return true;
+  };
   watch_desktop_dir();   // (creates ~/Pulpit when there is none)
   layout_icons();
+  if (!desk_set_.backdrop)   // the desktop as a window: it comes back with the session
+    Fl::add_timeout(0.8, [](void *p) {
+      auto *dk = (Desktop *)p;
+      if (!dk->find(dk->backdrop_dir())) dk->open_folder(dk->backdrop_dir(), false);
+    }, this);
   // the Ram Disk's fill in its label - and the icon itself, once the session has mounted it
   static Fl_Timeout_Handler ramdisk_tick = [](void *p) {
     auto *dk = (Desktop *)p;
@@ -802,9 +825,16 @@ void Desktop::layout_icons() {
   const int COL = 90, ROW = 70, top = MENUBAR_H + 14;
   // The Trash always stays in the same place, above the dock - also when the dock is empty,
   // so adding something to the dock does not move it
-  int trash_y = h() - 74 - (DOCK_TILE + 4);
+  int trash_y = h() - 74 - (dock_space() + 4);
   int ix = 0, iy = top, cols = 1;
+  // Backdrop off (Nirvana > Backdrop, Win+B): the desktop's own icons live in the window
+  // "Nirvana Desktop" (a folder of links); only the icons of minimized windows stay here
+  std::vector<std::pair<std::string, std::string>> windowed;   // (name, path)
   auto place = [&](DeskIcon d) {
+    if (!desk_set_.backdrop && !d.win) {
+      if (!d.path.empty()) windowed.push_back({d.ramdisk ? std::string("Ram Disk") : d.name, d.path});
+      return;
+    }
     if (iy + ROW > trash_y && iy > top) { ix += COL; iy = top; cols++; }
     d.x = ix; d.y = iy;
     icons_.push_back(d);
@@ -886,7 +916,11 @@ void Desktop::layout_icons() {
     if (d.name.empty()) d.name = "?";
     place(d);
   }
-  icons_.push_back({_("Trash"), trash_dir(), trash_full() ? Icon::TrashFull : Icon::Trash, 0, trash_y});
+  if (desk_set_.backdrop) icons_.push_back({_("Trash"), trash_dir(), trash_full() ? Icon::TrashFull : Icon::Trash, 0, trash_y});
+  else {
+    windowed.push_back({_("Trash"), trash_dir()});
+    sync_backdrop_folder(windowed);
+  }
   icon_cols_ = cols;
   // where each minimized window's icon is (_NIRVANA_ICON_RECT on the window, in the same
   // units as the frames): Insight flies the outlines to it and back
@@ -899,25 +933,60 @@ void Desktop::layout_icons() {
       }
   // dock: icons left out on the desktop (Leave Out), as a strip in the bottom
   // left corner. The icon position as for the others: the picture at (x + 24, y).
+  // The floating dock (the default): centered above the bottom edge, a grip on the left, a
+  // divider between groups (folders, each applications category, other programs and files).
   dock_shown_ = 0;
+  dock_divs_.clear();
   if (!dock_collapsed_) {
-    int tx = DOCK_TAB;
+    std::vector<std::string> shown;
     for (auto &p : dock_) {
       std::error_code ec;
-      if (!fs::exists(p, ec)) continue;
-      if (tx + DOCK_TILE + DOCK_END > w() - 10) break;   // the dock ends at the right edge
+      if (fs::exists(p, ec)) shown.push_back(p);
+    }
+    auto group = [this](const std::string &p) {
+      std::error_code ec;
+      if (fs::is_directory(p, ec)) return std::string("/folder");
+      if (in_apps(p)) return fs::path(p).parent_path().string();   // a category folder
+      return std::string("/other");
+    };
+    bool fl = desk_set_.dock_floating;
+    int lead = fl ? DOCK_GRIP + 4 : DOCK_TAB, tail = fl ? 6 : DOCK_END;
+    // how wide it would be: the tiles that fit
+    int width = lead + tail, n = 0, divs = 0;
+    std::string prev;
+    for (auto &p : shown) {
+      std::string g = group(p);
+      int add = DOCK_TILE + (fl && n && g != prev ? DOCK_DIV : 0);
+      if (width + add > w() - 20) break;
+      width += add;
+      if (fl && n && g != prev) divs++;
+      prev = g;
+      n++;
+    }
+    (void)divs;
+    int x0 = fl ? (w() - width) / 2 : 0;
+    int tx = x0 + lead;
+    int ty = fl ? h() - DOCK_LIFT - DOCK_PAD - DOCK_TILE : h() - DOCK_TILE;
+    prev.clear();
+    for (int i = 0; i < n; i++) {
+      const std::string &p = shown[i];
+      std::string g = group(p);
+      if (fl && i && g != prev) { dock_divs_.push_back(tx + DOCK_DIV / 2); tx += DOCK_DIV; }
+      prev = g;
       DeskIcon d;
       d.path = p;
       d.dock = true;
       d.entry = entry_for(p);
       d.name = d.entry.label;
       d.icon = d.entry.icon;
-      d.x = tx + 4 - 24;
-      d.y = h() - DOCK_TILE + 4;
+      d.x = tx - 20;   // the tile at (x + 20, y - 4), the picture at (x + 24, y)
+      d.y = ty + 4;
       icons_.push_back(d);
       tx += DOCK_TILE;
       dock_shown_++;
     }
+    dock_w_ = dock_.empty() ? 0 : tx - x0 + tail;
+    dock_x_ = x0;
   }
   publish_folder_area();
 }
@@ -931,7 +1000,7 @@ plat::Rect Desktop::folder_area() const {
   const int GAP = desk_set_.icon_margin ? 6 : 0;
   int L = (desk_set_.icon_margin ? icon_cols_ * 90 + 6 : 0) + FRAME, T = MENUBAR_H + TITLE_H + GAP;
   int R = w() - FRAME - GAP;
-  int B = h() - FRAME - GAP - (desk_set_.dock_room ? DOCK_TILE : 0);   // room for the dock (also when empty or collapsed)
+  int B = h() - FRAME - GAP - (desk_set_.dock_room ? dock_space() : 0);   // room for the dock (also when empty or collapsed)
   return {L, T, std::max(MIN_W, R - L), std::max(MIN_H, B - T)};
 }
 
@@ -939,8 +1008,9 @@ plat::Rect Desktop::folder_area() const {
 // _NIRVANA_WINDOW_AREA on the root window = x, y, width, height of the frame on screen.
 void Desktop::desktop_settings_changed() {
   int dock = desk_set_.dock_size;
+  bool floating = desk_set_.dock_floating, backdrop = desk_set_.backdrop;
   desk_set_ = plat::read_desktop();
-  if (dock != desk_set_.dock_size) {   // a new dock size: the tiles and the Trash above them move
+  if (dock != desk_set_.dock_size || floating != desk_set_.dock_floating || backdrop != desk_set_.backdrop) {   // a new dock size: the tiles and the Trash above them move
     layout_icons();
     redraw();
   }
@@ -951,7 +1021,7 @@ void Desktop::publish_folder_area() {
   if (!shown() || !fl_display) return;
   // _NIRVANA_DOCK: height of the dock - Insight keeps the windows of all programs above it
   static long last_dock = -1;
-  long dock = desk_set_.dock_room ? DOCK_TILE : 0;   // fixed room - windows do not jump when an icon is added
+  long dock = desk_set_.dock_room ? dock_space() : 0;   // fixed room - windows do not jump when an icon is added
   if (dock != last_dock) {
     last_dock = dock;
     XChangeProperty(fl_display, DefaultRootWindow(fl_display), atom("_NIRVANA_DOCK"), XA_CARDINAL, 32,
@@ -968,8 +1038,17 @@ void Desktop::publish_folder_area() {
 
 // Rectangle of the whole dock strip (with the tab and the end); empty when the dock is empty.
 void Desktop::dock_rect(int &X, int &Y, int &W, int &H) const {
+  if (dock_.empty()) { X = Y = W = H = 0; return; }
+  if (desk_set_.dock_floating) {
+    H = DOCK_TILE + 2 * DOCK_PAD;
+    Y = h() - DOCK_LIFT - H;
+    if (dock_collapsed_) { W = DOCK_GRIP + 8; X = (w() - W) / 2; return; }   // only the grip
+    X = dock_x_;
+    W = dock_w_;
+    return;
+  }
   X = 0; H = DOCK_TILE; Y = h() - H;
-  W = dock_.empty() ? 0 : DOCK_TAB + dock_shown_ * DOCK_TILE + DOCK_END;
+  W = DOCK_TAB + dock_shown_ * DOCK_TILE + DOCK_END;
 }
 
 // A dock icon of any size: pictures of programs scaled, Nirvana's vector icons drawn at 32 px
@@ -1000,10 +1079,99 @@ static void draw_dock_icon(const Entry &e, int x, int y, int size) {
   else dock_vector_icon(e.icon, size)->draw(x, y);
 }
 
+// The window of the desktop without the backdrop: a folder of links to its icons
+std::string Desktop::backdrop_dir() const { return home_ + "/.cache/nirvana/" + _("Nirvana Desktop"); }
+
+void Desktop::sync_backdrop_folder(const std::vector<std::pair<std::string, std::string>> &items) {
+  std::string dir = backdrop_dir();
+  std::error_code ec;
+  fs::create_directories(dir, ec);
+  std::set<std::string> want;
+  for (auto &[name, path] : items) {
+    std::string n = name;
+    for (auto &ch : n) if (ch == '/') ch = '-';
+    if (n.empty() || n[0] == '.') continue;
+    want.insert(n);
+    fs::path l = fs::path(dir) / n;
+    std::error_code e2;
+    if (fs::is_symlink(l, e2) && fs::read_symlink(l, e2) == fs::path(path)) continue;
+    fs::remove(l, e2);
+    fs::create_symlink(path, l, e2);
+  }
+  for (auto &de : fs::directory_iterator(dir, ec)) {
+    std::error_code e2;
+    if (fs::is_symlink(de.symlink_status(e2)) && !want.count(de.path().filename().string())) fs::remove(de.path(), e2);
+  }
+}
+
+// Nirvana > Backdrop (Win+B): the desktop is the backdrop (icons on it), or its icons are a
+// window of their own - "Nirvana Desktop", moved, sized and stacked like any other
+void Desktop::toggle_backdrop() {
+  desk_set_.backdrop = !desk_set_.backdrop;
+  plat::write_desktop(desk_set_);
+  icon_sel_ = -1;
+  layout_icons();
+  redraw();
+  if (!desk_set_.backdrop) open_folder(backdrop_dir());
+  else if (NWin *w = find(backdrop_dir())) close(w);
+}
+
+// The room the dock takes at the bottom (windows stay above it)
+int Desktop::dock_space() const {
+  return desk_set_.dock_floating ? DOCK_TILE + 2 * DOCK_PAD + DOCK_LIFT : DOCK_TILE;
+}
+
+// The grip of the floating dock (a click: the dock folds to it / unfolds)
+bool Desktop::dock_grip_at(int ex, int ey) const {
+  int X, Y, W, H;
+  dock_rect(X, Y, W, H);
+  if (!W) return false;
+  if (!desk_set_.dock_floating) return ex < DOCK_TAB && ey >= h() - DOCK_TILE;
+  return ex >= X && ex < X + DOCK_GRIP + 6 && ey >= Y && ey < Y + H;
+}
+
 void Desktop::draw_dock() {
   int X, Y, W, H;
   dock_rect(X, Y, W, H);
   if (!W) return;
+  if (desk_set_.dock_floating) {
+    // a bevelled tray with rounded ends, a black outline, a lit top edge
+    fl_color(DARK);
+    fl_rounded_rectf(X, Y, W, H, 6);
+    fl_color(GRAY);
+    fl_rounded_rectf(X + 1, Y + 1, W - 2, H - 2, 5);
+    fl_color(LIGHT);
+    fl_xyline(X + 5, Y + 1, X + W - 6);
+    fl_yxline(X + 1, Y + 5, Y + H - 6);
+    fl_color(SHADOW);
+    fl_xyline(X + 5, Y + H - 2, X + W - 6);
+    fl_yxline(X + W - 2, Y + 5, Y + H - 6);
+    // the grip: ribs
+    int gx = X + 5;
+    for (int i = 0; i < 3; i++) {
+      fl_color(LIGHT); fl_yxline(gx + i * 3, Y + 8, Y + H - 9);
+      fl_color(SHADOW); fl_yxline(gx + i * 3 + 1, Y + 8, Y + H - 9);
+    }
+    // a little arrow under the grip: which way it folds
+    int cx = gx + 4, cy = Y + H - 5;
+    fl_color(TEXT);
+    if (dock_collapsed_) fl_polygon(cx - 2, cy - 2, cx + 2, cy - 2, cx, cy);
+    else fl_polygon(cx - 2, cy, cx + 2, cy, cx, cy - 2);
+    // the dividers between groups
+    for (int dx : dock_divs_) {
+      fl_color(SHADOW); fl_yxline(dx, Y + 6, Y + H - 7);
+      fl_color(LIGHT); fl_yxline(dx + 1, Y + 6, Y + H - 7);
+    }
+    for (int i = 0; i < (int)icons_.size(); i++) {
+      auto &ic = icons_[i];
+      if (!ic.dock) continue;
+      bool sel = i == icon_sel_ || i == icon_drop_;
+      int bx = ic.x + 20, by = ic.y - 4;
+      if (sel) fl_draw_box(DOWN_BOX, bx, by, DOCK_TILE, DOCK_TILE, fl_color_average(GRAY, SHADOW, 0.6f));
+      draw_dock_icon(ic.entry, ic.x + 24 + (sel ? 1 : 0), ic.y + (sel ? 1 : 0), desk_set_.dock_size);
+    }
+    return;
+  }
   // rounded end: background with an outline, an arc on the right
   int ex = X + W - DOCK_END - 6;
   fl_color(DARK);
@@ -1696,7 +1864,7 @@ void Desktop::open_folder(const std::string &path, bool animate, bool new_window
   // the content as the first child: it gets the keyboard focus when the window opens
   win->pane = new FolderPane(ox, oy + bars, s.w, s.h - bars, path, show_hidden_);
   // a folder seen for the first time: a list, the applications - big icons (like Preferences)
-  if (!known_pos) { s.list = !(path == apps_dir() || in_apps(path + "/")); s.icons = 32; }
+  if (!known_pos) { s.list = !(path == apps_dir() || in_apps(path + "/") || path == backdrop_dir()); s.icons = 32; }
   win->pane->view()->set_icon_size(s.icons);
   build_folder_bars(win, ox, oy, s.w);
   win->resizable(win->pane);
@@ -1820,6 +1988,8 @@ std::string disk_path(const std::string &path) {
   }
   if (home.empty() || home == "/") return path;
   // the Ram Disk by its name (~/.ramdisk is a link to /run/nirvana-ramdisk/UID)
+  std::string bd = home + "/.cache/nirvana/" + _("Nirvana Desktop");   // the desktop as a window
+  if (path == bd) return _("Nirvana Desktop");
   std::string rd = home + "/.ramdisk";
   if (path == rd) return "Ram Disk";
   if (path.rfind(rd + "/", 0) == 0) return "Ram Disk" + path.substr(rd.size());
@@ -1910,7 +2080,7 @@ void Desktop::navigate(NWin *w, const std::string &target, Nav how) {
   WinState s;
   bool known_pos = spatial_.get(path, s);
   // the list is the default, the applications are big icons (like Preferences)
-  if (!known_pos) { s.list = !(path == apps_dir() || in_apps(path + "/")); s.icons = 32; }
+  if (!known_pos) { s.list = !(path == apps_dir() || in_apps(path + "/") || path == backdrop_dir()); s.icons = 32; }
   w->pane->view()->set_icon_size(s.icons);
   w->pane->set_mode(s.list ? FolderView::List : FolderView::Icons);
   w->pane->go(path);
@@ -2022,7 +2192,16 @@ void Desktop::go_location(NWin *w) {
   navigate(w, ps);
 }
 
-void Desktop::open_entry(const Entry &e, NWin *from) {
+void Desktop::open_entry(const Entry &e0, NWin *from) {
+  Entry e = e0;
+  // the "Nirvana Desktop" window holds links: the disk, Trash... open as themselves
+  if (e.path.rfind(backdrop_dir() + "/", 0) == 0) {
+    std::error_code ec;
+    if (fs::is_symlink(e.path, ec)) {
+      e.path = fs::read_symlink(e.path, ec).string();
+      if (e.dir) { open_folder(e.path, true, false); return; }
+    }
+  }
   if (e.dir) {
     // drawers: every folder opens its own window (Ctrl + double-click: in the same one); Rambler
     // Advanced: in the same window (Ctrl + double-click: a new one)
@@ -2468,7 +2647,7 @@ int Desktop::handle(int e) {
     tip_icon_ = -1;
     Fl_Tooltip::enter_area(this, 0, 0, 0, 0, nullptr);
   }
-  if (e == FL_PUSH && !dock_.empty() && Fl::event_x() < DOCK_TAB && Fl::event_y() >= h() - DOCK_TILE) {
+  if (e == FL_PUSH && !dock_.empty() && dock_grip_at(Fl::event_x(), Fl::event_y())) {
     toggle_dock();
     return 1;
   }

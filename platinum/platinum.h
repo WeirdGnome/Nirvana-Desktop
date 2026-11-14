@@ -62,6 +62,9 @@ struct DesktopSettings {
   bool dock_room = true;     // windows stay above the dock
   int dock_size = 32;        // dock icons: 24, 32, 48 or 64 px (the tile is 8 px larger)
   int screens = 4;           // virtual screens (1-9)
+  bool dock_floating = true; // the dock floats centered above the bottom edge (false: the strip at the bottom left)
+  int title_dclick = 0;      // a double click on a title bar: 0 iconify, 1 zoom, 2 shade, 3 depth (to front / back)
+  bool backdrop = true;      // the desktop is the backdrop (false: Rambler's desktop is a window of its own)
   // "Classic 16-bit" windows: close gadget at the left, zoom and depth gadgets at the right,
   // a size gadget in the corner; a click activates a window without raising it
   bool classic = false;

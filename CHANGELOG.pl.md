@@ -1,6 +1,18 @@
 # Lista zmian
 Wszystkie ważniejsze zmiany w Nirvana Desktop, od najnowszych. English: [CHANGELOG.md](CHANGELOG.md).
 
+## 0.0.72 – 2026-11-14
+
+Czwarty etap przebudowy: dok, tło pulpitu i paski tytułu.
+
+- **Pływający dok**, domyślnie:
+  - fazowana tacka pośrodku nad dolną krawędzią;
+  - uchwyt po lewej – klik zwija dok do uchwytu i rozwija go z powrotem;
+  - przegródki między grupami: folderami, kategoriami aplikacji i innymi programami lub plikami.
+  Dawny pasek w lewym rogu można przywrócić w *Preferencjach > Pulpit*.
+- **Tło pulpitu** (*Nirvana > Tło pulpitu*, `Win+B` albo *Preferencje > Pulpit*): po wyłączeniu ikony pulpitu przechodzą do zwykłego okna „Nirvana Desktop”. Kosz, dyski, Ram Disk i Nirvana HD mają w nim swoje obrazki i otwierają się jak z biurka. Na tle zostają tylko ikony zminimalizowanych okien i dok.
+- **Dwuklik na pasku tytułu** do wyboru w *Preferencjach > Pulpit*: ikonifikacja (domyślnie), powiększenie, zwinięcie albo głębia. Działa dla okien wszystkich programów, także w klasycznych oknach, gdzie wcześniej nie robił nic.
+
 ## 0.0.71 – 2026-11-14
 
 Trzeci etap przebudowy: wirtualne ekrany.

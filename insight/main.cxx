@@ -155,8 +155,10 @@ static bool here(const Client *c) { return c->sticky || c->screen == g_screen; }
 
 // Preferences > Desktop: "Classic 16-bit" windows and outline dragging (desktop.conf)
 static bool g_classic = false, g_outline = false;
+static int g_title_dclick = 0;
 static void read_window_mode() {
   DesktopSettings d = read_desktop();
+  g_title_dclick = d.title_dclick;
   g_classic = d.classic;
   g_outline = d.outline;
 }
@@ -449,8 +451,18 @@ public:
       if (c->bare) return 1;
       if (ey < TITLE_H) {
         if (int b = hit_button(ex, ey)) { drag_ = BTN; armed_ = pressed_ = b; redraw(); return 1; }
-        if (Fl::event_clicks() && !c->dialog && !classic_look(g_classic)) {
-          Fl::event_clicks(0); iconify_client(c); drag_ = NONE; return 1;
+        // a double click on the title bar: Preferences > Desktop - iconify (the default),
+        // zoom, shade or depth (to the front / to the back)
+        if (Fl::event_clicks() && !c->dialog) {
+          Fl::event_clicks(0);
+          drag_ = NONE;
+          switch (g_title_dclick) {
+          case 1: if (!c->fixed) toggle_zoom(); break;
+          case 2: toggle_shade(); break;
+          case 3: ::depth(c); break;
+          default: iconify_client(c); break;
+          }
+          return 1;
         }
         drag_ = MOVE;
       } else if (classic_look(g_classic) && !c->shaded && !c->dialog && !c->fixed) {

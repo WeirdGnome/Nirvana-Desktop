@@ -132,6 +132,9 @@ DesktopSettings read_desktop() {
   while (std::getline(in, line)) {
     if (line.rfind("icon_margin=", 0) == 0) d.icon_margin = line.substr(12) != "0";
     else if (line.rfind("dock_room=", 0) == 0) d.dock_room = line.substr(10) != "0";
+    else if (line.rfind("dock_floating=", 0) == 0) d.dock_floating = line.substr(14) != "0";
+    else if (line.rfind("title_dclick=", 0) == 0) d.title_dclick = std::clamp(atoi(line.substr(13).c_str()), 0, 3);
+    else if (line.rfind("backdrop=", 0) == 0) d.backdrop = line.substr(9) != "0";
     else if (line.rfind("screens=", 0) == 0) d.screens = std::clamp(atoi(line.substr(8).c_str()), 1, 9);
     else if (line.rfind("dock_size=", 0) == 0) {
       int v = atoi(line.substr(10).c_str());
@@ -153,7 +156,8 @@ bool write_desktop(const DesktopSettings &d) {
   mkdir(dir.c_str(), 0755);
   std::ofstream out(f);
   out << "# Nirvana Desktop - the desktop (Preferences > Desktop)\n"
-      << "icon_margin=" << d.icon_margin << "\ndock_room=" << d.dock_room << "\ndock_size=" << d.dock_size << "\nscreens=" << d.screens << "\n"
+      << "icon_margin=" << d.icon_margin << "\ndock_room=" << d.dock_room << "\ndock_size=" << d.dock_size << "\nscreens=" << d.screens << "\ndock_floating=" << d.dock_floating
+      << "\ntitle_dclick=" << d.title_dclick << "\nbackdrop=" << d.backdrop << "\n"
       << "classic_windows=" << d.classic << "\noutline_drag=" << d.outline << "\n"
       << "folder_windows=" << (d.folder_style == "explorer" ? "explorer" : "drawers") << "\n";
   return (bool)out;
