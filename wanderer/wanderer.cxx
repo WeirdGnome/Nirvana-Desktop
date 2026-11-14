@@ -18,6 +18,7 @@
 #include <FL/Fl.H>
 #include <FL/Fl_Menu_Item.H>
 #include <FL/fl_draw.H>
+#include <FL/platform.H>
 
 #include <algorithm>
 #include <cstring>
@@ -129,6 +130,18 @@ void Wanderer::start(bool backdrop) {
         apply_snapshot(root_);
     }
     root_->show();
+    if (backdrop) {
+        // the window manager puts a "desktop" window behind everything, below the screen's bar
+        Atom type = XInternAtom(fl_display, "_NET_WM_WINDOW_TYPE", False);
+        Atom desk = XInternAtom(fl_display, "_NET_WM_WINDOW_TYPE_DESKTOP", False);
+        ::Window xw = fl_xid(root_);
+        root_->hide();
+        root_->border(0);
+        root_->show();
+        xw = fl_xid(root_);
+        XChangeProperty(fl_display, xw, type, XA_ATOM, 32, PropModeReplace, (unsigned char *)&desk, 1);
+        (void)xw;
+    }
 }
 
 void Wanderer::setup(IconWindow *w) {
