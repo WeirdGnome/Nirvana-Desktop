@@ -131,7 +131,7 @@ enum MenuId {
     MEN_WINDOW_SORT_SIZE, MEN_WINDOW_SORT_TYPE, MEN_WINDOW_SORT_REVERSE, MEN_WINDOW_SORT_TOPDRAWERS,
     MEN_WINDOW_FIND, MEN_ICON_OPEN, MEN_ICON_RENAME, MEN_ICON_INFORMATION, MEN_ICON_SNAPSHOT,
     MEN_ICON_UNSNAPSHOT, MEN_ICON_DELETE, MEN_ICON_DISKINFO, MEN_WANDERER_PREFS,
-    MEN_ICON_LEAVEOUT, MEN_ICON_PUTAWAY, MEN_ICON_EMPTYTRASH, MEN_WANDERER_GUISETTINGS, MEN_ICON_EJECT, MEN_ICON_COPY, MEN_TOOLS_DRAWER, MEN_WANDERER_SHUTDOWN, MEN_WANDERER_ASSIGNS,
+    MEN_ICON_LEAVEOUT, MEN_ICON_PUTAWAY, MEN_ICON_EMPTYTRASH, MEN_WANDERER_GUISETTINGS, MEN_ICON_EJECT, MEN_ICON_COPY, MEN_TOOLS_DRAWER, MEN_WANDERER_SHUTDOWN, MEN_WANDERER_ASSIGNS, MEN_ICON_FORMAT,
     MEN_TOOL_FIRST = 1000
 };
 
@@ -399,12 +399,13 @@ std::vector<Fl_Menu_Item> Wanderer::menu_items(IconWindow *w) {
     IconList *l = w->iconlist();
     bool sel = !l->selection().empty();
     bool drawer = !w->is_root();
-    bool left_out_sel = false, trash_sel = w->location() == trash_dir(), volume_sel = false, eject_sel = false;
+    bool left_out_sel = false, trash_sel = w->location() == trash_dir(), volume_sel = false, eject_sel = false, format_sel = false;
     for (auto *e : l->selection()) {
         if (e->left_out) left_out_sel = true;
         if (e->trash) trash_sel = true;
         if (e->type == ST_ROOT) volume_sel = true;
         if (e->type == ST_ROOT && !e->device.empty() && !e->unmounted) eject_sel = true;
+        if (e->type == ST_ROOT && !e->device.empty()) format_sel = true;
     }
     int sf = l->sort_flags, df = l->display_flags;
     auto chk = [](bool on) { return FL_MENU_RADIO | (on ? FL_MENU_VALUE : 0); };
@@ -462,6 +463,7 @@ std::vector<Fl_Menu_Item> Wanderer::menu_items(IconWindow *w) {
             {"Delete...", 0, nullptr, (void *)MEN_ICON_DELETE, sel && drawer ? 0 : dis},
             {"Disk Info...", 0, nullptr, (void *)MEN_ICON_DISKINFO, volume_sel ? 0 : dis},
             {"Eject", FL_META + 'j', nullptr, (void *)MEN_ICON_EJECT, eject_sel ? 0 : dis},
+            {"Format...", 0, nullptr, (void *)MEN_ICON_FORMAT, format_sel ? 0 : dis},
             {"Empty Trash", 0, nullptr, (void *)MEN_ICON_EMPTYTRASH, trash_sel ? 0 : dis},
             {nullptr},
         {"Tools", 0, nullptr, nullptr, FL_SUBMENU},
@@ -760,6 +762,18 @@ void Wanderer::menu_action(IconWindow *w, int id) {
         file_operation(FileOpKind::Duplicate, paths, "", [this, w] { w->update(); apply_snapshot(w); });
         break;
     }
+    case MEN_ICON_FORMAT:
+        for (auto *e : l->selection())
+            if (e->type == ST_ROOT && !e->device.empty()) {
+                std::string label = e->label;
+                if (!label.empty() && label.back() == ':') label.pop_back();
+                // the volume's windows close first (they would keep it busy)
+                for (auto *o : std::vector<IconWindow *>(windows_))
+                    if (!e->unmounted && (o->location() == e->path || o->location().rfind(e->path + "/", 0) == 0)) close(o);
+                format_disk(e->device, label);
+                break;
+            }
+        break;
     case MEN_ICON_EJECT:
         for (auto *e : l->selection())
             if (e->type == ST_ROOT && !e->device.empty() && !e->unmounted) { eject(e->device); break; }

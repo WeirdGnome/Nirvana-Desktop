@@ -824,6 +824,81 @@ bool file_request(const std::string &title, std::string &path) {
 }
 
 // --------------------------------------------------------------------------------------------
+// Format (as the system's Format tool): a removable disk gets a new, empty file system - the
+// volume's name, the file system, Put Trashcan (its trash drawer made at once), Format (the
+// disk checked for bad blocks while it is made) / Quick Format / Cancel. The work is done as
+// root through polkit (pkexec); what it prints shows in an output window.
+void format_disk(const std::string &device, const std::string &label) {
+    // only removable disks: never the system's
+    bool removable = false;
+    for (auto &v : removable_volumes()) if (v.device == device) removable = true;
+    if (!removable) {
+        request("Format", trs("%s is not a removable disk - it is not formatted from here.", device), "OK");
+        return;
+    }
+    bool done = false;
+    int how = 0;   // 1 Format, 2 Quick Format
+    auto *root = VGroup();
+    auto *g = new Group(Group::Vertical, Frame_Group);
+    g->columns(2);
+    new Text("\033rDevice:");
+    new Text(device, Frame_Text);
+    new Text("\033rName:");
+    auto *name = new String(label.empty() ? "Empty" : label, 32);
+    new Text("\033rFile system:");
+    auto *fsys = new Cycle({"FAT32 (every system)", "exFAT (large files)", "ext4 (Linux)"}, 0);
+    new Text("\033rPut Trashcan:");
+    auto *trashcan = new Checkmark(true);
+    g->end();
+    auto *buttons = HGroup();
+    buttons->same_width(true);
+    auto *bf = new Button("Format");
+    auto *bq = new Button("Quick Format");
+    auto *bc = new Button("Cancel");
+    buttons->end();
+    root->end();
+    bf->on_press = [&] { how = 1; done = true; };
+    bq->on_press = [&] { how = 2; done = true; };
+    bc->on_press = [&] { done = true; };
+    auto *w = new Window(trs("Format %s", device), root);
+    w->size(std::max(w->w(), 380), w->h());
+    centre(w);
+    w->set_modal();
+    w->show();
+    while (!done && w->shown()) Fl::wait();
+    std::string vol = name->value();
+    int kind = fsys->active();
+    bool put_trash = trashcan->on();
+    w->hide();
+    Fl::delete_widget(w);
+    if (!how) return;
+    if (request("Format", trs("Everything on %s (%s) will be lost.\nFormat it?", device, label.empty() ? "?" : label),
+                "Format|Cancel") != 1)
+        return;
+    // the name as the file system allows it
+    std::string clean;
+    for (char c : vol) if (isalnum((unsigned char)c) || c == ' ' || c == '-' || c == '_') clean += c;
+    size_t maxlen = kind == 0 ? 11 : kind == 1 ? 15 : 16;
+    if (clean.size() > maxlen) clean.resize(maxlen);
+    if (kind == 0) for (auto &c : clean) c = (char)toupper((unsigned char)c);
+    if (clean.empty()) clean = "EMPTY";
+    std::string check = how == 1 ? (kind == 2 ? " -c" : kind == 0 ? " -c" : "") : "";
+    std::string mkfs = kind == 0 ? "mkfs.vfat -F 32" + check + " -n '" + clean + "'"
+                     : kind == 1 ? "mkfs.exfat -L '" + clean + "'"
+                                 : "mkfs.ext4 -F" + check + " -L '" + clean + "'";
+    std::string cmd =
+        "udisksctl unmount --no-user-interaction -b '" + device + "' >/dev/null 2>&1; "
+        "echo 'Formatting " + device + "...'; "
+        "pkexec sh -c \"wipefs -a '" + device + "' >/dev/null && " + mkfs + " '" + device + "'\" && "
+        "{ out=$(udisksctl mount --no-user-interaction -b '" + device + "' 2>&1); echo \"$out\"; " +
+        (put_trash ? "mnt=$(echo \"$out\" | sed -n 's/.* at \\(.*\\)\\.*$/\\1/p' | sed 's/\\.$//'); "
+                     "[ -n \"$mnt\" ] && mkdir -p \"$mnt/.Trash-$(id -u)\" 2>/dev/null; "
+                   : "") +
+        "echo 'Done.'; } || echo 'Formatting failed.'";
+    run_with_output(cmd, "/", trs("Format %s", device));
+}
+
+// --------------------------------------------------------------------------------------------
 // The assigns' editor: the list of names and their drawers; Add (a name and a drawer from the
 // file requester), Remove; Save writes ~/.config/wanderer/assigns
 void edit_assigns() {

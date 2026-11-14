@@ -29,6 +29,8 @@ void disk_info(const std::string &volume);                  // Tools/DiskInfo
 // the trash can (the freedesktop.org trash: files/ and info/*.trashinfo)
 bool move_to_trash(const std::string &path, std::string &error);
 void empty_trash();
+// Format: a removable disk gets a new file system (polkit / pkexec)
+void format_disk(const std::string &device, const std::string &label);
 // the assigns' editor (~/.config/wanderer/assigns)
 void edit_assigns();
 // Find: a pattern asked for; false - cancelled

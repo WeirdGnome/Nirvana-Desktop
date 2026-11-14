@@ -180,3 +180,15 @@ Choose the backdrop picture	Wybierz obraz tła pulpitu
 Choose the drawers' picture	Wybierz obraz tła szuflad
 Names of your own for drawers, usable in every volume path ("Docs:Listy")	Własne nazwy szuflad, do użycia w każdej ścieżce woluminu („Docs:Listy”)
 Enter command and its arguments:	Podaj polecenie i jego argumenty:
+Format...	Formatuj...
+Format	Formatuj
+Quick Format	Szybkie formatowanie
+Device:	Urządzenie:
+File system:	System plików:
+Put Trashcan:	Utwórz kosz:
+FAT32 (every system)	FAT32 (każdy system)
+exFAT (large files)	exFAT (duże pliki)
+ext4 (Linux)	ext4 (Linux)
+Format %s	Formatowanie %s
+Everything on %s (%s) will be lost.\nFormat it?	Wszystko na %s (%s) zostanie utracone.\nFormatować?
+%s is not a removable disk - it is not formatted from here.	%s nie jest dyskiem wymiennym - nie można go stąd formatować.
