@@ -836,11 +836,29 @@ int IconList::handle(int ev) {
         dragging_ = false;
         return 1;
     }
-    case FL_MOUSEWHEEL:
-        if ((display_flags & Disp_Vertical) && content_h_ <= mheight())
-            scroll_to(view_x_ + Fl::event_dy() * 30, view_y_);
-        else scroll_to(view_x_ + Fl::event_dx() * 30, view_y_ + Fl::event_dy() * 30);
+    case FL_MOUSEWHEEL: {
+        // DoWheelMove: the vertical wheel scrolls sideways when there is nothing to scroll
+        // down or with Alt; Ctrl goes to the edge, Shift a page, else 30 pixels a step
+        int wx = Fl::event_dx(), wy = Fl::event_dy();
+        if (wy && !wx && (content_h_ <= mheight() || Fl::event_state(FL_ALT))) { wx = wy; wy = 0; }
+        int nx = view_x_, ny = view_y_;
+        if (Fl::event_state(FL_CTRL)) {
+            if (wx < 0) nx = 0;
+            if (wx > 0) nx = content_w_;
+            if (wy < 0) ny = 0;
+            if (wy > 0) ny = content_h_;
+        } else if (Fl::event_state(FL_SHIFT)) {
+            nx += wx * mwidth();
+            ny += wy * mheight();
+        } else {
+            nx += wx * 30;
+            ny += wy * 30;
+        }
+        nx = std::max(0, std::min(nx, content_w_ - mwidth()));
+        ny = std::max(0, std::min(ny, content_h_ - mheight()));
+        scroll_to(nx, ny);
         return 1;
+    }
     case FL_KEYBOARD: {
         int k = Fl::event_key();
         if (k == FL_Enter || k == FL_KP_Enter) {
