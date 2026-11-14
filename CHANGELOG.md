@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.6.3 – 2026-11-14
+
+- **Find by contents**: besides a name pattern, a text the files must contain (no case,
+  files up to 64 MB). An empty name with a text finds every file that contains it.
+- **List view**: a click on a column's header sorts by Name, Size or Date. A second click
+  turns the order round, and the sorted column shows an arrow.
+
 ## 0.6.2 – 2026-11-14
 
 - **Drawer windows follow the disk** (inotify): files and drawers that are made,

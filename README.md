@@ -13,12 +13,12 @@ Parts of the port:
 * **window manager** (`wm`, later) – what Intuition does on AROS: window frames and
   gadgets, screens, screen dragging.
 
-Version: **0.6.2**
+Version: **0.6.3**
 
 ## Installing
 
 ```sh
-tar xzf wanderer-x11-0.6.2.tar.gz
+tar xzf wanderer-x11-0.6.3.tar.gz
 cd wanderer-x11
 ./install.sh
 ```

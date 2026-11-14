@@ -1,5 +1,13 @@
 # Lista zmian
 
+## 0.6.3 – 2026-11-14
+
+- **Find po zawartości**: oprócz wzorca nazwy można podać tekst, który pliki muszą
+  zawierać (bez rozróżniania wielkości liter, pliki do 64 MB). Pusta nazwa z tekstem
+  znajduje wszystkie pliki, które go zawierają.
+- **Widok listy**: kliknięcie nagłówka kolumny sortuje według nazwy, rozmiaru albo daty.
+  Drugie kliknięcie odwraca kolejność, a posortowana kolumna ma strzałkę.
+
 ## 0.6.2 – 2026-11-14
 
 - **Okna szuflad nadążają za dyskiem** (inotify): pliki i szuflady utworzone, usunięte,
