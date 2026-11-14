@@ -755,6 +755,31 @@ int List::handle(int e) {
 }
 
 // ============================================================================================
+// Gauge
+// ============================================================================================
+Gauge::Gauge() : Area(Frame_Gauge) {
+    background(MPEN_BACKGROUND);
+    inner(1, 1, 1, 1);
+}
+
+void Gauge::ask_min_max(int &minw, int &minh, int &defw, int &defh, int &maxw, int &maxh) {
+    minw = 60; defw = 260; maxw = MAXMAX;
+    minh = defh = maxh = prefs().font_size + 6;
+}
+
+void Gauge::draw_contents() {
+    const Pens &p = pens();
+    int fw = (int)((long double)mwidth() * std::clamp(cur_, 0LL, max_) / max_);
+    fl_color(p[MPEN_FILL]);
+    fl_rectf(mleft(), mtop(), fw, mheight());
+    if (!info_.empty()) {
+        fl_font(prefs().font, prefs().font_size);
+        fl_color(p[MPEN_TEXT]);
+        fl_draw(info_.c_str(), mleft(), mtop(), mwidth(), mheight(), FL_ALIGN_CENTER);
+    }
+}
+
+// ============================================================================================
 // ImageButton
 // ============================================================================================
 ImageButton::ImageButton(int w, int h, std::function<void(int, int, int, int, bool)> image)

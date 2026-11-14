@@ -15,6 +15,7 @@
 #include "iconwindow.h"
 #include "tools.h"
 #include "prefs.h"
+#include "fileops.h"
 #include "guisettings.h"
 
 #include <FL/Fl.H>
@@ -280,39 +281,22 @@ void Wanderer::drop(IconWindow *from, std::vector<IconEntry *> &entries, IconEnt
             dest = onto && onto->is_drawer() ? onto->path : to->location();
         }
     }
-    if (dest == trash_dir()) {
-        std::vector<std::string> sources;
-        for (auto *e : entries) if (!e->trash && e->type != ST_ROOT) sources.push_back(e->path);
-        for (auto &src : sources) {
-            std::string err;
-            if (!move_to_trash(src, err)) request("Wanderer", "Could not move '" + fs::path(src).filename().string() + "' to the trash:\n" + err, "OK");
-        }
-        from->update();
-        update_all(trash_dir());
-        return;
-    }
-    struct stat sd, ss;
-    if (stat(dest.c_str(), &sd) != 0) return;
     std::vector<std::string> sources;
-    for (auto *e : entries) sources.push_back(e->path);
+    for (auto *e : entries) if (!e->trash && e->type != ST_ROOT) sources.push_back(e->path);
+    from->iconlist()->rethink();
+    auto refresh = [this, dest] { update_all(dest); for (auto *w : windows_) w->update(); if (root_) root_->update(); };
+    if (dest == trash_dir()) { file_operation(FileOpKind::Trash, sources, dest, refresh); return; }
+    struct stat sd;
+    if (stat(dest.c_str(), &sd) != 0) return;
+    // Wanderer's rule: within one volume the icons move, onto another volume they are copied
+    std::vector<std::string> move, copy;
     for (auto &src : sources) {
+        struct stat ss;
         if (stat(src.c_str(), &ss) != 0) continue;
-        fs::path to = fs::path(dest) / fs::path(src).filename();
-        if (fs::path(src).parent_path() == fs::path(dest) || to == fs::path(src)) continue;
-        std::error_code ec;
-        if (fs::exists(to, ec)) {
-            if (request("Wanderer", "'" + to.filename().string() + "' already exists in the destination.\nReplace it?",
-                        "Replace|Skip") != 1)
-                continue;
-            fs::remove_all(to, ec);
-        }
-        if (ss.st_dev == sd.st_dev) fs::rename(src, to, ec);
-        else fs::copy(src, to, fs::copy_options::recursive | fs::copy_options::copy_symlinks, ec);
-        if (ec) request("Wanderer", "Could not " + std::string(ss.st_dev == sd.st_dev ? "move" : "copy") + " '" +
-                                        fs::path(src).filename().string() + "':\n" + ec.message(), "OK");
+        (ss.st_dev == sd.st_dev ? move : copy).push_back(src);
     }
-    from->update();
-    update_all(dest);
+    if (!move.empty()) file_operation(FileOpKind::Move, move, dest, refresh);
+    if (!copy.empty()) file_operation(FileOpKind::Copy, copy, dest, refresh);
 }
 
 // --------------------------------------------------------------------------------------------
@@ -581,18 +565,13 @@ void Wanderer::menu_action(IconWindow *w, int id) {
         int r = request("Delete", "Delete " + what + "?\nMove to Trash keeps them until the trash is emptied;\n"
                         "Delete removes them for good.", "Move to Trash|Delete|Cancel");
         if (r == 1 || r == 2) {
-            for (auto *e : sel) {
-                std::error_code ec;
-                std::string err;
-                if (r == 1 && w->location() != trash_dir()) {
-                    if (!move_to_trash(e->path, err)) request("Delete", "Could not move '" + e->label + "' to the trash:\n" + err, "OK");
-                } else {
-                    fs::remove_all(e->path, ec);
-                    if (ec) request("Delete", "Could not delete '" + e->label + "':\n" + ec.message(), "OK");
-                }
-            }
-            w->update();
-            update_all(trash_dir());
+            std::vector<std::string> paths;
+            for (auto *e : sel) paths.push_back(e->path);
+            bool trash = r == 1 && w->location() != trash_dir();
+            file_operation(trash ? FileOpKind::Trash : FileOpKind::Delete, paths, "", [this, w] {
+                for (auto *o : windows_) o->update();
+                if (root_) root_->update();
+            });
         }
         break;
     }

@@ -267,6 +267,20 @@ protected:
     class Prop *prop_ = nullptr;
 };
 
+// Gauge: a bar filled in the fill pen to the current value, a text in its middle
+class Gauge : public Area {
+public:
+    Gauge();
+    void set(long long current, long long max) { cur_ = current; max_ = max > 0 ? max : 1; redraw(); }
+    void info(const std::string &t) { info_ = t; redraw(); }
+    void ask_min_max(int &minw, int &minh, int &defw, int &defh, int &maxw, int &maxh) override;
+
+protected:
+    void draw_contents() override;
+    long long cur_ = 0, max_ = 1;
+    std::string info_;
+};
+
 // ImageButton: a button showing a picture drawn by a function (the theme's gadget images)
 class ImageButton : public Area {
 public:
