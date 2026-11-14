@@ -103,7 +103,7 @@ struct Appearance {                 // ~/.config/nirvana/wyglad.conf
   std::string gradient = "vertical"; // vertical, horizontal, diagonal, radial
   std::string pattern = "bricks";    // see PATTERNS
   bool animations = true;
-  std::string icons = "platinum";   // icon style: retro or platinum
+  std::string icons = "3d";   // icon style: 3d (Nirvana 3D, glossy, two states), retro or platinum
   std::string wallpaper;            // wallpaper file; empty = just the pattern
   std::string wallpaper_mode = "fill";   // see WALLPAPER_MODES
   int scale = 0;                    // interface scale in percent; 0 = automatic (Xft.dpi)
@@ -219,7 +219,16 @@ enum class Icon { Folder, OpenFolder, Document, Application, Home, Trash, TrashF
 void draw_category_emblem(int category, int x, int y, bool selected, int style);
 void draw_icon(Icon icon, int x, int y, bool selected);   // in the style from the appearance settings
 bool draw_icon_retro(Icon icon, int x, int y, bool selected);
-int icon_style();   // 0 = Retro, 1 = Platinum (key for the icon caches)
+int icon_style();   // 0 = Retro, 1 = Platinum, 2 = Nirvana 3D (key for the icon caches)
+// Nirvana 3D: the two states of an icon (NirvanaIconAtlas): normal and selected RGBA pictures,
+// from a sprite sheet / a pair of PNG files or Nirvana's own drawing, the selected one made
+// from the normal one when there is none (pressed, brighter, a golden glow). Kept for ever.
+struct IconStates { Fl_RGB_Image *normal = nullptr, *selected = nullptr; };
+const IconStates &icon_states(Icon icon, int size);
+bool draw_icon_3d(Icon icon, int x, int y, bool selected);
+const char *icon_name(Icon icon);   // "drawer", "harddisk"... (the PNG files that replace the drawings)
+// The selected state made from a normal picture (an AppImage's icon...): a new RGBA picture
+Fl_RGB_Image *synthesize_selected(const Fl_RGB_Image *normal);
 // The logo in one color: black on a light background, light on a dark one (bg - what it sits on)
 void draw_logo(int x, int y, int size, Fl_Color bg = GRAY);
 Fl_RGB_Image *logo_image(int size, Fl_Color bg = GRAY);   // with transparency, a copy (the caller deletes it)
@@ -236,6 +245,10 @@ Fl_RGB_Image *icon_image(Icon icon, int size);
 
 // Small network icons (menu bar, lists). on - color of the lit elements,
 // off - of the dimmed ones.
+// Nirvana 3D: the menu bar glyphs in color (glossy_glyphs()); glyph_color(rgb, c) sets the
+// color rgb - grayed when c is a dimmed color (not the text one)
+bool glossy_glyphs();
+void glyph_color(unsigned rgb, Fl_Color c);
 void draw_wifi(int x, int y, int level /*0-4, -1: off*/, Fl_Color on, Fl_Color off);   // 16x13
 void draw_wired(int x, int y, Fl_Color c);                       // 16x13
 void draw_signal(int x, int y, int level /*0-4*/, Fl_Color on, Fl_Color off);   // 13x10

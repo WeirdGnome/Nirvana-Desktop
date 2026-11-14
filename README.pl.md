@@ -40,7 +40,7 @@ Co się zmieniło w każdej wersji: [CHANGELOG.pl.md](CHANGELOG.pl.md).
 
 Rozpakuj źródła i uruchom instalator:
 
-    tar xzf nirvana-desktop-0.0.69.tar.gz && cd nirvana-desktop
+    tar xzf nirvana-desktop-0.0.70.tar.gz && cd nirvana-desktop
     sudo ./install.sh                 # albo: sudo ./install.sh --login-screen
 
 Instalator:
@@ -188,7 +188,7 @@ Inną czcionkę systemową (np. wolną, w stylu bitmapowym) można podać przez 
 - **Gdzie są aplikacje**: w folderze `~/Aplikacje` na Nirvana HD (nazwa w języku pierwszego
   uruchomienia, zapamiętana w `~/.config/nirvana/apps-folder`), z folderami kategorii; programy
   są dużymi ikonami, jak w oknie Preferencji (lista – `Ctrl+2`). Ukryty `~/.nirvana-apps`
-  z wersji 0.0.38–0.0.69 jest tam przenoszony przy pierwszym uruchomieniu, razem z wpisami doku
+  z wersji 0.0.38–0.0.70 jest tam przenoszony przy pierwszym uruchomieniu, razem z wpisami doku
   i zapamiętanymi oknami. Prawy przycisk na aplikacji i **Połóż na doku**
   trzyma ją pod ręką; prawy przycisk na kafelku doku daje **Otwórz** i **Odepnij z doku**.
 - **Instalacja**: otwarcie AppImage spoza folderu Aplikacje (np. z Pobranych) pyta, czy
@@ -610,8 +610,25 @@ przestawia cały system: Rambler i Insight przeładowują paletę bez restartu.
   - Pod przezroczystymi fragmentami PNG widać wzór biurka.
   - W Ramblerze: zaznacz obraz i wybierz **Ikony → Ustaw jako tapetę**.
   - Własne tapety można dodać do `~/.local/share/nirvana/wallpapers`.
-- **Styl ikon**: *Retro* albo *Platinum*. Zmiana działa
+- **Styl ikon**: *Nirvana 3D* (domyślny), *Retro* albo *Platinum*. Zmiana działa
   od razu, także w otwartych oknach i na doku.
+  - Nirvana 3D: błyszczące ikony 3D z pikseli w jednym języku – lekki widok izometryczny,
+    ostry czarny obrys, białe odblaski, nasycone kolory: bursztynowe szuflady (Preferencje
+    z zębatką i suwakiem), srebrna jednostka z diodami (Nirvana HD, dyski), zielony moduł
+    pamięci (Ram Disk), błyszcząca dyskietka, żłobiony metalowy Kosz (pusty i pełny),
+    kartridż dla programów, okno powłoki z `1>` i świecącym kursorem, skrzynka modemu (sieć).
+    Aplety paska menu też są kolorowe (głośnik studyjny, ciężkie ogniwo baterii, złota
+    wtyczka, niebieskie łuki Wi-Fi, plakietka Bluetooth, złoty dzwonek, paczka aktualizacji,
+    drukarka).
+  - **Dwa stany**: każda ikona ma obraz zwykły i zaznaczony. Zaznaczony jest wciśnięty (1 px
+    w dół i w prawo), jaśniejszy i ma ciepłą złotą poświatę – także dla obrazków AppImage.
+    Własne obrazki zastępują rysunki: w `~/.local/share/nirvana/icons` (albo
+    `share/nirvana/icons`) wystarczy `<nazwa>.png` – arkusz dwa razy szerszy niż wysoki (lewa
+    połowa zwykła, prawa zaznaczona) albo pojedynczy obrazek (stan zaznaczony powstaje z niego)
+    – albo para `<nazwa>_normal.png` + `<nazwa>_selected.png`. Nazwy: `drawer`, `drawer-open`,
+    `document`, `tool`, `nirvana-hd`, `harddisk`, `removable`, `optical`, `encrypted`,
+    `eject`, `network`, `wifi`, `prefs`, `applications`, `shell`, `ramdisk`, `trashcan`,
+    `trashcan-full`, `picture`, `sound`, `cat-games` … `cat-other`.
   - Retro: własne rysunki w stylu komputerów domowych z początku lat 90., w palecie szarości,
     granatu i beżu z czarnymi obrysami.
   - Foldery to szuflady, a dokumenty to „projekty” z zagiętym rogiem. Programy wyglądają

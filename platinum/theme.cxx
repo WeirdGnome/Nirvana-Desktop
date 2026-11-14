@@ -281,7 +281,9 @@ Appearance read_appearance() {
       for (int i = 0; PATTERNS[i]; i++) if (v == PATTERNS[i]) a.pattern = v;
     } else if (k == "animations") a.animations = !(v == "0" || v == "no");
     else if (k == "wallpaper") a.wallpaper = v;
-    else if (k == "icons") a.icons = v == "platinum" ? "platinum" : "retro";   // "workbench" was the old name
+    // icon_style= (0.0.70, with the Nirvana 3D icons as the default); the older icons= is not
+    // read any more, so everybody gets the new icons once and may choose again
+    else if (k == "icon_style") a.icons = v == "platinum" ? "platinum" : v == "retro" ? "retro" : "3d";
     else if (k == "background") {
       for (int i = 0; BACKGROUNDS[i]; i++) if (v == BACKGROUNDS[i]) a.background = v;
     } else if (k == "desktop_color2") a.desk2 = parse_color(v, c) ? (int)c : -1;
@@ -318,7 +320,7 @@ bool write_appearance(const Appearance &a) {
         << "desktop_color2=" << (a.desk2 < 0 ? "" : color_str((unsigned)a.desk2)) << "\n"
         << "gradient=" << a.gradient << "\n"
         << "animations=" << (a.animations ? 1 : 0) << "\n"
-        << "icons=" << a.icons << "\n"
+        << "icon_style=" << a.icons << "\n"
         << "wallpaper=" << a.wallpaper << "\n"
         << "wallpaper_layout=" << a.wallpaper_mode << "\n"
         << "scale=" << a.scale << "\n"

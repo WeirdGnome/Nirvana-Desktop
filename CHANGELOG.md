@@ -1,6 +1,23 @@
 # Changelog
 All notable changes to Nirvana Desktop, newest first. Polish: [CHANGELOG.pl.md](CHANGELOG.pl.md).
 
+## 0.0.70 – 2026-11-14
+
+The second stage of the rework: the icons.
+
+- **A new icon style, *Nirvana 3D***, the default for everybody (once also for existing settings). *Retro* and *Platinum* stay in *Appearance*. Every system icon is redrawn in one glossy 3D pixel style:
+  - drawers, also one with a gear for Preferences;
+  - a system unit with LEDs for Nirvana HD and disks;
+  - a memory module for the Ram Disk;
+  - a diskette, a disc, an empty and a full Trash;
+  - a cartridge for programs, a shell window, a modem and category folders.
+- **Two states for every icon** (normal and selected). The selected state comes:
+  - from a PNG sprite sheet (left half normal, right half selected);
+  - from a `_normal`/`_selected` pair;
+  - or is made by itself: the picture pressed by a pixel, brighter and with a golden glow. The same applies to the icons of AppImages.
+- The icons can be replaced with your own files in `~/.local/share/nirvana/icons`.
+- **Colored menu bar applets** in the Nirvana 3D style: clipboard, updates, power, sound, network, Bluetooth, notifications and printers. Dimmed when inactive.
+
 ## 0.0.69 – 2026-11-14
 
 The first stage of the rework in the style of the classic spatial desktop.

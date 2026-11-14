@@ -443,10 +443,10 @@ int panel_appearance() {
   });
 
   g_icons = new Fl_Choice(400, 428, 185, 22, _("Icon style:"));
-  g_icons->add(_("Retro|Platinum"));
-  g_icons->value(g_cur.icons == "platinum" ? 1 : 0);
+  g_icons->add(_("Nirvana 3D|Retro|Platinum"));
+  g_icons->value(g_cur.icons == "platinum" ? 2 : g_cur.icons == "retro" ? 1 : 0);
   g_icons->callback([](Fl_Widget *, void *) {
-    g_cur.icons = g_icons->value() == 1 ? "platinum" : "retro";
+    g_cur.icons = g_icons->value() == 2 ? "platinum" : g_icons->value() == 1 ? "retro" : "3d";
     preview();
   });
 

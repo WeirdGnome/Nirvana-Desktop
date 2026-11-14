@@ -1,6 +1,23 @@
 # Lista zmian
 Wszystkie ważniejsze zmiany w Nirvana Desktop, od najnowszych. English: [CHANGELOG.md](CHANGELOG.md).
 
+## 0.0.70 – 2026-11-14
+
+Drugi etap przebudowy: ikony.
+
+- **Nowy styl ikon *Nirvana 3D***, domyślny dla wszystkich (jednorazowo również dla dotychczasowych ustawień). Wybór *Retro* i *Platinum* został w *Wyglądzie*. Wszystkie ikony systemu są narysowane od nowa w jednym, błyszczącym stylu 3D z pikseli:
+  - szuflady, także z zębatką dla Preferencji;
+  - jednostka z diodami dla Nirvana HD i dysków;
+  - moduł pamięci dla Ram Disku;
+  - dyskietka, płyta, kosz pusty i pełny;
+  - kartridż dla programów, okno powłoki, modem i foldery kategorii.
+- **Dwa stany każdej ikony** (zwykły i zaznaczony). Stan zaznaczony bierze się:
+  - z arkusza PNG (lewa połowa zwykła, prawa zaznaczona);
+  - z pary plików `_normal`/`_selected`;
+  - albo powstaje sam: obraz wciśnięty o piksel, rozjaśniony i ze złotą poświatą. Tak samo działa to dla ikon z AppImage.
+- Ikony da się podmienić własnymi plikami w `~/.local/share/nirvana/icons`.
+- **Kolorowe aplety paska menu** w stylu Nirvana 3D: schowek, aktualizacje, zasilanie, dźwięk, sieć, Bluetooth, powiadomienia i drukarki. Przyciemnione, gdy nieaktywne.
+
 ## 0.0.69 – 2026-11-14
 
 Pierwszy etap przebudowy w stylu klasycznego pulpitu przestrzennego.

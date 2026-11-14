@@ -545,9 +545,60 @@ static void wifi_icon(int x, int y, bool sel) {
   fl_pie(x + 13, y + 23, 6, 6, 0, 360);
 }
 
+// Nirvana 3D icons: the small glyphs of the menu bar (sound, power, network, Bluetooth...)
+// are drawn in color, glossy, with a black outline - c only says whether the glyph is dimmed
+// (neither the text color nor the selected text color) or not
+static bool glossy() { return icon_style() == 2; }
+static const unsigned K3 = 0x000000;
+bool glossy_glyphs() { return glossy(); }
+static bool dimmed(Fl_Color c) {
+  uchar r, g, b, r1, g1, b1, r2, g2, b2;
+  Fl::get_color(c, r, g, b);
+  Fl::get_color(TEXT, r1, g1, b1);
+  Fl::get_color(SEL_TEXT, r2, g2, b2);
+  return !((r == r1 && g == g1 && b == b1) || (r == r2 && g == g2 && b == b2) || (r == 255 && g == 255 && b == 255) ||
+           (r == 0 && g == 0 && b == 0));
+}
+static void gc(unsigned v, bool dim) {
+  Fl_Color k = fl_rgb_color((uchar)(v >> 16), (uchar)(v >> 8), (uchar)v);
+  if (dim) {
+    uchar r, g, b;
+    Fl::get_color(k, r, g, b);
+    uchar l = (uchar)((r * 3 + g * 6 + b) / 10);
+    k = fl_color_average(fl_rgb_color(l, l, l), GRAY, 0.6f);
+  }
+  fl_color(k);
+}
+void glyph_color(unsigned rgb, Fl_Color c) { gc(rgb, dimmed(c)); }
+
 void draw_wifi(int x, int y, int level, Fl_Color on, Fl_Color off) {
   // a dot and three arcs spreading upwards (16x13)
   int cx = x + 8, by = y + 12;
+  if (glossy()) {
+    bool dim = dimmed(on) && level >= 0 && on == off;
+    gc(level >= 1 ? 0x30C050 : 0x9A9A9A, dim);
+    fl_pie(cx - 1, by - 2, 3, 3, 0, 360);
+    for (int i = 1; i <= 3; i++) {   // lit arcs blue with a light inner edge, dark ones gray
+      int r = i * 4;
+      bool lit = level >= i + 1;
+      gc(lit ? 0x1E6AD8 : 0x9A9A9A, dim);
+      fl_line_style(FL_SOLID, 2);
+      fl_arc(cx - r, by - r, 2 * r + 1, 2 * r + 1, 45, 135);
+      if (lit) {
+        gc(0x8CC4FF, dim);
+        fl_line_style(FL_SOLID, 1);
+        fl_arc(cx - r + 1, by - r + 1, 2 * r - 1, 2 * r - 1, 60, 120);
+      }
+    }
+    fl_line_style(0);
+    if (level < 0) {
+      gc(0xE02828, false);
+      fl_line_style(FL_SOLID, 2);
+      fl_line(x + 2, y + 1, x + 14, y + 12);
+      fl_line_style(0);
+    }
+    return;
+  }
   fl_color(level >= 1 ? on : off);
   fl_pie(cx - 1, by - 2, 3, 3, 0, 360);
   fl_line_style(FL_SOLID, 2);
@@ -567,6 +618,23 @@ void draw_wifi(int x, int y, int level, Fl_Color on, Fl_Color off) {
 
 void draw_wired(int x, int y, Fl_Color c) {
   // three connected squares - the classic network symbol
+  if (glossy()) {
+    bool dim = dimmed(c);
+    gc(K3, false);
+    fl_xyline(x + 3, y + 6, x + 13);
+    fl_yxline(x + 8, y + 5, y + 6);
+    fl_yxline(x + 3, y + 6, y + 8);
+    fl_yxline(x + 13, y + 6, y + 8);
+    for (auto [bx, by] : {std::pair{5, 0}, {0, 8}, {10, 8}}) {
+      gc(bx == 5 ? 0x3A9CFF : 0x30C060, dim);
+      fl_rectf(x + bx, y + by, 6, 5);
+      gc(0xFFFFFF, false);
+      fl_xyline(x + bx + 1, y + by + 1, x + bx + 3);
+      gc(K3, false);
+      fl_rect(x + bx, y + by, 6, 5);
+    }
+    return;
+  }
   fl_color(c);
   fl_rectf(x + 5, y, 6, 5);
   fl_rectf(x, y + 8, 6, 5);
@@ -589,6 +657,31 @@ void draw_speaker(int x, int y, int level, bool muted, Fl_Color c, double sc) {
   fl_push_matrix();
   fl_translate(x, y);
   fl_scale(sc);
+  if (glossy()) {   // a studio speaker: a silver cabinet, a dark cone, green waves
+    bool dim = dimmed(c);
+    gc(0xC8CCD4, dim);
+    fl_begin_polygon(); fl_vertex(0, 4); fl_vertex(3, 4); fl_vertex(7, 0.5); fl_vertex(7, 12.5); fl_vertex(3, 9); fl_vertex(0, 9); fl_end_polygon();
+    gc(0x404650, dim);
+    fl_begin_polygon(); fl_vertex(3, 5); fl_vertex(6, 2.5); fl_vertex(6, 10.5); fl_vertex(3, 8); fl_end_polygon();
+    gc(K3, false);
+    fl_begin_loop(); fl_vertex(0, 4); fl_vertex(3, 4); fl_vertex(7, 0.5); fl_vertex(7, 12.5); fl_vertex(3, 9); fl_vertex(0, 9); fl_end_loop();
+    gc(0xFFFFFF, false);
+    fl_begin_line(); fl_vertex(1, 5); fl_vertex(2, 5); fl_end_line();
+    fl_line_style(FL_SOLID, std::max(1, (int)(1.5 * sc + 0.5)));
+    if (muted) {
+      gc(0xE02828, false);
+      fl_begin_line(); fl_vertex(9.5, 4); fl_vertex(14.5, 9); fl_end_line();
+      fl_begin_line(); fl_vertex(14.5, 4); fl_vertex(9.5, 9); fl_end_line();
+    } else {
+      for (int i = 1; i <= level && i <= 3; i++) {
+        gc(i == 3 ? 0xFFC030 : 0x30C050, dim);
+        fl_begin_line(); fl_arc(7.5, 6.5, 2.5 * i, -50, 50); fl_end_line();
+      }
+    }
+    fl_line_style(0);
+    fl_pop_matrix();
+    return;
+  }
   fl_color(c);
   // body and cone
   fl_begin_polygon();
@@ -614,6 +707,32 @@ void draw_battery(int x, int y, int pct, bool charging, Fl_Color c, double sc) {
   fl_push_matrix();
   fl_translate(x, y);
   fl_scale(sc);
+  if (glossy()) {   // a heavy cell: a gold cap, the level green / amber / red, a white shine
+    bool dim = dimmed(c);
+    gc(0xE8EAEE, dim);
+    fl_begin_polygon(); fl_vertex(0.5, 0.5); fl_vertex(19.5, 0.5); fl_vertex(19.5, 10.5); fl_vertex(0.5, 10.5); fl_end_polygon();
+    gc(0xF2C232, dim);
+    fl_begin_polygon(); fl_vertex(20, 3); fl_vertex(22, 3); fl_vertex(22, 8); fl_vertex(20, 8); fl_end_polygon();
+    int p = std::clamp(pct, 0, 100);
+    double fw = 17.0 * p / 100.0;
+    if (fw > 0) {
+      gc(p <= 15 && !charging ? 0xE02828 : p <= 40 ? 0xF0A020 : 0x30C050, dim);
+      fl_begin_polygon(); fl_vertex(2, 2); fl_vertex(2 + fw, 2); fl_vertex(2 + fw, 9); fl_vertex(2, 9); fl_end_polygon();
+      gc(0xFFFFFF, false);
+      fl_begin_line(); fl_vertex(2.5, 3); fl_vertex(1.5 + fw, 3); fl_end_line();
+    }
+    gc(K3, false);
+    fl_begin_loop(); fl_vertex(0.5, 0.5); fl_vertex(19.5, 0.5); fl_vertex(19.5, 10.5); fl_vertex(0.5, 10.5); fl_end_loop();
+    fl_begin_loop(); fl_vertex(19.5, 2.5); fl_vertex(22, 2.5); fl_vertex(22, 8.5); fl_vertex(19.5, 8.5); fl_end_loop();
+    if (charging) {
+      gc(0xFFE040, false);
+      fl_begin_polygon(); fl_vertex(11, 1); fl_vertex(6.5, 6); fl_vertex(9.5, 6); fl_vertex(8, 10); fl_vertex(13, 4.5); fl_vertex(10, 4.5); fl_end_polygon();
+      gc(K3, false);
+      fl_begin_loop(); fl_vertex(11, 1); fl_vertex(6.5, 6); fl_vertex(9.5, 6); fl_vertex(8, 10); fl_vertex(13, 4.5); fl_vertex(10, 4.5); fl_end_loop();
+    }
+    fl_pop_matrix();
+    return;
+  }
   fl_color(c);
   fl_begin_loop(); fl_vertex(0.5, 0.5); fl_vertex(19.5, 0.5); fl_vertex(19.5, 10.5); fl_vertex(0.5, 10.5); fl_end_loop();
   fl_begin_polygon(); fl_vertex(20, 3); fl_vertex(22, 3); fl_vertex(22, 8); fl_vertex(20, 8); fl_end_polygon();
@@ -632,6 +751,19 @@ void draw_battery(int x, int y, int pct, bool charging, Fl_Color c, double sc) {
 }
 
 void draw_plug(int x, int y, Fl_Color c) {
+  if (glossy()) {   // a power supply plug: gold prongs, a dark glossy body
+    bool dim = dimmed(c);
+    gc(0xF2C232, dim);
+    fl_rectf(x + 3, y, 2, 4); fl_rectf(x + 9, y, 2, 4);
+    gc(0x3A3F4A, dim);
+    fl_rectf(x + 1, y + 4, 12, 4); fl_rectf(x + 3, y + 8, 8, 2);
+    gc(0x30C050, dim); fl_rectf(x + 10, y + 5, 2, 2);   // the lamp
+    gc(0x9098A8, dim); fl_xyline(x + 2, y + 5, x + 8);
+    gc(K3, false);
+    fl_rect(x + 1, y + 4, 12, 4);
+    fl_rectf(x + 6, y + 10, 2, 3);
+    return;
+  }
   fl_color(c);
   fl_rectf(x + 3, y, 2, 4);
   fl_rectf(x + 9, y, 2, 4);
@@ -665,6 +797,22 @@ void draw_display(int x, int y, Fl_Color c) {
 
 void draw_bluetooth(int x, int y, Fl_Color c) {
   // the bind rune drawn with lines: a stem and two arrow heads on the right
+  if (glossy()) {   // white on a blue rounded badge
+    bool dim = dimmed(c);
+    gc(0x1E64D8, dim);
+    fl_rectf(x - 1, y, 12, 13);
+    gc(0x5A96F0, dim); fl_xyline(x, y + 1, x + 9);
+    gc(K3, false);
+    fl_rect(x - 2, y - 1, 14, 15);
+    gc(0xFFFFFF, false);
+    fl_yxline(x + 4, y + 1, y + 11);
+    fl_yxline(x + 5, y + 1, y + 11);
+    fl_line(x + 5, y + 1, x + 8, y + 4);
+    fl_line(x + 8, y + 4, x + 2, y + 9);
+    fl_line(x + 5, y + 11, x + 8, y + 8);
+    fl_line(x + 8, y + 8, x + 2, y + 3);
+    return;
+  }
   fl_color(c);
   fl_line_style(FL_SOLID, 1);
   fl_yxline(x + 4, y, y + 12);
@@ -922,9 +1070,13 @@ void draw_category_emblem(int cat, int x, int y, bool sel, int style) {
   }
 }
 
-int icon_style() { return current_appearance().icons == "platinum" ? 1 : 0; }
+int icon_style() {
+  const std::string &s = current_appearance().icons;
+  return s == "platinum" ? 1 : s == "retro" ? 0 : 2;
+}
 
 void draw_icon(Icon icon, int x, int y, bool sel) {
+  if (icon_style() == 2 && draw_icon_3d(icon, x, y, sel)) return;
   if (icon_style() == 0 && draw_icon_retro(icon, x, y, sel)) return;
   switch (icon) {
   case Icon::Folder:      folder(x, y, sel, false); break;

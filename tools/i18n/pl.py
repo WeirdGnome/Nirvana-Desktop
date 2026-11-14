@@ -601,6 +601,8 @@ T = {
     'Licence': 'Licencja',
     'Acknowledgements': 'Podziękowania',
     'Community': 'Społeczność',
+    'Nirvana 3D|Retro|Platinum': 'Nirvana 3D|Retro|Platinum',
+    'Nirvana 3D': 'Nirvana 3D',
     'Clone': 'Klonuj',
     'New Drawer': 'Nowa szuflada',
     'Iconify': 'Ikonifikuj',

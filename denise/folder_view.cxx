@@ -99,7 +99,7 @@ static IconPair file_icon(const std::string &file, int size) {
   static std::map<std::string, IconPair> cache;
   static bool registered = false;
   if (!registered) { fl_register_images(); registered = true; }
-  std::string key = file + "@" + std::to_string(size);
+  std::string key = file + "@" + std::to_string(size) + "@" + std::to_string(icon_style());
   auto it = cache.find(key);
   if (it != cache.end()) return it->second;
   IconPair p;
@@ -111,9 +111,14 @@ static IconPair file_icon(const std::string &file, int size) {
       const Fl_Image *base = img->image() ? img->image() : img;
       p.normal = base->copy(size, size);
       if (auto *r = dynamic_cast<Fl_RGB_Image *>(p.normal)) r->normalize();   // SVG
-      p.selected = base->copy(size, size);
-      if (auto *r = dynamic_cast<Fl_RGB_Image *>(p.selected)) r->normalize();
-      p.selected->color_average(FL_BLACK, 0.5f);
+      if (icon_style() == 2 && dynamic_cast<Fl_RGB_Image *>(p.normal)) {
+        // Nirvana 3D: the selected state of a single picture is made like the system icons' one
+        p.selected = synthesize_selected((Fl_RGB_Image *)p.normal);
+      } else {
+        p.selected = base->copy(size, size);
+        if (auto *r = dynamic_cast<Fl_RGB_Image *>(p.selected)) r->normalize();
+        p.selected->color_average(FL_BLACK, 0.5f);
+      }
     }
     img->release();
   }
@@ -126,7 +131,7 @@ static Fl_Image *small_icon(Icon icon, bool sel) {
   // Icons are drawn on the content background, so the key includes the background color. Old ones
   // are not deleted: the application menu (gary) may still hold pointers to them.
   static std::map<std::pair<Fl_Color, int>, Fl_Image *> cache;
-  std::pair<Fl_Color, int> key{Fl::get_color(CONTENT), ((int)icon * 2 + sel) * 2 + icon_style()};
+  std::pair<Fl_Color, int> key{Fl::get_color(CONTENT), ((int)icon * 2 + sel) * 3 + icon_style()};
   auto it = cache.find(key);
   if (it != cache.end()) return it->second;
   Fl_Image_Surface surf(32, 32);
@@ -147,7 +152,7 @@ static Fl_Image *small_icon(Icon icon, bool sel) {
 // pixels like on an old computer screen.
 static Fl_Image *big_icon(Icon icon, bool sel) {
   static std::map<std::pair<Fl_Color, int>, Fl_Image *> cache;
-  std::pair<Fl_Color, int> key{Fl::get_color(CONTENT), ((int)icon * 2 + sel) * 2 + icon_style()};
+  std::pair<Fl_Color, int> key{Fl::get_color(CONTENT), ((int)icon * 2 + sel) * 3 + icon_style()};
   auto it = cache.find(key);
   if (it != cache.end()) return it->second;
   Fl_Image_Surface surf(32, 32);

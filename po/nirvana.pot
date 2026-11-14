@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Nirvana Desktop 0.1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-14 10:20+0000\n"
+"POT-Creation-Date: 2026-11-14 10:31+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -76,7 +76,7 @@ msgstr ""
 msgid "Color Scheme"
 msgstr ""
 
-#: alice/appearance.cxx:319 platinum/platinum.cxx:1451
+#: alice/appearance.cxx:319 platinum/platinum.cxx:1603
 msgid "Preview"
 msgstr ""
 
@@ -159,7 +159,7 @@ msgid "Icon style:"
 msgstr ""
 
 #: alice/appearance.cxx:446
-msgid "Retro|Platinum"
+msgid "Nirvana 3D|Retro|Platinum"
 msgstr ""
 
 #: alice/appearance.cxx:455
@@ -232,7 +232,7 @@ msgstr ""
 #: denise/menus.cxx:909 denise/menus.cxx:1220 denise/menus.cxx:1329
 #: denise/menus.cxx:1334 denise/updates.cxx:272 platinum/filedialog.cxx:341
 #: platinum/filedialog.cxx:575 platinum/platinum.cxx:266
-#: platinum/platinum.cxx:1438 polkit/nirvana-polkit-agent.cxx:161
+#: platinum/platinum.cxx:1590 polkit/nirvana-polkit-agent.cxx:161
 #: shell/main.cxx:615
 msgid "Cancel"
 msgstr ""
@@ -771,7 +771,7 @@ msgid "DNS servers:"
 msgstr ""
 
 #: alice/network.cxx:343 denise/filetypes.cxx:392 platinum/filedialog.cxx:246
-#: platinum/filedialog.cxx:248 platinum/platinum.cxx:1452
+#: platinum/filedialog.cxx:248 platinum/platinum.cxx:1604
 msgid "Save"
 msgstr ""
 
@@ -1161,7 +1161,7 @@ msgid "Screen Saver"
 msgstr ""
 
 #: alice/preferences.cxx:212 alice/printers.cxx:375 alice/printers.cxx:400
-#: denise/printer.cxx:199
+#: denise/printer.cxx:211
 msgid "Printers"
 msgstr ""
 
@@ -1400,11 +1400,11 @@ msgstr ""
 msgid "Could not change it."
 msgstr ""
 
-#: alice/printers.cxx:418 denise/printer.cxx:158
+#: alice/printers.cxx:418 denise/printer.cxx:170
 msgid "Print Test Page"
 msgstr ""
 
-#: alice/printers.cxx:421 denise/printer.cxx:173
+#: alice/printers.cxx:421 denise/printer.cxx:185
 msgid "A test page was sent to %1."
 msgstr ""
 
@@ -2190,6 +2190,10 @@ msgid "Theme"
 msgstr ""
 
 #: denise/about.cxx:441
+msgid "Nirvana 3D"
+msgstr ""
+
+#: denise/about.cxx:441
 msgid "Retro"
 msgstr ""
 
@@ -2588,31 +2592,31 @@ msgstr ""
 msgid "Bluetooth: %1"
 msgstr ""
 
-#: denise/clipboard.cxx:75
+#: denise/clipboard.cxx:88
 msgid "(spaces)"
 msgstr ""
 
-#: denise/clipboard.cxx:99
+#: denise/clipboard.cxx:112
 msgid "Clipboard history (Ctrl+Alt+V)"
 msgstr ""
 
-#: denise/clipboard.cxx:108
+#: denise/clipboard.cxx:121
 msgid "Clipboard History (paused)"
 msgstr ""
 
-#: denise/clipboard.cxx:108
+#: denise/clipboard.cxx:121
 msgid "Clipboard History"
 msgstr ""
 
-#: denise/clipboard.cxx:109
+#: denise/clipboard.cxx:122
 msgid "Nothing copied yet"
 msgstr ""
 
-#: denise/clipboard.cxx:115
+#: denise/clipboard.cxx:128
 msgid "Pause Recording"
 msgstr ""
 
-#: denise/clipboard.cxx:116
+#: denise/clipboard.cxx:129
 msgid "Clear History"
 msgstr ""
 
@@ -3128,11 +3132,11 @@ msgstr ""
 msgid "folder"
 msgstr ""
 
-#: denise/explorer.cxx:652 denise/folder_view.cxx:1065 denise/metadata.cxx:348
+#: denise/explorer.cxx:652 denise/folder_view.cxx:1070 denise/metadata.cxx:348
 msgid "Kind"
 msgstr ""
 
-#: denise/explorer.cxx:653 denise/folder_view.cxx:1064
+#: denise/explorer.cxx:653 denise/folder_view.cxx:1069
 msgid "Size"
 msgstr ""
 
@@ -3432,7 +3436,7 @@ msgid ""
 "first action is the double click."
 msgstr ""
 
-#: denise/filetypes.cxx:332 denise/folder_view.cxx:1062
+#: denise/filetypes.cxx:332 denise/folder_view.cxx:1067
 msgid "Name"
 msgstr ""
 
@@ -3500,15 +3504,15 @@ msgstr ""
 msgid "document"
 msgstr ""
 
-#: denise/folder_view.cxx:871
+#: denise/folder_view.cxx:876
 msgid "Loading…"
 msgstr ""
 
-#: denise/folder_view.cxx:872
+#: denise/folder_view.cxx:877
 msgid "%1 free"
 msgstr ""
 
-#: denise/folder_view.cxx:1063
+#: denise/folder_view.cxx:1068
 msgid "Date Modified"
 msgstr ""
 
@@ -3609,7 +3613,7 @@ msgid "Pack into an Archive…"
 msgstr ""
 
 #: denise/menus.cxx:486 platinum/filedialog.cxx:298 platinum/filedialog.cxx:553
-#: platinum/platinum.cxx:1450
+#: platinum/platinum.cxx:1602
 msgid "New Folder"
 msgstr ""
 
@@ -3980,57 +3984,57 @@ msgstr ""
 msgid "Notification"
 msgstr ""
 
-#: denise/notify.cxx:750
+#: denise/notify.cxx:771
 msgid "Another program shows the notifications"
 msgstr ""
 
-#: denise/notify.cxx:751
+#: denise/notify.cxx:772
 msgid "Notifications"
 msgstr ""
 
-#: denise/notify.cxx:752
+#: denise/notify.cxx:773
 msgid "No notifications"
 msgstr ""
 
-#: denise/notify.cxx:761
+#: denise/notify.cxx:782
 msgid "Do Not Disturb"
 msgstr ""
 
-#: denise/notify.cxx:762
+#: denise/notify.cxx:783
 msgid "Notification Sound"
 msgstr ""
 
-#: denise/notify.cxx:763
+#: denise/notify.cxx:784
 msgid "Clear Notifications"
 msgstr ""
 
-#: denise/printer.cxx:95
+#: denise/printer.cxx:107
 msgid "The printing system is not running"
 msgstr ""
 
-#: denise/printer.cxx:112 denise/printer.cxx:200
+#: denise/printer.cxx:124 denise/printer.cxx:212
 msgid "%1 print job"
 msgid_plural "%1 print jobs"
 msgstr[0] ""
 msgstr[1] ""
 
-#: denise/printer.cxx:118
+#: denise/printer.cxx:130
 msgid "Job %1"
 msgstr ""
 
-#: denise/printer.cxx:119
+#: denise/printer.cxx:131
 msgid "printing"
 msgstr ""
 
-#: denise/printer.cxx:128
+#: denise/printer.cxx:140
 msgid "Cancel this job"
 msgstr ""
 
-#: denise/printer.cxx:157
+#: denise/printer.cxx:169
 msgid "Cancel All My Jobs"
 msgstr ""
 
-#: denise/printer.cxx:159
+#: denise/printer.cxx:171
 msgid "Printer Settings…"
 msgstr ""
 
@@ -4307,33 +4311,33 @@ msgstr ""
 msgid "Updating failed"
 msgstr ""
 
-#: denise/updates.cxx:426
+#: denise/updates.cxx:438
 msgid "Restart the computer to finish the update."
 msgstr ""
 
-#: denise/updates.cxx:427
+#: denise/updates.cxx:439
 msgid "Last checked at %1 (%2)"
 msgstr ""
 
-#: denise/updates.cxx:436
+#: denise/updates.cxx:448
 msgid "Note: "
 msgstr ""
 
-#: denise/updates.cxx:456
+#: denise/updates.cxx:468
 msgid "…and %1 more"
 msgid_plural "…and %1 more"
 msgstr[0] ""
 msgstr[1] ""
 
-#: denise/updates.cxx:472
+#: denise/updates.cxx:484
 msgid "Install Updates…"
 msgstr ""
 
-#: denise/updates.cxx:473
+#: denise/updates.cxx:485
 msgid "Check for Updates"
 msgstr ""
 
-#: denise/updates.cxx:474
+#: denise/updates.cxx:486
 msgid "Show Log"
 msgstr ""
 
@@ -4857,7 +4861,7 @@ msgstr ""
 msgid "Choose Folder"
 msgstr ""
 
-#: platinum/filedialog.cxx:248 platinum/platinum.cxx:1439
+#: platinum/filedialog.cxx:248 platinum/platinum.cxx:1591
 msgid "Choose"
 msgstr ""
 
@@ -4881,7 +4885,7 @@ msgstr ""
 msgid "Show hidden files"
 msgstr ""
 
-#: platinum/filedialog.cxx:329 platinum/platinum.cxx:1453
+#: platinum/filedialog.cxx:329 platinum/platinum.cxx:1605
 msgid "Show:"
 msgstr ""
 
@@ -4938,49 +4942,49 @@ msgstr ""
 msgid "Yes"
 msgstr ""
 
-#: platinum/platinum.cxx:1433
+#: platinum/platinum.cxx:1585
 msgid "%1 item"
 msgid_plural "%1 items"
 msgstr[0] ""
 msgstr[1] ""
 
-#: platinum/platinum.cxx:1440
+#: platinum/platinum.cxx:1592
 msgid "Add to Favorites"
 msgstr ""
 
-#: platinum/platinum.cxx:1441
+#: platinum/platinum.cxx:1593
 msgid "All Files (*)"
 msgstr ""
 
-#: platinum/platinum.cxx:1442
+#: platinum/platinum.cxx:1594
 msgid "Custom Filter"
 msgstr ""
 
-#: platinum/platinum.cxx:1443
+#: platinum/platinum.cxx:1595
 msgid "The file already exists. Replace it?"
 msgstr ""
 
-#: platinum/platinum.cxx:1444
+#: platinum/platinum.cxx:1596
 msgid "Favorites"
 msgstr ""
 
-#: platinum/platinum.cxx:1445
+#: platinum/platinum.cxx:1597
 msgid "File:"
 msgstr ""
 
-#: platinum/platinum.cxx:1446
+#: platinum/platinum.cxx:1598
 msgid "Disks"
 msgstr ""
 
-#: platinum/platinum.cxx:1447
+#: platinum/platinum.cxx:1599
 msgid "Hidden files"
 msgstr ""
 
-#: platinum/platinum.cxx:1448
+#: platinum/platinum.cxx:1600
 msgid "Manage Favorites"
 msgstr ""
 
-#: platinum/platinum.cxx:1449
+#: platinum/platinum.cxx:1601
 msgid "New folder name:"
 msgstr ""
 
@@ -5104,15 +5108,15 @@ msgstr ""
 msgid "Glacier"
 msgstr ""
 
-#: platinum/theme.cxx:394
+#: platinum/theme.cxx:396
 msgid "Retro 16 · classic"
 msgstr ""
 
-#: platinum/theme.cxx:394
+#: platinum/theme.cxx:396
 msgid "Retro 16 · outline"
 msgstr ""
 
-#: platinum/theme.cxx:395
+#: platinum/theme.cxx:397
 msgid "Retro 16 · glass"
 msgstr ""
 

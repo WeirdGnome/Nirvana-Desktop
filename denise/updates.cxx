@@ -358,16 +358,28 @@ public:
     Fl_Color c = open ? SEL_TEXT : TEXT;
     // a parcel (a box with a lid) with an arrow pointing into it
     int ix = x() + 4, iy = y() + 3;
-    fl_color(open ? SEL_TEXT : fl_color_average(TEXT, GRAY, 0.25f));
-    fl_rectf(ix + 1, iy + 7, 13, 7);
-    fl_color(open ? SEL : GRAY);
-    fl_rectf(ix + 2, iy + 8, 11, 5);
-    fl_color(c);
-    fl_rect(ix, iy + 6, 15, 9);
-    fl_xyline(ix, iy + 9, ix + 14);
-    fl_rectf(ix + 6, iy + 9, 3, 2);                   // tape
-    fl_rectf(ix + 6, iy, 3, 5);                       // arrow shaft
-    fl_polygon(ix + 3, iy + 4, ix + 12, iy + 4, ix + 7, iy + 8);
+    if (glossy_glyphs()) {   // Nirvana 3D: a cardboard parcel, a green arrow
+      glyph_color(0xD6A060, c); fl_rectf(ix, iy + 6, 15, 9);
+      glyph_color(0xF0C888, c); fl_rectf(ix + 1, iy + 7, 13, 2);
+      glyph_color(0xA87438, c); fl_rectf(ix + 6, iy + 9, 3, 5);
+      glyph_color(0x000000, c); fl_rect(ix, iy + 6, 15, 9); fl_xyline(ix, iy + 9, ix + 14);
+      glyph_color(0x30C050, c);
+      fl_rectf(ix + 6, iy, 3, 5);
+      fl_polygon(ix + 3, iy + 4, ix + 12, iy + 4, ix + 7, iy + 8);
+      glyph_color(0x000000, c);
+      fl_loop(ix + 3, iy + 4, ix + 12, iy + 4, ix + 7, iy + 8);
+    } else {
+      fl_color(open ? SEL_TEXT : fl_color_average(TEXT, GRAY, 0.25f));
+      fl_rectf(ix + 1, iy + 7, 13, 7);
+      fl_color(open ? SEL : GRAY);
+      fl_rectf(ix + 2, iy + 8, 11, 5);
+      fl_color(c);
+      fl_rect(ix, iy + 6, 15, 9);
+      fl_xyline(ix, iy + 9, ix + 14);
+      fl_rectf(ix + 6, iy + 9, 3, 2);                   // tape
+      fl_rectf(ix + 6, iy, 3, 5);                       // arrow shaft
+      fl_polygon(ix + 3, iy + 4, ix + 12, iy + 4, ix + 7, iy + 8);
+    }
     if (g_state == State::Checking || g_state == State::Installing) {   // a moving dot / progress
       double t = Progress::time_now();
       if (g_state == State::Installing && g_progress >= 0) {

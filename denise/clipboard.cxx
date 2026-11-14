@@ -44,6 +44,19 @@ KeyCode g_key_v = 0;
 
 void draw_clipboard(int x, int y, Fl_Color c, Fl_Color paper, bool full) {
   // a board with a clip at the top and a sheet with lines (12x14)
+  if (glossy_glyphs()) {   // a brown board, a white sheet with blue lines, a silver clip
+    glyph_color(0xB0743A, c); fl_rectf(x, y + 1, 12, 13);
+    glyph_color(0xFFFFFF, c); fl_rectf(x + 2, y + 3, 8, 9);
+    if (full) {
+      glyph_color(0x3A7CE0, c);
+      for (int i = 0; i < 3; i++) fl_xyline(x + 3, y + 5 + i * 2, x + (i == 2 ? 6 : 8));
+    }
+    glyph_color(0xC8CCD4, c); fl_rectf(x + 3, y, 6, 3);
+    glyph_color(0x000000, c);
+    fl_rect(x, y + 1, 12, 13);
+    fl_rect(x + 3, y, 6, 3);
+    return;
+  }
   fl_color(c);
   fl_rect(x, y + 1, 12, 13);
   fl_color(paper);

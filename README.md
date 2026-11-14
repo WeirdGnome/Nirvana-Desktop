@@ -41,7 +41,7 @@ What changed in each version: [CHANGELOG.md](CHANGELOG.md).
 
 Unpack the sources and run the installer:
 
-    tar xzf nirvana-desktop-0.0.69.tar.gz && cd nirvana-desktop
+    tar xzf nirvana-desktop-0.0.70.tar.gz && cd nirvana-desktop
     sudo ./install.sh                 # or: sudo ./install.sh --login-screen
 
 The installer:
@@ -190,7 +190,7 @@ Another system font (for example a free bitmap-style one) can be set with `NIRVA
 - **Where applications live**: in the folder `~/Aplikacje` of Nirvana HD (`~/Applications` – the
   name in the language of the first start, remembered in `~/.config/nirvana/apps-folder`), with
   its category folders; the programs are shown as big icons, like the Preferences window (a list
-  with `Ctrl+2`). The hidden `~/.nirvana-apps` of 0.0.38–0.0.69 is moved there at the first
+  with `Ctrl+2`). The hidden `~/.nirvana-apps` of 0.0.38–0.0.70 is moved there at the first
   start, together with dock entries and remembered windows. Right-click an application
   there and choose **Put on Dock** to keep it at hand; right-click a dock tile for **Open** and
   **Unpin from Dock**.
@@ -617,8 +617,25 @@ the whole system: Rambler and Insight reload the palette without a restart.
   - *Nirvana Desktop* (2560×1440, glossy, with light ribbons and a mirrored floor) is made by the script
     `tools/wallpaper-nirvana-desktop.py [file] [width height]`, so it can be generated at the
     resolution of your own screen.
-- **Icon style**: *Retro* or *Platinum*. The change applies
+- **Icon style**: *Nirvana 3D* (the default), *Retro* or *Platinum*. The change applies
   immediately, also in open windows and on the dock.
+  - Nirvana 3D: glossy 3D pixel icons in one visual language – a slight isometric view, a
+    crisp black outline, white specular pixels, saturated colors: amber drawers (Preferences
+    with a gear and a slider), a silver system unit with LEDs (Nirvana HD, disks), a green
+    memory module (Ram Disk), a glossy diskette, a fluted metal Trash (empty and full), a
+    cartridge for programs, a shell window with `1>` and a glowing cursor, a modem box
+    (network). The menu bar applets are drawn in color too (a studio speaker, a heavy battery
+    cell, a gold plug, blue Wi-Fi arcs, a Bluetooth badge, a gold bell, a parcel for updates,
+    a printer).
+  - **Two states**: every icon has a normal and a selected picture. The selected one is
+    pressed (1 px down and right), brighter and has a warm golden glow – also for pictures of
+    AppImages. Your own pictures replace the drawings: in `~/.local/share/nirvana/icons` (or
+    `share/nirvana/icons`) put `<name>.png` – a sprite sheet twice as wide as high (left
+    half normal, right half selected) or a single picture (the selected state is made from
+    it) – or the pair `<name>_normal.png` + `<name>_selected.png`. Names: `drawer`,
+    `drawer-open`, `document`, `tool`, `nirvana-hd`, `harddisk`, `removable`, `optical`,
+    `encrypted`, `eject`, `network`, `wifi`, `prefs`, `applications`, `shell`, `ramdisk`,
+    `trashcan`, `trashcan-full`, `picture`, `sound`, `cat-games` … `cat-other`.
   - Retro: original drawings in the style of early-1990s home computers, in a palette of
     greys, navy and beige with black outlines.
   - Folders are drawers, and documents are "projects" with a folded corner. Programs look like

@@ -3,7 +3,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Nirvana Desktop 0.1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-14 10:20+0000\n"
+"POT-Creation-Date: 2026-11-14 10:31+0000\n"
 "PO-Revision-Date: 2026-11-09 13:00+0000\n"
 "Last-Translator: Nirvana Desktop\n"
 "Language-Team: Polish\n"
@@ -71,7 +71,7 @@ msgstr "Wygląd"
 msgid "Color Scheme"
 msgstr "Schemat kolorów"
 
-#: alice/appearance.cxx:319 platinum/platinum.cxx:1451
+#: alice/appearance.cxx:319 platinum/platinum.cxx:1603
 msgid "Preview"
 msgstr "Podgląd"
 
@@ -156,8 +156,8 @@ msgid "Icon style:"
 msgstr "Styl ikon:"
 
 #: alice/appearance.cxx:446
-msgid "Retro|Platinum"
-msgstr "Retro|Platinum"
+msgid "Nirvana 3D|Retro|Platinum"
+msgstr "Nirvana 3D|Retro|Platinum"
 
 #: alice/appearance.cxx:455
 msgid "Interface scale:"
@@ -231,7 +231,7 @@ msgstr "Bardzo duży (%1 px)"
 #: denise/menus.cxx:909 denise/menus.cxx:1220 denise/menus.cxx:1329
 #: denise/menus.cxx:1334 denise/updates.cxx:272 platinum/filedialog.cxx:341
 #: platinum/filedialog.cxx:575 platinum/platinum.cxx:266
-#: platinum/platinum.cxx:1438 polkit/nirvana-polkit-agent.cxx:161
+#: platinum/platinum.cxx:1590 polkit/nirvana-polkit-agent.cxx:161
 #: shell/main.cxx:615
 msgid "Cancel"
 msgstr "Anuluj"
@@ -793,7 +793,7 @@ msgid "DNS servers:"
 msgstr "Serwery DNS:"
 
 #: alice/network.cxx:343 denise/filetypes.cxx:392 platinum/filedialog.cxx:246
-#: platinum/filedialog.cxx:248 platinum/platinum.cxx:1452
+#: platinum/filedialog.cxx:248 platinum/platinum.cxx:1604
 msgid "Save"
 msgstr "Zapisz"
 
@@ -1195,7 +1195,7 @@ msgid "Screen Saver"
 msgstr "Wygaszacz ekranu"
 
 #: alice/preferences.cxx:212 alice/printers.cxx:375 alice/printers.cxx:400
-#: denise/printer.cxx:199
+#: denise/printer.cxx:211
 msgid "Printers"
 msgstr "Drukarki"
 
@@ -1445,11 +1445,11 @@ msgstr "%1 to teraz Twoja domyślna drukarka."
 msgid "Could not change it."
 msgstr "Nie udało się tego zmienić."
 
-#: alice/printers.cxx:418 denise/printer.cxx:158
+#: alice/printers.cxx:418 denise/printer.cxx:170
 msgid "Print Test Page"
 msgstr "Drukuj stronę testową"
 
-#: alice/printers.cxx:421 denise/printer.cxx:173
+#: alice/printers.cxx:421 denise/printer.cxx:185
 msgid "A test page was sent to %1."
 msgstr "Wysłano stronę testową do %1."
 
@@ -2282,6 +2282,10 @@ msgid "Theme"
 msgstr "Motyw"
 
 #: denise/about.cxx:441
+msgid "Nirvana 3D"
+msgstr "Nirvana 3D"
+
+#: denise/about.cxx:441
 msgid "Retro"
 msgstr "Retro"
 
@@ -2705,31 +2709,31 @@ msgstr "Ustawienia Bluetooth…"
 msgid "Bluetooth: %1"
 msgstr "Bluetooth: %1"
 
-#: denise/clipboard.cxx:75
+#: denise/clipboard.cxx:88
 msgid "(spaces)"
 msgstr "(same spacje)"
 
-#: denise/clipboard.cxx:99
+#: denise/clipboard.cxx:112
 msgid "Clipboard history (Ctrl+Alt+V)"
 msgstr "Historia schowka (Ctrl+Alt+V)"
 
-#: denise/clipboard.cxx:108
+#: denise/clipboard.cxx:121
 msgid "Clipboard History (paused)"
 msgstr "Historia schowka (wstrzymana)"
 
-#: denise/clipboard.cxx:108
+#: denise/clipboard.cxx:121
 msgid "Clipboard History"
 msgstr "Historia schowka"
 
-#: denise/clipboard.cxx:109
+#: denise/clipboard.cxx:122
 msgid "Nothing copied yet"
 msgstr "Nic jeszcze nie skopiowano"
 
-#: denise/clipboard.cxx:115
+#: denise/clipboard.cxx:128
 msgid "Pause Recording"
 msgstr "Wstrzymaj zapisywanie"
 
-#: denise/clipboard.cxx:116
+#: denise/clipboard.cxx:129
 msgid "Clear History"
 msgstr "Wyczyść historię"
 
@@ -3266,11 +3270,11 @@ msgstr "Obiektów: %1"
 msgid "folder"
 msgstr "folder"
 
-#: denise/explorer.cxx:652 denise/folder_view.cxx:1065 denise/metadata.cxx:348
+#: denise/explorer.cxx:652 denise/folder_view.cxx:1070 denise/metadata.cxx:348
 msgid "Kind"
 msgstr "Rodzaj"
 
-#: denise/explorer.cxx:653 denise/folder_view.cxx:1064
+#: denise/explorer.cxx:653 denise/folder_view.cxx:1069
 msgid "Size"
 msgstr "Rozmiar"
 
@@ -3590,7 +3594,7 @@ msgstr ""
 "Co dwuklik i menu kontekstowe robią z każdym rodzajem pliku. Pierwsza akcja "
 "to dwuklik."
 
-#: denise/filetypes.cxx:332 denise/folder_view.cxx:1062
+#: denise/filetypes.cxx:332 denise/folder_view.cxx:1067
 msgid "Name"
 msgstr "Nazwa"
 
@@ -3658,15 +3662,15 @@ msgstr "dźwięk"
 msgid "document"
 msgstr "dokument"
 
-#: denise/folder_view.cxx:871
+#: denise/folder_view.cxx:876
 msgid "Loading…"
 msgstr "Wczytywanie…"
 
-#: denise/folder_view.cxx:872
+#: denise/folder_view.cxx:877
 msgid "%1 free"
 msgstr "%1 wolne"
 
-#: denise/folder_view.cxx:1063
+#: denise/folder_view.cxx:1068
 msgid "Date Modified"
 msgstr "Data modyfikacji"
 
@@ -3767,7 +3771,7 @@ msgid "Pack into an Archive…"
 msgstr "Spakuj do archiwum…"
 
 #: denise/menus.cxx:486 platinum/filedialog.cxx:298
-#: platinum/filedialog.cxx:553 platinum/platinum.cxx:1450
+#: platinum/filedialog.cxx:553 platinum/platinum.cxx:1602
 msgid "New Folder"
 msgstr "Nowy folder"
 
@@ -4148,58 +4152,58 @@ msgstr "Rozmiar po rozpakowaniu"
 msgid "Notification"
 msgstr "Powiadomienie"
 
-#: denise/notify.cxx:750
+#: denise/notify.cxx:771
 msgid "Another program shows the notifications"
 msgstr "Powiadomienia wyświetla inny program"
 
-#: denise/notify.cxx:751
+#: denise/notify.cxx:772
 msgid "Notifications"
 msgstr "Powiadomienia"
 
-#: denise/notify.cxx:752
+#: denise/notify.cxx:773
 msgid "No notifications"
 msgstr "Brak powiadomień"
 
-#: denise/notify.cxx:761
+#: denise/notify.cxx:782
 msgid "Do Not Disturb"
 msgstr "Nie przeszkadzać"
 
-#: denise/notify.cxx:762
+#: denise/notify.cxx:783
 msgid "Notification Sound"
 msgstr "Dźwięk powiadomień"
 
-#: denise/notify.cxx:763
+#: denise/notify.cxx:784
 msgid "Clear Notifications"
 msgstr "Wyczyść powiadomienia"
 
-#: denise/printer.cxx:95
+#: denise/printer.cxx:107
 msgid "The printing system is not running"
 msgstr "System drukowania nie działa"
 
-#: denise/printer.cxx:112 denise/printer.cxx:200
+#: denise/printer.cxx:124 denise/printer.cxx:212
 msgid "%1 print job"
 msgid_plural "%1 print jobs"
 msgstr[0] "%1 zadanie drukowania"
 msgstr[1] "%1 zadania drukowania"
 msgstr[2] "%1 zadań drukowania"
 
-#: denise/printer.cxx:118
+#: denise/printer.cxx:130
 msgid "Job %1"
 msgstr "Zadanie %1"
 
-#: denise/printer.cxx:119
+#: denise/printer.cxx:131
 msgid "printing"
 msgstr "drukuje"
 
-#: denise/printer.cxx:128
+#: denise/printer.cxx:140
 msgid "Cancel this job"
 msgstr "Anuluj to zadanie"
 
-#: denise/printer.cxx:157
+#: denise/printer.cxx:169
 msgid "Cancel All My Jobs"
 msgstr "Anuluj wszystkie moje zadania"
 
-#: denise/printer.cxx:159
+#: denise/printer.cxx:171
 msgid "Printer Settings…"
 msgstr "Ustawienia drukarek…"
 
@@ -4482,34 +4486,34 @@ msgstr "Aktualizacje zainstalowane"
 msgid "Updating failed"
 msgstr "Aktualizacja nie powiodła się"
 
-#: denise/updates.cxx:426
+#: denise/updates.cxx:438
 msgid "Restart the computer to finish the update."
 msgstr "Uruchom komputer ponownie, aby dokończyć aktualizację."
 
-#: denise/updates.cxx:427
+#: denise/updates.cxx:439
 msgid "Last checked at %1 (%2)"
 msgstr "Ostatnio sprawdzono o %1 (%2)"
 
-#: denise/updates.cxx:436
+#: denise/updates.cxx:448
 msgid "Note: "
 msgstr "Uwaga: "
 
-#: denise/updates.cxx:456
+#: denise/updates.cxx:468
 msgid "…and %1 more"
 msgid_plural "…and %1 more"
 msgstr[0] "…i jeszcze %1"
 msgstr[1] "…i jeszcze %1"
 msgstr[2] "…i jeszcze %1"
 
-#: denise/updates.cxx:472
+#: denise/updates.cxx:484
 msgid "Install Updates…"
 msgstr "Zainstaluj aktualizacje…"
 
-#: denise/updates.cxx:473
+#: denise/updates.cxx:485
 msgid "Check for Updates"
 msgstr "Sprawdź aktualizacje"
 
-#: denise/updates.cxx:474
+#: denise/updates.cxx:486
 msgid "Show Log"
 msgstr "Pokaż dziennik"
 
@@ -5043,7 +5047,7 @@ msgstr "%1 %2"
 msgid "Choose Folder"
 msgstr "Wybierz folder"
 
-#: platinum/filedialog.cxx:248 platinum/platinum.cxx:1439
+#: platinum/filedialog.cxx:248 platinum/platinum.cxx:1591
 msgid "Choose"
 msgstr "Wybierz"
 
@@ -5067,7 +5071,7 @@ msgstr "Folder wyżej (Backspace)"
 msgid "Show hidden files"
 msgstr "Pokaż ukryte pliki"
 
-#: platinum/filedialog.cxx:329 platinum/platinum.cxx:1453
+#: platinum/filedialog.cxx:329 platinum/platinum.cxx:1605
 msgid "Show:"
 msgstr "Pokaż:"
 
@@ -5125,50 +5129,50 @@ msgstr "%1 %2 %3, %4"
 msgid "Yes"
 msgstr "Tak"
 
-#: platinum/platinum.cxx:1433
+#: platinum/platinum.cxx:1585
 msgid "%1 item"
 msgid_plural "%1 items"
 msgstr[0] "%1 element"
 msgstr[1] "%1 elementy"
 msgstr[2] "%1 elementów"
 
-#: platinum/platinum.cxx:1440
+#: platinum/platinum.cxx:1592
 msgid "Add to Favorites"
 msgstr "Dodaj do ulubionych"
 
-#: platinum/platinum.cxx:1441
+#: platinum/platinum.cxx:1593
 msgid "All Files (*)"
 msgstr "Wszystkie pliki (*)"
 
-#: platinum/platinum.cxx:1442
+#: platinum/platinum.cxx:1594
 msgid "Custom Filter"
 msgstr "Własny filtr"
 
-#: platinum/platinum.cxx:1443
+#: platinum/platinum.cxx:1595
 msgid "The file already exists. Replace it?"
 msgstr "Plik już istnieje. Zastąpić go?"
 
-#: platinum/platinum.cxx:1444
+#: platinum/platinum.cxx:1596
 msgid "Favorites"
 msgstr "Ulubione"
 
-#: platinum/platinum.cxx:1445
+#: platinum/platinum.cxx:1597
 msgid "File:"
 msgstr "Plik:"
 
-#: platinum/platinum.cxx:1446
+#: platinum/platinum.cxx:1598
 msgid "Disks"
 msgstr "Dyski"
 
-#: platinum/platinum.cxx:1447
+#: platinum/platinum.cxx:1599
 msgid "Hidden files"
 msgstr "Ukryte pliki"
 
-#: platinum/platinum.cxx:1448
+#: platinum/platinum.cxx:1600
 msgid "Manage Favorites"
 msgstr "Zarządzaj ulubionymi"
 
-#: platinum/platinum.cxx:1449
+#: platinum/platinum.cxx:1601
 msgid "New folder name:"
 msgstr "Nazwa nowego folderu:"
 
@@ -5292,15 +5296,15 @@ msgstr "Retro niebieski"
 msgid "Glacier"
 msgstr "Lodowiec"
 
-#: platinum/theme.cxx:394
+#: platinum/theme.cxx:396
 msgid "Retro 16 · classic"
 msgstr "Retro 16 · klasyczny"
 
-#: platinum/theme.cxx:394
+#: platinum/theme.cxx:396
 msgid "Retro 16 · outline"
 msgstr "Retro 16 · z obwódką"
 
-#: platinum/theme.cxx:395
+#: platinum/theme.cxx:397
 msgid "Retro 16 · glass"
 msgstr "Retro 16 · szklany"
 

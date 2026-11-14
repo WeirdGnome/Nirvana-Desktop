@@ -202,7 +202,7 @@ Icon icon_for(const std::string &name, bool dir, bool exec) {
 
 Fl_RGB_Image *icon16(Icon i) {
   static std::map<int, Fl_RGB_Image *> cache;
-  int key = (int)i * 2 + icon_style();
+  int key = (int)i * 3 + icon_style();
   auto &p = cache[key];
   if (!p) p = icon_image(i, 16);
   return p;

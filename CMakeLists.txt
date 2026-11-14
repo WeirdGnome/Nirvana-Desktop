@@ -63,6 +63,7 @@ add_library(nirvana-platinum STATIC
   platinum/wallpaper.cxx
   platinum/clockconf.cxx
   platinum/icons_retro.cxx
+  platinum/icons3d.cxx
   platinum/framewin.cxx)
 find_package(X11 REQUIRED)
 target_include_directories(nirvana-platinum PUBLIC platinum)

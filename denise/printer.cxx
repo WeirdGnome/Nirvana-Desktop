@@ -45,17 +45,29 @@ public:
     Fl_Color c = open ? SEL_TEXT : TEXT;
     int ix = x() + 4, iy = y() + 3;
     // a printer: the paper on top, the body, the output slot
-    fl_color(open ? SEL : GRAY);
-    fl_rectf(ix + 4, iy + 1, 8, 5);
-    fl_color(c);
-    fl_rect(ix + 4, iy, 8, 6);
-    fl_rect(ix, iy + 5, 16, 7);
-    fl_rectf(ix + 1, iy + 6, 14, 1);
-    fl_color(open ? SEL : GRAY);
-    fl_rectf(ix + 4, iy + 10, 8, 4);
-    fl_color(c);
-    fl_rect(ix + 4, iy + 10, 8, 5);
-    fl_point(ix + 13, iy + 8);
+    if (glossy_glyphs()) {   // Nirvana 3D: a beige body, white paper, a green lamp
+      glyph_color(0xFFFFFF, c); fl_rectf(ix + 4, iy, 8, 6);
+      glyph_color(0xE2DCCB, c); fl_rectf(ix, iy + 5, 16, 7);
+      glyph_color(0xFFFFFF, c); fl_xyline(ix + 1, iy + 6, ix + 14);
+      glyph_color(0x8E887A, c); fl_xyline(ix + 1, iy + 10, ix + 14);
+      glyph_color(0xFFFFFF, c); fl_rectf(ix + 4, iy + 10, 8, 4);
+      glyph_color(0x3A7CE0, c); fl_xyline(ix + 5, iy + 12, ix + 10);
+      glyph_color(0x30D050, c); fl_rectf(ix + 12, iy + 7, 2, 2);
+      glyph_color(0x000000, c);
+      fl_rect(ix + 4, iy, 8, 6); fl_rect(ix, iy + 5, 16, 7); fl_rect(ix + 4, iy + 10, 8, 5);
+    } else {
+      fl_color(open ? SEL : GRAY);
+      fl_rectf(ix + 4, iy + 1, 8, 5);
+      fl_color(c);
+      fl_rect(ix + 4, iy, 8, 6);
+      fl_rect(ix, iy + 5, 16, 7);
+      fl_rectf(ix + 1, iy + 6, 14, 1);
+      fl_color(open ? SEL : GRAY);
+      fl_rectf(ix + 4, iy + 10, 8, 4);
+      fl_color(c);
+      fl_rect(ix + 4, iy + 10, 8, 5);
+      fl_point(ix + 13, iy + 8);
+    }
     if (!g_ps.jobs.empty()) {   // the number of jobs in a blue badge
       std::string n = g_ps.jobs.size() > 99 ? "99+" : std::to_string(g_ps.jobs.size());
       fl_font(FONT_SYSTEM, 9);

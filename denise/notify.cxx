@@ -700,6 +700,27 @@ void start_server() {
 // The applet: a bell
 // ---------------------------------------------------------------------------
 void draw_bell(int x, int y, Fl_Color c, bool dnd) {
+  if (glossy_glyphs()) {   // a gold bell with a shine; do not disturb - a red slash
+    glyph_color(0xF2C232, c);
+    fl_pie(x + 2, y + 1, 10, 10, 0, 180);
+    fl_rectf(x + 2, y + 5, 10, 4);
+    fl_polygon(x + 2, y + 9, x + 12, y + 9, x + 14, y + 11, x + 0, y + 11);
+    glyph_color(0x000000, c);
+    fl_arc(x + 2, y + 1, 10, 10, 0, 180);
+    fl_yxline(x + 2, y + 6, y + 9); fl_yxline(x + 11, y + 6, y + 9);
+    fl_loop(x + 2, y + 9, x + 12, y + 9, x + 14, y + 11, x + 0, y + 11);
+    fl_rectf(x + 6, y + 12, 3, 2);
+    fl_rectf(x + 6, y, 3, 1);
+    glyph_color(0xFFFFFF, c);
+    fl_xyline(x + 4, y + 4, x + 5); fl_point(x + 4, y + 5);
+    if (dnd) {
+      glyph_color(0xE02828, FL_BLACK);
+      fl_line_style(FL_SOLID, 2);
+      fl_line(x, y + 1, x + 14, y + 13);
+      fl_line_style(0);
+    }
+    return;
+  }
   fl_color(c);
   fl_pie(x + 2, y + 1, 10, 10, 0, 180);                 // the dome
   fl_rectf(x + 2, y + 5, 10, 4);

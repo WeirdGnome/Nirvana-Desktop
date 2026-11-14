@@ -438,7 +438,7 @@ std::vector<Fact> gather(const std::string &home) {
       {_("WM"), "Insight"},
       {_("WM Theme"), fmt(_("%1 (title bar: %2)"), scheme, style)},
       {_("Theme"), scheme},
-      {_("Icons"), icon_style() == 0 ? _("Retro") : _("Platinum")},
+      {_("Icons"), icon_style() == 2 ? _("Nirvana 3D") : icon_style() == 0 ? _("Retro") : _("Platinum")},
       {_("Font"), font},
       {_("Cursor"), cursor_theme()},
       {_("Terminal"), "Nirvana Shell"},
