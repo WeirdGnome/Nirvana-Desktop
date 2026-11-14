@@ -14,6 +14,7 @@
 */
 #include "iconwindow.h"
 #include "tools.h"
+#include "prefs.h"
 
 #include <FL/Fl.H>
 #include <FL/Fl_Menu_Item.H>
@@ -91,6 +92,8 @@ public:
 
 private:
     IconWindow *root_ = nullptr;
+    WandererPrefs prefs_ = WandererPrefs::load();
+    void apply_prefs(IconWindow *w);
     std::vector<IconWindow *> windows_;
     IconWindow *active_ = nullptr;
     bool backdrop_ = false;
@@ -114,8 +117,26 @@ enum MenuId {
     MEN_WINDOW_VIEW_ALL, MEN_WINDOW_SORT_NOW, MEN_WINDOW_SORT_ENABLE, MEN_WINDOW_SORT_NAME, MEN_WINDOW_SORT_DATE,
     MEN_WINDOW_SORT_SIZE, MEN_WINDOW_SORT_TYPE, MEN_WINDOW_SORT_REVERSE, MEN_WINDOW_SORT_TOPDRAWERS,
     MEN_WINDOW_FIND, MEN_ICON_OPEN, MEN_ICON_RENAME, MEN_ICON_INFORMATION, MEN_ICON_SNAPSHOT,
-    MEN_ICON_UNSNAPSHOT, MEN_ICON_DELETE, MEN_ICON_DISKINFO
+    MEN_ICON_UNSNAPSHOT, MEN_ICON_DELETE, MEN_ICON_DISKINFO, MEN_WANDERER_PREFS
 };
+
+// The preferences on a window: the labels, the layout, the bars, the filter, the order
+void Wanderer::apply_prefs(IconWindow *w) {
+    IconList *l = w->iconlist();
+    l->text_mode = (TextMode)prefs_.text_mode;
+    l->label_multiline = prefs_.label_lines;
+    l->label_maxlen = prefs_.label_maxlen;
+    l->hspacing = prefs_.hspacing;
+    l->vspacing = prefs_.vspacing;
+    if (!w->is_root()) {
+        l->list_mode = (ListMode)prefs_.list_mode;
+        if (prefs_.show_hidden) l->display_flags |= Disp_ShowHidden; else l->display_flags &= ~Disp_ShowHidden;
+        if (prefs_.drawers_first) l->sort_flags &= ~(Sort_DrawersMixed | Sort_DrawersLast);
+        else l->sort_flags |= Sort_DrawersMixed;
+        w->show_toolbar(prefs_.toolbar);
+        w->show_statusbar(prefs_.statusbar);
+    }
+}
 
 // --------------------------------------------------------------------------------------------
 void Wanderer::start(bool backdrop) {
@@ -149,6 +170,7 @@ void Wanderer::start(bool backdrop) {
 }
 
 void Wanderer::setup(IconWindow *w) {
+    apply_prefs(w);
     w->on_open = [this](IconWindow *win, IconEntry &e) { open_entry(win, e); };
     w->on_activate = [this](IconWindow *win) { active_ = win; };
     w->on_parent = [this](IconWindow *win) {
@@ -292,6 +314,7 @@ std::vector<Fl_Menu_Item> Wanderer::menu_items(IconWindow *w) {
             {"Backdrop", FL_META + 'b', nullptr, (void *)MEN_WANDERER_BACKDROP, tog(backdrop_)},
             {"Execute Command...", FL_META + 'e', nullptr, (void *)MEN_WANDERER_EXECUTE},
             {"Shell", FL_META + 'w', nullptr, (void *)MEN_WANDERER_SHELL},
+            {"Preferences...", 0, nullptr, (void *)MEN_WANDERER_PREFS},
             {"About...", 0, nullptr, (void *)MEN_WANDERER_ABOUT},
             {"Quit...", FL_META + 'q', nullptr, (void *)MEN_WANDERER_QUIT},
             {nullptr},
@@ -420,6 +443,13 @@ void Wanderer::menu_action(IconWindow *w, int id) {
     }
     case MEN_WANDERER_EXECUTE: execute_command(w->is_root() ? getenv("HOME") : w->location()); break;
     case MEN_WANDERER_SHELL: launch({"x-terminal-emulator"}, w->is_root() ? getenv("HOME") : w->location()); break;
+    case MEN_WANDERER_PREFS:
+        edit_prefs(prefs_, [this](const WandererPrefs &p) {
+            prefs_ = p;
+            for (auto *o : windows_) { apply_prefs(o); o->update(); apply_snapshot(o); }
+            if (root_) { apply_prefs(root_); root_->update(); apply_snapshot(root_); }
+        });
+        break;
     case MEN_WANDERER_ABOUT:
         request("About Wanderer",
                 "Wanderer for X11 " WANDERER_VERSION "\n\nA port of the AROS desktop and file manager.\n"

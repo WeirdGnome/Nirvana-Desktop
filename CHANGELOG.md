@@ -1,5 +1,22 @@
 # Changelog
 
+## 0.2.0 – 2026-11-14
+
+- **Icons**: original images for drawers, hard disks, removable, optical and RAM disks,
+  the trash, and for files by type (text, document, picture, sound, movie, archive, script,
+  tool, link), with a darker selected image.
+- **Wanderer preferences** (*Wanderer > Preferences…*), with Save, Use and Cancel:
+  - label text (outline, plain or shadow);
+  - number of label lines and line length;
+  - grid or free layout and icon spacing;
+  - tool bar and status bar of drawer windows;
+  - all files;
+  - drawers first.
+
+  The settings are kept in `~/.config/wanderer/wanderer.prefs`.
+- **Zune**: the Cycle and Checkmark classes.
+- The backdrop has no scrollers.
+
 ## 0.1.0 – 2026-11-14
 
 The first version of the port of Wanderer (the AROS desktop) to X11. It starts from

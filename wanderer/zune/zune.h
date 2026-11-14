@@ -30,6 +30,7 @@
 #include <FL/Fl_Group.H>
 #include <FL/Fl_Input.H>
 
+#include <algorithm>
 #include <functional>
 #include <string>
 #include <vector>
@@ -196,6 +197,34 @@ protected:
     bool horiz_;
     int entries_ = 1, visible_ = 1, first_ = 0;
     int grab_ = -1, grab_first_ = 0;
+};
+
+// Cycle: a button that steps through its entries (the right part shows the cycle mark)
+class Cycle : public Area {
+public:
+    explicit Cycle(std::vector<std::string> entries, int active = 0);
+    int active() const { return active_; }
+    void active(int a) { active_ = std::clamp(a, 0, (int)entries_.size() - 1); redraw(); }
+    std::function<void(int)> on_change;
+    void ask_min_max(int &minw, int &minh, int &defw, int &defh, int &maxw, int &maxh) override;
+    int handle(int e) override;
+
+protected:
+    void draw_contents() override;
+    std::vector<std::string> entries_;
+    int active_;
+};
+
+// Checkmark: a box that is ticked or not
+class Checkmark : public Area {
+public:
+    explicit Checkmark(bool on = false);
+    bool on() const { return selected_; }
+    void on(bool v) { selected(v); }
+    void ask_min_max(int &minw, int &minh, int &defw, int &defh, int &maxw, int &maxh) override;
+
+protected:
+    void draw_contents() override;
 };
 
 // ImageButton: a button showing a picture drawn by a function (the theme's gadget images)

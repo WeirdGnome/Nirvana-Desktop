@@ -24,6 +24,7 @@ public:
     explicit IconListview(IconList *list);
     IconList *list() const { return list_; }
     void update_props();
+    void show_props(bool on);   // the backdrop has no scrollers
 
 private:
     IconList *list_;

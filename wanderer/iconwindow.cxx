@@ -38,6 +38,11 @@ IconListview::IconListview(IconList *list) : Group(Vertical), list_(list) {
     list_->on_view_changed = [this] { update_props(); };
 }
 
+void IconListview::show_props(bool on) {
+    if (on) { vprop_->show(); hprop_->show(); } else { vprop_->hide(); hprop_->hide(); }
+    resize(x(), y(), w(), h());
+}
+
 void IconListview::update_props() {
     vprop_->set(std::max(list_->content_h(), list_->mheight()), std::max(1, list_->mheight()), list_->view_top());
     hprop_->set(std::max(list_->content_w(), list_->mwidth()), std::max(1, list_->mwidth()), list_->view_left());
@@ -124,6 +129,7 @@ IconWindow::IconWindow(const std::string &location, bool backdrop)
         show_toolbar(false);
         show_statusbar(false);
     }
+    if (backdrop_) view_->show_props(false);
     list_->on_open = [this](IconEntry &e) { if (on_open) on_open(this, e); };
     list_->on_selection_changed = [this] { update_status(); };
     size(520, 340);

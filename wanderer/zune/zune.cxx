@@ -67,7 +67,7 @@ void Area::draw_background(int X, int Y, int W, int H) {
     if (bg_pen_ < 0) return;
     int pen = bg_pen_;
     // a selected button: the "selected" background (configdata: 0:131 - the fill pen)
-    if (selected_ && input_ != Input_None) pen = MPEN_FILL;
+    if (selected_ && (input_ == Input_RelVerify || input_ == Input_Immediate)) pen = MPEN_FILL;
     fl_color(pens()[pen]);
     fl_rectf(X, Y, W, H);
 }
@@ -75,7 +75,7 @@ void Area::draw_background(int X, int Y, int W, int H) {
 void Area::draw() {
     if (damage() & ~FL_DAMAGE_CHILD) {
         draw_background(x(), y(), w(), h());
-        draw_frame(frame_, x(), y(), w(), h(), selected_ && input_ != Input_None);
+        draw_frame(frame_, x(), y(), w(), h(), selected_ && (input_ == Input_RelVerify || input_ == Input_Immediate));
         fl_push_clip(mleft(), mtop(), mwidth(), mheight());
         draw_contents();
         fl_pop_clip();
@@ -498,6 +498,81 @@ int Prop::handle(int e) {
         return 1;
     }
     return Area::handle(e);
+}
+
+// ============================================================================================
+// Cycle
+// ============================================================================================
+Cycle::Cycle(std::vector<std::string> entries, int active) : Area(Frame_Button), entries_(std::move(entries)) {
+    background(MPEN_BACKGROUND);
+    active_ = std::clamp(active, 0, std::max(0, (int)entries_.size() - 1));
+}
+
+void Cycle::ask_min_max(int &minw, int &minh, int &defw, int &defh, int &maxw, int &maxh) {
+    fl_font(prefs().font, prefs().font_size);
+    int w = 0;
+    for (auto &e : entries_) w = std::max(w, (int)fl_width(e.c_str()));
+    minw = defw = w + 26;
+    maxw = MAXMAX;
+    minh = defh = maxh = prefs().font_size + 3;
+}
+
+void Cycle::draw_contents() {
+    const Pens &p = pens();
+    // the cycle mark: a looping arrow at the left, a separator
+    int X = mleft(), Y = mtop(), H = mheight();
+    fl_color(p[MPEN_TEXT]);
+    fl_arc(X + 2, Y + H / 2 - 5, 10, 10, 60, 360);
+    fl_polygon(X + 9, Y + H / 2 - 7, X + 13, Y + H / 2 - 4, X + 9, Y + H / 2 - 1);
+    fl_color(p[MPEN_SHADOW]);
+    fl_yxline(X + 16, Y, Y + H - 1);
+    fl_color(p[MPEN_SHINE]);
+    fl_yxline(X + 17, Y, Y + H - 1);
+    fl_color(selected_ ? p[MPEN_SHINE] : p[MPEN_TEXT]);
+    fl_font(prefs().font, prefs().font_size);
+    if (!entries_.empty())
+        fl_draw(entries_[active_].c_str(), X + 20, Y, mwidth() - 20, H, (Fl_Align)(FL_ALIGN_CENTER | FL_ALIGN_CLIP));
+}
+
+int Cycle::handle(int e) {
+    switch (e) {
+    case FL_PUSH: selected(true); return 1;
+    case FL_DRAG: selected(Fl::event_inside(this)); return 1;
+    case FL_RELEASE:
+        if (selected_ && !entries_.empty()) {
+            // Shift steps backwards
+            int n = (int)entries_.size();
+            active_ = (active_ + (Fl::event_state(FL_SHIFT) ? n - 1 : 1)) % n;
+            if (on_change) on_change(active_);
+        }
+        selected(false);
+        return 1;
+    }
+    return Area::handle(e);
+}
+
+// ============================================================================================
+// Checkmark
+// ============================================================================================
+Checkmark::Checkmark(bool on) : Area(Frame_ImageButton) {
+    background(MPEN_BACKGROUND);
+    input_mode(Input_Toggle);
+    selected_ = on;
+}
+
+void Checkmark::ask_min_max(int &minw, int &minh, int &defw, int &defh, int &maxw, int &maxh) {
+    minw = defw = maxw = 18;
+    minh = defh = maxh = 13;
+}
+
+void Checkmark::draw_contents() {
+    // the tick in the text pen (the background stays the button's)
+    if (!selected_) return;
+    int X = mleft(), Y = mtop(), W = mwidth(), H = mheight();
+    fl_color(pens()[MPEN_TEXT]);
+    fl_line_style(FL_SOLID, 2);
+    fl_line(X + 2, Y + H / 2, X + W / 2 - 1, Y + H - 2, X + W - 2, Y + 1);
+    fl_line_style(0);
 }
 
 // ============================================================================================
