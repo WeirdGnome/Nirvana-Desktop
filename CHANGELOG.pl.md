@@ -1,5 +1,38 @@
 # Lista zmian
 
+## 0.11.0 – 2026-11-14
+
+- **Szukaj** ułożone jak w oryginalnym narzędziu: ścieżka z wyborem szuflady, wzorzec
+  nazwy (`#?` pasuje do wszystkiego) i opcjonalny tekst, który pliki muszą zawierać.
+  Wyniki to lista z kolumnami (pełna ścieżka, rozmiar, atrybuty, data, czas, komentarz).
+  Kliknięcie tytułu kolumny sortuje według niej, a drugie odwraca kolejność. Otwórz,
+  Widok i Szuflada działają na wybranym pliku. Wyszukiwanie idzie krokami, więc
+  Zatrzymaj kończy je od razu.
+- **Obsługa Zune z klawiatury**
+  - Tab i Shift+Tab przechodzą między gadżetami, a aktywny ma przerywaną ramkę.
+  - Spacja naciska przyciski i pola wyboru; listy wyboru zmieniają się Spacją, strzałką
+    w górę i w dół.
+  - Okna otwierają się bez aktywnego obiektu, więc przypadkowy klawisz nie odpowiada
+    na pytanie. Pole tekstowe przejmuje klawiaturę.
+  - Okno pamięta aktywny obiekt, gdy się z niego wychodzi.
+- **Zune**: listy z kolumnami i wierszem tytułów, pionowe wskaźniki, pozioma kreska.
+- **Informacje o dysku** ułożone jak w oryginalnym narzędziu: urządzenie i system plików,
+  rozmiary, pionowy wskaźnik, rozmiar bloku i stan.
+- **Zmień nazwę i Nowa szuflada** ułożone jak w oryginale: ramka grupy, kreska, szerokość
+  jednej trzeciej ekranu. Nazwy z `/` lub `:` są odrzucane.
+- **Wykonaj polecenie** ułożone jak w oryginale: etykieta nad polem tekstowym i jego
+  przyciskiem pliku, przyciski razem po prawej.
+- **Usuwanie** najpierw pyta o pliki bez prawa zapisu (Usuń / Wszystkie / Pomiń /
+  Przerwij).
+- **Kopiowanie** pyta Pomiń / Pomiń wszystkie / Przerwij, gdy pliku lub szuflady nie da
+  się odczytać.
+- **Klawisze Super**: lewy Super z M lub N przełącza ekrany. Prawy Super trafia do
+  programu, więc Super+N w Wandererze tworzy nową szufladę.
+- **Preferencje Wanderera**
+  - Automatyczne sortowanie ikon w oknach szuflad.
+  - Odstęp obrazka od etykiety, margines tekstu etykiety i rozmiar ramki etykiety.
+  - Przesunięcia X i Y kafelków tła.
+
 ## 0.10.0 – 2026-11-14
 
 - **Preferencje Wanderera** ułożone jak w oryginalnym programie preferencji, w trzech

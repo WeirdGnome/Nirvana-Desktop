@@ -1,5 +1,34 @@
 # Changelog
 
+## 0.11.0 – 2026-11-14
+
+- **Find** laid out like the original tool: a path with a drawer requester, a name pattern
+  (`#?` matches anything) and an optional text the files must contain. The results are a
+  list with columns (full path, size, attributes, date, time, comment). Clicking a column
+  title sorts by it, and a second click reverses the order. Open, View and Drawer act on
+  the chosen file. The search runs in steps, so Stop ends it at once.
+- **Zune keyboard control**
+  - Tab and Shift+Tab move between gadgets, with the dashed outline of the active one.
+  - Space presses buttons and checkmarks; cycles step with Space, Up and Down.
+  - Windows open without an active object, so a stray key does not answer a requester.
+    A text field takes the keyboard.
+  - A window remembers its active object when you leave it.
+- **Zune**: lists with columns and a title row, vertical gauges, a horizontal bar.
+- **Disk Info** laid out like the original tool: device and file system, sizes, a vertical
+  gauge, block size and state.
+- **Rename and New Drawer** laid out like the original: a group frame, a bar, a third of
+  the screen wide. Names with `/` or `:` are refused.
+- **Execute Command** laid out like the original: the label above the text field and its
+  file button, the buttons together on the right.
+- **Delete** asks first about files without write permission (Delete / All / Skip / Abort).
+- **Copy** asks Skip / Skip All / Abort when a file or drawer cannot be read.
+- **Super keys**: the left Super key with M or N flips screens. The right Super key goes on
+  to the program, so Super+N in Wanderer makes a new drawer.
+- **Wanderer preferences**
+  - Icon auto-sort for drawer windows.
+  - Image-label spacing, label text padding and label frame size.
+  - X and Y offsets for background tiles.
+
 ## 0.10.0 – 2026-11-14
 
 - **Wanderer preferences** laid out like the original preferences program, with three pages.
