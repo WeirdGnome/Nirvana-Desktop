@@ -90,7 +90,9 @@ public:
     TextMode text_mode = TextMode_Outline;
     int label_maxlen = 10;            // ILC_ICONLABEL_MAXLINELEN_DEFAULT
     int label_multiline = 1;
-    bool label_multiline_on_focus = false;   // all the lines only on the focused entry's label
+    bool label_multiline_on_focus = false;
+    int icon_font_family = -1;   // the icon font (font.prefs FP_ICONFONT): -1 the screen's, 0 sans, 1 serif, 2 fixed
+    int icon_font_size = 0;      // 0: the screen font's size less one   // all the lines only on the focused entry's label
     int hspacing = 5, vspacing = 5;   // ILC_ICON_HORIZONTALMARGIN_DEFAULT ...
     int image_spacing = 1;            // between the image and the label
     int label_hpad = 4, label_vpad = 4, label_border_w = 1, label_border_h = 1;
@@ -152,7 +154,12 @@ protected:
     int lasso_x_ = 0, lasso_y_ = 0;
     IconEntry *pressed_ = nullptr;
     std::vector<bool> lasso_before_;
-    int label_font_size() const { return zune::prefs().font_size - 1; }
+    int label_font_size() const { return icon_font_size > 0 ? icon_font_size : zune::prefs().font_size - 1; }
+    Fl_Font label_font(bool bold = false) const {
+        static const Fl_Font fams[3][2] = {{FL_HELVETICA, FL_HELVETICA_BOLD}, {FL_TIMES, FL_TIMES_BOLD}, {FL_COURIER, FL_COURIER_BOLD}};
+        if (icon_font_family >= 0 && icon_font_family < 3) return fams[icon_font_family][bold];
+        return bold ? zune::prefs().font_bold : zune::prefs().font;
+    }
 };
 
 // ---------------------------------------------------------------------------------------------

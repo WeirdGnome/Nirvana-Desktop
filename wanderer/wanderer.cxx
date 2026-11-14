@@ -143,6 +143,8 @@ void Wanderer::apply_prefs(IconWindow *w) {
     l->text_mode = (TextMode)prefs_.text_mode;
     l->label_multiline = prefs_.label_lines;
     l->label_multiline_on_focus = prefs_.lines_on_focus;
+    l->icon_font_family = prefs_.icon_font;
+    l->icon_font_size = prefs_.icon_font_size;
     l->label_maxlen = prefs_.label_maxlen;
     l->hspacing = prefs_.hspacing;
     l->vspacing = prefs_.vspacing;

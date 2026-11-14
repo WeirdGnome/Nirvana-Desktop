@@ -51,6 +51,8 @@ WandererPrefs WandererPrefs::load() {
         else if (k == "hspacing") p.hspacing = std::clamp(v, 0, 40);
         else if (k == "vspacing") p.vspacing = std::clamp(v, 0, 40);
         else if (k == "backdrop_mode") p.backdrop_mode = std::clamp(v, 0, 2);
+        else if (k == "icon_font") p.icon_font = std::clamp(v, -1, 2);
+        else if (k == "icon_font_size") p.icon_font_size = std::clamp(v, 0, 48);
         else if (k == "lines_on_focus") p.lines_on_focus = v;
         else if (k == "drop_mode") p.drop_mode = std::clamp(v, 0, 1);
         else if (k == "navigation") p.navigation = std::clamp(v, 0, 1);
@@ -67,7 +69,7 @@ void WandererPrefs::save() const {
         << "\nlist_mode=" << list_mode << "\ntoolbar=" << toolbar << "\nstatusbar=" << statusbar
         << "\nshow_hidden=" << show_hidden << "\ndrawers_first=" << drawers_first << "\nhspacing=" << hspacing
         << "\nvspacing=" << vspacing << "\nbackdrop_image=" << backdrop_image << "\nbackdrop_mode=" << backdrop_mode
-        << "\ndrawer_image=" << drawer_image << "\ndrawer_mode=" << drawer_mode << "\nnavigation=" << navigation << "\ndrop_mode=" << drop_mode << "\nlines_on_focus=" << lines_on_focus << "\nscreen_title=" << screen_title << "\n";
+        << "\ndrawer_image=" << drawer_image << "\ndrawer_mode=" << drawer_mode << "\nnavigation=" << navigation << "\ndrop_mode=" << drop_mode << "\nlines_on_focus=" << lines_on_focus << "\nicon_font=" << icon_font << "\nicon_font_size=" << icon_font_size << "\nscreen_title=" << screen_title << "\n";
 }
 
 // --------------------------------------------------------------------------------------------
@@ -91,6 +93,13 @@ void edit_prefs(const WandererPrefs &current, std::function<void(const WandererP
     auto *lines = new Cycle({"1", "2", "3", "4", "5"}, current.label_lines - 1);
     label("Only on focus:");
     auto *onfocus = new Checkmark(current.lines_on_focus);
+    label("Font:");
+    auto *ifont = new Cycle({"Screen", "Sans", "Serif", "Fixed"}, current.icon_font + 1);
+    static const int ISIZES[] = {0, 9, 10, 11, 12, 13, 14, 16, 18, 20};
+    int isi = 0;
+    for (int i = 0; i < 10; i++) if (ISIZES[i] == current.icon_font_size) isi = i;
+    label("Font size:");
+    auto *ifsize = new Cycle({"Screen", "9", "10", "11", "12", "13", "14", "16", "18", "20"}, isi);
     label("Line length:");
     auto *maxlen = new String(std::to_string(current.label_maxlen), 3);
     label("Layout:");
@@ -180,6 +189,8 @@ void edit_prefs(const WandererPrefs &current, std::function<void(const WandererP
         p.navigation = nav->active();
         p.drop_mode = drop->active();
         p.lines_on_focus = onfocus->on();
+        p.icon_font = ifont->active() - 1;
+        p.icon_font_size = ISIZES[ifsize->active()];
         return p;
     };
     auto *w = new Window("Wanderer Preferences", root);

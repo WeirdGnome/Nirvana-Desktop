@@ -19,6 +19,8 @@ struct WandererPrefs {
     int text_mode = 0;           // 0 outline, 1 plain, 2 drop shadow
     int label_lines = 1;         // lines of a label (1..5)
     int label_maxlen = 10;       // characters of a line
+    int icon_font = -1;          // -1 the screen font, 0 sans, 1 serif, 2 fixed
+    int icon_font_size = 0;      // 0 - the screen font's
     bool lines_on_focus = false; // all the lines only on the focused icon
     int list_mode = 0;           // 0 grid, 1 rough
     bool toolbar = true;         // drawer windows: the tool bar

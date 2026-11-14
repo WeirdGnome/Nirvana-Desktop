@@ -168,7 +168,7 @@ void IconList::split_label(IconEntry &e) {
 }
 
 void IconList::create_label(IconEntry &e) {
-    fl_font(prefs().font, label_font_size());
+    fl_font(label_font(), label_font_size());
     e.lines.clear();
     if (label_multiline > 1) split_label(e);
     if (e.lines.empty()) {
@@ -224,7 +224,7 @@ void IconList::label_rect(IconEntry &e, int &w, int &h) {
     int lines = std::max(1, std::min((int)e.lines.size(), label_multiline));
     h = (label_border_h + label_vpad) * 2 + (fh + outline) * lines;
     if (!e.info.empty()) {
-        fl_font(prefs().font, label_font_size() - 1);
+        fl_font(label_font(), label_font_size() - 1);
         int tw = (int)fl_width(e.info.c_str());
         h += label_font_size() + 1 + outline;
         w = std::max(w, tw + outline + (label_vpad + label_border_w) * 2);
@@ -455,7 +455,7 @@ void IconList::draw_entry_label(IconEntry &e, int lx, int ly) {
     int outline = text_mode == TextMode_DropShadow ? 1 : text_mode == TextMode_Plain ? 0 : 2;
     int fh = label_font_size() + 2;
     int tyy = ly + label_border_h + label_vpad;
-    fl_font(text_mode == TextMode_Outline ? prefs().font_bold : prefs().font, label_font_size());
+    fl_font(label_font(text_mode == TextMode_Outline), label_font_size());
     int txt_area = lw - (label_border_w + label_hpad) * 2;
     size_t shown = label_multiline_on_focus && !e.focus ? 1 : e.lines.size();
     for (size_t i = 0; i < shown && i < e.lines.size(); i++) {
@@ -467,7 +467,7 @@ void IconList::draw_entry_label(IconEntry &e, int lx, int ly) {
         tyy += fh + outline;
     }
     if (!e.info.empty()) {
-        fl_font(prefs().font, label_font_size() - 1);
+        fl_font(label_font(), label_font_size() - 1);
         int tw = (int)fl_width(e.info.c_str());
         int tx = ax + label_border_w + label_hpad + std::max(0, (txt_area - tw) / 2);
         outlined_text(e.info.c_str(), tx, tyy + label_font_size() - fl_descent(), text_mode, info_pen, label_shadow_pen);
@@ -499,7 +499,7 @@ void IconList::draw_list_mode() {
     const Pens &p = pens();
     int fh = label_font_size() + 6;
     int X = mleft(), Y = mtop(), W = mwidth();
-    fl_font(prefs().font, label_font_size());
+    fl_font(label_font(), label_font_size());
     int wsize = (int)fl_width("0000000000") + 8, wprot = (int)fl_width("drwxrwxrwx") + 12,
         wdate = (int)fl_width("00-00-00 00:00") + 12;
     int wname = std::max(80, (W - wsize - wprot - wdate) * 55 / 100);
