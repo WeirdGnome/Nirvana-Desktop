@@ -967,30 +967,39 @@ void menu_motion(int xr, int yr) {
     }
 }
 
-void menu_end(bool pick) {
-    int id = 0;
-    if (pick && menu.title >= 0) {
-        auto &items = menu.titles[menu.title].children;
-        if (menu.sub && menu.sub_item >= 0) {
-            auto &m = items[menu.sub_of].children[menu.sub_item];
-            if (!m.disabled()) id = m.id;
-        } else if (menu.item >= 0 && items[menu.item].children.empty() && !items[menu.item].disabled()) id = items[menu.item].id;
+// the item under the pointer, if it can be picked (0: none)
+int menu_current_id() {
+    if (menu.title < 0) return 0;
+    auto &items = menu.titles[menu.title].children;
+    if (menu.sub && menu.sub_item >= 0) {
+        auto &m = items[menu.sub_of].children[menu.sub_item];
+        return m.disabled() ? 0 : m.id;
     }
+    if (menu.item >= 0 && items[menu.item].children.empty() && !items[menu.item].disabled()) return items[menu.item].id;
+    return 0;
+}
+
+void send_menu_pick(Client *c, int id) {
+    if (!id || !c || !by_window.count(c->win)) return;
+    XEvent e = {};
+    e.xclient.type = ClientMessage;
+    e.xclient.window = c->win;
+    e.xclient.message_type = WANDERER_MENU_PICK;
+    e.xclient.format = 32;
+    e.xclient.data.l[0] = id;
+    XSendEvent(dpy, c->win, False, NoEventMask, &e);
+    XFlush(dpy);
+}
+
+void menu_end(bool pick) {
+    int id = pick ? menu_current_id() : 0;
     close_box();
     XUngrabPointer(dpy, CurrentTime);
     WScreen *s = menu.s;
     Client *c = menu.c;
     menu = MenuState{};
     s->draw_bar();
-    if (id && by_window.count(c->win)) {
-        XEvent e = {};
-        e.xclient.type = ClientMessage;
-        e.xclient.window = c->win;
-        e.xclient.message_type = WANDERER_MENU_PICK;
-        e.xclient.format = 32;
-        e.xclient.data.l[0] = id;
-        XSendEvent(dpy, c->win, False, NoEventMask, &e);
-    }
+    send_menu_pick(c, id);
 }
 
 enum DragKind { D_NONE, D_MOVE, D_SIZE, D_SCREEN, D_GADGET };
@@ -1030,6 +1039,13 @@ WScreen *screen_of(Window w) {
 }
 
 void button_press(XButtonEvent &e) {
+    // the left button while the menus are held open: the item is picked and the menus stay
+    // (the original's multiple selection: one menu pass, several items)
+    if (menu.open && e.button == Button1) {
+        int id = menu_current_id();
+        if (id) send_menu_pick(menu.c, id);
+        return;
+    }
     if (getenv("WM_DEBUG"))
         fprintf(stderr, "press win=%lx sub=%lx b=%u st=%x menu=%d drag=%d client=%d frame=%d\n", e.window, e.subwindow,
                 e.button, e.state, menu.open, (int)drag.kind, (int)by_window.count(e.window), (int)by_frame.count(e.window));
