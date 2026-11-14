@@ -70,7 +70,7 @@ void edit_gui_settings() {
     auto *root = VGroup();
     root->vspacing(10);
     auto *main = HGroup();
-    const char *pages[] = {"Windows", "Groups", "Buttons", "Strings", "Listviews", "Scrollbars", "Palette"};
+    const char *pages[] = {"Windows", "Groups", "Buttons", "Cycles", "Strings", "Listviews", "Scrollbars", "Palette"};
     auto *list = new List();
     list->frame(Frame_InputList);
     {
@@ -152,6 +152,25 @@ void edit_gui_settings() {
         new Text("\033rFrame:");
         frames.push_back({Frame_Text, frame_cycle(Frame_Text)});
         tx->end();
+        VSpace();
+        pg->end();
+    }
+    // -- Cycles (cyclesp.c): the pop-up menu
+    Cycle *cpos;
+    Slider *cmin;
+    Checkmark *crec;
+    {
+        auto *pg = VGroup();
+        auto *g = new Group(Group::Vertical, Frame_Group);
+        g->frame_title("Menu");
+        g->columns(2);
+        new Text("\033rPosition:");
+        cpos = new Cycle({"Below", "On Active"}, saved.cycle_menu_position);
+        new Text("\033rLevel:");
+        cmin = new Slider(2, 20, saved.cycle_menu_min);
+        new Text("\033rRecessed entries:");
+        crec = new Checkmark(saved.cycle_menu_recessed);
+        g->end();
         VSpace();
         pg->end();
     }
@@ -259,6 +278,9 @@ void edit_gui_settings() {
         p.window_top = wt->value();
         p.window_bottom = wb->value();
         p.group_hspacing = gh->value();
+        p.cycle_menu_position = cpos->active();
+        p.cycle_menu_min = cmin->value();
+        p.cycle_menu_recessed = crec->on();
         p.group_vspacing = gv->value();
     };
     // a scheme fills the four colours in

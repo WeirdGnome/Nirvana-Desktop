@@ -48,6 +48,10 @@ struct Prefs {
     int font_family = 0;         // 0 sans, 1 serif, 2 fixed
     int group_hspacing = 6, group_vspacing = 3;
     int window_left = 4, window_right = 4, window_top = 3, window_bottom = 3;
+    // the cycles' pop-up menu (Cycles page): below the gadget or on the active entry, from how
+    // many entries, the active entry recessed
+    int cycle_menu_position = 0, cycle_menu_min = 2;
+    bool cycle_menu_recessed = false;
     int font_size = 13;          // the screen font (topaz-like 8 pt is too small on today's screens)
     Fl_Font font = FL_HELVETICA, font_bold = FL_HELVETICA_BOLD, font_fixed = FL_COURIER;
 };
@@ -251,6 +255,12 @@ protected:
     void draw_contents() override;
     std::vector<std::string> entries_;
     int active_;
+    // the pop-up of the entries (MakePopupWin): open while the button is held
+    class CyclePopup *popup_ = nullptr;
+    void close_popup();
+
+public:
+    ~Cycle() override { close_popup(); }
 };
 
 // Checkmark: a box that is ticked or not

@@ -13,6 +13,7 @@
     never growing above its maximum.
 */
 #include "zune.h"
+#include <FL/Fl_Menu_Window.H>
 #include "catalog.h"
 
 #include <FL/Fl.H>
@@ -60,6 +61,9 @@ void load_prefs() {
                 int i = atoi(k.c_str() + 6);
                 if (i > 0 && i < Frame_Count) p.frame[i] = v;
             }
+            else if (k == "cycle_menu_position") p.cycle_menu_position = std::clamp(atoi(v.c_str()), 0, 1);
+            else if (k == "cycle_menu_min") p.cycle_menu_min = std::clamp(atoi(v.c_str()), 2, 100);
+            else if (k == "cycle_menu_recessed") p.cycle_menu_recessed = atoi(v.c_str());
             else if (k == "group_hspacing") p.group_hspacing = std::clamp(atoi(v.c_str()), 0, 20);
             else if (k == "group_vspacing") p.group_vspacing = std::clamp(atoi(v.c_str()), 0, 20);
             else if (k == "window_left") p.window_left = std::clamp(atoi(v.c_str()), 0, 20);
@@ -87,6 +91,8 @@ void save_prefs() {
                "group_hspacing=%d\ngroup_vspacing=%d\nwindow_left=%d\nwindow_right=%d\nwindow_top=%d\nwindow_bottom=%d\n",
             p.background, p.shadow, p.shine, p.fill, p.font_size, p.font_family, p.group_hspacing, p.group_vspacing,
             p.window_left, p.window_right, p.window_top, p.window_bottom);
+    fprintf(f, "cycle_menu_position=%d\ncycle_menu_min=%d\ncycle_menu_recessed=%d\n", p.cycle_menu_position,
+            p.cycle_menu_min, (int)p.cycle_menu_recessed);
     for (int i = 1; i < Frame_Count; i++)
         if (!p.frame[i].empty()) fprintf(f, "frame_%d=%s\n", i, p.frame[i].c_str());
     fclose(f);
@@ -814,11 +820,113 @@ void Cycle::draw_contents() {
         fl_draw(entries_[active_].c_str(), X + 20, Y, mwidth() - 20, H, (Fl_Align)(FL_ALIGN_CENTER | FL_ALIGN_CLIP));
 }
 
+// The pop-up (cycle.c MakePopupWin, RenderPopupItem): a borderless window below the cycle
+// with every entry; the one under the pointer filled with the fill pen
+static const int POPITEM_EXTRAWIDTH = 4, POPITEM_EXTRAHEIGHT = 2, CYCLE_IMAGE_W = 18;
+
+class CyclePopup : public Fl_Menu_Window {
+public:
+    CyclePopup(int X, int Y, int W, int H, const std::vector<std::string> &entries, int item_w, int item_h,
+               int offx, int offy)
+        : Fl_Menu_Window(X, Y, W, H), entries_(entries), iw_(item_w), ih_(item_h), ox_(offx), oy_(offy) {
+        end();
+        clear_border();
+        set_override();
+    }
+    int item_at(int xr, int yr) const {
+        int lx = xr - x() - ox_, ly = yr - y() - oy_;
+        if (lx < 0 || lx >= iw_ || ly < 0) return -1;
+        int i = ly / ih_;
+        return i < (int)entries_.size() ? i : -1;
+    }
+    void highlight(int i) { if (i != active_) { active_ = i; redraw(); } }
+    int highlighted() const { return active_; }
+    void draw() override {
+        const Pens &p = pens();
+        fl_color(p[MPEN_BACKGROUND]);   // MUII_PopupBack
+        fl_rectf(0, 0, w(), h());
+        draw_frame(std_frame(Frame_PopUp), 0, 0, w(), h());
+        fl_font(prefs().font, prefs().font_size);
+        for (int i = 0; i < (int)entries_.size(); i++) {
+            int x1 = ox_, y1 = oy_ + i * ih_;
+            if (i == active_) {
+                int off = 0;
+                if (prefs().cycle_menu_recessed) {
+                    fl_color(p[MPEN_SHADOW]);
+                    fl_yxline(x1, y1, y1 + ih_ - 1);
+                    fl_xyline(x1 + 1, y1, x1 + iw_ - 2);
+                    fl_color(p[MPEN_SHINE]);
+                    fl_yxline(x1 + iw_ - 1, y1, y1 + ih_ - 1);
+                    fl_xyline(x1 + 1, y1 + ih_ - 1, x1 + iw_ - 2);
+                    off = 1;
+                }
+                fl_color(p[MPEN_FILL]);
+                fl_rectf(x1 + off, y1 + off, iw_ - 2 * off, ih_ - 2 * off);
+            }
+            fl_color(p[MPEN_TEXT]);
+            fl_draw(entries_[i].c_str(), x1, y1, iw_, ih_, FL_ALIGN_CENTER);
+        }
+    }
+
+private:
+    std::vector<std::string> entries_;
+    int iw_, ih_, ox_, oy_, active_ = -1;
+};
+
+void Cycle::close_popup() {
+    if (!popup_) return;
+    popup_->hide();
+    delete popup_;
+    popup_ = nullptr;
+}
+
 int Cycle::handle(int e) {
     switch (e) {
-    case FL_PUSH: selected(true); return 1;
-    case FL_DRAG: selected(Fl::event_inside(this)); return 1;
+    case FL_PUSH: {
+        if (Fl::event_button() != FL_LEFT_MOUSE) return 0;
+        // a press right of the cycle image opens the pop-up, if there are entries enough
+        // (cycle_menu_min_entries 2; the menu below the gadget: CYCLE_MENU_POSITION_BELOW)
+        if (Fl::event_x() > mleft() + CYCLE_IMAGE_W && (int)entries_.size() >= prefs().cycle_menu_min && window()) {
+            const FrameSpec &pf = std_frame(Frame_PopUp);
+            FrameBorders b = frame_borders(pf.type, pf.down);
+            int item_w = mwidth() - CYCLE_IMAGE_W + POPITEM_EXTRAWIDTH;
+            int item_h = prefs().font_size + 3 + POPITEM_EXTRAHEIGHT + (prefs().cycle_menu_recessed ? 2 : 0);
+            int offx = pf.inner_left + b.left, offy = pf.inner_top + b.top;
+            int ww = item_w + offx + pf.inner_right + b.right;
+            int wh = item_h * (int)entries_.size() + offy + pf.inner_bottom + b.bottom;
+            int wx = window()->x_root() + mleft() + CYCLE_IMAGE_W - offx - POPITEM_EXTRAWIDTH / 2;
+            int wy = prefs().cycle_menu_position == 0
+                         ? window()->y_root() + y() + h()   // below
+                         : window()->y_root() + mtop() - offy - POPITEM_EXTRAHEIGHT / 2 - active_ * item_h;   // on the active entry
+            int sx, sy, sw, sh;
+            Fl::screen_xywh(sx, sy, sw, sh);
+            if (wy + wh > sy + sh) wy = std::max(sy, window()->y_root() + y() - wh);   // WA_AutoAdjust
+            Fl_Group *saved = Fl_Group::current();
+            Fl_Group::current(nullptr);
+            popup_ = new CyclePopup(wx, wy, ww, wh, entries_, item_w, item_h, offx, offy);
+            Fl_Group::current(saved);
+            popup_->show();
+            return 1;
+        }
+        selected(true);
+        return 1;
+    }
+    case FL_DRAG:
+        if (popup_) { popup_->highlight(popup_->item_at(Fl::event_x_root(), Fl::event_y_root())); return 1; }
+        selected(Fl::event_inside(this));
+        return 1;
     case FL_RELEASE:
+        if (popup_) {
+            // released over an entry: that one; elsewhere: nothing changes
+            int i = popup_->item_at(Fl::event_x_root(), Fl::event_y_root());
+            close_popup();
+            if (i >= 0 && i != active_) {
+                active_ = i;
+                redraw();
+                if (on_change) on_change(active_);
+            }
+            return 1;
+        }
         if (selected_ && !entries_.empty()) {
             // Shift steps backwards
             int n = (int)entries_.size();
