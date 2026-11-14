@@ -82,7 +82,8 @@ const int SIZE_W = 16, SIZE_H = 16;
 Atom WM_PROTOCOLS, WM_DELETE_WINDOW, WM_STATE, WM_TAKE_FOCUS, NET_WM_NAME, UTF8_STRING, NET_WM_WINDOW_TYPE,
     NET_WM_WINDOW_TYPE_DESKTOP, NET_WM_WINDOW_TYPE_DOCK, NET_SUPPORTED, NET_ACTIVE_WINDOW, NET_CLIENT_LIST,
     NET_SUPPORTING_WM_CHECK, NET_WM_STATE, NET_WM_STATE_FULLSCREEN, WANDERER_SCREEN_TITLE, WANDERER_PALETTE,
-    NET_WM_STATE_MAXIMIZED_VERT, NET_WM_STATE_MAXIMIZED_HORZ, NET_CLOSE_WINDOW;
+    NET_WM_STATE_MAXIMIZED_VERT, NET_WM_STATE_MAXIMIZED_HORZ, NET_CLOSE_WINDOW, NET_FRAME_EXTENTS, NET_WORKAREA,
+    NET_NUMBER_OF_DESKTOPS, NET_CURRENT_DESKTOP, NET_DESKTOP_GEOMETRY;
 
 struct WScreen;
 
@@ -103,6 +104,8 @@ struct Client {
     bool bare() const { return backdrop || undecorated || fullscreen; }
     bool protocols_delete = false, takes_focus = false, accepts_input = true;
     int min_w = 40, min_h = 20;
+    int max_w = 0, max_h = 0;                 // 0: no limit (frame sizes)
+    int inc_w = 1, inc_h = 1, base_w = 0, base_h = 0;   // resize increments (terminals: characters)
     int pressed = 0;                          // a gadget held down
     int ignore_unmap = 0;                     // unmaps caused by reparenting a mapped window
 };
@@ -300,9 +303,21 @@ void read_protocols(Client *c) {
     if (hints) XFree(hints);
     XSizeHints sh;
     long supplied;
-    if (XGetWMNormalHints(dpy, c->win, &sh, &supplied) && (sh.flags & PMinSize)) {
-        c->min_w = std::max(40, sh.min_width + BORDER_L + BORDER_R);
-        c->min_h = std::max(TITLE_H + BORDER_B + 10, sh.min_height + TITLE_H + BORDER_B);
+    if (XGetWMNormalHints(dpy, c->win, &sh, &supplied)) {
+        if (sh.flags & PMinSize) {
+            c->min_w = std::max(40, sh.min_width + BORDER_L + BORDER_R);
+            c->min_h = std::max(TITLE_H + BORDER_B + 10, sh.min_height + TITLE_H + BORDER_B);
+        }
+        if ((sh.flags & PMaxSize) && sh.max_width > 0 && sh.max_height > 0) {
+            c->max_w = sh.max_width + BORDER_L + BORDER_R;
+            c->max_h = sh.max_height + TITLE_H + BORDER_B;
+        }
+        if ((sh.flags & PResizeInc) && sh.width_inc > 0 && sh.height_inc > 0) {
+            c->inc_w = sh.width_inc;
+            c->inc_h = sh.height_inc;
+            c->base_w = (sh.flags & PBaseSize) ? sh.base_width : (sh.flags & PMinSize) ? sh.min_width : 0;
+            c->base_h = (sh.flags & PBaseSize) ? sh.base_height : (sh.flags & PMinSize) ? sh.min_height : 0;
+        }
     }
 }
 
@@ -346,6 +361,8 @@ void place(Client *c) {
     if (c->bare()) XMoveResizeWindow(dpy, c->win, 0, 0, c->w, c->h);
     else XMoveResizeWindow(dpy, c->win, BORDER_L, TITLE_H, c->w - BORDER_L - BORDER_R, c->h - TITLE_H - BORDER_B);
     send_configure(c);
+    long ext[4] = {c->bare() ? 0 : BORDER_L, c->bare() ? 0 : BORDER_R, c->bare() ? 0 : TITLE_H, c->bare() ? 0 : BORDER_B};
+    XChangeProperty(dpy, c->win, NET_FRAME_EXTENTS, XA_CARDINAL, 32, PropModeReplace, (unsigned char *)ext, 4);
     draw_frame(c);
 }
 
@@ -1058,11 +1075,18 @@ void motion(XMotionEvent &e) {
         drag.c->y = std::max(BAR_H, drag.oy + dy);
         XMoveWindow(dpy, drag.c->frame, drag.c->x, drag.c->y);
         break;
-    case D_SIZE:
-        drag.c->w = std::max(drag.c->min_w, drag.ow + dx);
-        drag.c->h = std::max(drag.c->min_h, drag.oh + dy);
-        place(drag.c);
+    case D_SIZE: {
+        Client *c = drag.c;
+        int w = std::max(c->min_w, drag.ow + dx), h = std::max(c->min_h, drag.oh + dy);
+        if (c->max_w) w = std::min(w, c->max_w);
+        if (c->max_h) h = std::min(h, c->max_h);
+        // whole steps of the program's increment (a terminal: whole characters)
+        int cw = w - BORDER_L - BORDER_R - c->base_w, ch = h - TITLE_H - BORDER_B - c->base_h;
+        if (c->inc_w > 1 && cw > 0) w -= cw % c->inc_w;
+        if (c->inc_h > 1 && ch > 0) h -= ch % c->inc_h;
+        if (w != c->w || h != c->h) { c->w = w; c->h = h; place(c); }
         break;
+    }
     case D_GADGET: {
         // the gadget stays pressed while the pointer is over it
         Window child;
@@ -1199,6 +1223,11 @@ int main(int argc, char **argv) {
     NET_WM_STATE_MAXIMIZED_VERT = atom("_NET_WM_STATE_MAXIMIZED_VERT");
     NET_WM_STATE_MAXIMIZED_HORZ = atom("_NET_WM_STATE_MAXIMIZED_HORZ");
     NET_CLOSE_WINDOW = atom("_NET_CLOSE_WINDOW");
+    NET_FRAME_EXTENTS = atom("_NET_FRAME_EXTENTS");
+    NET_WORKAREA = atom("_NET_WORKAREA");
+    NET_NUMBER_OF_DESKTOPS = atom("_NET_NUMBER_OF_DESKTOPS");
+    NET_CURRENT_DESKTOP = atom("_NET_CURRENT_DESKTOP");
+    NET_DESKTOP_GEOMETRY = atom("_NET_DESKTOP_GEOMETRY");
     WANDERER_MENU = atom("_WANDERER_MENU");
     WANDERER_SCREEN_TITLE = atom("_WANDERER_SCREEN_TITLE");
     WANDERER_PALETTE = atom("_WANDERER_PALETTE");
@@ -1234,9 +1263,18 @@ int main(int argc, char **argv) {
     XChangeProperty(dpy, root, NET_SUPPORTING_WM_CHECK, XA_WINDOW, 32, PropModeReplace, (unsigned char *)&check_win, 1);
     Atom supported[] = {NET_WM_NAME, NET_WM_WINDOW_TYPE, NET_WM_WINDOW_TYPE_DESKTOP, NET_ACTIVE_WINDOW, NET_CLIENT_LIST,
                         NET_SUPPORTING_WM_CHECK, NET_WM_STATE, NET_WM_STATE_FULLSCREEN, NET_WM_STATE_MAXIMIZED_VERT,
-                        NET_WM_STATE_MAXIMIZED_HORZ, NET_CLOSE_WINDOW};
+                        NET_WM_STATE_MAXIMIZED_HORZ, NET_CLOSE_WINDOW, NET_FRAME_EXTENTS, NET_WORKAREA,
+                        NET_NUMBER_OF_DESKTOPS, NET_CURRENT_DESKTOP, NET_DESKTOP_GEOMETRY};
     XChangeProperty(dpy, root, NET_SUPPORTED, XA_ATOM, 32, PropModeReplace, (unsigned char *)supported,
                     sizeof supported / sizeof supported[0]);
+    {
+        // one desktop as large as the display; its work area below the screen's title bar
+        long one = 1, zero = 0, geo[2] = {SW, SH}, area[4] = {0, BAR_H, SW, SH - BAR_H};
+        XChangeProperty(dpy, root, NET_NUMBER_OF_DESKTOPS, XA_CARDINAL, 32, PropModeReplace, (unsigned char *)&one, 1);
+        XChangeProperty(dpy, root, NET_CURRENT_DESKTOP, XA_CARDINAL, 32, PropModeReplace, (unsigned char *)&zero, 1);
+        XChangeProperty(dpy, root, NET_DESKTOP_GEOMETRY, XA_CARDINAL, 32, PropModeReplace, (unsigned char *)geo, 2);
+        XChangeProperty(dpy, root, NET_WORKAREA, XA_CARDINAL, 32, PropModeReplace, (unsigned char *)area, 4);
+    }
 
     // the screens: the number from the command line (--screens N), at least one
     int nscreens = 2;
