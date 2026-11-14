@@ -21,6 +21,9 @@ void execute_command(const std::string &dir);              // Tools/ExecuteComma
 bool new_drawer(const std::string &dir, std::string &made); // Tools/WBNewDrawer
 bool rename_entry(const std::string &path, std::string &renamed);   // Tools/WBRename
 void information(const std::string &path);                  // Tools/Info
+std::string default_tool(const std::string &path);          // a project's default tool ("" - none)
+void set_default_tool(const std::string &path, const std::string &tool);
+std::string file_comment(const std::string &path);
 void disk_info(const std::string &volume);                  // Tools/DiskInfo
 
 // the trash can (the freedesktop.org trash: files/ and info/*.trashinfo)

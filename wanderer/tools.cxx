@@ -21,6 +21,8 @@
 #include <pwd.h>
 #include <sstream>
 #include <sys/stat.h>
+#include <sys/xattr.h>
+#include <cerrno>
 #include <sys/statvfs.h>
 #include <sys/wait.h>
 #include <unistd.h>
@@ -196,17 +198,83 @@ bool rename_entry(const std::string &path, std::string &renamed) {
 
 // --------------------------------------------------------------------------------------------
 // Information: the name, type, size, date, owner and the protection bits (as check marks)
+// The default tools of projects (~/.config/wanderer/defaulttools: path TAB command), as a
+// project's icon names the program that opens it
+static std::string tools_file() {
+    const char *x = getenv("XDG_CONFIG_HOME");
+    std::string base = x && *x ? x : std::string(getenv("HOME") ? getenv("HOME") : "/tmp") + "/.config";
+    return base + "/wanderer/defaulttools";
+}
+
+std::string default_tool(const std::string &path) {
+    FILE *f = fopen(tools_file().c_str(), "r");
+    if (!f) return "";
+    char line[4096];
+    std::string r;
+    while (fgets(line, sizeof line, f)) {
+        std::string l(line);
+        while (!l.empty() && l.back() == '\n') l.pop_back();
+        auto t = l.find('\t');
+        if (t != std::string::npos && l.substr(0, t) == path) r = l.substr(t + 1);
+    }
+    fclose(f);
+    return r;
+}
+
+void set_default_tool(const std::string &path, const std::string &tool) {
+    std::vector<std::string> keep;
+    if (FILE *f = fopen(tools_file().c_str(), "r")) {
+        char line[4096];
+        while (fgets(line, sizeof line, f)) {
+            std::string l(line);
+            while (!l.empty() && l.back() == '\n') l.pop_back();
+            auto t = l.find('\t');
+            if (t != std::string::npos && l.substr(0, t) != path) keep.push_back(l);
+        }
+        fclose(f);
+    }
+    if (!tool.empty()) keep.push_back(path + "\t" + tool);
+    std::error_code ec;
+    fs::create_directories(fs::path(tools_file()).parent_path(), ec);
+    if (FILE *f = fopen(tools_file().c_str(), "w")) {
+        for (auto &l : keep) fprintf(f, "%s\n", l.c_str());
+        fclose(f);
+    }
+}
+
+// The comment of a file (the extended attribute user.comment, as the file systems of the
+// system keep a comment with every file)
+std::string file_comment(const std::string &path) {
+    char buf[1024];
+    ssize_t n = lgetxattr(path.c_str(), "user.comment", buf, sizeof buf - 1);
+    return n > 0 ? std::string(buf, n) : "";
+}
+
+static bool set_file_comment(const std::string &path, const std::string &c, std::string &err) {
+    int r = c.empty() ? lremovexattr(path.c_str(), "user.comment")
+                      : lsetxattr(path.c_str(), "user.comment", c.data(), c.size(), 0);
+    if (r != 0 && !(c.empty() && errno == ENODATA)) { err = strerror(errno); return false; }
+    return true;
+}
+
+// Information: the name, type, size, date, owner; the protection (read, write, execute -
+// for the owner, the group and the others), the comment, the default tool of a project;
+// Save puts the changes into effect
 void information(const std::string &path) {
     struct stat st;
     if (lstat(path.c_str(), &st) != 0) return;
-    bool done = false;
-    std::string type = S_ISDIR(st.st_mode) ? "Drawer" : S_ISLNK(st.st_mode) ? "Link" : (st.st_mode & S_IXUSR) ? "Tool" : "Project";
+    bool done = false, save = false;
+    bool is_dir = S_ISDIR(st.st_mode), is_link = S_ISLNK(st.st_mode);
+    bool project = S_ISREG(st.st_mode) && !(st.st_mode & S_IXUSR);
+    std::string type = is_dir ? "Drawer" : is_link ? "Link" : (st.st_mode & S_IXUSR) ? "Tool" : "Project";
     char date[64];
     struct tm tm;
     localtime_r(&st.st_mtime, &tm);
     strftime(date, sizeof date, "%d-%b-%y %H:%M:%S", &tm);
     struct passwd *pw = getpwuid(st.st_uid);
     struct group *gr = getgrgid(st.st_gid);
+    Checkmark *bits[9];
+    String *comment, *tool = nullptr;
     auto *root = VGroup();
     {
         auto *top = new Group(Group::Vertical, Frame_Group);
@@ -221,26 +289,66 @@ void information(const std::string &path) {
         new Text(date, Frame_Text);
         new Text("\033rOwner:");
         new Text(std::string(pw ? pw->pw_name : "?") + " / " + (gr ? gr->gr_name : "?"), Frame_Text);
+        new Text("\033rComment:");
+        comment = new String(file_comment(path), 512);
+        if (project) {
+            new Text("\033rDefault Tool:");
+            tool = new String(default_tool(path), 1024);
+        }
         top->end();
-        auto *prot = new Group(Group::Horizontal, Frame_Group);
+        auto *prot = new Group(Group::Vertical, Frame_Group);
         prot->frame_title("Protection");
-        struct Bit { const char *name; mode_t bit; };
-        for (auto b : {Bit{"Read", S_IRUSR}, Bit{"Write", S_IWUSR}, Bit{"Execute", S_IXUSR}}) {
-            auto *t = new Text(std::string("\033c") + b.name + ((st.st_mode & b.bit) ? " \xe2\x9c\x93" : " -"), Frame_Text);
-            t->weight(100);
+        prot->columns(4);
+        new Text("");
+        new Text("\033cRead");
+        new Text("\033cWrite");
+        new Text("\033cExecute");
+        static const mode_t m[9] = {S_IRUSR, S_IWUSR, S_IXUSR, S_IRGRP, S_IWGRP, S_IXGRP, S_IROTH, S_IWOTH, S_IXOTH};
+        const char *who[3] = {"\033rOwner", "\033rGroup", "\033rOthers"};
+        for (int r = 0; r < 3; r++) {
+            new Text(who[r]);
+            for (int c = 0; c < 3; c++) {
+                auto *row = HGroup();
+                HSpace();
+                bits[r * 3 + c] = new Checkmark(st.st_mode & m[r * 3 + c]);
+                HSpace();
+                row->end();
+            }
         }
         prot->end();
+        if (is_link) for (auto *b : bits) b->disabled(true);   // links have no protection of their own
         auto *buttons = HGroup();
+        buttons->same_width(true);
+        auto *bs = new Button("Save");
         HSpace();
-        auto *ok = new Button("OK");
+        auto *bc = new Button("Cancel");
         buttons->end();
-        ok->on_press = [&done] { done = true; };
+        bs->on_press = [&] { save = done = true; };
+        bc->on_press = [&] { done = true; };
     }
     root->end();
     auto *w = new Window(fs::path(path).filename().string() + " - Information", root);
-    w->size(std::max(w->w(), 360), w->h());
+    w->size(std::max(w->w(), 380), w->h());
     centre(w);
-    run_modal(w, done);
+    w->set_modal();
+    w->show();
+    while (!done && w->shown()) Fl::wait();
+    if (save) {
+        std::string errors, err;
+        if (!is_link) {
+            static const mode_t m[9] = {S_IRUSR, S_IWUSR, S_IXUSR, S_IRGRP, S_IWGRP, S_IXGRP, S_IROTH, S_IWOTH, S_IXOTH};
+            mode_t mode = st.st_mode & ~(mode_t)0777;
+            for (int i = 0; i < 9; i++) if (bits[i]->on()) mode |= m[i];
+            if ((mode & 07777) != (st.st_mode & 07777) && chmod(path.c_str(), mode & 07777) != 0)
+                errors += std::string("Protection: ") + strerror(errno) + "\n";
+        }
+        if (comment->value() != file_comment(path) && !set_file_comment(path, comment->value(), err))
+            errors += "Comment: " + err + "\n";
+        if (tool) set_default_tool(path, tool->value());
+        if (!errors.empty()) request("Information", "Not everything could be changed:\n" + errors, "OK");
+    }
+    w->hide();
+    Fl::delete_widget(w);
 }
 
 // Disk Info: the volume's name, size, used, free

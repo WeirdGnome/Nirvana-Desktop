@@ -302,8 +302,10 @@ void Wanderer::open_entry(IconWindow *, IconEntry &e) {
     if (e.is_drawer()) { open_drawer(e.path); return; }
     struct stat st;
     std::string dir = fs::path(e.path).parent_path().string();
-    // a tool runs; a project opens with the program for its type
-    if (stat(e.path.c_str(), &st) == 0 && (st.st_mode & S_IXUSR) && S_ISREG(st.st_mode)) launch({e.path}, dir);
+    // a tool runs; a project opens with its default tool, else the program for its type
+    if (stat(e.path.c_str(), &st) == 0 && (st.st_mode & S_IXUSR) && S_ISREG(st.st_mode)) { launch({e.path}, dir); return; }
+    std::string tool = default_tool(e.path);
+    if (!tool.empty()) launch({"/bin/sh", "-c", tool + " \"$1\"", "sh", e.path}, dir);
     else launch({"xdg-open", e.path}, dir);
 }
 
