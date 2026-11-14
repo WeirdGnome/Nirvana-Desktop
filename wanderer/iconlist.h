@@ -52,6 +52,7 @@ struct IconEntry {
     long long size = 0;
     time_t mtime = 0;
     bool selected = false, focus = false, visible = true;
+    bool executable = false;          // a tool (the x bit)
     int provided_x = NO_ICON_POSITION, provided_y = NO_ICON_POSITION;   // a snapshot position
     // computed (iconlist.c: ie_IconX/Y, ie_AreaWidth/Height, ie_IconWidth/Height ...)
     int x = 0, y = 0, area_w = 0, area_h = 0, icon_w = 0, icon_h = 0;

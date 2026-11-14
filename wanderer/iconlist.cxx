@@ -10,6 +10,7 @@
     sorting and the selection follow those sources; drawing and input are FLTK's.
 */
 #include "iconlist.h"
+#include "icons.h"
 
 #include <FL/Fl.H>
 #include <FL/fl_draw.H>
@@ -163,8 +164,8 @@ void IconList::create_label(IconEntry &e) {
 // ---------------------------------------------------------------------------------------------
 void IconList::icon_size(IconEntry &e, int &w, int &h) {
     if (display_flags & Disp_NoIcons) { w = h = 0; return; }
-    w = 48; h = 40;   // the placeholder images (draw_icon_image)
-    if (e.type == ST_ROOT) { w = 52; h = 36; }
+    w = ICON_W;
+    h = ICON_H;
 }
 
 void IconList::label_rect(IconEntry &e, int &w, int &h) {
@@ -357,41 +358,12 @@ void IconList::resize(int X, int Y, int W, int H) {
 // ---------------------------------------------------------------------------------------------
 // Drawing (MUIM_Draw, MUIM_IconList_DrawEntry, MUIM_IconList_DrawEntryLabel)
 // ---------------------------------------------------------------------------------------------
-// The images until the icon library is ported: a drawer, a file, a tool, a volume - simple
-// original pictures in the screen's pens.
+// The image of an entry (icons.cxx): by its type and name
 void IconList::draw_icon_image(IconEntry &e, int x, int y, bool sel) {
     if (display_flags & Disp_NoIcons) return;
-    const Pens &p = pens();
-    Fl_Color body = sel ? fl_color_average(p[MPEN_FILL], p[MPEN_SHADOW], 0.7f) : p[MPEN_FILL];
-    Fl_Color paper = sel ? p[MPEN_HALFSHADOW] : p[MPEN_SHINE];
-    auto box = [&](int bx, int by, int bw, int bh, Fl_Color c) {
-        fl_color(c); fl_rectf(bx, by, bw, bh);
-        fl_color(p[MPEN_SHADOW]); fl_rect(bx, by, bw, bh);
-    };
-    if (e.type == ST_ROOT) {
-        // a drive: a flat box with a slot and a light
-        box(x + 2, y + 8, e.icon_w - 4, e.icon_h - 14, paper);
-        box(x + 2, y + e.icon_h - 10, e.icon_w - 4, 6, body);
-        fl_color(p[MPEN_SHADOW]); fl_rectf(x + 10, y + 16, e.icon_w - 20, 3);
-        fl_color(sel ? FL_DARK_GREEN : FL_GREEN); fl_rectf(x + e.icon_w - 12, y + e.icon_h - 9, 5, 3);
-    } else if (e.is_drawer()) {
-        // a drawer: a chest with a front and a handle
-        box(x + 4, y + 6, e.icon_w - 8, e.icon_h - 8, body);
-        box(x + 8, y + 12, e.icon_w - 16, e.icon_h - 20, paper);
-        fl_color(p[MPEN_SHADOW]); fl_rectf(x + e.icon_w / 2 - 6, y + 18, 12, 3);
-    } else {
-        // a file: a page with a folded corner
-        int px = x + (e.icon_w - 30) / 2, pw = 30, ph = e.icon_h - 2;
-        fl_color(paper);
-        fl_polygon(px, y, px + pw - 9, y, px + pw, y + 9, px + pw, y + ph);
-        fl_polygon(px, y, px + pw, y + ph, px, y + ph);
-        fl_color(p[MPEN_SHADOW]);
-        fl_line(px, y, px + pw - 9, y); fl_line(px + pw - 9, y, px + pw, y + 9);
-        fl_line(px + pw, y + 9, px + pw, y + ph); fl_line(px + pw, y + ph, px, y + ph); fl_line(px, y + ph, px, y);
-        fl_line(px + pw - 9, y, px + pw - 9, y + 9); fl_line(px + pw - 9, y + 9, px + pw, y + 9);
-        fl_color(body);
-        for (int l = 0; l < 4; l++) fl_rectf(px + 5, y + 14 + l * 5, pw - 10, 2);
-    }
+    IconKind k = icon_kind(e.path, e.is_drawer() && e.type != ST_ROOT, e.type == ST_ROOT, e.executable);
+    if (e.type == ST_LINKFILE) k = IconKind::Link;
+    draw_icon(k, x, y, sel);
 }
 
 static void outlined_text(const char *s, int tx, int ty, TextMode mode, Fl_Color pen, Fl_Color shadow) {
@@ -684,6 +656,7 @@ void IconDrawerList::update() {
             } else if (S_ISDIR(st.st_mode)) e.type = ST_USERDIR;
             else if (S_ISFIFO(st.st_mode)) e.type = ST_PIPEFILE;
             else e.type = ST_FILE;
+            e.executable = S_ISREG(st.st_mode) && (st.st_mode & S_IXUSR);
         }
         add(std::move(e));
     }
