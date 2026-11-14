@@ -1075,6 +1075,64 @@ void Gauge::draw_contents() {
 // ============================================================================================
 // ImageButton
 // ============================================================================================
+namespace {
+// Move / Draw of the RastPort
+struct Pen { int x = 0, y = 0; void move(int X, int Y) { x = X; y = Y; } void draw(int X, int Y) { fl_line(x, y, X, Y); x = X; y = Y; } };
+
+void popup_draw(int left, int top, int width, int height) {
+    Pen r;
+    height -= 3;
+    fl_color(pens()[MPEN_TEXT]);
+    int cx = width / 2;
+    r.move(left + 1, top); r.draw(left + width - cx, top + height - 1);
+    r.move(left, top); r.draw(left + width - cx - 1, top + height - 1);
+    r.move(left + width - 1 - 1, top); r.draw(left + cx - 1, top + height - 1);
+    r.move(left + width - 1, top); r.draw(left + cx, top + height - 1);
+    int bottom = top + height - 1 + 3, right = left + width - 1;
+    r.move(left, bottom - 2); r.draw(right, bottom - 2);
+    r.move(left, bottom - 1); r.draw(right, bottom - 1);
+}
+
+void popfile_draw(int left, int top, int width, int height) {
+    Pen r;
+    int right = left + width - 1, bottom = top + height - 1;
+    int edgex = left + width * 5 / 8, edgey = top + height * 5 / 8;
+    fl_color(pens()[MPEN_TEXT]);
+    r.move(left, top); r.draw(left, bottom);
+    r.move(left + 1, top); r.draw(left + 1, bottom);
+    r.move(left, bottom); r.draw(right, bottom);
+    r.move(left, bottom - 1); r.draw(right, bottom - 1);
+    r.move(right, bottom - 1); r.draw(right, edgey);
+    r.move(right - 1, bottom - 1); r.draw(right - 1, edgey);
+    r.move(right, edgey - 1); r.draw(edgex, edgey - 1); r.draw(edgex, top); r.draw(left + 2, top);
+    r.move(left + 2, top + 1); r.draw(edgex - 1, top + 1);
+    r.move(edgex + 1, top); r.draw(right, edgey - 1);
+}
+
+void popdrawer_draw(int left, int top, int width, int height) {
+    Pen r;
+    int right = left + width - 1, bottom = top + height - 1;
+    int halfx = (left + right) / 2, halfy = (top + bottom) / 2, quartery = top + height / 4;
+    fl_color(pens()[MPEN_TEXT]);
+    r.move(left, quartery); r.draw(left, bottom);
+    r.move(left + 1, quartery); r.draw(left + 1, bottom); r.draw(right, bottom); r.draw(right, halfy);
+    r.draw(halfx, halfy); r.draw(halfx, quartery); r.draw(left + 1, quartery);
+    r.move(halfx, quartery - 1); r.draw(halfx + 2, top); r.draw(right - 2, top); r.draw(right, quartery - 1);
+    r.draw(right, halfy);
+}
+}  // namespace
+
+ImageButton *PopButton(PopImage which) {
+    // the vector images are 10 x 11 at the least (vector_table)
+    auto *b = new ImageButton(10, 11, [which](int x, int y, int w, int h, bool) {
+        switch (which) {
+        case Pop_Up: popup_draw(x, y, w, h); break;
+        case Pop_File: popfile_draw(x, y, w, h); break;
+        case Pop_Drawer: popdrawer_draw(x, y, w, h); break;
+        }
+    });
+    return b;
+}
 ImageButton::ImageButton(int w, int h, std::function<void(int, int, int, int, bool)> image)
     : Area(Frame_ImageButton), iw_(w), ih_(h), image_(std::move(image)) {
     background(MPEN_BACKGROUND);

@@ -253,7 +253,13 @@ void execute_command(const std::string &dir) {
     new Text("Command:");
     auto *cmd = new String(last, 1024);
     cmd->weight(300);
+    auto *pop = PopButton(Pop_File);   // the Popasl of executecommand.c
     row->end();
+    pop->on_press = [cmd, dir] {
+        std::string p = cmd->value();
+        if (p.empty()) p = dir + "/";
+        if (file_request(tr("Execute a File"), p)) cmd->value(p);
+    };
     auto *buttons = HGroup();
     auto *ok = new Button("Execute");
     HSpace();
@@ -522,8 +528,7 @@ void information(const std::string &path) {
                 new Text("Default Tool:");
                 tool = new String(default_tool(path), 1024);
                 tool->weight(300);
-                auto *pick = new Button("?");
-                pick->fixed_width(16);
+                auto *pick = PopButton(Pop_File);   // a Popasl
                 trow->end();
                 String *t = tool;
                 pick->on_press = [t] { std::string p = t->value(); if (file_request(tr("Default Tool"), p)) t->value(p); };

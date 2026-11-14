@@ -330,6 +330,12 @@ protected:
 };
 
 // ImageButton: a button showing a picture drawn by a function (the theme's gadget images)
+// The pop-up images (imspec_vector.c: MUII_PopUp, MUII_PopFile, MUII_PopDrawer) on an image
+// button: the button beside a string that opens a requester (PopButton())
+enum PopImage { Pop_Up, Pop_File, Pop_Drawer };
+class ImageButton;
+ImageButton *PopButton(PopImage which);
+
 class ImageButton : public Area {
 public:
     ImageButton(int w, int h, std::function<void(int x, int y, int w, int h, bool selected)> image);
