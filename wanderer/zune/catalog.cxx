@@ -83,7 +83,9 @@ void load() {
 const std::string &tr(const std::string &english) {
     if (!g_loaded) load();
     auto it = g_cat.find(english);
-    return it == g_cat.end() ? english : it->second;
+    if (it != g_cat.end()) return it->second;
+    // not in the catalog: the English text, kept (the caller may hold on to it - menus do)
+    return g_cat.emplace(english, english).first->second;
 }
 
 std::string tr_text(const std::string &text) {
@@ -92,7 +94,7 @@ std::string tr_text(const std::string &text) {
     if (i >= text.size()) return text;
     std::string rest = text.substr(i);
     const std::string &t = tr(rest);
-    return &t == &rest ? text : text.substr(0, i) + t;
+    return text.substr(0, i) + t;
 }
 
 std::string trs(const std::string &english, const std::string &a, const std::string &b) {

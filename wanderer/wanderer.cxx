@@ -419,7 +419,8 @@ void Wanderer::drop_paths(const std::vector<std::string> &sources, const std::st
     for (auto &src : sources) {
         struct stat ss;
         if (stat(src.c_str(), &ss) != 0) continue;
-        (ss.st_dev == sd.st_dev ? move : copy).push_back(src);
+        // drop mode Move: moved within the volume; Copy: always copied (DROP_MODE_*)
+        (ss.st_dev == sd.st_dev && prefs_.drop_mode == 0 ? move : copy).push_back(src);
     }
     if (!move.empty()) file_operation(FileOpKind::Move, move, dest, refresh);
     if (!copy.empty()) file_operation(FileOpKind::Copy, copy, dest, refresh);

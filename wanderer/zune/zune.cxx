@@ -364,7 +364,13 @@ void Group::layout_columns() {
         int x = mleft();
         for (int c = 0; c < cols; c++) {
             size_t i = r * cols + c;
-            if (i < kids.size()) kids[i]->resize(x, y, ws[c], hs[r]);
+            if (i < kids.size()) {
+                // a child narrower / lower than its cell is centred in it (layout_2d_distribute_space)
+                int a, b, cc, d, e, f;
+                kids[i]->min_max(a, b, cc, d, e, f);
+                int cwid = std::max(std::min(e, ws[c]), a), chei = std::max(std::min(f, hs[r]), b);
+                kids[i]->resize(x + (ws[c] - cwid) / 2, y + (hs[r] - chei) / 2, cwid, chei);
+            }
             x += ws[c] + hs_;
         }
         y += hs[r] + vs_;

@@ -26,6 +26,7 @@ struct WandererPrefs {
     bool show_hidden = false;    // all files
     bool drawers_first = true;
     int hspacing = 5, vspacing = 5;
+    int drop_mode = 0;           // icons dropped: 0 moved within a volume (else copied), 1 always copied
     int navigation = 0;          // a drawer opens in: 0 a new window (classic), 1 the same window (enhanced)
     std::string backdrop_image, drawer_image;   // background pictures ("" - none)
     int backdrop_mode = 1, drawer_mode = 0;     // 0 tiled, 1 scaled, 2 centred
