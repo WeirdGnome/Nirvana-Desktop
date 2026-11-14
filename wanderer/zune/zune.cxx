@@ -1042,6 +1042,23 @@ void List::resize(int X, int Y, int W, int H) {
     layout_prop();
 }
 
+void List::columns(const std::vector<std::string> &titles, const std::vector<bool> &right) {
+    titles_.clear();
+    for (auto &t : titles) titles_.push_back(tr(t));
+    right_ = right;
+    right_.resize(titles_.size(), false);
+    measure_columns();
+}
+
+void List::measure_columns() {
+    colw_.assign(titles_.size(), 0);
+    fl_font(prefs().font, prefs().font_size);
+    for (size_t c = 0; c < titles_.size(); c++) colw_[c] = (int)fl_width(titles_[c].c_str()) + 10;
+    for (auto &l : lines_)
+        for (size_t c = 0; c < l.cols.size() && c < colw_.size(); c++)
+            colw_[c] = std::max(colw_[c], (int)fl_width(l.cols[c].c_str()) + 10);
+}
+
 void List::layout_prop() {
     int n = (int)lines_.size(), v = visible_lines();
     top_ = std::clamp(top_, 0, std::max(0, n - v));
@@ -1062,6 +1079,51 @@ void List::draw_contents() {
     const Pens &p = pens();
     int lh = line_h(), W = mwidth() - 16;
     fl_font(prefs().font, prefs().font_size);
+    if (!titles_.empty()) {
+        // the title row and the columns, divided by bars
+        int th = title_h(), x = mleft();
+        fl_color(p[MPEN_BACKGROUND]);
+        fl_rectf(mleft(), mtop(), W, th);
+        for (size_t c = 0; c < titles_.size(); c++) {
+            int cw = c + 1 == titles_.size() ? std::max(colw_[c], mleft() + W - x) : colw_[c];
+            fl_color(p[MPEN_TEXT]);
+            fl_draw(titles_[c].c_str(), x + 4, mtop(), cw - 8, th, (Fl_Align)((right_[c] ? FL_ALIGN_RIGHT : FL_ALIGN_LEFT) | FL_ALIGN_CLIP));
+            x += cw;
+        }
+        fl_color(p[MPEN_SHADOW]);
+        fl_xyline(mleft(), mtop() + th - 1, mleft() + W - 1);
+        fl_push_clip(mleft(), mtop() + th, W, mheight() - th);
+        for (int i = top_; i < (int)lines_.size() && (i - top_) * lh < mheight() - th; i++) {
+            int y = mtop() + th + (i - top_) * lh;
+            bool act = i == active_;
+            if (act) { fl_color(p[MPEN_FILL]); fl_rectf(mleft(), y, W, lh); }
+            int cx = mleft();
+            auto &l = lines_[i];
+            for (size_t c = 0; c < titles_.size(); c++) {
+                int cw = colw_[c];
+                if (c < l.cols.size()) {
+                    fl_color(act ? p[MPEN_SHINE] : p[MPEN_TEXT]);
+                    fl_draw(l.cols[c].c_str(), cx + 4, y, cw - 8, lh, (Fl_Align)((right_[c] ? FL_ALIGN_RIGHT : FL_ALIGN_LEFT) | FL_ALIGN_CLIP));
+                }
+                cx += cw;
+            }
+        }
+        // the bars between the columns
+        int bx = mleft();
+        for (size_t c = 0; c + 1 < titles_.size(); c++) {
+            bx += colw_[c];
+            fl_color(p[MPEN_SHADOW]);
+            fl_yxline(bx - 1, mtop(), mtop() + mheight() - 1);
+        }
+        fl_pop_clip();
+        int bx2 = mleft();
+        for (size_t c = 0; c + 1 < titles_.size(); c++) {
+            bx2 += colw_[c];
+            fl_color(p[MPEN_SHADOW]);
+            fl_yxline(bx2 - 1, mtop(), mtop() + th - 1);
+        }
+        return;
+    }
     for (int i = top_; i < (int)lines_.size() && (i - top_) * lh < mheight(); i++) {
         int y = mtop() + (i - top_) * lh;
         bool act = i == active_;
@@ -1087,7 +1149,16 @@ int List::handle(int e) {
     case FL_PUSH: {
         if (Fl::event_x() >= prop_->x()) return Area::handle(e);
         take_focus();
-        int i = top_ + (Fl::event_y() - mtop()) / line_h();
+        if (!titles_.empty() && Fl::event_y() < mtop() + title_h()) {
+            // a title clicked: its column (the list sorts by it)
+            int x = mleft();
+            for (size_t c = 0; c < titles_.size(); c++) {
+                x += colw_[c];
+                if (Fl::event_x() < x || c + 1 == titles_.size()) { if (on_title) on_title((int)c); break; }
+            }
+            return 1;
+        }
+        int i = top_ + (Fl::event_y() - mtop() - title_h()) / line_h();
         if (i < 0 || i >= (int)lines_.size()) return 1;
         bool dbl = Fl::event_clicks() && i == active_;
         active(i);

@@ -292,11 +292,15 @@ protected:
 class List : public Area {
 public:
     bool accepts_focus() const override { return !disabled_; }
-    struct Line { std::string text, info; bool highlight = false; };
+    struct Line { std::string text, info; bool highlight = false; std::vector<std::string> cols; };
+    // columns (MUIA_List_Format "BAR,P=\33r BAR,..." with MUIA_List_Title): the titles, which
+    // are right aligned; a line's cells are its cols; a title clicked: on_title
+    void columns(const std::vector<std::string> &titles, const std::vector<bool> &right = {});
+    std::function<void(int)> on_title;
     List();
     void clear() { lines_.clear(); active_ = -1; top_ = 0; redraw(); }
     void add(Line l) { lines_.push_back(std::move(l)); }
-    void done() { top_ = 0; layout_prop(); redraw(); }   // after adding
+    void done() { top_ = 0; measure_columns(); layout_prop(); redraw(); }   // after adding
     const std::vector<Line> &lines() const { return lines_; }
     int active() const { return active_; }
     void active(int a);
@@ -309,7 +313,12 @@ public:
 protected:
     void draw_contents() override;
     int line_h() const { return prefs().font_size + 3; }
-    int visible_lines() const { return std::max(1, mheight() / line_h()); }
+    int title_h() const { return titles_.empty() ? 0 : line_h() + 2; }
+    int visible_lines() const { return std::max(1, (mheight() - title_h()) / line_h()); }
+    std::vector<std::string> titles_;
+    std::vector<bool> right_;
+    std::vector<int> colw_;
+    void measure_columns();
     void layout_prop();
     std::vector<Line> lines_;
     int active_ = -1, top_ = 0;

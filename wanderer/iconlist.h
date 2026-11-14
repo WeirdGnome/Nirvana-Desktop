@@ -203,6 +203,7 @@ std::string ramdisk_dir();                     // the Ram Disk (/dev/shm/ramdisk
 // Home, Trash, the names of mounted drives; a Linux path is taken as it is)
 std::string to_volume_path(const std::string &path);
 std::string from_volume_path(const std::string &path);
+bool file_contains(const std::string &path, const std::string &text);   // the file has the text in it
 // the user's assigns (~/.config/wanderer/assigns: "Name = path"): name, directory
 std::vector<std::pair<std::string, std::string>> assigns();
 std::vector<std::string> left_out_paths();     // ~/.config/wanderer/leftout

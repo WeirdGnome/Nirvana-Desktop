@@ -1343,7 +1343,7 @@ void set_hidden_volumes(const std::vector<std::string> &names) {
 // directory; the interface stays alive while it searches
 // ============================================================================================
 // Does a regular file (up to 64 MB) contain the text? (no case; read in pieces)
-static bool file_contains(const std::string &path, const std::string &text) {
+bool file_contains(const std::string &path, const std::string &text) {
     struct stat st;
     if (stat(path.c_str(), &st) != 0 || !S_ISREG(st.st_mode) || st.st_size > (64LL << 20)) return false;
     FILE *f = fopen(path.c_str(), "rb");

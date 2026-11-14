@@ -17,6 +17,7 @@
 #include "prefs.h"
 #include "fileops.h"
 #include "guisettings.h"
+#include "find.h"
 
 #include <FL/Fl.H>
 #include <FL/Fl_Menu_Item.H>
@@ -1003,18 +1004,15 @@ void Wanderer::menu_action(IconWindow *w, int id) {
         }
         break;
     case MEN_WINDOW_FIND: {
-        std::string pattern;
-        static std::string contents;
-        if (!ask_find(pattern, contents)) break;
-        auto *list = new IconSearchList(w->location(), pattern, contents);
-        std::string what = pattern + (contents.empty() ? "" : trs(" containing \"%s\"", contents));
-        auto *fw = new IconWindow(trs("Find: %s in %s", what, to_volume_path(w->location())), false, list);
-        setup(fw);
-        fw->show_toolbar(false);
-        windows_.push_back(fw);
-        fw->position(w->x() + 30, w->y() + 30);
-        fw->show();
-        fw->update();
+        // the Find tool (SYS:System/Find), started in this window's drawer
+        find_tool(w->location(), [this](const std::string &p) {
+            IconEntry e;
+            e.path = p;
+            e.label = fs::path(p).filename().string();
+            std::error_code ec;
+            e.type = fs::is_directory(p, ec) ? ST_USERDIR : ST_FILE;
+            open_entry(nullptr, e);
+        }, [this](const std::string &p) { open_drawer(p); });
         break;
     }
     }
