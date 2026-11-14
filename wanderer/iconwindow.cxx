@@ -110,7 +110,7 @@ IconWindow::IconWindow(const std::string &location, bool backdrop, IconList *lis
         auto *search = new ImageButton(20, 18, draw_search);
         toolbar_->end();
         loc_string_->on_acknowledge = [this] { if (on_location) on_location(this, from_volume_path(loc_string_->value())); };
-        up->on_press = [this] { if (on_parent) on_parent(this); };
+        up->on_press = [this] { if (on_dir_up) on_dir_up(this); else if (on_parent) on_parent(this); };
         search->on_press = [this] { if (on_search) on_search(this); };
 
         if (list) list_ = list;
@@ -186,6 +186,22 @@ void IconWindow::refresh() {
     list_->scroll_to(vx, vy);
     list_->redraw();
     update_status();
+}
+
+bool IconWindow::set_location(const std::string &path) {
+    auto *dl = dynamic_cast<IconDrawerList *>(list_);
+    if (!dl) return false;
+    if (notify_fd_ >= 0) { Fl::remove_fd(notify_fd_); close(notify_fd_); notify_fd_ = -1; }
+    Fl::remove_timeout(refresh_cb, this);
+    refresh_pending_ = false;
+    location_ = path;
+    loc_string_->value(to_volume_path(location_));
+    for (auto &e : list_->entries()) e.selected = e.focus = false;
+    dl->directory(path);
+    list_->scroll_to(0, 0);
+    update();
+    list_->redraw();
+    return true;
 }
 
 IconWindow::~IconWindow() {

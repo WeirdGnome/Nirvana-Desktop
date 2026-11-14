@@ -50,6 +50,7 @@ WandererPrefs WandererPrefs::load() {
         else if (k == "hspacing") p.hspacing = std::clamp(v, 0, 40);
         else if (k == "vspacing") p.vspacing = std::clamp(v, 0, 40);
         else if (k == "backdrop_mode") p.backdrop_mode = std::clamp(v, 0, 2);
+        else if (k == "navigation") p.navigation = std::clamp(v, 0, 1);
         else if (k == "drawer_mode") p.drawer_mode = std::clamp(v, 0, 2);
     }
     return p;
@@ -63,7 +64,7 @@ void WandererPrefs::save() const {
         << "\nlist_mode=" << list_mode << "\ntoolbar=" << toolbar << "\nstatusbar=" << statusbar
         << "\nshow_hidden=" << show_hidden << "\ndrawers_first=" << drawers_first << "\nhspacing=" << hspacing
         << "\nvspacing=" << vspacing << "\nbackdrop_image=" << backdrop_image << "\nbackdrop_mode=" << backdrop_mode
-        << "\ndrawer_image=" << drawer_image << "\ndrawer_mode=" << drawer_mode << "\nscreen_title=" << screen_title << "\n";
+        << "\ndrawer_image=" << drawer_image << "\ndrawer_mode=" << drawer_mode << "\nnavigation=" << navigation << "\nscreen_title=" << screen_title << "\n";
 }
 
 // --------------------------------------------------------------------------------------------
@@ -104,8 +105,8 @@ void edit_prefs(const WandererPrefs &current, std::function<void(const WandererP
     auto *hidden = new Checkmark(current.show_hidden);
     label("Drawers first:");
     auto *first = new Checkmark(current.drawers_first);
-    VSpace();
-    VSpace();
+    label("Navigation:");
+    auto *nav = new Cycle({"Classic", "Enhanced"}, current.navigation);
     wins->end();
     columns->end();
     // -- Screen title
@@ -165,6 +166,7 @@ void edit_prefs(const WandererPrefs &current, std::function<void(const WandererP
         p.drawer_image = dimg->value();
         p.drawer_mode = dmode->active();
         p.screen_title = stitle->value();
+        p.navigation = nav->active();
         return p;
     };
     auto *w = new Window("Wanderer Preferences", root);

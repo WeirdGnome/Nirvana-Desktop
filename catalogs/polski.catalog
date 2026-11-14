@@ -196,3 +196,6 @@ free	wolne
 Screen	Ekran
 Screen title:	Tytuł ekranu:
 %wv version  %os system  %ov kernel  %pc %pf %pt memory	%wv wersja  %os system  %ov jądro  %pc %pf %pt pamięć
+Navigation:	Nawigacja:
+Classic	Klasyczna
+Enhanced	Rozszerzona

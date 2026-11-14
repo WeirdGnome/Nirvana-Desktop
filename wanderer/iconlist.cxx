@@ -807,8 +807,7 @@ int IconList::handle(int ev) {
 IconDrawerList::IconDrawerList(const std::string &dir) : dir_(dir) {}
 
 void IconDrawerList::directory(const std::string &d) {
-    dir_ = d;
-    update();
+    dir_ = d;   // read by update()
 }
 
 void IconDrawerList::update() {

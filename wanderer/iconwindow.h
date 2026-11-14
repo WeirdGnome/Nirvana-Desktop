@@ -42,13 +42,16 @@ public:
     void show_toolbar(bool on);
     void show_statusbar(bool on);
     void update();                 // re-read the contents
+    // another drawer in this window (MUIA_IconWindow_Location): a drawer window only
+    bool set_location(const std::string &path);
     void update_status();
     void update_title();
 
     // what happens (Wanderer connects these)
     std::function<void(IconWindow *, IconEntry &)> on_open;
     std::function<void(IconWindow *, const std::string &)> on_location;   // the tool bar's location
-    std::function<void(IconWindow *)> on_parent;
+    std::function<void(IconWindow *)> on_parent;     // Window > Open Parent
+    std::function<void(IconWindow *)> on_dir_up;     // the tool bar's "parent" (this window)
     std::function<void(IconWindow *)> on_search;
     std::function<void(IconWindow *)> on_activate;
     std::function<void(IconWindow *)> on_close;

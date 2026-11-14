@@ -89,6 +89,7 @@ class Wanderer {
 public:
     void start(bool backdrop);
     IconWindow *open_drawer(const std::string &path);
+    void navigate(IconWindow *w, const std::string &path);   // another drawer in the same window
     void open_entry(IconWindow *w, IconEntry &e);
     void show_menu(IconWindow *w, int x_root, int y_root);
     std::vector<Fl_Menu_Item> menu_items(IconWindow *w);
@@ -203,9 +204,23 @@ void Wanderer::setup(IconWindow *w) {
         if (volume) { if (root_) root_->show(); return; }
         if (p.string() != loc) open_drawer(p.string());
     };
-    w->on_location = [this](IconWindow *, const std::string &loc) {
+    w->on_location = [this](IconWindow *win, const std::string &loc) {
+        // the tool bar's location: this window shows the drawer (panel_toolbar.c)
         std::error_code ec;
-        if (fs::is_directory(loc, ec)) open_drawer(loc);
+        if (!fs::is_directory(loc, ec)) return;
+        if (dynamic_cast<IconDrawerList *>(win->iconlist())) navigate(win, loc);
+        else open_drawer(loc);
+    };
+    w->on_dir_up = [this](IconWindow *win) {
+        // the tool bar's "parent": up in this window, not above the volume (ICONWINDOW_ACTION_DIRUP)
+        if (!dynamic_cast<IconDrawerList *>(win->iconlist())) { if (win->on_parent) win->on_parent(win); return; }
+        const std::string &loc = win->location();
+        fs::path p = fs::path(loc).parent_path();
+        struct stat a, b;
+        const char *home = getenv("HOME");
+        bool volume = loc == "/" || (home && loc == home) || loc == ramdisk_dir() ||
+                      (stat(loc.c_str(), &a) == 0 && stat(p.c_str(), &b) == 0 && a.st_dev != b.st_dev);
+        if (!volume && p.string() != loc) navigate(win, p.string());
     };
     w->iconlist()->on_context_menu = [this, w](int x, int y) { show_menu(w, x, y); };
     w->iconlist()->on_selection_changed = [this, w] { w->update_status(); publish_menu(w); };
@@ -257,6 +272,17 @@ IconWindow *Wanderer::open_drawer(const std::string &path) {
     windows_.push_back(w);
     w->show();
     return w;
+}
+
+void Wanderer::navigate(IconWindow *w, const std::string &path) {
+    if (w->location() == path) return;
+    apply_prefs(w);   // the defaults, then the drawer's own view
+    IconList *l = w->iconlist();
+    Snapshot s = load_snapshot(path);
+    if (s.display >= 0) { l->display_flags = s.display; l->sort_flags = s.sort; }
+    w->set_location(path);
+    apply_snapshot(w, false);
+    publish_menu(w);
 }
 
 void Wanderer::close(IconWindow *w) {
@@ -327,9 +353,14 @@ void Wanderer::eject(const std::string &device) {
     if (root_) root_->update();
 }
 
-void Wanderer::open_entry(IconWindow *, IconEntry &e) {
+void Wanderer::open_entry(IconWindow *w, IconEntry &e) {
     if (e.unmounted) { mount_and_open(e.device); return; }
-    if (e.is_drawer()) { open_drawer(e.path); return; }
+    if (e.is_drawer()) {
+        // a new window from the root window or with classic navigation, else the same window
+        if (w && !w->is_root() && prefs_.navigation == 1 && dynamic_cast<IconDrawerList *>(w->iconlist())) navigate(w, e.path);
+        else open_drawer(e.path);
+        return;
+    }
     struct stat st;
     std::string dir = fs::path(e.path).parent_path().string();
     // a tool runs; a project opens with its default tool, else the program for its type
