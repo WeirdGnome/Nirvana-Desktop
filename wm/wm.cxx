@@ -81,7 +81,8 @@ const int SIZE_W = 16, SIZE_H = 16;
 
 Atom WM_PROTOCOLS, WM_DELETE_WINDOW, WM_STATE, WM_TAKE_FOCUS, NET_WM_NAME, UTF8_STRING, NET_WM_WINDOW_TYPE,
     NET_WM_WINDOW_TYPE_DESKTOP, NET_WM_WINDOW_TYPE_DOCK, NET_SUPPORTED, NET_ACTIVE_WINDOW, NET_CLIENT_LIST,
-    NET_SUPPORTING_WM_CHECK, NET_WM_STATE, NET_WM_STATE_FULLSCREEN, WANDERER_SCREEN_TITLE, WANDERER_PALETTE;
+    NET_SUPPORTING_WM_CHECK, NET_WM_STATE, NET_WM_STATE_FULLSCREEN, WANDERER_SCREEN_TITLE, WANDERER_PALETTE,
+    NET_WM_STATE_MAXIMIZED_VERT, NET_WM_STATE_MAXIMIZED_HORZ, NET_CLOSE_WINDOW;
 
 struct WScreen;
 
@@ -93,9 +94,17 @@ struct Client {
     int x = 0, y = 0, w = 100, h = 100;       // the frame, on its screen
     int alt_x = 0, alt_y = 0, alt_w = 0, alt_h = 0;   // the other size (zoom)
     bool backdrop = false, active = false, zoomed = false;
+    bool undecorated = false;                 // no frame: docks, notifications, splash screens, tooltips,
+                                              // and windows asking for none (_MOTIF_WM_HINTS)
+    bool fullscreen = false;                  // _NET_WM_STATE_FULLSCREEN: the whole display, no frame
+    bool on_top = false;                      // notifications, docks: above the other windows
+    bool no_focus = false;                    // notifications, tooltips: never active
+    int fs_x = 0, fs_y = 0, fs_w = 0, fs_h = 0;   // the size before full screen
+    bool bare() const { return backdrop || undecorated || fullscreen; }
     bool protocols_delete = false, takes_focus = false, accepts_input = true;
     int min_w = 40, min_h = 20;
     int pressed = 0;                          // a gadget held down
+    int ignore_unmap = 0;                     // unmaps caused by reparenting a mapped window
 };
 
 struct WScreen {
@@ -184,7 +193,7 @@ void draw_size(Drawable d, GC gc, int x, int y, int w, int h, bool pressed) {
 GC gc_for(Drawable d) { return XCreateGC(dpy, d, 0, nullptr); }
 
 void draw_frame(Client *c) {
-    if (c->backdrop) return;
+    if (c->bare()) return;
     Window f = c->frame;
     GC gc = gc_for(f);
     int w = c->w, h = c->h;
@@ -319,7 +328,7 @@ void send_configure(Client *c) {
     ce.event = c->win;
     ce.window = c->win;
     int sy = c->screen ? c->screen->y : 0;
-    if (c->backdrop) { ce.x = c->x; ce.y = c->y + sy; ce.width = c->w; ce.height = c->h; }
+    if (c->bare()) { ce.x = c->x; ce.y = c->y + sy; ce.width = c->w; ce.height = c->h; }
     else {
         ce.x = c->x + BORDER_L;
         ce.y = c->y + TITLE_H + sy;
@@ -334,7 +343,7 @@ void place(Client *c) {
     c->w = std::max(c->w, c->min_w);
     c->h = std::max(c->h, c->min_h);
     XMoveResizeWindow(dpy, c->frame, c->x, c->y, c->w, c->h);
-    if (c->backdrop) XMoveResizeWindow(dpy, c->win, 0, 0, c->w, c->h);
+    if (c->bare()) XMoveResizeWindow(dpy, c->win, 0, 0, c->w, c->h);
     else XMoveResizeWindow(dpy, c->win, BORDER_L, TITLE_H, c->w - BORDER_L - BORDER_R, c->h - TITLE_H - BORDER_B);
     send_configure(c);
     draw_frame(c);
@@ -343,7 +352,10 @@ void place(Client *c) {
 // the stacking within a screen: backdrops at the bottom, then the clients in order
 void restack(WScreen *s) {
     std::vector<Window> order;   // top first (XRestackWindows)
-    for (auto it = s->clients.rbegin(); it != s->clients.rend(); ++it) if (!(*it)->backdrop) order.push_back((*it)->frame);
+    for (auto it = s->clients.rbegin(); it != s->clients.rend(); ++it) if ((*it)->on_top) order.push_back((*it)->frame);
+    for (auto it = s->clients.rbegin(); it != s->clients.rend(); ++it) if ((*it)->fullscreen && !(*it)->on_top) order.push_back((*it)->frame);
+    for (auto it = s->clients.rbegin(); it != s->clients.rend(); ++it)
+        if (!(*it)->backdrop && !(*it)->on_top && !(*it)->fullscreen) order.push_back((*it)->frame);
     for (auto it = s->clients.rbegin(); it != s->clients.rend(); ++it) if ((*it)->backdrop) order.push_back((*it)->frame);
     if (!order.empty()) XRestackWindows(dpy, order.data(), (int)order.size());
 }
@@ -408,6 +420,8 @@ void close_window(Client *c) {
     } else XKillClient(dpy, c->win);
 }
 
+void publish_state(Client *c);
+
 void zoom(Client *c) {
     // the other size: at first the largest the screen allows
     if (!c->alt_w) {
@@ -422,9 +436,61 @@ void zoom(Client *c) {
     std::swap(c->h, c->alt_h);
     c->zoomed = !c->zoomed;
     place(c);
+    publish_state(c);
 }
 
 WScreen *front_screen() { return screens.back(); }
+
+bool motif_undecorated(Window w) {
+    Atom a = XInternAtom(dpy, "_MOTIF_WM_HINTS", False), type;
+    int fmt;
+    unsigned long n, after;
+    unsigned char *data = nullptr;
+    bool r = false;
+    if (XGetWindowProperty(dpy, w, a, 0, 5, False, AnyPropertyType, &type, &fmt, &n, &after, &data) == Success && data) {
+        long *h = (long *)data;   // flags, functions, decorations, ...
+        if (n >= 3 && (h[0] & 2) && h[2] == 0) r = true;
+        XFree(data);
+    }
+    return r;
+}
+
+bool has_state(Window w, Atom state) {
+    Atom type;
+    int fmt;
+    unsigned long n, after;
+    unsigned char *data = nullptr;
+    bool r = false;
+    if (XGetWindowProperty(dpy, w, NET_WM_STATE, 0, 32, False, XA_ATOM, &type, &fmt, &n, &after, &data) == Success && data) {
+        for (unsigned long i = 0; i < n; i++) if (((Atom *)data)[i] == state) r = true;
+        XFree(data);
+    }
+    return r;
+}
+
+void publish_state(Client *c) {
+    std::vector<Atom> st;
+    if (c->fullscreen) st.push_back(NET_WM_STATE_FULLSCREEN);
+    if (c->zoomed) { st.push_back(NET_WM_STATE_MAXIMIZED_VERT); st.push_back(NET_WM_STATE_MAXIMIZED_HORZ); }
+    XChangeProperty(dpy, c->win, NET_WM_STATE, XA_ATOM, 32, PropModeReplace, (unsigned char *)st.data(), (int)st.size());
+}
+
+// The whole display for the window (a film, a game, a presentation): no frame, over the
+// screen's title bar; back to its size and frame after
+void set_fullscreen(Client *c, bool on) {
+    if (c->backdrop || c->fullscreen == on) return;
+    if (on) {
+        c->fs_x = c->x; c->fs_y = c->y; c->fs_w = c->w; c->fs_h = c->h;
+        c->fullscreen = true;
+        c->x = 0; c->y = 0; c->w = SW; c->h = SH;   // (place() puts the window at 0, 0 of its frame)
+    } else {
+        c->fullscreen = false;
+        c->x = c->fs_x; c->y = c->fs_y; c->w = c->fs_w; c->h = c->fs_h;
+    }
+    place(c);
+    restack(c->screen);
+    publish_state(c);
+}
 
 void manage(Window w, bool existing) {
     if (by_window.count(w) || by_frame.count(w)) return;
@@ -439,11 +505,20 @@ void manage(Window w, bool existing) {
     c->screen_title = utf8_prop(w, WANDERER_SCREEN_TITLE);
     c->backdrop = has_type(w, NET_WM_WINDOW_TYPE_DESKTOP);
     read_protocols(c);
+    // the kinds of windows that have no frame
+    for (const char *t : {"_NET_WM_WINDOW_TYPE_DOCK", "_NET_WM_WINDOW_TYPE_SPLASH", "_NET_WM_WINDOW_TYPE_NOTIFICATION",
+                          "_NET_WM_WINDOW_TYPE_TOOLTIP", "_NET_WM_WINDOW_TYPE_DROPDOWN_MENU", "_NET_WM_WINDOW_TYPE_POPUP_MENU",
+                          "_NET_WM_WINDOW_TYPE_COMBO", "_NET_WM_WINDOW_TYPE_DND"})
+        if (has_type(w, XInternAtom(dpy, t, False))) c->undecorated = true;
+    c->no_focus = has_type(w, XInternAtom(dpy, "_NET_WM_WINDOW_TYPE_NOTIFICATION", False)) ||
+                  has_type(w, XInternAtom(dpy, "_NET_WM_WINDOW_TYPE_TOOLTIP", False));
+    c->on_top = c->no_focus || has_type(w, XInternAtom(dpy, "_NET_WM_WINDOW_TYPE_DOCK", False));
+    if (motif_undecorated(w)) c->undecorated = true;
     if (c->backdrop) {
         c->x = 0; c->y = BAR_H; c->w = SW; c->h = SH - BAR_H;
     } else {
-        c->w = wa.width + BORDER_L + BORDER_R;
-        c->h = wa.height + TITLE_H + BORDER_B;
+        c->w = wa.width + (c->undecorated ? 0 : BORDER_L + BORDER_R);
+        c->h = wa.height + (c->undecorated ? 0 : TITLE_H + BORDER_B);
         // the position the program asked for, else a little down and right of the last one
         XSizeHints sh;
         long supplied;
@@ -463,7 +538,7 @@ void manage(Window w, bool existing) {
             c->y = std::max(BAR_H, p->y + (p->h - c->h) / 3);
         }
         c->x = std::clamp(c->x, -c->w + 40, SW - 40);
-        c->y = std::clamp(c->y, BAR_H, SH - TITLE_H);
+        if (!c->undecorated) c->y = std::clamp(c->y, BAR_H, SH - TITLE_H);
     }
     XSetWindowAttributes a = {};
     a.background_pixel = pen_grey;
@@ -474,7 +549,8 @@ void manage(Window w, bool existing) {
     XSelectInput(dpy, w, PropertyChangeMask | StructureNotifyMask);
     XSetWindowBorderWidth(dpy, w, 0);
     XAddToSaveSet(dpy, w);
-    XReparentWindow(dpy, w, c->frame, c->backdrop ? 0 : BORDER_L, c->backdrop ? 0 : TITLE_H);
+    if (wa.map_state == IsViewable) c->ignore_unmap++;   // reparenting unmaps it once
+    XReparentWindow(dpy, w, c->frame, c->bare() ? 0 : BORDER_L, c->bare() ? 0 : TITLE_H);
     // clicks in the window: activate it first (the click goes on to the program)
     XGrabButton(dpy, AnyButton, AnyModifier, w, False, ButtonPressMask, GrabModeSync, GrabModeAsync, None, None);
     by_window[w] = c;
@@ -486,7 +562,8 @@ void manage(Window w, bool existing) {
     XMapWindow(dpy, c->frame);
     set_wm_state(w, NormalState);
     restack(c->screen);
-    if (!c->backdrop) activate(c);
+    if (has_state(w, NET_WM_STATE_FULLSCREEN)) set_fullscreen(c, true);
+    if (!c->backdrop && !c->no_focus) activate(c);
     publish_client_list();
 }
 
@@ -512,7 +589,7 @@ void unmanage(Client *c, bool destroyed) {
 }
 
 Gadget gadget_at(Client *c, int x, int y) {
-    if (c->backdrop) return G_NONE;
+    if (c->bare()) return G_NONE;
     if (y < TITLE_H) {
         if (x < GADGET_W) return G_CLOSE;
         if (x >= c->w - GADGET_W) return G_DEPTH;
@@ -1119,6 +1196,9 @@ int main(int argc, char **argv) {
     NET_SUPPORTING_WM_CHECK = atom("_NET_SUPPORTING_WM_CHECK");
     NET_WM_STATE = atom("_NET_WM_STATE");
     NET_WM_STATE_FULLSCREEN = atom("_NET_WM_STATE_FULLSCREEN");
+    NET_WM_STATE_MAXIMIZED_VERT = atom("_NET_WM_STATE_MAXIMIZED_VERT");
+    NET_WM_STATE_MAXIMIZED_HORZ = atom("_NET_WM_STATE_MAXIMIZED_HORZ");
+    NET_CLOSE_WINDOW = atom("_NET_CLOSE_WINDOW");
     WANDERER_MENU = atom("_WANDERER_MENU");
     WANDERER_SCREEN_TITLE = atom("_WANDERER_SCREEN_TITLE");
     WANDERER_PALETTE = atom("_WANDERER_PALETTE");
@@ -1153,7 +1233,8 @@ int main(int argc, char **argv) {
     XChangeProperty(dpy, check_win, NET_WM_NAME, UTF8_STRING, 8, PropModeReplace, (const unsigned char *)"wanderer-wm", 11);
     XChangeProperty(dpy, root, NET_SUPPORTING_WM_CHECK, XA_WINDOW, 32, PropModeReplace, (unsigned char *)&check_win, 1);
     Atom supported[] = {NET_WM_NAME, NET_WM_WINDOW_TYPE, NET_WM_WINDOW_TYPE_DESKTOP, NET_ACTIVE_WINDOW, NET_CLIENT_LIST,
-                        NET_SUPPORTING_WM_CHECK};
+                        NET_SUPPORTING_WM_CHECK, NET_WM_STATE, NET_WM_STATE_FULLSCREEN, NET_WM_STATE_MAXIMIZED_VERT,
+                        NET_WM_STATE_MAXIMIZED_HORZ, NET_CLOSE_WINDOW};
     XChangeProperty(dpy, root, NET_SUPPORTED, XA_ATOM, 32, PropModeReplace, (unsigned char *)supported,
                     sizeof supported / sizeof supported[0]);
 
@@ -1185,7 +1266,12 @@ int main(int argc, char **argv) {
             auto &cr = ev.xconfigurerequest;
             if (by_window.count(cr.window)) {
                 Client *c = by_window[cr.window];
-                if (!c->backdrop) {
+                if (c->undecorated && !c->fullscreen && !c->backdrop) {
+                    if (cr.value_mask & CWWidth) c->w = cr.width;
+                    if (cr.value_mask & CWHeight) c->h = cr.height;
+                    if (cr.value_mask & CWX) c->x = cr.x;
+                    if (cr.value_mask & CWY) c->y = cr.y - c->screen->y;
+                } else if (!c->bare()) {
                     if (cr.value_mask & CWWidth) c->w = cr.width + BORDER_L + BORDER_R;
                     if (cr.value_mask & CWHeight) c->h = cr.height + TITLE_H + BORDER_B;
                     if (cr.value_mask & CWX) c->x = cr.x - BORDER_L;
@@ -1201,6 +1287,7 @@ int main(int argc, char **argv) {
         case UnmapNotify:
             if (by_window.count(ev.xunmap.window) && ev.xunmap.event != root) {
                 Client *c = by_window[ev.xunmap.window];
+                if (c->ignore_unmap > 0 && !ev.xunmap.send_event) { c->ignore_unmap--; break; }
                 if (ev.xunmap.event == c->frame || ev.xunmap.send_event) unmanage(c, false);
             }
             break;
@@ -1223,6 +1310,26 @@ int main(int argc, char **argv) {
             }
             break;
         case ClientMessage:
+            if (ev.xclient.message_type == NET_WM_STATE && by_window.count(ev.xclient.window)) {
+                // data: action (0 remove, 1 add, 2 toggle), the first and the second state
+                Client *c = by_window[ev.xclient.window];
+                long action = ev.xclient.data.l[0];
+                for (int i = 1; i <= 2; i++) {
+                    Atom a = (Atom)ev.xclient.data.l[i];
+                    if (a == NET_WM_STATE_FULLSCREEN)
+                        set_fullscreen(c, action == 2 ? !c->fullscreen : action == 1);
+                    else if ((a == NET_WM_STATE_MAXIMIZED_VERT || a == NET_WM_STATE_MAXIMIZED_HORZ) && i == 1 && !c->bare()) {
+                        bool want = action == 2 ? !c->zoomed : action == 1;
+                        if (want != c->zoomed) zoom(c);
+                        publish_state(c);
+                    }
+                }
+                break;
+            }
+            if (ev.xclient.message_type == NET_CLOSE_WINDOW && by_window.count(ev.xclient.window)) {
+                close_window(by_window[ev.xclient.window]);
+                break;
+            }
             if (ev.xclient.message_type == NET_ACTIVE_WINDOW && by_window.count(ev.xclient.window)) {
                 Client *c = by_window[ev.xclient.window];
                 if (c->screen != front_screen()) screen_to_front(c->screen);
