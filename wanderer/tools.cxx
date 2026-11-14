@@ -23,6 +23,7 @@
 #include <map>
 #include <grp.h>
 #include <pwd.h>
+#include <fstream>
 #include <sstream>
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -754,34 +755,102 @@ void about_window() {
 }
 
 // Disk Info: the volume's name, size, used, free
+// Tools/DiskInfo: the volume's icon with its device and file system on the left; on the
+// right its name, size, used and free beside a gauge, the block size and the state
 void disk_info(const std::string &volume) {
     struct statvfs sv;
     if (statvfs(volume.c_str(), &sv) != 0) return;
     unsigned long long total = (unsigned long long)sv.f_blocks * sv.f_frsize,
-                       freeb = (unsigned long long)sv.f_bavail * sv.f_frsize, used = total - (unsigned long long)sv.f_bfree * sv.f_frsize;
-    auto mb = [](unsigned long long b) { return std::to_string(b / (1024 * 1024)) + " MB"; };
+                       freeb = (unsigned long long)sv.f_bavail * sv.f_frsize,
+                       used = total - (unsigned long long)sv.f_bfree * sv.f_frsize;
+    auto human = [](unsigned long long b) {
+        char t[64];
+        if (b >= 1ULL << 30) snprintf(t, sizeof t, "%.1fG", b / 1073741824.0);
+        else if (b >= 1ULL << 20) snprintf(t, sizeof t, "%.1fM", b / 1048576.0);
+        else snprintf(t, sizeof t, "%.1fK", b / 1024.0);
+        return std::string(t);
+    };
+    auto with_bytes = [&](unsigned long long b) { return human(b) + " (" + std::to_string(b) + " " + tr("bytes") + ")"; };
+    // the device and the file system (the longest mount point holding the volume)
+    std::string device, fstype;
+    {
+        std::ifstream m("/proc/self/mounts");
+        std::string line;
+        size_t best = 0;
+        std::string v = fs::weakly_canonical(volume).string();
+        while (std::getline(m, line)) {
+            std::istringstream ls(line);
+            std::string dev, mnt, type;
+            ls >> dev >> mnt >> type;
+            if ((v == mnt || v.rfind(mnt == "/" ? "/" : mnt + "/", 0) == 0) && mnt.size() >= best) {
+                best = mnt.size(); device = dev; fstype = type;
+            }
+        }
+    }
+    std::string name = to_volume_path(volume);
+    if (!name.empty() && name.back() == ':') name.pop_back();
+    if (name.find(':') != std::string::npos || name.empty()) name = fs::path(volume).filename().string();
+    int percent = total ? (int)(used * 100 / total) : 0;
     bool done = false;
-    auto *root = VGroup();
-    auto *g = new Group(Group::Vertical, Frame_Group);
-    g->columns(2);
-    new Text("\033rVolume:");
-    new Text(volume, Frame_Text);
-    new Text("\033rSize:");
-    new Text(mb(total), Frame_Text);
-    new Text("\033rUsed:");
-    new Text(mb(used) + " (" + std::to_string(total ? used * 100 / total : 0) + "%)", Frame_Text);
-    new Text("\033rFree:");
-    new Text(mb(freeb), Frame_Text);
-    new Text("\033rBlock size:");
-    new Text(std::to_string(sv.f_frsize) + " bytes", Frame_Text);
-    g->end();
-    auto *buttons = HGroup();
-    HSpace();
-    auto *ok = new Button("OK");
-    buttons->end();
+    auto *root = HGroup();
+    {
+        auto *left = VGroup();
+        HVSpace();
+        auto *ir = HGroup();
+        HVSpace();
+        IconKind kind = icon_kind(volume, true, true, false);
+        auto *img = new ImageButton(ICON_W, ICON_H, [kind](int x, int y, int, int, bool sel) { draw_icon(kind, x, y, sel); });
+        img->frame(Frame_None);
+        img->input_mode(Input_Toggle);
+        HVSpace();
+        ir->end();
+        HVSpace();
+        auto *info = new Group(Group::Vertical);
+        info->columns(2);
+        if (!device.empty()) { new Text("\033rDevice:"); new Text("\033l" + device); }
+        new Text("\033rFile system:");
+        new Text("\033l" + (fstype.empty() ? tr("Unknown") : fstype));
+        info->end();
+        HVSpace();
+        left->end();
+
+        auto *right = VGroup();
+        auto *g = new Group(Group::Horizontal, Frame_Group);
+        HVSpace();
+        auto *cols = new Group(Group::Vertical);
+        cols->columns(2);
+        new Text("\033rName:");
+        new Text("\033b\033l" + name, Frame_Text);
+        auto *labels = VGroup();
+        // MUIA_FramePhantomHoriz: as high as the framed values beside them, no frame drawn
+        const FrameSpec &tf = std_frame(Frame_Text);
+        FrameBorders tb = frame_borders(tf.type, tf.down);
+        for (const char *l : {"\033rSize:", "\033rUsed:", "\033rFree:"})
+            (new Text(l))->inner(0, 0, tb.top + tf.inner_top, tb.bottom + tf.inner_bottom);
+        labels->end();
+        auto *vals = HGroup();
+        auto *vv = VGroup();
+        new Text("\033l" + with_bytes(total), Frame_Text);
+        new Text("\033l" + with_bytes(used) + " " + std::to_string(percent) + "%", Frame_Text);
+        new Text("\033l" + with_bytes(freeb), Frame_Text);
+        vv->end();
+        auto *gauge = new Gauge();
+        gauge->vertical(true);
+        gauge->set(percent, 100);
+        vals->end();
+        new Text("\033rBlock size:");
+        new Text("\033l" + std::to_string(sv.f_frsize) + " " + tr("bytes"), Frame_Text);
+        new Text("\033rStatus:");
+        new Text(std::string("\033l") + tr(sv.f_flag & ST_RDONLY ? "Read only" : "Read/Write"), Frame_Text);
+        cols->end();
+        HVSpace();
+        g->end();
+        HVSpace();
+        right->end();
+    }
     root->end();
-    ok->on_press = [&done] { done = true; };
-    auto *w = new Window("Disk Info", root);
+    auto *w = new Window(tr("Disk Info") + " - " + name, root);
+    w->callback([](Fl_Widget *win, void *d) { *(bool *)d = true; win->hide(); }, &done);
     centre(w);
     run_modal(w, done);
 }

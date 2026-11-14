@@ -329,3 +329,15 @@ All	Wszystkie
 No access to the drawer '%s' in	Brak dostępu do szuflady '%s' w
 No access to the file '%s' in	Brak dostępu do pliku '%s' w
 Skip All	Pomiń wszystkie
+Device:	Urządzenie:
+File system:	System plików:
+Unknown	Nieznany
+Name:	Nazwa:
+Size:	Rozmiar:
+Used:	Zajęte:
+Free:	Wolne:
+Block size:	Rozmiar bloku:
+Status:	Stan:
+Read only	Tylko do odczytu
+Read/Write	Odczyt i zapis
+Disk Info	Informacje o dysku

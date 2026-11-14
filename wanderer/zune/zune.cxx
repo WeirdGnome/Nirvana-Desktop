@@ -1265,12 +1265,23 @@ Gauge::Gauge() : Area(Frame_Gauge) {
 }
 
 void Gauge::ask_min_max(int &minw, int &minh, int &defw, int &defh, int &maxw, int &maxh) {
+    if (!horiz_) {   // a vertical gauge: narrow, as high as it is let
+        minw = defw = maxw = prefs().font_size + 6;
+        minh = 20; defh = 60; maxh = MAXMAX;
+        return;
+    }
     minw = 60; defw = 260; maxw = MAXMAX;
     minh = defh = maxh = prefs().font_size + 6;
 }
 
 void Gauge::draw_contents() {
     const Pens &p = pens();
+    if (!horiz_) {
+        int fh = (int)((long double)mheight() * std::clamp(cur_, 0LL, max_) / max_);
+        fl_color(p[MPEN_FILL]);
+        fl_rectf(mleft(), mtop() + mheight() - fh, mwidth(), fh);
+        return;
+    }
     int fw = (int)((long double)mwidth() * std::clamp(cur_, 0LL, max_) / max_);
     fl_color(p[MPEN_FILL]);
     fl_rectf(mleft(), mtop(), fw, mheight());

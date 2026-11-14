@@ -350,10 +350,12 @@ public:
     Gauge();
     void set(long long current, long long max) { cur_ = current; max_ = max > 0 ? max : 1; redraw(); }
     void info(const std::string &t) { info_ = t; redraw(); }
+    void vertical(bool v) { horiz_ = !v; }   // MUIA_Gauge_Horiz FALSE: it fills from the bottom
     void ask_min_max(int &minw, int &minh, int &defw, int &defh, int &maxw, int &maxh) override;
 
 protected:
     void draw_contents() override;
+    bool horiz_ = true;
     long long cur_ = 0, max_ = 1;
     std::string info_;
 };
@@ -367,6 +369,8 @@ ImageButton *PopButton(PopImage which);
 
 class ImageButton : public Area {
 public:
+    // a frameless image (an icon shown in a window) is no stop of the keyboard
+    bool accepts_focus() const override { return Area::accepts_focus() && frame_spec().type != FST_NONE; }
     ImageButton(int w, int h, std::function<void(int x, int y, int w, int h, bool selected)> image);
     void ask_min_max(int &minw, int &minh, int &defw, int &defh, int &maxw, int &maxh) override;
 
