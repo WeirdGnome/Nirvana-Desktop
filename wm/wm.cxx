@@ -1016,6 +1016,9 @@ WScreen *screen_of(Window w) {
 }
 
 void button_press(XButtonEvent &e) {
+    if (getenv("WM_DEBUG"))
+        fprintf(stderr, "press win=%lx sub=%lx b=%u st=%x menu=%d drag=%d client=%d frame=%d\n", e.window, e.subwindow,
+                e.button, e.state, menu.open, (int)drag.kind, (int)by_window.count(e.window), (int)by_frame.count(e.window));
     if (menu.open) return;
     if (drag.kind != D_NONE) {
         if (e.button == Button3) cancel_drag();   // the right button cancels a drag

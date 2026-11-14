@@ -261,3 +261,47 @@ Round thin border	Okrągła cienka ramka
 Grey border	Szara ramka
 Semi-round bevel	Półokrągła faza
 Rounded	Zaokrąglona
+General	Ogólne
+Appearance	Wygląd
+Toolbar	Pasek narzędzi
+Navigation	Nawigacja
+Method:	Sposób:
+Icon drop mode:	Upuszczanie ikon:
+Root Window	Okno główne
+Wanderer Screen Title	Tytuł ekranu Wanderera
+Title:	Tytuł:
+View Settings	Ustawienia widoków
+Root window	Okno główne
+Root window:	Okno główne:
+Drawers	Szuflady
+Advanced	Zaawansowane
+Select the background	Wybierz tło
+A click on a picture chooses another; Advanced has the icons, labels and background.	Kliknięcie obrazka wybiera inny; Zaawansowane to ikony, etykiety i tło.
+Objects	Obiekty
+Toolbar enabled:	Pasek narzędzi:
+Status bar enabled:	Pasek stanu:
+Preview	Podgląd
+Advanced Options	Opcje zaawansowane
+Labels	Etykiety
+Background	Tło
+Icon Settings	Ustawienia ikon
+Icon listing mode:	Układ ikon:
+Horizontal spacing:	Odstęp poziomy:
+Vertical spacing:	Odstęp pionowy:
+Default sort mode:	Domyślne sortowanie:
+By Name	Według nazwy
+By Date	Według daty
+By Size	Według rozmiaru
+Default view mode:	Domyślny widok:
+Only Icons	Tylko ikony
+Label Settings	Ustawienia etykiet
+Label text mode:	Tekst etykiet:
+Icon label font:	Czcionka etykiet:
+Label line length:	Długość linii etykiety:
+Use multi-line labels:	Etykiety wieloliniowe:
+Only show focused icon's lines:	Linie tylko przy fokusie:
+No. of lines to display:	Liczba linii:
+Background Options	Opcje tła
+Draw mode:	Rysowanie:
+Tile mode:	Kafelki:
+Floating	Ruchome

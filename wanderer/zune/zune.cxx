@@ -1125,6 +1125,14 @@ void Window::resize(int X, int Y, int W, int H) {
     }
 }
 
+int Window::handle(int e) {
+    int r = Fl_Double_Window::handle(e);
+    if (getenv("ZUNE_DEBUG") && (e == FL_PUSH || e == FL_RELEASE || e == FL_ENTER || e == FL_LEAVE))
+        fprintf(stderr, "[%s] ev %d at %d,%d -> %d pushed=%p below=%p grab=%p modal=%p\n", label(), e, Fl::event_x(), Fl::event_y(), r,
+                (void *)Fl::pushed(), (void *)Fl::belowmouse(), (void *)Fl::grab(), (void *)Fl::modal());
+    return r;
+}
+
 void Window::draw() {
     if (damage() & ~FL_DAMAGE_CHILD) {
         // configdata: the window background "0:128"

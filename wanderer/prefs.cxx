@@ -12,10 +12,13 @@
 #include "iconlist.h"
 
 #include <FL/Fl.H>
+#include <FL/Fl_Shared_Image.H>
+#include <FL/fl_draw.H>
 
 #include <cstdlib>
 #include <filesystem>
 #include <fstream>
+#include <memory>
 
 namespace fs = std::filesystem;
 using namespace zune;
@@ -54,6 +57,7 @@ WandererPrefs WandererPrefs::load() {
         else if (k == "icon_font") p.icon_font = std::clamp(v, -1, 2);
         else if (k == "icon_font_size") p.icon_font_size = std::clamp(v, 0, 48);
         else if (k == "lines_on_focus") p.lines_on_focus = v;
+        else if (k == "default_sort") p.default_sort = std::clamp(v, 0, 2);
         else if (k == "drop_mode") p.drop_mode = std::clamp(v, 0, 1);
         else if (k == "show_network") p.show_network = v;
         else if (k == "navigation") p.navigation = std::clamp(v, 0, 1);
@@ -70,93 +74,245 @@ void WandererPrefs::save() const {
         << "\nlist_mode=" << list_mode << "\ntoolbar=" << toolbar << "\nstatusbar=" << statusbar
         << "\nshow_hidden=" << show_hidden << "\ndrawers_first=" << drawers_first << "\nhspacing=" << hspacing
         << "\nvspacing=" << vspacing << "\nbackdrop_image=" << backdrop_image << "\nbackdrop_mode=" << backdrop_mode
-        << "\ndrawer_image=" << drawer_image << "\ndrawer_mode=" << drawer_mode << "\nnavigation=" << navigation << "\nshow_network=" << show_network << "\ndrop_mode=" << drop_mode << "\nlines_on_focus=" << lines_on_focus << "\nicon_font=" << icon_font << "\nicon_font_size=" << icon_font_size << "\nscreen_title=" << screen_title << "\n";
+        << "\ndrawer_image=" << drawer_image << "\ndrawer_mode=" << drawer_mode << "\nnavigation=" << navigation << "\nshow_network=" << show_network << "\ndrop_mode=" << drop_mode << "\ndefault_sort=" << default_sort << "\nlines_on_focus=" << lines_on_focus << "\nicon_font=" << icon_font << "\nicon_font_size=" << icon_font_size << "\nscreen_title=" << screen_title << "\n";
 }
 
 // --------------------------------------------------------------------------------------------
 // The editor: one window, groups with titles, Save / Use / Cancel
 // --------------------------------------------------------------------------------------------
-static Window *g_editor = nullptr;
+static Window *g_editor = nullptr, *g_advanced = nullptr;
 
 static Text *label(const char *t) { return new Text(std::string("\033r") + t); }
 
-void edit_prefs(const WandererPrefs &current, std::function<void(const WandererPrefs &)> apply) {
-    if (g_editor) { g_editor->show(); return; }
+// MUIC_Popimage of the view settings: the picture, small; a click chooses another
+static ImageButton *picture_button(std::shared_ptr<std::string> path) {
+    // each button keeps its picture (a shared image, scaled to the button when drawn)
+    struct Cache { std::string path; Fl_Shared_Image *img = nullptr; };
+    auto cache = std::make_shared<Cache>();
+    auto *b = new ImageButton(50, 50, [path, cache](int x, int y, int w, int h, bool) {
+        fl_color(pens()[MPEN_HALFSHADOW]);
+        fl_rectf(x, y, w, h);
+        if (cache->path != *path) {
+            if (cache->img) { cache->img->release(); cache->img = nullptr; }
+            cache->path = *path;
+            if (!path->empty()) cache->img = Fl_Shared_Image::get(path->c_str());
+        }
+        if (cache->img && cache->img->w() > 0 && cache->img->h() > 0) {
+            cache->img->scale(w, h, 0, 1);
+            cache->img->draw(x, y);
+        }
+    });
+    b->input_mode(Input_RelVerify);
+    return b;
+}
+
+// The advanced options of a view (MSG_ADVANCEDOPTIONS): Icons, Labels, Background
+static void advanced_options(const std::string &view, std::shared_ptr<WandererPrefs> work, bool backdrop) {
+    if (g_advanced) { g_advanced->show(); return; }
+    WandererPrefs &c = *work;
     auto *root = VGroup();
-    // the pages of the editor (a register, as the preferences programs have)
-    auto *reg = new Register({"Icons", "Drawer Windows", "Screen", "Background Pictures"});
+    auto *reg = new Register({"Icons", "Labels", "Background"});
     // -- Icons
-    auto *icons = new Group(Group::Vertical);
-    icons->columns(2);
-    label("Label text:");
-    auto *mode = new Cycle({"Outline", "Plain", "Shadow"}, current.text_mode);
-    label("Label lines:");
-    auto *lines = new Cycle({"1", "2", "3", "4", "5"}, current.label_lines - 1);
-    label("Only on focus:");
-    auto *onfocus = new Checkmark(current.lines_on_focus);
-    label("Font:");
-    auto *ifont = new Cycle({"Screen", "Sans", "Serif", "Fixed"}, current.icon_font + 1);
+    auto *ip = VGroup();
+    auto *ig = new Group(Group::Vertical, Frame_Group);
+    ig->frame_title("Icon Settings");
+    ig->columns(2);
+    label("Icon listing mode:");
+    auto *layout = new Cycle({"Grid", "Plain"}, c.list_mode);
+    label("Horizontal spacing:");
+    auto *hsp = new Slider(0, 40, c.hspacing);
+    label("Vertical spacing:");
+    auto *vsp = new Slider(0, 40, c.vspacing);
+    label("Drawers first:");
+    auto *first = new Checkmark(c.drawers_first);
+    label("Default sort mode:");
+    auto *sortm = new Cycle({"By Name", "By Date", "By Size"}, c.default_sort);
+    label("Default view mode:");
+    auto *viewm = new Cycle({"Only Icons", "All Files"}, c.show_hidden ? 1 : 0);
+    ig->end();
+    VSpace();
+    ip->end();
+    // -- Labels
+    auto *lp = VGroup();
+    auto *lg = new Group(Group::Vertical, Frame_Group);
+    lg->frame_title("Label Settings");
+    lg->columns(2);
+    label("Label text mode:");
+    auto *mode = new Cycle({"Outline", "Plain", "Shadow"}, c.text_mode);
+    label("Icon label font:");
+    auto *ifont = new Cycle({"Screen", "Sans", "Serif", "Fixed"}, c.icon_font + 1);
     static const int ISIZES[] = {0, 9, 10, 11, 12, 13, 14, 16, 18, 20};
     int isi = 0;
-    for (int i = 0; i < 10; i++) if (ISIZES[i] == current.icon_font_size) isi = i;
+    for (int i = 0; i < 10; i++) if (ISIZES[i] == c.icon_font_size) isi = i;
     label("Font size:");
     auto *ifsize = new Cycle({"Screen", "9", "10", "11", "12", "13", "14", "16", "18", "20"}, isi);
-    label("Line length:");
-    auto *maxlen = new Slider(4, 64, current.label_maxlen);
-    label("Layout:");
-    auto *layout = new Cycle({"Grid", "Free"}, current.list_mode);
-    label("Spacing:");
-    auto *spacing = new Cycle({"Small", "Normal", "Large"}, current.hspacing <= 3 ? 0 : current.hspacing >= 10 ? 2 : 1);
-    icons->end();
-    // -- Windows
-    auto *wins = new Group(Group::Vertical);
-    wins->columns(2);
-    label("Tool bar:");
-    auto *tb = new Checkmark(current.toolbar);
-    label("Status bar:");
-    auto *sb = new Checkmark(current.statusbar);
-    label("All files:");
-    auto *hidden = new Checkmark(current.show_hidden);
-    label("Drawers first:");
-    auto *first = new Checkmark(current.drawers_first);
-    label("Navigation:");
-    auto *nav = new Cycle({"Classic", "Enhanced"}, current.navigation);
-    label("Dropped icons:");
-    auto *drop = new Cycle({"Move", "Copy"}, current.drop_mode);
-    wins->end();
-    // -- Screen title
-    auto *scr = new Group(Group::Vertical);
-    scr->columns(2);
-    label("Screen title:");
-    auto *stitle = new String(current.screen_title, 256);
-    stitle->weight(300);
-    label("");
-    new Text("%wv version  %os system  %ov kernel  %pc %pf %pt memory");
-    label("Network Access:");
-    auto *netw = new Checkmark(current.show_network);
-    label("Hidden volumes:");
-    std::string hv;
-    for (auto &n : hidden_volumes()) hv += (hv.empty() ? "" : ", ") + n;
-    auto *hidden_vols = new String(hv, 1024);
-    scr->end();
-    // -- Background pictures
-    auto *pics = new Group(Group::Vertical);
-    pics->columns(4);
-    label("Backdrop:");
-    auto *bimg = new String(current.backdrop_image, 1024);
-    bimg->weight(300);
-    auto *bpick = new Button("?");
-    bpick->fixed_width(16);
-    auto *bmode = new Cycle({"Tiled", "Scaled", "Centred", "Fixed tiles"}, current.backdrop_mode);
-    label("Drawers:");
-    auto *dimg = new String(current.drawer_image, 1024);
-    dimg->weight(300);
-    auto *dpick = new Button("?");
-    dpick->fixed_width(16);
-    auto *dmode = new Cycle({"Tiled", "Scaled", "Centred", "Fixed tiles"}, current.drawer_mode);
-    bpick->on_press = [bimg] { std::string p = bimg->value(); if (file_request(tr("Choose the backdrop picture"), p)) bimg->value(p); };
-    dpick->on_press = [dimg] { std::string p = dimg->value(); if (file_request(tr("Choose the drawers' picture"), p)) dimg->value(p); };
-    pics->end();
+    label("Label line length:");
+    auto *maxlen = new Slider(4, 64, c.label_maxlen);
+    label("Use multi-line labels:");
+    auto *multi = new Checkmark(c.label_lines > 1);
+    label("Only show focused icon's lines:");
+    auto *onfocus = new Checkmark(c.lines_on_focus);
+    label("No. of lines to display:");
+    auto *lines = new Slider(2, 5, std::max(2, c.label_lines));
+    lg->end();
+    VSpace();
+    lp->end();
+    // -- Background
+    auto *bp = VGroup();
+    auto *bg = new Group(Group::Vertical, Frame_Group);
+    bg->frame_title("Background Options");
+    bg->columns(2);
+    int &bmode = backdrop ? c.backdrop_mode : c.drawer_mode;
+    label("Draw mode:");
+    auto *draw = new Cycle({"Tiled", "Scaled", "Centred"}, bmode == 3 ? 0 : bmode);
+    label("Tile mode:");
+    auto *tile = new Cycle({"Floating", "Fixed"}, bmode == 3 ? 1 : 0);
+    bg->end();
+    VSpace();
+    bp->end();
+    reg->end();
+    auto *buttons = HGroup();
+    buttons->same_width(true);
+    auto *use = new Button("Use");
+    HSpace();
+    auto *cancel = new Button("Cancel");
+    buttons->end();
+    root->end();
+    auto *w = new Window(tr("Advanced Options") + " - " + view, root);
+    g_advanced = w;
+    auto close = [w] { w->hide(); Fl::delete_widget(w); g_advanced = nullptr; };
+    use->on_press = [=, &bmode] {
+        WandererPrefs &p = *work;
+        p.list_mode = layout->active();
+        p.hspacing = hsp->value();
+        p.vspacing = vsp->value();
+        p.drawers_first = first->on();
+        p.default_sort = sortm->active();
+        p.show_hidden = viewm->active() == 1;
+        p.text_mode = mode->active();
+        p.icon_font = ifont->active() - 1;
+        p.icon_font_size = ISIZES[ifsize->active()];
+        p.label_maxlen = maxlen->value();
+        p.label_lines = multi->on() ? lines->value() : 1;
+        p.lines_on_focus = onfocus->on();
+        bmode = draw->active() == 0 && tile->active() == 1 ? 3 : draw->active();
+        close();
+    };
+    cancel->on_press = [=] { close(); };
+    w->callback([](Fl_Widget *win, void *) { win->hide(); Fl::delete_widget(win); g_advanced = nullptr; });
+    int sx, sy, sw, sh;
+    Fl::screen_work_area(sx, sy, sw, sh);
+    w->position(sx + (sw - w->w()) / 2, sy + (sh - w->h()) / 3);
+    w->show();
+}
+
+// The Wanderer preferences program (prefs/wanderer/wpeditor.c): a register with General,
+// Appearance and Toolbar; Save / Use / Cancel
+void edit_prefs(const WandererPrefs &current, std::function<void(const WandererPrefs &)> apply) {
+    if (g_editor) { g_editor->show(); return; }
+    auto work = std::make_shared<WandererPrefs>(current);
+    auto bpath = std::make_shared<std::string>(current.backdrop_image);
+    auto dpath = std::make_shared<std::string>(current.drawer_image);
+    auto *root = VGroup();
+    auto *reg = new Register({"General", "Appearance", "Toolbar"});
+    Cycle *m, *d;
+    Checkmark *n, *tb, *sb;
+    String *hidden, *title;
+    // -- General: navigation and the root window
+    auto *gen = VGroup();
+    {
+        auto *nav = new Group(Group::Vertical, Frame_Group);
+        nav->frame_title("Navigation");
+        nav->columns(2);
+        label("Method:");
+        m = new Cycle({"Classic", "Enhanced"}, current.navigation);
+        label("Icon drop mode:");
+        d = new Cycle({"Move", "Copy"}, current.drop_mode);
+        nav->end();
+        auto *rootw = new Group(Group::Vertical, Frame_Group);
+        rootw->frame_title("Root Window");
+        auto *r1 = HGroup();
+        label("Network Access:");
+        n = new Checkmark(current.show_network);
+        HSpace();
+        r1->end();
+        auto *r2 = HGroup();
+        label("Hidden volumes:");
+        std::string hv;
+        for (auto &v : hidden_volumes()) hv += (hv.empty() ? "" : ", ") + v;
+        hidden = new String(hv, 1024);
+        hidden->weight(300);
+        r2->end();
+        rootw->end();
+        auto *st = new Group(Group::Vertical, Frame_Group);
+        st->frame_title("Wanderer Screen Title");
+        st->columns(2);
+        label("Title:");
+        title = new String(current.screen_title, 256);
+        label("");
+        new Text("%wv version  %os system  %ov kernel  %pc %pf %pt memory");
+        st->end();
+        VSpace();
+    }
+    gen->end();
+    // -- Appearance: the view settings - each view's picture and its advanced options
+    auto *app = VGroup();
+    {
+        auto *vs = new Group(Group::Vertical, Frame_Group);
+        vs->frame_title("View Settings");
+        vs->columns(3);
+        struct View { const char *name; std::shared_ptr<std::string> path; bool backdrop; };
+        for (View v : {View{"Root window", bpath, true}, View{"Drawers", dpath, false}}) {
+            label((std::string(v.name) + ":").c_str());
+            auto *pic = picture_button(v.path);
+            auto *adv = new Button("Advanced");
+            auto path = v.path;
+            std::string name = tr(v.name);
+            pic->on_press = [path, pic] {
+                std::string p = *path;
+                if (file_request(tr("Select the background"), p)) { *path = p; pic->redraw(); }
+            };
+            bool bd = v.backdrop;
+            adv->on_press = [work, name, bd] { advanced_options(name, work, bd); };
+        }
+        vs->end();
+        new Text("\033cA click on a picture chooses another; Advanced has the icons, labels and background.");
+        VSpace();
+    }
+    app->end();
+    // -- Toolbar: the objects of a drawer window, with a preview
+    auto *tbp = VGroup();
+    {
+        auto *obj = new Group(Group::Vertical, Frame_Group);
+        obj->frame_title("Objects");
+        obj->columns(2);
+        label("Toolbar enabled:");
+        tb = new Checkmark(current.toolbar);
+        label("Status bar enabled:");
+        sb = new Checkmark(current.statusbar);
+        obj->end();
+        auto *pv = new Group(Group::Horizontal, Frame_Group);
+        pv->frame_title("Preview");
+        auto *loc = new String("Home:", 64);
+        loc->weight(100);
+        new ImageButton(20, 18, [](int x, int y, int w, int h, bool) {
+            fl_color(pens()[MPEN_TEXT]);
+            int cx = x + w / 2;
+            fl_polygon(cx, y + 3, cx - 6, y + 9, cx + 6, y + 9);
+            fl_rectf(cx - 2, y + 9, 5, h - 12);
+        });
+        new ImageButton(20, 18, [](int x, int y, int w, int h, bool) {
+            fl_color(pens()[MPEN_TEXT]);
+            fl_line_style(FL_SOLID, 2);
+            fl_arc(x + 4, y + 3, 9, 9, 0, 360);
+            fl_line(x + 12, y + 11, x + w - 4, y + h - 3);
+            fl_line_style(0);
+        });
+        pv->end();
+        VSpace();
+        (void)loc;
+    }
+    tbp->end();
     reg->end();
     // -- Save / Use / Cancel
     auto *buttons = HGroup();
@@ -169,47 +325,35 @@ void edit_prefs(const WandererPrefs &current, std::function<void(const WandererP
     buttons->end();
     root->end();
 
+    auto store_hidden = [hidden] {
+        std::vector<std::string> v;
+        std::string all = std::string(hidden->value()) + ",", cur;
+        for (char ch : all) {
+            if (ch == ',') {
+                size_t b = cur.find_first_not_of(' '), e = cur.find_last_not_of(' ');
+                if (b != std::string::npos) v.push_back(cur.substr(b, e - b + 1));
+                cur.clear();
+            } else cur += ch;
+        }
+        set_hidden_volumes(v);
+    };
     auto collect = [=] {
-        WandererPrefs p;
-        p.text_mode = mode->active();
-        p.label_lines = lines->active() + 1;
-        p.label_maxlen = maxlen->value();
-        p.list_mode = layout->active();
-        int sp[] = {2, 5, 12};
-        p.hspacing = p.vspacing = sp[spacing->active()];
+        WandererPrefs p = *work;
+        p.navigation = m->active();
+        p.drop_mode = d->active();
+        p.show_network = n->on();
+        p.screen_title = title->value();
         p.toolbar = tb->on();
         p.statusbar = sb->on();
-        p.show_hidden = hidden->on();
-        p.drawers_first = first->on();
-        p.backdrop_image = bimg->value();
-        p.backdrop_mode = bmode->active();
-        p.drawer_image = dimg->value();
-        p.drawer_mode = dmode->active();
-        p.screen_title = stitle->value();
-        p.navigation = nav->active();
-        p.show_network = netw->on();
-        p.drop_mode = drop->active();
-        p.lines_on_focus = onfocus->on();
-        p.icon_font = ifont->active() - 1;
-        p.icon_font_size = ISIZES[ifsize->active()];
+        p.backdrop_image = *bpath;
+        p.drawer_image = *dpath;
         return p;
     };
     auto *w = new Window("Wanderer Preferences", root);
     g_editor = w;
-    auto close = [w] { w->hide(); Fl::delete_widget(w); g_editor = nullptr; };
-    // the hidden volumes: their own file (hiddenvolumes.prefs in the sources), names by commas here
-    auto store_hidden = [hidden_vols] {
-        std::vector<std::string> v;
-        std::string all = hidden_vols->value(), cur;
-        all += ',';
-        for (char c : all) {
-            if (c == ',') {
-                size_t b = cur.find_first_not_of(' '), e = cur.find_last_not_of(' ');
-                if (b != std::string::npos) v.push_back(cur.substr(b, e - b + 1));
-                cur.clear();
-            } else cur += c;
-        }
-        set_hidden_volumes(v);
+    auto close = [w] {
+        if (g_advanced) { g_advanced->hide(); Fl::delete_widget(g_advanced); g_advanced = nullptr; }
+        w->hide(); Fl::delete_widget(w); g_editor = nullptr;
     };
     save->on_press = [=] { auto p = collect(); p.save(); store_hidden(); apply(p); close(); };
     use->on_press = [=] { store_hidden(); apply(collect()); close(); };

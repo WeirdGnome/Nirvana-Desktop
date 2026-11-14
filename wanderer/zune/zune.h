@@ -351,6 +351,7 @@ public:
     void fit();
     void resize(int X, int Y, int W, int H) override;
     void draw() override;
+    int handle(int e) override;
 
 private:
     Area *root_ = nullptr;
