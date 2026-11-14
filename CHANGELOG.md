@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.6.1 – 2026-11-14
+
+- **Output window**: what a command started by *Execute Command* prints shows in a window
+  of its own, in the fixed font. A command that prints nothing opens none (as the
+  system's console window).
+- **Wanderer > Shutdown…**: turns the computer off or restarts it (elogind / logind,
+  else systemctl or shutdown), and asks again while files are still being copied.
+- **Snapshot keeps a drawer's view**: icons or list, all files or not, and the order. The
+  drawer opens that way again.
+
 ## 0.6.0 – 2026-11-14
 
 - **Copying, moving and deleting in the background** (also moving to the trash):

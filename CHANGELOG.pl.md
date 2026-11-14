@@ -1,5 +1,15 @@
 # Lista zmian
 
+## 0.6.1 – 2026-11-14
+
+- **Okno wyjścia**: to, co wypisze polecenie uruchomione przez *Execute Command*, pojawia
+  się w osobnym oknie, czcionką o stałej szerokości. Polecenie, które nic nie wypisze,
+  nie otwiera okna (jak systemowa konsola).
+- **Wanderer > Shutdown…**: wyłącza albo restartuje komputer (elogind / logind, a w razie
+  potrzeby systemctl albo shutdown) i pyta ponownie, gdy trwa jeszcze kopiowanie plików.
+- **Snapshot zapamiętuje widok szuflady**: ikony albo listę, wszystkie pliki albo nie
+  oraz kolejność. Szuflada otwiera się potem tak samo.
+
 ## 0.6.0 – 2026-11-14
 
 - **Kopiowanie, przenoszenie i usuwanie w tle** (także do kosza):
