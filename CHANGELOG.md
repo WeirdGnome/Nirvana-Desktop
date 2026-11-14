@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.4.1 – 2026-11-14
+
+- **File requester** in the style of the system's file requester:
+  - the drawer's list, with drawers marked "Drawer" and files with their size;
+  - the Drawer and File fields;
+  - OK, Volumes, Parent and Cancel buttons;
+  - a double click opens a drawer or picks a file.
+
+  The "?" buttons in *Preferences > Background Pictures* open it.
+- **Zune**: the List class (a read list with a scroller, an active line, keys and the mouse
+  wheel).
+
 ## 0.4.0 – 2026-11-14
 
 - **Background pictures** for the backdrop and for drawer windows (PNG, JPEG, GIF or BMP),

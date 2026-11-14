@@ -29,6 +29,10 @@ void empty_trash();
 // Find: a pattern asked for; false - cancelled
 bool ask_find(std::string &pattern);
 
+// A file requester (as the system's ASL file requester): the list of the drawer, the
+// Drawer and File fields, OK / Volumes / Parent / Cancel. Returns the path chosen.
+bool file_request(const std::string &title, std::string &path);
+
 // starts a program / opens a file with the system's handler, detached
 void launch(const std::vector<std::string> &argv, const std::string &dir);
 

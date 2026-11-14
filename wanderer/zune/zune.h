@@ -227,6 +227,35 @@ protected:
     void draw_contents() override;
 };
 
+// List: lines of text in the read list frame - a name on the left, an optional second
+// column on the right (drawers: "Drawer" in the highlight pen); one line active; a
+// scroller at the right
+class List : public Area {
+public:
+    struct Line { std::string text, info; bool highlight = false; };
+    List();
+    void clear() { lines_.clear(); active_ = -1; top_ = 0; redraw(); }
+    void add(Line l) { lines_.push_back(std::move(l)); }
+    void done() { top_ = 0; layout_prop(); redraw(); }   // after adding
+    const std::vector<Line> &lines() const { return lines_; }
+    int active() const { return active_; }
+    void active(int a);
+    std::function<void(int)> on_active;      // a line clicked
+    std::function<void(int)> on_double;      // a line double clicked
+    void ask_min_max(int &minw, int &minh, int &defw, int &defh, int &maxw, int &maxh) override;
+    void resize(int X, int Y, int W, int H) override;
+    int handle(int e) override;
+
+protected:
+    void draw_contents() override;
+    int line_h() const { return prefs().font_size + 3; }
+    int visible_lines() const { return std::max(1, mheight() / line_h()); }
+    void layout_prop();
+    std::vector<Line> lines_;
+    int active_ = -1, top_ = 0;
+    class Prop *prop_ = nullptr;
+};
+
 // ImageButton: a button showing a picture drawn by a function (the theme's gadget images)
 class ImageButton : public Area {
 public:

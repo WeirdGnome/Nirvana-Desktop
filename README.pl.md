@@ -4,12 +4,12 @@ Port **Wanderera**, pulpitu i menedżera plików systemu AROS, na Linuksa i X11.
 działa na FLTK, a okna obsługuje własny menedżer okien `wanderer-wm`, który przejmuje
 rolę Intuition: ekrany, ramki okien, gadżety i menu na pasku ekranu.
 
-Wersja: **0.4.0**. Dotychczasowa Nirvana Desktop jest na gałęzi `nirvana-legacy`.
+Wersja: **0.4.1**. Dotychczasowa Nirvana Desktop jest na gałęzi `nirvana-legacy`.
 
 ## Instalacja
 
 ```sh
-tar xzf wanderer-x11-0.4.0.tar.gz
+tar xzf wanderer-x11-0.4.1.tar.gz
 cd wanderer-x11
 ./install.sh
 ```

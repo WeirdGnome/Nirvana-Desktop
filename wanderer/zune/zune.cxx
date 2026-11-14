@@ -576,6 +576,101 @@ void Checkmark::draw_contents() {
 }
 
 // ============================================================================================
+// List
+// ============================================================================================
+List::List() : Area(Frame_ReadList) {
+    background(MPEN_SHINE);   // configdata: the list background ("0:128" on a white screen pen)
+    begin();
+    prop_ = new Prop(false);
+    end();
+    prop_->on_change = [this](int f) { top_ = f; redraw(); };
+}
+
+void List::ask_min_max(int &minw, int &minh, int &defw, int &defh, int &maxw, int &maxh) {
+    minw = 80; defw = 300; maxw = MAXMAX;
+    minh = line_h() * 3; defh = line_h() * 12; maxh = MAXMAX;
+}
+
+void List::resize(int X, int Y, int W, int H) {
+    Fl_Widget::resize(X, Y, W, H);
+    prop_->resize(x() + w() - add_right() - 14, mtop(), 14, mheight());
+    layout_prop();
+}
+
+void List::layout_prop() {
+    int n = (int)lines_.size(), v = visible_lines();
+    top_ = std::clamp(top_, 0, std::max(0, n - v));
+    prop_->set(std::max(n, v), v, top_);
+}
+
+void List::active(int a) {
+    active_ = std::clamp(a, -1, (int)lines_.size() - 1);
+    if (active_ >= 0) {   // kept in view
+        if (active_ < top_) top_ = active_;
+        if (active_ >= top_ + visible_lines()) top_ = active_ - visible_lines() + 1;
+        layout_prop();
+    }
+    redraw();
+}
+
+void List::draw_contents() {
+    const Pens &p = pens();
+    int lh = line_h(), W = mwidth() - 16;
+    fl_font(prefs().font, prefs().font_size);
+    for (int i = top_; i < (int)lines_.size() && (i - top_) * lh < mheight(); i++) {
+        int y = mtop() + (i - top_) * lh;
+        bool act = i == active_;
+        if (act) { fl_color(p[MPEN_FILL]); fl_rectf(mleft(), y, W, lh); }
+        auto &l = lines_[i];
+        int infow = l.info.empty() ? 0 : (int)fl_width(l.info.c_str()) + 8;
+        fl_color(act ? p[MPEN_SHINE] : p[MPEN_TEXT]);
+        fl_draw(l.text.c_str(), mleft() + 3, y, W - infow - 6, lh, (Fl_Align)(FL_ALIGN_LEFT | FL_ALIGN_CLIP));
+        if (infow) {
+            fl_color(act ? p[MPEN_SHINE] : (l.highlight ? p[MPEN_SHINE] : p[MPEN_TEXT]));
+            if (l.highlight && !act) {   // "Drawer": in the highlight colours (white on the fill pen)
+                fl_color(p[MPEN_HALFSHADOW]);
+                fl_rectf(mleft() + W - infow, y + 1, infow - 2, lh - 2);
+                fl_color(p[MPEN_SHINE]);
+            }
+            fl_draw(l.info.c_str(), mleft() + W - infow, y, infow - 4, lh, FL_ALIGN_RIGHT);
+        }
+    }
+}
+
+int List::handle(int e) {
+    switch (e) {
+    case FL_PUSH: {
+        if (Fl::event_x() >= prop_->x()) return Area::handle(e);
+        take_focus();
+        int i = top_ + (Fl::event_y() - mtop()) / line_h();
+        if (i < 0 || i >= (int)lines_.size()) return 1;
+        bool dbl = Fl::event_clicks() && i == active_;
+        active(i);
+        if (dbl) { Fl::event_clicks(0); if (on_double) on_double(i); }
+        else if (on_active) on_active(i);
+        return 1;
+    }
+    case FL_MOUSEWHEEL:
+        top_ += Fl::event_dy() * 3;
+        layout_prop();
+        redraw();
+        return 1;
+    case FL_FOCUS: case FL_UNFOCUS: return 1;
+    case FL_KEYBOARD: {
+        int k = Fl::event_key();
+        if (k == FL_Down || k == FL_Up) {
+            active(active_ + (k == FL_Down ? 1 : -1));
+            if (on_active && active_ >= 0) on_active(active_);
+            return 1;
+        }
+        if ((k == FL_Enter || k == FL_KP_Enter) && active_ >= 0 && on_double) { on_double(active_); return 1; }
+        return 0;
+    }
+    }
+    return Area::handle(e);
+}
+
+// ============================================================================================
 // ImageButton
 // ============================================================================================
 ImageButton::ImageButton(int w, int h, std::function<void(int, int, int, int, bool)> image)

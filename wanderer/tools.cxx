@@ -12,7 +12,9 @@
 
 #include <FL/Fl.H>
 
+#include <algorithm>
 #include <cstring>
+#include <functional>
 #include <ctime>
 #include <filesystem>
 #include <grp.h>
@@ -324,6 +326,120 @@ void empty_trash() {
             std::error_code e2;
             fs::remove_all(it->path(), e2);
         }
+}
+
+// --------------------------------------------------------------------------------------------
+bool file_request(const std::string &title, std::string &path) {
+    std::error_code ec;
+    std::string dir = path.empty() ? std::string(getenv("HOME") ? getenv("HOME") : "/") : path;
+    std::string file;
+    if (!fs::is_directory(dir, ec)) {
+        file = fs::path(dir).filename().string();
+        dir = fs::path(dir).parent_path().string();
+        if (!fs::is_directory(dir, ec)) dir = getenv("HOME") ? getenv("HOME") : "/";
+    }
+    bool done = false, ok = false, volumes = false;
+    auto *root = VGroup();
+    auto *list = new List();
+    list->weight(300);
+    auto *g = new Group(Group::Vertical);
+    g->columns(2);
+    new Text("\033rDrawer");
+    auto *sdir = new String(dir, 1024);
+    new Text("\033rFile");
+    auto *sfile = new String(file, 255);
+    g->end();
+    auto *buttons = HGroup();
+    buttons->same_width(true);
+    auto *bok = new Button("OK");
+    auto *bvol = new Button("Volumes");
+    auto *bpar = new Button("Parent");
+    auto *bc = new Button("Cancel");
+    buttons->end();
+    root->end();
+
+    std::vector<std::string> paths;   // the path of every line
+    std::function<void(const std::string &)> read_dir = [&](const std::string &d) {
+        volumes = false;
+        list->clear();
+        paths.clear();
+        std::vector<std::pair<std::string, bool>> items;
+        std::error_code e2;
+        for (auto it = fs::directory_iterator(d, e2); !e2 && it != fs::directory_iterator(); it.increment(e2)) {
+            std::string n = it->path().filename().string();
+            if (!n.empty() && n[0] == '.') continue;
+            items.push_back({n, it->is_directory(e2)});
+        }
+        std::sort(items.begin(), items.end(), [](auto &a, auto &b) {
+            if (a.second != b.second) return a.second;
+            return strcasecmp(a.first.c_str(), b.first.c_str()) < 0;
+        });
+        for (auto &[n, isdir] : items) {
+            std::string full = (fs::path(d) / n).string();
+            std::string info = "Drawer";
+            if (!isdir) {
+                std::error_code e3;
+                auto sz = fs::file_size(full, e3);
+                info = e3 ? "" : std::to_string(sz);
+            }
+            list->add({n, info, isdir});
+            paths.push_back(full);
+        }
+        list->done();
+        sdir->value(d);
+    };
+    auto show_volumes = [&] {
+        volumes = true;
+        list->clear();
+        paths.clear();
+        auto add = [&](const std::string &p, const std::string &n) { list->add({n + ":", "Volume", true}); paths.push_back(p); };
+        add("/", "System");
+        if (getenv("HOME")) add(getenv("HOME"), "Home");
+        for (const char *base : {"/media", "/mnt", "/run/media"}) {
+            std::error_code e2;
+            for (auto it = fs::recursive_directory_iterator(base, e2); !e2 && it != fs::recursive_directory_iterator(); it.increment(e2)) {
+                if (it.depth() > 1) { it.disable_recursion_pending(); continue; }
+                struct stat a, b;
+                if (stat(it->path().c_str(), &a) == 0 && stat(it->path().parent_path().c_str(), &b) == 0 && a.st_dev != b.st_dev)
+                    add(it->path().string(), it->path().filename().string());
+            }
+        }
+        list->done();
+    };
+    list->on_active = [&](int i) {
+        if (i < 0 || i >= (int)paths.size()) return;
+        if (!list->lines()[i].highlight) sfile->value(list->lines()[i].text);
+    };
+    list->on_double = [&](int i) {
+        if (i < 0 || i >= (int)paths.size()) return;
+        if (list->lines()[i].highlight) { read_dir(paths[i]); return; }   // a drawer or a volume: into it
+        sfile->value(list->lines()[i].text);
+        ok = done = true;
+    };
+    sdir->on_acknowledge = [&] { std::error_code e2; if (fs::is_directory(sdir->value(), e2)) read_dir(sdir->value()); };
+    sfile->on_acknowledge = [&] { ok = done = true; };
+    bok->on_press = [&] { ok = done = true; };
+    bc->on_press = [&] { done = true; };
+    bvol->on_press = [&] { show_volumes(); };
+    bpar->on_press = [&] {
+        fs::path p = fs::path(sdir->value());
+        if (volumes) return;
+        if (p.has_parent_path() && p.parent_path() != p) read_dir(p.parent_path().string());
+        else show_volumes();
+    };
+    auto *w = new Window(title, root);
+    w->size(std::max(w->w(), 380), std::max(w->h(), 420));
+    centre(w);
+    read_dir(dir);
+    w->set_modal();
+    w->show();
+    while (!done && w->shown()) Fl::wait();
+    std::string chosen = (fs::path(sdir->value()) / sfile->value()).string();
+    if (std::string(sfile->value()).empty()) chosen = sdir->value();
+    w->hide();
+    Fl::delete_widget(w);
+    if (ok) path = chosen;
+    return ok;
 }
 
 bool ask_find(std::string &pattern) {

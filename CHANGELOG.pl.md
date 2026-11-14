@@ -1,5 +1,17 @@
 # Lista zmian
 
+## 0.4.1 – 2026-11-14
+
+- **Okno wyboru pliku** w stylu systemowego okna wyboru plików:
+  - lista zawartości szuflady, w której szuflady mają oznaczenie „Drawer”, a pliki rozmiar;
+  - pola Drawer i File;
+  - przyciski OK, Volumes, Parent i Cancel;
+  - dwuklik otwiera szufladę albo wybiera plik.
+
+  Otwierają je przyciski „?” w *Preferences > Background Pictures*.
+- **Zune**: klasa List (lista z suwakiem, aktywnym wierszem, obsługą klawiatury i kółka
+  myszy).
+
 ## 0.4.0 – 2026-11-14
 
 - **Obrazy tła** dla pulpitu i okien szuflad (PNG, JPEG, GIF albo BMP): kafelkowane,

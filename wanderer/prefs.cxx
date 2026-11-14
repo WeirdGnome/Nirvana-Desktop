@@ -8,6 +8,7 @@
 */
 #include "prefs.h"
 #include "zune.h"
+#include "tools.h"
 
 #include <FL/Fl.H>
 
@@ -109,15 +110,21 @@ void edit_prefs(const WandererPrefs &current, std::function<void(const WandererP
     // -- Background pictures
     auto *pics = new Group(Group::Vertical, Frame_Group);
     pics->frame_title("Background Pictures");
-    pics->columns(3);
+    pics->columns(4);
     label("Backdrop:");
     auto *bimg = new String(current.backdrop_image, 1024);
     bimg->weight(300);
+    auto *bpick = new Button("?");
+    bpick->fixed_width(16);
     auto *bmode = new Cycle({"Tiled", "Scaled", "Centred"}, current.backdrop_mode);
     label("Drawers:");
     auto *dimg = new String(current.drawer_image, 1024);
     dimg->weight(300);
+    auto *dpick = new Button("?");
+    dpick->fixed_width(16);
     auto *dmode = new Cycle({"Tiled", "Scaled", "Centred"}, current.drawer_mode);
+    bpick->on_press = [bimg] { std::string p = bimg->value(); if (file_request("Choose the backdrop picture", p)) bimg->value(p); };
+    dpick->on_press = [dimg] { std::string p = dimg->value(); if (file_request("Choose the drawers' picture", p)) dimg->value(p); };
     pics->end();
     // -- Save / Use / Cancel
     auto *buttons = HGroup();
