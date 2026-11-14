@@ -399,6 +399,8 @@ void information(const std::string &path) {
         top->columns(2);
         new Text("\033rName:");
         new Text(fs::path(path).filename().string(), Frame_Text);
+        new Text("\033rIn:");
+        new Text(to_volume_path(fs::path(path).parent_path().string()), Frame_Text);
         new Text("\033rType:");
         new Text(type, Frame_Text);
         new Text("\033rSize:");
@@ -694,7 +696,7 @@ bool file_request(const std::string &title, std::string &path) {
     auto *g = new Group(Group::Vertical);
     g->columns(2);
     new Text("\033rDrawer");
-    auto *sdir = new String(dir, 1024);
+    auto *sdir = new String(to_volume_path(dir), 1024);
     new Text("\033rFile");
     auto *sfile = new String(file, 255);
     g->end();
@@ -735,7 +737,7 @@ bool file_request(const std::string &title, std::string &path) {
             paths.push_back(full);
         }
         list->done();
-        sdir->value(d);
+        sdir->value(to_volume_path(d));
     };
     auto show_volumes = [&] {
         volumes = true;
@@ -765,13 +767,17 @@ bool file_request(const std::string &title, std::string &path) {
         sfile->value(list->lines()[i].text);
         ok = done = true;
     };
-    sdir->on_acknowledge = [&] { std::error_code e2; if (fs::is_directory(sdir->value(), e2)) read_dir(sdir->value()); };
+    sdir->on_acknowledge = [&] {
+        std::error_code e2;
+        std::string d = from_volume_path(sdir->value());
+        if (fs::is_directory(d, e2)) read_dir(d);
+    };
     sfile->on_acknowledge = [&] { ok = done = true; };
     bok->on_press = [&] { ok = done = true; };
     bc->on_press = [&] { done = true; };
     bvol->on_press = [&] { show_volumes(); };
     bpar->on_press = [&] {
-        fs::path p = fs::path(sdir->value());
+        fs::path p = fs::path(from_volume_path(sdir->value()));
         if (volumes) return;
         if (p.has_parent_path() && p.parent_path() != p) read_dir(p.parent_path().string());
         else show_volumes();
@@ -783,8 +789,8 @@ bool file_request(const std::string &title, std::string &path) {
     w->set_modal();
     w->show();
     while (!done && w->shown()) Fl::wait();
-    std::string chosen = (fs::path(sdir->value()) / sfile->value()).string();
-    if (std::string(sfile->value()).empty()) chosen = sdir->value();
+    std::string chosen = (fs::path(from_volume_path(sdir->value())) / sfile->value()).string();
+    if (std::string(sfile->value()).empty()) chosen = from_volume_path(sdir->value());
     w->hide();
     Fl::delete_widget(w);
     if (ok) path = chosen;
