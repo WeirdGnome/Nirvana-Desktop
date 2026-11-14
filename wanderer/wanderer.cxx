@@ -398,10 +398,28 @@ void Wanderer::open_entry(IconWindow *w, IconEntry &e) {
     struct stat st;
     std::string dir = fs::path(e.path).parent_path().string();
     // a tool runs; a project opens with its default tool, else the program for its type
-    if (stat(e.path.c_str(), &st) == 0 && (st.st_mode & S_IXUSR) && S_ISREG(st.st_mode)) { launch({e.path}, dir); return; }
+    // the other icons selected (in every window: Shift held while the last one was
+    // double-clicked) are its arguments, as the original passes them with WBOPENA_ArgName
+    std::vector<std::string> args;
+    auto collect = [&](IconWindow *o) {
+        if (!o || !Fl::event_state(FL_SHIFT)) return;
+        for (auto *x : o->iconlist()->selection())
+            if (x != &e && !x->app_window && !x->network && !x->path.empty() && x->path[0] == '/') args.push_back(x->path);
+    };
+    collect(root_);
+    for (auto *o : windows_) collect(o);
+    if (stat(e.path.c_str(), &st) == 0 && (st.st_mode & S_IXUSR) && S_ISREG(st.st_mode)) {
+        std::vector<std::string> argv = {e.path};
+        argv.insert(argv.end(), args.begin(), args.end());
+        launch(argv, dir);
+        return;
+    }
     std::string tool = default_tool(e.path);
-    if (!tool.empty()) launch({"/bin/sh", "-c", tool + " \"$1\"", "sh", e.path}, dir);
-    else launch({"xdg-open", e.path}, dir);
+    if (!tool.empty()) {
+        std::vector<std::string> argv = {"/bin/sh", "-c", tool + " \"$@\"", "sh", e.path};
+        argv.insert(argv.end(), args.begin(), args.end());
+        launch(argv, dir);
+    } else launch({"xdg-open", e.path}, dir);
 }
 
 IconWindow *Wanderer::window_at(int xr, int yr, IconWindow *except) {

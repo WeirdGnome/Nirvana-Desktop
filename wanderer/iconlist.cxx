@@ -730,8 +730,14 @@ int IconList::handle(int ev) {
         moved_ = false;
         bool shift = Fl::event_state(FL_SHIFT);
         if (e) {
-            if (Fl::event_clicks() && e->selected && !shift) {   // a double click opens it
+            if (Fl::event_clicks() && (e->selected || shift)) {
+                // a double click opens it; without Shift the others are unselected first, with
+                // Shift they stay selected (the arguments of a tool)
                 Fl::event_clicks(0);
+                if (!shift) for (auto &o : entries_) if (&o != e) o.selected = false;
+                e->selected = true;
+                redraw();
+                if (on_selection_changed) on_selection_changed();
                 if (on_open) on_open(*e);
                 return 1;
             }
