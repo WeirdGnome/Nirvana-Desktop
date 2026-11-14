@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=XSession
+Name=Wanderer
+Name[pl]=Wanderer
+Comment=Wanderer for X11 - a port of the AROS desktop
+Comment[pl]=Wanderer dla X11 - port pulpitu AROS
+Exec=wanderer-session
+TryExec=wanderer-session
+DesktopNames=Wanderer

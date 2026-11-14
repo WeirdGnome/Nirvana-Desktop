@@ -13,6 +13,48 @@ Parts of the port:
 * **window manager** (`wm`, later) – what Intuition does on AROS: window frames and
   gadgets, screens, screen dragging.
 
+Version: **0.1.0**
+
+## Installing
+
+```sh
+tar xzf wanderer-x11-0.1.0.tar.gz
+cd wanderer-x11
+./install.sh
+```
+
+The installer installs the packages needed for building (apt), builds the programs (FLTK
+1.4 is downloaded and built with them if the system has none) and installs them into
+`/usr/local`. It also installs the session file `/usr/share/xsessions/wanderer.desktop`,
+so **Wanderer** appears among the sessions of the display manager (LightDM, SDDM, GDM,
+XDM …). Options: `--prefix DIR`, `--no-deps`, `--uninstall`.
+
+The session (`wanderer-session`) starts the window manager `wanderer-wm`, then
+`wanderer --backdrop`. Choosing *Wanderer > Quit…* ends the session. The number of
+screens is set in `~/.config/wanderer/session.conf`, e.g. `WANDERER_SCREENS=3`.
+
+To try it in a running X session without another window manager:
+
+```sh
+wanderer-wm & wanderer --backdrop
+```
+
+## Using it
+
+* **Menus**: hold the right mouse button over a window. The screen's title bar shows the
+  window's menus, and releasing the button over an item picks it. Shortcuts:
+  Super+key.
+* **Screens**: drag a screen down by its title bar to uncover the screens behind it.
+  Esc or the right button during the drag puts it back. The gadget at the right end of
+  the bar sends a screen to the back. Super+M brings the back screen to the front and
+  Super+N sends the front screen to the back.
+* **Windows**: close gadget on the left, zoom and depth gadgets on the right, size gadget
+  in the corner. A click activates a window without raising it. The depth gadget raises
+  it, or lowers it if it is already in front.
+* **Icons**: a double click opens; Shift adds to the selection; a lasso selects in the
+  empty space. Dragging icons to another window moves them within a volume and copies
+  them across volumes.
+
 ## Licence
 
 Wanderer and Zune (AROS's toolkit compatible with the classic object-oriented GUI

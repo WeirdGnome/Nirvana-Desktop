@@ -1,0 +1,41 @@
+#!/bin/sh
+# Wanderer for X11 - the session started by the display manager.
+# The window manager (screens, frames, menus in the screen's bar) runs first, then Wanderer
+# with its root window as the backdrop. The session ends when Wanderer quits
+# (Wanderer > Quit...).
+#
+# Licensed under the AROS Public License, version 1.1.
+
+# the user's own settings for the session (e.g. WANDERER_SCREENS=3)
+[ -r "$HOME/.config/wanderer/session.conf" ] && . "$HOME/.config/wanderer/session.conf"
+
+export XDG_CURRENT_DESKTOP=Wanderer
+export XDG_SESSION_DESKTOP=wanderer
+export DESKTOP_SESSION=wanderer
+
+# a session bus if the display manager has not started one
+if [ -z "$DBUS_SESSION_BUS_ADDRESS" ] && command -v dbus-launch >/dev/null 2>&1; then
+    eval "$(dbus-launch --sh-syntax --exit-with-session)"
+fi
+
+# the X resources and the keyboard of the user
+[ -r "$HOME/.Xresources" ] && command -v xrdb >/dev/null 2>&1 && xrdb -merge "$HOME/.Xresources"
+
+wanderer-wm --screens "${WANDERER_SCREENS:-2}" &
+WM=$!
+sleep 0.3
+
+# Wanderer: restarted if it crashes, the session ends when it quits normally
+while :; do
+    wanderer --backdrop
+    status=$?
+    [ "$status" -eq 0 ] && break
+    # crashed: again, unless it keeps crashing at once
+    now=$(date +%s)
+    if [ -n "$last" ] && [ $((now - last)) -lt 5 ]; then break; fi
+    last=$now
+done
+
+kill "$WM" 2>/dev/null
+wait "$WM" 2>/dev/null
+exit 0

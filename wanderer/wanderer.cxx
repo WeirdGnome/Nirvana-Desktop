@@ -422,7 +422,7 @@ void Wanderer::menu_action(IconWindow *w, int id) {
     case MEN_WANDERER_SHELL: launch({"x-terminal-emulator"}, w->is_root() ? getenv("HOME") : w->location()); break;
     case MEN_WANDERER_ABOUT:
         request("About Wanderer",
-                "Wanderer for X11\n\nA port of the AROS desktop and file manager.\n"
+                "Wanderer for X11 " WANDERER_VERSION "\n\nA port of the AROS desktop and file manager.\n"
                 "AROS Public License 1.1 - The AROS Development Team.",
                 "OK");
         break;
