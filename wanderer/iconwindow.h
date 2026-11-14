@@ -43,6 +43,7 @@ public:
     void show_statusbar(bool on);
     void update();                 // re-read the contents
     void update_status();
+    void update_title();
 
     // what happens (Wanderer connects these)
     std::function<void(IconWindow *, IconEntry &)> on_open;
@@ -57,7 +58,7 @@ public:
     int handle(int e) override;
 
 private:
-    std::string location_;
+    std::string location_, title_text_;
     bool backdrop_;
     IconList *list_ = nullptr;
     IconListview *view_ = nullptr;

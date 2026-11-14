@@ -14,6 +14,8 @@
 #include <FL/fl_draw.H>
 
 #include <algorithm>
+#include <sys/stat.h>
+#include <sys/statvfs.h>
 #include <filesystem>
 
 namespace fs = std::filesystem;
@@ -150,6 +152,42 @@ void IconWindow::update() {
     list_->update();
     view_->update_props();
     update_status();
+    update_title();
+}
+
+// The title: a drawer's name; a volume's name with how full it is
+// ("System  45% full, 12.3G free, 20.1G in use", as the system shows on a disk's window)
+void IconWindow::update_title() {
+    if (location_.empty() || dynamic_cast<IconSearchList *>(list_)) return;   // the root window, Find
+    fs::path p(location_);
+    std::string name = p.filename().string();
+    if (name.empty()) name = location_;
+    struct stat a, b;
+    const char *home = getenv("HOME");
+    bool volume = location_ == "/" || (home && location_ == home) ||
+                  (stat(location_.c_str(), &a) == 0 && stat(p.parent_path().c_str(), &b) == 0 && a.st_dev != b.st_dev);
+    if (location_ == "/") name = "System";
+    else if (home && location_ == home) name = "Home";
+    std::string t = name;
+    struct statvfs sv;
+    if (volume && statvfs(location_.c_str(), &sv) == 0 && sv.f_blocks) {
+        auto human = [](unsigned long long v) {
+            char s[32];
+            const char *u = "KMGTP";
+            double d = v / 1024.0;
+            int i = 0;
+            while (d >= 1000 && i < 4) { d /= 1024; i++; }
+            snprintf(s, sizeof s, d < 10 ? "%.1f%c" : "%.0f%c", d, u[i]);
+            return std::string(s);
+        };
+        unsigned long long total = (unsigned long long)sv.f_blocks * sv.f_frsize;
+        unsigned long long avail = (unsigned long long)sv.f_bavail * sv.f_frsize;
+        unsigned long long used = total - (unsigned long long)sv.f_bfree * sv.f_frsize;
+        int pct = (int)((used * 100 + total / 2) / total);
+        t += "  " + std::to_string(pct) + "% full, " + human(avail) + " free, " + human(used) + " in use";
+    }
+    title_text_ = t;
+    label(title_text_.c_str());
 }
 
 // " 12.3 KB in 4 files, 2 drawers (3 hidden)"
