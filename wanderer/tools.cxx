@@ -11,6 +11,8 @@
 #include "iconlist.h"
 
 #include <FL/Fl.H>
+#include <FL/Fl_Text_Buffer.H>
+#include <FL/Fl_Text_Display.H>
 
 #include <algorithm>
 #include <cstring>
@@ -22,6 +24,7 @@
 #include <pwd.h>
 #include <sstream>
 #include <sys/stat.h>
+#include <fcntl.h>
 #include <sys/xattr.h>
 #include <cerrno>
 #include <sys/statvfs.h>
@@ -101,6 +104,119 @@ void launch(const std::vector<std::string> &argv, const std::string &dir) {
 }
 
 // --------------------------------------------------------------------------------------------
+// The output window: what a command started by Execute Command prints opens a window of its
+// own (as the system's console opened for a command's output) - only when there is output
+namespace {
+
+class TextView : public Area {
+public:
+    TextView() : Area(Frame_ReadList) {
+        background(MPEN_SHINE);
+        begin();
+        buf_ = new Fl_Text_Buffer;
+        view_ = new Fl_Text_Display(0, 0, 10, 10);
+        view_->buffer(buf_);
+        view_->box(FL_FLAT_BOX);
+        view_->color(pens()[MPEN_SHINE]);
+        view_->textcolor(pens()[MPEN_TEXT]);
+        view_->textfont(prefs().font_fixed);
+        view_->textsize(prefs().font_size);
+        view_->scrollbar_width(14);
+        end();
+    }
+    void append(const char *t, int n) {
+        buf_->append(std::string(t, n).c_str());
+        view_->insert_position(buf_->length());
+        view_->show_insert_position();
+    }
+    void ask_min_max(int &minw, int &minh, int &defw, int &defh, int &maxw, int &maxh) override {
+        minw = 200; defw = 560; maxw = MAXMAX;
+        minh = 80; defh = 260; maxh = MAXMAX;
+    }
+    void resize(int X, int Y, int W, int H) override {
+        Fl_Widget::resize(X, Y, W, H);
+        view_->resize(mleft(), mtop(), mwidth(), mheight());
+    }
+
+private:
+    Fl_Text_Buffer *buf_;
+    Fl_Text_Display *view_;
+};
+
+struct OutputRun {
+    int fd = -1;
+    std::string title, dir;
+    Window *win = nullptr;
+    TextView *text = nullptr;
+};
+
+void output_window(OutputRun *r) {
+    auto *root = VGroup();
+    r->text = new TextView();
+    r->text->weight(300);
+    auto *row = HGroup();
+    HSpace();
+    auto *close = new Button("Close");
+    row->end();
+    root->end();
+    r->win = new Window("Output: " + r->title, root);
+    Window *w = r->win;
+    close->on_press = [w] { w->hide(); };
+    int sx, sy, sw, sh;
+    Fl::screen_work_area(sx, sy, sw, sh);
+    w->position(sx + 40, sy + sh - w->h() - 60);
+    w->show();
+}
+
+void output_ready(int fd, void *d) {
+    auto *r = (OutputRun *)d;
+    char buf[4096];
+    ssize_t n = read(fd, buf, sizeof buf);
+    if (n > 0) {
+        if (!r->win || !r->win->shown()) {
+            if (r->win) Fl::delete_widget(r->win);
+            output_window(r);
+        }
+        r->text->append(buf, (int)n);
+        return;
+    }
+    // the end of the output (the command and whatever it left running have closed it)
+    Fl::remove_fd(fd);
+    close(fd);
+    if (!r->win) delete r;   // nothing printed: no window
+    // (with a window: it stays until closed; the run is kept with it)
+}
+
+}  // namespace
+
+void run_with_output(const std::string &command, const std::string &dir) {
+    int p[2];
+    if (pipe(p) != 0) { launch({"/bin/sh", "-c", command}, dir); return; }
+    pid_t pid = fork();
+    if (pid == 0) {
+        setsid();
+        if (fork() != 0) _exit(0);   // detached (nobody's child), its output through the pipe
+        close(p[0]);
+        int nul = open("/dev/null", O_RDONLY);
+        if (nul >= 0) { dup2(nul, 0); close(nul); }
+        dup2(p[1], 1);
+        dup2(p[1], 2);
+        close(p[1]);
+        if (!dir.empty() && chdir(dir.c_str()) != 0) {}
+        execl("/bin/sh", "sh", "-c", command.c_str(), (char *)nullptr);
+        _exit(127);
+    }
+    close(p[1]);
+    if (pid > 0) { int st; waitpid(pid, &st, 0); }
+    auto *r = new OutputRun;
+    r->fd = p[0];
+    r->title = command;
+    r->dir = dir;
+    fcntl(r->fd, F_SETFD, FD_CLOEXEC);
+    Fl::add_fd(r->fd, FL_READ, output_ready, r);
+}
+
+// --------------------------------------------------------------------------------------------
 // Execute Command: a command line, run in the drawer's directory
 void execute_command(const std::string &dir) {
     static std::string last;   // the command given last time is offered again
@@ -131,7 +247,7 @@ void execute_command(const std::string &dir) {
     command = cmd->value();
     w->hide();
     Fl::delete_widget(w);
-    if (run && !command.empty()) { last = command; launch({"/bin/sh", "-c", command}, dir); }
+    if (run && !command.empty()) { last = command; run_with_output(command, dir); }
 }
 
 // --------------------------------------------------------------------------------------------

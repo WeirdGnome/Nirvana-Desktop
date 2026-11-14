@@ -50,6 +50,9 @@ void run_startup();
 struct ToolItem { std::string label, command; };
 std::vector<ToolItem> tool_items();
 
+// runs a command line; what it prints shows in an output window (none without output)
+void run_with_output(const std::string &command, const std::string &dir);
+
 // starts a program / opens a file with the system's handler, detached
 void launch(const std::vector<std::string> &argv, const std::string &dir);
 
