@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.6.6 – 2026-11-14
+
+- **Assigns**: names of your own for drawers, kept in `~/.config/wanderer/assigns`
+  (`Docs = ~/Dokumenty`).
+  - Usable in every volume path, e.g. `Docs:Listy`.
+  - *Wanderer > Assigns…* edits them: a name, Add… (the drawer from the file requester),
+    Remove, Save.
+- **Execute Command** understands volume paths and assigns (`cat Docs:list.txt`,
+  `ls RAM:`). Words that name no volume, like `http://…`, stay as they are.
+
 ## 0.6.5 – 2026-11-14
 
 - **Volume paths**: a drawer's location field shows the volume's name and the path inside

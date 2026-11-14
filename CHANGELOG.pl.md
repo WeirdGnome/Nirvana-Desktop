@@ -1,5 +1,14 @@
 # Lista zmian
 
+## 0.6.6 – 2026-11-14
+
+- **Przypisania (assigns)**: własne nazwy dla szuflad, zapisane w
+  `~/.config/wanderer/assigns` (`Docs = ~/Dokumenty`).
+  - Działają w każdej ścieżce woluminu, np. `Docs:Listy`.
+  - Edytuje je *Wanderer > Assigns…*: nazwa, Add… (szuflada z okna wyboru), Remove, Save.
+- **Execute Command** rozumie ścieżki woluminów i przypisania (`cat Docs:list.txt`,
+  `ls RAM:`). Słowa, które nie wskazują woluminu, np. `http://…`, zostają bez zmian.
+
 ## 0.6.5 – 2026-11-14
 
 - **Ścieżki woluminów**: pole lokalizacji szuflady pokazuje nazwę woluminu i ścieżkę w
