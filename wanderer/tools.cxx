@@ -427,23 +427,34 @@ static bool set_tool_types(const std::string &path, const std::vector<std::strin
     return true;
 }
 
-// The version string of a file: "$VER: name 1.2 (1.1.2026)" in its first megabyte
+// The version string of a file: "$VER: name 1.2 (1.1.2026)" in its first 32 MB, read in
+// pieces (as the Version command looks for it)
 static std::string file_version(const std::string &path) {
     FILE *f = fopen(path.c_str(), "rb");
     if (!f) return "";
-    std::string data(1 << 20, '\0');
-    size_t n = fread(&data[0], 1, data.size(), f);
-    fclose(f);
-    data.resize(n);
-    size_t at = data.find("$VER: ");
-    if (at == std::string::npos) return "";
-    std::string v;
-    for (size_t i = at + 6; i < data.size() && v.size() < 120; i++) {
-        unsigned char c = data[i];
-        if (c == 0 || c == '\n' || c == '\r') break;
-        v += (char)c;
+    const size_t piece = 1 << 20, keep = 160;
+    std::string buf, v;
+    std::vector<char> b(piece);
+    for (size_t total = 0; total < (32u << 20);) {
+        size_t n = fread(b.data(), 1, piece, f);
+        if (n == 0) break;
+        total += n;
+        buf.append(b.data(), n);
+        size_t at = buf.find("$VER: ");
+        if (at != std::string::npos && buf.size() - at > keep - 1) {
+            for (size_t i = at + 6; i < buf.size() && v.size() < 120; i++) {
+                unsigned char c = buf[i];
+                if (c == 0 || c == '\n' || c == '\r') break;
+                v += (char)c;
+            }
+            break;
+        }
+        if (at == std::string::npos && buf.size() > keep) buf.erase(0, buf.size() - keep);
     }
-    return v;
+    fclose(f);
+    // "Wanderer 0.8.0 (X11)": blanks after the tag tolerated
+    size_t s = v.find_first_not_of(' ');
+    return s == std::string::npos ? "" : v.substr(s);
 }
 
 std::function<void(const std::string &)> open_drawer_hook;
@@ -640,6 +651,49 @@ void information(const std::string &path) {
     }
     w->hide();
     Fl::delete_widget(w);
+}
+
+// About Wanderer (wanderer_menufunc_wanderer_about): the icon, the name and version, the
+// copyright; the classes Wanderer is made of. One window, closed by its close gadget.
+static Window *g_about = nullptr;
+
+void about_window() {
+    if (g_about) { g_about->show(); return; }
+    auto *root = VGroup();
+    {
+        auto *head = HGroup();
+        auto *img = new ImageButton(ICON_W, ICON_H, [](int x, int y, int, int, bool sel) { draw_icon(IconKind::Harddisk, x, y, sel); });
+        img->frame(Frame_None);
+        img->input_mode(Input_Toggle);
+        auto *tg = VGroup();
+        new Text("\033c\033bWanderer " WANDERER_VERSION);
+        new Text("\033c\302\251 The AROS Dev Team");
+        new Text("\033cX11 port: Wanderer X11 contributors");
+        tg->end();
+        head->end();
+        auto *cl = new Group(Group::Vertical, Frame_Group);
+        new Text("\033bInternal Classes:");
+        HVSpace();
+        auto *c1 = new Group(Group::Vertical);
+        c1->columns(2);
+        for (const char *n : {"IconWindow", "IconWindowVolumeList", "IconWindowDrawerList"}) { new Text(n); new Text(""); }
+        c1->end();
+        HVSpace();
+        new Text("\033bExternal Classes:");
+        HVSpace();
+        auto *c2 = new Group(Group::Vertical);
+        c2->columns(2);
+        for (const char *n : {"IconList", "IconListview", "IconVolumeList", "IconDrawerList"}) { new Text(n); new Text(""); }
+        c2->end();
+        HVSpace();
+        cl->end();
+    }
+    root->end();
+    auto *w = new Window("About Wanderer...", root);
+    g_about = w;
+    w->callback([](Fl_Widget *win, void *) { win->hide(); });
+    centre(w);
+    w->show();
 }
 
 // Disk Info: the volume's name, size, used, free

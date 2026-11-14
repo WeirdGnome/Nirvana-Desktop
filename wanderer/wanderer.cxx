@@ -160,6 +160,9 @@ void Wanderer::apply_prefs(IconWindow *w) {
     }
 }
 
+// the version string (the Info tool's Version: shows it)
+[[gnu::used]] static const char version_tag[] = "$VER: Wanderer " WANDERER_VERSION " (X11)";
+
 // --------------------------------------------------------------------------------------------
 void Wanderer::start(bool backdrop) {
     backdrop_ = backdrop;
@@ -746,12 +749,7 @@ void Wanderer::menu_action(IconWindow *w, int id) {
                                     "\n" + tr("(the user may need the right to do it - elogind or polkit)"), "OK");
         break;
     }
-    case MEN_WANDERER_ABOUT:
-        request("About Wanderer",
-                "Wanderer for X11 " WANDERER_VERSION "\n\n" + tr("A port of the AROS desktop and file manager.") +
-                    "\nAROS Public License 1.1 - The AROS Development Team.",
-                "OK");
-        break;
+    case MEN_WANDERER_ABOUT: about_window(); break;
     case MEN_WANDERER_QUIT:
         if (request("Wanderer", file_operations_running() ? "Files are still being copied, moved or deleted.\nQuit Wanderer anyway?"
                                                          : "Do you really want to quit Wanderer?", "Quit|Cancel") == 1) exit(0);
