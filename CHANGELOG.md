@@ -1,5 +1,30 @@
 # Changelog
 
+## 0.9.0 – 2026-11-14
+
+- **Network Access**: an icon on the root window opens a window with the mounted network
+  file systems (NFS, SMB/CIFS, SSHFS, rclone, WebDAV …) as volumes, with their own volume
+  names (`outputs:`). It can be turned off in the preferences.
+- **Programs' items in the Tools menu** (AppMenuItems) and **programs' icons on the root
+  window** (AppIcons). Programs set an X property on their window and get a message back
+  with the paths of the selected or dropped icons (see README).
+- **Icons dragged onto another program's window** are passed on by drag and drop (XDND,
+  file URIs). The icons go back to their places.
+- **About Wanderer** window as in the original: the icon, the version, the copyright, the
+  classes. Wanderer carries its own version string, so Information shows its version.
+- **Preferences** on register pages: Icons, Drawer Windows, Screen, Background Pictures.
+- **Keys** in drawer windows: Page Up and Page Down scroll, Home and End move the focus to
+  the first or last icon. A new window's keys go to its icons.
+- **The session no longer logs out silently** when Wanderer cannot start (e.g. a package
+  built on another system with other libraries). It says why and offers a shell. Its log is
+  `~/.cache/wanderer/session.log`.
+- **Fixes**
+  - Windows and requesters open centred, because the position asked for now reaches the
+    window manager.
+  - The window manager makes a window its backdrop even when the window gets the desktop
+    type after it is shown.
+  - The status bar counts volumes as drawers.
+
 ## 0.8.0 – 2026-11-14
 
 - **System tray** (AppIcons): programs' tray icons (XEmbed) sit in the main screen's title

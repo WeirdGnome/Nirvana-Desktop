@@ -1,5 +1,31 @@
 # Lista zmian
 
+## 0.9.0 – 2026-11-14
+
+- **Dostęp do sieci**: ikona w oknie głównym otwiera okno z zamontowanymi sieciowymi
+  systemami plików (NFS, SMB/CIFS, SSHFS, rclone, WebDAV …) jako woluminami, z własnymi
+  nazwami woluminów (`outputs:`). Można ją wyłączyć w preferencjach.
+- **Pozycje programów w menu Tools** (AppMenuItems) i **ikony programów w oknie głównym**
+  (AppIcons). Program ustawia właściwość X na swoim oknie i dostaje komunikat ze ścieżkami
+  zaznaczonych albo upuszczonych ikon (opis w README).
+- **Ikony przeciągnięte na okno innego programu** są przekazywane przez przeciągnij i upuść
+  (XDND, adresy plików). Ikony wracają na swoje miejsca.
+- **Okno O Wandererze** jak w oryginale: ikona, wersja, prawa autorskie, klasy. Wanderer
+  ma własny ciąg wersji, więc Information pokazuje jego wersję.
+- **Preferencje** na stronach rejestru: Icons, Drawer Windows, Screen, Background
+  Pictures.
+- **Klawisze** w oknach szuflad: Page Up i Page Down przewijają, Home i End przenoszą
+  fokus na pierwszą lub ostatnią ikonę. Klawisze nowego okna trafiają do jego ikon.
+- **Sesja nie wylogowuje już bez słowa**, gdy Wanderer nie może się uruchomić (np. paczka
+  zbudowana na innym systemie z innymi bibliotekami). Mówi dlaczego i daje powłokę. Jej
+  dziennik to `~/.cache/wanderer/session.log`.
+- **Poprawki**
+  - Okna i zapytania otwierają się na środku, bo żądana pozycja dociera teraz do menedżera
+    okien.
+  - Menedżer okien robi z okna tło nawet wtedy, gdy okno dostaje typ pulpitu po
+    pokazaniu.
+  - Pasek stanu liczy woluminy jako szuflady.
+
 ## 0.8.0 – 2026-11-14
 
 - **Zasobnik systemowy** (AppIcons): ikony programów w zasobniku (XEmbed) siedzą na pasku
