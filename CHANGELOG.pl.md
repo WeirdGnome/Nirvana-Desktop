@@ -1,5 +1,36 @@
 # Lista zmian
 
+## 0.8.0 – 2026-11-14
+
+- **Zasobnik systemowy** (AppIcons): ikony programów w zasobniku (XEmbed) siedzą na pasku
+  tytułu głównego ekranu, na lewo od gadżetu głębi.
+- **Icon > Format…**: dysk wymienny dostaje nowy system plików (FAT32, exFAT lub ext4) z
+  nazwą, szybkim formatowaniem i opcjonalnym koszem. Najpierw pyta, działa przez polkit.
+- **Information** działa jak narzędzie Info: ikona i nazwa nad rejestrem z trzema
+  stronami.
+  - *Information*: typ, data, **ciąg wersji** pliku (`$VER:`), rozmiar, ścieżka z
+    przyciskiem **Open**, domyślne narzędzie (z oknem wyboru pliku) i komentarz.
+  - *Protection*: odczyt, zapis i wykonywanie dla właściciela, grupy i pozostałych.
+  - *Tool Types*: lista ustawień zapisanych przy pliku (`user.tooltypes`), z przyciskami
+    New i Delete.
+- **Rejestr Zune**: grupy stron z zakładkami, rysowanymi jak w oryginale.
+- **Preferencje**, nowe ustawienia:
+  - Szablon **tytułu ekranu**: `%wv` wersja, `%os` system, `%ov` jądro, `%pc` / `%pf` /
+    `%pt` pamięć dostępna, wolna i całkowita.
+  - **Nawigacja**: *Classic* otwiera szufladę w nowym oknie, *Enhanced* w tym samym.
+    Przycisk „w górę” i pole lokalizacji na pasku narzędzi zawsze przeglądają w swoim
+    oknie.
+  - **Upuszczone ikony**: *Move* (w obrębie woluminu, inaczej kopia) albo zawsze *Copy*.
+  - **Tylko przy fokusie**: dodatkowe linie etykiety widać tylko przy ikonie z fokusem.
+  - **Czcionka** i **rozmiar czcionki** etykiet ikon.
+  - **Ukryte woluminy**: nazwy, urządzenia lub punkty montowania, których okno główne nie
+    pokazuje.
+  - Obrazy tła mogą używać **stałych kafelków**, które nie przesuwają się przy przewijaniu.
+- **Poprawki**
+  - Menu pokazywały wszędzie ostatni tytuł, gdy tekstu nie było w katalogu.
+  - Grupy w siatce centrują obiekty mniejsze od komórki, więc pola wyboru zachowują
+    rozmiar.
+
 ## 0.7.0 – 2026-11-14
 
 - **Katalogi**: interfejs w języku użytkownika (według `LANG` i pozostałych zmiennych

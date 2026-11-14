@@ -1,5 +1,33 @@
 # Changelog
 
+## 0.8.0 – 2026-11-14
+
+- **System tray** (AppIcons): programs' tray icons (XEmbed) sit in the main screen's title
+  bar, left of the depth gadget.
+- **Icon > Format…**: a removable disk gets a new file system (FAT32, exFAT or ext4), with
+  a name, Quick Format and an optional trash can. It asks first and works through polkit.
+- **Information** works like the Info tool: the icon and the name above a register with
+  three pages.
+  - *Information*: type, date, the file's **version string** (`$VER:`), size, the path with
+    **Open**, the default tool (with a file requester) and the comment.
+  - *Protection*: read, write and execute for the owner, the group and the others.
+  - *Tool Types*: a list of settings kept with the file (`user.tooltypes`), with New and
+    Delete.
+- **Zune Register**: page groups with tabs, drawn like the original's.
+- **Preferences**, new settings:
+  - **Screen title** template: `%wv` version, `%os` system, `%ov` kernel, `%pc` / `%pf` /
+    `%pt` available, free and total memory.
+  - **Navigation**: *Classic* opens a drawer in a new window, *Enhanced* in the same one.
+    The tool bar's parent button and location field always browse in their own window.
+  - **Dropped icons**: *Move* (within a volume, else copy) or always *Copy*.
+  - **Only on focus**: a label's extra lines show only on the focused icon.
+  - **Font** and **Font size** of the icon labels.
+  - **Hidden volumes**: names, devices or mount points the root window leaves out.
+  - Background pictures can use **fixed tiles**, which stay put while the view scrolls.
+- **Fixes**
+  - Menus showed the last title everywhere when a text was not in the catalog.
+  - Grid groups now centre objects smaller than their cell, so checkmarks keep their size.
+
 ## 0.7.0 – 2026-11-14
 
 - **Catalogs**: the interface in the user's language (from `LANG` and the other locale
