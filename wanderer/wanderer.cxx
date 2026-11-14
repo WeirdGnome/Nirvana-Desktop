@@ -192,8 +192,15 @@ void Wanderer::setup(IconWindow *w) {
     w->on_activate = [this](IconWindow *win) { active_ = win; };
     w->on_parent = [this](IconWindow *win) {
         if (win->is_root()) return;
-        fs::path p = fs::path(win->location()).parent_path();
-        if (p.string() != win->location()) open_drawer(p.string());
+        // the parent of a volume is the root window with the volumes
+        const std::string &loc = win->location();
+        fs::path p = fs::path(loc).parent_path();
+        struct stat a, b;
+        const char *home = getenv("HOME");
+        bool volume = loc == "/" || (home && loc == home) ||
+                      (stat(loc.c_str(), &a) == 0 && stat(p.c_str(), &b) == 0 && a.st_dev != b.st_dev);
+        if (volume) { if (root_) root_->show(); return; }
+        if (p.string() != loc) open_drawer(p.string());
     };
     w->on_location = [this](IconWindow *, const std::string &loc) {
         std::error_code ec;
