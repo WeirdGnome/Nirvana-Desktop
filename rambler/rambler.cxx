@@ -172,7 +172,7 @@ enum MenuId {
     MEN_RAMBLER_BACKDROP = 1, MEN_RAMBLER_EXECUTE, MEN_RAMBLER_SHELL, MEN_RAMBLER_ABOUT, MEN_RAMBLER_QUIT,
     MEN_WINDOW_NEW_DRAWER, MEN_WINDOW_OPEN_PARENT, MEN_WINDOW_CLOSE, MEN_WINDOW_UPDATE, MEN_WINDOW_SELECT,
     MEN_WINDOW_CLEAR, MEN_WINDOW_SNAP_WIN, MEN_WINDOW_SNAP_ALL, MEN_WINDOW_VIEW_ICON, MEN_WINDOW_VIEW_DETAIL,
-    MEN_WINDOW_VIEW_ALL, MEN_WINDOW_SORT_NOW, MEN_WINDOW_SORT_ENABLE, MEN_WINDOW_SORT_NAME, MEN_WINDOW_SORT_DATE,
+    MEN_WINDOW_VIEW_ALL, MEN_WINDOW_VIEW_HIDDEN, MEN_WINDOW_SORT_NOW, MEN_WINDOW_SORT_ENABLE, MEN_WINDOW_SORT_NAME, MEN_WINDOW_SORT_DATE,
     MEN_WINDOW_SORT_SIZE, MEN_WINDOW_SORT_TYPE, MEN_WINDOW_SORT_REVERSE, MEN_WINDOW_SORT_TOPDRAWERS,
     MEN_WINDOW_FIND, MEN_ICON_OPEN, MEN_ICON_RENAME, MEN_ICON_INFORMATION, MEN_ICON_SNAPSHOT,
     MEN_ICON_UNSNAPSHOT, MEN_ICON_DELETE, MEN_ICON_DISKINFO, MEN_RAMBLER_PREFS,
@@ -205,6 +205,7 @@ void Rambler::apply_prefs(IconWindow *w) {
     if (!w->is_root()) {
         l->list_mode = (ListMode)prefs_.list_mode;
         if (prefs_.show_hidden) l->display_flags |= Disp_ShowHidden; else l->display_flags &= ~Disp_ShowHidden;
+        if (prefs_.only_icons) l->display_flags |= Disp_ShowInfo; else l->display_flags &= ~Disp_ShowInfo;
         static const int orders[3] = {Sort_ByName, Sort_ByDate, Sort_BySize};
         l->sort_flags = (l->sort_flags & ~Sort_Orders) | orders[std::clamp(prefs_.default_sort, 0, 2)];
         if (prefs_.auto_sort) l->sort_flags |= Sort_AutoSort; else l->sort_flags &= ~Sort_AutoSort;
@@ -677,7 +678,9 @@ std::vector<Fl_Menu_Item> Rambler::menu_items(IconWindow *w) {
             {"View", 0, nullptr, nullptr, FL_SUBMENU},
                 {"as Icons", 0, nullptr, (void *)MEN_WINDOW_VIEW_ICON, chk(!(df & Disp_ModeList))},
                 {"as List", 0, nullptr, (void *)MEN_WINDOW_VIEW_DETAIL, chk(df & Disp_ModeList) | FL_MENU_DIVIDER},
-                {"All Files", 0, nullptr, (void *)MEN_WINDOW_VIEW_ALL, tog(df & Disp_ShowHidden)},
+                // All Files: not ticked, only what has an icon of its own (ICONLIST_DISP_SHOWINFO)
+                {"All Files", 0, nullptr, (void *)MEN_WINDOW_VIEW_ALL, tog(!(df & Disp_ShowInfo))},
+                {"Hidden Files", 0, nullptr, (void *)MEN_WINDOW_VIEW_HIDDEN, tog(df & Disp_ShowHidden)},
                 {nullptr},
             {"Sort Icons", 0, nullptr, nullptr, FL_SUBMENU | FL_MENU_DIVIDER},
                 {"Clean Up", FL_META + '.', nullptr, (void *)MEN_WINDOW_SORT_NOW},
@@ -1057,7 +1060,8 @@ void Rambler::menu_action(IconWindow *w, int id) {
     }
     case MEN_WINDOW_VIEW_ICON: l->display_flags = (l->display_flags & ~Disp_ModeMask) | Disp_ModeDefault; l->rethink(); break;
     case MEN_WINDOW_VIEW_DETAIL: l->display_flags = (l->display_flags & ~Disp_ModeMask) | Disp_ModeList; l->rethink(); break;
-    case MEN_WINDOW_VIEW_ALL: l->display_flags ^= Disp_ShowHidden; w->update(); break;
+    case MEN_WINDOW_VIEW_ALL: l->display_flags ^= Disp_ShowInfo; w->update(); break;
+    case MEN_WINDOW_VIEW_HIDDEN: l->display_flags ^= Disp_ShowHidden; w->update(); break;
     case MEN_WINDOW_SORT_NOW: resort(); break;
     case MEN_WINDOW_SORT_ENABLE: l->sort_flags ^= Sort_AutoSort; resort(); break;
     case MEN_WINDOW_SORT_NAME: l->sort_flags = (l->sort_flags & ~Sort_Orders) | Sort_ByName; resort(); break;

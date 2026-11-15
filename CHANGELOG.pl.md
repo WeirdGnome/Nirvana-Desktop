@@ -1,5 +1,13 @@
 # Lista zmian
 
+## 0.15.0 (w przygotowaniu)
+
+### Zmiany
+- **Window > View > All Files** działa jak w oryginale: gdy nie jest zaznaczone, szuflada
+  pokazuje tylko to, co ma własny plik ikony (`.info`). Domyślnie jest zaznaczone (w
+  Linuksie mało plików ma ikony). Pliki ukryte (`.nazwa`) mają osobną pozycję **Hidden
+  Files**, a preferencje Ramblera przełącznik „Ukryte pliki” obok domyślnego widoku.
+
 ## 0.14.0 – 2026-11-15
 
 ### Nowe

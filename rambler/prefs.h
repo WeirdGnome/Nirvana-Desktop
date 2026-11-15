@@ -25,7 +25,8 @@ struct RamblerPrefs {
     int list_mode = 0;           // 0 grid, 1 rough
     bool toolbar = true;         // drawer windows: the tool bar
     bool statusbar = true;       //                 the status bar
-    bool show_hidden = false;    // all files
+    bool show_hidden = false;    // the hidden files (".name") too
+    bool only_icons = false;     // the default view: only what has an icon of its own (.info)
     bool drawers_first = true;
     bool auto_sort = false;      // new drawer windows sort their icons (no free positions)
     int default_sort = 0;        // a drawer's order without a snapshot: 0 name, 1 date, 2 size

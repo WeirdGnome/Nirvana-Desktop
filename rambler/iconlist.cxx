@@ -1085,6 +1085,11 @@ void IconDrawerList::update() {
         if (hidden && !(display_flags & Disp_ShowHidden)) continue;
         // icon files are the icons of other entries, not entries of their own
         if (name.size() > 5 && name.compare(name.size() - 5, 5, ".info") == 0) continue;
+        // only icons (All Files not ticked): what has no icon file of its own is not shown
+        if (display_flags & Disp_ShowInfo) {
+            struct stat ist;
+            if (stat((it->path().string() + ".info").c_str(), &ist) != 0) continue;
+        }
         IconEntry e;
         e.path = it->path().string();
         e.label = name;

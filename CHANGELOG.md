@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.15.0 (unreleased)
+
+### Changed
+- **Window > View > All Files** works as on the original system: not ticked, a drawer shows
+  only what has an icon file of its own (`.info`). It is ticked by default (few files on
+  Linux have icons). The hidden files (`.name`) have an item of their own, **Hidden
+  Files**, and the Rambler preferences a "Hidden files" switch beside the default view.
+
 ## 0.14.0 – 2026-11-15
 
 ### Added
