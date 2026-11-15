@@ -740,3 +740,19 @@ Save the changes?	Zapisać zmiany?
 The file exists already:	Plik już istnieje:
 replaced.	zamieniono.
 A plain text editor.	Prosty edytor tekstu.
+Commodities	Programy usługowe
+Active	Aktywny
+Inactive	Nieaktywny
+Show Interface	Pokaż okno
+Hide Interface	Ukryj okno
+Hide	Ukryj
+Timeout:	Czas do wygaszenia:
+Bring to front with:	Na wierzch przez:
+Double click	Podwójne kliknięcie
+Alt + click	Alt + kliknięcie
+Ctrl + click	Ctrl + kliknięcie
+Shift + click	Shift + kliknięcie
+The window under the pointer becomes active.	Okno pod wskaźnikiem staje się aktywne.
+Blanks the screen after some minutes without input.	Wygasza ekran po kilku minutach bezczynności.
+A double click brings a window to the front.	Podwójne kliknięcie wysuwa okno na wierzch.
+The Caps Lock key does not lock.	Klawisz Caps Lock nie blokuje wielkich liter.

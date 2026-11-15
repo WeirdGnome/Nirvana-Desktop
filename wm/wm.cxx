@@ -86,7 +86,7 @@ const int SIZE_W = 16, SIZE_H = 16;
 
 Atom WM_PROTOCOLS, WM_DELETE_WINDOW, WM_STATE, WM_TAKE_FOCUS, NET_WM_NAME, UTF8_STRING, NET_WM_WINDOW_TYPE,
     NET_WM_WINDOW_TYPE_DESKTOP, NET_WM_WINDOW_TYPE_DOCK, NET_SUPPORTED, NET_ACTIVE_WINDOW, NET_CLIENT_LIST,
-    NET_SUPPORTING_WM_CHECK, NET_WM_STATE, NET_WM_STATE_FULLSCREEN, RAMBLER_SCREEN_TITLE, RAMBLER_PALETTE, RAMBLER_FONT, RAMBLER_ICONTROL, RAMBLER_SOUND,
+    NET_SUPPORTING_WM_CHECK, NET_WM_STATE, NET_WM_STATE_FULLSCREEN, RAMBLER_SCREEN_TITLE, RAMBLER_PALETTE, RAMBLER_FONT, RAMBLER_ICONTROL, RAMBLER_SOUND, RAMBLER_COMMODITIES,
     NET_WM_STATE_MAXIMIZED_VERT, NET_WM_STATE_MAXIMIZED_HORZ, NET_CLOSE_WINDOW, NET_FRAME_EXTENTS, NET_WORKAREA,
     NET_NUMBER_OF_DESKTOPS, NET_CURRENT_DESKTOP, NET_DESKTOP_GEOMETRY;
 
@@ -172,6 +172,31 @@ void read_icontrol(const std::string &text) {
         else if (k == "offscreen") p.offscreen = v;
     }
     ic = p;
+}
+// The commodities the window manager does (Exchange): ClickToFront and AutoPoint
+struct CommodityPrefs {
+    bool click_to_front = false;
+    unsigned ctf_mask = 0;               // 0: a double click; else the key held with a click
+    bool autopoint = false;
+} cx;
+
+void read_commodities(const std::string &text) {
+    CommodityPrefs p;
+    size_t a = 0;
+    while (a < text.size()) {
+        size_t b = text.find('\n', a);
+        if (b == std::string::npos) b = text.size();
+        std::string line = text.substr(a, b - a);
+        a = b + 1;
+        auto eq = line.find('=');
+        if (eq == std::string::npos) continue;
+        std::string k = line.substr(0, eq);
+        int v = atoi(line.c_str() + eq + 1);
+        if (k == "click_to_front") p.click_to_front = v;
+        else if (k == "ctf_key") p.ctf_mask = v == 1 ? Mod1Mask : v == 2 ? ControlMask : v == 3 ? ShiftMask : 0;
+        else if (k == "autopoint") p.autopoint = v;
+    }
+    cx = p;
 }
 Window check_win;
 
@@ -1192,6 +1217,15 @@ void button_press(XButtonEvent &e) {
         // (the backdrop too: as the system's backdrop window, it takes the keys and its menus
         // show; it is not raised - activating raises nothing)
         activate(c);
+        // ClickToFront: a double click (or a click with its key held) brings it to the front
+        if (cx.click_to_front && e.button == Button1 && !c->backdrop) {
+            static Window last_win = 0;
+            static Time last_time = 0;
+            bool to = cx.ctf_mask ? (e.state & cx.ctf_mask) != 0 : (e.window == last_win && e.time - last_time < 400);
+            last_win = e.window;
+            last_time = to ? 0 : e.time;
+            if (to) to_front(c);
+        }
         // the right button over a window with menus: the screen bar shows them
         release.sync = false;
         if (e.button == Button3 && menu_begin(c)) {
@@ -1564,6 +1598,7 @@ int main(int argc, char **argv) {
     RAMBLER_FONT = atom("_RAMBLER_FONT");
     RAMBLER_ICONTROL = atom("_RAMBLER_ICONTROL");
     RAMBLER_SOUND = atom("_RAMBLER_SOUND");
+    RAMBLER_COMMODITIES = atom("_RAMBLER_COMMODITIES");
     RAMBLER_MENU_PICK = atom("_RAMBLER_MENU_PICK");
 
     // the IControl preferences: the ones in use (the property, ENV:), else the saved ones
@@ -1583,6 +1618,20 @@ int main(int argc, char **argv) {
             }
         }
         read_icontrol(v);
+    }
+    {   // the commodities: the property, else ENV:, else ENVARC:
+        std::string v = utf8_prop(root, RAMBLER_COMMODITIES);
+        for (const std::string &f : {rambler::beep_env_dir() + "/commodities.prefs",
+                                     rambler::beep_saved_file().substr(0, rambler::beep_saved_file().size() - 11) + "commodities.prefs"}) {
+            if (!v.empty()) break;
+            if (FILE *fp = fopen(f.c_str(), "r")) {
+                char buf[1024];
+                size_t n = fread(buf, 1, sizeof buf - 1, fp);
+                fclose(fp);
+                v.assign(buf, n);
+            }
+        }
+        read_commodities(v);
     }
     {   // the Sound preferences: the property, else ENV:, else ENVARC:
         std::string v = utf8_prop(root, RAMBLER_SOUND);
@@ -1725,6 +1774,8 @@ int main(int argc, char **argv) {
         case PropertyNotify:
             if (ev.xproperty.window == root && ev.xproperty.atom == RAMBLER_PALETTE) palette_changed();
             if (ev.xproperty.window == root && ev.xproperty.atom == RAMBLER_FONT) font_changed();
+            if (ev.xproperty.window == root && ev.xproperty.atom == RAMBLER_COMMODITIES)
+                read_commodities(utf8_prop(root, RAMBLER_COMMODITIES));
             if (ev.xproperty.window == root && ev.xproperty.atom == RAMBLER_SOUND)
                 beep_prefs = rambler::BeepPrefs::parse(utf8_prop(root, RAMBLER_SOUND));
             if (ev.xproperty.window == root && ev.xproperty.atom == RAMBLER_ICONTROL) {
@@ -1803,6 +1854,15 @@ int main(int argc, char **argv) {
             }
             break;
         case ButtonPress: button_press(ev.xbutton); break;
+        case EnterNotify:
+            // AutoPoint: the window the pointer comes into becomes the active one (not while
+            // something is dragged or a menu is open; the backdrop stays as it is)
+            if (cx.autopoint && ev.xcrossing.mode == NotifyNormal && ev.xcrossing.detail != NotifyInferior &&
+                drag.kind == D_NONE && !menu.open && by_frame.count(ev.xcrossing.window)) {
+                Client *c = by_frame[ev.xcrossing.window];
+                if (!c->backdrop && c != active) activate(c);
+            }
+            break;
         case MotionNotify: if (drag.kind != D_NONE || menu.open) motion(ev.xmotion); break;
         case ButtonRelease: button_release(ev.xbutton); break;
         case KeyPress: key_press(ev.xkey); break;

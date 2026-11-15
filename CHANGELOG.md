@@ -16,6 +16,14 @@
   or without matching case), Go to Line; Settings: Word Wrap. The title shows a star
   while there are changes not saved, and they are asked about before the text goes; the
   line and column of the cursor are shown below the text.
+- **Exchange** (`rambler --utility exchange`, in the Tools drawer) and four commodities
+  built into the session: **ClickToFront** (a double click, or a click with Alt, Ctrl or
+  Shift, brings a window to the front; a plain click only activates it, as before),
+  **AutoPoint** (the window under the pointer becomes active), **Blanker** (the screen
+  blanks after 1 to 120 minutes without input) and **NoCapsLock** (Caps Lock does not
+  lock). Each is switched Active or Inactive; Show Interface opens the settings of
+  ClickToFront and Blanker. A change takes effect at once and is kept for the next
+  session.
 
 ## 0.17.0 – 2026-11-15
 

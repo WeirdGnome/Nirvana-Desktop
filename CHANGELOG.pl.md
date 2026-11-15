@@ -18,6 +18,13 @@
   liter lub bez), Idź do wiersza; Ustawienia: Zawijanie wierszy. Tytuł ma gwiazdkę, gdy
   są niezapisane zmiany, a przed porzuceniem tekstu program o nie pyta; pod tekstem
   widać wiersz i kolumnę kursora.
+- **Exchange** (`rambler --utility exchange`, w szufladzie Tools) i cztery programy
+  usługowe wbudowane w sesję: **ClickToFront** (podwójne kliknięcie albo kliknięcie z
+  Alt, Ctrl lub Shift wysuwa okno na wierzch; zwykłe kliknięcie tylko je aktywuje, jak
+  dotąd), **AutoPoint** (okno pod wskaźnikiem staje się aktywne), **Blanker** (ekran
+  wygasa po 1-120 minutach bezczynności) i **NoCapsLock** (Caps Lock nie blokuje). Każdy
+  można przełączyć na Aktywny albo Nieaktywny; „Pokaż okno” otwiera ustawienia
+  ClickToFront i Blankera. Zmiana działa od razu i zostaje na następną sesję.
 
 ## 0.17.0 – 2026-11-15
 

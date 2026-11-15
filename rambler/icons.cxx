@@ -339,6 +339,19 @@ void editor_icon(int x, int y) {
     fl_line(x + 18, y + 38, x + 19, y + 36);
 }
 
+// Exchange: a switchboard - three switches, two on
+void exchange_icon(int x, int y) {
+    box3d(x + 4, y + 6, 38, 34, 0xAAAAAA, 0xE6E6E6, 0x5E5E5E);
+    for (int i = 0; i < 3; i++) {
+        int sy = y + 11 + i * 10;
+        box3d(x + 9, sy, 14, 7, 0x404040, 0x707070, 0x202020);
+        bool on = i != 1;
+        box3d(on ? x + 16 : x + 10, sy + 1, 6, 5, on ? 0x40C040 : 0xD9D9D9, 0xFFFFFF, 0x555555);
+        fl_color(C(0x404040));
+        fl_xyline(x + 27, sy + 3, x + 37 - i * 3);
+    }
+}
+
 // The Calculator: its case, the display and the keys
 void calculator_icon(int x, int y) {
     box3d(x + 9, y + 4, 28, 38, 0x8A8A8A, 0xC8C8C8, 0x404040);
@@ -472,7 +485,7 @@ bool builtin_icon(const std::string &name, IconKind &k) {
         {"rambler-prefs-locale", IconKind::PrefsLocale}, {"rambler-prefs-lune", IconKind::PrefsLune},
         {"rambler-prefs-network", IconKind::PrefsNetwork}, {"rambler-prefs-pointer", IconKind::PrefsPointer},
         {"rambler-prefs-rambler", IconKind::PrefsRambler}, {"rambler-prefs-screenmode", IconKind::PrefsScreenMode},
-        {"rambler-prefs-printer", IconKind::PrefsPrinter}, {"rambler-prefs-sound", IconKind::PrefsSound}, {"rambler-prefs-time", IconKind::PrefsTime}, {"rambler-utility-clock", IconKind::UtilityClock}, {"rambler-utility-calculator", IconKind::UtilityCalculator}, {"rambler-utility-multiview", IconKind::UtilityMultiView}, {"rambler-utility-editor", IconKind::UtilityEditor}};
+        {"rambler-prefs-printer", IconKind::PrefsPrinter}, {"rambler-prefs-sound", IconKind::PrefsSound}, {"rambler-prefs-time", IconKind::PrefsTime}, {"rambler-utility-clock", IconKind::UtilityClock}, {"rambler-utility-calculator", IconKind::UtilityCalculator}, {"rambler-utility-multiview", IconKind::UtilityMultiView}, {"rambler-utility-editor", IconKind::UtilityEditor}, {"rambler-utility-exchange", IconKind::UtilityExchange}};
     for (auto &[n, kind] : NAMES) if (name == n) { k = kind; return true; }
     return false;
 }
@@ -497,6 +510,7 @@ void draw_icon(IconKind k, int x, int y, bool selected) {
     case IconKind::UtilityCalculator: calculator_icon(x, y); break;
     case IconKind::UtilityMultiView: multiview_icon(x, y); break;
     case IconKind::UtilityEditor: editor_icon(x, y); break;
+    case IconKind::UtilityExchange: exchange_icon(x, y); break;
     default: project(k, x, y); break;
     }
     g_sel = false;

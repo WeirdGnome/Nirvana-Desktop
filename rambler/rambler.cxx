@@ -32,6 +32,7 @@
 #include "calculator.h"
 #include "multiview.h"
 #include "editor.h"
+#include "commodities.h"
 
 #include <FL/Fl.H>
 #include <FL/Fl_Menu_Item.H>
@@ -1268,7 +1269,7 @@ void make_tools_drawer() {
     std::error_code ec;
     fs::create_directories(dir, ec);
     std::string made = read_file(made_file);
-    struct { const char *file, *name, *arg; } utils[] = {{"Calculator.desktop", "Calculator", "calculator"}, {"Clock.desktop", "Clock", "clock"}, {"Editor.desktop", "Editor", "editor"}, {"MultiView.desktop", "MultiView", "multiview"}};
+    struct { const char *file, *name, *arg; } utils[] = {{"Calculator.desktop", "Calculator", "calculator"}, {"Clock.desktop", "Clock", "clock"}, {"Editor.desktop", "Editor", "editor"}, {"Exchange.desktop", "Exchange", "exchange"}, {"MultiView.desktop", "MultiView", "multiview"}};
     for (auto &u : utils) {
         if (made.find(std::string(u.file) + "\n") != std::string::npos) continue;
         std::string f = dir + "/" + u.file;
@@ -1300,7 +1301,8 @@ int main(int argc, char **argv) {
             else if (u == "calculator") run_calculator();
             else if (u == "multiview") run_multiview(i + 1 < argc ? argv[i + 1] : "");
             else if (u == "editor") run_editor(i + 1 < argc ? argv[i + 1] : "");
-            else { fprintf(stderr, "rambler: no utility '%s' (calculator, clock, editor, multiview)\n", u.c_str()); return 1; }
+            else if (u == "exchange") run_exchange();
+            else { fprintf(stderr, "rambler: no utility '%s' (calculator, clock, editor, exchange, multiview)\n", u.c_str()); return 1; }
             return run();
         }
         else if (!strcmp(argv[i], "--appimage-icon") && i + 1 < argc) {
@@ -1346,6 +1348,10 @@ int main(int argc, char **argv) {
     if (backdrop && InputPrefs::exists()) InputPrefs::load().apply();
     if (backdrop) make_prefs_drawer();
     if (backdrop) make_tools_drawer();
+    // the commodities as they were left (only when they were ever set: X's own screen saver
+    // stays as it is otherwise)
+    if (backdrop && (fs::exists(lune::env_dir() + "/commodities.prefs") || fs::exists(config_dir() + "/commodities.prefs")))
+        Commodities::load().apply();
     if (backdrop && first_in_session()) run_startup();   // once per session (not again after a restart)
     Fl::add_timeout(5.0, Rambler::tick, &g_rambler);
     Fl::add_timeout(0.5, Rambler::watch_volumes, &g_rambler);
