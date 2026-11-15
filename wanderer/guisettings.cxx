@@ -72,6 +72,7 @@ zune::Window *g_win = nullptr;
 class SpecialImage : public Area {
 public:
     explicit SpecialImage(std::function<void(int, int, int, int)> f) : Area(Frame_ImageButton), f_(std::move(f)) {}
+    void painter(std::function<void(int, int, int, int)> f) { f_ = std::move(f); redraw(); }
     void ask_min_max(int &minw, int &minh, int &defw, int &defh, int &maxw, int &maxh) override {
         minw = defw = maxw = minh = defh = maxh = 20;   // (MUIA_MaxWidth / MaxHeight 28 with the frame)
     }
@@ -360,18 +361,92 @@ void edit_gui_settings() {
         right->end();
         pg->end();
     }
-    // -- Listviews (listviewsp.c)
+    // -- Listviews (listviewsp.c): control, fonts, design (frames and backgrounds), cursor
+    Cycle *lmulti, *lrefresh, *lfam, *lsize, *fsize;
+    Checkmark *lsmooth;
+    Slider *lsmoothval, *llead;
+    Cycle *lback, *rback, *lcur, *lsel, *lselcur;
     {
-        auto *pg = VGroup();
-        auto *g = new Group(Group::Vertical, Frame_Group);
-        g->frame_title("Frames");
-        g->columns(2);
-        new Text("\033rInput list:");
-        frames.push_back({Frame_InputList, frame_cycle(Frame_InputList)});
-        new Text("\033rRead list:");
-        frames.push_back({Frame_ReadList, frame_cycle(Frame_ReadList)});
-        g->end();
+        auto *pg = new Group(Group::Vertical);
+        pg->columns(2);
+        pg->same_size(true);
+        auto *ctl = new Group(Group::Vertical, Frame_Group);
+        ctl->frame_title("Control");
         VSpace();
+        auto *cc = new Group(Group::Vertical);
+        cc->columns(2);
+        new Text("\033rMulti:");
+        lmulti = new Cycle({"Shifted", "Always"}, saved.list_multi);
+        new Text("\033rRefresh:");
+        lrefresh = new Cycle({"Linear", "Mixed"}, saved.list_refresh);
+        new Text("\033rSmooth:");
+        auto *sm = HGroup();
+        lsmooth = new Checkmark(saved.list_smoothed);
+        lsmoothval = new Slider(0, 9, saved.list_smoothval);
+        sm->end();
+        cc->end();
+        VSpace();
+        ctl->end();
+        lsmoothval->disabled(!saved.list_smoothed);
+        lsmooth->on_press = [=] { lsmoothval->disabled(!lsmooth->on()); };
+        auto *fo = new Group(Group::Vertical, Frame_Group);
+        fo->frame_title("Fonts");
+        VSpace();
+        auto *fc = new Group(Group::Vertical);
+        fc->columns(2);
+        auto size_index = [](int v) { for (int i = 0; i < 7; i++) if (SIZES[i] == v) return i + 1; return 0; };
+        std::vector<std::string> sizes = {"Normal"};
+        for (int sz : SIZES) sizes.push_back(std::to_string(sz));
+        new Text("\033rNormal:");
+        auto *nr = HGroup();
+        lfam = new Cycle({"Normal", "Sans", "Serif", "Fixed"}, saved.list_font_family + 1);
+        lsize = new Cycle(sizes, size_index(saved.list_font_size));
+        nr->end();
+        new Text("\033rFixed:");
+        fsize = new Cycle(sizes, size_index(saved.fixed_font_size));
+        new Text("\033rLeading:");
+        llead = new Slider(0, 9, saved.list_leading);
+        fc->end();
+        VSpace();
+        fo->end();
+        // a background: the pattern's sample and its name (the popimage of the original)
+        auto pattern = [](int muii) {
+            auto *row = HGroup();
+            row->spacing(2);
+            auto *sample = new SpecialImage([](int, int, int, int) {});
+            std::vector<std::string> names(PATTERN_NAMES, PATTERN_NAMES + (MUII_LASTPAT - MUII_BACKGROUND));
+            auto *c = new Cycle(names, muii - MUII_BACKGROUND);
+            row->end();
+            sample->painter([c](int X, int Y, int W, int H) { draw_pattern(MUII_BACKGROUND + c->active(), X, Y, W, H); });
+            c->on_change = [sample](int) { sample->redraw(); };
+            return c;
+        };
+        auto *de = new Group(Group::Vertical, Frame_Group);
+        de->frame_title("Design");
+        de->columns(3);
+        new Text("\033rInput Lists:");
+        frames.push_back({Frame_InputList, frame_cycle(Frame_InputList)});
+        lback = pattern(saved.list_back);
+        new Text("\033rRead-only Lists:");
+        frames.push_back({Frame_ReadList, frame_cycle(Frame_ReadList)});
+        rback = pattern(saved.readlist_back);
+        VSpace();
+        new Text("\033cFrame");
+        new Text("\033cBackground");
+        de->end();
+        auto *cu = new Group(Group::Vertical, Frame_Group);
+        cu->frame_title("Cursor");
+        cu->columns(3);
+        new Text("\033rActive:");
+        lcur = pattern(saved.list_cursor);
+        auto *asl = VGroup();
+        HVSpace();
+        new Text("\033cActive+Selected");
+        asl->end();
+        new Text("\033rSelected:");
+        lsel = pattern(saved.list_select);
+        lselcur = pattern(saved.list_selcur);
+        cu->end();
         pg->end();
     }
     // -- Strings (stringsp.c)
@@ -631,6 +706,19 @@ void edit_gui_settings() {
         p.bubble_first = bfirst->value();
         p.bubble_next = bnext->value();
         p.scrollbar_arrangement = *sbarr;
+        p.list_multi = lmulti->active();
+        p.list_refresh = lrefresh->active();
+        p.list_smoothed = lsmooth->on();
+        p.list_smoothval = lsmoothval->value();
+        p.list_font_family = lfam->active() - 1;
+        p.list_font_size = lsize->active() ? SIZES[lsize->active() - 1] : 0;
+        p.fixed_font_size = fsize->active() ? SIZES[fsize->active() - 1] : 0;
+        p.list_leading = llead->value();
+        p.list_back = MUII_BACKGROUND + lback->active();
+        p.readlist_back = MUII_BACKGROUND + rback->active();
+        p.list_cursor = MUII_BACKGROUND + lcur->active();
+        p.list_select = MUII_BACKGROUND + lsel->active();
+        p.list_selcur = MUII_BACKGROUND + lselcur->active();
         p.scrollbar_type = sbtype->active();
         for (int i = 0; i < 16; i++) p.custom_frame[i] = cframe[i]->value();
         for (int i = 0; i < MUIKEY_COUNT; i++) p.keys[i] = (*keys)[i] == KEY_DEFAULTS[i] ? "" : (*keys)[i];

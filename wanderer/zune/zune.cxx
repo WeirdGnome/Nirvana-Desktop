@@ -91,6 +91,19 @@ void load_prefs() {
             }
             else if (k == "scrollbar_arrangement") p.scrollbar_arrangement = std::clamp(atoi(v.c_str()), 0, 2);
             else if (k == "scrollbar_type") p.scrollbar_type = std::clamp(atoi(v.c_str()), 0, 2);
+            else if (k == "list_multi") p.list_multi = std::clamp(atoi(v.c_str()), 0, 1);
+            else if (k == "list_refresh") p.list_refresh = std::clamp(atoi(v.c_str()), 0, 1);
+            else if (k == "list_smoothed") p.list_smoothed = atoi(v.c_str());
+            else if (k == "list_smoothval") p.list_smoothval = std::clamp(atoi(v.c_str()), 0, 9);
+            else if (k == "list_leading") p.list_leading = std::clamp(atoi(v.c_str()), 0, 9);
+            else if (k == "list_font_family") p.list_font_family = std::clamp(atoi(v.c_str()), -1, 2);
+            else if (k == "list_font_size") p.list_font_size = std::clamp(atoi(v.c_str()), 0, 24);
+            else if (k == "fixed_font_size") p.fixed_font_size = std::clamp(atoi(v.c_str()), 0, 24);
+            else if (k == "list_back") p.list_back = std::clamp(atoi(v.c_str()), 128, 145);
+            else if (k == "readlist_back") p.readlist_back = std::clamp(atoi(v.c_str()), 128, 145);
+            else if (k == "list_cursor") p.list_cursor = std::clamp(atoi(v.c_str()), 128, 145);
+            else if (k == "list_select") p.list_select = std::clamp(atoi(v.c_str()), 128, 145);
+            else if (k == "list_selcur") p.list_selcur = std::clamp(atoi(v.c_str()), 128, 145);
             else if (k == "bubble_first") p.bubble_first = std::clamp(atoi(v.c_str()), 0, 50);
             else if (k == "bubble_next") p.bubble_next = std::clamp(atoi(v.c_str()), 0, 50);
             else if (k == "balancing_look") p.balancing_look = std::clamp(atoi(v.c_str()), 0, 1);
@@ -124,6 +137,12 @@ void save_prefs() {
             p.balancing_look);
     for (int i = 0; i < 16; i++)
         if (!p.custom_frame[i].empty()) fprintf(f, "custom_frame_%d=%s\n", i + 1, p.custom_frame[i].c_str());
+    fprintf(f, "list_multi=%d\nlist_refresh=%d\nlist_smoothed=%d\nlist_smoothval=%d\nlist_leading=%d\n"
+               "list_font_family=%d\nlist_font_size=%d\nfixed_font_size=%d\nlist_back=%d\nreadlist_back=%d\n"
+               "list_cursor=%d\nlist_select=%d\nlist_selcur=%d\n",
+            p.list_multi, p.list_refresh, (int)p.list_smoothed, p.list_smoothval, p.list_leading, p.list_font_family,
+            p.list_font_size, p.fixed_font_size, p.list_back, p.readlist_back, p.list_cursor, p.list_select,
+            p.list_selcur);
     fprintf(f, "scrollbar_arrangement=%d\nscrollbar_type=%d\n", p.scrollbar_arrangement, p.scrollbar_type);
     fprintf(f, "bubble_first=%d\nbubble_next=%d\n", p.bubble_first, p.bubble_next);
     fprintf(f, "drag_left_modifier=%s\ndrag_middle_modifier=%s\n", p.drag_left_modifier.c_str(), p.drag_middle_modifier.c_str());
@@ -203,6 +222,7 @@ void apply_prefs() {
     static const Fl_Font fams[3][2] = {{FL_HELVETICA, FL_HELVETICA_BOLD}, {FL_TIMES, FL_TIMES_BOLD}, {FL_COURIER, FL_COURIER_BOLD}};
     p.font = fams[p.font_family][0];
     p.font_bold = fams[p.font_family][1];
+    p.list_font = p.list_font_family < 0 ? p.font : fams[p.list_font_family][0];
     for (int i = 0; i < 16; i++) set_custom_frame(i, p.custom_frame[i]);
     for (int i = 1; i < Frame_Count; i++) set_std_frame((StdFrame)i, p.frame[i].empty() ? default_frame((StdFrame)i) : p.frame[i]);
     // bubble help: FLTK's tooltips with the delays set
@@ -1291,7 +1311,7 @@ void List::columns(const std::vector<std::string> &titles, const std::vector<boo
 
 void List::measure_columns() {
     colw_.assign(titles_.size(), 0);
-    fl_font(prefs().font, prefs().font_size);
+    fl_font(prefs().list_font, prefs().list_size());
     for (size_t c = 0; c < titles_.size(); c++) colw_[c] = (int)fl_width(titles_[c].c_str()) + 10;
     for (auto &l : lines_)
         for (size_t c = 0; c < l.cols.size() && c < colw_.size(); c++)
@@ -1314,10 +1334,15 @@ void List::active(int a) {
     redraw();
 }
 
+// the list's background: an input or a read-only list's pattern (MUII_ListBack / ReadListBack)
+void List::draw_background(int X, int Y, int W, int H) {
+    draw_pattern(std_ == Frame_InputList ? prefs().list_back : prefs().readlist_back, X, Y, W, H);
+}
+
 void List::draw_contents() {
     const Pens &p = pens();
     int lh = line_h(), W = mwidth() - 16;
-    fl_font(prefs().font, prefs().font_size);
+    fl_font(prefs().list_font, prefs().list_size());
     if (!titles_.empty()) {
         // the title row and the columns, divided by bars
         int th = title_h(), x = mleft();
@@ -1335,7 +1360,7 @@ void List::draw_contents() {
         for (int i = top_; i < (int)lines_.size() && (i - top_) * lh < mheight() - th; i++) {
             int y = mtop() + th + (i - top_) * lh;
             bool act = i == active_;
-            if (act) { fl_color(p[MPEN_FILL]); fl_rectf(mleft(), y, W, lh); }
+            if (act) draw_pattern(prefs().list_cursor, mleft(), y, W, lh);   // MUII_ListCursor
             int cx = mleft();
             auto &l = lines_[i];
             for (size_t c = 0; c < titles_.size(); c++) {
@@ -1366,7 +1391,7 @@ void List::draw_contents() {
     for (int i = top_; i < (int)lines_.size() && (i - top_) * lh < mheight(); i++) {
         int y = mtop() + (i - top_) * lh;
         bool act = i == active_;
-        if (act) { fl_color(p[MPEN_FILL]); fl_rectf(mleft(), y, W, lh); }
+        if (act) draw_pattern(prefs().list_cursor, mleft(), y, W, lh);   // MUII_ListCursor
         auto &l = lines_[i];
         int infow = l.info.empty() ? 0 : (int)fl_width(l.info.c_str()) + 8;
         fl_color(act ? p[MPEN_SHINE] : p[MPEN_TEXT]);
