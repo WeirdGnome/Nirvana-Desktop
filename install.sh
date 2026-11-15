@@ -7,6 +7,10 @@
 #   ./install.sh --package-only  only builds the package (into this directory)
 #   ./install.sh --no-deps       does not install the packages needed for building
 #   ./install.sh --uninstall     removes the package and any files installed without it
+#   ./install.sh --with-dwarfs   also puts dwarfsextract into /usr/local/bin (the DwarFS
+#                                project's single program, from its releases on GitHub): the
+#                                icons of AppImages that carry a DwarFS image (uruntime,
+#                                "anylinux" AppImages)
 #
 # The package puts the programs into /usr/bin and the session into /usr/share/xsessions,
 # so "Rambler" appears among the sessions of the display manager.
@@ -17,12 +21,14 @@ set -e
 DEPS=1
 PACKAGE_ONLY=0
 UNINSTALL=0
+DWARFS=0
 while [ $# -gt 0 ]; do
     case "$1" in
         --package-only) PACKAGE_ONLY=1; shift ;;
         --no-deps) DEPS=0; shift ;;
         --uninstall) UNINSTALL=1; shift ;;
-        -h|--help) sed -n '2,13p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+        --with-dwarfs) DWARFS=1; shift ;;
+        -h|--help) sed -n '2,17p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
         *) echo "Unknown option: $1" >&2; exit 2 ;;
     esac
 done
@@ -181,7 +187,33 @@ else
     $SUDO dpkg -i "$DEB"
 fi
 
+# --- DwarFS (asked for) -------------------------------------------------------------------------
+if [ "$DWARFS" -eq 1 ]; then
+    DWV=0.12.4
+    case "$(uname -m)" in
+        x86_64) DWA=x86_64 ;; aarch64|arm64) DWA=aarch64 ;; *) DWA="" ;;
+    esac
+    if [ -z "$DWA" ]; then
+        echo "DwarFS: no ready program for $(uname -m)"
+    elif command -v curl >/dev/null 2>&1; then
+        say "Putting dwarfsextract into /usr/local/bin (DwarFS $DWV)"
+        TMPDW="$(mktemp -d /tmp/rambler-dwarfs.XXXXXX)"
+        if curl -fsSL -o "$TMPDW/dwarfs-universal" \
+            "https://github.com/mhx/dwarfs/releases/download/v$DWV/dwarfs-universal-$DWV-Linux-$DWA"; then
+            $SUDO install -m 755 "$TMPDW/dwarfs-universal" /usr/local/bin/dwarfs-universal
+            $SUDO ln -sf dwarfs-universal /usr/local/bin/dwarfsextract
+        else
+            echo "DwarFS could not be downloaded"
+        fi
+        rm -rf "$TMPDW"
+    else
+        echo "DwarFS: curl is needed to download it"
+    fi
+fi
+
 say "Done."
 command -v unsquashfs >/dev/null 2>&1 || echo "Note: AppImages show their icons with unsquashfs:  sudo apt install squashfs-tools"
+command -v dwarfsextract >/dev/null 2>&1 || command -v dwarfs-universal >/dev/null 2>&1 || \
+    echo "Note: the icons of AppImages with a DwarFS image (\"anylinux\") need dwarfsextract:  ./install.sh --with-dwarfs"
 echo "Log out and choose \"Rambler\" from the sessions of the login screen."
 echo "To remove it:  ./install.sh --uninstall   (or: sudo apt remove $PKGNAME)"

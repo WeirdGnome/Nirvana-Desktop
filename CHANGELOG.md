@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.13.3 – 2026-11-15
+
+### Fixed
+- **"anylinux" AppImages had no icons**: they carry a DwarFS image instead of squashfs
+  (the uruntime runtime). Their icons are now taken out with `dwarfsextract` (the program
+  itself or the DwarFS project's `dwarfs-universal`, also from `~/.local/bin`), still
+  without running the AppImage. DwarFS is not packaged by Debian yet:
+  `./install.sh --with-dwarfs` downloads the DwarFS project's program from its releases
+  on GitHub into `/usr/local/bin`.
+
+### Added
+- An AppImage put into the menus by a desktop tool (AppImageLauncher, Gear Lever,
+  appimaged) gets the icon its `.desktop` file names, when its own cannot be taken out.
+
 ## 0.13.2 – 2026-11-15
 
 ### Fixed

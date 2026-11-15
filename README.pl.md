@@ -6,12 +6,12 @@ oryginałów AROS; pliki i komentarze przeniesione z AROS nadal je wymieniają. 
 działa na FLTK, a okna obsługuje własny menedżer okien `rambler-wm`, który przejmuje
 rolę Intuition: ekrany, ramki okien, gadżety i menu na pasku ekranu.
 
-Wersja: **0.13.2**. Dotychczasowa Nirvana Desktop jest na gałęzi `nirvana-legacy`.
+Wersja: **0.13.3**. Dotychczasowa Nirvana Desktop jest na gałęzi `nirvana-legacy`.
 
 ## Instalacja
 
 ```sh
-tar xzf rambler-x11-0.13.2.tar.gz
+tar xzf rambler-x11-0.13.3.tar.gz
 cd rambler-x11
 ./install.sh
 ```
@@ -65,7 +65,10 @@ Sesja uruchamia najpierw `rambler-wm`, a potem `rambler --backdrop`. Polecenie
   razem z plikiem przy kopiowaniu, przenoszeniu, zmianie nazwy i usuwaniu.
 * **AppImage** pokazują ikonę, którą zawierają (wyjmowaną przez `unsquashfs` z paczki
   `squashfs-tools`; AppImage nie jest przy tym uruchamiany). `rambler --appimage-icon PLIK`
-  opisuje krok po kroku, co dzieje się z ikoną AppImage.
+  opisuje krok po kroku, co dzieje się z ikoną AppImage. AppImage z obrazem DwarFS zamiast
+  squashfs („anylinux”, uruntime) wymagają `dwarfsextract`: `./install.sh --with-dwarfs`
+  instaluje program projektu DwarFS w `/usr/local/bin`. AppImage dodany do menu przez
+  narzędzie pulpitu dostaje też ikonę wskazaną w jego pliku `.desktop`.
   *Icon > Snapshot* zapisuje ją jako własną podwójną ikonę AppImage
   (`Nazwa.AppImage.info`: dwa obrazy PNG jeden po drugim); przemaluj drugi, by zmienić
   wygląd zaznaczenia.

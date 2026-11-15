@@ -47,7 +47,8 @@ bool ends_appimage(const std::string &path) {
 // that mark (some tools leave it out), an ELF program named *.AppImage. The squashfs starts
 // where the ELF ends (after its section headers); if its magic "hsqs" is not there, it is
 // looked for after the program's headers (0 - not an AppImage)
-int appimage_type(const std::string &path, unsigned long long &squashfs_offset) {
+int appimage_type(const std::string &path, unsigned long long &squashfs_offset, bool &dwarfs) {
+    dwarfs = false;
     std::ifstream in(path, std::ios::binary);
     unsigned char h[64];
     if (!in.read((char *)h, sizeof h)) return 0;
@@ -70,19 +71,25 @@ int appimage_type(const std::string &path, unsigned long long &squashfs_offset) 
     in.clear();
     in.seekg((std::streamoff)squashfs_offset);
     if (in.read(magic, 4) && !memcmp(magic, "hsqs", 4)) { TRACE("squashfs found there"); return type; }
-    // not there: the first "hsqs" in the first 8 MB, at a 4-byte boundary
+    // not there: the first "hsqs" (squashfs) or "DWARFS" (DwarFS, which other runtimes such
+    // as uruntime carry) in the first 8 MB - the ELF's end first, then at 4-byte boundaries
     in.clear();
     in.seekg(0);
     std::vector<char> buf(8u << 20);
     in.read(buf.data(), (std::streamsize)buf.size());
     size_t n = (size_t)in.gcount();
-    for (size_t i = 64; i + 4 <= n; i += 4)
-        if (!memcmp(&buf[i], "hsqs", 4)) {
-            squashfs_offset = i;
-            TRACE("squashfs found by its magic at %zu", i);
-            return type;
-        }
-    TRACE("no squashfs found");
+    auto at = [&](size_t i) {
+        if (i + 6 <= n && !memcmp(&buf[i], "DWARFS", 6)) { dwarfs = true; return true; }
+        return i + 4 <= n && !memcmp(&buf[i], "hsqs", 4);
+    };
+    bool found = squashfs_offset < n && at((size_t)squashfs_offset);
+    for (size_t i = 64; !found && i + 4 <= n; i += 4)
+        if (at(i)) { squashfs_offset = i; found = true; }
+    if (found) {
+        TRACE("%s found at %llu", dwarfs ? "DwarFS" : "squashfs", squashfs_offset);
+        return type;
+    }
+    TRACE("no squashfs or DwarFS found");
     return 0;
 }
 
@@ -124,7 +131,8 @@ enum class Taken { Picture, NoIcon, Failed };   // what taking the icon out came
 
 // .DirIcon taken out of the squashfs into dir (a link followed inside the image); only the
 // options every unsquashfs with -o (4.4, 2019) knows
-std::string extract_dir_icon(const std::string &appimage, unsigned long long offset, const std::string &dir, Taken &how) {
+std::string extract_dir_icon(const std::string &appimage, unsigned long long offset, bool dwarfs, const std::string &dir,
+                             Taken &how) {
     std::error_code ec;
     std::string name = ".DirIcon";
     how = Taken::NoIcon;
@@ -133,16 +141,40 @@ std::string extract_dir_icon(const std::string &appimage, unsigned long long off
         std::string err;
         // (-no-xattrs: the image's extended attributes could not all be set by a user, and
         // that is an error to some versions)
-        int rc = run({"unsquashfs", "-no-xattrs", "-o", std::to_string(offset), "-d", dir, "-f", appimage, name}, err);
+        int rc;
+        const char *tool = dwarfs ? "dwarfsextract" : "unsquashfs";
+        if (dwarfs) {
+            // DwarFS: dwarfsextract with the one path as its pattern - the program itself, or
+            // the project's single program (dwarfs-universal --tool=dwarfsextract), in PATH or
+            // in ~/.local/bin (install.sh --with-dwarfs puts it in /usr/local/bin)
+            fs::create_directories(dir, ec);
+            std::vector<std::string> args = {"-i", appimage, "-O", std::to_string(offset), "-o", dir, "--pattern", name,
+                                             "--log-level=error"};
+            std::string home = getenv("HOME") ? getenv("HOME") : "";
+            rc = 127;
+            for (const std::vector<std::string> &prog :
+                 {std::vector<std::string>{"dwarfsextract"}, {"dwarfs-universal", "--tool=dwarfsextract"},
+                  {home + "/.local/bin/dwarfsextract"}, {home + "/.local/bin/dwarfs-universal", "--tool=dwarfsextract"}}) {
+                std::vector<std::string> a = prog;
+                a.insert(a.end(), args.begin(), args.end());
+                err.clear();
+                rc = run(a, err);
+                if (rc != 127) break;
+            }
+        } else
+            rc = run({"unsquashfs", "-no-xattrs", "-o", std::to_string(offset), "-d", dir, "-f", appimage, name}, err);
         std::string got = dir + "/" + name;
-        TRACE("unsquashfs ... %s: exit %d%s%s", name.c_str(), rc, err.empty() ? "" : ", said: ",
+        TRACE("%s ... %s: exit %d%s%s", tool, name.c_str(), rc, err.empty() ? "" : ", said: ",
               err.substr(0, err.find('\n')).c_str());
         // what was taken out counts, whatever the exit code (warnings make some versions fail)
         if (rc != 0 && !fs::exists(fs::symlink_status(got, ec))) {
             // (said in the session's log: no unsquashfs, an unsquashfs too old, a damaged image)
             how = Taken::Failed;
-            fprintf(stderr, "rambler: the icon of %s could not be taken out (unsquashfs: %s)\n", appimage.c_str(),
-                    rc == 127 ? "not installed - the squashfs-tools package" : err.substr(0, err.find('\n')).c_str());
+            fprintf(stderr, "rambler: the icon of %s could not be taken out (%s: %s)\n", appimage.c_str(), tool,
+                    rc == 127 ? (dwarfs ? "not installed - ./install.sh --with-dwarfs" : "not installed - the squashfs-tools package")
+                              : err.substr(0, err.find('\n')).c_str());
+            TRACE("%s", rc == 127 ? (dwarfs ? "dwarfsextract is not installed (./install.sh --with-dwarfs puts it in)"
+                                            : "unsquashfs is not installed (the squashfs-tools package)") : "failed");
             return "";
         }
         if (fs::is_symlink(got, ec)) {
@@ -230,6 +262,33 @@ std::string md5_hex(const std::string &msg) {
 }
 }  // namespace
 
+// An AppImage put into the menus by a desktop tool (AppImageLauncher, Gear Lever, appimaged
+// ...): a .desktop file whose Exec names it, and the icon that one gives
+std::shared_ptr<DiskObject> integrated_icon(const std::string &path) {
+    std::vector<std::string> dirs;
+    const char *dh = getenv("XDG_DATA_HOME");
+    std::string home = getenv("HOME") ? getenv("HOME") : "";
+    dirs.push_back(dh && *dh ? std::string(dh) + "/applications" : home + "/.local/share/applications");
+    dirs.push_back("/usr/share/applications");
+    dirs.push_back("/usr/local/share/applications");
+    std::error_code ec;
+    std::string abs = fs::absolute(path, ec).string();
+    for (auto &d : dirs)
+        for (auto it = fs::directory_iterator(d, ec); !ec && it != fs::directory_iterator(); it.increment(ec)) {
+            if (it->path().extension() != ".desktop") continue;
+            std::ifstream in(it->path());
+            std::string line, exec, icon;
+            while (std::getline(in, line)) {
+                if (line.rfind("Exec=", 0) == 0 && exec.empty()) exec = line.substr(5);
+                else if (line.rfind("Icon=", 0) == 0 && icon.empty()) icon = line.substr(5);
+            }
+            if (icon.empty() || exec.find(abs) == std::string::npos) continue;
+            TRACE("put into the menus by %s, Icon=%s", it->path().c_str(), icon.c_str());
+            if (auto o = theme_icon(icon)) return o;
+        }
+    return nullptr;
+}
+
 std::shared_ptr<DiskObject> appimage_icon(const std::string &path);
 
 int appimage_icon_trace(const std::string &path) {
@@ -250,7 +309,8 @@ std::shared_ptr<DiskObject> appimage_icon(const std::string &path) {
     struct stat st;
     if (stat(path.c_str(), &st) != 0 || !S_ISREG(st.st_mode) || st.st_size < 4096) return nullptr;
     unsigned long long offset = 0;
-    int type = appimage_type(path, offset);
+    bool dwarfs = false;
+    int type = appimage_type(path, offset, dwarfs);
     if (!type) { TRACE("not an AppImage"); return nullptr; }
     // kept while the AppImage stays as it is
     struct Kept { time_t mtime; off_t size; std::shared_ptr<DiskObject> obj; };
@@ -274,7 +334,7 @@ std::shared_ptr<DiskObject> appimage_icon(const std::string &path) {
         std::string dir = cache_dir() + "/" + key + ".tmp";
         fs::create_directories(cache_dir(), ec);
         Taken how;
-        std::string got = extract_dir_icon(path, offset, dir, how);
+        std::string got = extract_dir_icon(path, offset, dwarfs, dir, how);
         if (!got.empty()) {
             // the kind of picture from its first bytes (.DirIcon has no extension)
             std::ifstream in(got, std::ios::binary);
@@ -299,7 +359,10 @@ std::shared_ptr<DiskObject> appimage_icon(const std::string &path) {
     }
     if (picture.empty()) { picture = thumbnail_of(path); TRACE("thumbnail: %s", picture.empty() ? "none" : picture.c_str()); }
     if (!picture.empty()) obj = icon_from_picture(picture, ICON_W);
-    TRACE("icon: %s", obj ? (std::to_string(obj->width) + "x" + std::to_string(obj->height)).c_str() : "none (the picture could not be read)");
+    if (!obj) obj = integrated_icon(path);
+    if (obj) picture = "-";
+    TRACE("icon: %s", obj ? (std::to_string(obj->width) + "x" + std::to_string(obj->height)).c_str()
+                           : picture.empty() ? "none" : "none (the picture could not be read)");
     if (!failed || obj) kept[path] = {st.st_mtime, st.st_size, obj};   // (a failure: tried again next time)
     return obj;
 }

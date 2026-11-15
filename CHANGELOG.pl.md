@@ -1,5 +1,18 @@
 # Lista zmian
 
+## 0.13.3 – 2026-11-15
+
+### Poprawki
+- **AppImage „anylinux” nie miały ikon**: zawierają obraz DwarFS zamiast squashfs (program
+  startowy uruntime). Ich ikony są teraz wyjmowane przez `dwarfsextract` (sam program albo
+  `dwarfs-universal` projektu DwarFS, także z `~/.local/bin`), nadal bez uruchamiania
+  AppImage. Debian nie ma jeszcze paczki DwarFS: `./install.sh --with-dwarfs` pobiera
+  program projektu DwarFS z jego wydań na GitHubie do `/usr/local/bin`.
+
+### Nowe
+- AppImage dodany do menu przez narzędzie pulpitu (AppImageLauncher, Gear Lever,
+  appimaged) dostaje ikonę wskazaną w jego pliku `.desktop`, gdy własnej nie da się wyjąć.
+
 ## 0.13.2 – 2026-11-15
 
 ### Poprawki

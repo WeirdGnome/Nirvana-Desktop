@@ -15,12 +15,12 @@ Parts of the port:
 * **window manager** (`wm`, later) – what Intuition does on AROS: window frames and
   gadgets, screens, screen dragging.
 
-Version: **0.13.2**
+Version: **0.13.3**
 
 ## Installing
 
 ```sh
-tar xzf rambler-x11-0.13.2.tar.gz
+tar xzf rambler-x11-0.13.3.tar.gz
 cd rambler-x11
 ./install.sh
 ```
@@ -82,7 +82,10 @@ rambler-wm & rambler --backdrop
   file when the file is copied, moved, renamed or deleted.
 * **AppImages** show the icon they carry (taken out with `unsquashfs` from the
   `squashfs-tools` package; the AppImage is not run for it). `rambler --appimage-icon FILE`
-  tells, step by step, what becomes of an AppImage's icon.
+  tells, step by step, what becomes of an AppImage's icon. AppImages with a DwarFS image
+  instead of squashfs ("anylinux", uruntime) need `dwarfsextract`: `./install.sh
+  --with-dwarfs` puts the DwarFS project's program into `/usr/local/bin`. An AppImage put
+  into the menus by a desktop tool also gets the icon its `.desktop` file names.
   *Icon > Snapshot* writes it out as the AppImage's own dual icon (`Name.AppImage.info`:
   two PNG images one after the other); paint over the second one for the selected look.
 
