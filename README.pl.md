@@ -78,7 +78,7 @@ Sesja uruchamia najpierw `rambler-wm`, a potem `rambler --backdrop`. Polecenie
 
 ## Preferencje
 
-*Tools > Tools Drawer* zawiera narzędzia: Clock (`rambler --utility clock`; analogowy albo
+*Tools > Tools Drawer* zawiera narzędzia: Calculator (`rambler --utility calculator`; z taśmą), Clock (`rambler --utility clock`; analogowy albo
 cyfrowy, data w tytule, budzik).
 
 *Tools > Prefs Drawer* otwiera programy preferencji: Input, Lune (GUI Settings),

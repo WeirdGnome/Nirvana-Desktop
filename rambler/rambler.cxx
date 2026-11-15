@@ -29,6 +29,7 @@
 #include "soundprefs.h"
 #include "printerprefs.h"
 #include "clock.h"
+#include "calculator.h"
 
 #include <FL/Fl.H>
 #include <FL/Fl_Menu_Item.H>
@@ -1261,7 +1262,7 @@ void make_tools_drawer() {
     std::error_code ec;
     fs::create_directories(dir, ec);
     std::string made = read_file(made_file);
-    struct { const char *file, *name, *arg; } utils[] = {{"Clock.desktop", "Clock", "clock"}};
+    struct { const char *file, *name, *arg; } utils[] = {{"Calculator.desktop", "Calculator", "calculator"}, {"Clock.desktop", "Clock", "clock"}};
     for (auto &u : utils) {
         if (made.find(std::string(u.file) + "\n") != std::string::npos) continue;
         std::string f = dir + "/" + u.file;
@@ -1290,7 +1291,8 @@ int main(int argc, char **argv) {
             lune::load_prefs();
             fl_open_display();
             if (u == "clock") run_clock();
-            else { fprintf(stderr, "rambler: no utility '%s' (clock)\n", u.c_str()); return 1; }
+            else if (u == "calculator") run_calculator();
+            else { fprintf(stderr, "rambler: no utility '%s' (calculator, clock)\n", u.c_str()); return 1; }
             return run();
         }
         else if (!strcmp(argv[i], "--appimage-icon") && i + 1 < argc) {

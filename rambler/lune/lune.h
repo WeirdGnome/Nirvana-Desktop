@@ -484,6 +484,8 @@ public:
     void clear() { lines_.clear(); active_ = -1; top_ = 0; redraw(); }
     void add(Line l) { lines_.push_back(std::move(l)); }
     void done() { top_ = 0; measure_columns(); layout_prop(); redraw(); }   // after adding
+    // MUIA_List_First at the end (MUIV_List_Jump_Bottom): the last lines in sight
+    void jump_bottom() { top_ = std::max(0, (int)lines_.size() - visible_lines()); layout_prop(); redraw(); }
     const std::vector<Line> &lines() const { return lines_; }
     int active() const { return active_; }
     void active(int a);

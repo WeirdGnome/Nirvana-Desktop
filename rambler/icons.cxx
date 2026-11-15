@@ -308,6 +308,18 @@ void clock_icon(int x, int y) {
     fl_pie(cx - 2, cy - 2, 4, 4, 0, 360);
 }
 
+// The Calculator: its case, the display and the keys
+void calculator_icon(int x, int y) {
+    box3d(x + 9, y + 4, 28, 38, 0x8A8A8A, 0xC8C8C8, 0x404040);
+    rect(x + 12, y + 7, 22, 8, 0xC8D8B0);
+    fl_color(C(0x000000));
+    fl_font(FL_HELVETICA_BOLD, 7);
+    fl_draw("123", x + 13, y + 7, 20, 8, FL_ALIGN_RIGHT);
+    for (int r = 0; r < 4; r++)
+        for (int c = 0; c < 4; c++)
+            box3d(x + 12 + c * 6, y + 18 + r * 6, 5, 5, c == 3 ? 0x6688BB : 0xD9D9D9, 0xFFFFFF, 0x555555);
+}
+
 // A preferences program: a panel with three sliders (the settings), and over its corner the
 // sign of what it sets
 void prefs_icon(IconKind k, int x, int y) {
@@ -429,7 +441,7 @@ bool builtin_icon(const std::string &name, IconKind &k) {
         {"rambler-prefs-locale", IconKind::PrefsLocale}, {"rambler-prefs-lune", IconKind::PrefsLune},
         {"rambler-prefs-network", IconKind::PrefsNetwork}, {"rambler-prefs-pointer", IconKind::PrefsPointer},
         {"rambler-prefs-rambler", IconKind::PrefsRambler}, {"rambler-prefs-screenmode", IconKind::PrefsScreenMode},
-        {"rambler-prefs-printer", IconKind::PrefsPrinter}, {"rambler-prefs-sound", IconKind::PrefsSound}, {"rambler-prefs-time", IconKind::PrefsTime}, {"rambler-utility-clock", IconKind::UtilityClock}};
+        {"rambler-prefs-printer", IconKind::PrefsPrinter}, {"rambler-prefs-sound", IconKind::PrefsSound}, {"rambler-prefs-time", IconKind::PrefsTime}, {"rambler-utility-clock", IconKind::UtilityClock}, {"rambler-utility-calculator", IconKind::UtilityCalculator}};
     for (auto &[n, kind] : NAMES) if (name == n) { k = kind; return true; }
     return false;
 }
@@ -451,6 +463,7 @@ void draw_icon(IconKind k, int x, int y, bool selected) {
         prefs_icon(k, x, y);
         break;
     case IconKind::UtilityClock: clock_icon(x, y); break;
+    case IconKind::UtilityCalculator: calculator_icon(x, y); break;
     default: project(k, x, y); break;
     }
     g_sel = false;

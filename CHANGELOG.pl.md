@@ -13,7 +13,11 @@
   albo cyfrowej, data w tytule okna. Menu Ustawienia: sekundy, data, zegar 24-godzinny,
   budzik (daje sygnał tak, jak ustawiają go preferencje Sound, i o tym informuje),
   Zapisz ustawienia.
-- Lune: listę pozycji Cycle można ustawić ponownie.
+- **Calculator** (`rambler --utility calculator`, w szufladzie Tools): klawiatura
+  ekranowa i zwykła (cyfry, + - * /, Return albo =, Backspace, Delete czyści wpis, Escape
+  wszystko, n zmienia znak), taśma z obliczeniami (Okna > Pokaż taśmę), wycinanie,
+  kopiowanie i wklejanie liczby.
+- Lune: listę pozycji Cycle można ustawić ponownie; List może przewinąć się na koniec.
 - Lune: **menu okien** (Menustrip, Menu, Menuitem): menu okna Lune pokazują się w pasku
   ekranu tak jak menu Ramblera, z pozycjami zaznaczanymi, grupami wykluczającymi i
   skrótami Super+klawisz.
