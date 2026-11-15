@@ -10,6 +10,12 @@
   drag marks lines); Search: Find, Find Next; View: Word Wrap, Fit to Window. Without a
   file it asks for one. Rambler opens a text or a picture with it when the system has no
   program set for that kind of file.
+- **Editor** (`rambler --utility editor [FILE]`, in the Tools drawer): a plain text
+  editor in the fixed font. Project: New, Open, Save, Save As, Print, About, Quit; Edit:
+  Undo, Cut, Copy, Paste, Select All; Search: Find, Find Next, Replace (one or all, with
+  or without matching case), Go to Line; Settings: Word Wrap. The title shows a star
+  while there are changes not saved, and they are asked about before the text goes; the
+  line and column of the cursor are shown below the text.
 
 ## 0.17.0 – 2026-11-15
 

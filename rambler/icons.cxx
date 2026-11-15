@@ -326,6 +326,19 @@ void multiview_icon(int x, int y) {
     fl_line_style(0);
 }
 
+// The Editor: a page of text and a pencil writing on it
+void editor_icon(int x, int y) {
+    rect(x + 6, y + 3, 28, 36, 0xFFFFFF);
+    fl_color(C(0x404040));
+    for (int i = 0; i < 6; i++) fl_xyline(x + 9, y + 9 + i * 5, x + 31 - (i % 3) * 5);
+    // the pencil, slanting down to the left
+    poly(0xF0C020, {x + 38, y + 14, x + 42, y + 18, x + 24, y + 36, x + 20, y + 32});
+    poly(0xEE8888, {x + 38, y + 14, x + 40, y + 12, x + 44, y + 16, x + 42, y + 18});
+    poly(0xE6C8A0, {x + 20, y + 32, x + 24, y + 36, x + 18, y + 38});
+    fl_color(C(0x000000));
+    fl_line(x + 18, y + 38, x + 19, y + 36);
+}
+
 // The Calculator: its case, the display and the keys
 void calculator_icon(int x, int y) {
     box3d(x + 9, y + 4, 28, 38, 0x8A8A8A, 0xC8C8C8, 0x404040);
@@ -459,7 +472,7 @@ bool builtin_icon(const std::string &name, IconKind &k) {
         {"rambler-prefs-locale", IconKind::PrefsLocale}, {"rambler-prefs-lune", IconKind::PrefsLune},
         {"rambler-prefs-network", IconKind::PrefsNetwork}, {"rambler-prefs-pointer", IconKind::PrefsPointer},
         {"rambler-prefs-rambler", IconKind::PrefsRambler}, {"rambler-prefs-screenmode", IconKind::PrefsScreenMode},
-        {"rambler-prefs-printer", IconKind::PrefsPrinter}, {"rambler-prefs-sound", IconKind::PrefsSound}, {"rambler-prefs-time", IconKind::PrefsTime}, {"rambler-utility-clock", IconKind::UtilityClock}, {"rambler-utility-calculator", IconKind::UtilityCalculator}, {"rambler-utility-multiview", IconKind::UtilityMultiView}};
+        {"rambler-prefs-printer", IconKind::PrefsPrinter}, {"rambler-prefs-sound", IconKind::PrefsSound}, {"rambler-prefs-time", IconKind::PrefsTime}, {"rambler-utility-clock", IconKind::UtilityClock}, {"rambler-utility-calculator", IconKind::UtilityCalculator}, {"rambler-utility-multiview", IconKind::UtilityMultiView}, {"rambler-utility-editor", IconKind::UtilityEditor}};
     for (auto &[n, kind] : NAMES) if (name == n) { k = kind; return true; }
     return false;
 }
@@ -483,6 +496,7 @@ void draw_icon(IconKind k, int x, int y, bool selected) {
     case IconKind::UtilityClock: clock_icon(x, y); break;
     case IconKind::UtilityCalculator: calculator_icon(x, y); break;
     case IconKind::UtilityMultiView: multiview_icon(x, y); break;
+    case IconKind::UtilityEditor: editor_icon(x, y); break;
     default: project(k, x, y); break;
     }
     g_sel = false;

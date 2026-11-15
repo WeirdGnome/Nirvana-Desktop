@@ -31,6 +31,7 @@
 #include "clock.h"
 #include "calculator.h"
 #include "multiview.h"
+#include "editor.h"
 
 #include <FL/Fl.H>
 #include <FL/Fl_Menu_Item.H>
@@ -1267,7 +1268,7 @@ void make_tools_drawer() {
     std::error_code ec;
     fs::create_directories(dir, ec);
     std::string made = read_file(made_file);
-    struct { const char *file, *name, *arg; } utils[] = {{"Calculator.desktop", "Calculator", "calculator"}, {"Clock.desktop", "Clock", "clock"}, {"MultiView.desktop", "MultiView", "multiview"}};
+    struct { const char *file, *name, *arg; } utils[] = {{"Calculator.desktop", "Calculator", "calculator"}, {"Clock.desktop", "Clock", "clock"}, {"Editor.desktop", "Editor", "editor"}, {"MultiView.desktop", "MultiView", "multiview"}};
     for (auto &u : utils) {
         if (made.find(std::string(u.file) + "\n") != std::string::npos) continue;
         std::string f = dir + "/" + u.file;
@@ -1298,7 +1299,8 @@ int main(int argc, char **argv) {
             if (u == "clock") run_clock();
             else if (u == "calculator") run_calculator();
             else if (u == "multiview") run_multiview(i + 1 < argc ? argv[i + 1] : "");
-            else { fprintf(stderr, "rambler: no utility '%s' (calculator, clock, multiview)\n", u.c_str()); return 1; }
+            else if (u == "editor") run_editor(i + 1 < argc ? argv[i + 1] : "");
+            else { fprintf(stderr, "rambler: no utility '%s' (calculator, clock, editor, multiview)\n", u.c_str()); return 1; }
             return run();
         }
         else if (!strcmp(argv[i], "--appimage-icon") && i + 1 < argc) {

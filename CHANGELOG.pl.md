@@ -11,6 +11,13 @@
   zaznacza wiersze); Szukaj: Szukaj, Szukaj dalej; Widok: Zawijanie wierszy, Dopasuj do
   okna. Bez pliku pyta o plik. Rambler otwiera nim tekst albo obraz, gdy system nie ma
   programu dla danego rodzaju pliku.
+- **Editor** (`rambler --utility editor [PLIK]`, w szufladzie Tools): prosty edytor
+  tekstu czcionką o stałej szerokości. Projekt: Nowy, Otwórz, Zapisz, Zapisz jako,
+  Drukuj, O programie, Zakończ; Edycja: Cofnij, Wytnij, Kopiuj, Wklej, Zaznacz wszystko;
+  Szukaj: Szukaj, Szukaj dalej, Zamień (jedno albo wszystkie, z uwzględnianiem wielkości
+  liter lub bez), Idź do wiersza; Ustawienia: Zawijanie wierszy. Tytuł ma gwiazdkę, gdy
+  są niezapisane zmiany, a przed porzuceniem tekstu program o nie pyta; pod tekstem
+  widać wiersz i kolumnę kursora.
 
 ## 0.17.0 – 2026-11-15
 
