@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.17.0 (unreleased)
+## 0.17.0 – 2026-11-15
 
 ### Added
 - **Printer preferences** (`rambler --prefs printer`, in the Prefs drawer): the CUPS

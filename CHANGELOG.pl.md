@@ -1,6 +1,6 @@
 # Lista zmian
 
-## 0.17.0 (w przygotowaniu)
+## 0.17.0 – 2026-11-15
 
 ### Nowe
 - **Preferencje Printer** (`rambler --prefs printer`, w szufladzie Prefs): drukarki CUPS
