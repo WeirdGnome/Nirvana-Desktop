@@ -23,6 +23,7 @@
 #include "localeprefs.h"
 #include "pointerprefs.h"
 #include "fontprefs.h"
+#include "networkprefs.h"
 
 #include <FL/Fl.H>
 #include <FL/Fl_Menu_Item.H>
@@ -1197,7 +1198,7 @@ void make_prefs_drawer() {
     std::error_code ec;
     fs::create_directories(dir, ec);
     struct { const char *file, *name, *arg; } progs[] = {
-        {"Font.desktop", "Font", "font"}, {"Input.desktop", "Input", "input"}, {"Locale.desktop", "Locale", "locale"},
+        {"Font.desktop", "Font", "font"}, {"Input.desktop", "Input", "input"}, {"Locale.desktop", "Locale", "locale"}, {"Network.desktop", "Network", "network"},
         {"Pointer.desktop", "Pointer", "pointer"}, {"Lune.desktop", "Lune", "lune"}, {"Rambler.desktop", "Rambler", "rambler"},
         {"ScreenMode.desktop", "ScreenMode", "screenmode"}};
     for (auto &pr : progs) {
@@ -1231,9 +1232,10 @@ int main(int argc, char **argv) {
         else if (prefs_program == "locale") edit_locale_prefs(true);
         else if (prefs_program == "pointer") edit_pointer_prefs(true);
         else if (prefs_program == "font") edit_font_prefs(true);
+        else if (prefs_program == "network") edit_network_prefs(true);
         else if (prefs_program == "rambler") edit_prefs(RamblerPrefs::load(), [](const RamblerPrefs &) {}, true);
         else {
-            fprintf(stderr, "rambler: no preferences program '%s' (font, input, locale, lune, pointer, rambler, screenmode)\n", prefs_program.c_str());
+            fprintf(stderr, "rambler: no preferences program '%s' (font, input, locale, lune, network, pointer, rambler, screenmode)\n", prefs_program.c_str());
             return 1;
         }
         return run();

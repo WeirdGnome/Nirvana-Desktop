@@ -35,6 +35,12 @@
   systemu o stałej szerokości – dowolna czcionka systemu z rozmiarem, wybierana w nowym
   **wyborze czcionki** (Lune, jak ASL: rodziny, rozmiary, próbka). Wybór rodziny w GUI
   Settings i preferencjach Ramblera zostaje; wybranie jej tam zastępuje czcionkę z nazwy.
+- **Preferencje Network** (`rambler --prefs network`), przez NetworkManagera (`nmcli`):
+  Interfejsy (włączony lub nie, DHCP albo stały adres z maską, bramą i serwerami DNS),
+  Komputer (nazwa komputera) i Sieci bezprzewodowe (sieci w zasięgu z sygnałem i
+  zabezpieczeniami, łączenie z hasłem, ponowne szukanie). Use zmienia interfejs tylko na
+  teraz, Save zmienia jego połączenie na stałe; błędne adresy są wskazywane, zanim
+  cokolwiek się zmieni.
 
 ### Poprawki
 - Po polsku strona Paski przewijania w preferencjach Lune nazywała się tak samo jak strona

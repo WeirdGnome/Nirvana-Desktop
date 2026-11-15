@@ -583,3 +583,33 @@ Screen text:	Tekst ekranu:
 System default text	Domyślny tekst systemu
 System default text:	Domyślny tekst systemu:
 Screen font	Czcionka ekranu
+Network Preferences	Preferencje sieci
+Interfaces	Interfejsy
+Interface	Interfejs
+State:	Stan:
+Up:	Włączony:
+IP Mode:	Tryb IP:
+Static	Stały
+IP:	IP:
+Netmask:	Maska:
+Gateway:	Brama:
+DNS:	DNS:
+Host	Komputer
+Host name:	Nazwa komputera:
+Wireless	Sieci bezprzewodowe
+Networks	Sieci
+Signal	Sygnał
+Security	Zabezpieczenia
+Connect	Połącz
+Password:	Hasło:
+Rescan	Szukaj ponownie
+connected	połączony
+disconnected	rozłączony
+unavailable	niedostępny
+unmanaged	niezarządzany
+connecting	łączenie
+Connected to %s.	Połączono z %s.
+%s: the IP address is not valid.	%s: nieprawidłowy adres IP.
+%s: the netmask is not valid.	%s: nieprawidłowa maska.
+%s: the gateway is not valid.	%s: nieprawidłowa brama.
+The network is set up by NetworkManager, which is not running\n(or nmcli is not installed).	Sieć ustawia NetworkManager, który nie działa\n(albo nie zainstalowano nmcli).

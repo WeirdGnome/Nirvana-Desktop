@@ -34,6 +34,12 @@
   system's fixed-width text, each any font of the system with its size, chosen in a new
   **font requester** (Lune's, as ASL's: families, sizes, a sample). The family choices in
   the GUI settings and Rambler preferences stay; picking one there replaces the font by name.
+- **Network preferences** (`rambler --prefs network`), with NetworkManager doing the work
+  (`nmcli`): Interfaces (up or down, DHCP or a static address with netmask, gateway and
+  name servers), Host (the computer's name) and Wireless (the networks in reach with
+  signal and security, connecting with a password, rescanning). Use changes an interface
+  for now only, Save changes its connection for good; wrong addresses are pointed out
+  before anything is changed.
 
 ### Fixed
 - Polish: the Scrollbars page of the Lune preferences was named like the Sliders page.
