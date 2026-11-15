@@ -95,6 +95,7 @@ public:
     IconWindow *open_drawer(const std::string &path);
     void navigate(IconWindow *w, const std::string &path);   // another drawer in the same window
     void open_network();   // the Network Access window
+    void find(IconWindow *w);   // the Find tool, in the window's drawer
     void open_entry(IconWindow *w, IconEntry &e);
     void show_menu(IconWindow *w, int x_root, int y_root);
     std::vector<Fl_Menu_Item> menu_items(IconWindow *w);
@@ -235,6 +236,7 @@ void Wanderer::setup(IconWindow *w) {
         if (dynamic_cast<IconDrawerList *>(win->iconlist())) navigate(win, loc);
         else open_drawer(loc);
     };
+    w->on_search = [this](IconWindow *win) { find(win); };   // the tool bar's search button
     w->on_dir_up = [this](IconWindow *win) {
         // the tool bar's "parent": up in this window, not above the volume (ICONWINDOW_ACTION_DIRUP)
         if (!dynamic_cast<IconDrawerList *>(win->iconlist())) { if (win->on_parent) win->on_parent(win); return; }
@@ -281,6 +283,19 @@ void Wanderer::apply_snapshot(IconWindow *w, bool place) {
         }
         w->iconlist()->rethink();
     }
+}
+
+void Wanderer::find(IconWindow *w) {
+    // the Find tool (SYS:System/Find), started in this window's drawer
+    std::string start = w && !w->location().empty() ? w->location() : (getenv("HOME") ? getenv("HOME") : "/");
+    find_tool(start, [this](const std::string &p) {
+        IconEntry e;
+        e.path = p;
+        e.label = fs::path(p).filename().string();
+        std::error_code ec;
+        e.type = fs::is_directory(p, ec) ? ST_USERDIR : ST_FILE;
+        open_entry(nullptr, e);
+    }, [this](const std::string &p) { open_drawer(p); });
 }
 
 IconWindow *Wanderer::open_drawer(const std::string &path) {
@@ -1004,18 +1019,7 @@ void Wanderer::menu_action(IconWindow *w, int id) {
             update_all(trash_dir());
         }
         break;
-    case MEN_WINDOW_FIND: {
-        // the Find tool (SYS:System/Find), started in this window's drawer
-        find_tool(w->location(), [this](const std::string &p) {
-            IconEntry e;
-            e.path = p;
-            e.label = fs::path(p).filename().string();
-            std::error_code ec;
-            e.type = fs::is_directory(p, ec) ? ST_USERDIR : ST_FILE;
-            open_entry(nullptr, e);
-        }, [this](const std::string &p) { open_drawer(p); });
-        break;
-    }
+    case MEN_WINDOW_FIND: find(w); break;
     }
 }
 
