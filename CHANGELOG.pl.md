@@ -1,5 +1,37 @@
 # Lista zmian
 
+## 0.12.0 – 2026-11-15
+
+- **Zmienione klawisze:** Return naciska przyciski, a Spacja zaznacza pola wyboru, jak w
+  oryginalnym systemie (w 0.11.0 Spacja naciskała też przyciski). Każdy klawisz interfejsu
+  da się teraz ustawić w GUI Settings > Nawigacja.
+- **Widok listy** szuflad ułożony jak w oryginale: kolumny Typ, Nazwa, Rozmiar, Uprawnienia,
+  Ostatni dostęp i Komentarz pod wypukłym wierszem tytułów. Kliknięcie Nazwy, Rozmiaru lub
+  Ostatniego dostępu sortuje według tej kolumny, a drugie odwraca kolejność.
+- **Programy uruchamiane z Wandererem** jak w oryginalnym narzędziu: typ narzędzia
+  `STARTPRI` ustala kolejność, `WAIT` przerwę po programie. Program, którego nie da się
+  uruchomić, pokazuje ostrzeżenie.
+- **Ikony programów:** Zapamiętaj położenie, Zapomnij położenie, Usuń i Opróżnij kosz
+  trafiają do programu, dla pozycji zadeklarowanych w `_WANDERER_APPICON_SUPPORTS` (patrz
+  README).
+- Kliknięcie okna głównego czyni je aktywnym, więc działają jego menu i klawisze.
+- Przycisk lupy na pasku narzędzi otwiera Szukaj w danej szufladzie.
+- **GUI Settings** ma wszystkie strony oryginału: nowe są System (opóźnienia dymków
+  pomocy), Suwaki, Paski przewijania, Listy, Pola tekstowe, Nawigacja, Specjalne i Ramki,
+  a strona Przyciski jest pełna.
+- **Zune**
+  - Klawisze zapisane jak w oryginale (`-repeat shift tab`, `control up`...) dla
+    przycisków, list wyboru (menu działa z klawiatury), list, suwaków i okien.
+  - Paski przewijania ze strzałkami w wybranym układzie, pionowe suwaki, dzielniki
+    Balance dzielące miejsce między obiekty, wzory tła.
+  - Własne ramki z obrazków (plik `frame.config`, patrz README).
+  - Listy, pola tekstowe i przyciski biorą kolory, tła i czcionki z ustawień.
+  - Puste odstępy układają się jak w oryginale, więc ramki takie jak przykładowe suwaki
+    zajmują całą szerokość.
+- `install.sh` instaluje paczkę z kopii tymczasowej, więc apt nie pokazuje komunikatu o
+  pobieraniu poza piaskownicą.
+- Daty są w języku systemu.
+
 ## 0.11.0 – 2026-11-14
 
 - **Szukaj** ułożone jak w oryginalnym narzędziu: ścieżka z wyborem szuflady, wzorzec

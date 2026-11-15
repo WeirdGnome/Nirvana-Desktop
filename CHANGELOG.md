@@ -1,5 +1,35 @@
 # Changelog
 
+## 0.12.0 – 2026-11-15
+
+- **Changed keys:** Return presses buttons and Space ticks checkmarks, as on the original
+  system (in 0.11.0 Space pressed buttons too). Every key of the user interface can now be
+  set in GUI Settings > Navigation.
+- **List view** of drawers laid out like the original: Type, Name, Size, Protection, Last
+  Accessed and Comment columns under a raised title row. Clicking Name, Size or Last
+  Accessed sorts by it; a second click reverses the order.
+- **Startup drawer** as the original tool: the `STARTPRI` tool type sets the order, `WAIT`
+  a pause after a program. A program that cannot be started shows a warning.
+- **Programs' icons:** Snapshot, Unsnapshot, Delete and Empty Trash are passed on to the
+  program, for the items it declares in `_WANDERER_APPICON_SUPPORTS` (see the README).
+- Clicking the root window makes it the active window, so its menus and keys apply.
+- The tool bar's search button opens Find in the drawer.
+- **GUI Settings** has every page of the original: System (bubble help delays),
+  Sliders, Scrollbars, Listviews, Strings, Navigation, Special and Frames are new, and
+  Buttons is complete.
+- **Zune**
+  - Keys as the original's key specs (`-repeat shift tab`, `control up`...), for buttons,
+    cycles (the pop-up works from the keyboard), lists, sliders and windows.
+  - Scrollbars with arrows, arranged as set; vertical sliders; Balance bars that share
+    the room between objects; background patterns.
+  - Custom frames made of pictures (a `frame.config` file, see the README).
+  - Lists, strings and buttons take their colours, backgrounds and fonts from the settings.
+  - Empty spaces lay out as in the original, so frames such as the slider examples
+    take their full width.
+- `install.sh` installs the package from a temporary copy, so apt shows no notice about
+  an unsandboxed download.
+- Dates follow the system language.
+
 ## 0.11.0 – 2026-11-14
 
 - **Find** laid out like the original tool: a path with a drawer requester, a name pattern
