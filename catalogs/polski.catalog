@@ -615,3 +615,17 @@ Connected to %s.	Połączono z %s.
 The network is set up by NetworkManager, which is not running\n(or nmcli is not installed).	Sieć ustawia NetworkManager, który nie działa\n(albo nie zainstalowano nmcli).
 Hidden Files	Ukryte pliki
 Hidden files:	Ukryte pliki:
+IControl Preferences	Preferencje IControl
+Screens	Ekrany
+Menus	Menu
+Public Screens	Ekrany publiczne
+Frontmost screen is default:	Ekran z przodu domyślnym:
+Drag	Przeciąganie
+Screens can be dragged beyond the:	Ekrany można przeciągać poza:
+Left edge:	Lewą krawędź:
+Right edge:	Prawą krawędź:
+Top edge:	Górną krawędź:
+Bottom edge:	Dolną krawędź:
+Screen drag key:	Klawisz przeciągania ekranu:
+Sticky:	Lepkie:
+Offscreen window moves:	Przesuwanie okien poza ekran:

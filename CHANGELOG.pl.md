@@ -2,6 +2,15 @@
 
 ## 0.15.0 (w przygotowaniu)
 
+### Nowe
+- **Preferencje IControl** (`rambler --prefs icontrol`, w szufladzie Prefs): ustawienia
+  menedżera okien, jak ustawienia Intuition w oryginale. Ekrany: nowe okna na ekranie z
+  przodu albo na pierwszym, czy ekran można ściągnąć do samej dolnej krawędzi, klawisz
+  (Super, Alt albo Ctrl) do przeciągania ekranu z dowolnego miejsca. Menu: wygląd
+  klasyczny albo 3D, menu lepkie (krótkie kliknięcie przyciskiem menu zostawia je
+  otwarte; kliknięcie wybiera pozycję albo je zamyka). Okna: czy można je przesuwać
+  częściowo poza ekran. Menedżer okien przyjmuje zmianę od razu.
+
 ### Zmiany
 - **Window > View > All Files** działa jak w oryginale: gdy nie jest zaznaczone, szuflada
   pokazuje tylko to, co ma własny plik ikony (`.info`). Domyślnie jest zaznaczone (w

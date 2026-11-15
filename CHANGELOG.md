@@ -2,6 +2,15 @@
 
 ## 0.15.0 (unreleased)
 
+### Added
+- **IControl preferences** (`rambler --prefs icontrol`, in the Prefs drawer): the window
+  manager's settings, as Intuition's on the original system. Screens: new windows on the
+  front screen or on the first one, whether a screen can be dragged down to the bottom
+  edge, the key (Super, Alt or Ctrl) that drags a screen from anywhere. Menus: the classic
+  or the 3D look, sticky menus (a short click of the menu button leaves them open; a click
+  picks an item or closes them). Windows: whether they can be moved partly off the
+  screen. The window manager takes a change up at once.
+
 ### Changed
 - **Window > View > All Files** works as on the original system: not ticked, a drawer shows
   only what has an icon file of its own (`.info`). It is ticked by default (few files on

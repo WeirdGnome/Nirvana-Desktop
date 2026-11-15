@@ -34,7 +34,7 @@ add_executable(lune-test rambler/lune/test_lune.cxx)
 target_link_libraries(lune-test lune)
 
 # Rambler
-add_library(rambler-classes STATIC rambler/iconlist.cxx rambler/icons.cxx rambler/iconwindow.cxx rambler/tools.cxx rambler/prefs.cxx rambler/fileops.cxx rambler/guisettings.cxx rambler/find.cxx rambler/inputprefs.cxx rambler/screenmodeprefs.cxx rambler/localeprefs.cxx rambler/pointerprefs.cxx rambler/fontprefs.cxx rambler/networkprefs.cxx rambler/diskobject.cxx rambler/appimage.cxx)
+add_library(rambler-classes STATIC rambler/iconlist.cxx rambler/icons.cxx rambler/iconwindow.cxx rambler/tools.cxx rambler/prefs.cxx rambler/fileops.cxx rambler/guisettings.cxx rambler/find.cxx rambler/inputprefs.cxx rambler/screenmodeprefs.cxx rambler/localeprefs.cxx rambler/pointerprefs.cxx rambler/fontprefs.cxx rambler/networkprefs.cxx rambler/diskobject.cxx rambler/appimage.cxx rambler/icontrolprefs.cxx)
 target_include_directories(rambler-classes PUBLIC rambler)
 target_link_libraries(rambler-classes PUBLIC lune)
 # the colour icons' ARGB images are zlib packed (without zlib those icons show their other images)

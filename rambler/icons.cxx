@@ -304,6 +304,14 @@ void prefs_icon(IconKind k, int x, int y) {
         fl_font(FL_TIMES_BOLD, 14);
         fl_draw("A", cx - 5, cy + 5);
         break;
+    case IconKind::PrefsIControl:   // a window with its gadgets
+        box3d(cx - 7, cy - 6, 14, 12, 0xAAAAAA, 0xFFFFFF, 0x404040);
+        fl_color(C(0x6688BB));
+        fl_rectf(cx - 6, cy - 5, 12, 3);
+        fl_color(C(0x000000));
+        fl_rect(cx - 6, cy - 5, 3, 3);
+        fl_rect(cx + 3, cy - 5, 3, 3);
+        break;
     case IconKind::PrefsInput:    // a key
         box3d(cx - 6, cy - 5, 12, 10, 0xD9D9D9, 0xFFFFFF, 0x777777);
         break;
@@ -372,7 +380,7 @@ std::vector<std::string> default_icon_names(IconKind k) {
 
 bool builtin_icon(const std::string &name, IconKind &k) {
     static const std::pair<const char *, IconKind> NAMES[] = {
-        {"rambler-prefs-font", IconKind::PrefsFont}, {"rambler-prefs-input", IconKind::PrefsInput},
+        {"rambler-prefs-font", IconKind::PrefsFont}, {"rambler-prefs-icontrol", IconKind::PrefsIControl}, {"rambler-prefs-input", IconKind::PrefsInput},
         {"rambler-prefs-locale", IconKind::PrefsLocale}, {"rambler-prefs-lune", IconKind::PrefsLune},
         {"rambler-prefs-network", IconKind::PrefsNetwork}, {"rambler-prefs-pointer", IconKind::PrefsPointer},
         {"rambler-prefs-rambler", IconKind::PrefsRambler}, {"rambler-prefs-screenmode", IconKind::PrefsScreenMode}};
@@ -392,7 +400,7 @@ void draw_icon(IconKind k, int x, int y, bool selected) {
     case IconKind::Trash: trash(x, y); break;
     case IconKind::Network: network(x, y); break;
     case IconKind::NetworkDisk: network_disk(x, y); break;
-    case IconKind::PrefsFont: case IconKind::PrefsInput: case IconKind::PrefsLocale: case IconKind::PrefsLune:
+    case IconKind::PrefsFont: case IconKind::PrefsIControl: case IconKind::PrefsInput: case IconKind::PrefsLocale: case IconKind::PrefsLune:
     case IconKind::PrefsNetwork: case IconKind::PrefsPointer: case IconKind::PrefsRambler: case IconKind::PrefsScreenMode:
         prefs_icon(k, x, y);
         break;

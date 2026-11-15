@@ -85,7 +85,7 @@ const int SIZE_W = 16, SIZE_H = 16;
 
 Atom WM_PROTOCOLS, WM_DELETE_WINDOW, WM_STATE, WM_TAKE_FOCUS, NET_WM_NAME, UTF8_STRING, NET_WM_WINDOW_TYPE,
     NET_WM_WINDOW_TYPE_DESKTOP, NET_WM_WINDOW_TYPE_DOCK, NET_SUPPORTED, NET_ACTIVE_WINDOW, NET_CLIENT_LIST,
-    NET_SUPPORTING_WM_CHECK, NET_WM_STATE, NET_WM_STATE_FULLSCREEN, RAMBLER_SCREEN_TITLE, RAMBLER_PALETTE, RAMBLER_FONT,
+    NET_SUPPORTING_WM_CHECK, NET_WM_STATE, NET_WM_STATE_FULLSCREEN, RAMBLER_SCREEN_TITLE, RAMBLER_PALETTE, RAMBLER_FONT, RAMBLER_ICONTROL,
     NET_WM_STATE_MAXIMIZED_VERT, NET_WM_STATE_MAXIMIZED_HORZ, NET_CLOSE_WINDOW, NET_FRAME_EXTENTS, NET_WORKAREA,
     NET_NUMBER_OF_DESKTOPS, NET_CURRENT_DESKTOP, NET_DESKTOP_GEOMETRY;
 
@@ -135,6 +135,39 @@ int tray_width() { return tray_icons.empty() ? 0 : (int)tray_icons.size() * (TRA
 bool is_tray_icon(Window w) { return std::find(tray_icons.begin(), tray_icons.end(), w) != tray_icons.end(); }
 std::map<Window, Client *> by_window, by_frame;
 Client *active = nullptr;
+
+// The IControl preferences (Intuition's settings): from icontrol.prefs, then from the
+// _RAMBLER_ICONTROL property of the root window when the preferences program changes them
+struct IControlPrefs {
+    bool frontmost_default = true;   // new windows on the front screen (else on the first)
+    bool drag_bottom = true;         // a screen dragged down to the bottom edge (else its bar stays)
+    unsigned meta_drag = Mod4Mask;   // the key that drags a screen from anywhere
+    bool menu_3d = false;            // the menus' look: classic or 3D
+    bool menu_sticky = false;        // a click of the menu button leaves the menus open
+    bool offscreen = true;           // windows moved partly off the screen
+} ic;
+
+void read_icontrol(const std::string &text) {
+    IControlPrefs p;
+    size_t a = 0;
+    while (a < text.size()) {
+        size_t b = text.find('\n', a);
+        if (b == std::string::npos) b = text.size();
+        std::string line = text.substr(a, b - a);
+        a = b + 1;
+        auto eq = line.find('=');
+        if (eq == std::string::npos) continue;
+        std::string k = line.substr(0, eq);
+        int v = atoi(line.c_str() + eq + 1);
+        if (k == "frontmost_default") p.frontmost_default = v;
+        else if (k == "drag_bottom") p.drag_bottom = v;
+        else if (k == "meta_drag") p.meta_drag = v == 1 ? Mod1Mask : v == 2 ? ControlMask : Mod4Mask;
+        else if (k == "menu_look") p.menu_3d = v == 1;
+        else if (k == "menu_sticky") p.menu_sticky = v;
+        else if (k == "offscreen") p.offscreen = v;
+    }
+    ic = p;
+}
 Window check_win;
 
 enum Gadget { G_NONE, G_CLOSE, G_ZOOM, G_DEPTH, G_SIZE, G_TITLE };
@@ -544,7 +577,7 @@ void manage(Window w, bool existing) {
     for (auto *s : screens) if (s->win == w) return;
     auto *c = new Client;
     c->win = w;
-    c->screen = front_screen();
+    c->screen = ic.frontmost_default || screens.empty() ? front_screen() : screens.front();
     c->title = window_title(w);
     c->screen_title = utf8_prop(w, RAMBLER_SCREEN_TITLE);
     c->backdrop = has_type(w, NET_WM_WINDOW_TYPE_DESKTOP);
@@ -689,7 +722,8 @@ void screen_to_back(WScreen *s) {
 }
 
 void move_screen(WScreen *s, int y) {
-    s->y = std::clamp(y, 0, SH - 1);
+    // (to the bottom edge, or as far as leaves its bar in sight)
+    s->y = std::clamp(y, 0, ic.drag_bottom ? SH - 1 : SH - BAR_H);
     XMoveWindow(dpy, s->win, 0, s->y);
 }
 
@@ -727,7 +761,10 @@ struct MenuState {
     int box_x = 0, box_y = 0, box_w = 0, box_h = 0;
     int sub_x = 0, sub_y = 0, sub_w = 0, sub_h = 0;
     int item = -1, sub_item = -1, sub_of = -1;
+    Time opened = 0;                     // when the menu button went down
+    bool stuck = false;                  // sticky menus (IControl): left open by a click
 } menu;
+Time last_press = 0;                     // (the time of the last button press)
 
 const int ITEM_H = 18, MENU_PAD = 4;
 
@@ -795,14 +832,21 @@ void draw_menu_box(Window w, const std::vector<MenuItem> &items, int bw, int bh,
     GC gc = gc_for(w);
     // BARBLOCK (white) with a BARDETAIL (black) outline, items in BARDETAIL; the item under
     // the pointer in the fill pen (FILLTEXT on it)
-    fill(w, gc, pen_white, 0, 0, bw, bh);
-    XSetForeground(dpy, gc, pen_black);
-    XDrawRectangle(dpy, w, gc, 0, 0, bw - 1, bh - 1);
+    // (IControl's 3D look: the background pen in a raised bevel, the item under the pointer
+    // pressed in)
+    unsigned long block = ic.menu_3d ? pen_grey : pen_white;
+    fill(w, gc, block, 0, 0, bw, bh);
+    if (ic.menu_3d) bevel(w, gc, 0, 0, bw, bh, false);
+    else {
+        XSetForeground(dpy, gc, pen_black);
+        XDrawRectangle(dpy, w, gc, 0, 0, bw - 1, bh - 1);
+    }
     for (int i = 0; i < (int)items.size(); i++) {
         auto &m = items[i];
         int y = item_y(items, i);
         bool lit = i == hi && !m.disabled();
-        if (lit) fill(w, gc, pen_blue, 2, y, bw - 4, ITEM_H);
+        if (lit && ic.menu_3d) bevel(w, gc, 2, y, bw - 4, ITEM_H, true);
+        else if (lit) fill(w, gc, pen_blue, 2, y, bw - 4, ITEM_H);
         XftColor *col = &xft_black;
         int ty = y + (ITEM_H + font->ascent - font->descent) / 2;
         if ((m.flags & 2) && (m.flags & 4)) {   // the check mark
@@ -826,7 +870,7 @@ void draw_menu_box(Window w, const std::vector<MenuItem> &items, int bw, int bh,
             Pixmap pm = XCreateBitmapFromData(dpy, w, stip, 4, 2);
             XSetStipple(dpy, gc, pm);
             XSetFillStyle(dpy, gc, FillStippled);
-            XSetForeground(dpy, gc, pen_white);
+            XSetForeground(dpy, gc, block);
             XFillRectangle(dpy, w, gc, 2, y, bw - 4, ITEM_H);
             XSetFillStyle(dpy, gc, FillSolid);
             XFreePixmap(dpy, pm);
@@ -842,7 +886,7 @@ void draw_menu_box(Window w, const std::vector<MenuItem> &items, int bw, int bh,
 Window make_box(int x, int y, int w, int h) {
     XSetWindowAttributes a = {};
     a.override_redirect = True;
-    a.background_pixel = pen_white;
+    a.background_pixel = ic.menu_3d ? pen_grey : pen_white;
     a.save_under = True;
     a.event_mask = ExposureMask;
     Window b = XCreateWindow(dpy, root, x, y, w, h, 0, CopyFromParent, InputOutput, CopyFromParent,
@@ -927,6 +971,8 @@ bool menu_begin(Client *c) {
     menu.c = c;
     menu.s = c->screen;
     menu.title = -1;
+    menu.opened = last_press;
+    menu.stuck = false;
     draw_menu_bar();
     XGrabPointer(dpy, root, False, ButtonReleaseMask | PointerMotionMask | ButtonPressMask, GrabModeAsync,
                  GrabModeAsync, None, None, CurrentTime);
@@ -967,6 +1013,19 @@ void menu_motion(int xr, int yr) {
         menu.item = -1;
         draw_menu_box(menu.box, menu.titles[menu.title].children, menu.box_w, menu.box_h, -1);
     }
+}
+
+// The screen drag key (IControl) + the left button anywhere: dragging screens (also with Caps
+// Lock or Num Lock on); grabbed again when the key changes
+void grab_meta_drag() {
+    static unsigned grabbed = 0;
+    unsigned extras[] = {0u, (unsigned)LockMask, (unsigned)Mod2Mask, (unsigned)(LockMask | Mod2Mask)};
+    if (grabbed)
+        for (unsigned extra : extras) XUngrabButton(dpy, Button1, grabbed | extra, root);
+    for (unsigned extra : extras)
+        XGrabButton(dpy, Button1, ic.meta_drag | extra, root, False, ButtonPressMask | ButtonReleaseMask | PointerMotionMask,
+                    GrabModeAsync, GrabModeAsync, None, None);
+    grabbed = ic.meta_drag;
 }
 
 // the item under the pointer, if it can be picked (0: none)
@@ -1048,10 +1107,17 @@ void button_press(XButtonEvent &e) {
         bool sync;
         ~Release() { if (sync) XAllowEvents(dpy, AsyncPointer, CurrentTime); }
     } release{by_window.count(e.window) > 0};
+    last_press = e.time;
     // the left button while the menus are held open: the item is picked and the menus stay
     // (the original's multiple selection: one menu pass, several items)
     if (menu.open && e.button == Button1) {
         int id = menu_current_id();
+        if (menu.stuck) {
+            // sticky menus: a click picks the item and closes them; a click beside them closes
+            // them
+            menu_end(id != 0);
+            return;
+        }
         if (id) send_menu_pick(menu.c, id);
         return;
     }
@@ -1065,7 +1131,7 @@ void button_press(XButtonEvent &e) {
     }
     // Super + the left button anywhere: the screen under the pointer is dragged (as the
     // left system key with the mouse button drags a screen on the original system)
-    if (e.window == root && e.button == Button1 && (e.state & Mod4Mask)) {
+    if (e.window == root && e.button == Button1 && (e.state & ic.meta_drag)) {
         WScreen *s = nullptr;
         for (auto it = screens.rbegin(); it != screens.rend(); ++it)
             if (e.y_root >= (*it)->y) { s = *it; break; }   // the front-most screen there
@@ -1146,6 +1212,10 @@ void motion(XMotionEvent &e) {
     case D_MOVE:
         drag.c->x = drag.ox + dx;
         drag.c->y = std::max(BAR_H, drag.oy + dy);
+        if (!ic.offscreen) {   // (the whole window stays on the screen)
+            drag.c->x = std::clamp(drag.c->x, 0, std::max(0, SW - drag.c->w));
+            drag.c->y = std::clamp(drag.c->y, BAR_H, std::max(BAR_H, SH - drag.c->h));
+        }
         XMoveWindow(dpy, drag.c->frame, drag.c->x, drag.c->y);
         break;
     case D_SIZE: {
@@ -1175,7 +1245,14 @@ void motion(XMotionEvent &e) {
 
 void button_release(XButtonEvent &e) {
     if (menu.open) {
-        if (e.button == Button3) menu_end(true);
+        if (e.button != Button3) return;
+        // sticky menus (IControl): a short click of the menu button, over no item, leaves the
+        // menus open; the next click picks
+        if (ic.menu_sticky && !menu.stuck && e.time - menu.opened < 400 && !menu_current_id()) {
+            menu.stuck = true;
+            return;
+        }
+        menu_end(true);
         return;
     }
     Drag d = drag;
@@ -1439,7 +1516,27 @@ int main(int argc, char **argv) {
     RAMBLER_SCREEN_TITLE = atom("_RAMBLER_SCREEN_TITLE");
     RAMBLER_PALETTE = atom("_RAMBLER_PALETTE");
     RAMBLER_FONT = atom("_RAMBLER_FONT");
+    RAMBLER_ICONTROL = atom("_RAMBLER_ICONTROL");
     RAMBLER_MENU_PICK = atom("_RAMBLER_MENU_PICK");
+
+    // the IControl preferences: the ones in use (the property, ENV:), else the saved ones
+    {
+        std::string v = utf8_prop(root, RAMBLER_ICONTROL);
+        const char *x = getenv("XDG_CONFIG_HOME"), *rt = getenv("XDG_RUNTIME_DIR");
+        std::string base = x && *x ? x : std::string(getenv("HOME") ? getenv("HOME") : "/tmp") + "/.config";
+        std::string env = rt && *rt ? std::string(rt) + "/rambler/icontrol.prefs"
+                                    : "/tmp/rambler-" + std::to_string(getuid()) + "/icontrol.prefs";
+        for (const std::string &f : {env, base + "/rambler/icontrol.prefs"}) {
+            if (!v.empty()) break;
+            if (FILE *fp = fopen(f.c_str(), "r")) {
+                char buf[1024];
+                size_t n = fread(buf, 1, sizeof buf - 1, fp);
+                fclose(fp);
+                v.assign(buf, n);
+            }
+        }
+        read_icontrol(v);
+    }
 
     // the palette: the GUI settings' (~/.config/rambler/lune.prefs), else the default
     std::string bg = "AAAAAA", sd = "000000", sh = "FFFFFF", fl = "6688BB";
@@ -1502,10 +1599,7 @@ int main(int argc, char **argv) {
     tray_start();
 
     XGrabKey(dpy, XKeysymToKeycode(dpy, XK_m), Mod4Mask, root, True, GrabModeAsync, GrabModeSync);
-    // Super + the left button: dragging screens (also with Caps Lock or Num Lock on)
-    for (unsigned extra : {0u, (unsigned)LockMask, (unsigned)Mod2Mask, (unsigned)(LockMask | Mod2Mask)})
-        XGrabButton(dpy, Button1, Mod4Mask | extra, root, False, ButtonPressMask | ButtonReleaseMask | PointerMotionMask,
-                    GrabModeAsync, GrabModeAsync, None, None);
+    grab_meta_drag();
     XGrabKey(dpy, XKeysymToKeycode(dpy, XK_n), Mod4Mask, root, True, GrabModeAsync, GrabModeSync);
 
     // the windows already there
@@ -1580,6 +1674,10 @@ int main(int argc, char **argv) {
         case PropertyNotify:
             if (ev.xproperty.window == root && ev.xproperty.atom == RAMBLER_PALETTE) palette_changed();
             if (ev.xproperty.window == root && ev.xproperty.atom == RAMBLER_FONT) font_changed();
+            if (ev.xproperty.window == root && ev.xproperty.atom == RAMBLER_ICONTROL) {
+                read_icontrol(utf8_prop(root, RAMBLER_ICONTROL));
+                grab_meta_drag();
+            }
             else if (by_window.count(ev.xproperty.window)) {
                 Client *c = by_window[ev.xproperty.window];
                 if (ev.xproperty.atom == XA_WM_NAME || ev.xproperty.atom == NET_WM_NAME) {
