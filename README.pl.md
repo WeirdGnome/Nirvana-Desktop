@@ -81,7 +81,7 @@ Sesja uruchamia najpierw `rambler-wm`, a potem `rambler --backdrop`. Polecenie
 *Tools > Tools Drawer* zawiera narzędzia: Calculator (`rambler --utility calculator`; z taśmą), MultiView (`rambler --utility multiview PLIK`;
 teksty i obrazy), Editor (`rambler --utility editor PLIK`), Exchange (`rambler --utility exchange`;
 programy usługowe ClickToFront, AutoPoint, Blanker i NoCapsLock), ScreenGrabber
-(`rambler --utility screengrabber`), Clock (`rambler --utility clock`; analogowy albo
+(`rambler --utility screengrabber`), KeyShow (`rambler --utility keyshow`), Clock (`rambler --utility clock`; analogowy albo
 cyfrowy, data w tytule, budzik).
 
 *Tools > Prefs Drawer* otwiera programy preferencji: Input, Lune (GUI Settings),

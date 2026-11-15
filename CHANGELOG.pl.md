@@ -1,5 +1,14 @@
 # Lista zmian
 
+## 0.19.0 (w przygotowaniu)
+
+### Nowe
+- **KeyShow** (`rambler --utility keyshow`, w szufladzie Tools): pełna klawiatura z
+  tym, co wpisuje każdy klawisz w używanym układzie (dowolne pismo, klawisze martwe jako
+  ich znak diakrytyczny). Wciśnięte klawisze są pokazane jako wciśnięte, a z Shift albo
+  AltGr widać ten poziom; kliknięcie Shift, Ctrl, Alt albo AltGr go blokuje. Na dole
+  widać układ klawiatury i modyfikatory.
+
 ## 0.18.0 – 2026-11-15
 
 ### Nowe

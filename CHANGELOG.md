@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.19.0 (unreleased)
+
+### Added
+- **KeyShow** (`rambler --utility keyshow`, in the Tools drawer): a full-size keyboard
+  drawn with what each key types in the keymap in use (any script, dead keys as their
+  accent). The keys held show pressed and Shift or AltGr held shows that level; a click
+  on Shift, Ctrl, Alt or AltGr latches it. The keymap and the qualifiers are shown below.
+
 ## 0.18.0 – 2026-11-15
 
 ### Added
