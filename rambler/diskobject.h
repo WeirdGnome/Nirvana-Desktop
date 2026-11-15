@@ -69,6 +69,11 @@ std::shared_ptr<DiskObject> theme_icon(const std::string &name);
 // rambler/icons, as ENV:Sys), the user's (~/.config/rambler/icons, as ENVARC:Sys) or the
 // installation's (share/rambler/icons); the name's case does not matter
 std::shared_ptr<DiskObject> default_disk_object(const std::string &name);
+// the tool types and (when not nullptr) the default tool written into an icon file of any
+// kind Rambler reads (PutDiskObject): a PNG icon is written again, a classic one (also with
+// NewIcons or a colour icon) gets only its strings changed; false - it could not be done
+bool put_icon_strings(const std::string &info_file, const std::string *default_tool,
+                      const std::vector<std::string> &tool_types);
 // an AppImage's own icon (appimage.cxx): nullptr - not an AppImage, or no icon in it
 std::shared_ptr<DiskObject> appimage_icon(const std::string &path);
 // the steps of taking an AppImage's icon out, told on stdout (rambler --appimage-icon FILE)

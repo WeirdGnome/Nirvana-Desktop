@@ -797,24 +797,19 @@ void information(const std::string &path) {
         // (PutDiskObject); the other kinds Rambler cannot write - the file's attribute and
         // Rambler's list keep them, as before
         bool in_icon = false;
-        {
-            std::string info = path + ".info";
-            char magic[4] = {0};
-            if (FILE *f = fopen(info.c_str(), "rb")) { (void)!fread(magic, 1, 4, f); fclose(f); }
-            if (!memcmp(magic, "\x89PNG", 4))
-                if (auto o = read_icon_file(info)) {
-                    DiskObject n = *o;
-                    n.tool_types = types;
-                    // (the default tool as shown: one of the original system's paths, not shown
-                    // in the field, stays unless the field was changed)
-                    if (tool && tool->value() != tool_shown) n.default_tool = tool->value();
-                    if (put_png_icon(info, n)) {
-                        in_icon = true;
-                        std::string e2;
-                        set_tool_types(path, {}, e2);   // (none kept beside it any more)
-                        set_default_tool(path, "");
-                    } else errors += tr("The icon file could not be written.") + "\n";
-                }
+        std::string info = path + ".info";
+        struct stat ist;
+        if (stat(info.c_str(), &ist) == 0 && S_ISREG(ist.st_mode)) {
+            // (the default tool as shown: one of the original system's paths, not shown in
+            // the field, stays unless the field was changed)
+            std::string new_tool = tool ? std::string(tool->value()) : "";
+            bool tool_changed = tool && new_tool != tool_shown;
+            if (put_icon_strings(info, tool_changed ? &new_tool : nullptr, types)) {
+                in_icon = true;
+                std::string e2;
+                set_tool_types(path, {}, e2);   // (none kept beside it any more)
+                set_default_tool(path, "");
+            }
         }
         if (!in_icon && types != tool_types(path) && !set_tool_types(path, types, err))
             errors += "Tool Types: " + err + "\n";

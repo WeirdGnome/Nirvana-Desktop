@@ -590,6 +590,99 @@ bool put_png_icon(const std::string &info_file, const DiskObject &o) {
     return rename(tmp.c_str(), info_file.c_str()) == 0;
 }
 
+// The tool types and the default tool put into a classic icon file (also one with NewIcons
+// or a colour icon): the strings' part of the file is made again, the rest - the DiskObject,
+// the drawer data, the images, the tool window, the new drawer data, the FORM ICON after
+// it - is kept as it was, byte for byte; the NewIcons image lines stay after the new tool
+// types (PutDiskObject writes them back the same way)
+bool put_classic_strings(const std::string &info_file, const std::string *default_tool,
+                         const std::vector<std::string> &tool_types) {
+    std::ifstream in(info_file, std::ios::binary);
+    std::vector<unsigned char> d((std::istreambuf_iterator<char>(in)), std::istreambuf_iterator<char>());
+    in.close();
+    Reader r{d};
+    if (d.size() < 78 || r.u16() != 0xE310) return false;
+    r.pos = 16;
+    unsigned gflags = r.u16();
+    r.pos = 22;
+    unsigned render = r.u32(), select = r.u32();
+    r.pos = 50;
+    unsigned deftool = r.u32(), tooltypes = r.u32();
+    r.pos = 66;
+    unsigned drawerdata = r.u32();
+    r.pos = 78;
+    if (drawerdata) r.skip(56);
+    std::vector<unsigned char> pens;
+    int w, h;
+    const unsigned GADGIMAGE = 0x0004, GADGHIGHBITS = 0x0003, GADGHIMAGE = 0x0002;
+    if ((render || (gflags & GADGIMAGE)) && !read_planar(r, w, h, pens)) return false;
+    if ((select || (gflags & GADGHIGHBITS) == GADGHIMAGE) && !read_planar(r, w, h, pens)) return false;
+    size_t start = r.pos;   // the strings begin
+    auto read_string = [&r]() {
+        unsigned len = r.u32();
+        std::string s;
+        if (len && len < 65536 && r.need(len)) { s.assign((const char *)&r.d[r.pos], len); r.pos += len; }
+        while (!s.empty() && s.back() == 0) s.pop_back();
+        return s;
+    };
+    std::string old_tool;
+    std::vector<std::string> old_types;
+    if (deftool) old_tool = read_string();
+    if (tooltypes) {
+        int n = (int)(r.u32() >> 2) - 1;
+        for (int i = 0; i < n && r.ok; i++) old_types.push_back(read_string());
+    }
+    if (!r.ok) return false;
+    size_t end = r.pos;     // the strings end: the tool window and the rest after it
+    // the new strings: the NewIcons lines (the marker and after) kept after the tool types
+    std::vector<std::string> types = tool_types;
+    for (size_t i = 0; i < old_types.size(); i++)
+        if (old_types[i] == "*** DON'T EDIT THE FOLLOWING LINES!! ***") {
+            types.insert(types.end(), old_types.begin() + (long)i, old_types.end());
+            break;
+        }
+    std::string tool = default_tool ? *default_tool : old_tool;
+    std::vector<unsigned char> mid;
+    auto u32 = [&mid](unsigned v) { for (int s = 24; s >= 0; s -= 8) mid.push_back((v >> s) & 255); };
+    auto str = [&](const std::string &s) { u32((unsigned)s.size() + 1); mid.insert(mid.end(), s.begin(), s.end()); mid.push_back(0); };
+    if (!tool.empty()) str(tool);
+    if (!types.empty()) {
+        u32((unsigned)(types.size() + 1) * 4);
+        for (auto &t : types) str(t);
+    }
+    std::vector<unsigned char> out(d.begin(), d.begin() + (long)start);
+    // do_DefaultTool, do_ToolTypes: "there is one" (a pointer in memory, only not 0 on disk)
+    auto put32 = [&out](size_t at, unsigned v) { for (int i = 0; i < 4; i++) out[at + i] = (v >> (24 - 8 * i)) & 255; };
+    put32(50, tool.empty() ? 0 : 1);
+    put32(54, types.empty() ? 0 : 1);
+    out.insert(out.end(), mid.begin(), mid.end());
+    out.insert(out.end(), d.begin() + (long)end, d.end());
+    std::string tmp = info_file + ".new";
+    {
+        std::ofstream o(tmp, std::ios::binary);
+        o.write((const char *)out.data(), (std::streamsize)out.size());
+        if (!o) { unlink(tmp.c_str()); return false; }
+    }
+    return rename(tmp.c_str(), info_file.c_str()) == 0;
+}
+
+bool put_icon_strings(const std::string &info_file, const std::string *default_tool,
+                      const std::vector<std::string> &tool_types) {
+    char magic[4] = {0};
+    if (FILE *f = fopen(info_file.c_str(), "rb")) { (void)!fread(magic, 1, 4, f); fclose(f); }
+    if (!memcmp(magic, "\x89PNG", 4)) {
+        auto o = read_icon_file(info_file);
+        if (!o) return false;
+        DiskObject n = *o;
+        n.tool_types = tool_types;
+        if (default_tool) n.default_tool = *default_tool;
+        return put_png_icon(info_file, n);
+    }
+    if ((unsigned char)magic[0] == 0xE3 && (unsigned char)magic[1] == 0x10)
+        return put_classic_strings(info_file, default_tool, tool_types);
+    return false;
+}
+
 std::shared_ptr<DiskObject> default_disk_object(const std::string &name) {
     // the directories, and the icon files in them by their names in lower case (looked at
     // again when a directory changes)
