@@ -99,11 +99,11 @@ void load_prefs() {
             else if (k == "list_font_family") p.list_font_family = std::clamp(atoi(v.c_str()), -1, 2);
             else if (k == "list_font_size") p.list_font_size = std::clamp(atoi(v.c_str()), 0, 24);
             else if (k == "fixed_font_size") p.fixed_font_size = std::clamp(atoi(v.c_str()), 0, 24);
-            else if (k == "list_back") p.list_back = std::clamp(atoi(v.c_str()), 128, 145);
-            else if (k == "readlist_back") p.readlist_back = std::clamp(atoi(v.c_str()), 128, 145);
-            else if (k == "list_cursor") p.list_cursor = std::clamp(atoi(v.c_str()), 128, 145);
-            else if (k == "list_select") p.list_select = std::clamp(atoi(v.c_str()), 128, 145);
-            else if (k == "list_selcur") p.list_selcur = std::clamp(atoi(v.c_str()), 128, 145);
+            else if (k == "list_back") p.list_back = v;
+            else if (k == "readlist_back") p.readlist_back = v;
+            else if (k == "list_cursor") p.list_cursor = v;
+            else if (k == "list_select") p.list_select = v;
+            else if (k == "list_selcur") p.list_selcur = v;
             else if (k.rfind("string_", 0) == 0) {
                 static const std::pair<const char *, int Prefs::*> sk[] = {
                     {"string_bg", &Prefs::string_bg}, {"string_text", &Prefs::string_text},
@@ -112,8 +112,8 @@ void load_prefs() {
                     {"string_marked_text", &Prefs::string_marked_text}};
                 for (auto &[name, m] : sk) if (k == name) p.*m = std::clamp(atoi(v.c_str()), 0, MPEN_COUNT - 1);
             }
-            else if (k == "button_back") p.button_back = std::clamp(atoi(v.c_str()), 128, 145);
-            else if (k == "selected_back") p.selected_back = std::clamp(atoi(v.c_str()), 128, 145);
+            else if (k == "button_back") p.button_back = v;
+            else if (k == "selected_back") p.selected_back = v;
             else if (k == "button_font_family") p.button_font_family = std::clamp(atoi(v.c_str()), -1, 2);
             else if (k == "button_font_size") p.button_font_size = std::clamp(atoi(v.c_str()), 0, 24);
             else if (k == "radio_hspacing") p.radio_hspacing = std::clamp(atoi(v.c_str()), 0, 20);
@@ -152,17 +152,17 @@ void save_prefs() {
     for (int i = 0; i < 16; i++)
         if (!p.custom_frame[i].empty()) fprintf(f, "custom_frame_%d=%s\n", i + 1, p.custom_frame[i].c_str());
     fprintf(f, "list_multi=%d\nlist_refresh=%d\nlist_smoothed=%d\nlist_smoothval=%d\nlist_leading=%d\n"
-               "list_font_family=%d\nlist_font_size=%d\nfixed_font_size=%d\nlist_back=%d\nreadlist_back=%d\n"
-               "list_cursor=%d\nlist_select=%d\nlist_selcur=%d\n",
+               "list_font_family=%d\nlist_font_size=%d\nfixed_font_size=%d\nlist_back=%s\nreadlist_back=%s\n"
+               "list_cursor=%s\nlist_select=%s\nlist_selcur=%s\n",
             p.list_multi, p.list_refresh, (int)p.list_smoothed, p.list_smoothval, p.list_leading, p.list_font_family,
-            p.list_font_size, p.fixed_font_size, p.list_back, p.readlist_back, p.list_cursor, p.list_select,
-            p.list_selcur);
+            p.list_font_size, p.fixed_font_size, p.list_back.c_str(), p.readlist_back.c_str(), p.list_cursor.c_str(),
+            p.list_select.c_str(), p.list_selcur.c_str());
     fprintf(f, "string_bg=%d\nstring_text=%d\nstring_active_bg=%d\nstring_active_text=%d\nstring_cursor=%d\n"
                "string_marked_bg=%d\nstring_marked_text=%d\n",
             p.string_bg, p.string_text, p.string_active_bg, p.string_active_text, p.string_cursor, p.string_marked_bg,
             p.string_marked_text);
-    fprintf(f, "button_back=%d\nselected_back=%d\nbutton_font_family=%d\nbutton_font_size=%d\nradio_hspacing=%d\nradio_vspacing=%d\n",
-            p.button_back, p.selected_back, p.button_font_family, p.button_font_size, p.radio_hspacing, p.radio_vspacing);
+    fprintf(f, "button_back=%s\nselected_back=%s\nbutton_font_family=%d\nbutton_font_size=%d\nradio_hspacing=%d\nradio_vspacing=%d\n",
+            p.button_back.c_str(), p.selected_back.c_str(), p.button_font_family, p.button_font_size, p.radio_hspacing, p.radio_vspacing);
     fprintf(f, "scrollbar_arrangement=%d\nscrollbar_type=%d\n", p.scrollbar_arrangement, p.scrollbar_type);
     fprintf(f, "bubble_first=%d\nbubble_next=%d\n", p.bubble_first, p.bubble_next);
     fprintf(f, "drag_left_modifier=%s\ndrag_middle_modifier=%s\n", p.drag_left_modifier.c_str(), p.drag_middle_modifier.c_str());
@@ -313,7 +313,7 @@ void Area::draw_background(int X, int Y, int W, int H) {
     if ((std_ == Frame_Button || std_ == Frame_ImageButton) && bg_pen_ == MPEN_BACKGROUND) {
         // a button: MUII_ButtonBack, pressed MUII_SelectedBack (the Buttons page's patterns)
         bool down = selected_ && (input_ == Input_RelVerify || input_ == Input_Immediate);
-        draw_pattern(down ? prefs().selected_back : prefs().button_back, X, Y, W, H);
+        draw_imspec(down ? prefs().selected_back : prefs().button_back, X, Y, W, H);
         return;
     }
     int pen = bg_pen_;
@@ -1400,7 +1400,7 @@ void List::active(int a) {
 
 // the list's background: an input or a read-only list's pattern (MUII_ListBack / ReadListBack)
 void List::draw_background(int X, int Y, int W, int H) {
-    draw_pattern(std_ == Frame_InputList ? prefs().list_back : prefs().readlist_back, X, Y, W, H);
+    draw_imspec(std_ == Frame_InputList ? prefs().list_back : prefs().readlist_back, X, Y, W, H);
 }
 
 void List::draw_contents() {
@@ -1424,7 +1424,7 @@ void List::draw_contents() {
         for (int i = top_; i < (int)lines_.size() && (i - top_) * lh < mheight() - th; i++) {
             int y = mtop() + th + (i - top_) * lh;
             bool act = i == active_;
-            if (act) draw_pattern(prefs().list_cursor, mleft(), y, W, lh);   // MUII_ListCursor
+            if (act) draw_imspec(prefs().list_cursor, mleft(), y, W, lh);   // MUII_ListCursor
             int cx = mleft();
             auto &l = lines_[i];
             for (size_t c = 0; c < titles_.size(); c++) {
@@ -1455,7 +1455,7 @@ void List::draw_contents() {
     for (int i = top_; i < (int)lines_.size() && (i - top_) * lh < mheight(); i++) {
         int y = mtop() + (i - top_) * lh;
         bool act = i == active_;
-        if (act) draw_pattern(prefs().list_cursor, mleft(), y, W, lh);   // MUII_ListCursor
+        if (act) draw_imspec(prefs().list_cursor, mleft(), y, W, lh);   // MUII_ListCursor
         auto &l = lines_[i];
         int infow = l.info.empty() ? 0 : (int)fl_width(l.info.c_str()) + 8;
         fl_color(act ? p[MPEN_SHINE] : p[MPEN_TEXT]);
@@ -2046,5 +2046,265 @@ void Window::draw() {
 }
 
 int run() { return Fl::run(); }
+
+// ============================================================================================
+// Popimage, Imageadjust, Penadjust
+// ============================================================================================
+std::function<bool(const std::string &, std::string &)> file_request_hook;
+
+namespace {
+// Imagedisplay: a spec drawn over its whole inside (the previews)
+class ImageDisplay : public Area {
+public:
+    ImageDisplay(std::function<std::string()> spec, int w, int h, StdFrame f = Frame_Text)
+        : Area(f), spec_(std::move(spec)), w_(w), h_(h) { background(-1); }
+    void ask_min_max(int &minw, int &minh, int &defw, int &defh, int &maxw, int &maxh) override {
+        minw = defw = w_; minh = defh = h_; maxw = maxh = MAXMAX;
+    }
+    void fixed() { fixed_ = true; }
+
+protected:
+    void draw_contents() override { draw_imspec(spec_(), mleft(), mtop(), mwidth(), mheight()); }
+    std::function<std::string()> spec_;
+    int w_, h_;
+    bool fixed_ = false;
+};
+
+// a pattern's button in the Pattern page (ButtonFrame, 16 x 16, Immediate)
+class PatternButton : public Area {
+public:
+    PatternButton(int muii) : Area(Frame_Button), muii_(muii) { inner(4, 4, 4, 4); input_mode(Input_Immediate); }
+    void ask_min_max(int &minw, int &minh, int &defw, int &defh, int &maxw, int &maxh) override {
+        minw = defw = maxw = minh = defh = maxh = 16;
+    }
+
+protected:
+    void draw_background(int X, int Y, int W, int H) override {
+        fl_color(pens()[selected_ ? MPEN_FILL : MPEN_BACKGROUND]);
+        fl_rectf(X, Y, W, H);
+    }
+    void draw_contents() override { draw_pattern(muii_, mleft(), mtop(), mwidth(), mheight()); }
+    int muii_;
+};
+
+const char *const PEN_NAMES[MPEN_COUNT] = {"Shine", "Halfshine", "Background", "Halfshadow", "Shadow", "Text", "Fill", "Mark"};
+
+// Penadjust: the MUI pens (a list) or red, green and blue (sliders); the state in a spec
+// "m<n>" / "r<r>,<g>,<b>"
+struct PenAdjust {
+    Register *reg;
+    List *list;
+    Slider *r, *g, *b;
+    std::function<void()> changed;
+    std::string spec() const {
+        if (reg->active() == 0) return "m" + std::to_string(std::max(0, list->active()));
+        char s[40];
+        snprintf(s, sizeof s, "r%08x,%08x,%08x", r->value() * 0x01010101u, g->value() * 0x01010101u,
+                 b->value() * 0x01010101u);
+        return s;
+    }
+    void set(const std::string &pen) {
+        unsigned rgb = penspec_rgb(pen);
+        r->value((rgb >> 16) & 255); g->value((rgb >> 8) & 255); b->value(rgb & 255);
+        if (!pen.empty() && pen[0] == 'm') { list->active(atoi(pen.c_str() + 1)); reg->active(0); }
+        else if (!pen.empty() && pen[0] == 'r') reg->active(1);
+    }
+};
+
+PenAdjust *make_penadjust() {
+    auto *pa = new PenAdjust;
+    pa->reg = new Register({"MUI", "RGB"});
+    pa->list = new List();
+    pa->list->frame(Frame_InputList);
+    for (auto *n : PEN_NAMES) pa->list->add({tr(n)});
+    pa->list->done();
+    auto *rgb = new Group(Group::Vertical);
+    rgb->columns(2);
+    new Text("\033rRed:"); pa->r = new Slider(0, 255, 0);
+    new Text("\033rGreen:"); pa->g = new Slider(0, 255, 0);
+    new Text("\033rBlue:"); pa->b = new Slider(0, 255, 0);
+    rgb->end();
+    pa->reg->end();
+    auto ch = [pa] { if (pa->changed) pa->changed(); };
+    pa->list->on_active = [ch](int) { ch(); };
+    pa->r->on_change = pa->g->on_change = pa->b->on_change = [ch](int) { ch(); };
+    pa->reg->on_change = [ch](int) { ch(); };
+    return pa;
+}
+}  // namespace
+
+Popimage::Popimage(const std::string &spec, Kind kind, const std::string &title)
+    : Area(Frame_ImageButton), spec_(spec), title_(title), kind_(kind) {
+    background(MPEN_BACKGROUND);
+    input_mode(Input_RelVerify);
+    on_press = [this] { open(); };
+}
+
+Popimage::~Popimage() {
+    if (win_) { win_->hide(); Fl::delete_widget(win_); }
+}
+
+void Popimage::ask_min_max(int &minw, int &minh, int &defw, int &defh, int &maxw, int &maxh) {
+    minw = minh = 12;
+    defw = defh = 16;
+    maxw = 22;   // (MUIA_MaxWidth 28 with the frame)
+    maxh = 22;
+}
+
+void Popimage::draw_contents() {
+    if (kind_ == Pen) {
+        unsigned rgb = penspec_rgb(spec_);
+        fl_color(fl_rgb_color((rgb >> 16) & 255, (rgb >> 8) & 255, rgb & 255));
+        fl_rectf(mleft(), mtop(), mwidth(), mheight());
+    } else draw_imspec(spec_, mleft(), mtop(), mwidth(), mheight());
+}
+
+void Popimage::open() {
+    if (win_) { win_->show(); return; }
+    // the state the window works on (the spec being made)
+    struct State {
+        ImSpec cur;
+        std::string pen;   // (a Poppen: the pen spec)
+        std::vector<PatternButton *> patterns;
+        PenAdjust *color = nullptr, *gstart = nullptr, *gend = nullptr;
+        String *file = nullptr;
+        Slider *angle = nullptr;
+        Area *preview_bitmap = nullptr, *preview_gradient = nullptr;
+        Register *reg = nullptr;
+    };
+    auto st = std::make_shared<State>();
+    Fl_Group *saved = Fl_Group::current();
+    Fl_Group::current(nullptr);
+    auto *root = VGroup();
+    if (kind_ == Pen) {
+        st->pen = spec_.empty() ? "m5" : spec_;
+        st->color = make_penadjust();
+        st->color->set(st->pen);
+        st->color->changed = [st] { st->pen = st->color->spec(); };
+    } else {
+        st->cur = ImSpec::parse(spec_);
+        if (st->cur.type == IMS_NONE) { st->cur.type = IMS_PATTERN; st->cur.pattern = MUII_BACKGROUND; }
+        st->reg = new Register({"Pattern", "Color", "Bitmap", "Gradient"});
+        // Pattern: the 18 patterns in six columns
+        auto *pc = HGroup();
+        HSpace();
+        auto *pg = new Group(Group::Vertical);
+        pg->columns(6);
+        for (int i = MUII_BACKGROUND; i < MUII_LASTPAT; i++) {
+            auto *b = new PatternButton(i);
+            b->copy_tooltip(tr(PATTERN_NAMES[i - MUII_BACKGROUND]).c_str());
+            st->patterns.push_back(b);
+            b->on_press = [st, i] {
+                st->cur.type = IMS_PATTERN;
+                st->cur.pattern = i;
+                for (int k = 0; k < (int)st->patterns.size(); k++) st->patterns[k]->selected(k + MUII_BACKGROUND == i);
+            };
+        }
+        pg->end();
+        HSpace();
+        pc->end();
+        // Color: a Penadjust
+        st->color = make_penadjust();
+        // Bitmap: the preview, the file
+        auto *bg = VGroup();
+        st->preview_bitmap = new ImageDisplay([st] { return "5:" + std::string(st->file ? st->file->value() : ""); }, 64, 64);
+        auto *fr = HGroup();
+        fr->spacing(0);
+        st->file = new String(st->cur.type == IMS_BITMAP ? st->cur.file : "", 1024);
+        auto *pop = PopButton(Pop_File);
+        fr->end();
+        bg->end();
+        auto use_file = [st] {
+            st->cur.type = IMS_BITMAP;
+            st->cur.file = st->file->value();
+            st->preview_bitmap->redraw();
+        };
+        st->file->on_acknowledge = use_file;
+        pop->on_press = [st, use_file] {
+            std::string p = st->file->value();
+            if (file_request_hook && file_request_hook(tr("Bitmap"), p)) { st->file->value(p); use_file(); }
+        };
+        // Gradient: the angle, the two colours, the preview
+        auto *gg = new Group(Group::Vertical);
+        gg->columns(2);
+        new Text("\033rAngle:");
+        auto *ang = VGroup();
+        auto *hv = HGroup();
+        hv->same_width(true);
+        auto *bv = new Button("Vertical");
+        auto *bh = new Button("Horizontal");
+        hv->end();
+        st->angle = new Slider(0, 179, st->cur.type == IMS_GRADIENT ? std::min(179, st->cur.angle) : 0);
+        ang->end();
+        new Text("\033rColors:");
+        auto *cols = HGroup();
+        auto *startc = new Popimage(st->cur.type == IMS_GRADIENT ? "r" + ImSpec{IMS_RGB, 0, 0, st->cur.rgb}.str().substr(3) : "rbbbbbbbb,bbbbbbbb,bbbbbbbb", Pen, tr("Start pen"));
+        auto *swap = new Button("<->");
+        swap->weight(0);
+        auto *endc = new Popimage(st->cur.type == IMS_GRADIENT ? "r" + ImSpec{IMS_RGB, 0, 0, st->cur.rgb2}.str().substr(3) : "r55555555,55555555,55555555", Pen, tr("End pen"));
+        cols->end();
+        new Text("\033rPreview:");
+        st->preview_gradient = new ImageDisplay([st, startc, endc] {
+            ImSpec g;
+            g.type = IMS_GRADIENT;
+            g.angle = st->angle->value();
+            g.rgb = penspec_rgb(startc->spec());
+            g.rgb2 = penspec_rgb(endc->spec());
+            return g.str();
+        }, 64, 48);
+        gg->end();
+        auto grad = [st, startc, endc] {
+            st->cur.type = IMS_GRADIENT;
+            st->cur.angle = st->angle->value();
+            st->cur.rgb = penspec_rgb(startc->spec());
+            st->cur.rgb2 = penspec_rgb(endc->spec());
+            st->preview_gradient->redraw();
+        };
+        st->angle->on_change = [grad](int) { grad(); };
+        // (as the original: "Vertical" a gradient from the top down - angle 0, "Horizontal" 90)
+        bv->on_press = [st, grad] { st->angle->value(0); grad(); };
+        bh->on_press = [st, grad] { st->angle->value(90); grad(); };
+        startc->on_change = endc->on_change = [grad](const std::string &) { grad(); };
+        swap->on_press = [startc, endc, grad] { std::string a = startc->spec(); startc->spec(endc->spec()); endc->spec(a); grad(); };
+        st->reg->end();
+        // the spec shown first: its page
+        int page = st->cur.type == IMS_PATTERN ? 0 : st->cur.type == IMS_PEN || st->cur.type == IMS_RGB ? 1
+                 : st->cur.type == IMS_BITMAP ? 2 : 3;
+        if (st->cur.type == IMS_PATTERN && st->cur.pattern >= MUII_BACKGROUND && st->cur.pattern < MUII_LASTPAT)
+            st->patterns[st->cur.pattern - MUII_BACKGROUND]->selected(true);
+        if (st->cur.type == IMS_PEN) st->color->set("m" + std::to_string(st->cur.pen));
+        else if (st->cur.type == IMS_RGB) st->color->set(ImSpec(st->cur).str().substr(2));
+        st->color->changed = [st] {
+            std::string p = st->color->spec();
+            st->cur = ImSpec::parse("2:" + p);
+        };
+        st->reg->active(page);
+    }
+    auto *btns = HGroup();
+    btns->same_width(true);
+    auto *ok = new Button("Ok");
+    HVSpace();
+    HVSpace();
+    auto *cancel = new Button("Cancel");
+    btns->end();
+    root->end();
+    win_ = new Window(title_.empty() ? tr(kind_ == Pen ? "Adjust Pen" : "Adjust Image") : title_, root);
+    Fl_Group::current(saved);
+    if (window()) win_->position(window()->x() + x(), window()->y() + y() + h() + 1);   // below the button
+    auto close = [this] {
+        Window *w = win_;
+        win_ = nullptr;
+        w->hide();
+        Fl::delete_widget(w);
+    };
+    ok->on_press = [this, st, close] {
+        std::string s = kind_ == Pen ? st->pen : st->cur.str();
+        close();
+        if (s != spec_) { spec(s); if (on_change) on_change(s); }
+    };
+    cancel->on_press = close;
+    win_->callback([](Fl_Widget *, void *d) { ((Popimage *)d)->win_->hide(); Fl::delete_widget(((Popimage *)d)->win_); ((Popimage *)d)->win_ = nullptr; }, this);
+    win_->show();
+}
 
 }  // namespace zune

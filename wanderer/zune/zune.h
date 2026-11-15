@@ -24,6 +24,7 @@
 */
 #pragma once
 #include "frame.h"
+#include "imspec.h"
 #include "pens.h"
 #include "catalog.h"
 
@@ -87,15 +88,16 @@ struct Prefs {
     int list_multi = 0, list_refresh = 1, list_smoothval = 0, list_leading = 1;
     bool list_smoothed = false;
     int list_font_family = -1, list_font_size = 0, fixed_font_size = 0;
-    int list_back = MUII_SHINE, readlist_back = MUII_SHINE;   // (configdata "0:128"; white here)
-    int list_cursor = MUII_FILL, list_select = MUII_FILLBACK, list_selcur = MUII_FILLBACK2;
+    // (image specs, imspec.h; configdata "0:128" for the lists - white here)
+    std::string list_back = "0:130", readlist_back = "0:130";
+    std::string list_cursor = "0:131", list_select = "0:135", list_selcur = "0:138";
     Fl_Font list_font = FL_HELVETICA;
     // the Strings page (pens, MPEN_*): the background and text of an inactive and of the
     // active string, the cursor, the marked text's background and text (configdata.c
     // "2:m2", "m5", "2:m1", "m5", "m7", "m6", "m0")
     // the Buttons page: the background and the pressed background of buttons (MUII
     // patterns), the button font (-1 / 0: the normal one), the radio buttons' spacing
-    int button_back = MUII_BACKGROUND, selected_back = MUII_FILL;
+    std::string button_back = "0:128", selected_back = "0:131";   // (image specs)
     int button_font_family = -1, button_font_size = 0;
     int radio_hspacing = 4, radio_vspacing = 1;
     Fl_Font button_font = FL_HELVETICA, button_font_bold = FL_HELVETICA_BOLD;
@@ -537,6 +539,30 @@ protected:
 };
 
 // ---------------------------------------------------------------------------------------------
+// Popimage (classes/popimage.c, imageadjust.c, penadjust.c): an image spec shown in a button;
+// pressed, a window to change it - the pattern, a colour (a MUI pen or red, green and blue),
+// a picture or a gradient for a background; only a colour for a pen (a Poppen). OK takes
+// the new spec (on_change), Cancel leaves it
+class Popimage : public Area {
+public:
+    enum Kind { Background, Pen };
+    explicit Popimage(const std::string &spec, Kind kind = Background, const std::string &title = "");
+    const std::string &spec() const { return spec_; }
+    void spec(const std::string &s) { spec_ = s; redraw(); }
+    std::function<void(const std::string &)> on_change;
+    void ask_min_max(int &minw, int &minh, int &defw, int &defh, int &maxw, int &maxh) override;
+    ~Popimage() override;
+
+protected:
+    void draw_contents() override;
+    void open();
+    std::string spec_, title_;
+    Kind kind_;
+    class Window *win_ = nullptr;
+};
+// the file requester the image adjust window uses for a picture (set by the program)
+extern std::function<bool(const std::string &title, std::string &path)> file_request_hook;
+
 class Window : public Fl_Double_Window {
 public:
     Window(const std::string &title, Area *root = nullptr);

@@ -1079,6 +1079,8 @@ static bool first_in_session() {
 int main(int argc, char **argv) {
     // dates and times in the user's language (the locale's FORMAT_DEF); numbers stay as they are
     setlocale(LC_TIME, "");
+    // Zune's image adjust window asks for a picture with Wanderer's file requester
+    zune::file_request_hook = [](const std::string &title, std::string &path) { return file_request(title, path); };
     bool backdrop = false;
     for (int i = 1; i < argc; i++)
         if (!strcmp(argv[i], "--backdrop")) backdrop = true;

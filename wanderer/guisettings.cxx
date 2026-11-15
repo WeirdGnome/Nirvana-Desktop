@@ -237,20 +237,11 @@ void edit_gui_settings() {
     }
     // -- Buttons (buttonsp.c): general (backgrounds), text buttons (frame, font), image
     // buttons, checkmarks, radio buttons
-    Cycle *bback, *bsel, *bfam, *bsize;
+    Popimage *bback, *bsel;
+    Cycle *bfam, *bsize;
     Slider *rh, *rv;
     {
-        auto pattern = [](int muii) {
-            auto *row = HGroup();
-            row->spacing(2);
-            auto *sample = new SpecialImage([](int, int, int, int) {});
-            std::vector<std::string> names(PATTERN_NAMES, PATTERN_NAMES + (MUII_LASTPAT - MUII_BACKGROUND));
-            auto *c = new Cycle(names, muii - MUII_BACKGROUND);
-            row->end();
-            sample->painter([c](int X, int Y, int W, int H) { draw_pattern(MUII_BACKGROUND + c->active(), X, Y, W, H); });
-            c->on_change = [sample](int) { sample->redraw(); };
-            return c;
-        };
+        auto pattern = [](const std::string &spec) { return new Popimage(spec, Popimage::Background, tr("Adjust Background")); };
         auto size_index = [](int v) { for (int i = 0; i < 7; i++) if (SIZES[i] == v) return i + 1; return 0; };
         std::vector<std::string> sizes = {"Normal"};
         for (int sz : SIZES) sizes.push_back(std::to_string(sz));
@@ -425,7 +416,7 @@ void edit_gui_settings() {
     Cycle *lmulti, *lrefresh, *lfam, *lsize, *fsize;
     Checkmark *lsmooth;
     Slider *lsmoothval, *llead;
-    Cycle *lback, *rback, *lcur, *lsel, *lselcur;
+    Popimage *lback, *rback, *lcur, *lsel, *lselcur;
     {
         auto *pg = new Group(Group::Vertical);
         pg->columns(2);
@@ -469,18 +460,8 @@ void edit_gui_settings() {
         fc->end();
         VSpace();
         fo->end();
-        // a background: the pattern's sample and its name (the popimage of the original)
-        auto pattern = [](int muii) {
-            auto *row = HGroup();
-            row->spacing(2);
-            auto *sample = new SpecialImage([](int, int, int, int) {});
-            std::vector<std::string> names(PATTERN_NAMES, PATTERN_NAMES + (MUII_LASTPAT - MUII_BACKGROUND));
-            auto *c = new Cycle(names, muii - MUII_BACKGROUND);
-            row->end();
-            sample->painter([c](int X, int Y, int W, int H) { draw_pattern(MUII_BACKGROUND + c->active(), X, Y, W, H); });
-            c->on_change = [sample](int) { sample->redraw(); };
-            return c;
-        };
+        // a background: MakeBackgroundPopimage
+        auto pattern = [](const std::string &spec) { return new Popimage(spec, Popimage::Background, tr("Adjust Background")); };
         auto *de = new Group(Group::Vertical, Frame_Group);
         de->frame_title("Design");
         de->columns(3);
@@ -816,8 +797,8 @@ void edit_gui_settings() {
         p.bubble_first = bfirst->value();
         p.bubble_next = bnext->value();
         p.scrollbar_arrangement = *sbarr;
-        p.button_back = MUII_BACKGROUND + bback->active();
-        p.selected_back = MUII_BACKGROUND + bsel->active();
+        p.button_back = bback->spec();
+        p.selected_back = bsel->spec();
         p.button_font_family = bfam->active() - 1;
         p.button_font_size = bsize->active() ? SIZES[bsize->active() - 1] : 0;
         p.radio_hspacing = rh->value();
@@ -837,11 +818,11 @@ void edit_gui_settings() {
         p.list_font_size = lsize->active() ? SIZES[lsize->active() - 1] : 0;
         p.fixed_font_size = fsize->active() ? SIZES[fsize->active() - 1] : 0;
         p.list_leading = llead->value();
-        p.list_back = MUII_BACKGROUND + lback->active();
-        p.readlist_back = MUII_BACKGROUND + rback->active();
-        p.list_cursor = MUII_BACKGROUND + lcur->active();
-        p.list_select = MUII_BACKGROUND + lsel->active();
-        p.list_selcur = MUII_BACKGROUND + lselcur->active();
+        p.list_back = lback->spec();
+        p.readlist_back = rback->spec();
+        p.list_cursor = lcur->spec();
+        p.list_select = lsel->spec();
+        p.list_selcur = lselcur->spec();
         p.scrollbar_type = sbtype->active();
         for (int i = 0; i < 16; i++) p.custom_frame[i] = cframe[i]->value();
         for (int i = 0; i < MUIKEY_COUNT; i++) p.keys[i] = (*keys)[i] == KEY_DEFAULTS[i] ? "" : (*keys)[i];

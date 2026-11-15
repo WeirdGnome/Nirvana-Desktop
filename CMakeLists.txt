@@ -23,7 +23,7 @@ if(NOT FLTK_FOUND)
 endif()
 
 # Zune on FLTK
-add_library(zune STATIC wanderer/zune/pens.cxx wanderer/zune/frame.cxx wanderer/zune/zune.cxx wanderer/zune/catalog.cxx)
+add_library(zune STATIC wanderer/zune/pens.cxx wanderer/zune/frame.cxx wanderer/zune/zune.cxx wanderer/zune/catalog.cxx wanderer/zune/imspec.cxx)
 target_include_directories(zune PUBLIC wanderer/zune)
 target_link_libraries(zune PUBLIC fltk::fltk fltk::images)
 
