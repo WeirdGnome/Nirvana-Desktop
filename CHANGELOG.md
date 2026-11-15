@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.16.0 (unreleased)
+## 0.16.0 – 2026-11-15
 
 ### Added
 - **Time preferences** (`rambler --prefs time`, in the Prefs drawer): the date in a

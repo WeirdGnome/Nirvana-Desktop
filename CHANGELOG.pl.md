@@ -1,6 +1,6 @@
 # Lista zmian
 
-## 0.16.0 (w przygotowaniu)
+## 0.16.0 – 2026-11-15
 
 ### Nowe
 - **Preferencje Time** (`rambler --prefs time`, w szufladzie Prefs): data w kalendarzu
