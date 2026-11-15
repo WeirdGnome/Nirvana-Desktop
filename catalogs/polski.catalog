@@ -632,3 +632,7 @@ Offscreen window moves:	Przesuwanie okien poza ekran:
 Pull-down	Rozwijane z paska
 Pop-up	Przy wskaźniku
 Pull-down in screen bar:	Rozwijane z paska ekranu:
+Time Preferences	Preferencje czasu
+Set automatically (network time)	Ustawiaj samoczynnie (czas z sieci)
+The time could not be set:	Nie udało się ustawić czasu:
+Setting the time needs timedatectl or pkexec.	Ustawienie czasu wymaga timedatectl albo pkexec.

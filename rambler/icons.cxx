@@ -339,6 +339,11 @@ void prefs_icon(IconKind k, int x, int y) {
     case IconKind::PrefsPointer:  // the pointer
         poly(0xEE4444, {cx - 5, cy - 7, cx + 5, cy + 1, cx, cy + 1, cx + 2, cy + 6, cx, cy + 7, cx - 2, cy + 2, cx - 5, cy + 5});
         break;
+    case IconKind::PrefsTime:     // a clock
+        fl_color(C(0x000000));
+        fl_line(cx, cy, cx, cy - 6);
+        fl_line(cx, cy, cx + 4, cy + 2);
+        break;
     case IconKind::PrefsRambler:  // a drawer
         box3d(cx - 7, cy - 5, 14, 11, 0x6688BB, 0xA9C0E4, 0x3C5A8A);
         box3d(cx - 3, cy - 1, 6, 3, 0xD9D9D9, 0xFFFFFF, 0x777777);
@@ -383,7 +388,8 @@ bool builtin_icon(const std::string &name, IconKind &k) {
         {"rambler-prefs-font", IconKind::PrefsFont}, {"rambler-prefs-icontrol", IconKind::PrefsIControl}, {"rambler-prefs-input", IconKind::PrefsInput},
         {"rambler-prefs-locale", IconKind::PrefsLocale}, {"rambler-prefs-lune", IconKind::PrefsLune},
         {"rambler-prefs-network", IconKind::PrefsNetwork}, {"rambler-prefs-pointer", IconKind::PrefsPointer},
-        {"rambler-prefs-rambler", IconKind::PrefsRambler}, {"rambler-prefs-screenmode", IconKind::PrefsScreenMode}};
+        {"rambler-prefs-rambler", IconKind::PrefsRambler}, {"rambler-prefs-screenmode", IconKind::PrefsScreenMode},
+        {"rambler-prefs-time", IconKind::PrefsTime}};
     for (auto &[n, kind] : NAMES) if (name == n) { k = kind; return true; }
     return false;
 }
@@ -401,7 +407,7 @@ void draw_icon(IconKind k, int x, int y, bool selected) {
     case IconKind::Network: network(x, y); break;
     case IconKind::NetworkDisk: network_disk(x, y); break;
     case IconKind::PrefsFont: case IconKind::PrefsIControl: case IconKind::PrefsInput: case IconKind::PrefsLocale: case IconKind::PrefsLune:
-    case IconKind::PrefsNetwork: case IconKind::PrefsPointer: case IconKind::PrefsRambler: case IconKind::PrefsScreenMode:
+    case IconKind::PrefsNetwork: case IconKind::PrefsPointer: case IconKind::PrefsRambler: case IconKind::PrefsScreenMode: case IconKind::PrefsTime:
         prefs_icon(k, x, y);
         break;
     default: project(k, x, y); break;

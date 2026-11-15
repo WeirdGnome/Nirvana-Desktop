@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.16.0 (unreleased)
+
+### Added
+- **Time preferences** (`rambler --prefs time`, in the Prefs drawer): the date in a
+  calendar (month, year with - and +), the time on an analog clock that goes until it is
+  set (hours, minutes, seconds, - and + for the field typed in). Use sets the system's
+  clock, Save also the computer's own clock, with `timedatectl` (or `date` and `hwclock`
+  through `pkexec` without it); the system asks for the right to do it. With
+  `timedatectl` the time can be set automatically from the network (NTP).
+- Lune: the **Calendar** and **Clock** classes.
+
 ## 0.15.0 – 2026-11-15
 
 ### Added

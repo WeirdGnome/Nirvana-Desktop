@@ -18,7 +18,7 @@ enum class IconKind {
     Project, Text, Picture, Sound, Movie, Archive, Document, Tool, Script, Link,
     Network, NetworkDisk,
     // the preferences programs (the Prefs drawer): a panel and the program's sign
-    PrefsFont, PrefsIControl, PrefsInput, PrefsLocale, PrefsLune, PrefsNetwork, PrefsPointer, PrefsRambler, PrefsScreenMode
+    PrefsFont, PrefsIControl, PrefsInput, PrefsLocale, PrefsLune, PrefsNetwork, PrefsPointer, PrefsRambler, PrefsScreenMode, PrefsTime
 };
 // the default icon files that stand for a kind (ENV:Sys/def_*.info), the first found used:
 // e.g. Text -> def_txt, def_ascii, def_text, def_project

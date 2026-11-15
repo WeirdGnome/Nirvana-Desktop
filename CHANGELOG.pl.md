@@ -1,5 +1,16 @@
 # Lista zmian
 
+## 0.16.0 (w przygotowaniu)
+
+### Nowe
+- **Preferencje Time** (`rambler --prefs time`, w szufladzie Prefs): data w kalendarzu
+  (miesiąc, rok z - i +), czas na zegarze ze wskazówkami, który chodzi, dopóki czas nie
+  jest ustawiany (godziny, minuty, sekundy, - i + dla pola, w którym się pisze). Use
+  ustawia zegar systemu, Save także własny zegar komputera, przez `timedatectl` (a bez
+  niego `date` i `hwclock` przez `pkexec`); system pyta o uprawnienia. Z `timedatectl`
+  czas może być ustawiany samoczynnie z sieci (NTP).
+- Lune: klasy **Calendar** i **Clock**.
+
 ## 0.15.0 – 2026-11-15
 
 ### Nowe

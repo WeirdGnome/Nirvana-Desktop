@@ -25,6 +25,7 @@
 #include "fontprefs.h"
 #include "networkprefs.h"
 #include "icontrolprefs.h"
+#include "timeprefs.h"
 
 #include <FL/Fl.H>
 #include <FL/Fl_Menu_Item.H>
@@ -1234,7 +1235,7 @@ void make_prefs_drawer() {
     struct { const char *file, *name, *arg; } progs[] = {
         {"Font.desktop", "Font", "font"}, {"IControl.desktop", "IControl", "icontrol"}, {"Input.desktop", "Input", "input"}, {"Locale.desktop", "Locale", "locale"}, {"Network.desktop", "Network", "network"},
         {"Pointer.desktop", "Pointer", "pointer"}, {"Lune.desktop", "Lune", "lune"}, {"Rambler.desktop", "Rambler", "rambler"},
-        {"ScreenMode.desktop", "ScreenMode", "screenmode"}};
+        {"ScreenMode.desktop", "ScreenMode", "screenmode"}, {"Time.desktop", "Time", "time"}};
     for (auto &pr : progs) {
         std::string f = dir + "/" + pr.file;
         // made when missing, and made again when it is one of ours from an earlier version
@@ -1278,9 +1279,10 @@ int main(int argc, char **argv) {
         else if (prefs_program == "font") edit_font_prefs(true);
         else if (prefs_program == "network") edit_network_prefs(true);
         else if (prefs_program == "icontrol") edit_icontrol_prefs(true);
+        else if (prefs_program == "time") edit_time_prefs(true);
         else if (prefs_program == "rambler") edit_prefs(RamblerPrefs::load(), [](const RamblerPrefs &) {}, true);
         else {
-            fprintf(stderr, "rambler: no preferences program '%s' (font, icontrol, input, locale, lune, network, pointer, rambler, screenmode)\n", prefs_program.c_str());
+            fprintf(stderr, "rambler: no preferences program '%s' (font, icontrol, input, locale, lune, network, pointer, rambler, screenmode, time)\n", prefs_program.c_str());
             return 1;
         }
         return run();

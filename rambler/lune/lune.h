@@ -575,6 +575,51 @@ protected:
 };
 
 // ---------------------------------------------------------------------------------------------
+// Calendar (classes/zune/calendar): a month as a grid of days under the names of the week's
+// days (the week starting with the locale's first day); a click or the cursor keys pick a
+// day
+class Calendar : public Area {
+public:
+    Calendar();
+    void date(int year, int month, int day);   // month 1 - 12
+    int year() const { return year_; }
+    int month() const { return month_; }
+    int day() const { return day_; }
+    std::function<void(int day)> on_change;
+    bool accepts_focus() const override { return true; }
+    void ask_min_max(int &minw, int &minh, int &defw, int &defh, int &maxw, int &maxh) override;
+    int handle(int e) override;
+
+protected:
+    void draw_contents() override;
+    int year_ = 2000, month_ = 1, day_ = 1;
+    int first_wday_ = 1;   // the locale's first day of the week (0 Sunday, 1 Monday)
+    int cell(int &cw, int &ch, int &x0, int &y0) const;   // the first day's column
+};
+
+// Clock (classes/zune/clock): an analog clock; it goes with the system's time unless frozen
+// (the time being edited), then it shows the time set
+class Clock : public Area {
+public:
+    Clock();
+    ~Clock() override;
+    void time(int h, int m, int s);
+    int hour() const { return h_; }
+    int minute() const { return m_; }
+    int second() const { return s_; }
+    void frozen(bool f);
+    bool frozen() const { return frozen_; }
+    std::function<void()> on_tick;   // (each second, when it goes)
+    void ask_min_max(int &minw, int &minh, int &defw, int &defh, int &maxw, int &maxh) override;
+
+protected:
+    void draw_contents() override;
+    static void tick(void *d);
+    int h_ = 0, m_ = 0, s_ = 0;
+    bool frozen_ = false;
+};
+
+// ---------------------------------------------------------------------------------------------
 // Popimage (classes/popimage.c, imageadjust.c, penadjust.c): an image spec shown in a button;
 // pressed, a window to change it - the pattern, a colour (a MUI pen or red, green and blue),
 // a picture or a gradient for a background; only a colour for a pen (a Poppen). OK takes
