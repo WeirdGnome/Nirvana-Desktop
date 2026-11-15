@@ -9,7 +9,16 @@
   clock, Save also the computer's own clock, with `timedatectl` (or `date` and `hwclock`
   through `pkexec` without it); the system asks for the right to do it. With
   `timedatectl` the time can be set automatically from the network (NTP).
+- **Sound preferences** (`rambler --prefs sound`, in the Prefs drawer): what the beep
+  does - the screen flashes, a sound is made, or both. The sound is a beep (its volume,
+  pitch and length) or a sampled sound (a file), with a Test button. With PulseAudio or
+  PipeWire (`pactl`) also the sound output: the device, the master volume and mute. The
+  window manager takes a change up at once and plays the sound with `paplay` (or `aplay`).
 - Lune: the **Calendar** and **Clock** classes.
+
+### Changed
+- Lune: a disabled (ghost) object is covered with dots of the shadow pen, as on the
+  original system; until now it only stopped taking input.
 
 ## 0.15.0 – 2026-11-15
 

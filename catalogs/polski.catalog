@@ -636,3 +636,17 @@ Time Preferences	Preferencje czasu
 Set automatically (network time)	Ustawiaj samoczynnie (czas z sieci)
 The time could not be set:	Nie udało się ustawić czasu:
 Setting the time needs timedatectl or pkexec.	Ustawienie czasu wymaga timedatectl albo pkexec.
+Sound Preferences	Preferencje dźwięku
+Beep	Sygnał
+Flash display:	Mignięcie ekranu:
+Make sound:	Dźwięk:
+Sound type:	Rodzaj dźwięku:
+Sampled sound	Próbka dźwięku
+Volume:	Głośność:
+Pitch:	Wysokość tonu:
+Duration:	Czas trwania:
+Sample:	Próbka:
+Device:	Urządzenie:
+Master volume:	Głośność główna:
+Mute:	Wyciszenie:
+Select a sound	Wybierz dźwięk

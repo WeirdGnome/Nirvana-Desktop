@@ -43,6 +43,7 @@
 #include <string>
 #include <unistd.h>
 #include <vector>
+#include "../rambler/beep.h"
 
 namespace {
 
@@ -85,7 +86,7 @@ const int SIZE_W = 16, SIZE_H = 16;
 
 Atom WM_PROTOCOLS, WM_DELETE_WINDOW, WM_STATE, WM_TAKE_FOCUS, NET_WM_NAME, UTF8_STRING, NET_WM_WINDOW_TYPE,
     NET_WM_WINDOW_TYPE_DESKTOP, NET_WM_WINDOW_TYPE_DOCK, NET_SUPPORTED, NET_ACTIVE_WINDOW, NET_CLIENT_LIST,
-    NET_SUPPORTING_WM_CHECK, NET_WM_STATE, NET_WM_STATE_FULLSCREEN, RAMBLER_SCREEN_TITLE, RAMBLER_PALETTE, RAMBLER_FONT, RAMBLER_ICONTROL,
+    NET_SUPPORTING_WM_CHECK, NET_WM_STATE, NET_WM_STATE_FULLSCREEN, RAMBLER_SCREEN_TITLE, RAMBLER_PALETTE, RAMBLER_FONT, RAMBLER_ICONTROL, RAMBLER_SOUND,
     NET_WM_STATE_MAXIMIZED_VERT, NET_WM_STATE_MAXIMIZED_HORZ, NET_CLOSE_WINDOW, NET_FRAME_EXTENTS, NET_WORKAREA,
     NET_NUMBER_OF_DESKTOPS, NET_CURRENT_DESKTOP, NET_DESKTOP_GEOMETRY;
 
@@ -1432,7 +1433,12 @@ void tray_start() {
 // The bell (a program's XBell, a mistake typed): the front screen flashes in the fill pen for
 // a moment, as the system flashes the screen when it beeps
 int xkb_event = -1;
+// the Sound preferences: flash, sound or both (from sound.prefs, then the _RAMBLER_SOUND
+// property when the preferences program changes them)
+rambler::BeepPrefs beep_prefs;
 void display_beep() {
+    if (beep_prefs.sound) rambler::play_beep_sound(beep_prefs);
+    if (!beep_prefs.flash) return;
     WScreen *s = screens.empty() ? nullptr : screens.back();
     int y = s ? s->y : 0;
     XSetWindowAttributes a = {};
@@ -1553,6 +1559,7 @@ int main(int argc, char **argv) {
     RAMBLER_PALETTE = atom("_RAMBLER_PALETTE");
     RAMBLER_FONT = atom("_RAMBLER_FONT");
     RAMBLER_ICONTROL = atom("_RAMBLER_ICONTROL");
+    RAMBLER_SOUND = atom("_RAMBLER_SOUND");
     RAMBLER_MENU_PICK = atom("_RAMBLER_MENU_PICK");
 
     // the IControl preferences: the ones in use (the property, ENV:), else the saved ones
@@ -1572,6 +1579,10 @@ int main(int argc, char **argv) {
             }
         }
         read_icontrol(v);
+    }
+    {   // the Sound preferences: the property, else ENV:, else ENVARC:
+        std::string v = utf8_prop(root, RAMBLER_SOUND);
+        beep_prefs = v.empty() ? rambler::load_beep_prefs() : rambler::BeepPrefs::parse(v);
     }
 
     // the palette: the GUI settings' (~/.config/rambler/lune.prefs), else the default
@@ -1710,6 +1721,8 @@ int main(int argc, char **argv) {
         case PropertyNotify:
             if (ev.xproperty.window == root && ev.xproperty.atom == RAMBLER_PALETTE) palette_changed();
             if (ev.xproperty.window == root && ev.xproperty.atom == RAMBLER_FONT) font_changed();
+            if (ev.xproperty.window == root && ev.xproperty.atom == RAMBLER_SOUND)
+                beep_prefs = rambler::BeepPrefs::parse(utf8_prop(root, RAMBLER_SOUND));
             if (ev.xproperty.window == root && ev.xproperty.atom == RAMBLER_ICONTROL) {
                 read_icontrol(utf8_prop(root, RAMBLER_ICONTROL));
                 grab_meta_drag();

@@ -147,7 +147,7 @@ Architecture: $ARCH
 Maintainer: Nirvana Desktop contributors <106549403+WeirdGnome@users.noreply.github.com>
 Installed-Size: $SIZE
 Depends: ${DEPENDS:+$DEPENDS, }xdg-utils
-Recommends: dbus-x11, x11-xserver-utils, x11-utils, xterm, network-manager, squashfs-tools
+Recommends: dbus-x11, x11-xserver-utils, x11-utils, xterm, network-manager, squashfs-tools, pulseaudio-utils | alsa-utils
 Suggests: x-terminal-emulator
 Section: x11
 Priority: optional

@@ -9,7 +9,16 @@
   ustawia zegar systemu, Save także własny zegar komputera, przez `timedatectl` (a bez
   niego `date` i `hwclock` przez `pkexec`); system pyta o uprawnienia. Z `timedatectl`
   czas może być ustawiany samoczynnie z sieci (NTP).
+- **Preferencje Sound** (`rambler --prefs sound`, w szufladzie Prefs): co robi sygnał -
+  ekran miga, słychać dźwięk albo jedno i drugie. Dźwięk to krótki ton (głośność,
+  wysokość i długość) albo próbka dźwięku (plik), z przyciskiem Próba. Z PulseAudio albo
+  PipeWire (`pactl`) także wyjście dźwięku: urządzenie, głośność główna i wyciszenie.
+  Menedżer okien przyjmuje zmianę od razu i odtwarza dźwięk przez `paplay` (albo `aplay`).
 - Lune: klasy **Calendar** i **Clock**.
+
+### Zmienione
+- Lune: wyłączony obiekt jest pokryty kropkami w kolorze cienia, jak w oryginale; dotąd
+  tylko przestawał przyjmować wejście.
 
 ## 0.15.0 – 2026-11-15
 

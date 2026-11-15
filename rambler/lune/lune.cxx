@@ -414,6 +414,15 @@ void Area::draw() {
         fl_pop_clip();
     }
     draw_children();
+    // DoDisabledPattern: a ghost object is covered with dots of the shadow pen (the pattern
+    // 0x8888, 0x2222), the frame and the children with it
+    if (disabled_) {
+        fl_push_clip(x(), y(), w(), h());
+        fl_color(pens()[MPEN_SHADOW]);
+        for (int Y = y(); Y < y() + h(); Y++)
+            for (int X = x() + ((Y - y()) & 1 ? 2 : 0); X < x() + w(); X += 4) fl_point(X, Y);
+        fl_pop_clip();
+    }
     if (Fl::focus() == this && accepts_focus()) draw_active_outline();
 }
 

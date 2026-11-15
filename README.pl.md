@@ -80,7 +80,7 @@ Sesja uruchamia najpierw `rambler-wm`, a potem `rambler --backdrop`. Polecenie
 
 *Tools > Prefs Drawer* otwiera programy preferencji: Input, Lune (GUI Settings),
 Rambler, IControl (ekrany, menu i okna menedżera okien), ScreenMode (tryb wyświetlania,
-przez xrandr), Time (data i godzina), Locale (języki, kraj, strefa
+przez xrandr), Time (data i godzina), Sound (sygnał i wyjście dźwięku), Locale (języki, kraj, strefa
 czasowa), Pointer (motyw i rozmiar kursora), Font (czcionki ikon, ekranu i systemu) i
 Network (interfejsy, nazwa komputera, sieci bezprzewodowe; wymaga działającego
 NetworkManagera). Każdy działa też samodzielnie
