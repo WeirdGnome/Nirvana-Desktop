@@ -18,6 +18,7 @@
 #include "fileops.h"
 #include "guisettings.h"
 #include "find.h"
+#include "inputprefs.h"
 
 #include <FL/Fl.H>
 #include <FL/Fl_Menu_Item.H>
@@ -35,6 +36,8 @@
 #include <sys/stat.h>
 #include <sys/utsname.h>
 #include <unistd.h>
+
+void make_prefs_drawer();   // (main.cxx part below)
 
 namespace fs = std::filesystem;
 using namespace zune;
@@ -140,7 +143,7 @@ enum MenuId {
     MEN_WINDOW_SORT_SIZE, MEN_WINDOW_SORT_TYPE, MEN_WINDOW_SORT_REVERSE, MEN_WINDOW_SORT_TOPDRAWERS,
     MEN_WINDOW_FIND, MEN_ICON_OPEN, MEN_ICON_RENAME, MEN_ICON_INFORMATION, MEN_ICON_SNAPSHOT,
     MEN_ICON_UNSNAPSHOT, MEN_ICON_DELETE, MEN_ICON_DISKINFO, MEN_WANDERER_PREFS,
-    MEN_ICON_LEAVEOUT, MEN_ICON_PUTAWAY, MEN_ICON_EMPTYTRASH, MEN_WANDERER_GUISETTINGS, MEN_ICON_EJECT, MEN_ICON_COPY, MEN_TOOLS_DRAWER, MEN_WANDERER_SHUTDOWN, MEN_WANDERER_ASSIGNS, MEN_ICON_FORMAT,
+    MEN_ICON_LEAVEOUT, MEN_ICON_PUTAWAY, MEN_ICON_EMPTYTRASH, MEN_WANDERER_GUISETTINGS, MEN_ICON_EJECT, MEN_ICON_COPY, MEN_TOOLS_DRAWER, MEN_TOOLS_PREFS, MEN_WANDERER_SHUTDOWN, MEN_WANDERER_ASSIGNS, MEN_ICON_FORMAT,
     MEN_TOOL_FIRST = 1000
 };
 
@@ -630,6 +633,7 @@ std::vector<Fl_Menu_Item> Wanderer::menu_items(IconWindow *w) {
             {nullptr},
         {"Tools", 0, nullptr, nullptr, FL_SUBMENU},
             {"Tools Drawer", 0, nullptr, (void *)MEN_TOOLS_DRAWER},
+            {"Prefs Drawer", 0, nullptr, (void *)MEN_TOOLS_PREFS},
             {nullptr},
         {nullptr}};
     // the menus look like the screen's: the window's pens, the screen font
@@ -992,6 +996,13 @@ void Wanderer::menu_action(IconWindow *w, int id) {
         }
         break;
     }
+    case MEN_TOOLS_PREFS: {
+        const char *x = getenv("XDG_CONFIG_HOME");
+        std::string base = x && *x ? x : std::string(getenv("HOME") ? getenv("HOME") : "/tmp") + "/.config";
+        make_prefs_drawer();
+        open_drawer(base + "/wanderer/prefs");
+        break;
+    }
     case MEN_TOOLS_DRAWER: {
         const char *x = getenv("XDG_CONFIG_HOME");
         std::string base = x && *x ? x : std::string(getenv("HOME") ? getenv("HOME") : "/tmp") + "/.config";
@@ -1076,20 +1087,53 @@ static bool first_in_session() {
     return true;
 }
 
+// the Prefs drawer (SYS:Prefs): ~/.config/wanderer/prefs with a starter for each preferences
+// program (made when missing; the user may add others)
+void make_prefs_drawer() {
+    const char *x = getenv("XDG_CONFIG_HOME");
+    std::string base = x && *x ? x : std::string(getenv("HOME") ? getenv("HOME") : "/tmp") + "/.config";
+    std::string dir = base + "/wanderer/prefs";
+    std::error_code ec;
+    fs::create_directories(dir, ec);
+    struct { const char *file, *name, *arg; } progs[] = {{"Input.desktop", "Input", "input"}};
+    for (auto &pr : progs) {
+        std::string f = dir + "/" + pr.file;
+        if (fs::exists(f, ec)) continue;
+        std::ofstream out(f);
+        out << "[Desktop Entry]\nType=Application\nName=" << pr.name << "\nExec=wanderer --prefs " << pr.arg
+            << "\nCategories=Settings;\n";
+    }
+}
+
 int main(int argc, char **argv) {
     // dates and times in the user's language (the locale's FORMAT_DEF); numbers stay as they are
     setlocale(LC_TIME, "");
     // Zune's image adjust window asks for a picture with Wanderer's file requester
     zune::file_request_hook = [](const std::string &title, std::string &path) { return file_request(title, path); };
     bool backdrop = false;
-    for (int i = 1; i < argc; i++)
+    std::string prefs_program;
+    for (int i = 1; i < argc; i++) {
         if (!strcmp(argv[i], "--backdrop")) backdrop = true;
+        else if (!strcmp(argv[i], "--prefs") && i + 1 < argc) prefs_program = argv[++i];
+    }
+    if (!prefs_program.empty()) {
+        // a preferences program on its own (SYS:Prefs/...): its editor, the program ends with it
+        Fl::visual(FL_DOUBLE | FL_INDEX);
+        zune::load_prefs();
+        fl_open_display();
+        if (prefs_program == "input") edit_input_prefs(true);
+        else { fprintf(stderr, "wanderer: no preferences program '%s' (input)\n", prefs_program.c_str()); return 1; }
+        return run();
+    }
     Fl::visual(FL_DOUBLE | FL_INDEX);
     Fl::get_system_colors();
     Fl::add_system_handler(x_events, nullptr);
     zune::load_prefs();
     fl_open_display();
     g_wanderer.start(backdrop);
+    // as IPrefs: the input preferences put into effect (when there are any saved)
+    if (backdrop && InputPrefs::exists()) InputPrefs::load().apply();
+    if (backdrop) make_prefs_drawer();
     if (backdrop && first_in_session()) run_startup();   // once per session (not again after a restart)
     Fl::add_timeout(5.0, Wanderer::tick, &g_wanderer);
     Fl::add_timeout(0.5, Wanderer::watch_volumes, &g_wanderer);

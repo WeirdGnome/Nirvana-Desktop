@@ -229,7 +229,7 @@ Groups	Grupy
 Buttons	Przyciski
 Strings	Pola tekstowe
 Listviews	Listy
-Scrollbars	Suwaki
+Scrollbars	Paski przewijania
 Palette	Paleta
 Fonts	Czcionki
 Normal:	Zwykła:
@@ -531,3 +531,25 @@ Without clear	Bez czyszczenia
 With clear	Z czyszczeniem
 Tiny:	Mała:
 Big:	Duża:
+Keyboard	Klawiatura
+Mouse	Mysz
+Keyboard Type	Rodzaj klawiatury
+Default:	Domyślna:
+Alternative:	Druga:
+Set	Ustaw
+System default	Jak w systemie
+Key Repeat Rate	Szybkość powtarzania
+Key Repeat Delay	Opóźnienie powtarzania
+Keymap Switching	Przełączanie układu
+Enable:	Włącz:
+Switch Key:	Klawisz przełączania:
+Test	Próba
+Mouse Speed	Szybkość myszy
+Slow	Wolna
+Fast	Szybka
+Accelerated:	Przyspieszanie:
+Button Settings	Przyciski
+Double-Click Delay:	Czas podwójnego kliknięcia:
+Left-Handed Mouse:	Mysz dla leworęcznych:
+Input Preferences	Preferencje wejścia
+Prefs Drawer	Szuflada Prefs
