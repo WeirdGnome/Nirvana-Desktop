@@ -11,6 +11,9 @@
   `def_movie`, `def_archive`, `def_document`, `def_script`, `def_cdrom`, `def_network`
   (`.info` files of any kind Rambler reads, dual ones too). Without them the built-in
   pictures stay.
+- **Information saves into the icon file** (PutDiskObject): a file with a PNG icon of its
+  own keeps its tool types and default tool in it, as on the original system; the icon's
+  images (both of a dual icon) stay. Other icon files keep them beside, as before.
 
 ## 0.13.3 – 2026-11-15
 

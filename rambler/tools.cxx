@@ -617,6 +617,7 @@ void information(const std::string &path) {
     struct group *gr = getgrgid(st.st_gid);
     Checkmark *bits[9];
     String *comment, *tool = nullptr, *tt_string;
+    std::string tool_shown;   // the default tool the field showed
     List *tt_list;
     std::vector<std::string> types = tool_types(path);
     int tt_active = -1;
@@ -668,7 +669,8 @@ void information(const std::string &path) {
             if (project) {
                 auto *trow = HGroup();
                 new Text("Default Tool:");
-                tool = new String(default_tool(path), 1024);
+                tool_shown = default_tool(path);
+                tool = new String(tool_shown, 1024);
                 tool->weight(300);
                 auto *pick = PopButton(Pop_File);   // a Popasl
                 trow->end();
@@ -791,9 +793,32 @@ void information(const std::string &path) {
         }
         if (comment->value() != file_comment(path) && !set_file_comment(path, comment->value(), err))
             errors += "Comment: " + err + "\n";
-        if (types != tool_types(path) && !set_tool_types(path, types, err))
+        // a PNG icon file of its own: the tool types and the default tool go into it
+        // (PutDiskObject); the other kinds Rambler cannot write - the file's attribute and
+        // Rambler's list keep them, as before
+        bool in_icon = false;
+        {
+            std::string info = path + ".info";
+            char magic[4] = {0};
+            if (FILE *f = fopen(info.c_str(), "rb")) { (void)!fread(magic, 1, 4, f); fclose(f); }
+            if (!memcmp(magic, "\x89PNG", 4))
+                if (auto o = read_icon_file(info)) {
+                    DiskObject n = *o;
+                    n.tool_types = types;
+                    // (the default tool as shown: one of the original system's paths, not shown
+                    // in the field, stays unless the field was changed)
+                    if (tool && tool->value() != tool_shown) n.default_tool = tool->value();
+                    if (put_png_icon(info, n)) {
+                        in_icon = true;
+                        std::string e2;
+                        set_tool_types(path, {}, e2);   // (none kept beside it any more)
+                        set_default_tool(path, "");
+                    } else errors += tr("The icon file could not be written.") + "\n";
+                }
+        }
+        if (!in_icon && types != tool_types(path) && !set_tool_types(path, types, err))
             errors += "Tool Types: " + err + "\n";
-        if (tool) set_default_tool(path, tool->value());
+        if (!in_icon && tool) set_default_tool(path, tool->value());
         if (!errors.empty()) request("Information", tr("Not everything could be changed:") + "\n" + errors, "OK");
     }
     w->hide();

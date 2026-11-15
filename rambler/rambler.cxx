@@ -1092,6 +1092,7 @@ void Rambler::menu_action(IconWindow *w, int id) {
             std::error_code ec;
             if (id == MEN_ICON_SNAPSHOT && e->icon && !e->is_drawer() && !fs::exists(e->path + ".info", ec)) {
                 DiskObject o = *e->icon;
+                o.dual = true;   // (its selected image written as a second one, to be painted over)
                 o.current_x = e->x;
                 o.current_y = e->y;
                 if (put_png_icon(e->path + ".info", o)) e->icon = get_disk_object(e->path);

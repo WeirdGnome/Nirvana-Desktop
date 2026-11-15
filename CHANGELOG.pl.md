@@ -10,6 +10,9 @@
   `def_txt`, `def_picture`, `def_sound`, `def_movie`, `def_archive`, `def_document`,
   `def_script`, `def_cdrom`, `def_network` (pliki `.info` dowolnego rodzaju, który Rambler
   czyta, także podwójne). Bez nich zostają wbudowane rysunki.
+- **Informacje zapisują do pliku ikony** (PutDiskObject): plik z własną ikoną PNG trzyma w
+  niej typy narzędzi i narzędzie domyślne, jak w oryginale; obrazy ikony (oba w ikonie
+  podwójnej) zostają. Pozostałe pliki ikon trzymają je obok, jak dotąd.
 
 ## 0.13.3 – 2026-11-15
 

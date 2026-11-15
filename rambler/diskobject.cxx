@@ -555,8 +555,11 @@ std::vector<unsigned char> png_bytes(const std::vector<unsigned char> &rgba, int
 bool put_png_icon(const std::string &info_file, const DiskObject &o) {
     if (o.normal.empty() || o.width <= 0 || o.height <= 0) return false;
     std::vector<unsigned char> first = png_bytes(o.normal, o.width, o.height);
-    std::vector<unsigned char> second = png_bytes(o.selected.empty() ? o.normal : o.selected, o.width, o.height);
-    if (first.size() < 20 || second.empty()) return false;
+    // the selected image only for a dual icon (one with a single image gets its lighter
+    // selected image when read, as before)
+    std::vector<unsigned char> second;
+    if (o.dual && !o.selected.empty()) second = png_bytes(o.selected, o.width, o.height);
+    if (first.size() < 20 || (o.dual && second.empty())) return false;
     // the icOn chunk before the first image's IEND: the place, the type, the tool, the tool types
     std::vector<unsigned char> data;
     auto u32 = [&data](unsigned v) { for (int s = 24; s >= 0; s -= 8) data.push_back((v >> s) & 255); };
