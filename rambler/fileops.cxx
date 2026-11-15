@@ -16,6 +16,7 @@
 #include <cstring>
 #include <condition_variable>
 #include <fcntl.h>
+#include <algorithm>
 #include <filesystem>
 #include <memory>
 #include <mutex>
@@ -373,6 +374,18 @@ void poll(void *d) {
 
 void file_operation(FileOpKind kind, std::vector<std::string> sources, std::string dest, std::function<void()> done) {
     if (sources.empty()) { if (done) done(); return; }
+    // a file's icon goes with it (name.info: copied, moved, deleted along)
+    {
+        std::vector<std::string> icons;
+        std::error_code ec;
+        for (auto &s : sources) {
+            if (s.size() > 5 && s.compare(s.size() - 5, 5, ".info") == 0) continue;
+            std::string info = s + ".info";
+            if (fs::is_regular_file(info, ec) && std::find(sources.begin(), sources.end(), info) == sources.end())
+                icons.push_back(info);
+        }
+        sources.insert(sources.end(), icons.begin(), icons.end());
+    }
     auto *j = new Job;
     j->kind = kind;
     j->sources = std::move(sources);

@@ -60,6 +60,9 @@ Sesja uruchamia najpierw `rambler-wm`, a potem `rambler --backdrop`. Polecenie
   dysku i kopiowane między dyskami.
 * **Wyłożenie**: ikony przeciągnięte z szuflady na puste tło okna głównego zostają tam
   wyłożone; *Icon > Put Away* je zabiera.
+* **Pliki ikon**: własna ikona pliku to `nazwa.info` obok niego (ikony klasyczne,
+  NewIcons, kolorowe i PNG). Ikona podwójna ma drugi obraz na stan zaznaczenia; idzie
+  razem z plikiem przy kopiowaniu, przenoszeniu, zmianie nazwy i usuwaniu.
 
 ## Preferencje
 

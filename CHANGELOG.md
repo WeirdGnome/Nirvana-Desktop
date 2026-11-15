@@ -40,6 +40,14 @@
   signal and security, connecting with a password, rescanning). Use changes an interface
   for now only, Save changes its connection for good; wrong addresses are pointed out
   before anything is changed.
+- **Icon files and dual icons.** A file's icon comes from its `name.info` beside it (a
+  drawer's from `drawer.info`, a volume's from `Disk.info` in its root), as icon.library
+  reads them: classic icons (planar images in the screen's pens), NewIcons (images in the
+  tool types), colour icons (FORM ICON with palette or ARGB images) and PNG icons. A
+  **dual icon** shows its own second image when selected (SelectRender, `IM2=`, the second
+  IMAG / ARGB chunk, the PNG attached after the first); an icon with one image is shown
+  lighter, as on AROS. The `.info` files are not listed themselves, and they go with
+  their file when it is copied, moved, renamed or deleted.
 
 ### Fixed
 - Polish: the Scrollbars page of the Lune preferences was named like the Sliders page.

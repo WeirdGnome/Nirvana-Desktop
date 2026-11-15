@@ -11,6 +11,8 @@
     columns, sorts them, selects them with a click, Shift-click or a lasso, and moves them.
 */
 #pragma once
+#include "diskobject.h"
+#include <memory>
 #include "lune.h"
 
 #include <FL/Fl_Scrollbar.H>
@@ -63,6 +65,7 @@ struct IconEntry {
     unsigned long app_supports = 1;   // and the Icon menu's items it takes (WBAPPICONA_Supports*)
     bool network = false;             // the Network Access icon of the root window
     bool network_volume = false;      // a network file system (NFS, SMB, SSHFS ...)
+    std::shared_ptr<DiskObject> icon; // its icon file (name.info / Disk.info); none: a default icon
     long app_id = 0;                  // and the icon's number there
     int provided_x = NO_ICON_POSITION, provided_y = NO_ICON_POSITION;   // a snapshot position
     // computed (iconlist.c: ie_IconX/Y, ie_AreaWidth/Height, ie_IconWidth/Height ...)

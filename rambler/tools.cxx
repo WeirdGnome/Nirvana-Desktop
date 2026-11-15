@@ -439,7 +439,13 @@ bool rename_entry(const std::string &path, std::string &renamed) {
         fs::path to = p.parent_path() / name;
         if (fs::exists(to, ec)) { request("Rename", trs("'%s' already exists.", name), "OK"); continue; }
         fs::rename(p, to, ec);
-        if (!ec) { renamed = to.string(); return true; }
+        if (!ec) {
+            // its icon takes the new name too
+            std::error_code ie;
+            if (fs::is_regular_file(path + ".info", ie)) fs::rename(path + ".info", to.string() + ".info", ie);
+            renamed = to.string();
+            return true;
+        }
         request("Rename", tr("Could not rename:") + "\n" + ec.message(), "OK");
         return false;
     }

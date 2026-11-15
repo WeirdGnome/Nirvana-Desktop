@@ -77,6 +77,9 @@ rambler-wm & rambler --backdrop
   them across volumes.
 * **Leave Out**: icons dragged from a drawer onto the empty background of the root window
   are left out there; *Icon > Put Away* takes them back.
+* **Icon files**: a file's own icon is `name.info` beside it (classic, NewIcons, colour
+  and PNG icons). A dual icon has a second image for its selected state; it goes with its
+  file when the file is copied, moved, renamed or deleted.
 
 ## Preferences
 

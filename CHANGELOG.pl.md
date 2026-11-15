@@ -41,6 +41,14 @@
   zabezpieczeniami, łączenie z hasłem, ponowne szukanie). Use zmienia interfejs tylko na
   teraz, Save zmienia jego połączenie na stałe; błędne adresy są wskazywane, zanim
   cokolwiek się zmieni.
+- **Pliki ikon i ikony podwójne.** Ikona pliku pochodzi z leżącego obok `nazwa.info`
+  (szuflady z `szuflada.info`, dysku z `Disk.info` w jego katalogu głównym), czytanego jak
+  w icon.library: ikony klasyczne (obrazy planarne w kolorach ekranu), NewIcons (obrazy w
+  typach narzędzi), ikony kolorowe (FORM ICON z paletą albo ARGB) i ikony PNG. **Ikona
+  podwójna** po zaznaczeniu pokazuje swój drugi obraz (SelectRender, `IM2=`, drugi blok
+  IMAG / ARGB, PNG doklejony po pierwszym); ikona z jednym obrazem jest wtedy
+  rozjaśniana, jak w AROS. Same pliki `.info` nie są pokazywane, a przy kopiowaniu,
+  przenoszeniu, zmianie nazwy i usuwaniu idą razem ze swoim plikiem.
 
 ### Poprawki
 - Po polsku strona Paski przewijania w preferencjach Lune nazywała się tak samo jak strona

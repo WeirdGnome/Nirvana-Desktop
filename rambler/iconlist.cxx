@@ -257,6 +257,7 @@ void IconList::create_label(IconEntry &e) {
 // ---------------------------------------------------------------------------------------------
 void IconList::icon_size(IconEntry &e, int &w, int &h) {
     if (display_flags & Disp_NoIcons) { w = h = 0; return; }
+    if (e.icon) { w = e.icon->width; h = e.icon->height; return; }   // its icon file's size
     w = ICON_W;
     h = ICON_H;
 }
@@ -464,7 +465,10 @@ void IconList::draw_icon_image(IconEntry &e, int x, int y, bool sel) {
     if (e.unmounted) k = IconKind::Removable;
     if (e.network) k = IconKind::Network;
     if (e.network_volume) k = IconKind::NetworkDisk;
-    draw_icon(k, x, y, sel);
+    if (e.icon && !e.trash && !e.unmounted) {
+        // the icon file's image: the selected one of a dual icon, else the lightened one
+        if (Fl_RGB_Image *img = e.icon->image(sel)) img->draw(x, y);
+    } else draw_icon(k, x, y, sel);
     if (e.unmounted) {
         // ghosted: every other pixel in the background pen (as a disabled gadget)
         fl_color(pens()[MPEN_BACKGROUND]);
@@ -1062,9 +1066,12 @@ void IconDrawerList::update() {
         std::string name = it->path().filename().string();
         bool hidden = !name.empty() && name[0] == '.';
         if (hidden && !(display_flags & Disp_ShowHidden)) continue;
+        // icon files are the icons of other entries, not entries of their own
+        if (name.size() > 5 && name.compare(name.size() - 5, 5, ".info") == 0) continue;
         IconEntry e;
         e.path = it->path().string();
         e.label = name;
+        e.icon = get_disk_object(e.path);
         struct stat st;
         if (lstat(e.path.c_str(), &st) == 0) {
             e.mtime = st.st_mtime;
@@ -1122,6 +1129,7 @@ void IconVolumeList::update() {
         e.label = name + ":";   // volumes end with a colon (trimmed on the label)
         e.type = ST_ROOT;
         e.device = dev;
+        e.icon = get_disk_object(path, true);   // the volume's Disk.info
         add(std::move(e));
         return true;
     };
@@ -1182,6 +1190,7 @@ void IconVolumeList::update() {
         e.mtime = st.st_mtime;
         e.executable = S_ISREG(st.st_mode) && (st.st_mode & S_IXUSR);
         e.left_out = true;
+        e.icon = get_disk_object(p);
         add(std::move(e));
     }
     // Network Access (the network browser icon, after the special drawers)
