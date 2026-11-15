@@ -1,7 +1,9 @@
-# Wanderer dla X11 (Nirvana Desktop)
+# Rambler dla X11 (Nirvana Desktop)
 
-Port **Wanderera**, pulpitu i menedżera plików systemu AROS, na Linuksa i X11. Pulpit
-działa na FLTK, a okna obsługuje własny menedżer okien `wanderer-wm`, który przejmuje
+**Rambler** to port Wanderera, pulpitu i menedżera plików systemu AROS, na Linuksa i X11.
+**Lune** to port Zune, biblioteki interfejsu AROS. Nowe nazwy odróżniają ten port od
+oryginałów AROS; pliki i komentarze przeniesione z AROS nadal je wymieniają. Pulpit
+działa na FLTK, a okna obsługuje własny menedżer okien `rambler-wm`, który przejmuje
 rolę Intuition: ekrany, ramki okien, gadżety i menu na pasku ekranu.
 
 Wersja: **0.12.0**. Dotychczasowa Nirvana Desktop jest na gałęzi `nirvana-legacy`.
@@ -9,8 +11,8 @@ Wersja: **0.12.0**. Dotychczasowa Nirvana Desktop jest na gałęzi `nirvana-lega
 ## Instalacja
 
 ```sh
-tar xzf wanderer-x11-0.12.0.tar.gz
-cd wanderer-x11
+tar xzf rambler-x11-0.12.0.tar.gz
+cd rambler-x11
 ./install.sh
 ```
 
@@ -18,29 +20,29 @@ Instalator:
 
 1. doinstalowuje pakiety potrzebne do budowania (apt);
 2. buduje programy (jeśli w systemie nie ma FLTK 1.4, pobiera je i wkompilowuje);
-3. **tworzy paczkę Debiana** `wanderer-x11_WERSJA_ARCH.deb`;
+3. **tworzy paczkę Debiana** `rambler-x11_WERSJA_ARCH.deb`;
 4. usuwa pliki wcześniejszej instalacji zrobionej bez paczki (np. starszym `install.sh` do
    `/usr/local`), ale tylko te, które nie należą do żadnej paczki;
 5. instaluje paczkę przez apt.
 
-Paczka umieszcza programy w `/usr/bin`, a sesję w `/usr/share/xsessions/wanderer.desktop`,
-więc na ekranie logowania (LightDM, SDDM, GDM, XDM…) pojawia się sesja **Wanderer**.
+Paczka umieszcza programy w `/usr/bin`, a sesję w `/usr/share/xsessions/rambler.desktop`,
+więc na ekranie logowania (LightDM, SDDM, GDM, XDM…) pojawia się sesja **Rambler**.
 
 Paczka powstaje dla systemu, na którym jest budowana (jego bibliotek): buduj ją na
 każdym systemie przez `./install.sh` zamiast instalować `.deb` zrobiony gdzie indziej.
-Gdy Wanderer nie może się uruchomić, sesja mówi dlaczego, zamiast od razu wylogować;
-jej dziennik to `~/.cache/wanderer/session.log`.
+Gdy Rambler nie może się uruchomić, sesja mówi dlaczego, zamiast od razu wylogować;
+jej dziennik to `~/.cache/rambler/session.log`.
 
 Opcje:
 
 * `--package-only` – tylko buduje paczkę `.deb`;
 * `--no-deps` – nie doinstalowuje pakietów do budowania;
 * `--uninstall` – usuwa paczkę i pliki zainstalowane bez niej (można też użyć
-  `sudo apt remove wanderer-x11`).
+  `sudo apt remove rambler-x11`).
 
-Sesja uruchamia najpierw `wanderer-wm`, a potem `wanderer --backdrop`. Polecenie
-*Wanderer > Quit…* kończy sesję. Liczbę ekranów ustawisz w
-`~/.config/wanderer/session.conf`, na przykład `WANDERER_SCREENS=3`.
+Sesja uruchamia najpierw `rambler-wm`, a potem `rambler --backdrop`. Polecenie
+*Rambler > Quit…* kończy sesję. Liczbę ekranów ustawisz w
+`~/.config/rambler/session.conf`, na przykład `RAMBLER_SCREENS=3`.
 
 ## Obsługa
 
@@ -57,9 +59,9 @@ Sesja uruchamia najpierw `wanderer-wm`, a potem `wanderer --backdrop`. Polecenie
   miejscu zaznacza lassem. Ikony przeciągnięte do innego okna są przenoszone w obrębie
   dysku i kopiowane między dyskami.
 
-## Programy uruchamiane z Wandererem
+## Programy uruchamiane z Ramblerem
 
-Na początku sesji Wanderer uruchamia wszystko z `~/.config/wanderer/startup` (programy,
+Na początku sesji Rambler uruchamia wszystko z `~/.config/rambler/startup` (programy,
 skrypty, pliki `.desktop`), a potem wpisy autostartu XDG. Dwa typy narzędzi (ustawiane w
 oknie Informacje) działają jak w oryginalnym systemie:
 
@@ -72,13 +74,13 @@ startują po nim.
 
 ## Pozycje programów w menu Tools
 
-Program może dodać pozycje do menu Tools Wanderera (jak AddAppMenuItem). Ustawia na swoim
-głównym oknie właściwość `_WANDERER_APPMENU` (typ `UTF8_STRING`, nazwy pozycji rozdzielone
-znakiem NUL). Po wybraniu pozycji Wanderer:
+Program może dodać pozycje do menu Tools Ramblera (jak AddAppMenuItem). Ustawia na swoim
+głównym oknie właściwość `_RAMBLER_APPMENU` (typ `UTF8_STRING`, nazwy pozycji rozdzielone
+znakiem NUL). Po wybraniu pozycji Rambler:
 
-1. wpisuje ścieżki zaznaczonych ikon do właściwości okna `_WANDERER_APPMENU_ARGS`
+1. wpisuje ścieżki zaznaczonych ikon do właściwości okna `_RAMBLER_APPMENU_ARGS`
    (rozdzielone znakiem NUL);
-2. wysyła do okna ClientMessage `_WANDERER_APPMENU_PICK`, gdzie `l[0]` to numer pozycji, a
+2. wysyła do okna ClientMessage `_RAMBLER_APPMENU_PICK`, gdzie `l[0]` to numer pozycji, a
    `l[1]` liczba ścieżek.
 
 Pozycje znikają, gdy okno się zamknie albo właściwość zostanie usunięta.
@@ -86,16 +88,16 @@ Pozycje znikają, gdy okno się zamknie albo właściwość zostanie usunięta.
 ## Ikony programów w oknie głównym
 
 Program może też położyć ikonę w oknie głównym (jak AddAppIcon): właściwość
-`_WANDERER_APPICON` (`UTF8_STRING`, po jednej nazwie na ikonę, rozdzielone znakiem NUL) na
+`_RAMBLER_APPICON` (`UTF8_STRING`, po jednej nazwie na ikonę, rozdzielone znakiem NUL) na
 swoim głównym oknie. Otwarcie ikony albo upuszczenie na nią innych ikon wysyła do okna
-ClientMessage `_WANDERER_APPICON_MESSAGE` (`l[0]` numer ikony, `l[1]` liczba ścieżek);
-ścieżki upuszczonych ikon są we właściwości `_WANDERER_APPICON_ARGS` (rozdzielone znakiem
+ClientMessage `_RAMBLER_APPICON_MESSAGE` (`l[0]` numer ikony, `l[1]` liczba ścieżek);
+ścieżki upuszczonych ikon są we właściwości `_RAMBLER_APPICON_ARGS` (rozdzielone znakiem
 NUL).
 
 `l[2]` mówi, dlaczego wysłano komunikat (numery AMCLASSICON): 0 ikonę otwarto albo
 upuszczono na nią ikony; 4 Zapamiętaj położenie, 5 Zapomnij położenie, 8 Usuń, 10 Opróżnij
 kosz wybrano z menu Ikona, gdy była zaznaczona. Te pozycje są dostępne dla ikony tylko
-wtedy, gdy program deklaruje, że je obsługuje: właściwość `_WANDERER_APPICON_SUPPORTS`
+wtedy, gdy program deklaruje, że je obsługuje: właściwość `_RAMBLER_APPICON_SUPPORTS`
 (`CARDINAL`, po jednej na ikonę, w kolejności) z ustawionym bitem *n* dla klasy *n* (jak
 znaczniki WBAPPICONA_Supports). Bez niej ikona obsługuje tylko otwarcie.
 
@@ -126,7 +128,7 @@ nie da się odczytać, jest rysowana jako prostokąt.
 ## Języki
 
 Interfejs mówi językiem użytkownika (`LANGUAGE`, `LC_ALL`, `LC_MESSAGES`, `LANG`).
-Teksty pochodzą z katalogów w `share/wanderer/catalogs`, po jednym w wierszu: tekst
+Teksty pochodzą z katalogów w `share/rambler/catalogs`, po jednym w wierszu: tekst
 angielski, TAB, tłumaczenie. W paczce jest polski (`polski.catalog`). Tekst bez
 tłumaczenia pokazuje się po angielsku.
 

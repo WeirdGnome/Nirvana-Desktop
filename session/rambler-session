@@ -1,0 +1,82 @@
+#!/bin/sh
+# Rambler for X11 - the session started by the display manager.
+# The window manager (screens, frames, menus in the screen's bar) runs first, then Rambler
+# with its root window as the backdrop. The session ends when Rambler quits
+# (Rambler > Quit...).
+#
+# Licensed under the AROS Public License, version 1.1.
+
+# the settings of an earlier version (named Wanderer then): copied once, the old ones stay
+CONF="${XDG_CONFIG_HOME:-$HOME/.config}"
+if [ ! -e "$CONF/rambler" ] && [ -d "$CONF/wanderer" ]; then
+    cp -a "$CONF/wanderer" "$CONF/rambler" 2>/dev/null
+    [ -f "$CONF/rambler/zune.prefs" ] && mv -f "$CONF/rambler/zune.prefs" "$CONF/rambler/lune.prefs"
+    [ -f "$CONF/rambler/zune.windows" ] && mv -f "$CONF/rambler/zune.windows" "$CONF/rambler/lune.windows"
+    [ -f "$CONF/rambler/wanderer.prefs" ] && mv -f "$CONF/rambler/wanderer.prefs" "$CONF/rambler/rambler.prefs"
+    [ -f "$CONF/rambler/session.conf" ] && sed -i 's/WANDERER_/RAMBLER_/g' "$CONF/rambler/session.conf"
+fi
+
+# the user's own settings for the session (e.g. RAMBLER_SCREENS=3)
+[ -r "$HOME/.config/rambler/session.conf" ] && . "$HOME/.config/rambler/session.conf"
+
+export XDG_CURRENT_DESKTOP=Rambler
+export XDG_SESSION_DESKTOP=rambler
+export DESKTOP_SESSION=rambler
+
+# a session bus if the display manager has not started one
+if [ -z "$DBUS_SESSION_BUS_ADDRESS" ] && command -v dbus-launch >/dev/null 2>&1; then
+    eval "$(dbus-launch --sh-syntax --exit-with-session)"
+fi
+
+# the X resources and the keyboard of the user
+[ -r "$HOME/.Xresources" ] && command -v xrdb >/dev/null 2>&1 && xrdb -merge "$HOME/.Xresources"
+
+# what the programs say goes to a log (the display manager's own log is hard to find)
+LOG="${XDG_CACHE_HOME:-$HOME/.cache}/rambler/session.log"
+mkdir -p "$(dirname "$LOG")" 2>/dev/null && { [ -f "$LOG" ] && mv -f "$LOG" "$LOG.old"; exec >>"$LOG" 2>&1; }
+echo "Rambler session $(date)"
+
+# Rambler cannot run (a library missing - a package built on another system): the
+# session does not end at once; it says why and gives a shell to put it right
+cannot_run() {
+    msg="Rambler could not be started.
+
+$1
+
+The session log: $LOG
+Build the package on this system: ./install.sh in the sources."
+    echo "$msg"
+    if command -v xmessage >/dev/null 2>&1; then
+        xmessage -center -buttons "Shell:2,Log out:0" "$msg"
+        [ $? -eq 2 ] && { for t in x-terminal-emulator xterm; do command -v $t >/dev/null 2>&1 && { $t; break; }; done; }
+    else
+        for t in x-terminal-emulator xterm; do command -v $t >/dev/null 2>&1 && { $t; break; }; done
+    fi
+}
+for p in rambler-wm rambler; do
+    if ! command -v $p >/dev/null 2>&1; then cannot_run "$p is not installed."; exit 1; fi
+    missing=$(ldd "$(command -v $p)" 2>&1 | grep -E "not found|version .* not found")
+    if [ -n "$missing" ]; then cannot_run "$p: $missing"; exit 1; fi
+done
+
+rambler-wm --screens "${RAMBLER_SCREENS:-2}" &
+WM=$!
+sleep 0.3
+
+# Rambler: restarted if it crashes, the session ends when it quits normally
+while :; do
+    rambler --backdrop
+    status=$?
+    [ "$status" -eq 0 ] && break
+    # crashed: again, unless it keeps crashing at once
+    now=$(date +%s)
+    if [ -n "$last" ] && [ $((now - last)) -lt 5 ]; then
+        cannot_run "rambler keeps stopping at once (exit status $status)."
+        break
+    fi
+    last=$now
+done
+
+kill "$WM" 2>/dev/null
+wait "$WM" 2>/dev/null
+exit 0

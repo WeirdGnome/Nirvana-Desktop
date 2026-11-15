@@ -1,7 +1,7 @@
 #!/bin/sh
-# Wanderer for X11 - the installer. It builds a Debian package and installs it.
+# Rambler for X11 - the installer. It builds a Debian package and installs it.
 #
-#   ./install.sh                 builds wanderer-x11_VERSION_ARCH.deb and installs it;
+#   ./install.sh                 builds rambler-x11_VERSION_ARCH.deb and installs it;
 #                                files of an earlier installation that is not from the
 #                                package (make install, an older install.sh) are removed
 #   ./install.sh --package-only  only builds the package (into this directory)
@@ -9,7 +9,7 @@
 #   ./install.sh --uninstall     removes the package and any files installed without it
 #
 # The package puts the programs into /usr/bin and the session into /usr/share/xsessions,
-# so "Wanderer" appears among the sessions of the display manager.
+# so "Rambler" appears among the sessions of the display manager.
 #
 # Licensed under the AROS Public License, version 1.1.
 set -e
@@ -29,7 +29,7 @@ done
 
 SRC=$(cd "$(dirname "$0")" && pwd)
 BUILD="$SRC/build"
-PKGNAME=wanderer-x11
+PKGNAME=rambler-x11
 VERSION=$(head -n1 "$SRC/VERSION")
 SUDO=""
 [ "$(id -u)" -ne 0 ] && command -v sudo >/dev/null 2>&1 && SUDO=sudo
@@ -48,7 +48,11 @@ DEB="$SRC/${PKGNAME}_${VERSION}_${ARCH}.deb"
 # them; a file is removed only if no installed package owns it.
 remove_unpackaged() {
     FOUND=""
-    for f in /usr/local/bin/wanderer /usr/local/bin/wanderer-wm /usr/local/bin/wanderer-session \
+    for f in /usr/local/bin/rambler /usr/local/bin/rambler-wm /usr/local/bin/rambler-session \
+             /usr/bin/rambler /usr/bin/rambler-wm /usr/bin/rambler-session \
+             /usr/share/xsessions/rambler.desktop /usr/local/share/xsessions/rambler.desktop \
+             /usr/local/share/doc/rambler-x11/LICENSE /usr/local/share/doc/rambler-x11/README.md \
+             /usr/local/bin/wanderer /usr/local/bin/wanderer-wm /usr/local/bin/wanderer-session \
              /usr/bin/wanderer /usr/bin/wanderer-wm /usr/bin/wanderer-session \
              /usr/share/xsessions/wanderer.desktop /usr/local/share/xsessions/wanderer.desktop \
              /usr/local/share/doc/wanderer-x11/LICENSE /usr/local/share/doc/wanderer-x11/README.md; do
@@ -69,7 +73,15 @@ remove_unpackaged() {
     if [ -n "$FOUND" ]; then
         say "Removing an installation that is not from the package"
         for f in $FOUND; do $SUDO rm -f "$f" && echo "  removed $f"; done
-        $SUDO rmdir /usr/local/share/doc/wanderer-x11 2>/dev/null || true
+        $SUDO rmdir /usr/local/share/doc/rambler-x11 /usr/local/share/doc/wanderer-x11 2>/dev/null || true
+    fi
+}
+
+# the package of the earlier name (wanderer-x11): the new one replaces it
+remove_old_package() {
+    if dpkg -s wanderer-x11 >/dev/null 2>&1; then
+        say "Removing the package of the earlier name, wanderer-x11"
+        $SUDO apt-get remove -y wanderer-x11 2>/dev/null || $SUDO dpkg -r wanderer-x11
     fi
 }
 
@@ -79,7 +91,7 @@ if [ "$UNINSTALL" -eq 1 ]; then
         $SUDO apt-get remove -y "$PKGNAME" 2>/dev/null || $SUDO dpkg -r "$PKGNAME"
     fi
     remove_unpackaged
-    say "Done. Wanderer is no longer installed."
+    say "Done. Rambler is no longer installed."
     exit 0
 fi
 
@@ -101,23 +113,23 @@ fi
 # --- building ---------------------------------------------------------------------------------
 say "Building $PKGNAME $VERSION (FLTK 1.4 is downloaded and built in if the system has none)"
 cmake -S "$SRC" -B "$BUILD" -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr \
-      -DWANDERER_XSESSIONS_DIR=/usr/share/xsessions
-cmake --build "$BUILD" -j"$(nproc 2>/dev/null || echo 2)" --target wanderer wanderer-wm
+      -DRAMBLER_XSESSIONS_DIR=/usr/share/xsessions
+cmake --build "$BUILD" -j"$(nproc 2>/dev/null || echo 2)" --target rambler rambler-wm
 
 # --- the package ------------------------------------------------------------------------------
 say "Making the package"
 ROOT="$BUILD/pkgroot"
 rm -rf "$ROOT"
-DESTDIR="$ROOT" cmake --install "$BUILD" --component wanderer >/dev/null
+DESTDIR="$ROOT" cmake --install "$BUILD" --component rambler >/dev/null
 rm -f "$BUILD"/install_manifest*.txt   # (a DESTDIR install is no installation)
-strip --strip-unneeded "$ROOT/usr/bin/wanderer" "$ROOT/usr/bin/wanderer-wm" 2>/dev/null || true
+strip --strip-unneeded "$ROOT/usr/bin/rambler" "$ROOT/usr/bin/rambler-wm" 2>/dev/null || true
 
 # the libraries the programs need: their packages (dpkg-shlibdeps)
 DEPENDS=""
 if command -v dpkg-shlibdeps >/dev/null 2>&1; then
     mkdir -p "$BUILD/shlibs/debian"
     echo "Source: $PKGNAME" > "$BUILD/shlibs/debian/control"
-    DEPENDS=$(cd "$BUILD/shlibs" && dpkg-shlibdeps -O "$ROOT/usr/bin/wanderer" "$ROOT/usr/bin/wanderer-wm" 2>/dev/null \
+    DEPENDS=$(cd "$BUILD/shlibs" && dpkg-shlibdeps -O "$ROOT/usr/bin/rambler" "$ROOT/usr/bin/rambler-wm" 2>/dev/null \
               | sed -n 's/^shlibs:Depends=//p')
 fi
 SIZE=$(du -sk "$ROOT" | cut -f1)
@@ -134,9 +146,11 @@ Suggests: x-terminal-emulator
 Section: x11
 Priority: optional
 Homepage: https://github.com/WeirdGnome/Nirvana-Desktop
-Description: Wanderer for X11 - a port of the AROS desktop
- Wanderer, the desktop and file manager of the AROS Research Operating
- System, ported to Linux and X11, with its own window manager (screens that
+Conflicts: wanderer-x11
+Replaces: wanderer-x11
+Description: Rambler for X11 - a port of the AROS desktop
+ Rambler is Wanderer, the desktop and file manager of the AROS Research
+ Operating System, ported to Linux and X11, with its own window manager (screens that
  are dragged down by their title bar, window frames with gadgets, menus in
  the screen's title bar) and a session for the display manager.
  .
@@ -152,12 +166,13 @@ if [ "$PACKAGE_ONLY" -eq 1 ]; then
 fi
 
 # --- installing -------------------------------------------------------------------------------
+remove_old_package
 remove_unpackaged
 say "Installing the package"
 if command -v apt-get >/dev/null 2>&1; then
     # apt reads the package as its own user (_apt), who cannot see into a home directory:
     # a copy in a world-readable temporary directory (no "unsandboxed download" notice)
-    TMPDEB="$(mktemp -d /tmp/wanderer-x11.XXXXXX)"
+    TMPDEB="$(mktemp -d /tmp/rambler-x11.XXXXXX)"
     cp "$DEB" "$TMPDEB/"
     chmod 755 "$TMPDEB"; chmod 644 "$TMPDEB/$(basename "$DEB")"
     $SUDO apt-get install -y --reinstall "$TMPDEB/$(basename "$DEB")"
@@ -167,5 +182,5 @@ else
 fi
 
 say "Done."
-echo "Log out and choose \"Wanderer\" from the sessions of the login screen."
+echo "Log out and choose \"Rambler\" from the sessions of the login screen."
 echo "To remove it:  ./install.sh --uninstall   (or: sudo apt remove $PKGNAME)"

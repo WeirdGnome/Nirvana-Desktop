@@ -1,15 +1,17 @@
-# Wanderer for X11 (Nirvana Desktop)
+# Rambler for X11 (Nirvana Desktop)
 
-A port of **Wanderer**, the desktop and file manager of the AROS Research Operating
-System, to Linux and X11. It runs as an ordinary X11 program on top of FLTK.
+**Rambler** is a port of Wanderer, the desktop and file manager of the AROS Research
+Operating System, to Linux and X11. It runs as an ordinary X11 program on top of FLTK.
+**Lune** is its port of Zune, the AROS toolkit. The new names keep this port apart from
+the AROS originals; files and comments that come from AROS still name them.
 
 This repository starts the port from scratch. The earlier Nirvana Desktop code (FLTK
 desktop, GPL-3.0) is kept on the `nirvana-legacy` branch.
 
 Parts of the port:
 
-* **Zune on FLTK** (`wanderer/zune`) – the AROS toolkit classes Wanderer is built on;
-* **Wanderer** (`wanderer`) – the desktop, drawer windows, icons, menus and tools;
+* **Lune on FLTK** (`rambler/lune`) – the toolkit classes (ported from Zune) Rambler is built on;
+* **Rambler** (`rambler`) – the desktop, drawer windows, icons, menus and tools;
 * **window manager** (`wm`, later) – what Intuition does on AROS: window frames and
   gadgets, screens, screen dragging.
 
@@ -18,8 +20,8 @@ Version: **0.12.0**
 ## Installing
 
 ```sh
-tar xzf wanderer-x11-0.12.0.tar.gz
-cd wanderer-x11
+tar xzf rambler-x11-0.12.0.tar.gz
+cd rambler-x11
 ./install.sh
 ```
 
@@ -27,35 +29,35 @@ The installer:
 
 1. installs the packages needed for building (apt);
 2. builds the programs (FLTK 1.4 is downloaded and built in if the system has none);
-3. **makes a Debian package** `wanderer-x11_VERSION_ARCH.deb`;
+3. **makes a Debian package** `rambler-x11_VERSION_ARCH.deb`;
 4. removes the files of an earlier installation that is not from the package (e.g. an
    older `install.sh` into `/usr/local`) - only files that no package owns;
 5. installs the package with apt.
 
 The package puts the programs into `/usr/bin` and the session into
-`/usr/share/xsessions/wanderer.desktop`, so **Wanderer** appears among the sessions of
+`/usr/share/xsessions/rambler.desktop`, so **Rambler** appears among the sessions of
 the display manager (LightDM, SDDM, GDM, XDM …).
 
 The package is made for the system it is built on (its libraries): build it on each
-system with `./install.sh` rather than installing a `.deb` made elsewhere. If Wanderer
+system with `./install.sh` rather than installing a `.deb` made elsewhere. If Rambler
 cannot start, the session says why instead of logging out at once; its log is
-`~/.cache/wanderer/session.log`.
+`~/.cache/rambler/session.log`.
 
 Options:
 
 * `--package-only` - only builds the `.deb`;
 * `--no-deps` - does not install the build dependencies;
 * `--uninstall` - removes the package and any files installed without it (or
-  `sudo apt remove wanderer-x11`).
+  `sudo apt remove rambler-x11`).
 
-The session (`wanderer-session`) starts the window manager `wanderer-wm`, then
-`wanderer --backdrop`. Choosing *Wanderer > Quit…* ends the session. The number of
-screens is set in `~/.config/wanderer/session.conf`, e.g. `WANDERER_SCREENS=3`.
+The session (`rambler-session`) starts the window manager `rambler-wm`, then
+`rambler --backdrop`. Choosing *Rambler > Quit…* ends the session. The number of
+screens is set in `~/.config/rambler/session.conf`, e.g. `RAMBLER_SCREENS=3`.
 
 To try it in a running X session without another window manager:
 
 ```sh
-wanderer-wm & wanderer --backdrop
+rambler-wm & rambler --backdrop
 ```
 
 ## Using it
@@ -74,9 +76,9 @@ wanderer-wm & wanderer --backdrop
   empty space. Dragging icons to another window moves them within a volume and copies
   them across volumes.
 
-## Programs started with Wanderer
+## Programs started with Rambler
 
-At the start of a session Wanderer starts everything in `~/.config/wanderer/startup`
+At the start of a session Rambler starts everything in `~/.config/rambler/startup`
 (programs, scripts, `.desktop` files), then the XDG autostart entries. Two tool types (set in
 Information) work as on the original system:
 
@@ -88,13 +90,13 @@ A program that cannot be started shows a requester, and the rest start after it.
 
 ## Programs' items in the Tools menu
 
-A program can add items to Wanderer's Tools menu (as AddAppMenuItem does). It sets the
-property `_WANDERER_APPMENU` (type `UTF8_STRING`, the item names separated by NUL) on its
-top-level window. When an item is picked, Wanderer:
+A program can add items to Rambler's Tools menu (as AddAppMenuItem does). It sets the
+property `_RAMBLER_APPMENU` (type `UTF8_STRING`, the item names separated by NUL) on its
+top-level window. When an item is picked, Rambler:
 
 1. puts the paths of the selected icons into the window's property
-   `_WANDERER_APPMENU_ARGS` (separated by NUL);
-2. sends the window a ClientMessage `_WANDERER_APPMENU_PICK`, with `l[0]` the item's
+   `_RAMBLER_APPMENU_ARGS` (separated by NUL);
+2. sends the window a ClientMessage `_RAMBLER_APPMENU_PICK`, with `l[0]` the item's
    number and `l[1]` the number of paths.
 
 The items go away when the window closes or the property is deleted.
@@ -102,15 +104,15 @@ The items go away when the window closes or the property is deleted.
 ## Programs' icons on the root window
 
 A program can also put an icon on the root window (as AddAppIcon does): the property
-`_WANDERER_APPICON` (`UTF8_STRING`, one name for each icon, separated by NUL) on its
+`_RAMBLER_APPICON` (`UTF8_STRING`, one name for each icon, separated by NUL) on its
 top-level window. Opening the icon, or dropping icons onto it, sends the window a
-ClientMessage `_WANDERER_APPICON_MESSAGE` (`l[0]` the icon's number, `l[1]` the number of
-paths); the dropped icons' paths are in `_WANDERER_APPICON_ARGS` (separated by NUL).
+ClientMessage `_RAMBLER_APPICON_MESSAGE` (`l[0]` the icon's number, `l[1]` the number of
+paths); the dropped icons' paths are in `_RAMBLER_APPICON_ARGS` (separated by NUL).
 
 `l[2]` says why the message was sent (the AMCLASSICON numbers): 0 the icon was opened or
 icons were dropped on it; 4 Snapshot, 5 Unsnapshot, 8 Delete, 10 Empty Trash were picked
 in the Icon menu while it was selected. Those items are enabled for the icon only when the
-program says it takes them: the property `_WANDERER_APPICON_SUPPORTS` (`CARDINAL`, one for
+program says it takes them: the property `_RAMBLER_APPICON_SUPPORTS` (`CARDINAL`, one for
 each icon, in order) with bit *n* set for class *n* (as the WBAPPICONA_Supports tags).
 Without it an icon takes Open only.
 
@@ -141,13 +143,13 @@ cannot be read is drawn as a rectangle.
 ## Languages
 
 The interface follows the user's language (`LANGUAGE`, `LC_ALL`, `LC_MESSAGES`, `LANG`).
-The texts come from catalogs in `share/wanderer/catalogs`, one line per text: the English
+The texts come from catalogs in `share/rambler/catalogs`, one line per text: the English
 text, a TAB, the translation. Polish (`polski.catalog`) is included. A text without a
 translation shows in English.
 
 ## Licence
 
-Wanderer and Zune (AROS's toolkit compatible with the classic object-oriented GUI
+Rambler and Lune (AROS's toolkit compatible with the classic object-oriented GUI
 toolkit) are distributed by the AROS Development Team under the **AROS Public License,
 version 1.1** (APL). The licence is in [`LICENSE`](LICENSE).
 
@@ -168,11 +170,11 @@ Source of the port: <https://github.com/aros-development-team/AROS>,
 
 | Here | Ported from (AROS) |
 |---|---|
-| `zune/pens.*` | `muimaster` pens (`MPEN_*`) and the default screen palette |
-| `zune/frame.*` | `muimaster/frame.c` – the built-in frames |
-| `zune/area.*`, `zune/group.*` … | the Zune classes Wanderer uses (Area, Group, Text, Button, String, Window, Application, Menustrip) |
+| `lune/pens.*` | `muimaster` pens (`MPEN_*`) and the default screen palette |
+| `lune/frame.*` | `muimaster/frame.c` – the built-in frames |
+| `lune/area.*`, `lune/group.*` … | the Lune classes Rambler uses (Area, Group, Text, Button, String, Window, Application, Menustrip) |
 | `iconlist.*`, `icon.*` … | `Wanderer/Classes` |
-| `wanderer.*`, `iconwindow*` … | `Wanderer/*.c` |
+| `rambler.*`, `iconwindow*` … | `Wanderer/*.c` |
 | `tools/*` | `Wanderer/Tools` (Execute Command, Info, Rename, New Drawer, Disk Info) |
 
 ## Naming

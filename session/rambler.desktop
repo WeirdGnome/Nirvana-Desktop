@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=XSession
+Name=Rambler
+Name[pl]=Rambler
+Comment=Rambler for X11 - a port of the AROS desktop
+Comment[pl]=Rambler dla X11 - port pulpitu AROS
+Exec=rambler-session
+TryExec=rambler-session
+DesktopNames=Rambler

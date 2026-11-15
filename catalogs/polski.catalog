@@ -1,5 +1,5 @@
-# Wanderer for X11 - polski (Polish). One text per line: English TAB translation; \n is a new line.
-Wanderer	Wanderer
+# Rambler for X11 - polski (Polish). One text per line: English TAB translation; \n is a new line.
+Rambler	Rambler
 Window	Okno
 Icon	Ikona
 Tools	Narzędzia
@@ -70,7 +70,7 @@ Turn Off	Wyłącz
 Restart	Uruchom ponownie
 Rename	Zmień nazwę
 Execute a file	Wykonaj plik
-Wanderer Preferences	Ustawienia Wanderera
+Rambler Preferences	Ustawienia Ramblera
 GUI Settings	Wygląd interfejsu
 Disk Info	Informacje o dysku
 Assigns	Przypisania
@@ -81,7 +81,7 @@ Copying	Kopiowanie
 Moving	Przenoszenie
 Deleting	Usuwanie
 Moving to the trash	Przenoszenie do kosza
-About Wanderer	O Wandererze
+About Rambler	O Ramblerze
 Command:	Polecenie:
 Name:	Nazwa:
 Contents:	Zawartość:
@@ -134,8 +134,8 @@ Groups:	Grupy:
 The colours apply at once, also to the window frames and the screens.	Kolory działają od razu, także w ramkach okien i na ekranach.
 Find the files and drawers whose names match\n(wildcards: * and ?) and, if given, that contain a text	Szuka plików i szuflad o nazwach pasujących do wzorca\n(znaki * i ?) i, jeśli podano, zawierających tekst
 Enter the name of the new drawer:	Podaj nazwę nowej szuflady:
-Do you really want to quit Wanderer?	Czy na pewno zakończyć pracę Wanderera?
-Files are still being copied, moved or deleted.\nQuit Wanderer anyway?	Pliki są wciąż kopiowane, przenoszone lub usuwane.\nZakończyć mimo to?
+Do you really want to quit Rambler?	Czy na pewno zakończyć pracę Ramblera?
+Files are still being copied, moved or deleted.\nQuit Rambler anyway?	Pliki są wciąż kopiowane, przenoszone lub usuwane.\nZakończyć mimo to?
 Turn the computer off, or restart it?\nPrograms still running are ended.	Wyłączyć komputer czy uruchomić go ponownie?\nDziałające programy zostaną zakończone.
 Files are still being copied, moved or deleted.\nTurn off anyway?	Pliki są wciąż kopiowane, przenoszone lub usuwane.\nWyłączyć mimo to?
 Do you really want to delete\neverything in the trash?\nThis cannot be undone.	Czy na pewno usunąć\nwszystko z kosza?\nTego nie da się cofnąć.
@@ -217,13 +217,13 @@ New	Nowy
 Link	Dowiązanie
 Tool	Narzędzie
 Project	Projekt
-About Wanderer...	O Wandererze...
+About Rambler...	O Ramblerze...
 Internal Classes:	Klasy wewnętrzne:
 External Classes:	Klasy zewnętrzne:
-X11 port: Wanderer X11 contributors	Port na X11: autorzy Wanderer X11
+X11 port: Rambler X11 contributors	Port na X11: autorzy Rambler X11
 Network Access..	Dostęp do sieci..
 Network Access:	Dostęp do sieci:
-Zune Preferences	Preferencje Zune
+Lune Preferences	Preferencje Lune
 Windows	Okna
 Groups	Grupy
 Buttons	Przyciski
@@ -268,7 +268,7 @@ Navigation	Nawigacja
 Method:	Sposób:
 Icon drop mode:	Upuszczanie ikon:
 Root Window	Okno główne
-Wanderer Screen Title	Tytuł ekranu Wanderera
+Rambler Screen Title	Tytuł ekranu Ramblera
 Title:	Tytuł:
 View Settings	Ustawienia widoków
 Root window	Okno główne

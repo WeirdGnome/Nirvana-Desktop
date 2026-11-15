@@ -1,5 +1,21 @@
 # Lista zmian
 
+## 0.13.0 (w przygotowaniu)
+
+### Zmiany
+- **Port nazywa się teraz Rambler, a jego biblioteka interfejsu Lune**, żeby odróżnić go
+  od oryginałów AROS (Wanderer i Zune). Programy to `rambler`, `rambler-wm` i
+  `rambler-session`, paczka to `rambler-x11` (zastępuje `wanderer-x11`), sesja nazywa się
+  „Rambler”, ustawienia są w `~/.config/rambler`, a właściwości X to `_RAMBLER_*`. Pliki i
+  komentarze przeniesione z AROS nadal podają oryginalne nazwy.
+- Ustawienia wcześniejszej wersji są kopiowane z `~/.config/wanderer` raz, przy pierwszym
+  uruchomieniu (`zune.prefs` staje się `lune.prefs`, `wanderer.prefs` – `rambler.prefs`);
+  `install.sh` usuwa paczkę `wanderer-x11` i pliki o starej nazwie.
+
+### Poprawki
+- Po polsku strona Paski przewijania w preferencjach Lune nazywała się tak samo jak strona
+  Suwaki.
+
 ## 0.12.0 – 2026-11-15
 
 - **Zmienione klawisze:** Return naciska przyciski, a Spacja zaznacza pola wyboru, jak w

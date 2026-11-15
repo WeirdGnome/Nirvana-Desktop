@@ -2,7 +2,7 @@
     Port to FLTK/X11: Nirvana Desktop contributors.
     Licensed under the AROS Public License, version 1.1 (see LICENSE in the repository root).
 
-    wanderer-wm: the window manager of the Wanderer port - what Intuition does on AROS.
+    rambler-wm: the window manager of the Rambler port - what Intuition does on AROS.
 
       Screens   every screen is a window as large as the display holding its own title
                 bar (the screen's title at the left, the depth gadget at the right) and the
@@ -16,7 +16,7 @@
                 right corner. A click activates a window without bringing it to the front;
                 the depth gadget brings it to the front, or sends it back if it is already
                 in front. Zoom switches between two sizes.
-      Backdrop  a window of the type _NET_WM_WINDOW_TYPE_DESKTOP (Wanderer's root window as a
+      Backdrop  a window of the type _NET_WM_WINDOW_TYPE_DESKTOP (Rambler's root window as a
                 backdrop) fills its screen below the title bar, behind every other window,
                 without a frame.
 
@@ -83,7 +83,7 @@ const int SIZE_W = 16, SIZE_H = 16;
 
 Atom WM_PROTOCOLS, WM_DELETE_WINDOW, WM_STATE, WM_TAKE_FOCUS, NET_WM_NAME, UTF8_STRING, NET_WM_WINDOW_TYPE,
     NET_WM_WINDOW_TYPE_DESKTOP, NET_WM_WINDOW_TYPE_DOCK, NET_SUPPORTED, NET_ACTIVE_WINDOW, NET_CLIENT_LIST,
-    NET_SUPPORTING_WM_CHECK, NET_WM_STATE, NET_WM_STATE_FULLSCREEN, WANDERER_SCREEN_TITLE, WANDERER_PALETTE,
+    NET_SUPPORTING_WM_CHECK, NET_WM_STATE, NET_WM_STATE_FULLSCREEN, RAMBLER_SCREEN_TITLE, RAMBLER_PALETTE,
     NET_WM_STATE_MAXIMIZED_VERT, NET_WM_STATE_MAXIMIZED_HORZ, NET_CLOSE_WINDOW, NET_FRAME_EXTENTS, NET_WORKAREA,
     NET_NUMBER_OF_DESKTOPS, NET_CURRENT_DESKTOP, NET_DESKTOP_GEOMETRY;
 
@@ -93,7 +93,7 @@ struct Client {
     Window win = 0, frame = 0;
     WScreen *screen = nullptr;
     std::string title;
-    std::string screen_title;                 // _WANDERER_SCREEN_TITLE: the screen's title while active
+    std::string screen_title;                 // _RAMBLER_SCREEN_TITLE: the screen's title while active
     int x = 0, y = 0, w = 100, h = 100;       // the frame, on its screen
     int alt_x = 0, alt_y = 0, alt_w = 0, alt_h = 0;   // the other size (zoom)
     bool backdrop = false, active = false, zoomed = false;
@@ -121,7 +121,7 @@ struct WScreen {
 };
 
 std::vector<WScreen *> screens;               // back to front
-WScreen *main_screen = nullptr;               // the Wanderer Screen (the default public screen)
+WScreen *main_screen = nullptr;               // the Rambler Screen (the default public screen)
 
 // AppIcons: the icons programs put out (the system tray, XEmbed) sit in the main screen's
 // title bar, left of its depth gadget
@@ -544,7 +544,7 @@ void manage(Window w, bool existing) {
     c->win = w;
     c->screen = front_screen();
     c->title = window_title(w);
-    c->screen_title = utf8_prop(w, WANDERER_SCREEN_TITLE);
+    c->screen_title = utf8_prop(w, RAMBLER_SCREEN_TITLE);
     c->backdrop = has_type(w, NET_WM_WINDOW_TYPE_DESKTOP);
     read_protocols(c);
     // the kinds of windows that have no frame
@@ -701,11 +701,11 @@ void screen_moved(WScreen *s) {
 
 // --------------------------------------------------------------------------------------------
 // Menus: while the right mouse button is held over a window that has menus
-// (_WANDERER_MENU), the screen's title bar shows the menu titles of that window; the menu
+// (_RAMBLER_MENU), the screen's title bar shows the menu titles of that window; the menu
 // under the pointer drops down, a sub-menu opens beside its item; releasing the button over
-// an item picks it (_WANDERER_MENU_PICK is sent to the window).
+// an item picks it (_RAMBLER_MENU_PICK is sent to the window).
 // --------------------------------------------------------------------------------------------
-Atom WANDERER_MENU, WANDERER_MENU_PICK;
+Atom RAMBLER_MENU, RAMBLER_MENU_PICK;
 
 struct MenuItem {
     int id = 0, flags = 0;               // 1 disabled, 2 check mark item, 4 checked, 8 line after
@@ -735,7 +735,7 @@ bool read_menu(Client *c, std::vector<MenuItem> &out) {
     unsigned long n, after;
     unsigned char *data = nullptr;
     out.clear();
-    if (XGetWindowProperty(dpy, c->win, WANDERER_MENU, 0, 1 << 16, False, UTF8_STRING, &type, &fmt, &n, &after, &data) != Success || !data)
+    if (XGetWindowProperty(dpy, c->win, RAMBLER_MENU, 0, 1 << 16, False, UTF8_STRING, &type, &fmt, &n, &after, &data) != Success || !data)
         return false;
     std::string all((char *)data, n);
     XFree(data);
@@ -984,7 +984,7 @@ void send_menu_pick(Client *c, int id) {
     XEvent e = {};
     e.xclient.type = ClientMessage;
     e.xclient.window = c->win;
-    e.xclient.message_type = WANDERER_MENU_PICK;
+    e.xclient.message_type = RAMBLER_MENU_PICK;
     e.xclient.format = 32;
     e.xclient.data.l[0] = id;
     XSendEvent(dpy, c->win, False, NoEventMask, &e);
@@ -1232,7 +1232,7 @@ void key_press(XKeyEvent &e) {
 
 int on_error(Display *, XErrorEvent *e) {
     if (e->error_code == BadAccess && e->request_code == 2) {   // ChangeWindowAttributes on root
-        fprintf(stderr, "wanderer-wm: another window manager is running\n");
+        fprintf(stderr, "rambler-wm: another window manager is running\n");
         exit(1);
     }
     return 0;   // windows that went away meanwhile
@@ -1346,10 +1346,10 @@ void apply_palette(const std::string &bg, const std::string &sd, const std::stri
     xft_ready = true;
 }
 
-// The GUI settings changed the colours (Wanderer sets _WANDERER_PALETTE on the root window):
+// The GUI settings changed the colours (Rambler sets _RAMBLER_PALETTE on the root window):
 // the pens again, every frame and screen bar drawn again
 void palette_changed() {
-    std::string v = utf8_prop(root, WANDERER_PALETTE);
+    std::string v = utf8_prop(root, RAMBLER_PALETTE);
     char a[8] = {}, b[8] = {}, c[8] = {}, d[8] = {};
     if (sscanf(v.c_str(), "%6s %6s %6s %6s", a, b, c, d) != 4) return;
     apply_palette(a, b, c, d);   // background, shadow, shine, fill
@@ -1368,7 +1368,7 @@ void palette_changed() {
 
 int main(int argc, char **argv) {
     dpy = XOpenDisplay(nullptr);
-    if (!dpy) { fprintf(stderr, "wanderer-wm: cannot open the display\n"); return 1; }
+    if (!dpy) { fprintf(stderr, "rambler-wm: cannot open the display\n"); return 1; }
     scr = DefaultScreen(dpy);
     root = RootWindow(dpy, scr);
     SW = DisplayWidth(dpy, scr);
@@ -1400,17 +1400,17 @@ int main(int argc, char **argv) {
     NET_NUMBER_OF_DESKTOPS = atom("_NET_NUMBER_OF_DESKTOPS");
     NET_CURRENT_DESKTOP = atom("_NET_CURRENT_DESKTOP");
     NET_DESKTOP_GEOMETRY = atom("_NET_DESKTOP_GEOMETRY");
-    WANDERER_MENU = atom("_WANDERER_MENU");
-    WANDERER_SCREEN_TITLE = atom("_WANDERER_SCREEN_TITLE");
-    WANDERER_PALETTE = atom("_WANDERER_PALETTE");
-    WANDERER_MENU_PICK = atom("_WANDERER_MENU_PICK");
+    RAMBLER_MENU = atom("_RAMBLER_MENU");
+    RAMBLER_SCREEN_TITLE = atom("_RAMBLER_SCREEN_TITLE");
+    RAMBLER_PALETTE = atom("_RAMBLER_PALETTE");
+    RAMBLER_MENU_PICK = atom("_RAMBLER_MENU_PICK");
 
-    // the palette: the GUI settings' (~/.config/wanderer/zune.prefs), else the default
+    // the palette: the GUI settings' (~/.config/rambler/lune.prefs), else the default
     std::string bg = "AAAAAA", sd = "000000", sh = "FFFFFF", fl = "6688BB";
     {
         const char *x = getenv("XDG_CONFIG_HOME");
         std::string base = x && *x ? x : std::string(getenv("HOME") ? getenv("HOME") : "/tmp") + "/.config";
-        if (FILE *f = fopen((base + "/wanderer/zune.prefs").c_str(), "r")) {
+        if (FILE *f = fopen((base + "/rambler/lune.prefs").c_str(), "r")) {
             char line[256];
             while (fgets(line, sizeof line, f)) {
                 std::string l(line);
@@ -1431,7 +1431,7 @@ int main(int argc, char **argv) {
     // EWMH: who manages the windows, what is supported
     check_win = XCreateSimpleWindow(dpy, root, -1, -1, 1, 1, 0, 0, 0);
     XChangeProperty(dpy, check_win, NET_SUPPORTING_WM_CHECK, XA_WINDOW, 32, PropModeReplace, (unsigned char *)&check_win, 1);
-    XChangeProperty(dpy, check_win, NET_WM_NAME, UTF8_STRING, 8, PropModeReplace, (const unsigned char *)"wanderer-wm", 11);
+    XChangeProperty(dpy, check_win, NET_WM_NAME, UTF8_STRING, 8, PropModeReplace, (const unsigned char *)"rambler-wm", 11);
     XChangeProperty(dpy, root, NET_SUPPORTING_WM_CHECK, XA_WINDOW, 32, PropModeReplace, (unsigned char *)&check_win, 1);
     Atom supported[] = {NET_WM_NAME, NET_WM_WINDOW_TYPE, NET_WM_WINDOW_TYPE_DESKTOP, NET_ACTIVE_WINDOW, NET_CLIENT_LIST,
                         NET_SUPPORTING_WM_CHECK, NET_WM_STATE, NET_WM_STATE_FULLSCREEN, NET_WM_STATE_MAXIMIZED_VERT,
@@ -1453,7 +1453,7 @@ int main(int argc, char **argv) {
     for (int i = 1; i + 1 < argc; i++)
         if (!strcmp(argv[i], "--screens")) nscreens = std::clamp(atoi(argv[i + 1]), 1, 8);
     for (int i = nscreens - 1; i >= 0; i--)
-        open_screen(i == 0 ? "Wanderer Screen" : "Screen " + std::to_string(i + 1));
+        open_screen(i == 0 ? "Rambler Screen" : "Screen " + std::to_string(i + 1));
     main_screen = screens.back();
     restack_screens();
     tray_start();
@@ -1535,13 +1535,13 @@ int main(int argc, char **argv) {
             if (by_window.count(ev.xdestroywindow.window)) unmanage(by_window[ev.xdestroywindow.window], true);
             break;
         case PropertyNotify:
-            if (ev.xproperty.window == root && ev.xproperty.atom == WANDERER_PALETTE) palette_changed();
+            if (ev.xproperty.window == root && ev.xproperty.atom == RAMBLER_PALETTE) palette_changed();
             else if (by_window.count(ev.xproperty.window)) {
                 Client *c = by_window[ev.xproperty.window];
                 if (ev.xproperty.atom == XA_WM_NAME || ev.xproperty.atom == NET_WM_NAME) {
                     c->title = window_title(c->win);
                     draw_frame(c);
-                } else if (ev.xproperty.atom == WANDERER_MENU && menu.open && menu.c == c) {
+                } else if (ev.xproperty.atom == RAMBLER_MENU && menu.open && menu.c == c) {
                     // the program changed its menus while they are open (an item picked with the
                     // left button): the ticks and the ghosting show at once, if the shape is the same
                     std::vector<MenuItem> fresh;
@@ -1556,8 +1556,8 @@ int main(int argc, char **argv) {
                         if (menu.box) draw_menu_box(menu.box, menu.titles[menu.title].children, menu.box_w, menu.box_h, menu.item);
                         if (menu.sub) draw_menu_box(menu.sub, menu.titles[menu.title].children[menu.sub_of].children, menu.sub_w, menu.sub_h, menu.sub_item);
                     }
-                } else if (ev.xproperty.atom == WANDERER_SCREEN_TITLE) {
-                    c->screen_title = utf8_prop(c->win, WANDERER_SCREEN_TITLE);
+                } else if (ev.xproperty.atom == RAMBLER_SCREEN_TITLE) {
+                    c->screen_title = utf8_prop(c->win, RAMBLER_SCREEN_TITLE);
                     if (!menu.open) c->screen->draw_bar();
                 } else if (ev.xproperty.atom == NET_WM_WINDOW_TYPE && !c->backdrop && !c->fullscreen &&
                            has_type(c->win, NET_WM_WINDOW_TYPE_DESKTOP)) {
