@@ -366,3 +366,44 @@ Sliders	Suwaki
 Container Design	Wygląd prowadnicy
 Knob Design	Wygląd gałki
 Example Sliders	Przykładowe suwaki
+Drag & Drop	Przeciąganie i upuszczanie
+Left Button:	Lewy przycisk:
+Middle Button:	Środkowy przycisk:
+Autostart:	Samoczynny start:
+Look:	Wygląd:
+Always solid	Zawsze pełny
+Ghosted on box	Przezroczysty nad polem
+Ghosted outside box	Przezroczysty poza polem
+Always ghosted	Zawsze przezroczysty
+Balancing Groups	Grupy z podziałem
+Show frames	Pokazuj ramki
+Show objects	Pokazuj obiekty
+Example:	Przykład:
+Try with	Spróbuj z
+shift	Shift
+too	też
+Keyboard Control	Sterowanie klawiaturą
+Function	Funkcja
+Key	Klawisz
+Press	Naciśnij
+Toggle	Przełącz
+Up	W górę
+Down	W dół
+Page up	Strona w górę
+Page down	Strona w dół
+Top	Na początek
+Bottom	Na koniec
+Left	W lewo
+Right	W prawo
+Word left	Słowo w lewo
+Word right	Słowo w prawo
+Line start	Początek wiersza
+Line end	Koniec wiersza
+Next gadget	Następny gadżet
+Previous gadget	Poprzedni gadżet
+Gadget off	Bez gadżetu
+Close window	Zamknij okno
+Next window	Następne okno
+Previous window	Poprzednie okno
+Help	Pomoc
+Popup	Rozwiń

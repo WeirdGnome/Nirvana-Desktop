@@ -23,6 +23,7 @@
 #include <cstring>
 
 #include <algorithm>
+#include <sstream>
 #include <cstdio>
 #include <cstdlib>
 #include <sys/stat.h>
@@ -72,6 +73,18 @@ void load_prefs() {
             else if (k == "window_bottom") p.window_bottom = std::clamp(atoi(v.c_str()), 0, 20);
             else if (k == "font_size") p.font_size = std::clamp(atoi(v.c_str()), 9, 24);
             else if (k == "font_family") p.font_family = std::clamp(atoi(v.c_str()), 0, 2);
+            else if (k.rfind("key_", 0) == 0) {
+                int i = atoi(k.c_str() + 4);
+                if (i >= 0 && i < MUIKEY_COUNT && key_spec_valid(v)) p.keys[i] = v;
+            }
+            else if (k == "drag_left") p.drag_left = atoi(v.c_str());
+            else if (k == "drag_middle") p.drag_middle = atoi(v.c_str());
+            else if (k == "drag_left_modifier") p.drag_left_modifier = v;
+            else if (k == "drag_middle_modifier") p.drag_middle_modifier = v;
+            else if (k == "drag_autostart") p.drag_autostart = atoi(v.c_str());
+            else if (k == "drag_autostart_length") p.drag_autostart_length = std::clamp(atoi(v.c_str()), 1, 20);
+            else if (k == "drag_look") p.drag_look = std::clamp(atoi(v.c_str()), 0, 3);
+            else if (k == "balancing_look") p.balancing_look = std::clamp(atoi(v.c_str()), 0, 1);
         }
         fclose(f);
     }
@@ -95,7 +108,79 @@ void save_prefs() {
             p.cycle_menu_min, (int)p.cycle_menu_recessed);
     for (int i = 1; i < Frame_Count; i++)
         if (!p.frame[i].empty()) fprintf(f, "frame_%d=%s\n", i, p.frame[i].c_str());
+    for (int i = 0; i < MUIKEY_COUNT; i++)
+        if (!p.keys[i].empty() && p.keys[i] != KEY_DEFAULTS[i]) fprintf(f, "key_%d=%s\n", i, p.keys[i].c_str());
+    fprintf(f, "drag_left=%d\ndrag_middle=%d\ndrag_autostart=%d\ndrag_autostart_length=%d\ndrag_look=%d\nbalancing_look=%d\n",
+            (int)p.drag_left, (int)p.drag_middle, (int)p.drag_autostart, p.drag_autostart_length, p.drag_look,
+            p.balancing_look);
+    fprintf(f, "drag_left_modifier=%s\ndrag_middle_modifier=%s\n", p.drag_left_modifier.c_str(), p.drag_middle_modifier.c_str());
     fclose(f);
+}
+
+// --------------------------------------------------------------------------------------------
+// Keys (MUIKEY_*): configdata.c's defaults; a spec is qualifiers then a key, as the
+// commodities' input descriptions ("control up", "-repeat shift tab", "esc")
+// --------------------------------------------------------------------------------------------
+const char *const KEY_DEFAULTS[MUIKEY_COUNT] = {
+    "-upstroke return", "-repeat space", "-repeat up", "-repeat down", "-repeat shift up", "-repeat shift down",
+    "control up", "control down", "-repeat left", "-repeat right", "-repeat control left", "-repeat control right",
+    "shift left", "shift right", "-repeat tab", "-repeat shift tab", "control tab", "esc", "-repeat alt tab",
+    "-repeat alt shift tab", "help", "control p"};
+const char *const KEY_LABELS[MUIKEY_COUNT] = {
+    "Press", "Toggle", "Up", "Down", "Page up", "Page down", "Top", "Bottom", "Left", "Right", "Word left",
+    "Word right", "Line start", "Line end", "Next gadget", "Previous gadget", "Gadget off", "Close window",
+    "Next window", "Previous window", "Help", "Popup"};
+
+namespace {
+struct KeySpec { int key = 0, state = 0; bool ok = false; };
+
+int key_by_name(const std::string &n) {
+    static const std::pair<const char *, int> names[] = {
+        {"return", FL_Enter}, {"enter", FL_KP_Enter}, {"space", ' '}, {"spacebar", ' '}, {"tab", FL_Tab},
+        {"esc", FL_Escape}, {"escape", FL_Escape}, {"up", FL_Up}, {"cursor_up", FL_Up}, {"down", FL_Down},
+        {"cursor_down", FL_Down}, {"left", FL_Left}, {"cursor_left", FL_Left}, {"right", FL_Right},
+        {"cursor_right", FL_Right}, {"help", FL_Help}, {"del", FL_Delete}, {"delete", FL_Delete},
+        {"backspace", FL_BackSpace}, {"home", FL_Home}, {"end", FL_End}, {"page_up", FL_Page_Up},
+        {"page_down", FL_Page_Down}, {"insert", FL_Insert}};
+    for (auto &[name, k] : names) if (n == name) return k;
+    if (n.size() > 1 && n[0] == 'f' && isdigit((unsigned char)n[1])) {
+        int f = atoi(n.c_str() + 1);
+        if (f >= 1 && f <= 12) return FL_F + f;
+    }
+    if (n.size() == 1) return tolower((unsigned char)n[0]);
+    return 0;
+}
+
+KeySpec parse_key(const std::string &spec) {
+    KeySpec k;
+    std::stringstream ss(spec);
+    std::string t;
+    while (ss >> t) {
+        for (auto &ch : t) ch = (char)tolower((unsigned char)ch);
+        if (t[0] == '-') continue;   // -repeat, -upstroke: taken as they come
+        if (t == "shift" || t == "lshift" || t == "rshift" || t == "caps" || t == "capslock") k.state |= FL_SHIFT;
+        else if (t == "control" || t == "ctrl") k.state |= FL_CTRL;
+        else if (t == "alt" || t == "lalt" || t == "ralt") k.state |= FL_ALT;
+        else if (t == "command" || t == "lcommand" || t == "rcommand" || t == "amiga" || t == "super") k.state |= FL_META;
+        else { k.key = key_by_name(t); k.ok = k.key != 0; }
+    }
+    return k;
+}
+}  // namespace
+
+bool key_spec_valid(const std::string &spec) { return parse_key(spec).ok; }
+
+MuiKey muikey() {
+    int key = Fl::event_key();
+    if (key == FL_KP_Enter) key = FL_Enter;
+    if (key < 128) key = tolower(key);
+    int state = Fl::event_state() & (FL_SHIFT | FL_CTRL | FL_ALT | FL_META);
+    for (int i = 0; i < MUIKEY_COUNT; i++) {
+        const std::string &s = prefs().keys[i].empty() ? std::string(KEY_DEFAULTS[i]) : prefs().keys[i];
+        KeySpec k = parse_key(s);
+        if (k.ok && k.key == key && k.state == state) return (MuiKey)i;
+    }
+    return MUIKEY_NONE;
 }
 
 void apply_prefs() {
@@ -211,16 +296,23 @@ void Area::focus_changed() {
 
 int Area::handle(int e) {
     if ((e == FL_FOCUS || e == FL_UNFOCUS) && accepts_focus() && children() == 0) { focus_changed(); return 1; }
+    // (keys a group does not take go on to the window, which moves between the objects with
+    // the keys set for it - not FLTK's own Tab navigation)
+    if (e == FL_KEYBOARD && children() > 0 && input_ == Input_None) return 0;
     if (input_ == Input_None || disabled_) return Fl_Group::handle(e);
     switch (e) {
-    case FL_KEYBOARD:
-        // the active object: Space (and Return) press it
-        if (Fl::focus() == this && (Fl::event_key() == ' ' || Fl::event_key() == FL_Enter)) {
+    case FL_KEYBOARD: {
+        // the active object (area.c MUIKEY_PRESS / MUIKEY_TOGGLE): Press presses it (a toggle
+        // object toggles), Toggle toggles a toggle object only
+        if (Fl::focus() != this) return 0;
+        MuiKey k = muikey();
+        if (k == MUIKEY_PRESS || (k == MUIKEY_TOGGLE && input_ == Input_Toggle)) {
             if (input_ == Input_Toggle) { selected(!selected_); if (on_press) on_press(); }
             else if (on_press) on_press();
             return 1;
         }
         return 0;
+    }
     case FL_PUSH:
         if (Fl::event_button() != FL_LEFT_MOUSE) return 0;
         pressed_ = true;
@@ -455,6 +547,7 @@ void Group::draw() {
             fl_draw(title_.c_str(), tx, y(), tw, th, FL_ALIGN_CENTER);
         }
     }
+    if (sketch_) { draw_sketch(); return; }
     draw_children();
 }
 
@@ -925,47 +1018,77 @@ void Cycle::close_popup() {
     popup_ = nullptr;
 }
 
+bool Cycle::open_popup() {
+    if ((int)entries_.size() < prefs().cycle_menu_min || !window() || popup_) return false;
+    const FrameSpec &pf = std_frame(Frame_PopUp);
+    FrameBorders b = frame_borders(pf.type, pf.down);
+    int item_w = mwidth() - CYCLE_IMAGE_W + POPITEM_EXTRAWIDTH;
+    int item_h = prefs().font_size + 3 + POPITEM_EXTRAHEIGHT + (prefs().cycle_menu_recessed ? 2 : 0);
+    int offx = pf.inner_left + b.left, offy = pf.inner_top + b.top;
+    int ww = item_w + offx + pf.inner_right + b.right;
+    int wh = item_h * (int)entries_.size() + offy + pf.inner_bottom + b.bottom;
+    int wx = window()->x_root() + mleft() + CYCLE_IMAGE_W - offx - POPITEM_EXTRAWIDTH / 2;
+    int wy = prefs().cycle_menu_position == 0
+                 ? window()->y_root() + y() + h()   // below
+                 : window()->y_root() + mtop() - offy - POPITEM_EXTRAHEIGHT / 2 - active_ * item_h;   // on the active entry
+    int sx, sy, sw, sh;
+    Fl::screen_xywh(sx, sy, sw, sh);
+    if (wy + wh > sy + sh) wy = std::max(sy, window()->y_root() + y() - wh);   // WA_AutoAdjust
+    Fl_Group *saved = Fl_Group::current();
+    Fl_Group::current(nullptr);
+    popup_ = new CyclePopup(wx, wy, ww, wh, entries_, item_w, item_h, offx, offy);
+    Fl_Group::current(saved);
+    popup_->show();
+    return true;
+}
+
 int Cycle::handle(int e) {
     switch (e) {
-    case FL_KEYBOARD:
-        // the active object: Space / Down the next entry, Up the one before (wrapping)
-        if (Fl::focus() == this && !entries_.empty()) {
-            int n = (int)entries_.size(), k = Fl::event_key();
-            if (k == ' ' || k == FL_Down || k == FL_Up) {
-                bool back = k == FL_Up || Fl::event_state(FL_SHIFT);
-                active_ = (active_ + (back ? n - 1 : 1)) % n;
-                redraw();
-                if (on_change) on_change(active_);
-                return 1;
+    case FL_UNFOCUS:
+        if (popup_ && key_popup_) close_popup();
+        return Area::handle(e);
+    case FL_KEYBOARD: {
+        // the active object (cycle.c): Press opens the pop-up (with too few entries: the
+        // next one), in it picks the highlighted entry; Down / Up the next / the one before
+        // (wrapping when closed), Page up / Top the first, Page down / Bottom the last;
+        // Close window closes the pop-up
+        if (Fl::focus() != this || entries_.empty()) return 0;
+        int n = (int)entries_.size();
+        MuiKey k = muikey();
+        int old = popup_ ? popup_->highlighted() : active_, now = old;
+        switch (k) {
+        case MUIKEY_WINDOW_CLOSE:
+            if (popup_) { close_popup(); return 1; }
+            return 0;
+        case MUIKEY_PRESS:
+            if (!popup_) {
+                if (open_popup()) { key_popup_ = true; popup_->highlight(active_); return 1; }
+                now = (now + 1) % n;   // too few entries: as Down
+                break;
             }
+            {
+                int i = popup_->highlighted();
+                close_popup();
+                if (i >= 0 && i != active_) { active_ = i; redraw(); if (on_change) on_change(active_); }
+            }
+            return 1;
+        case MUIKEY_DOWN: now = now < n - 1 ? now + 1 : (popup_ ? now : 0); break;
+        case MUIKEY_UP: now = now > 0 ? now - 1 : (popup_ ? now : n - 1); break;
+        case MUIKEY_PAGEUP: case MUIKEY_TOP: now = 0; break;
+        case MUIKEY_PAGEDOWN: case MUIKEY_BOTTOM: now = n - 1; break;
+        default: return 0;
         }
-        return 0;
+        if (now != old) {
+            if (popup_) popup_->highlight(now);
+            else { active_ = now; redraw(); if (on_change) on_change(active_); }
+        }
+        return 1;
+    }
     case FL_PUSH: {
         if (Fl::event_button() != FL_LEFT_MOUSE) return 0;
         // a press right of the cycle image opens the pop-up, if there are entries enough
         // (cycle_menu_min_entries 2; the menu below the gadget: CYCLE_MENU_POSITION_BELOW)
-        if (Fl::event_x() > mleft() + CYCLE_IMAGE_W && (int)entries_.size() >= prefs().cycle_menu_min && window()) {
-            const FrameSpec &pf = std_frame(Frame_PopUp);
-            FrameBorders b = frame_borders(pf.type, pf.down);
-            int item_w = mwidth() - CYCLE_IMAGE_W + POPITEM_EXTRAWIDTH;
-            int item_h = prefs().font_size + 3 + POPITEM_EXTRAHEIGHT + (prefs().cycle_menu_recessed ? 2 : 0);
-            int offx = pf.inner_left + b.left, offy = pf.inner_top + b.top;
-            int ww = item_w + offx + pf.inner_right + b.right;
-            int wh = item_h * (int)entries_.size() + offy + pf.inner_bottom + b.bottom;
-            int wx = window()->x_root() + mleft() + CYCLE_IMAGE_W - offx - POPITEM_EXTRAWIDTH / 2;
-            int wy = prefs().cycle_menu_position == 0
-                         ? window()->y_root() + y() + h()   // below
-                         : window()->y_root() + mtop() - offy - POPITEM_EXTRAHEIGHT / 2 - active_ * item_h;   // on the active entry
-            int sx, sy, sw, sh;
-            Fl::screen_xywh(sx, sy, sw, sh);
-            if (wy + wh > sy + sh) wy = std::max(sy, window()->y_root() + y() - wh);   // WA_AutoAdjust
-            Fl_Group *saved = Fl_Group::current();
-            Fl_Group::current(nullptr);
-            popup_ = new CyclePopup(wx, wy, ww, wh, entries_, item_w, item_h, offx, offy);
-            Fl_Group::current(saved);
-            popup_->show();
-            return 1;
-        }
+        if (Fl::event_x() > mleft() + CYCLE_IMAGE_W && open_popup()) { key_popup_ = false; return 1; }
         selected(true);
         return 1;
     }
@@ -1174,16 +1297,27 @@ int List::handle(int e) {
         return 1;
     case FL_FOCUS: case FL_UNFOCUS: focus_changed(); return 1;
     case FL_KEYBOARD: {
-        int k = Fl::event_key();
-        if (k == FL_Down || k == FL_Up) {
-            active(active_ + (k == FL_Down ? 1 : -1));
-            if (on_active && active_ >= 0) on_active(active_);
-            return 1;
+        // list.c: Up / Down a line, Page up / Page down a page, Top / Bottom the ends;
+        // Press: as a double click (the listview's)
+        if (Fl::focus() != this) return 0;
+        int page = std::max(1, visible_lines() - 1), a = active_;
+        switch (muikey()) {
+        case MUIKEY_UP: a = a < 0 ? 0 : a - 1; break;
+        case MUIKEY_DOWN: a = a + 1; break;
+        case MUIKEY_PAGEUP: a = a < 0 ? 0 : a - page; break;
+        case MUIKEY_PAGEDOWN: a = a + page; break;
+        case MUIKEY_TOP: a = 0; break;
+        case MUIKEY_BOTTOM: a = (int)lines_.size() - 1; break;
+        case MUIKEY_PRESS:
+            if (active_ >= 0 && on_double) { on_double(active_); return 1; }
+            return 0;
+        default: return 0;
         }
-        if ((k == FL_Enter || k == FL_KP_Enter) && active_ >= 0 && on_double) { on_double(active_); return 1; }
-        return 0;
-    }
-    }
+        if (lines_.empty()) return 1;
+        active(std::clamp(a, 0, (int)lines_.size() - 1));
+        if (on_active && active_ >= 0) on_active(active_);
+        return 1;
+    }    }
     return Area::handle(e);
 }
 
@@ -1289,17 +1423,146 @@ int Slider::handle(int e) {
         if (dragging_) { dragging_ = false; redraw(); }
         return 1;
     case FL_FOCUS: case FL_UNFOCUS: focus_changed(); return 1;
-    case FL_KEYBOARD:
-        if (Fl::event_key() == FL_Left || Fl::event_key() == FL_Up) { value(value_ - 1); return 1; }
-        if (Fl::event_key() == FL_Right || Fl::event_key() == FL_Down) { value(value_ + 1); return 1; }
-        if (Fl::event_key() == FL_Home) { value(min_); return 1; }
-        if (Fl::event_key() == FL_End) { value(max_); return 1; }
-        return 0;
+    case FL_KEYBOARD: {
+        // numeric.c: Left / Up one less, Right / Down one more; Page down / Word right ten
+        // more (one with fewer than ten steps), Page up / Word left ten less; Top / Line start
+        // the minimum, Bottom / Line end the maximum
+        if (Fl::focus() != this) return 0;
+        int step = max_ - min_ < 10 ? 1 : 10;
+        switch (muikey()) {
+        case MUIKEY_LEFT: case MUIKEY_UP: value(value_ - 1); return 1;
+        case MUIKEY_RIGHT: case MUIKEY_DOWN: value(value_ + 1); return 1;
+        case MUIKEY_PAGEDOWN: case MUIKEY_WORDRIGHT: value(value_ + step); return 1;
+        case MUIKEY_PAGEUP: case MUIKEY_WORDLEFT: value(value_ - step); return 1;
+        case MUIKEY_TOP: case MUIKEY_LINESTART: value(min_); return 1;
+        case MUIKEY_BOTTOM: case MUIKEY_LINEEND: value(max_); return 1;
+        default: return 0;
+        }
+    }
     case FL_MOUSEWHEEL:
         value(value_ + (horiz_ ? -Fl::event_dy() : Fl::event_dy()));
         return 1;
     }
     return Area::handle(e);
+}
+
+// ============================================================================================
+// Balance
+// ============================================================================================
+Balance::Balance() : Area(Frame_None) { background(-1); }
+
+bool Balance::horiz() const {
+    auto *g = dynamic_cast<Group *>(parent());
+    return g && g->horizontal();
+}
+
+void Balance::ask_min_max(int &minw, int &minh, int &defw, int &defh, int &maxw, int &maxh) {
+    if (horiz()) { minw = defw = maxw = 3; minh = defh = 0; maxh = MAXMAX; }
+    else { minh = defh = maxh = 3; minw = defw = 0; maxw = MAXMAX; }
+}
+
+void Balance::draw_contents() {
+    // three lines: text and shine pens round the fill pen, the other way round while dragged
+    const Pens &p = pens();
+    Fl_Color c1 = p[state_ ? MPEN_SHINE : MPEN_TEXT], c2 = p[state_ ? MPEN_TEXT : MPEN_SHINE];
+    if (horiz()) {
+        fl_color(c1); fl_yxline(mleft(), mtop(), mtop() + mheight() - 1);
+        fl_color(p[MPEN_FILL]); fl_yxline(mleft() + 1, mtop(), mtop() + mheight() - 1);
+        fl_color(c2); fl_yxline(mleft() + 2, mtop(), mtop() + mheight() - 1);
+    } else {
+        fl_color(c1); fl_xyline(mleft(), mtop(), mleft() + mwidth() - 1);
+        fl_color(p[MPEN_FILL]); fl_xyline(mleft(), mtop() + 1, mleft() + mwidth() - 1);
+        fl_color(c2); fl_xyline(mleft(), mtop() + 2, mleft() + mwidth() - 1);
+    }
+}
+
+void Balance::move(int pos) {
+    // set_weight_2 / set_weight_all: the total weight of both sides shared by where the
+    // pointer is between the bounds (each side down to its objects' smallest sizes)
+    long total = lsum_ + rsum_;
+    if (total <= 0) return;
+    long wa;
+    if (pos >= second_bound_) wa = total;
+    else if (pos <= first_bound_) wa = 0;
+    else wa = std::min(total, (long)(pos - first_bound_ + 1) * total / (second_bound_ - first_bound_ + 1));
+    long wb = total - wa;
+    bool h = horiz();
+    auto set = [h](Area *a, long w) { if (h) a->horiz_weight((int)w); else a->vert_weight((int)w); };
+    for (size_t i = 0; i < before_.size(); i++) set(before_[i], lsum_ ? lw_[i] * wa / lsum_ : wa / (long)before_.size());
+    for (size_t i = 0; i < after_.size(); i++) set(after_[i], rsum_ ? rw_[i] * wb / rsum_ : wb / (long)after_.size());
+    if (auto *g = dynamic_cast<Group *>(parent())) g->relayout();
+}
+
+int Balance::handle(int e) {
+    auto *g = dynamic_cast<Group *>(parent());
+    bool h = horiz();
+    int pos = h ? Fl::event_x() : Fl::event_y();
+    switch (e) {
+    case FL_ENTER: case FL_LEAVE: case FL_MOVE: return 1;
+    case FL_PUSH: {
+        if (Fl::event_button() != FL_LEFT_MOUSE || !g) return 0;
+        // the objects before and after it: with Shift only the next ones
+        before_.clear(); after_.clear(); lw_.clear(); rw_.clear();
+        bool shift = Fl::event_state(FL_SHIFT);
+        bool past = false;
+        for (int i = 0; i < g->children(); i++) {
+            auto *a = dynamic_cast<Area *>(g->child(i));
+            if (!a || !a->visible()) continue;
+            if (a == this) { past = true; continue; }
+            if (dynamic_cast<Balance *>(a)) continue;
+            if (!past) { if (shift) before_.clear(); before_.push_back(a); }
+            else { after_.push_back(a); if (shift) break; }
+        }
+        if (before_.empty() || after_.empty()) return 1;
+        lsum_ = rsum_ = 0;
+        for (auto *a : before_) { lw_.push_back(a->weight(h)); lsum_ += a->weight(h); }
+        for (auto *a : after_) { rw_.push_back(a->weight(h)); rsum_ += a->weight(h); }
+        // the bounds: the first objects' start plus their smallest sizes, and so on the other side
+        int sp = h ? g->hsp() : g->vsp();
+        int mins_before = 0, mins_after = 0;
+        for (auto *a : before_) { int mw, mh, dw, dh, xw, xh; a->min_max(mw, mh, dw, dh, xw, xh); mins_before += (h ? mw : mh) + sp; }
+        for (auto *a : after_) { int mw, mh, dw, dh, xw, xh; a->min_max(mw, mh, dw, dh, xw, xh); mins_after += (h ? mw : mh) + sp; }
+        Area *first = before_.front(), *last = after_.back();
+        first_bound_ = (h ? first->x() : first->y()) + mins_before;
+        second_bound_ = (h ? last->x() + last->w() : last->y() + last->h()) - mins_after;
+        state_ = shift ? 2 : 1;
+        if (prefs().balancing_look == 0) g->sketch(true);
+        redraw();
+        return 1;
+    }
+    case FL_DRAG:
+        if (state_) move(pos);
+        return 1;
+    case FL_RELEASE:
+        if (state_) {
+            state_ = 0;
+            if (g) { g->sketch(false); g->relayout(); }
+            redraw();
+        }
+        return 1;
+    }
+    return Area::handle(e);
+}
+
+void Group::draw_sketch() {
+    // draw_object_frame: each object's outline in the text pen (with its diagonals when it
+    // can change size) over the group's background
+    fl_color(pens()[bg_pen_ >= 0 ? bg_pen_ : MPEN_BACKGROUND]);
+    fl_rectf(mleft(), mtop() + title_h(), mwidth(), mheight() - title_h());
+    bool h = horizontal();
+    fl_color(pens()[MPEN_TEXT]);
+    for (int i = 0; i < children(); i++) {
+        auto *a = dynamic_cast<Area *>(child(i));
+        if (!a || !a->visible()) continue;
+        if (auto *b = dynamic_cast<Balance *>(a)) { draw_child(*b); continue; }
+        int mw, mh, dw, dh, xw, xh;
+        a->min_max(mw, mh, dw, dh, xw, xh);
+        bool fixed = h ? mw == xw : mh == xh;
+        fl_color(pens()[MPEN_TEXT]);
+        int x1 = a->x(), y1 = a->y(), x2 = a->x() + a->w() - 1, y2 = a->y() + a->h() - 1;
+        fl_rect(x1, y1, a->w(), a->h());
+        if (!fixed) { fl_line(x1, y1, x2, y2); fl_line(x2, y1, x1, y2); }
+    }
 }
 
 // ============================================================================================
@@ -1535,11 +1798,25 @@ int Window::handle(int e) {
         last_focus_->widget()->take_focus();
         return 1;
     }
-    if (e == FL_KEYBOARD && Fl::event_key() == FL_Tab && Fl::focus() == this) {
-        // no active object yet: Tab takes the first, Shift+Tab the last
-        std::vector<Fl_Widget *> c;
-        chain(this, c);
-        if (!c.empty()) { (Fl::event_state(FL_SHIFT) ? c.back() : c.front())->take_focus(); return 1; }
+    if (e == FL_KEYBOARD) {
+        // window.c: Next / Previous gadget move along the cycle chain (wrapping; with no active
+        // object the first / the last), Gadget off: no active object; Close window: as the
+        // close gadget
+        MuiKey k = muikey();
+        if (k == MUIKEY_GADGET_NEXT || k == MUIKEY_GADGET_PREV) {
+            std::vector<Fl_Widget *> c;
+            chain(this, c);
+            if (c.empty()) return 1;
+            Fl_Widget *f = Fl::focus();
+            auto it = std::find_if(c.begin(), c.end(), [f](Fl_Widget *w) { return w == f || (f && f->inside(w)); });
+            int n = (int)c.size(), i = it == c.end() ? -1 : (int)(it - c.begin());
+            int next = i < 0 ? (k == MUIKEY_GADGET_NEXT ? 0 : n - 1) : (i + (k == MUIKEY_GADGET_NEXT ? 1 : n - 1)) % n;
+            c[next]->take_focus();
+            return 1;
+        }
+        if (k == MUIKEY_GADGET_OFF) { Fl::focus(this); redraw(); return 1; }
+        if (k == MUIKEY_WINDOW_CLOSE) { do_callback(); return 1; }
+        if (Fl::event_key() == FL_Tab) return 1;   // (no FLTK Tab navigation besides)
     }
     if (e == FL_FOCUS && (!Fl::focus() || !Fl::focus()->inside(this))) {
         // a window coming active has no active object, unless it has a text field: the

@@ -13,6 +13,8 @@
 #include <FL/fl_draw.H>
 
 #include <cstdio>
+#include <memory>
+#include <FL/fl_ask.H>
 
 using namespace zune;
 
@@ -70,7 +72,7 @@ void edit_gui_settings() {
     auto *root = VGroup();
     root->vspacing(10);
     auto *main = HGroup();
-    const char *pages[] = {"Windows", "Groups", "Buttons", "Cycles", "Sliders", "Scrollbars", "Listviews", "Strings", "Palette"};
+    const char *pages[] = {"Windows", "Groups", "Buttons", "Cycles", "Sliders", "Scrollbars", "Listviews", "Strings", "Navigation", "Palette"};
     auto *list = new List();
     list->frame(Frame_InputList);
     {
@@ -249,6 +251,93 @@ void edit_gui_settings() {
         VSpace();
         pg->end();
     }
+    // -- Navigation (navigationp.c): drag & drop, balancing groups, the keys
+    Checkmark *dleft, *dmid, *dauto;
+    String *dleft_mod, *dmid_mod;
+    Slider *dlen;
+    Cycle *dlook, *blook;
+    auto keys = std::make_shared<std::vector<std::string>>();
+    for (int i = 0; i < MUIKEY_COUNT; i++) keys->push_back(saved.keys[i].empty() ? KEY_DEFAULTS[i] : saved.keys[i]);
+    {
+        auto *pg = HGroup();
+        auto *left = VGroup();
+        auto *dd = new Group(Group::Vertical, Frame_Group);
+        dd->frame_title("Drag & Drop");
+        auto *c3 = new Group(Group::Vertical);
+        c3->columns(3);
+        new Text("\033rLeft Button:");
+        dleft = new Checkmark(saved.drag_left);
+        dleft_mod = new String(saved.drag_left_modifier, 64);
+        new Text("\033rMiddle Button:");
+        dmid = new Checkmark(saved.drag_middle);
+        dmid_mod = new String(saved.drag_middle_modifier, 64);
+        new Text("\033rAutostart:");
+        dauto = new Checkmark(saved.drag_autostart);
+        dlen = new Slider(1, 20, saved.drag_autostart_length);
+        c3->end();
+        auto *c2 = new Group(Group::Vertical);
+        c2->columns(2);
+        new Text("\033rFrame:");
+        frames.push_back({Frame_Drag, frame_cycle(Frame_Drag)});
+        new Text("\033rLook:");
+        dlook = new Cycle({"Always solid", "Ghosted on box", "Ghosted outside box", "Always ghosted"}, saved.drag_look);
+        c2->end();
+        dd->end();
+        auto *bg = new Group(Group::Vertical, Frame_Group);
+        bg->frame_title("Balancing Groups");
+        HVSpace();
+        auto *bc = new Group(Group::Vertical);
+        bc->columns(2);
+        new Text("\033rLook:");
+        blook = new Cycle({"Show frames", "Show objects"}, saved.balancing_look);
+        new Text("\033rExample:");
+        auto *ex = HGroup();
+        new Text("\033cTry with", Frame_Text);
+        new Balance();
+        new Text("\033cshift", Frame_Text);
+        new Balance();
+        new Text("\033ctoo", Frame_Text);
+        ex->end();
+        bc->end();
+        HVSpace();
+        bg->end();
+        left->end();
+        // the keys (MUICFG_Keyboard_*): a list of the functions with their keys; the string
+        // below sets the chosen one's (the original's scroll group of strings)
+        auto *kc = new Group(Group::Vertical, Frame_Group);
+        kc->frame_title("Keyboard Control");
+        auto *kl = new List();
+        kl->frame(Frame_ReadList);
+        kl->columns({"Function", "Key"});
+        auto fill_keys = [kl, keys] {
+            int a = kl->active();
+            kl->clear();
+            for (int i = 0; i < MUIKEY_COUNT; i++) {
+                List::Line l;
+                l.cols = {tr(KEY_LABELS[i]), (*keys)[i]};
+                kl->add(l);
+            }
+            kl->done();
+            if (a >= 0) kl->active(a);
+        };
+        fill_keys();
+        auto *ks = new String("", 128);
+        ks->disabled(true);
+        kc->end();
+        kl->on_active = [kl, ks, keys](int i) {
+            ks->disabled(false);
+            ks->value((*keys)[i]);
+        };
+        ks->on_acknowledge = [kl, ks, keys, fill_keys] {
+            int i = kl->active();
+            if (i < 0) return;
+            std::string v = ks->value();
+            if (!key_spec_valid(v)) { fl_beep(); return; }
+            (*keys)[i] = v;
+            fill_keys();
+        };
+        pg->end();
+    }
     // -- Palette (the screen's four colours: the palette preferences)
     Cycle *scheme;
     String *cbg, *csh, *csd, *cfl;
@@ -315,6 +404,15 @@ void edit_gui_settings() {
         p.cycle_menu_min = cmin->value();
         p.cycle_menu_recessed = crec->on();
         p.group_vspacing = gv->value();
+        p.drag_left = dleft->on();
+        p.drag_middle = dmid->on();
+        p.drag_left_modifier = dleft_mod->value();
+        p.drag_middle_modifier = dmid_mod->value();
+        p.drag_autostart = dauto->on();
+        p.drag_autostart_length = dlen->value();
+        p.drag_look = dlook->active();
+        p.balancing_look = blook->active();
+        for (int i = 0; i < MUIKEY_COUNT; i++) p.keys[i] = (*keys)[i] == KEY_DEFAULTS[i] ? "" : (*keys)[i];
     };
     // a scheme fills the four colours in
     scheme->on_change = [=](int i) {

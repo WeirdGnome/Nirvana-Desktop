@@ -41,6 +41,20 @@ namespace zune {
 
 constexpr int MAXMAX = 10000;   // MUI_MAXMAX
 
+// The keys of the user interface (MUIKEY_*: the Navigation page's keyboard control), each set
+// by a key spec as the original's ("-repeat shift tab": qualifiers, then the key)
+enum MuiKey {
+    MUIKEY_NONE = -1, MUIKEY_PRESS, MUIKEY_TOGGLE, MUIKEY_UP, MUIKEY_DOWN, MUIKEY_PAGEUP, MUIKEY_PAGEDOWN,
+    MUIKEY_TOP, MUIKEY_BOTTOM, MUIKEY_LEFT, MUIKEY_RIGHT, MUIKEY_WORDLEFT, MUIKEY_WORDRIGHT, MUIKEY_LINESTART,
+    MUIKEY_LINEEND, MUIKEY_GADGET_NEXT, MUIKEY_GADGET_PREV, MUIKEY_GADGET_OFF, MUIKEY_WINDOW_CLOSE,
+    MUIKEY_WINDOW_NEXT, MUIKEY_WINDOW_PREV, MUIKEY_HELP, MUIKEY_POPUP, MUIKEY_COUNT
+};
+extern const char *const KEY_DEFAULTS[MUIKEY_COUNT];   // configdata.c
+extern const char *const KEY_LABELS[MUIKEY_COUNT];     // the Navigation page's labels
+// the keyboard event being handled as a MUIKEY (MUIKEY_NONE: none of them)
+MuiKey muikey();
+bool key_spec_valid(const std::string &spec);
+
 // configdata.c defaults
 struct Prefs {
     // the screen's palette (MUI pens come from it) and the frames of buttons and groups
@@ -53,6 +67,13 @@ struct Prefs {
     // many entries, the active entry recessed
     int cycle_menu_position = 0, cycle_menu_min = 2;
     bool cycle_menu_recessed = false;
+    std::string keys[MUIKEY_COUNT];   // "" - the default (KEY_DEFAULTS)
+    // drag & drop (Navigation page): which buttons drag, after how many pixels it starts
+    bool drag_left = true, drag_middle = false, drag_autostart = true;
+    std::string drag_left_modifier, drag_middle_modifier;   // (kept, as the original does)
+    int drag_autostart_length = 3;
+    int drag_look = 0;      // DNDLook: 0 always solid, 1 ghosted on box, 2 ghosted outside, 3 always ghosted
+    int balancing_look = 0; // 0 show frames, 1 show objects
     int font_size = 13;          // the screen font (topaz-like 8 pt is too small on today's screens)
     Fl_Font font = FL_HELVETICA, font_bold = FL_HELVETICA_BOLD, font_fixed = FL_COURIER;
 };
@@ -138,6 +159,11 @@ public:
     void frame_title(const std::string &t) { title_ = tr_text(t); }
     void ask_min_max(int &minw, int &minh, int &defw, int &defh, int &maxw, int &maxh) override;
     void resize(int X, int Y, int W, int H) override;
+    bool horizontal() const { return dir_ == Horizontal; }
+    // a Balance being dragged with "Show frames": the children as outlines only (with crosses
+    // when they can change size), not drawn themselves
+    void sketch(bool on) { sketch_ = on; redraw(); }
+    void relayout() { layout(); redraw(); }
     void layout();
     void draw() override;
     std::vector<Area *> areas() const;   // the children that are Zune objects and shown
@@ -145,8 +171,12 @@ public:
 protected:
     Dir dir_;
     int hs_, vs_, columns_ = 0;   // the spacing (-1: the preferences')
+public:
     int hsp() const { return hs_ < 0 ? prefs().group_hspacing : hs_; }
     int vsp() const { return vs_ < 0 ? prefs().group_vspacing : vs_; }
+protected:
+    void draw_sketch();
+    bool sketch_ = false;
     bool same_w_ = false, same_h_ = false;
     std::string title_;
     int title_h() const;
@@ -198,6 +228,29 @@ inline Rectangle *HBar() { return new Rectangle('H'); }
 // MUIO_HSpace: no vertical weight, a fixed width (0: free); MUIO_VSpace the other way round
 inline Rectangle *HSpace(int w = 0) { auto *r = new Rectangle('h'); r->vert_weight(0); if (w) r->fixed_width(w); return r; }
 inline Rectangle *VSpace(int h = 0) { auto *r = new Rectangle('v'); r->horiz_weight(0); if (h) r->fixed_height(h); return r; }
+
+// Balance (classes/balance.c): a thin bar between objects of a group; dragging it shares
+// the room between them anew (their weights) - the two next to it with Shift held, else all
+// on each side. While dragging the group shows its objects or only their frames (the
+// balancing look of the preferences)
+class Balance : public Area {
+public:
+    Balance();
+    void ask_min_max(int &minw, int &minh, int &defw, int &defh, int &maxw, int &maxh) override;
+    int handle(int e) override;
+
+protected:
+    void draw_contents() override;
+
+private:
+    bool horiz() const;
+    void move(int pos);
+    int state_ = 0;   // NOT_CLICKED, CLICKED, SHIFT_CLICKED
+    std::vector<Area *> before_, after_;
+    long lsum_ = 0, rsum_ = 0;
+    std::vector<int> lw_, rw_;   // the weights when the drag started
+    int first_bound_ = 0, second_bound_ = 0;
+};
 
 // ---------------------------------------------------------------------------------------------
 class Text : public Area {
@@ -273,7 +326,9 @@ protected:
     int active_;
     // the pop-up of the entries (MakePopupWin): open while the button is held
     class CyclePopup *popup_ = nullptr;
+    bool open_popup();     // MakePopupWin (false: too few entries)
     void close_popup();
+    bool key_popup_ = false;   // opened by the keyboard (MUIKEY_PRESS): the keys move in it
 
 public:
     ~Cycle() override { close_popup(); }
