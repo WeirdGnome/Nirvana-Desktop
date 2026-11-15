@@ -59,6 +59,15 @@ Sesja uruchamia najpierw `rambler-wm`, a potem `rambler --backdrop`. Polecenie
   miejscu zaznacza lassem. Ikony przeciągnięte do innego okna są przenoszone w obrębie
   dysku i kopiowane między dyskami.
 
+## Preferencje
+
+*Tools > Prefs Drawer* otwiera programy preferencji: Input, Lune (GUI Settings) i
+Rambler. Każdy działa też samodzielnie (`rambler --prefs input|lune|rambler`). Jak w
+oryginalnym systemie, **Use** wprowadza ustawienia tylko na tę sesję (zapisuje je w
+`$XDG_RUNTIME_DIR/rambler`, odpowiedniku ENV:), a **Save** także je zachowuje
+(`~/.config/rambler`, odpowiednik ENVARC:). Działający Rambler przyjmuje zmianę zrobioną
+przez program preferencji w ciągu sekundy.
+
 ## Programy uruchamiane z Ramblerem
 
 Na początku sesji Rambler uruchamia wszystko z `~/.config/rambler/startup` (programy,

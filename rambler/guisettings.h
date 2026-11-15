@@ -4,5 +4,5 @@
 */
 #pragma once
 namespace rambler {
-void edit_gui_settings();   // the Lune preferences editor (Save / Use / Cancel)
+void edit_gui_settings(bool standalone = false);   // the Lune preferences editor (Save / Use / Cancel)
 }

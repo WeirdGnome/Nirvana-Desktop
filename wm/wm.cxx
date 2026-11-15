@@ -40,6 +40,7 @@
 #include <cstring>
 #include <map>
 #include <string>
+#include <unistd.h>
 #include <vector>
 
 namespace {
@@ -1410,7 +1411,13 @@ int main(int argc, char **argv) {
     {
         const char *x = getenv("XDG_CONFIG_HOME");
         std::string base = x && *x ? x : std::string(getenv("HOME") ? getenv("HOME") : "/tmp") + "/.config";
-        if (FILE *f = fopen((base + "/rambler/lune.prefs").c_str(), "r")) {
+        // the session's settings in use (ENV:) first, else the saved ones
+        const char *rt = getenv("XDG_RUNTIME_DIR");
+        std::string env = rt && *rt ? std::string(rt) + "/rambler/lune.prefs"
+                                    : "/tmp/rambler-" + std::to_string(getuid()) + "/lune.prefs";
+        FILE *f = fopen(env.c_str(), "r");
+        if (!f) f = fopen((base + "/rambler/lune.prefs").c_str(), "r");
+        if (f) {
             char line[256];
             while (fgets(line, sizeof line, f)) {
                 std::string l(line);

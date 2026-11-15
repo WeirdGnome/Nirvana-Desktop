@@ -12,8 +12,15 @@
   first start (`zune.prefs` becomes `lune.prefs`, `wanderer.prefs` becomes `rambler.prefs`);
   `install.sh` removes the `wanderer-x11` package and files of the old name.
 
+### Added
+- **Preferences programs on their own**, as in SYS:Prefs: the Prefs drawer has Input, Lune
+  and Rambler (`rambler --prefs lune|rambler`). Use keeps the settings for the session
+  (`$XDG_RUNTIME_DIR/rambler`, as ENV:), Save also in `~/.config/rambler` (as ENVARC:); a
+  running Rambler takes the change up at once, as IPrefs does.
+
 ### Fixed
 - Polish: the Scrollbars page of the Lune preferences was named like the Sliders page.
+- The close gadget of the Lune preferences now cancels, as Cancel does.
 
 ## 0.12.0 – 2026-11-15
 

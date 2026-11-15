@@ -127,10 +127,13 @@ struct Prefs {
     Fl_Font font = FL_HELVETICA, font_bold = FL_HELVETICA_BOLD, font_fixed = FL_COURIER;
 };
 Prefs &prefs();
-// ~/.config/rambler/lune.prefs: read at the start, written by the settings editor;
+// ~/.config/rambler/lune.prefs (ENVARC:) and $XDG_RUNTIME_DIR/rambler/lune.prefs (ENV:): read
+// at the start (ENV: first), written by the settings editor (Use: ENV:, Save: both);
 // apply() puts them into effect in every window at once
 void load_prefs();
-void save_prefs();
+void save_prefs(bool archive = true);
+std::string env_dir();          // the session's settings in use (ENV:)
+std::string env_prefs_path();
 void apply_prefs();
 
 enum InputMode { Input_None, Input_RelVerify, Input_Immediate, Input_Toggle };

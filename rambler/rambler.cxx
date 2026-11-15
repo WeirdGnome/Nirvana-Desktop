@@ -49,6 +49,13 @@ namespace {
 // Snapshots: a drawer's window place and its icons' positions (on AROS kept in the .info
 // files; here in ~/.config/rambler/drawers)
 // --------------------------------------------------------------------------------------------
+std::string read_file(const std::string &path) {
+    std::ifstream in(path);
+    std::ostringstream ss;
+    ss << in.rdbuf();
+    return ss.str();
+}
+
 std::string config_dir() {
     const char *x = getenv("XDG_CONFIG_HOME");
     std::string base = x && *x ? x : std::string(getenv("HOME") ? getenv("HOME") : "/tmp") + "/.config";
@@ -107,6 +114,10 @@ public:
     void publish_title(IconWindow *w);
     static void tick(void *d);
     static void watch_volumes(void *d);
+    static void watch_prefs(void *d);
+    std::string lune_env_, rambler_env_;
+    bool prefs_seen_ = false;   // the settings in use (ENV:), as last read
+    void use_prefs(const RamblerPrefs &p);
     void mount_and_open(const std::string &device);
     void eject(const std::string &device);
     std::string volumes_state_;
@@ -131,6 +142,22 @@ private:
     void drop_paths(const std::vector<std::string> &sources, const std::string &dest);
     void menu_action(IconWindow *w, int id);
 };
+
+// the settings of an earlier version (named Wanderer then) copied once into Rambler's
+// directory (as the session does; for Rambler started some other way)
+void migrate_settings() {
+    const char *x = getenv("XDG_CONFIG_HOME");
+    std::string base = x && *x ? x : std::string(getenv("HOME") ? getenv("HOME") : "/tmp") + "/.config";
+    std::error_code ec;
+    if (fs::exists(base + "/rambler", ec) || !fs::is_directory(base + "/wanderer", ec)) return;
+    fs::copy(base + "/wanderer", base + "/rambler", fs::copy_options::recursive, ec);
+    fs::rename(base + "/rambler/zune.prefs", base + "/rambler/lune.prefs", ec);
+    fs::rename(base + "/rambler/zune.windows", base + "/rambler/lune.windows", ec);
+    fs::rename(base + "/rambler/wanderer.prefs", base + "/rambler/rambler.prefs", ec);
+}
+
+// (before g_rambler, whose settings are read when it is made)
+const bool g_migrated = (migrate_settings(), true);
 
 Rambler g_rambler;
 
@@ -779,6 +806,37 @@ void Rambler::watch_volumes(void *d) {
     Fl::repeat_timeout(2.0, watch_volumes, d);
 }
 
+void Rambler::use_prefs(const RamblerPrefs &p) {
+    prefs_ = p;
+    rambler_env_ = read_file(RamblerPrefs::in_use_file());   // (not taken up again by watch_prefs)
+    for (auto *o : windows_) { apply_prefs(o); o->update(); apply_snapshot(o); }
+    if (root_) { apply_prefs(root_); root_->update(); apply_snapshot(root_); }
+    if (root_) publish_title(root_);
+}
+
+// As IPrefs, which is notified when a preferences program writes ENV:Sys: the settings in
+// use are looked at every second, and a change (by a preferences program running on its
+// own, Use or Save) is put into effect at once
+void Rambler::watch_prefs(void *d) {
+    auto *self = (Rambler *)d;
+    bool first = !self->prefs_seen_;
+    self->prefs_seen_ = true;
+    std::string l = read_file(lune::env_prefs_path());
+    if (l != self->lune_env_) {
+        self->lune_env_ = l;
+        if (!first && !l.empty()) { lune::load_prefs(); lune::apply_prefs(); }
+    }
+    std::string r = read_file(RamblerPrefs::in_use_file());
+    if (r != self->rambler_env_) {
+        self->rambler_env_ = r;
+        if (!first && !r.empty()) {
+            RamblerPrefs p = RamblerPrefs::load();
+            if (p.text() != self->prefs_.text()) self->use_prefs(p);
+        }
+    }
+    Fl::repeat_timeout(1.0, watch_prefs, d);
+}
+
 void Rambler::tick(void *d) {
     auto *self = (Rambler *)d;
     for (auto *w : self->windows_) self->publish_title(w);
@@ -886,12 +944,7 @@ void Rambler::menu_action(IconWindow *w, int id) {
     case MEN_RAMBLER_EXECUTE: execute_command(w->is_root() ? getenv("HOME") : w->location()); break;
     case MEN_RAMBLER_SHELL: launch({"x-terminal-emulator"}, w->is_root() ? getenv("HOME") : w->location()); break;
     case MEN_RAMBLER_PREFS:
-        edit_prefs(prefs_, [this](const RamblerPrefs &p) {
-            prefs_ = p;
-            for (auto *o : windows_) { apply_prefs(o); o->update(); apply_snapshot(o); }
-            if (root_) { apply_prefs(root_); root_->update(); apply_snapshot(root_); }
-            if (root_) publish_title(root_);
-        });
+        edit_prefs(prefs_, [this](const RamblerPrefs &p) { use_prefs(p); });
         break;
     case MEN_RAMBLER_GUISETTINGS: edit_gui_settings(); break;
     case MEN_RAMBLER_ASSIGNS: edit_assigns(); break;
@@ -1095,7 +1148,8 @@ void make_prefs_drawer() {
     std::string dir = base + "/rambler/prefs";
     std::error_code ec;
     fs::create_directories(dir, ec);
-    struct { const char *file, *name, *arg; } progs[] = {{"Input.desktop", "Input", "input"}};
+    struct { const char *file, *name, *arg; } progs[] = {
+        {"Input.desktop", "Input", "input"}, {"Lune.desktop", "Lune", "lune"}, {"Rambler.desktop", "Rambler", "rambler"}};
     for (auto &pr : progs) {
         std::string f = dir + "/" + pr.file;
         if (fs::exists(f, ec)) continue;
@@ -1105,21 +1159,7 @@ void make_prefs_drawer() {
     }
 }
 
-// the settings of an earlier version (named Wanderer then) copied once into Rambler's
-// directory (as the session does; for Rambler started some other way)
-static void migrate_settings() {
-    const char *x = getenv("XDG_CONFIG_HOME");
-    std::string base = x && *x ? x : std::string(getenv("HOME") ? getenv("HOME") : "/tmp") + "/.config";
-    std::error_code ec;
-    if (fs::exists(base + "/rambler", ec) || !fs::is_directory(base + "/wanderer", ec)) return;
-    fs::copy(base + "/wanderer", base + "/rambler", fs::copy_options::recursive, ec);
-    fs::rename(base + "/rambler/zune.prefs", base + "/rambler/lune.prefs", ec);
-    fs::rename(base + "/rambler/zune.windows", base + "/rambler/lune.windows", ec);
-    fs::rename(base + "/rambler/wanderer.prefs", base + "/rambler/rambler.prefs", ec);
-}
-
 int main(int argc, char **argv) {
-    migrate_settings();
     // dates and times in the user's language (the locale's FORMAT_DEF); numbers stay as they are
     setlocale(LC_TIME, "");
     // Lune's image adjust window asks for a picture with Rambler's file requester
@@ -1136,7 +1176,12 @@ int main(int argc, char **argv) {
         lune::load_prefs();
         fl_open_display();
         if (prefs_program == "input") edit_input_prefs(true);
-        else { fprintf(stderr, "rambler: no preferences program '%s' (input)\n", prefs_program.c_str()); return 1; }
+        else if (prefs_program == "lune") edit_gui_settings(true);
+        else if (prefs_program == "rambler") edit_prefs(RamblerPrefs::load(), [](const RamblerPrefs &) {}, true);
+        else {
+            fprintf(stderr, "rambler: no preferences program '%s' (input, lune, rambler)\n", prefs_program.c_str());
+            return 1;
+        }
         return run();
     }
     Fl::visual(FL_DOUBLE | FL_INDEX);
@@ -1151,5 +1196,6 @@ int main(int argc, char **argv) {
     if (backdrop && first_in_session()) run_startup();   // once per session (not again after a restart)
     Fl::add_timeout(5.0, Rambler::tick, &g_rambler);
     Fl::add_timeout(0.5, Rambler::watch_volumes, &g_rambler);
+    Rambler::watch_prefs(&g_rambler);   // (the first look only notes what is there)
     return run();
 }

@@ -43,10 +43,13 @@ struct RamblerPrefs {
     std::string screen_title;
 
     static RamblerPrefs load();
-    void save() const;
+    void save(bool archive = true) const;   // Use: false (ENV: only), Save: true (and ENVARC:)
+    std::string text() const;               // as written to the file
+    static std::string in_use_file();       // ENV:'s copy (watched by a running Rambler)
 };
 
 // The editor; apply is called with the settings to use (Use or Save)
-void edit_prefs(const RamblerPrefs &current, std::function<void(const RamblerPrefs &)> apply);
+void edit_prefs(const RamblerPrefs &current, std::function<void(const RamblerPrefs &)> apply,
+                bool standalone = false);
 
 }  // namespace rambler

@@ -12,9 +12,16 @@
   uruchomieniu (`zune.prefs` staje się `lune.prefs`, `wanderer.prefs` – `rambler.prefs`);
   `install.sh` usuwa paczkę `wanderer-x11` i pliki o starej nazwie.
 
+### Nowe
+- **Samodzielne programy preferencji**, jak w SYS:Prefs: szuflada Prefs ma Input, Lune i
+  Rambler (`rambler --prefs lune|rambler`). Use zachowuje ustawienia na sesję
+  (`$XDG_RUNTIME_DIR/rambler`, jak ENV:), Save także w `~/.config/rambler` (jak ENVARC:);
+  działający Rambler od razu przyjmuje zmianę, jak IPrefs.
+
 ### Poprawki
 - Po polsku strona Paski przewijania w preferencjach Lune nazywała się tak samo jak strona
   Suwaki.
+- Gadżet zamknięcia w preferencjach Lune anuluje teraz zmiany, jak Cancel.
 
 ## 0.12.0 – 2026-11-15
 

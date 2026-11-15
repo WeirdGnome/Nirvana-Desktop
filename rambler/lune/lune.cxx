@@ -30,6 +30,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <sys/stat.h>
+#include <unistd.h>
 
 namespace lune {
 
@@ -38,11 +39,21 @@ Prefs &prefs() {
     return p;
 }
 
+// ENVARC: the saved settings; ENV: the ones in use in this session (what Use writes; gone
+// with the session, as ENV: is a RAM disk)
 static std::string prefs_path() {
     const char *x = getenv("XDG_CONFIG_HOME");
     std::string base = x && *x ? x : std::string(getenv("HOME") ? getenv("HOME") : "/tmp") + "/.config";
     return base + "/rambler/lune.prefs";
 }
+
+std::string env_dir() {
+    const char *r = getenv("XDG_RUNTIME_DIR");
+    if (r && *r) return std::string(r) + "/rambler";
+    return "/tmp/rambler-" + std::to_string(getuid());
+}
+
+std::string env_prefs_path() { return env_dir() + "/lune.prefs"; }
 
 // the image and pen specs of the preferences, by their names in the file
 static const std::pair<const char *, std::string Prefs::*> SPEC_PREFS[] = {
@@ -74,7 +85,8 @@ static std::string Prefs::*spec_pref(const std::string &k) {
 
 void load_prefs() {
     Prefs &p = prefs();
-    FILE *f = fopen(prefs_path().c_str(), "r");
+    FILE *f = fopen(env_prefs_path().c_str(), "r");
+    if (!f) f = fopen(prefs_path().c_str(), "r");
     if (f) {
         char line[512];
         while (fgets(line, sizeof line, f)) {
@@ -146,9 +158,15 @@ void load_prefs() {
     apply_prefs();
 }
 
-void save_prefs() {
+static void write_prefs(const std::string &path);
+
+void save_prefs(bool archive) {
+    write_prefs(env_prefs_path());
+    if (archive) write_prefs(prefs_path());
+}
+
+static void write_prefs(const std::string &path) {
     Prefs &p = prefs();
-    std::string path = prefs_path();
     std::string dir = path.substr(0, path.rfind('/'));
     std::string cmd;
     for (size_t i = 1; i <= dir.size(); i++)

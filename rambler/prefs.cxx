@@ -18,6 +18,8 @@
 #include <cstdlib>
 #include <filesystem>
 #include <fstream>
+#include <sstream>
+#include <vector>
 #include <memory>
 
 namespace fs = std::filesystem;
@@ -31,9 +33,15 @@ static std::string prefs_file() {
     return base + "/rambler/rambler.prefs";
 }
 
+// the session's settings in use (ENV:; what Use writes)
+static std::string env_file() { return lune::env_dir() + "/rambler.prefs"; }
+
+std::string RamblerPrefs::in_use_file() { return env_file(); }
+
 RamblerPrefs RamblerPrefs::load() {
     RamblerPrefs p;
-    std::ifstream in(prefs_file());
+    std::ifstream in(env_file());
+    if (!in) in.open(prefs_file());
     std::string line;
     while (std::getline(in, line)) {
         auto eq = line.find('=');
@@ -76,15 +84,24 @@ RamblerPrefs RamblerPrefs::load() {
     return p;
 }
 
-void RamblerPrefs::save() const {
-    std::error_code ec;
-    fs::create_directories(fs::path(prefs_file()).parent_path(), ec);
-    std::ofstream out(prefs_file());
+// Use: ENV: only; Save: ENV: and ENVARC:
+void RamblerPrefs::save(bool archive) const {
+    std::string t = text();
+    for (auto &f : archive ? std::vector<std::string>{env_file(), prefs_file()} : std::vector<std::string>{env_file()}) {
+        std::error_code ec;
+        fs::create_directories(fs::path(f).parent_path(), ec);
+        std::ofstream(f) << t;
+    }
+}
+
+std::string RamblerPrefs::text() const {
+    std::ostringstream out;
     out << "text_mode=" << text_mode << "\nlabel_lines=" << label_lines << "\nlabel_maxlen=" << label_maxlen
         << "\nlist_mode=" << list_mode << "\ntoolbar=" << toolbar << "\nstatusbar=" << statusbar
         << "\nshow_hidden=" << show_hidden << "\ndrawers_first=" << drawers_first << "\nhspacing=" << hspacing
         << "\nvspacing=" << vspacing << "\nbackdrop_image=" << backdrop_image << "\nbackdrop_mode=" << backdrop_mode
         << "\ndrawer_image=" << drawer_image << "\ndrawer_mode=" << drawer_mode << "\nnavigation=" << navigation << "\nshow_network=" << show_network << "\ndrop_mode=" << drop_mode << "\ndefault_sort=" << default_sort << "\nauto_sort=" << auto_sort << "\nbackdrop_ox=" << backdrop_ox << "\nbackdrop_oy=" << backdrop_oy << "\ndrawer_ox=" << drawer_ox << "\ndrawer_oy=" << drawer_oy << "\nimage_spacing=" << image_spacing << "\nlabel_hpad=" << label_hpad << "\nlabel_vpad=" << label_vpad << "\nlabel_border_w=" << label_border_w << "\nlabel_border_h=" << label_border_h << "\nlines_on_focus=" << lines_on_focus << "\nicon_font=" << icon_font << "\nicon_font_size=" << icon_font_size << "\nscreen_title=" << screen_title << "\n";
+    return out.str();
 }
 
 // --------------------------------------------------------------------------------------------
@@ -243,7 +260,7 @@ static void advanced_options(const std::string &view, std::shared_ptr<RamblerPre
 
 // The Rambler preferences program (prefs/wanderer/wpeditor.c): a register with General,
 // Appearance and Toolbar; Save / Use / Cancel
-void edit_prefs(const RamblerPrefs &current, std::function<void(const RamblerPrefs &)> apply) {
+void edit_prefs(const RamblerPrefs &current, std::function<void(const RamblerPrefs &)> apply, bool standalone) {
     if (g_editor) { g_editor->show(); return; }
     auto work = std::make_shared<RamblerPrefs>(current);
     auto bpath = std::make_shared<std::string>(current.backdrop_image);
@@ -387,14 +404,15 @@ void edit_prefs(const RamblerPrefs &current, std::function<void(const RamblerPre
     auto *w = new Window("Rambler Preferences", root);
     w->id("RAMBLERPREFS");
     g_editor = w;
-    auto close = [w] {
+    auto close = [w, standalone] {
         if (g_advanced) { g_advanced->hide(); Fl::delete_widget(g_advanced); g_advanced = nullptr; }
         w->hide(); Fl::delete_widget(w); g_editor = nullptr;
+        if (standalone) exit(0);   // the preferences program on its own ends with its window
     };
-    save->on_press = [=] { auto p = collect(); p.save(); store_hidden(); apply(p); close(); };
-    use->on_press = [=] { store_hidden(); apply(collect()); close(); };
+    save->on_press = [=] { auto p = collect(); p.save(true); store_hidden(); apply(p); close(); };
+    use->on_press = [=] { auto p = collect(); p.save(false); store_hidden(); apply(p); close(); };
     cancel->on_press = [=] { close(); };
-    w->callback([](Fl_Widget *win, void *) { win->hide(); Fl::delete_widget(win); g_editor = nullptr; });
+    w->callback([](Fl_Widget *, void *d) { (*(std::function<void()> *)d)(); }, new std::function<void()>(close));
     int sx, sy, sw, sh;
     Fl::screen_work_area(sx, sy, sw, sh);
     w->position(sx + (sw - w->w()) / 2, sy + (sh - w->h()) / 3);

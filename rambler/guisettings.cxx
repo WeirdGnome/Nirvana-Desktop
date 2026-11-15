@@ -152,7 +152,7 @@ void draw_tape(int which, int X, int Y, int W, int H) {
 
 // The Lune preferences (prefs/Zune/zune.c): the list of pages on the left, the page on the
 // right in a text frame; Save / Use / Cancel (the prefs window)
-void edit_gui_settings() {
+void edit_gui_settings(bool standalone) {
     if (g_win) { g_win->show(); return; }
     Prefs saved = prefs();   // Cancel puts these back
     std::vector<FrameSetting> frames;
@@ -948,11 +948,18 @@ void edit_gui_settings() {
     auto *w = new lune::Window("Lune Preferences", root);
     w->id("LUNEPREFS");
     g_win = w;
-    auto close = [w] { w->hide(); Fl::delete_widget(w); g_win = nullptr; };
-    save->on_press = [=] { collect(); save_prefs(); apply_prefs(); close(); };
-    use->on_press = [=] { collect(); apply_prefs(); close(); };
+    auto close = [w, standalone] {
+        w->hide(); Fl::delete_widget(w); g_win = nullptr;
+        if (standalone) exit(0);   // the preferences program on its own ends with its window
+    };
+    // Use: the session's settings (ENV:), Save: also the saved ones (ENVARC:); a Rambler
+    // running apart from this program notices the change and takes it up
+    save->on_press = [=] { collect(); save_prefs(true); apply_prefs(); close(); };
+    use->on_press = [=] { collect(); save_prefs(false); apply_prefs(); close(); };
     cancel->on_press = [=] { prefs() = saved; apply_prefs(); close(); };
-    w->callback([](Fl_Widget *win, void *) { win->hide(); Fl::delete_widget(win); g_win = nullptr; });
+    // the close gadget is Cancel
+    w->callback([](Fl_Widget *, void *d) { (*(std::function<void()> *)d)(); },
+                new std::function<void()>([=] { prefs() = saved; apply_prefs(); close(); }));
     int sx, sy, sw, sh;
     Fl::screen_work_area(sx, sy, sw, sh);
     w->position(sx + (sw - w->w()) / 2, sy + (sh - w->h()) / 3);
