@@ -21,6 +21,7 @@
 #include "inputprefs.h"
 #include "screenmodeprefs.h"
 #include "localeprefs.h"
+#include "pointerprefs.h"
 
 #include <FL/Fl.H>
 #include <FL/Fl_Menu_Item.H>
@@ -117,7 +118,7 @@ public:
     static void tick(void *d);
     static void watch_volumes(void *d);
     static void watch_prefs(void *d);
-    std::string lune_env_, rambler_env_, locale_env_;
+    std::string lune_env_, rambler_env_, locale_env_, pointer_env_;
     bool prefs_seen_ = false;   // the settings in use (ENV:), as last read
     void use_prefs(const RamblerPrefs &p);
     void mount_and_open(const std::string &device);
@@ -865,6 +866,12 @@ void Rambler::watch_prefs(void *d) {
         self->locale_env_ = lo;
         if (!first && !lo.empty()) LocalePrefs::load().apply();
     }
+    // the Pointer preferences changed by the program on its own: the environment too
+    std::string po = read_file(PointerPrefs::in_use_file());
+    if (po != self->pointer_env_) {
+        self->pointer_env_ = po;
+        if (!first && !po.empty()) PointerPrefs::load().apply();
+    }
     std::string r = read_file(RamblerPrefs::in_use_file());
     if (r != self->rambler_env_) {
         self->rambler_env_ = r;
@@ -1188,7 +1195,8 @@ void make_prefs_drawer() {
     std::error_code ec;
     fs::create_directories(dir, ec);
     struct { const char *file, *name, *arg; } progs[] = {
-        {"Input.desktop", "Input", "input"}, {"Locale.desktop", "Locale", "locale"}, {"Lune.desktop", "Lune", "lune"}, {"Rambler.desktop", "Rambler", "rambler"},
+        {"Input.desktop", "Input", "input"}, {"Locale.desktop", "Locale", "locale"},
+        {"Pointer.desktop", "Pointer", "pointer"}, {"Lune.desktop", "Lune", "lune"}, {"Rambler.desktop", "Rambler", "rambler"},
         {"ScreenMode.desktop", "ScreenMode", "screenmode"}};
     for (auto &pr : progs) {
         std::string f = dir + "/" + pr.file;
@@ -1219,9 +1227,10 @@ int main(int argc, char **argv) {
         else if (prefs_program == "lune") edit_gui_settings(true);
         else if (prefs_program == "screenmode") edit_screenmode_prefs(true);
         else if (prefs_program == "locale") edit_locale_prefs(true);
+        else if (prefs_program == "pointer") edit_pointer_prefs(true);
         else if (prefs_program == "rambler") edit_prefs(RamblerPrefs::load(), [](const RamblerPrefs &) {}, true);
         else {
-            fprintf(stderr, "rambler: no preferences program '%s' (input, locale, lune, rambler, screenmode)\n", prefs_program.c_str());
+            fprintf(stderr, "rambler: no preferences program '%s' (input, locale, lune, pointer, rambler, screenmode)\n", prefs_program.c_str());
             return 1;
         }
         return run();
@@ -1235,6 +1244,7 @@ int main(int argc, char **argv) {
     // as IPrefs: the input preferences put into effect (when there are any saved)
     if (backdrop && ScreenModePrefs::exists()) ScreenModePrefs::load().apply();
     if (backdrop) LocalePrefs::load().apply();
+    if (backdrop) PointerPrefs::load().apply();
     if (backdrop && InputPrefs::exists()) InputPrefs::load().apply();
     if (backdrop) make_prefs_drawer();
     if (backdrop && first_in_session()) run_startup();   // once per session (not again after a restart)

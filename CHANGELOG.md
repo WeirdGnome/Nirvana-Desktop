@@ -27,11 +27,18 @@
   one with a catalog is the interface's; programs get them as `LANGUAGE`), the country
   (the formats of dates, numbers and money: an installed locale) and the timezone (`TZ`).
   The session exports the saved ones; after Use, the programs Rambler starts get them.
+- **Pointer preferences** (`rambler --prefs pointer`): the X cursor theme and size, with
+  the Normal and Busy pointers shown from the theme's own files. They go into the X
+  resources, the root window and the programs started from then on.
 
 ### Fixed
 - Polish: the Scrollbars page of the Lune preferences was named like the Sliders page.
 - The close gadget of the Lune preferences now cancels, as Cancel does.
 - A window that remembers its size is never opened smaller than its contents need.
+- A click during the screen flash of the display beep was lost; it now goes to the window
+  under it.
+- A click in a window could leave the pointer frozen for that window while a menu or a
+  drag was in progress in the window manager.
 
 ## 0.12.0 – 2026-11-15
 

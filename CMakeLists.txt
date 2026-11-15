@@ -34,7 +34,7 @@ add_executable(lune-test rambler/lune/test_lune.cxx)
 target_link_libraries(lune-test lune)
 
 # Rambler
-add_library(rambler-classes STATIC rambler/iconlist.cxx rambler/icons.cxx rambler/iconwindow.cxx rambler/tools.cxx rambler/prefs.cxx rambler/fileops.cxx rambler/guisettings.cxx rambler/find.cxx rambler/inputprefs.cxx rambler/screenmodeprefs.cxx rambler/localeprefs.cxx)
+add_library(rambler-classes STATIC rambler/iconlist.cxx rambler/icons.cxx rambler/iconwindow.cxx rambler/tools.cxx rambler/prefs.cxx rambler/fileops.cxx rambler/guisettings.cxx rambler/find.cxx rambler/inputprefs.cxx rambler/screenmodeprefs.cxx rambler/localeprefs.cxx rambler/pointerprefs.cxx)
 target_include_directories(rambler-classes PUBLIC rambler)
 target_link_libraries(rambler-classes PUBLIC lune)
 add_executable(iconlist-test rambler/test_iconlist.cxx)
@@ -49,7 +49,7 @@ find_package(PkgConfig REQUIRED)
 pkg_check_modules(XFT REQUIRED xft)
 add_executable(rambler-wm wm/wm.cxx)
 target_include_directories(rambler-wm PRIVATE ${XFT_INCLUDE_DIRS})
-target_link_libraries(rambler-wm ${XFT_LIBRARIES} ${X11_LIBRARIES})
+target_link_libraries(rambler-wm ${XFT_LIBRARIES} ${X11_LIBRARIES} ${X11_Xext_LIB})
 install(TARGETS rambler-wm RUNTIME DESTINATION bin COMPONENT rambler)
 
 # the session for the display manager

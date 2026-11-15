@@ -30,6 +30,7 @@
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 #include <X11/cursorfont.h>
+#include <X11/extensions/shape.h>
 #include <X11/keysym.h>
 #include <X11/XKBlib.h>
 #include <poll.h>
@@ -1040,6 +1041,13 @@ WScreen *screen_of(Window w) {
 }
 
 void button_press(XButtonEvent &e) {
+    // a press in a program's window comes through the synchronous grab (click to activate):
+    // whatever happens to it, the pointer is let go again (else it stays frozen for the
+    // program's window - every later click there would be lost)
+    struct Release {
+        bool sync;
+        ~Release() { if (sync) XAllowEvents(dpy, AsyncPointer, CurrentTime); }
+    } release{by_window.count(e.window) > 0};
     // the left button while the menus are held open: the item is picked and the menus stay
     // (the original's multiple selection: one menu pass, several items)
     if (menu.open && e.button == Button1) {
@@ -1078,6 +1086,7 @@ void button_press(XButtonEvent &e) {
         // show; it is not raised - activating raises nothing)
         activate(c);
         // the right button over a window with menus: the screen bar shows them
+        release.sync = false;
         if (e.button == Button3 && menu_begin(c)) {
             XAllowEvents(dpy, AsyncPointer, CurrentTime);
             return;
@@ -1318,6 +1327,9 @@ void display_beep() {
     a.background_pixel = pen_blue;
     Window f = XCreateWindow(dpy, root, 0, y, SW, SH - y, 0, CopyFromParent, InputOutput, CopyFromParent,
                              CWOverrideRedirect | CWBackPixel, &a);
+    // no input of its own: a click during the flash goes to the window under it (the
+    // original's DisplayBeep only flashes the screen's colours)
+    XShapeCombineRectangles(dpy, f, ShapeInput, 0, 0, nullptr, 0, ShapeSet, Unsorted);
     XMapRaised(dpy, f);
     XFlush(dpy);
     struct pollfd none = {-1, 0, 0};

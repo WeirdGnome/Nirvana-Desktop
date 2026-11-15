@@ -28,6 +28,9 @@
   (formaty dat, liczb i walut: zainstalowane ustawienia regionalne) i strefa czasowa
   (`TZ`). Sesja eksportuje zapisane ustawienia; po Use dostają je programy uruchamiane
   przez Ramblera.
+- **Preferencje Pointer** (`rambler --prefs pointer`): motyw i rozmiar kursora X, z
+  podglądem zwykłego wskaźnika i wskaźnika zajętości z plików motywu. Trafiają do zasobów
+  X, okna głównego i programów uruchamianych od tej chwili.
 
 ### Poprawki
 - Po polsku strona Paski przewijania w preferencjach Lune nazywała się tak samo jak strona
@@ -35,6 +38,10 @@
 - Gadżet zamknięcia w preferencjach Lune anuluje teraz zmiany, jak Cancel.
 - Okno, które pamięta swój rozmiar, nie otwiera się już mniejsze, niż potrzebuje jego
   zawartość.
+- Kliknięcie w trakcie mignięcia ekranu (sygnał dźwiękowy) ginęło; teraz trafia do okna pod
+  spodem.
+- Kliknięcie w oknie mogło zamrozić wskaźnik dla tego okna, gdy w menedżerze okien trwało
+  menu albo przeciąganie.
 
 ## 0.12.0 – 2026-11-15
 

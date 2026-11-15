@@ -28,6 +28,13 @@ if [ -r "$LOCALE_PREFS" ]; then
     v=$(sed -n 's/^timezone=//p' "$LOCALE_PREFS"); [ -n "$v" ] && export TZ="$v"
 fi
 
+# the Pointer preferences (saved): the cursor theme and size
+POINTER_PREFS="$CONF/rambler/pointer.prefs"
+if [ -r "$POINTER_PREFS" ]; then
+    v=$(sed -n 's/^theme=//p' "$POINTER_PREFS"); [ -n "$v" ] && export XCURSOR_THEME="$v"
+    v=$(sed -n 's/^size=//p' "$POINTER_PREFS"); [ -n "$v" ] && [ "$v" != 0 ] && export XCURSOR_SIZE="$v"
+fi
+
 export XDG_CURRENT_DESKTOP=Rambler
 export XDG_SESSION_DESKTOP=rambler
 export DESKTOP_SESSION=rambler
