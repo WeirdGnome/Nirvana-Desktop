@@ -1086,18 +1086,25 @@ void Rambler::menu_action(IconWindow *w, int id) {
             if (e->app_window) continue;
             std::string key = w->is_root() ? e->path : fs::path(e->path).filename().string();
             if (id == MEN_ICON_SNAPSHOT) s.icons[key] = {e->x, e->y};
-            // an AppImage's icon (no .info yet) is written out as its own dual icon, as
-            // Snapshot gives a file shown with a default icon an icon of its own; its second
-            // image (selected) can then be painted over
+            else { s.icons.erase(key); e->provided_x = e->provided_y = NO_ICON_POSITION; }
             std::error_code ec;
-            if (id == MEN_ICON_SNAPSHOT && e->icon && !e->is_drawer() && !fs::exists(e->path + ".info", ec)) {
+            std::string info = e->path + ".info";
+            if (id == MEN_ICON_SNAPSHOT && e->icon && !e->is_drawer() && !fs::exists(info, ec)) {
+                // an AppImage's icon (no .info yet) is written out as its own dual icon, as
+                // Snapshot gives a file shown with a default icon an icon of its own; its
+                // second image (selected) can then be painted over
                 DiskObject o = *e->icon;
                 o.dual = true;   // (its selected image written as a second one, to be painted over)
                 o.current_x = e->x;
                 o.current_y = e->y;
-                if (put_png_icon(e->path + ".info", o)) e->icon = get_disk_object(e->path);
+                if (put_png_icon(info, o)) e->icon = get_disk_object(e->path);
+            } else if (e->type != ST_ROOT && fs::is_regular_file(info, ec)) {
+                // an icon file of its own keeps the place too (do_CurrentX/Y), as on the
+                // original system: it goes with the file; Unsnapshot takes it away
+                if (id == MEN_ICON_SNAPSHOT) put_icon_position(info, e->x, e->y);
+                else put_icon_position(info, NO_ICON_POSITION, NO_ICON_POSITION);
+                e->icon = get_disk_object(e->path);
             }
-            else { s.icons.erase(key); e->provided_x = e->provided_y = NO_ICON_POSITION; }
         }
         save_snapshot(w->location(), s);
         if (id == MEN_ICON_UNSNAPSHOT) l->rethink();

@@ -15,6 +15,12 @@
   (oba obrazy ikony podwójnej zostają); ikona klasyczna – także z NewIcons albo ikoną
   kolorową – ma zmieniane tylko napisy, cała reszta zostaje bajt w bajt, także wiersze
   obrazów NewIcons.
+- **Snapshot zapisuje położenie w pliku ikony** (do_CurrentX/Y), jeśli ikona go ma, więc
+  idzie ono razem z plikiem; Unsnapshot je usuwa.
+
+### Poprawki
+- Snapshot ikony od wersji 0.13.0 niczego nie zapamiętywał (był od razu cofany); znów
+  działa.
 
 ## 0.13.3 – 2026-11-15
 

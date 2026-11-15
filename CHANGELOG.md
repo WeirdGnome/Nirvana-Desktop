@@ -16,6 +16,11 @@
   written again (both images of a dual icon stay); a classic icon - also with NewIcons or
   a colour icon - gets only its strings changed, everything else stays byte for byte,
   the NewIcons image lines too.
+- **Snapshot writes the place into the icon file** (do_CurrentX/Y) of an icon that has
+  one, so it goes with the file; Unsnapshot takes it away.
+
+### Fixed
+- Snapshot of an icon kept nothing since 0.13.0 (it was undone at once); it works again.
 
 ## 0.13.3 – 2026-11-15
 

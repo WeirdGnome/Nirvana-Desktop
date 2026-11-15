@@ -74,6 +74,9 @@ std::shared_ptr<DiskObject> default_disk_object(const std::string &name);
 // NewIcons or a colour icon) gets only its strings changed; false - it could not be done
 bool put_icon_strings(const std::string &info_file, const std::string *default_tool,
                       const std::vector<std::string> &tool_types);
+// the icon's place in its drawer written into its icon file (do_CurrentX/Y; NO_ICON_POSITION
+// both: none)
+bool put_icon_position(const std::string &info_file, int x, int y);
 // an AppImage's own icon (appimage.cxx): nullptr - not an AppImage, or no icon in it
 std::shared_ptr<DiskObject> appimage_icon(const std::string &path);
 // the steps of taking an AppImage's icon out, told on stdout (rambler --appimage-icon FILE)

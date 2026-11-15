@@ -666,6 +666,30 @@ bool put_classic_strings(const std::string &info_file, const std::string *defaul
     return rename(tmp.c_str(), info_file.c_str()) == 0;
 }
 
+bool put_icon_position(const std::string &info_file, int x, int y) {
+    std::fstream f(info_file, std::ios::binary | std::ios::in | std::ios::out);
+    unsigned char m[4] = {0};
+    if (!f || !f.read((char *)m, 4)) return false;
+    if (m[0] == 0xE3 && m[1] == 0x10) {
+        // a classic icon: do_CurrentX / do_CurrentY in its DiskObject (bytes 58 - 65)
+        unsigned char b[8];
+        for (int i = 0; i < 4; i++) { b[i] = ((unsigned)x >> (24 - 8 * i)) & 255; b[4 + i] = ((unsigned)y >> (24 - 8 * i)) & 255; }
+        f.seekp(58);
+        f.write((const char *)b, 8);
+        return (bool)f;
+    }
+    f.close();
+    if (!memcmp(m, "\x89PNG", 4)) {   // a PNG icon: its icOn chunk written again
+        auto o = read_icon_file(info_file);
+        if (!o) return false;
+        DiskObject n = *o;
+        n.current_x = x;
+        n.current_y = y;
+        return put_png_icon(info_file, n);
+    }
+    return false;
+}
+
 bool put_icon_strings(const std::string &info_file, const std::string *default_tool,
                       const std::vector<std::string> &tool_types) {
     char magic[4] = {0};
