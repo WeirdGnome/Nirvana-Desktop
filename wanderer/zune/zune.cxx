@@ -112,6 +112,12 @@ void load_prefs() {
                     {"string_marked_text", &Prefs::string_marked_text}};
                 for (auto &[name, m] : sk) if (k == name) p.*m = std::clamp(atoi(v.c_str()), 0, MPEN_COUNT - 1);
             }
+            else if (k == "button_back") p.button_back = std::clamp(atoi(v.c_str()), 128, 145);
+            else if (k == "selected_back") p.selected_back = std::clamp(atoi(v.c_str()), 128, 145);
+            else if (k == "button_font_family") p.button_font_family = std::clamp(atoi(v.c_str()), -1, 2);
+            else if (k == "button_font_size") p.button_font_size = std::clamp(atoi(v.c_str()), 0, 24);
+            else if (k == "radio_hspacing") p.radio_hspacing = std::clamp(atoi(v.c_str()), 0, 20);
+            else if (k == "radio_vspacing") p.radio_vspacing = std::clamp(atoi(v.c_str()), 0, 20);
             else if (k == "bubble_first") p.bubble_first = std::clamp(atoi(v.c_str()), 0, 50);
             else if (k == "bubble_next") p.bubble_next = std::clamp(atoi(v.c_str()), 0, 50);
             else if (k == "balancing_look") p.balancing_look = std::clamp(atoi(v.c_str()), 0, 1);
@@ -155,6 +161,8 @@ void save_prefs() {
                "string_marked_bg=%d\nstring_marked_text=%d\n",
             p.string_bg, p.string_text, p.string_active_bg, p.string_active_text, p.string_cursor, p.string_marked_bg,
             p.string_marked_text);
+    fprintf(f, "button_back=%d\nselected_back=%d\nbutton_font_family=%d\nbutton_font_size=%d\nradio_hspacing=%d\nradio_vspacing=%d\n",
+            p.button_back, p.selected_back, p.button_font_family, p.button_font_size, p.radio_hspacing, p.radio_vspacing);
     fprintf(f, "scrollbar_arrangement=%d\nscrollbar_type=%d\n", p.scrollbar_arrangement, p.scrollbar_type);
     fprintf(f, "bubble_first=%d\nbubble_next=%d\n", p.bubble_first, p.bubble_next);
     fprintf(f, "drag_left_modifier=%s\ndrag_middle_modifier=%s\n", p.drag_left_modifier.c_str(), p.drag_middle_modifier.c_str());
@@ -235,6 +243,8 @@ void apply_prefs() {
     p.font = fams[p.font_family][0];
     p.font_bold = fams[p.font_family][1];
     p.list_font = p.list_font_family < 0 ? p.font : fams[p.list_font_family][0];
+    p.button_font = p.button_font_family < 0 ? p.font : fams[p.button_font_family][0];
+    p.button_font_bold = p.button_font_family < 0 ? p.font_bold : fams[p.button_font_family][1];
     for (int i = 0; i < 16; i++) set_custom_frame(i, p.custom_frame[i]);
     for (int i = 1; i < Frame_Count; i++) set_std_frame((StdFrame)i, p.frame[i].empty() ? default_frame((StdFrame)i) : p.frame[i]);
     // bubble help: FLTK's tooltips with the delays set
@@ -300,6 +310,12 @@ void Area::min_max(int &minw, int &minh, int &defw, int &defh, int &maxw, int &m
 
 void Area::draw_background(int X, int Y, int W, int H) {
     if (bg_pen_ < 0) return;
+    if ((std_ == Frame_Button || std_ == Frame_ImageButton) && bg_pen_ == MPEN_BACKGROUND) {
+        // a button: MUII_ButtonBack, pressed MUII_SelectedBack (the Buttons page's patterns)
+        bool down = selected_ && (input_ == Input_RelVerify || input_ == Input_Immediate);
+        draw_pattern(down ? prefs().selected_back : prefs().button_back, X, Y, W, H);
+        return;
+    }
     int pen = bg_pen_;
     // a selected button: the "selected" background (configdata: 0:131 - the fill pen)
     if (selected_ && (input_ == Input_RelVerify || input_ == Input_Immediate)) pen = MPEN_FILL;
@@ -833,14 +849,21 @@ std::vector<Text::Line> Text::parse() const {
     return lines;
 }
 
+Fl_Font Text::font(bool bold) const {
+    if (button_font_) return bold ? prefs().button_font_bold : prefs().button_font;
+    return bold ? prefs().font_bold : prefs().font;
+}
+
+int Text::font_size() const { return button_font_ ? prefs().button_size() : prefs().font_size; }
+
 void Text::ask_min_max(int &minw, int &minh, int &defw, int &defh, int &maxw, int &maxh) {
     auto lines = parse();
     int wmax = 0;
     for (auto &l : lines) {
-        fl_font(l.bold ? prefs().font_bold : prefs().font, prefs().font_size);
+        fl_font(font(l.bold), font_size());
         wmax = std::max(wmax, (int)fl_width(l.text.c_str()));
     }
-    int lh = prefs().font_size + 3;
+    int lh = font_size() + 3;
     minw = defw = wmax;
     maxw = setmax_ ? wmax : MAXMAX;
     minh = defh = maxh = lh * (int)lines.size();
@@ -848,11 +871,11 @@ void Text::ask_min_max(int &minw, int &minh, int &defw, int &defh, int &maxw, in
 
 void Text::draw_contents() {
     auto lines = parse();
-    int lh = prefs().font_size + 3;
+    int lh = font_size() + 3;
     int y0 = mtop() + (mheight() - lh * (int)lines.size()) / 2;
     bool sel = selected_ && input_ != Input_None;
     for (size_t i = 0; i < lines.size(); i++) {
-        fl_font(lines[i].bold ? prefs().font_bold : prefs().font, prefs().font_size);
+        fl_font(font(lines[i].bold), font_size());
         fl_color(active_r() ? pens()[sel ? MPEN_SHINE : MPEN_TEXT] : pens()[MPEN_HALFSHADOW]);
         fl_draw(lines[i].text.c_str(), mleft(), y0 + (int)i * lh, mwidth(), lh, (Fl_Align)(lines[i].align | FL_ALIGN_CLIP));
     }
@@ -863,6 +886,7 @@ void Text::draw_contents() {
 Button::Button(const std::string &label) : Text("\033c" + label, Frame_Button) {
     background(MPEN_BACKGROUND);
     input_mode(Input_RelVerify);
+    button_font_ = true;
 }
 
 // ============================================================================================

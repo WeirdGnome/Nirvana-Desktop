@@ -93,6 +93,13 @@ struct Prefs {
     // the Strings page (pens, MPEN_*): the background and text of an inactive and of the
     // active string, the cursor, the marked text's background and text (configdata.c
     // "2:m2", "m5", "2:m1", "m5", "m7", "m6", "m0")
+    // the Buttons page: the background and the pressed background of buttons (MUII
+    // patterns), the button font (-1 / 0: the normal one), the radio buttons' spacing
+    int button_back = MUII_BACKGROUND, selected_back = MUII_FILL;
+    int button_font_family = -1, button_font_size = 0;
+    int radio_hspacing = 4, radio_vspacing = 1;
+    Fl_Font button_font = FL_HELVETICA, button_font_bold = FL_HELVETICA_BOLD;
+    int button_size() const { return button_font_size > 0 ? button_font_size : font_size; }
     int string_bg = 2, string_text = 5, string_active_bg = 1, string_active_text = 5, string_cursor = 7,
         string_marked_bg = 6, string_marked_text = 0;
     int list_size() const { return list_font_size > 0 ? list_font_size : font_size; }
@@ -289,6 +296,9 @@ protected:
     void draw_contents() override;
     std::string text_, preparse_;
     bool setmax_ = false;
+    bool button_font_ = false;   // MUIV_Font_Button (a button's text)
+    Fl_Font font(bool bold) const;
+    int font_size() const;
     struct Line { std::string text; int align; bool bold; };
     std::vector<Line> parse() const;
 };

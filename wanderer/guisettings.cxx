@@ -235,22 +235,82 @@ void edit_gui_settings() {
         VSpace();
         pg->end();
     }
-    // -- Buttons (buttonsp.c)
+    // -- Buttons (buttonsp.c): general (backgrounds), text buttons (frame, font), image
+    // buttons, checkmarks, radio buttons
+    Cycle *bback, *bsel, *bfam, *bsize;
+    Slider *rh, *rv;
     {
-        auto *pg = VGroup();
+        auto pattern = [](int muii) {
+            auto *row = HGroup();
+            row->spacing(2);
+            auto *sample = new SpecialImage([](int, int, int, int) {});
+            std::vector<std::string> names(PATTERN_NAMES, PATTERN_NAMES + (MUII_LASTPAT - MUII_BACKGROUND));
+            auto *c = new Cycle(names, muii - MUII_BACKGROUND);
+            row->end();
+            sample->painter([c](int X, int Y, int W, int H) { draw_pattern(MUII_BACKGROUND + c->active(), X, Y, W, H); });
+            c->on_change = [sample](int) { sample->redraw(); };
+            return c;
+        };
+        auto size_index = [](int v) { for (int i = 0; i < 7; i++) if (SIZES[i] == v) return i + 1; return 0; };
+        std::vector<std::string> sizes = {"Normal"};
+        for (int sz : SIZES) sizes.push_back(std::to_string(sz));
+        auto *pg = HGroup();
+        auto *left = VGroup();
+        left->weight(130);
+        auto *gen = new Group(Group::Vertical, Frame_Group);
+        gen->frame_title("General");
+        gen->columns(2);
+        new Text("\033rBackground:");
+        bback = pattern(saved.button_back);
+        new Text("\033rBackground (pressed):");
+        bsel = pattern(saved.selected_back);
+        gen->end();
         auto *tb = new Group(Group::Vertical, Frame_Group);
         tb->frame_title("Text Buttons");
         tb->columns(2);
         new Text("\033rFrame:");
         frames.push_back({Frame_Button, frame_cycle(Frame_Button)});
+        new Text("\033rFont:");
+        auto *fr = HGroup();
+        bfam = new Cycle({"Normal", "Sans", "Serif", "Fixed"}, saved.button_font_family + 1);
+        bsize = new Cycle(sizes, size_index(saved.button_font_size));
+        fr->end();
         tb->end();
-        auto *ib = new Group(Group::Vertical, Frame_Group);
+        left->end();
+        auto *right = VGroup();
+        auto *ib = new Group(Group::Horizontal, Frame_Group);
         ib->frame_title("Image Buttons");
-        ib->columns(2);
+        HSpace();
         new Text("\033rFrame:");
         frames.push_back({Frame_ImageButton, frame_cycle(Frame_ImageButton)});
+        HSpace();
         ib->end();
-        VSpace();
+        auto *cm = new Group(Group::Horizontal, Frame_Group);
+        cm->frame_title("Checkmarks");
+        HSpace();
+        new Text("\033rLook:");
+        new Checkmark(true);   // MUII_CheckMark "1:4"
+        HSpace();
+        cm->end();
+        auto *rb = new Group(Group::Horizontal, Frame_Group);
+        rb->frame_title("Radio Buttons");
+        HSpace();
+        auto *look = VGroup();
+        look->vspacing(1);
+        new RadioMark(true);   // MUII_RadioButton "1:5"
+        new Text("\033cLook");
+        look->end();
+        HSpace(4);
+        auto *spc = new Group(Group::Vertical);
+        spc->columns(2);
+        new Text("\033rH"); rh = number(saved.radio_hspacing);
+        new Text("\033rV"); rv = number(saved.radio_vspacing);
+        HVSpace();
+        new Text("\033cSpacing");
+        spc->end();
+        HSpace();
+        rb->end();
+        right->end();
         pg->end();
     }
     // -- Cycles (cyclesp.c): the pop-up menu
@@ -756,6 +816,12 @@ void edit_gui_settings() {
         p.bubble_first = bfirst->value();
         p.bubble_next = bnext->value();
         p.scrollbar_arrangement = *sbarr;
+        p.button_back = MUII_BACKGROUND + bback->active();
+        p.selected_back = MUII_BACKGROUND + bsel->active();
+        p.button_font_family = bfam->active() - 1;
+        p.button_font_size = bsize->active() ? SIZES[bsize->active() - 1] : 0;
+        p.radio_hspacing = rh->value();
+        p.radio_vspacing = rv->value();
         p.string_bg = sbg->active();
         p.string_text = stext->active();
         p.string_active_bg = sabg->active();
