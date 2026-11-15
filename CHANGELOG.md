@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.18.0 (unreleased)
+## 0.18.0 – 2026-11-15
 
 ### Added
 - **MultiView** (`rambler --utility multiview [FILE]`, in the Tools drawer): shows a text

@@ -1,6 +1,6 @@
 # Lista zmian
 
-## 0.18.0 (w przygotowaniu)
+## 0.18.0 – 2026-11-15
 
 ### Nowe
 - **MultiView** (`rambler --utility multiview [PLIK]`, w szufladzie Tools): pokazuje
