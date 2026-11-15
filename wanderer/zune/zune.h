@@ -101,6 +101,17 @@ struct Prefs {
     // the other backgrounds (image specs, configdata.c): windows, requesters, framed groups,
     // registers, page groups, pop-ups, text fields, scrollers (the half shadow here), sliders
     // and their knobs; the colour of the active object (Navigation page)
+    // the Groups page: the title's position (0 above the frame, 1 centred on its top line),
+    // colour (0 standard, 1 hilite, 2 3D, 3 outline) and font (-1 / 0: the normal bold one);
+    // registers truncating their titles (kept)
+    int group_title_position = 1, group_title_color = 1, title_font_family = -1, title_font_size = 0;
+    bool register_truncate_titles = false;
+    Fl_Font title_font = FL_HELVETICA_BOLD;
+    int title_size() const { return title_font_size > 0 ? title_font_size : font_size; }
+    // the Windows page: window positions (0 forgotten on exit, 1 remembered on exit, 2 saved
+    // on exit), refresh and redraw (kept), the extra buttons (kept), the tiny and big fonts
+    int window_positions = 0, window_refresh = 1, window_redraw = 0, window_buttons = 0;
+    int tiny_font_size = 0, big_font_size = 0;
     std::string window_back = "0:128", requester_back = "0:137", group_back = "0:128", register_back = "0:128",
                 page_back = "0:128", popup_back = "0:128", text_back = "0:128", prop_back = "2:m3",
                 slider_back = "0:128", slider_knob = "0:128", active_object_color = "m0";
@@ -580,6 +591,11 @@ public:
     ~Window() override;
     void root(Area *r);
     Area *root() const { return root_; }
+    // MUIA_Window_ID: a window with an ID opens where it was (the Windows page's positions)
+    void id(const std::string &i) { id_ = i; }
+    void show() override;
+    using Fl_Double_Window::show;
+    void hide() override;
     // a requester's window has the requester background (MUII_RequesterBack)
     void requester(bool r) { requester_ = r; }
     const std::string &background_spec() const;
@@ -591,6 +607,7 @@ public:
 
 private:
     bool requester_ = false;
+    std::string id_;
     Area *root_ = nullptr;
     std::string title_;
     std::unique_ptr<class Fl_Widget_Tracker> last_focus_;   // the active object when the window was left

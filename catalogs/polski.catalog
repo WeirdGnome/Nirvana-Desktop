@@ -513,3 +513,21 @@ Framed	W ramce
 Register	Zakładki
 Page	Strona
 Color of active object:	Kolor aktywnego obiektu:
+Title	Tytuł
+Above	Nad ramką
+Centered	Na środku
+Color:	Kolor:
+Hilite	Wyróżniony
+3D	3D
+Default size truncate titles:	Skracaj tytuły przy domyślnym rozmiarze:
+Positions:	Położenie:
+Forget on exit	Zapomnij przy wyjściu
+Remember on exit	Pamiętaj przy wyjściu
+Save on exit	Zapisz przy wyjściu
+Smart	Inteligentne
+Simple	Proste
+Redraw:	Rysowanie:
+Without clear	Bez czyszczenia
+With clear	Z czyszczeniem
+Tiny:	Mała:
+Big:	Duża:

@@ -385,6 +385,7 @@ void edit_prefs(const WandererPrefs &current, std::function<void(const WandererP
         return p;
     };
     auto *w = new Window("Wanderer Preferences", root);
+    w->id("WANDERERPREFS");
     g_editor = w;
     auto close = [w] {
         if (g_advanced) { g_advanced->hide(); Fl::delete_widget(g_advanced); g_advanced = nullptr; }

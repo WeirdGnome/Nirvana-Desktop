@@ -217,11 +217,37 @@ void edit_gui_settings() {
         }
         g->end();
     };
-    // -- Windows: the fonts, the spacing (windowp.c)
+    auto size_index = [](int v) { for (int i = 0; i < 7; i++) if (SIZES[i] == v) return i + 1; return 0; };
+    std::vector<std::string> size_names = {"Normal"};
+    for (int sz : SIZES) size_names.push_back(std::to_string(sz));
+    auto size_of = [](Cycle *c) { return c->active() ? SIZES[c->active() - 1] : 0; };
+    // -- Windows: control, the fonts, the background, the spacing (windowp.c)
     Slider *wl, *wr, *wt, *wb;
-    Cycle *fam, *size;
+    Cycle *fam, *size, *wpos, *wrefresh, *wredraw, *tiny, *big;
+    std::vector<Checkmark *> wbuttons;
     {
         auto *pg = VGroup();
+        auto *ctl = new Group(Group::Vertical, Frame_Group);
+        ctl->frame_title("Control");
+        ctl->columns(2);
+        new Text("\033rPositions:");
+        wpos = new Cycle({"Forget on exit", "Remember on exit", "Save on exit"}, saved.window_positions);
+        new Text("\033rRefresh:");
+        wrefresh = new Cycle({"Smart", "Simple"}, saved.window_refresh);
+        new Text("\033rRedraw:");
+        wredraw = new Cycle({"Without clear", "With clear"}, saved.window_redraw);
+        new Text("\033rButtons:");
+        auto *wbr = HGroup();
+        const char *bn[] = {"M", "S", "P", "I"};   // MUI, snapshot, pop-up, iconify (MUIV_Window_Button_*)
+        for (int i = 0; i < 4; i++) {
+            if (i) HVSpace();
+            auto *c = new Checkmark(saved.window_buttons >> i & 1);
+            c->copy_tooltip(bn[i]);
+            wbuttons.push_back(c);
+            new Text(bn[i]);
+        }
+        wbr->end();
+        ctl->end();
         auto *fonts = new Group(Group::Vertical, Frame_Group);
         fonts->frame_title("Fonts");
         fonts->columns(2);
@@ -231,6 +257,10 @@ void edit_gui_settings() {
         fam = new Cycle({"Sans", "Serif", "Fixed"}, saved.font_family);
         new Text("\033rSize:");
         size = new Cycle({"11", "12", "13", "14", "15", "16", "18"}, si);
+        new Text("\033rTiny:");
+        tiny = new Cycle(size_names, size_index(saved.tiny_font_size));
+        new Text("\033rBig:");
+        big = new Cycle(size_names, size_index(saved.big_font_size));
         fonts->end();
         pop_row("Background", {{"Window", &Prefs::window_back}, {"Requester", &Prefs::requester_back}});
         auto *sp = new Group(Group::Vertical, Frame_Group);
@@ -244,10 +274,32 @@ void edit_gui_settings() {
         VSpace();
         pg->end();
     }
-    // -- Groups: the frame, the spacing (groupsp.c)
+    // -- Groups: the title, the spacing, registers, the frames, the backgrounds (groupsp.c)
     Slider *gh, *gv;
+    Cycle *gtpos, *gtcol, *gtfam, *gtsize;
+    Checkmark *gtrunc;
     {
         auto *pg = VGroup();
+        auto *ti = new Group(Group::Vertical, Frame_Group);
+        ti->frame_title("Title");
+        ti->columns(2);
+        new Text("\033rPosition:");
+        gtpos = new Cycle({"Above", "Centered"}, saved.group_title_position);
+        new Text("\033rColor:");
+        gtcol = new Cycle({"Standard", "Hilite", "3D", "Outline"}, saved.group_title_color);
+        new Text("\033rFont:");
+        auto *tf = HGroup();
+        gtfam = new Cycle({"Normal", "Sans", "Serif", "Fixed"}, saved.title_font_family + 1);
+        gtsize = new Cycle(size_names, size_index(saved.title_font_size));
+        tf->end();
+        ti->end();
+        auto *rg = new Group(Group::Horizontal, Frame_Group);
+        rg->frame_title("Register");
+        HSpace();
+        new Text("\033rDefault size truncate titles:");
+        gtrunc = new Checkmark(saved.register_truncate_titles);
+        HSpace();
+        rg->end();
         auto *fr = new Group(Group::Vertical, Frame_Group);
         fr->frame_title("Frame");
         fr->columns(2);
@@ -843,6 +895,18 @@ void edit_gui_settings() {
         p.bubble_first = bfirst->value();
         p.bubble_next = bnext->value();
         p.scrollbar_arrangement = *sbarr;
+        p.window_positions = wpos->active();
+        p.window_refresh = wrefresh->active();
+        p.window_redraw = wredraw->active();
+        p.window_buttons = 0;
+        for (int i = 0; i < 4; i++) if (wbuttons[i]->on()) p.window_buttons |= 1 << i;
+        p.tiny_font_size = size_of(tiny);
+        p.big_font_size = size_of(big);
+        p.group_title_position = gtpos->active();
+        p.group_title_color = gtcol->active();
+        p.title_font_family = gtfam->active() - 1;
+        p.title_font_size = size_of(gtsize);
+        p.register_truncate_titles = gtrunc->on();
         for (auto &[m, pi] : *pop_specs) p.*m = pi->spec();
         p.button_back = bback->spec();
         p.selected_back = bsel->spec();
@@ -882,6 +946,7 @@ void edit_gui_settings() {
         cfl->value(hex(PALETTES[i].fill));
     };
     auto *w = new zune::Window("Zune Preferences", root);
+    w->id("ZUNEPREFS");
     g_win = w;
     auto close = [w] { w->hide(); Fl::delete_widget(w); g_win = nullptr; };
     save->on_press = [=] { collect(); save_prefs(); apply_prefs(); close(); };

@@ -20,11 +20,13 @@
 #include <FL/Fl_Tooltip.H>
 #include <FL/fl_draw.H>
 #include <FL/platform.H>
+#include <X11/Xatom.h>
 
 #include <cstring>
 
 #include <algorithm>
 #include <sstream>
+#include <map>
 #include <cstdio>
 #include <cstdlib>
 #include <sys/stat.h>
@@ -52,6 +54,18 @@ static const std::pair<const char *, std::string Prefs::*> SPEC_PREFS[] = {
     {"string_text", &Prefs::string_text}, {"string_active_bg", &Prefs::string_active_bg},
     {"string_active_text", &Prefs::string_active_text}, {"string_cursor", &Prefs::string_cursor},
     {"string_marked_bg", &Prefs::string_marked_bg}, {"string_marked_text", &Prefs::string_marked_text}};
+
+static const std::pair<const char *, int Prefs::*> INT_PREFS[] = {
+    {"group_title_position", &Prefs::group_title_position}, {"group_title_color", &Prefs::group_title_color},
+    {"title_font_family", &Prefs::title_font_family}, {"title_font_size", &Prefs::title_font_size},
+    {"window_positions", &Prefs::window_positions}, {"window_refresh", &Prefs::window_refresh},
+    {"window_redraw", &Prefs::window_redraw}, {"window_buttons", &Prefs::window_buttons},
+    {"tiny_font_size", &Prefs::tiny_font_size}, {"big_font_size", &Prefs::big_font_size}};
+
+static int Prefs::*int_pref(const std::string &k) {
+    for (auto &[name, m] : INT_PREFS) if (k == name) return m;
+    return nullptr;
+}
 
 static std::string Prefs::*spec_pref(const std::string &k) {
     for (auto &[name, m] : SPEC_PREFS) if (k == name) return m;
@@ -121,6 +135,8 @@ void load_prefs() {
             else if (k == "list_select") p.list_select = v;
             else if (k == "list_selcur") p.list_selcur = v;
             else if (std::string Prefs::*m = spec_pref(k)) p.*m = v;
+            else if (int Prefs::*m = int_pref(k)) p.*m = atoi(v.c_str());
+            else if (k == "register_truncate_titles") p.register_truncate_titles = atoi(v.c_str());
             else if (k == "bubble_first") p.bubble_first = std::clamp(atoi(v.c_str()), 0, 50);
             else if (k == "bubble_next") p.bubble_next = std::clamp(atoi(v.c_str()), 0, 50);
             else if (k == "balancing_look") p.balancing_look = std::clamp(atoi(v.c_str()), 0, 1);
@@ -161,6 +177,8 @@ void save_prefs() {
             p.list_font_size, p.fixed_font_size, p.list_back.c_str(), p.readlist_back.c_str(), p.list_cursor.c_str(),
             p.list_select.c_str(), p.list_selcur.c_str());
     for (auto &[name, m] : SPEC_PREFS) fprintf(f, "%s=%s\n", name, (p.*m).c_str());
+    for (auto &[name, m] : INT_PREFS) fprintf(f, "%s=%d\n", name, p.*m);
+    fprintf(f, "register_truncate_titles=%d\n", (int)p.register_truncate_titles);
     fprintf(f, "scrollbar_arrangement=%d\nscrollbar_type=%d\n", p.scrollbar_arrangement, p.scrollbar_type);
     fprintf(f, "bubble_first=%d\nbubble_next=%d\n", p.bubble_first, p.bubble_next);
     fprintf(f, "drag_left_modifier=%s\ndrag_middle_modifier=%s\n", p.drag_left_modifier.c_str(), p.drag_middle_modifier.c_str());
@@ -242,6 +260,7 @@ void apply_prefs() {
     p.font_bold = fams[p.font_family][1];
     p.list_font = p.list_font_family < 0 ? p.font : fams[p.list_font_family][0];
     p.button_font = p.button_font_family < 0 ? p.font : fams[p.button_font_family][0];
+    p.title_font = p.title_font_family < 0 ? p.font_bold : fams[std::clamp(p.title_font_family, 0, 2)][1];
     p.button_font_bold = p.button_font_family < 0 ? p.font_bold : fams[p.button_font_family][1];
     for (int i = 0; i < 16; i++) set_custom_frame(i, p.custom_frame[i]);
     for (int i = 1; i < Frame_Count; i++) set_std_frame((StdFrame)i, p.frame[i].empty() ? default_frame((StdFrame)i) : p.frame[i]);
@@ -434,10 +453,14 @@ Group::Group(Dir d, StdFrame f) : Area(f), dir_(d), hs_(-1), vs_(-1) {
     begin();          // the children follow (end() closes it)
 }
 
+// the title's band above the frame (mad_TitleHeightAbove): above - the font's baseline,
+// centred - half the font
 int Group::title_h() const {
     if (title_.empty()) return 0;
-    return prefs().font_size + 2;
+    return prefs().title_size() + 2;
 }
+
+static int title_above(int th) { return prefs().group_title_position == 0 ? th - 3 : th / 2; }
 
 std::vector<Area *> Group::areas() const {
     std::vector<Area *> v;
@@ -619,16 +642,42 @@ void Group::draw() {
     if (damage() & ~FL_DAMAGE_CHILD) {
         // a framed group draws its background (configdata: MUII_GroupBack); the title sits on
         // the top edge of the frame, centred
-        int th = title_h();
+        int th = title_h(), ta = title_above(th);
         draw_background(x(), y(), w(), h());
-        draw_frame(frame_spec(), x(), y() + th / 2, w(), h() - th / 2);
-        if (th) {
-            fl_font(prefs().font_bold, prefs().font_size);
-            int tw = (int)fl_width(title_.c_str()) + 8;
+        if (!th) draw_frame(frame_spec(), x(), y(), w(), h());
+        else {
+            // the frame, clipped round the title (an eighth of the font's height either side)
+            const Prefs &p = prefs();
+            fl_font(p.title_font, p.title_size());
+            int addtw = p.group_title_color == 3 ? 2 : p.group_title_color == 2 ? 1 : 0;
+            int tw = (int)fl_width(title_.c_str()) + addtw, hspace = std::max(1, p.title_size() / 8);
             int tx = x() + (w() - tw) / 2;
-            draw_background(tx, y(), tw, th);
-            fl_color(pens()[MPEN_TEXT]);
-            fl_draw(title_.c_str(), tx, y(), tw, th, FL_ALIGN_CENTER);
+            fl_push_clip(x(), y(), tx - hspace - x(), h());
+            draw_frame(frame_spec(), x(), y() + ta, w(), h() - ta);
+            fl_pop_clip();
+            fl_push_clip(tx + tw + hspace, y(), x() + w() - (tx + tw + hspace), h());
+            draw_frame(frame_spec(), x(), y() + ta, w(), h() - ta);
+            fl_pop_clip();
+            fl_push_clip(tx - hspace, y() + th, tw + 2 * hspace, h() - th);
+            draw_frame(frame_spec(), x(), y() + ta, w(), h() - ta);
+            fl_pop_clip();
+            // the title: standard (shadow), hilite (shine), 3D (shadow under shine), outline
+            // (shine round shadow)
+            const Pens &P = pens();
+            int by = y(), bh = th;
+            auto txt = [&](int dx, int dy, Fl_Color c) {
+                fl_color(c);
+                fl_draw(title_.c_str(), tx + dx, by + dy, tw - addtw, bh, FL_ALIGN_LEFT);
+            };
+            switch (p.group_title_color) {
+            case 2: txt(1, 1, P[MPEN_SHADOW]); txt(0, 0, P[MPEN_SHINE]); break;
+            case 3:
+                txt(2, 1, P[MPEN_SHINE]); txt(0, 1, P[MPEN_SHINE]); txt(1, 2, P[MPEN_SHINE]); txt(1, 0, P[MPEN_SHINE]);
+                txt(1, 1, P[MPEN_SHADOW]);
+                break;
+            case 1: txt(0, 0, P[MPEN_SHINE]); break;
+            default: txt(0, 0, P[MPEN_SHADOW]); break;
+            }
         }
     }
     if (sketch_) { draw_sketch(); return; }
@@ -2059,6 +2108,68 @@ void Window::draw() {
         draw_imspec(background_spec(), 0, 0, w(), h());
     }
     draw_children();
+}
+
+// --------------------------------------------------------------------------------------------
+// Window positions (window.c, MUICFG_Window_Positions): by the windows' IDs, kept while the
+// program runs; with "save on exit" in ~/.config/wanderer/zune.windows as well
+// --------------------------------------------------------------------------------------------
+namespace {
+struct WinPos { int x, y, w, h; };
+std::map<std::string, WinPos> &positions() {
+    static std::map<std::string, WinPos> m;
+    static bool loaded = false;
+    if (!loaded) {
+        loaded = true;
+        std::string path = prefs_path();
+        path = path.substr(0, path.rfind('/')) + "/zune.windows";
+        if (FILE *f = fopen(path.c_str(), "r")) {
+            char id[256];
+            WinPos p;
+            while (fscanf(f, "%255s %d %d %d %d", id, &p.x, &p.y, &p.w, &p.h) == 5) m[id] = p;
+            fclose(f);
+        }
+        atexit([] {
+            if (prefs().window_positions != 2) return;
+            std::string path = prefs_path();
+            path = path.substr(0, path.rfind('/')) + "/zune.windows";
+            if (FILE *f = fopen(path.c_str(), "w")) {
+                for (auto &[k, p] : positions()) fprintf(f, "%s %d %d %d %d\n", k.c_str(), p.x, p.y, p.w, p.h);
+                fclose(f);
+            }
+        });
+    }
+    return m;
+}
+}  // namespace
+
+void Window::show() {
+    if (!shown() && !id_.empty() && prefs().window_positions != 0) {
+        auto &m = positions();
+        auto it = m.find(id_);
+        if (it != m.end()) resize(it->second.x, it->second.y, std::max(it->second.w, 20), std::max(it->second.h, 20));
+    }
+    Fl_Double_Window::show();
+}
+
+void Window::hide() {
+    if (shown() && !id_.empty()) {
+        // the frame's place: the window manager puts the frame where a window asks to be
+        // (NorthWest gravity), so the frame's edges (_NET_FRAME_EXTENTS) come off
+        long left = 0, top = 0;
+        Atom type;
+        int format;
+        unsigned long n = 0, after;
+        unsigned char *d = nullptr;
+        if (XGetWindowProperty(fl_display, fl_xid(this), XInternAtom(fl_display, "_NET_FRAME_EXTENTS", False), 0, 4,
+                               False, XA_CARDINAL, &type, &format, &n, &after, &d) == Success && d && n == 4) {
+            left = ((long *)d)[0];
+            top = ((long *)d)[2];
+        }
+        if (d) XFree(d);
+        positions()[id_] = {x() - (int)left, y() - (int)top, w(), h()};
+    }
+    Fl_Double_Window::hide();
 }
 
 const std::string &Window::background_spec() const { return requester_ ? prefs().requester_back : prefs().window_back; }

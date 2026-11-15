@@ -248,6 +248,7 @@ void find_tool(const std::string &startdir, std::function<void(const std::string
     }
     root->end();
     s->win = new Window("Find", root);
+    s->win->id("FIND");
     int sx, sy, sw, sh;
     Fl::screen_work_area(sx, sy, sw, sh);
     s->win->size(std::max(s->win->w(), sw / 2), std::max(s->win->h(), sh / 2));
