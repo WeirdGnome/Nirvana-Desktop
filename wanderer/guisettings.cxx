@@ -70,7 +70,7 @@ void edit_gui_settings() {
     auto *root = VGroup();
     root->vspacing(10);
     auto *main = HGroup();
-    const char *pages[] = {"Windows", "Groups", "Buttons", "Cycles", "Strings", "Listviews", "Scrollbars", "Palette"};
+    const char *pages[] = {"Windows", "Groups", "Buttons", "Cycles", "Sliders", "Scrollbars", "Listviews", "Strings", "Palette"};
     auto *list = new List();
     list->frame(Frame_InputList);
     {
@@ -174,16 +174,49 @@ void edit_gui_settings() {
         VSpace();
         pg->end();
     }
-    // -- Strings (stringsp.c)
+    // -- Sliders (slidersp.c): the container's frame, the knob's frame; example sliders
+    {
+        auto *pg = VGroup();
+        auto *top = HGroup();
+        top->weight(800);
+        auto *cont = new Group(Group::Vertical, Frame_Group);
+        cont->frame_title("Container Design");
+        cont->columns(2);
+        new Text("\033rFrame:");
+        frames.push_back({Frame_Slider, frame_cycle(Frame_Slider)});
+        cont->end();
+        auto *knob = new Group(Group::Vertical, Frame_Group);
+        knob->frame_title("Knob Design");
+        knob->columns(2);
+        new Text("\033rFrame:");
+        frames.push_back({Frame_Knob, frame_cycle(Frame_Knob)});
+        knob->end();
+        top->end();
+        auto *ex = new Group(Group::Vertical, Frame_Group);
+        ex->frame_title("Example Sliders");
+        VSpace();
+        auto *row = HGroup();
+        auto *col = VGroup();
+        new Slider(0, 9, 5);     // MakeSmallHorizSlider
+        new Slider(0, 99, 42);   // MakeBigHorizSlider
+        col->end();
+        new Slider(0, 9, 5, false);
+        new Slider(0, 99, 42, false);
+        row->end();
+        HVSpace();
+        ex->end();
+        pg->end();
+    }
+    // -- Scrollbars and gauges (scrollbarsp.c)
     {
         auto *pg = VGroup();
         auto *g = new Group(Group::Vertical, Frame_Group);
-        g->frame_title("Frame");
+        g->frame_title("Frames");
         g->columns(2);
-        new Text("\033rStrings:");
-        frames.push_back({Frame_String, frame_cycle(Frame_String)});
-        new Text("\033rPop-ups:");
-        frames.push_back({Frame_PopUp, frame_cycle(Frame_PopUp)});
+        new Text("\033rScrollbar:");
+        frames.push_back({Frame_Prop, frame_cycle(Frame_Prop)});
+        new Text("\033rGauge:");
+        frames.push_back({Frame_Gauge, frame_cycle(Frame_Gauge)});
         g->end();
         VSpace();
         pg->end();
@@ -202,16 +235,16 @@ void edit_gui_settings() {
         VSpace();
         pg->end();
     }
-    // -- Scrollbars and gauges (scrollbarsp.c)
+    // -- Strings (stringsp.c)
     {
         auto *pg = VGroup();
         auto *g = new Group(Group::Vertical, Frame_Group);
-        g->frame_title("Frames");
+        g->frame_title("Frame");
         g->columns(2);
-        new Text("\033rScrollbar:");
-        frames.push_back({Frame_Prop, frame_cycle(Frame_Prop)});
-        new Text("\033rGauge:");
-        frames.push_back({Frame_Gauge, frame_cycle(Frame_Gauge)});
+        new Text("\033rStrings:");
+        frames.push_back({Frame_String, frame_cycle(Frame_String)});
+        new Text("\033rPop-ups:");
+        frames.push_back({Frame_PopUp, frame_cycle(Frame_PopUp)});
         g->end();
         VSpace();
         pg->end();

@@ -77,8 +77,12 @@ public:
     // the background: a pen (MPEN_BACKGROUND by default) or none (the parent's shows through)
     void background(int pen) { bg_pen_ = pen; }
     void inner(int l, int r, int t, int b) { il_ = l; ir_ = r; it_ = t; ib_ = b; inner_set_ = true; }
-    void weight(int w) { weight_ = w; }
+    void weight(int w) { weight_ = w; hweight_ = vweight_ = -1; }
     int weight() const { return weight_; }
+    // MUIA_HorizWeight / MUIA_VertWeight: the weight along one direction only
+    void horiz_weight(int w) { hweight_ = w; }
+    void vert_weight(int w) { vweight_ = w; }
+    int weight(bool horiz) const { int w = horiz ? hweight_ : vweight_; return w >= 0 ? w : weight_; }
     void fixed_width(int w) { fixw_ = w; }
     void fixed_height(int h) { fixh_ = h; }
     void input_mode(InputMode m) { input_ = m; }
@@ -113,7 +117,7 @@ protected:
     int bg_pen_ = MPEN_BACKGROUND;
     int il_ = 0, ir_ = 0, it_ = 0, ib_ = 0;
     bool inner_set_ = false;
-    int weight_ = 100, fixw_ = 0, fixh_ = 0;
+    int weight_ = 100, hweight_ = -1, vweight_ = -1, fixw_ = 0, fixh_ = 0;
     InputMode input_ = Input_None;
     bool selected_ = false, disabled_ = false, pressed_ = false;
 };
@@ -191,8 +195,9 @@ private:
 };
 inline Rectangle *HVSpace() { return new Rectangle(0); }
 inline Rectangle *HBar() { return new Rectangle('H'); }
-inline Rectangle *HSpace(int w = 0) { auto *r = new Rectangle('h'); if (w) r->fixed_width(w); return r; }
-inline Rectangle *VSpace(int h = 0) { auto *r = new Rectangle('v'); if (h) r->fixed_height(h); return r; }
+// MUIO_HSpace: no vertical weight, a fixed width (0: free); MUIO_VSpace the other way round
+inline Rectangle *HSpace(int w = 0) { auto *r = new Rectangle('h'); r->vert_weight(0); if (w) r->fixed_width(w); return r; }
+inline Rectangle *VSpace(int h = 0) { auto *r = new Rectangle('v'); r->horiz_weight(0); if (h) r->fixed_height(h); return r; }
 
 // ---------------------------------------------------------------------------------------------
 class Text : public Area {
@@ -332,7 +337,7 @@ protected:
 class Slider : public Area {
 public:
     bool accepts_focus() const override { return !disabled_; }
-    Slider(int min, int max, int value);
+    Slider(int min, int max, int value, bool horiz = true);   // horiz false: MUIA_Slider_Horiz FALSE
     int value() const { return value_; }
     void value(int v);
     std::function<void(int)> on_change;
@@ -342,8 +347,10 @@ public:
 protected:
     void draw_contents() override;
     int knob_w() const, knob_h() const;
-    int knob_x() const;
+    int knob_pos() const;   // the knob's offset along the slider (knob_offset)
+    int scale_length() const;
     int min_, max_, value_;
+    bool horiz_ = true;
     bool dragging_ = false;
     int grab_dx_ = 0;
 };

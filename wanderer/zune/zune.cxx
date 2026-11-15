@@ -295,6 +295,8 @@ void Group::ask_min_max(int &minw, int &minh, int &defw, int &defh, int &maxw, i
             k->min_max(a, b, c, d, e, f);
             int amin = horiz ? a : b, adef = horiz ? c : d, amax = horiz ? e : f;
             int xmin = horiz ? b : a, xdef = horiz ? d : c, xmax = horiz ? f : e;
+            // (w0_maxwidth: an object without weight along the group grows no further)
+            if (k->weight(horiz) <= 0) amax = amin;
             along_min += amin; along_def += adef; along_max += amax;
             same_min = std::max(same_min, amin); same_def = std::max(same_def, adef);
             across_min = std::max(across_min, xmin);
@@ -364,7 +366,7 @@ void Group::layout_line(bool horiz) {
         maxs[i] = horiz ? e : f;
         xmin[i] = horiz ? b : a;
         xmax[i] = horiz ? f : e;
-        weights[i] = kids[i]->weight();
+        weights[i] = kids[i]->weight(horiz);
     }
     if ((horiz && same_w_) || (!horiz && same_h_)) {
         int m = *std::max_element(mins.begin(), mins.end());
@@ -639,8 +641,7 @@ int Register::handle(int e) {
 // ============================================================================================
 void Rectangle::ask_min_max(int &minw, int &minh, int &defw, int &defh, int &maxw, int &maxh) {
     minw = minh = defw = defh = 0;
-    maxw = kind_ == 'v' ? 0 : MAXMAX;
-    maxh = kind_ == 'h' ? 0 : MAXMAX;
+    maxw = maxh = MAXMAX;   // (HSpace / VSpace: free, without weight across)
     if (kind_ == 'H') { minh = defh = maxh = 2; }
 }
 
@@ -1192,7 +1193,8 @@ int List::handle(int e) {
 // ============================================================================================
 // Slider
 // ============================================================================================
-Slider::Slider(int min, int max, int value) : Area(Frame_Slider), min_(min), max_(std::max(min, max)) {
+Slider::Slider(int min, int max, int value, bool horiz)
+    : Area(Frame_Slider), min_(min), max_(std::max(min, max)), horiz_(horiz) {
     value_ = std::clamp(value, min_, max_);
     background(MPEN_BACKGROUND);   // MUII_SliderBack "0:128"
 }
@@ -1220,22 +1222,34 @@ int Slider::knob_h() const {
     return prefs().font_size + 2 + b.top + b.bottom + k.inner_top + k.inner_bottom;
 }
 
-// MUIM_Numeric_ValueToScale
-int Slider::knob_x() const {
-    int scale = mwidth() - knob_w();
-    if (max_ == min_ || scale <= 0) return mleft();
-    return mleft() + (int)((long)scale * (value_ - min_) / (max_ - min_));
+// the room the knob moves in (scale_length): the width or height less the knob's
+int Slider::scale_length() const { return horiz_ ? mwidth() - knob_w() : mheight() - knob_h(); }
+
+// MUIM_Numeric_ValueToScale (a vertical slider has its minimum at the top)
+int Slider::knob_pos() const {
+    int scale = scale_length();
+    if (max_ == min_ || scale <= 0) return 0;
+    return (int)((long)scale * (value_ - min_) / (max_ - min_));
 }
 
 void Slider::ask_min_max(int &minw, int &minh, int &defw, int &defh, int &maxw, int &maxh) {
-    minw = knob_w() + 1;
-    defw = knob_w() * 4 + 2;
-    maxw = MAXMAX;
-    minh = defh = maxh = knob_h();
+    if (horiz_) {
+        minw = knob_w() + 1;
+        defw = knob_w() * 4 + 2;
+        maxw = MAXMAX;
+        minh = defh = maxh = knob_h();
+    } else {
+        minw = defw = maxw = knob_w();
+        minh = knob_h() + 1;
+        defh = knob_h() * 4 + 2;
+        maxh = MAXMAX;
+    }
 }
 
 void Slider::draw_contents() {
-    int kx = knob_x(), ky = mtop(), kw = knob_w(), kh = mheight();
+    int kx = mleft(), ky = mtop(), kw = horiz_ ? knob_w() : mwidth(), kh = horiz_ ? mheight() : knob_h();
+    if (horiz_) kx += knob_pos();
+    else ky += knob_pos();
     const FrameSpec &k = std_frame(Frame_Knob);
     fl_color(pens()[MPEN_BACKGROUND]);   // MUII_SliderKnob
     fl_rectf(kx, ky, kw, kh);
@@ -1247,24 +1261,26 @@ void Slider::draw_contents() {
 
 int Slider::handle(int e) {
     if (disabled_) return Fl_Group::handle(e);
+    int ev = horiz_ ? Fl::event_x() : Fl::event_y();   // the pointer along the slider
+    int start = horiz_ ? mleft() : mtop();
     switch (e) {
     case FL_PUSH: {
         if (Fl::event_button() != FL_LEFT_MOUSE) return 0;
         take_focus();
-        int kx = knob_x();
-        if (Fl::event_x() >= kx && Fl::event_x() < kx + knob_w()) {
+        int kp = start + knob_pos(), kl = horiz_ ? knob_w() : knob_h();
+        if (ev >= kp && ev < kp + kl) {
             // on the knob: dragging starts
             dragging_ = true;
-            grab_dx_ = Fl::event_x() - kx;
+            grab_dx_ = ev - kp;
             redraw();
-        } else value(value_ + (Fl::event_x() < kx ? -1 : 1));   // beside it: a step towards the click
+        } else value(value_ + (ev < kp ? -1 : 1));   // beside it: a step towards the click
         return 1;
     }
     case FL_DRAG:
         if (dragging_) {
-            int scale = mwidth() - knob_w();
+            int scale = scale_length();
             if (scale > 0) {
-                int pos = std::clamp(Fl::event_x() - grab_dx_ - mleft(), 0, scale);
+                int pos = std::clamp(ev - grab_dx_ - start, 0, scale);
                 value(min_ + (int)(((long)pos * (max_ - min_) + scale / 2) / scale));
             }
         }
@@ -1274,13 +1290,13 @@ int Slider::handle(int e) {
         return 1;
     case FL_FOCUS: case FL_UNFOCUS: focus_changed(); return 1;
     case FL_KEYBOARD:
-        if (Fl::event_key() == FL_Left || Fl::event_key() == FL_Down) { value(value_ - 1); return 1; }
-        if (Fl::event_key() == FL_Right || Fl::event_key() == FL_Up) { value(value_ + 1); return 1; }
+        if (Fl::event_key() == FL_Left || Fl::event_key() == FL_Up) { value(value_ - 1); return 1; }
+        if (Fl::event_key() == FL_Right || Fl::event_key() == FL_Down) { value(value_ + 1); return 1; }
         if (Fl::event_key() == FL_Home) { value(min_); return 1; }
         if (Fl::event_key() == FL_End) { value(max_); return 1; }
         return 0;
     case FL_MOUSEWHEEL:
-        value(value_ - Fl::event_dy());
+        value(value_ + (horiz_ ? -Fl::event_dy() : Fl::event_dy()));
         return 1;
     }
     return Area::handle(e);
