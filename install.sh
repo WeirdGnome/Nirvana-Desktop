@@ -155,7 +155,13 @@ fi
 remove_unpackaged
 say "Installing the package"
 if command -v apt-get >/dev/null 2>&1; then
-    $SUDO apt-get install -y --reinstall "$DEB"
+    # apt reads the package as its own user (_apt), who cannot see into a home directory:
+    # a copy in a world-readable temporary directory (no "unsandboxed download" notice)
+    TMPDEB="$(mktemp -d /tmp/wanderer-x11.XXXXXX)"
+    cp "$DEB" "$TMPDEB/"
+    chmod 755 "$TMPDEB"; chmod 644 "$TMPDEB/$(basename "$DEB")"
+    $SUDO apt-get install -y --reinstall "$TMPDEB/$(basename "$DEB")"
+    rm -rf "$TMPDEB"
 else
     $SUDO dpkg -i "$DEB"
 fi

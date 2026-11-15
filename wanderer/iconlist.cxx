@@ -16,6 +16,7 @@
 #include <FL/Fl.H>
 #include <FL/fl_draw.H>
 #include <FL/Fl_Shared_Image.H>
+#include <FL/Fl_RGB_Image.H>
 #include <FL/platform.H>
 #include <X11/Xatom.h>
 
@@ -330,11 +331,15 @@ void IconList::rethink() {
 
 void IconList::position_icons() {
     if ((display_flags & Disp_ModeMask) == Disp_ModeList) {
-        int fh = label_font_size() + 6, y = fh + 2;
-        content_w_ = 0;
-        for (auto &e : entries_) if (e.visible) { e.x = 0; e.y = y; y += fh; }
+        // the list view: a row under the header for each entry; the columns as wide as
+        // their widest cell (at least the original's 100 pixels), the type column 18
+        measure_list_columns();
+        int y = list_header_h(), rh = list_row_h();
+        content_w_ = 2;
+        for (int c = 0; c < LIST_COLUMNS; c++) content_w_ += col_w_[c];
+        for (auto &e : entries_)
+            if (e.visible) { e.x = 0; e.y = y; e.area_w = content_w_; e.area_h = rh; y += rh; }
         content_h_ = y;
-        content_w_ = mwidth();
         return;
     }
     const bool vertical = display_flags & Disp_Vertical;
@@ -531,61 +536,186 @@ void IconList::draw_entry(IconEntry &e) {
     draw_entry_label(e, ex, ly);
 }
 
-// the protection as ls shows it: d / l / -, then rwx for the owner, the group, the others
-static std::string protection(unsigned m) {
-    std::string r = S_ISDIR(m) ? "d" : S_ISLNK(m) ? "l" : "-";
-    const char *c = "rwxrwxrwx";
-    for (int i = 0; i < 9; i++) r += (m & (0400 >> i)) ? c[i] : '-';
+// panel_statusbar.c FmtSizeToString: one decimal, rounded; "Bytes" without one
+std::string fmt_size(unsigned long long num) {
+    static const char *units[] = {"GB", "MB", "KB", "Bytes"};
+    unsigned long long div[] = {1ULL << 30, 1ULL << 20, 1ULL << 10, 1};
+    for (int i = 0; i < 4; i++) {
+        if (num >= div[i] || i == 3) {
+            unsigned long long val = num / div[i], d = i == 3 ? 0 : (num * 10 + div[i] / 2) / div[i];
+            unsigned dec = (unsigned)(d % 10);
+            if (!dec && d > val * 10) val++;
+            char b[64];
+            if (dec) snprintf(b, sizeof b, "%llu.%u %s", val, dec, tr(units[i]).c_str());
+            else snprintf(b, sizeof b, "%llu %s", val, tr(units[i]).c_str());
+            return b;
+        }
+    }
+    return "";
+}
+
+// ---------------------------------------------------------------------------------------------
+// The list view (ICONLIST_DISP_MODELIST, RenderEntryField / RenderListViewModeHeader): the
+// columns Type (a small drawer or file image), Name, Size, Protection, Last Accessed,
+// Comment; a header line on top - a click on a title sorts by it (again: the other way
+// round), the sorted one has a small arrow
+// ---------------------------------------------------------------------------------------------
+static const char *const list_titles[IconList::LIST_COLUMNS] = {"Type", "Name", "Size", "Protection", "Last Accessed", "Comment"};
+static const int LIST_ICON = 16;   // ICONENTRY_SIZE
+
+int IconList::list_header_h() const { return fl_height(label_font(), label_font_size()) + 6; }   // HEADERLINE_EXTRAHEIGHT
+int IconList::list_row_h() const { return std::max(LIST_ICON, fl_height(label_font(), label_font_size())) + 4; }   // LINE_EXTRAHEIGHT
+
+// the protection as the original shows it: s p a (script, pure, archive - not kept here),
+// then r w e d for the owner - d when the drawer it is in can be written
+static std::string protection(const IconEntry &e) {
+    std::string r = "---";
+    r += e.mode & S_IRUSR ? 'r' : '-';
+    r += e.mode & S_IWUSR ? 'w' : '-';
+    r += e.mode & S_IXUSR ? 'e' : '-';
+    static std::string last_dir;
+    static bool last_w = false;
+    std::string dir = fs::path(e.path).parent_path().string();
+    if (dir != last_dir) { last_dir = dir; last_w = access(dir.c_str(), W_OK) == 0; }
+    r += last_w ? 'd' : '-';
     return r;
 }
 
-void IconList::draw_list_mode() {
-    // the list view: a header and one line per entry - Name, Size, Protection, Date, Comment
-    const Pens &p = pens();
-    int fh = label_font_size() + 6;
-    int X = mleft(), Y = mtop(), W = mwidth();
+std::string IconList::list_cell(const IconEntry &e, int col) const {
+    switch (col) {
+    case 1: return e.label;
+    case 2: return e.is_drawer() ? tr("Drawer") : fmt_size(e.size);
+    case 3: return e.mode ? protection(e) : "";
+    case 4: {
+        if (!e.mtime) return "";
+        // DateToStr FORMAT_DEF: the date and the time
+        char b[64];
+        struct tm tm;
+        localtime_r(&e.mtime, &tm);
+        strftime(b, sizeof b, "%d-%b-%y %H:%M:%S", &tm);
+        return b;
+    }
+    case 5: return e.comment;
+    }
+    return "";
+}
+
+void IconList::measure_list_columns() {
     fl_font(label_font(), label_font_size());
-    int wsize = (int)fl_width("0000000000") + 8, wprot = (int)fl_width("drwxrwxrwx") + 12,
-        wdate = (int)fl_width("00-00-00 00:00") + 12;
-    int wname = std::max(80, (W - wsize - wprot - wdate) * 55 / 100);
-    int cname = X, csize = cname + wname, cprot = csize + wsize, cdate = cprot + wprot, ccom = cdate + wdate;
-    int cols[6] = {cname, csize, cprot, cdate, ccom, X + W};
-    std::copy(cols, cols + 6, col_x_);
+    for (int c = 0; c < LIST_COLUMNS; c++) {
+        if (c == 0) { col_w_[c] = LIST_ICON + 2; continue; }
+        int w = (int)fl_width(tr(list_titles[c]).c_str()) + 8 + 12;   // HEADERENTRY_EXTRAWIDTH, the arrow
+        for (auto &e : entries_)
+            if (e.visible) w = std::max(w, (int)fl_width(list_cell(e, c).c_str()) + 8);
+        col_w_[c] = std::max(100, w);
+    }
+}
+
+int IconList::list_column_at(int ex) const {
+    int x = mleft() - view_x_ + 1;
+    for (int c = 0; c < LIST_COLUMNS; c++) {
+        if (ex >= x && ex < x + col_w_[c]) return c;
+        x += col_w_[c];
+    }
+    return -1;
+}
+
+// the list view's images: the drawer's and the file's at 16 pixels (WANDERER:Icons/drawer
+// and file), from the full size pictures; the outside is transparent
+static Fl_RGB_Image *small_icon(bool drawer, bool sel) {
+    static Fl_RGB_Image *cache[2][2] = {};
+    Fl_RGB_Image *&img = cache[drawer][sel];
+    if (img) return img;
+    Fl_Offscreen off = fl_create_offscreen(ICON_W, ICON_H);
+    fl_begin_offscreen(off);
+    fl_color(fl_rgb_color(255, 0, 255));
+    fl_rectf(0, 0, ICON_W, ICON_H);
+    draw_icon(drawer ? IconKind::Drawer : IconKind::Project, 0, 0, sel);
+    uchar *rgb = fl_read_image(nullptr, 0, 0, ICON_W, ICON_H);
+    fl_end_offscreen();
+    fl_delete_offscreen(off);
+    auto *rgba = new uchar[ICON_W * ICON_H * 4];
+    for (int i = 0; i < ICON_W * ICON_H; i++) {
+        bool key = rgb[i * 3] == 255 && rgb[i * 3 + 1] == 0 && rgb[i * 3 + 2] == 255;
+        for (int k = 0; k < 3; k++) rgba[i * 4 + k] = key ? 0 : rgb[i * 3 + k];
+        rgba[i * 4 + 3] = key ? 0 : 255;
+    }
+    delete[] rgb;
+    Fl_RGB_Image full(rgba, ICON_W, ICON_H, 4);
+    full.alloc_array = 1;
+    Fl_RGB_Scaling old = Fl_Image::RGB_scaling();
+    Fl_Image::RGB_scaling(FL_RGB_SCALING_BILINEAR);
+    img = (Fl_RGB_Image *)full.copy(LIST_ICON, LIST_ICON * ICON_H / ICON_W);
+    Fl_Image::RGB_scaling(old);
+    return img;
+}
+
+void IconList::draw_list_mode() {
+    const Pens &p = pens();
+    fl_font(label_font(), label_font_size());
+    int hh = list_header_h(), rh = list_row_h();
+    int X0 = mleft() - view_x_, Y = mtop(), W = mwidth(), H = mheight();
+    static const Fl_Align align[LIST_COLUMNS] = {FL_ALIGN_RIGHT, FL_ALIGN_LEFT, FL_ALIGN_RIGHT, FL_ALIGN_LEFT, FL_ALIGN_LEFT, FL_ALIGN_LEFT};
+    fl_push_clip(mleft(), Y + hh, W, std::max(0, H - hh));
     for (auto &e : entries_) {
         if (!e.visible) continue;
         int y = Y + e.y - view_y_;
-        if (y + fh < Y || y > Y + mheight()) continue;
-        if (e.selected) { fl_color(p[MPEN_FILL]); fl_rectf(X, y, W, fh); }
-        fl_color(e.selected ? p[MPEN_SHINE] : p[MPEN_TEXT]);
-        fl_draw(e.label.c_str(), cname + 4, y, wname - 8, fh, (Fl_Align)(FL_ALIGN_LEFT | FL_ALIGN_CLIP));
-        std::string s = e.is_drawer() ? "Drawer" : std::to_string(e.size);
-        fl_draw(s.c_str(), csize, y, wsize - 6, fh, (Fl_Align)(FL_ALIGN_RIGHT | FL_ALIGN_CLIP));
-        if (e.mode) fl_draw(protection(e.mode).c_str(), cprot + 6, y, wprot - 8, fh, (Fl_Align)(FL_ALIGN_LEFT | FL_ALIGN_CLIP));
-        char b[32];
-        struct tm tm;
-        localtime_r(&e.mtime, &tm);
-        strftime(b, sizeof b, "%d-%m-%y %H:%M", &tm);
-        fl_draw(b, cdate + 6, y, wdate - 8, fh, (Fl_Align)(FL_ALIGN_LEFT | FL_ALIGN_CLIP));
-        if (!e.comment.empty())
-            fl_draw(e.comment.c_str(), ccom + 6, y, X + W - ccom - 8, fh, (Fl_Align)(FL_ALIGN_LEFT | FL_ALIGN_CLIP));
-    }
-    // the header on top
-    fl_draw_box(FL_FLAT_BOX, X, Y, W, fh, p[MPEN_BACKGROUND]);
-    for (auto [cx, cw, t] : {std::tuple{cname, wname, "Name"}, {csize, wsize, "Size"}, {cprot, wprot, "Protection"},
-                             {cdate, wdate, "Date"}, {ccom, std::max(0, X + W - ccom), "Comment"}}) {
-        if (cw <= 0) continue;
-        draw_frame(FST_BEVEL, false, cx, Y, cw, fh);
-        fl_color(p[MPEN_TEXT]);
-        fl_draw(t, cx + 4, Y, cw - 8, fh, (Fl_Align)(FL_ALIGN_LEFT | FL_ALIGN_CLIP));
-        // the order: a small arrow on the column sorted by (down: reversed)
-        bool by = (!strcmp(t, "Name") && !(sort_flags & (Sort_ByDate | Sort_BySize | Sort_ByType))) ||
-                  (!strcmp(t, "Size") && (sort_flags & Sort_BySize)) || (!strcmp(t, "Date") && (sort_flags & Sort_ByDate));
-        if (by && cw > 30) {
-            int ax = cx + cw - 12, ay = Y + fh / 2;
-            if (sort_flags & Sort_Reverse) fl_polygon(ax, ay - 2, ax + 7, ay - 2, ax + 3, ay + 3);
-            else fl_polygon(ax, ay + 2, ax + 7, ay + 2, ax + 3, ay - 3);
+        if (y + rh < Y + hh || y > Y + H) continue;
+        bool sel = e.selected;
+        int x = X0 + 1;   // LINE_SPACING_LEFT
+        if (sel) { fl_color(p[MPEN_FILL]); fl_rectf(X0, y, content_w_ + 1, rh - 1); }
+        for (int c = 0; c < LIST_COLUMNS; c++) {
+            int fx = x + 4, fw = col_w_[c] - 8;   // (ENTRY_SPACING_LEFT / RIGHT, wider)
+            x += col_w_[c];
+            if (fx > mleft() + W || fx + fw < mleft()) continue;
+            if (c == 0) {
+                Fl_RGB_Image *img = small_icon(e.is_drawer() || e.type == ST_ROOT, sel);
+                img->draw(fx + fw - img->w(), y + (rh - img->h()) / 2);
+                continue;
+            }
+            std::string t = list_cell(e, c);
+            if (t.empty()) continue;
+            fl_color(sel ? p[MPEN_SHINE] : p[MPEN_TEXT]);
+            fl_draw(t.c_str(), fx, y + 2, fw, rh - 4, (Fl_Align)(align[c] | FL_ALIGN_CLIP));
         }
     }
+    fl_pop_clip();
+    // the header: the title fields raised (pressed: sunken), the line drawn to the end
+    fl_push_clip(mleft(), Y, W, hh);
+    int x = X0 + 1;   // HEADERLINE_SPACING_LEFT
+    for (int c = 0; c < LIST_COLUMNS; c++) {
+        int fx = c == 0 ? X0 : x, fw = x + col_w_[c] - fx + (c == LIST_COLUMNS - 1 ? 1 : 0);
+        x += col_w_[c];
+        bool down = c == header_pressed_;
+        Fl_Color fill = p[down ? MPEN_HALFSHADOW : MPEN_HALFSHINE], bright = p[down ? MPEN_SHADOW : MPEN_SHINE],
+                 dark = p[down ? MPEN_HALFSHINE : MPEN_HALFSHADOW];
+        fl_color(fill); fl_rectf(fx + 1, Y + 1, fw - 2, hh - 2);
+        fl_color(bright); fl_yxline(fx, Y, Y + hh - 1); fl_xyline(fx + 1, Y, fx + fw - 2);
+        fl_color(dark); fl_yxline(fx + fw - 1, Y, Y + hh - 1); fl_xyline(fx + 1, Y + hh - 1, fx + fw - 2);
+        // the sort indicator: a small arrow (up: in order, down: reversed)
+        if (c == list_sort_column()) {
+            int ax = fx + fw - 1 - 4 - 6, ay = Y + hh / 2 - 3;
+            if (ax > fx) {
+                fl_color(p[down ? MPEN_SHADOW : MPEN_HALFSHADOW]);
+                if (sort_flags & Sort_Reverse) { fl_rectf(ax, ay, 6, 2); fl_rectf(ax + 1, ay + 2, 4, 2); fl_rectf(ax + 2, ay + 4, 2, 2); }
+                else { fl_rectf(ax, ay + 4, 6, 2); fl_rectf(ax + 1, ay + 2, 4, 2); fl_rectf(ax + 2, ay, 2, 2); }
+            }
+        }
+        if (c == 0) continue;   // (the type column's title does not fit)
+        fl_color(p[MPEN_TEXT]);
+        fl_draw(tr(list_titles[c]).c_str(), fx + 4, Y + 3, fw - 8, hh - 6, (Fl_Align)(FL_ALIGN_LEFT | FL_ALIGN_CLIP));
+    }
+    x += 1;
+    if (x < mleft() + W) { fl_color(p[MPEN_HALFSHINE]); fl_rectf(x, Y, mleft() + W - x, hh); }
+    fl_pop_clip();
+}
+
+// the column the list is sorted by (lmva_SortColumn): name, size or last accessed
+int IconList::list_sort_column() const {
+    if (sort_flags & Sort_BySize) return 2;
+    if (sort_flags & Sort_ByDate) return 4;
+    if (sort_flags & Sort_ByType) return -1;
+    return 1;
 }
 
 void IconList::draw_contents() {
@@ -652,8 +782,8 @@ void IconList::move_focus(int key, bool extend) {
 IconEntry *IconList::entry_at(int ex, int ey) {
     int vx = ex - mleft() + view_x_, vy = ey - mtop() + view_y_;
     if ((display_flags & Disp_ModeMask) == Disp_ModeList) {
-        int fh = label_font_size() + 6;
-        for (auto &e : entries_) if (e.visible && vy >= e.y && vy < e.y + fh) return &e;
+        if (ey < mtop() + list_header_h()) return nullptr;
+        for (auto &e : entries_) if (e.visible && vy >= e.y && vy < e.y + e.area_h && vx < e.area_w) return &e;
         return nullptr;
     }
     for (auto it = entries_.rbegin(); it != entries_.rend(); ++it) {
@@ -706,18 +836,11 @@ int IconList::handle(int ev) {
     case FL_FOCUS: case FL_UNFOCUS: return 1;
     case FL_PUSH: {
         take_focus();
-        // the list's header: a click sorts by that column (again: the other way round)
+        // the list's header: the title pressed; let go over it, the list is sorted by it
         if ((display_flags & Disp_ModeMask) == Disp_ModeList && Fl::event_button() == FL_LEFT_MOUSE &&
-            Fl::event_y() >= mtop() && Fl::event_y() < mtop() + label_font_size() + 6) {
-            int col = -1;
-            for (int i = 0; i < 5; i++) if (Fl::event_x() >= col_x_[i] && Fl::event_x() < col_x_[i + 1]) col = i;
-            int order = col == 1 ? Sort_BySize : col == 3 ? Sort_ByDate : Sort_ByName;
-            if ((sort_flags & Sort_Orders) == order || (order == Sort_ByName && !(sort_flags & (Sort_ByDate | Sort_BySize | Sort_ByType))))
-                sort_flags ^= Sort_Reverse;
-            else sort_flags = (sort_flags & ~(Sort_Orders | Sort_Reverse)) | order;
-            sort();
-            rethink();
-            if (on_selection_changed) on_selection_changed();   // (the menus show the order)
+            Fl::event_y() >= mtop() && Fl::event_y() < mtop() + list_header_h()) {
+            header_pressed_ = list_column_at(Fl::event_x());
+            redraw();
             return 1;
         }
         if (Fl::event_button() == FL_RIGHT_MOUSE) {
@@ -769,6 +892,7 @@ int IconList::handle(int ev) {
     }
     case FL_DRAG: {
         int vx = Fl::event_x() - mleft() + view_x_, vy = Fl::event_y() - mtop() + view_y_;
+        if (header_pressed_ >= 0) return 1;
         if (lasso_) {
             lasso_x_ = vx;
             lasso_y_ = vy;
@@ -800,6 +924,7 @@ int IconList::handle(int ev) {
             }
             return 1;
         }
+        if (moved_ && (display_flags & Disp_ModeMask) == Disp_ModeList) return 1;   // (rows stay; a drop goes on a drawer)
         if (moved_) {
             // the selected icons follow the pointer (MUIM_CreateDragImage in the sources)
             int dx = vx - press_x_, dy = vy - press_y_;
@@ -812,6 +937,21 @@ int IconList::handle(int ev) {
         return 1;
     }
     case FL_RELEASE: {
+        if (header_pressed_ >= 0) {
+            int c = header_pressed_;
+            header_pressed_ = -1;
+            if (Fl::event_y() >= mtop() && Fl::event_y() < mtop() + list_header_h() && list_column_at(Fl::event_x()) == c) {
+                // the same column again: the other way round; name, size, last accessed sort
+                int order = c == 1 ? Sort_ByName : c == 2 ? Sort_BySize : c == 4 ? Sort_ByDate : -1;
+                if (c == list_sort_column()) sort_flags ^= Sort_Reverse;
+                else if (order >= 0) sort_flags = (sort_flags & ~(Sort_Orders | Sort_Reverse)) | order;
+                sort();
+                rethink();
+                if (on_selection_changed) on_selection_changed();   // (the menus show the order)
+            }
+            redraw();
+            return 1;
+        }
         if (lasso_) {
             lasso_ = false;
             redraw();
@@ -833,7 +973,7 @@ int IconList::handle(int ev) {
             if (!Fl::event_inside(this) || target) {
                 if (on_drop) on_drop(sel, target);
                 if (target) position_icons();
-            } else {
+            } else if ((display_flags & Disp_ModeMask) != Disp_ModeList) {
                 for (auto *o : sel) { o->provided_x = o->x; o->provided_y = o->y; }
                 position_icons();
             }

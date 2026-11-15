@@ -75,6 +75,7 @@ struct IconEntry {
 // ---------------------------------------------------------------------------------------------
 class IconList : public zune::Area {
 public:
+    static const int LIST_COLUMNS = 6;   // the list view's columns (NUM_COLUMNS)
     IconList();
     ~IconList() override;
 
@@ -148,7 +149,14 @@ protected:
     void area_rect(IconEntry &e);
     void position_icons();
     void draw_list_mode();
-    int col_x_[6] = {0, 0, 0, 0, 0, 0};   // the list's columns (from its last drawing)
+    void measure_list_columns();
+    int list_header_h() const;
+    int list_row_h() const;
+    int list_column_at(int ex) const;
+    int list_sort_column() const;
+    std::string list_cell(const IconEntry &e, int col) const;
+    int col_w_[6] = {0, 0, 0, 0, 0, 0};   // the list view's column widths (lmva_ColumnWidth)
+    int header_pressed_ = -1;              // the title held down (lmva_LastSelectedColumn)
 
     std::vector<IconEntry> entries_;
     int view_x_ = 0, view_y_ = 0, content_w_ = 0, content_h_ = 0;
@@ -202,6 +210,7 @@ std::string ramdisk_dir();                     // the Ram Disk (/dev/shm/ramdisk
 // "Home:Dokumenty" <-> "/home/user/Dokumenty" (volume names: System / SYS, Ram Disk / RAM,
 // Home, Trash, the names of mounted drives; a Linux path is taken as it is)
 std::string to_volume_path(const std::string &path);
+std::string fmt_size(unsigned long long num);   // FmtSizeToString: "12.3 KB", "512 Bytes"
 std::string from_volume_path(const std::string &path);
 bool file_contains(const std::string &path, const std::string &text);   // the file has the text in it
 // the user's assigns (~/.config/wanderer/assigns: "Name = path"): name, directory

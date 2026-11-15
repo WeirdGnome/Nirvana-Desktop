@@ -73,24 +73,6 @@ static void draw_search(int x, int y, int w, int h, bool sel) {
     fl_line_style(0);
 }
 
-// panel_statusbar.c FmtSizeToString: one decimal, rounded; "Bytes" without one
-static std::string fmt_size(unsigned long long num) {
-    static const char *units[] = {"GB", "MB", "KB", "Bytes"};
-    unsigned long long div[] = {1ULL << 30, 1ULL << 20, 1ULL << 10, 1};
-    for (int i = 0; i < 4; i++) {
-        if (num >= div[i] || i == 3) {
-            unsigned long long val = num / div[i], d = i == 3 ? 0 : (num * 10 + div[i] / 2) / div[i];
-            unsigned dec = (unsigned)(d % 10);
-            if (!dec && d > val * 10) val++;
-            char b[64];
-            if (dec) snprintf(b, sizeof b, "%llu.%u %s", val, dec, units[i]);
-            else snprintf(b, sizeof b, "%llu %s", val, units[i]);
-            return b;
-        }
-    }
-    return "";
-}
-
 // ============================================================================================
 // IconWindow
 // ============================================================================================

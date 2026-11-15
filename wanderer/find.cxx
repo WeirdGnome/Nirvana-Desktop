@@ -68,9 +68,9 @@ std::string to_glob(std::string p) {
 }
 
 std::string attributes(const Found &f) {
-    // the owner's read, write, execute; "d" when it may be deleted (the drawer can be written)
-    std::string s;
-    s += f.dir ? 'D' : '-';
+    // as the original's protection bits (s p a r w e d): script, pure and archive are not
+    // kept here; the owner's read, write, execute; d when the drawer it is in can be written
+    std::string s = "---";
     s += f.mode & S_IRUSR ? 'r' : '-';
     s += f.mode & S_IWUSR ? 'w' : '-';
     s += f.mode & S_IXUSR ? 'e' : '-';
