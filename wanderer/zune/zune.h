@@ -77,6 +77,9 @@ struct Prefs {
     // bubble help (System page): the delays before the first bubble and between bubbles, in
     // tenths of a second (configdata.c 30 and 10)
     int bubble_first = 30, bubble_next = 10;
+    // the Scrollbars page: the arrows' place (0 after the bar, 1 around it, 2 before it;
+    // SCROLLBAR_ARRANGEMENT_TOP / MIDDLE / BOTTOM) and the gadget type (kept, as the original)
+    int scrollbar_arrangement = 0, scrollbar_type = 0;
     std::string custom_frame[16];   // the Frames page: the custom frames' frame.config files
     int font_size = 13;          // the screen font (topaz-like 8 pt is too small on today's screens)
     Fl_Font font = FL_HELVETICA, font_bold = FL_HELVETICA_BOLD, font_fixed = FL_COURIER;
@@ -304,6 +307,7 @@ public:
     std::function<void(int first)> on_change;
     void ask_min_max(int &minw, int &minh, int &defw, int &defh, int &maxw, int &maxh) override;
     int handle(int e) override;
+    void step(int n);   // MUIM_Prop_Increase / Decrease (n < 0)
 
 protected:
     void draw_contents() override;
@@ -311,6 +315,44 @@ protected:
     bool horiz_;
     int entries_ = 1, visible_ = 1, first_ = 0;
     int grab_ = -1, grab_first_ = 0;
+};
+
+// Arrow (MUII_ArrowUp / Down / Left / Right in an image button frame): pressed it acts at
+// once, then again and again while held (MUIA_Timer)
+class Arrow : public Area {
+public:
+    enum Dir { Up, Down, Left, Right };
+    explicit Arrow(Dir d, int size = 14);
+    std::function<void()> on_step;
+    void ask_min_max(int &minw, int &minh, int &defw, int &defh, int &maxw, int &maxh) override;
+    int handle(int e) override;
+    static void draw_arrow(Dir d, int x, int y, int w, int h);   // the image itself
+
+protected:
+    void draw_contents() override;
+    static void repeat(void *);
+    Dir dir_;
+    int size_;
+};
+
+// Scrollbar (classes/scrollbar.c): a prop gadget with its two arrows, arranged as the
+// preferences say (Scrollbars page: arrows after it, around it or before it), or as set
+class Scrollbar : public Group {
+public:
+    enum Type { Default = -1, Top, Sym, Bottom };   // MUIV_Scrollbar_Type_Top / Sym / Bottom
+    explicit Scrollbar(bool horiz, Type type = Default);
+    void set(int entries, int visible, int first) { prop_->set(entries, visible, first); }
+    int first() const { return prop_->first(); }
+    std::function<void(int first)> on_change;
+    int incdec = 1;   // MUIA_Scrollbar_IncDecSize
+    void resize(int X, int Y, int W, int H) override;
+
+private:
+    void arrange();
+    Prop *prop_;
+    Arrow *up_, *down_;
+    Type type_;
+    int arranged_ = -1;
 };
 
 // Cycle: a button that steps through its entries (the right part shows the cycle mark)
@@ -386,7 +428,7 @@ protected:
     void layout_prop();
     std::vector<Line> lines_;
     int active_ = -1, top_ = 0;
-    class Prop *prop_ = nullptr;
+    class Scrollbar *prop_ = nullptr;
 };
 
 // Gauge: a bar filled in the fill pen to the current value, a text in its middle

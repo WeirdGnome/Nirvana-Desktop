@@ -81,6 +81,22 @@ protected:
     std::function<void(int, int, int, int)> f_;
 };
 
+// MakeSingleRadio: a radio button image without a frame (MUII_RadioButton)
+class RadioMark : public Checkmark {
+public:
+    explicit RadioMark(bool on) : Checkmark(on) { frame(Frame_None); }
+
+protected:
+    void draw_contents() override {
+        int d = std::min(mwidth(), mheight()) - 1, X = mleft() + (mwidth() - d) / 2, Y = mtop() + (mheight() - d) / 2;
+        fl_color(pens()[MPEN_SHADOW]);
+        fl_arc(X, Y, d, d, 45, 225);
+        fl_color(pens()[MPEN_SHINE]);
+        fl_arc(X, Y, d, d, 225, 405);
+        if (selected_) { fl_color(pens()[MPEN_TEXT]); fl_pie(X + d / 4, Y + d / 4, d / 2 + 1, d / 2 + 1, 0, 360); }
+    }
+};
+
 // a picture of the icons, made small (as the device images)
 void draw_small_icon(IconKind k, int X, int Y, int W, int H) {
     static std::map<int, Fl_RGB_Image *> cache;
@@ -288,16 +304,60 @@ void edit_gui_settings() {
         ex->end();
         pg->end();
     }
-    // -- Scrollbars and gauges (scrollbarsp.c)
+    // -- Scrollbars (scrollbarsp.c): the arrows, the bar, the frame, the arrangement
+    Cycle *sbtype;
+    auto sbarr = std::make_shared<int>(saved.scrollbar_arrangement);
     {
-        auto *pg = VGroup();
-        auto *g = new Group(Group::Vertical, Frame_Group);
-        g->frame_title("Frame");
-        g->columns(2);
-        new Text("\033rScrollbar:");
+        auto *pg = HGroup();
+        auto *left = VGroup();
+        auto *ar = new Group(Group::Vertical, Frame_Group);
+        ar->frame_title("Arrows");
+        auto *ac = new Group(Group::Vertical);
+        ac->columns(4);
+        ac->same_height(true);
+        auto arrow_image = [](Arrow::Dir d, const char *title) {
+            auto *im = new SpecialImage([d](int X, int Y, int W, int H) {
+                fl_color(pens()[MPEN_TEXT]);
+                Arrow::draw_arrow(d, X, Y, W, H);
+            });
+            im->copy_tooltip(tr(title).c_str());
+        };
+        new Text("\033rUp"); arrow_image(Arrow::Up, "Arrow up"); arrow_image(Arrow::Down, "Arrow down"); new Text("\033lDown");
+        new Text("\033rLeft"); arrow_image(Arrow::Left, "Arrow left"); arrow_image(Arrow::Right, "Arrow right"); new Text("\033lRight");
+        ac->end();
+        ar->end();
+        auto *bar = new Group(Group::Vertical, Frame_Group);
+        bar->frame_title("Bar");
+        auto *tr_ = HGroup();
+        new Text("\033rGadget Type:");
+        sbtype = new Cycle({"Standard", "NewLook", "Custom"}, saved.scrollbar_type);
+        tr_->end();
+        bar->end();
+        left->end();
+        auto *right = VGroup();
+        auto *fr = new Group(Group::Vertical, Frame_Group);
+        fr->frame_title("Frame");
         frames.push_back({Frame_Prop, frame_cycle(Frame_Prop)});
-        g->end();
-        VSpace();
+        fr->end();
+        auto *arr = new Group(Group::Vertical, Frame_Group);
+        arr->frame_title("Arrangement");
+        arr->columns(3);
+        RadioMark *radios[3];
+        for (int i = 0; i < 3; i++) radios[i] = new RadioMark(*sbarr == i);
+        for (int t : {Scrollbar::Top, Scrollbar::Sym, Scrollbar::Bottom}) {
+            auto *sb = new Scrollbar(false, (Scrollbar::Type)t);
+            sb->set(10, 4, 3);   // MUIA_Prop_Entries 10, Visible 4, First 3
+        }
+        arr->end();
+        for (int i = 0; i < 3; i++) {
+            RadioMark *r0 = radios[0], *r1 = radios[1], *r2 = radios[2];
+            radios[i]->on_press = [i, sbarr, r0, r1, r2] {
+                *sbarr = i;
+                RadioMark *all[3] = {r0, r1, r2};
+                for (int k = 0; k < 3; k++) all[k]->on(k == i);
+            };
+        }
+        right->end();
         pg->end();
     }
     // -- Listviews (listviewsp.c)
@@ -570,6 +630,8 @@ void edit_gui_settings() {
         p.balancing_look = blook->active();
         p.bubble_first = bfirst->value();
         p.bubble_next = bnext->value();
+        p.scrollbar_arrangement = *sbarr;
+        p.scrollbar_type = sbtype->active();
         for (int i = 0; i < 16; i++) p.custom_frame[i] = cframe[i]->value();
         for (int i = 0; i < MUIKEY_COUNT; i++) p.keys[i] = (*keys)[i] == KEY_DEFAULTS[i] ? "" : (*keys)[i];
     };

@@ -89,6 +89,8 @@ void load_prefs() {
                 int i = atoi(k.c_str() + 13) - 1;
                 if (i >= 0 && i < 16) p.custom_frame[i] = v;
             }
+            else if (k == "scrollbar_arrangement") p.scrollbar_arrangement = std::clamp(atoi(v.c_str()), 0, 2);
+            else if (k == "scrollbar_type") p.scrollbar_type = std::clamp(atoi(v.c_str()), 0, 2);
             else if (k == "bubble_first") p.bubble_first = std::clamp(atoi(v.c_str()), 0, 50);
             else if (k == "bubble_next") p.bubble_next = std::clamp(atoi(v.c_str()), 0, 50);
             else if (k == "balancing_look") p.balancing_look = std::clamp(atoi(v.c_str()), 0, 1);
@@ -122,6 +124,7 @@ void save_prefs() {
             p.balancing_look);
     for (int i = 0; i < 16; i++)
         if (!p.custom_frame[i].empty()) fprintf(f, "custom_frame_%d=%s\n", i + 1, p.custom_frame[i].c_str());
+    fprintf(f, "scrollbar_arrangement=%d\nscrollbar_type=%d\n", p.scrollbar_arrangement, p.scrollbar_type);
     fprintf(f, "bubble_first=%d\nbubble_next=%d\n", p.bubble_first, p.bubble_next);
     fprintf(f, "drag_left_modifier=%s\ndrag_middle_modifier=%s\n", p.drag_left_modifier.c_str(), p.drag_middle_modifier.c_str());
     fclose(f);
@@ -901,6 +904,12 @@ void Prop::draw_contents() {
     draw_frame(FST_BEVEL, grab_ >= 0, kx, ky, kw, kh);
 }
 
+void Prop::step(int n) {
+    int old = first_;
+    set(entries_, visible_, first_ + n);
+    if (first_ != old && on_change) on_change(first_);
+}
+
 int Prop::handle(int e) {
     int pos = horiz_ ? Fl::event_x() : Fl::event_y();
     switch (e) {
@@ -935,6 +944,98 @@ int Prop::handle(int e) {
         return 1;
     }
     return Area::handle(e);
+}
+
+// ============================================================================================
+// Arrow, Scrollbar
+// ============================================================================================
+Arrow::Arrow(Dir d, int size) : Area(Frame_ImageButton), dir_(d), size_(size) {
+    background(MPEN_BACKGROUND);   // MUII_ButtonBack
+    input_mode(Input_RelVerify);
+    weight(0);
+}
+
+void Arrow::ask_min_max(int &minw, int &minh, int &defw, int &defh, int &maxw, int &maxh) {
+    // as wide (high) as the bar it belongs to, square
+    int iw = std::max(4, size_ - add_left() - add_right()), ih = std::max(4, size_ - add_top() - add_bottom());
+    minw = defw = maxw = iw;
+    minh = defh = maxh = ih;
+}
+
+void Arrow::draw_arrow(Dir d, int X, int Y, int W, int H) {
+    int cx = X + W / 2, cy = Y + H / 2, r = std::max(2, std::min(W, H) / 2 - 1);
+    switch (d) {
+    case Up: fl_polygon(cx - r, cy + r / 2, cx + r, cy + r / 2, cx, cy - r / 2 - 1); break;
+    case Down: fl_polygon(cx - r, cy - r / 2, cx + r, cy - r / 2, cx, cy + r / 2 + 1); break;
+    case Left: fl_polygon(cx + r / 2, cy - r, cx + r / 2, cy + r, cx - r / 2 - 1, cy); break;
+    case Right: fl_polygon(cx - r / 2, cy - r, cx - r / 2, cy + r, cx + r / 2 + 1, cy); break;
+    }
+}
+
+void Arrow::draw_contents() {
+    fl_color(pens()[MPEN_TEXT]);
+    draw_arrow(dir_, mleft(), mtop(), mwidth(), mheight());
+}
+
+void Arrow::repeat(void *d) {
+    auto *a = (Arrow *)d;
+    if (!a->pressed_) return;
+    if (a->selected_ && a->on_step) a->on_step();
+    Fl::repeat_timeout(0.05, repeat, d);
+}
+
+int Arrow::handle(int e) {
+    switch (e) {
+    case FL_PUSH:
+        if (Fl::event_button() != FL_LEFT_MOUSE) return 0;
+        pressed_ = true;
+        selected(true);
+        if (on_step) on_step();
+        Fl::add_timeout(0.3, repeat, this);   // the first repeat after a pause
+        return 1;
+    case FL_DRAG:
+        if (pressed_) selected(Fl::event_inside(this));
+        return 1;
+    case FL_RELEASE:
+        pressed_ = false;
+        Fl::remove_timeout(repeat, this);
+        selected(false);
+        return 1;
+    case FL_HIDE:
+        Fl::remove_timeout(repeat, this);
+        break;
+    }
+    return Area::handle(e);
+}
+
+Scrollbar::Scrollbar(bool horiz, Type type) : Group(horiz ? Horizontal : Vertical), type_(type) {
+    spacing(0);
+    prop_ = new Prop(horiz);
+    up_ = new Arrow(horiz ? Arrow::Left : Arrow::Up);
+    down_ = new Arrow(horiz ? Arrow::Right : Arrow::Down);
+    end();
+    prop_->on_change = [this](int f) { if (on_change) on_change(f); };
+    up_->on_step = [this] { prop_->step(-incdec); };
+    down_->on_step = [this] { prop_->step(incdec); };
+    arrange();
+}
+
+// MUIM_Setup: the children in the order of the arrangement (or of the type set)
+void Scrollbar::arrange() {
+    int a = type_ == Default ? prefs().scrollbar_arrangement : (int)type_;
+    if (a == arranged_) return;
+    arranged_ = a;
+    Fl_Widget *order[3];
+    if (a == 1) { order[0] = up_; order[1] = prop_; order[2] = down_; }
+    else if (a == 2) { order[0] = up_; order[1] = down_; order[2] = prop_; }
+    else { order[0] = prop_; order[1] = up_; order[2] = down_; }
+    for (auto *w : order) remove(w);
+    for (auto *w : order) add(w);
+}
+
+void Scrollbar::resize(int X, int Y, int W, int H) {
+    arrange();   // (the preferences may have changed)
+    Group::resize(X, Y, W, H);
 }
 
 // ============================================================================================
@@ -1164,7 +1265,7 @@ void Checkmark::draw_contents() {
 List::List() : Area(Frame_ReadList) {
     background(MPEN_SHINE);   // configdata: the list background ("0:128" on a white screen pen)
     begin();
-    prop_ = new Prop(false);
+    prop_ = new Scrollbar(false);
     end();
     prop_->on_change = [this](int f) { top_ = f; redraw(); };
 }
