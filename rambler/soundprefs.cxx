@@ -129,7 +129,7 @@ void edit_sound_prefs(bool standalone) {
     auto *sound = new Checkmark(p.sound);
     new Text("\033rSound type:");
     auto *type = new Cycle({"Beep", "Sampled sound"}, p.type);
-    new Text("\033rVolume:");
+    new Text("\033rSound volume:");
     auto *volume = new Slider(0, 100, p.volume);
     volume->format = [](int v) { return std::to_string(v) + "%"; };
     new Text("\033rPitch:");

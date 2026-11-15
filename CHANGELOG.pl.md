@@ -1,5 +1,19 @@
 # Lista zmian
 
+## 0.17.0 (w przygotowaniu)
+
+### Nowe
+- **Preferencje Printer** (`rambler --prefs printer`, w szufladzie Prefs): drukarki CUPS
+  z ich stanem, opisem, położeniem i urządzeniem; drukarka domyślna; strona próbna; dla
+  każdej drukarki rozmiar, rodzaj i podajnik papieru, orientacja, druk dwustronny, kolor,
+  rozdzielczość i jakość - tak, jak oferuje je sterownik. Ustawienia są własne
+  użytkownika (`lpoptions`), więc system nie pyta o uprawnienia. *Drukarki...* otwiera
+  systemowe narzędzie do drukarek (albo strony WWW CUPS), by je skonfigurować.
+- Lune: listę pozycji Cycle można ustawić ponownie.
+
+### Poprawione
+- Preferencje Sound: etykieta głośności kolidowała w katalogu polskim z „Wolumin:”.
+
 ## 0.16.0 – 2026-11-15
 
 ### Nowe

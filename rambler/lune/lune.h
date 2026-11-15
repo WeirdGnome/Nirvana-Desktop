@@ -431,6 +431,14 @@ public:
     explicit Cycle(std::vector<std::string> entries, int active = 0);
     int active() const { return active_; }
     void active(int a) { active_ = std::clamp(a, 0, (int)entries_.size() - 1); redraw(); }
+    // MUIA_Cycle_Entries set again (the entries as they are: not looked up in the catalog)
+    void entries(std::vector<std::string> e, int active = 0) {
+        entries_ = std::move(e);
+        if (entries_.empty()) entries_.push_back("");
+        active_ = std::clamp(active, 0, (int)entries_.size() - 1);
+        redraw();
+    }
+    int count() const { return (int)entries_.size(); }
     std::function<void(int)> on_change;
     void ask_min_max(int &minw, int &minh, int &defw, int &defh, int &maxw, int &maxh) override;
     int handle(int e) override;

@@ -27,6 +27,7 @@
 #include "icontrolprefs.h"
 #include "timeprefs.h"
 #include "soundprefs.h"
+#include "printerprefs.h"
 
 #include <FL/Fl.H>
 #include <FL/Fl_Menu_Item.H>
@@ -1235,7 +1236,7 @@ void make_prefs_drawer() {
     fs::create_directories(dir, ec);
     struct { const char *file, *name, *arg; } progs[] = {
         {"Font.desktop", "Font", "font"}, {"IControl.desktop", "IControl", "icontrol"}, {"Input.desktop", "Input", "input"}, {"Locale.desktop", "Locale", "locale"}, {"Network.desktop", "Network", "network"},
-        {"Pointer.desktop", "Pointer", "pointer"}, {"Lune.desktop", "Lune", "lune"}, {"Rambler.desktop", "Rambler", "rambler"},
+        {"Pointer.desktop", "Pointer", "pointer"}, {"Printer.desktop", "Printer", "printer"}, {"Lune.desktop", "Lune", "lune"}, {"Rambler.desktop", "Rambler", "rambler"},
         {"ScreenMode.desktop", "ScreenMode", "screenmode"}, {"Sound.desktop", "Sound", "sound"}, {"Time.desktop", "Time", "time"}};
     for (auto &pr : progs) {
         std::string f = dir + "/" + pr.file;
@@ -1282,9 +1283,10 @@ int main(int argc, char **argv) {
         else if (prefs_program == "icontrol") edit_icontrol_prefs(true);
         else if (prefs_program == "time") edit_time_prefs(true);
         else if (prefs_program == "sound") edit_sound_prefs(true);
+        else if (prefs_program == "printer") edit_printer_prefs(true);
         else if (prefs_program == "rambler") edit_prefs(RamblerPrefs::load(), [](const RamblerPrefs &) {}, true);
         else {
-            fprintf(stderr, "rambler: no preferences program '%s' (font, icontrol, input, locale, lune, network, pointer, rambler, screenmode, sound, time)\n", prefs_program.c_str());
+            fprintf(stderr, "rambler: no preferences program '%s' (font, icontrol, input, locale, lune, network, pointer, printer, rambler, screenmode, sound, time)\n", prefs_program.c_str());
             return 1;
         }
         return run();

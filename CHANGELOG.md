@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.17.0 (unreleased)
+
+### Added
+- **Printer preferences** (`rambler --prefs printer`, in the Prefs drawer): the CUPS
+  printers with their state, description, location and device; the default printer; a
+  test page; for each printer the paper size, type and source, the orientation, two-sided
+  printing, colour, resolution and quality, as its driver offers them. The settings are the
+  user's own (`lpoptions`), so no rights are asked. *Printers...* opens the system's
+  printer tool (or CUPS's web pages) to set printers up.
+- Lune: a Cycle's entries can be set again.
+
+### Fixed
+- Sound preferences: the volume's label clashed with the disk volume's in the Polish
+  catalog.
+
 ## 0.16.0 – 2026-11-15
 
 ### Added

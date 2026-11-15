@@ -642,11 +642,49 @@ Flash display:	Mignięcie ekranu:
 Make sound:	Dźwięk:
 Sound type:	Rodzaj dźwięku:
 Sampled sound	Próbka dźwięku
-Volume:	Głośność:
 Pitch:	Wysokość tonu:
 Duration:	Czas trwania:
 Sample:	Próbka:
-Device:	Urządzenie:
 Master volume:	Głośność główna:
 Mute:	Wyciszenie:
 Select a sound	Wybierz dźwięk
+Printer Preferences	Preferencje drukarki
+Printer	Drukarka
+State	Stan
+Default printer:	Drukarka domyślna:
+Location:	Położenie:
+Print Test Page	Drukuj stronę próbną
+Printers...	Drukarki...
+Paper and Print	Papier i druk
+Printer:	Drukarka:
+Orientation:	Orientacja:
+Portrait	Pionowo
+Landscape	Poziomo
+Paper size:	Rozmiar papieru:
+Paper type:	Rodzaj papieru:
+Paper source:	Podajnik:
+Two-sided:	Dwustronnie:
+Colour:	Kolor:
+Resolution:	Rozdzielczość:
+Quality:	Jakość:
+Off	Wyłączone
+Long edge	Wzdłuż dłuższej krawędzi
+Short edge	Wzdłuż krótszej krawędzi
+Grey	Odcienie szarości
+Colour	Kolor
+Draft	Robocza
+High	Wysoka
+idle	bezczynna
+printing	drukuje
+disabled	wyłączona
+Test page	Strona próbna
+This is a test page.	To jest strona próbna.
+The test page has been sent to the printer.	Strona próbna została wysłana do drukarki.
+The test page could not be printed:	Nie udało się wydrukować strony próbnej:
+The settings could not be set:	Nie udało się zapisać ustawień:
+No printers are set up.	Nie ma skonfigurowanych drukarek.
+CUPS is not installed.	CUPS nie jest zainstalowany.
+Install the cups package to print.	Aby drukować, zainstaluj pakiet cups.
+Settings	Ustawienia
+Description	Opis
+Sound volume:	Głośność:
