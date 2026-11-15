@@ -64,7 +64,8 @@ static const std::pair<const char *, std::string Prefs::*> SPEC_PREFS[] = {
     {"active_object_color", &Prefs::active_object_color}, {"string_bg", &Prefs::string_bg},
     {"string_text", &Prefs::string_text}, {"string_active_bg", &Prefs::string_active_bg},
     {"string_active_text", &Prefs::string_active_text}, {"string_cursor", &Prefs::string_cursor},
-    {"string_marked_bg", &Prefs::string_marked_bg}, {"string_marked_text", &Prefs::string_marked_text}};
+    {"string_marked_bg", &Prefs::string_marked_bg}, {"string_marked_text", &Prefs::string_marked_text},
+    {"font_name", &Prefs::font_name}, {"fixed_font_name", &Prefs::fixed_font_name}};
 
 static const std::pair<const char *, int Prefs::*> INT_PREFS[] = {
     {"group_title_position", &Prefs::group_title_position}, {"group_title_color", &Prefs::group_title_color},
@@ -269,13 +270,27 @@ MuiKey muikey() {
     return MUIKEY_NONE;
 }
 
+Fl_Font named_font(const std::string &family, bool bold) {
+    // (numbers far above the ones Fl::set_fonts() fills in for the font requester)
+    static std::map<std::string, Fl_Font> made;
+    static int next = 6000;
+    std::string key = (bold ? "B" : " ") + family;
+    auto it = made.find(key);
+    if (it != made.end()) return it->second;
+    Fl_Font f = (Fl_Font)next++;
+    Fl::set_font(f, strdup(key.c_str()));   // (FLTK keeps the name)
+    made[key] = f;
+    return f;
+}
+
 void apply_prefs() {
     Prefs &p = prefs();
     auto col = [](unsigned rgb) { return fl_rgb_color((rgb >> 16) & 255, (rgb >> 8) & 255, rgb & 255); };
     set_palette(col(p.background), col(p.shadow), col(p.shine), col(p.fill));
     static const Fl_Font fams[3][2] = {{FL_HELVETICA, FL_HELVETICA_BOLD}, {FL_TIMES, FL_TIMES_BOLD}, {FL_COURIER, FL_COURIER_BOLD}};
-    p.font = fams[p.font_family][0];
-    p.font_bold = fams[p.font_family][1];
+    p.font = p.font_name.empty() ? fams[p.font_family][0] : named_font(p.font_name);
+    p.font_bold = p.font_name.empty() ? fams[p.font_family][1] : named_font(p.font_name, true);
+    p.font_fixed = p.fixed_font_name.empty() ? FL_COURIER : named_font(p.fixed_font_name);
     p.list_font = p.list_font_family < 0 ? p.font : fams[p.list_font_family][0];
     p.button_font = p.button_font_family < 0 ? p.font : fams[p.button_font_family][0];
     p.title_font = p.title_font_family < 0 ? p.font_bold : fams[std::clamp(p.title_font_family, 0, 2)][1];

@@ -82,8 +82,9 @@ rambler-wm & rambler --backdrop
 
 *Tools > Prefs Drawer* opens the preferences programs: Input, Lune (the GUI settings),
 Rambler, ScreenMode (the display mode, with xrandr), Locale (languages, country,
-timezone) and Pointer (the cursor theme and size). Each also runs on its own
-(`rambler --prefs input|locale|lune|pointer|rambler|screenmode`). As on the
+timezone), Pointer (the cursor theme and size) and Font (the icons', screen and system
+fonts). Each also runs on its own
+(`rambler --prefs font|input|locale|lune|pointer|rambler|screenmode`). As on the
 original system, **Use** puts the settings into effect for this session only (they are
 written to `$XDG_RUNTIME_DIR/rambler`, the counterpart of ENV:) and **Save** also keeps
 them (`~/.config/rambler`, the counterpart of ENVARC:). A running Rambler takes up a change

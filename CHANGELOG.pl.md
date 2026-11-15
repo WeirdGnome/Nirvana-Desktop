@@ -31,6 +31,10 @@
 - **Preferencje Pointer** (`rambler --prefs pointer`): motyw i rozmiar kursora X, z
   podglądem zwykłego wskaźnika i wskaźnika zajętości z plików motywu. Trafiają do zasobów
   X, okna głównego i programów uruchamianych od tej chwili.
+- **Preferencje Font** (`rambler --prefs font`): czcionka ikon, tekstu ekranu i tekstu
+  systemu o stałej szerokości – dowolna czcionka systemu z rozmiarem, wybierana w nowym
+  **wyborze czcionki** (Lune, jak ASL: rodziny, rozmiary, próbka). Wybór rodziny w GUI
+  Settings i preferencjach Ramblera zostaje; wybranie jej tam zastępuje czcionkę z nazwy.
 
 ### Poprawki
 - Po polsku strona Paski przewijania w preferencjach Lune nazywała się tak samo jak strona

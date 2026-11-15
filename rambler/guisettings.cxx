@@ -873,6 +873,7 @@ void edit_gui_settings(bool standalone) {
         p.shine = parse(csh, p.shine);
         p.shadow = parse(csd, p.shadow);
         p.fill = parse(cfl, p.fill);
+        if (fam->active() != p.font_family) p.font_name.clear();   // (a family chosen: no font by name)
         p.font_family = fam->active();
         p.font_size = SIZES[size->active()];
         p.window_left = wl->value();

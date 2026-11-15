@@ -23,7 +23,7 @@ if(NOT FLTK_FOUND)
 endif()
 
 # Lune on FLTK
-add_library(lune STATIC rambler/lune/pens.cxx rambler/lune/frame.cxx rambler/lune/lune.cxx rambler/lune/catalog.cxx rambler/lune/imspec.cxx)
+add_library(lune STATIC rambler/lune/pens.cxx rambler/lune/frame.cxx rambler/lune/lune.cxx rambler/lune/catalog.cxx rambler/lune/imspec.cxx rambler/lune/fontreq.cxx)
 target_include_directories(lune PUBLIC rambler/lune)
 target_link_libraries(lune PUBLIC fltk::fltk fltk::images)
 
@@ -34,7 +34,7 @@ add_executable(lune-test rambler/lune/test_lune.cxx)
 target_link_libraries(lune-test lune)
 
 # Rambler
-add_library(rambler-classes STATIC rambler/iconlist.cxx rambler/icons.cxx rambler/iconwindow.cxx rambler/tools.cxx rambler/prefs.cxx rambler/fileops.cxx rambler/guisettings.cxx rambler/find.cxx rambler/inputprefs.cxx rambler/screenmodeprefs.cxx rambler/localeprefs.cxx rambler/pointerprefs.cxx)
+add_library(rambler-classes STATIC rambler/iconlist.cxx rambler/icons.cxx rambler/iconwindow.cxx rambler/tools.cxx rambler/prefs.cxx rambler/fileops.cxx rambler/guisettings.cxx rambler/find.cxx rambler/inputprefs.cxx rambler/screenmodeprefs.cxx rambler/localeprefs.cxx rambler/pointerprefs.cxx rambler/fontprefs.cxx)
 target_include_directories(rambler-classes PUBLIC rambler)
 target_link_libraries(rambler-classes PUBLIC lune)
 add_executable(iconlist-test rambler/test_iconlist.cxx)

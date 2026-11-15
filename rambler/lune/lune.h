@@ -124,8 +124,19 @@ struct Prefs {
     int list_size() const { return list_font_size > 0 ? list_font_size : font_size; }
     std::string custom_frame[16];   // the Frames page: the custom frames' frame.config files
     int font_size = 13;          // the screen font (topaz-like 8 pt is too small on today's screens)
+    // the Font preferences: the screen font and the fixed-width (system) font by name - a
+    // font of the system ("DejaVu Sans"); "" - font_family / Courier
+    std::string font_name, fixed_font_name;
     Fl_Font font = FL_HELVETICA, font_bold = FL_HELVETICA_BOLD, font_fixed = FL_COURIER;
 };
+// a font of the system by its family name ("DejaVu Sans"), plain or bold: an FLTK font
+// number of its own (made the first time it is asked for)
+Fl_Font named_font(const std::string &family, bool bold = false);
+// the font families of the system (for the font requester), sorted
+std::vector<std::string> font_families();
+// the font requester (ASL's FontRequest, as Popasl shows it): a family and a size; false -
+// cancelled
+bool font_request(const std::string &title, std::string &family, int &size);
 Prefs &prefs();
 // ~/.config/rambler/lune.prefs (ENVARC:) and $XDG_RUNTIME_DIR/rambler/lune.prefs (ENV:): read
 // at the start (ENV: first), written by the settings editor (Use: ENV:, Save: both);

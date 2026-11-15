@@ -41,6 +41,7 @@ struct RamblerPrefs {
     // The user screen title: %wv / %wb Rambler version, %ov OS version, %os OS release,
     // %pc available, %pf free, %pt total memory ("" - the default title)
     std::string screen_title;
+    std::string icon_font_name;   // the Font preferences' icon font ("" - icon_font's family)
 
     static RamblerPrefs load();
     void save(bool archive = true) const;   // Use: false (ENV: only), Save: true (and ENVARC:)

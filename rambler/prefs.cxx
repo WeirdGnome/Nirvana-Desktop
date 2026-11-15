@@ -50,6 +50,7 @@ RamblerPrefs RamblerPrefs::load() {
         if (k == "backdrop_image") { p.backdrop_image = line.substr(eq + 1); continue; }
         if (k == "drawer_image") { p.drawer_image = line.substr(eq + 1); continue; }
         if (k == "screen_title") { p.screen_title = line.substr(eq + 1); continue; }
+        if (k == "icon_font_name") { p.icon_font_name = line.substr(eq + 1); continue; }
         int v = atoi(line.c_str() + eq + 1);
         if (k == "text_mode") p.text_mode = std::clamp(v, 0, 2);
         else if (k == "label_lines") p.label_lines = std::clamp(v, 1, 5);
@@ -100,7 +101,7 @@ std::string RamblerPrefs::text() const {
         << "\nlist_mode=" << list_mode << "\ntoolbar=" << toolbar << "\nstatusbar=" << statusbar
         << "\nshow_hidden=" << show_hidden << "\ndrawers_first=" << drawers_first << "\nhspacing=" << hspacing
         << "\nvspacing=" << vspacing << "\nbackdrop_image=" << backdrop_image << "\nbackdrop_mode=" << backdrop_mode
-        << "\ndrawer_image=" << drawer_image << "\ndrawer_mode=" << drawer_mode << "\nnavigation=" << navigation << "\nshow_network=" << show_network << "\ndrop_mode=" << drop_mode << "\ndefault_sort=" << default_sort << "\nauto_sort=" << auto_sort << "\nbackdrop_ox=" << backdrop_ox << "\nbackdrop_oy=" << backdrop_oy << "\ndrawer_ox=" << drawer_ox << "\ndrawer_oy=" << drawer_oy << "\nimage_spacing=" << image_spacing << "\nlabel_hpad=" << label_hpad << "\nlabel_vpad=" << label_vpad << "\nlabel_border_w=" << label_border_w << "\nlabel_border_h=" << label_border_h << "\nlines_on_focus=" << lines_on_focus << "\nicon_font=" << icon_font << "\nicon_font_size=" << icon_font_size << "\nscreen_title=" << screen_title << "\n";
+        << "\ndrawer_image=" << drawer_image << "\ndrawer_mode=" << drawer_mode << "\nnavigation=" << navigation << "\nshow_network=" << show_network << "\ndrop_mode=" << drop_mode << "\ndefault_sort=" << default_sort << "\nauto_sort=" << auto_sort << "\nbackdrop_ox=" << backdrop_ox << "\nbackdrop_oy=" << backdrop_oy << "\ndrawer_ox=" << drawer_ox << "\ndrawer_oy=" << drawer_oy << "\nimage_spacing=" << image_spacing << "\nlabel_hpad=" << label_hpad << "\nlabel_vpad=" << label_vpad << "\nlabel_border_w=" << label_border_w << "\nlabel_border_h=" << label_border_h << "\nlines_on_focus=" << lines_on_focus << "\nicon_font=" << icon_font << "\nicon_font_size=" << icon_font_size << "\nscreen_title=" << screen_title << "\nicon_font_name=" << icon_font_name << "\n";
     return out.str();
 }
 
@@ -235,6 +236,7 @@ static void advanced_options(const std::string &view, std::shared_ptr<RamblerPre
         p.auto_sort = asort->on();
         p.show_hidden = viewm->active() == 1;
         p.text_mode = mode->active();
+        if (ifont->active() - 1 != p.icon_font) p.icon_font_name.clear();   // (a family chosen: no font by name)
         p.icon_font = ifont->active() - 1;
         p.icon_font_size = ISIZES[ifsize->active()];
         p.label_maxlen = maxlen->value();

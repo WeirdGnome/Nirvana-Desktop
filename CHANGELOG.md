@@ -30,6 +30,10 @@
 - **Pointer preferences** (`rambler --prefs pointer`): the X cursor theme and size, with
   the Normal and Busy pointers shown from the theme's own files. They go into the X
   resources, the root window and the programs started from then on.
+- **Font preferences** (`rambler --prefs font`): the icons' font, the screen text and the
+  system's fixed-width text, each any font of the system with its size, chosen in a new
+  **font requester** (Lune's, as ASL's: families, sizes, a sample). The family choices in
+  the GUI settings and Rambler preferences stay; picking one there replaces the font by name.
 
 ### Fixed
 - Polish: the Scrollbars page of the Lune preferences was named like the Sliders page.

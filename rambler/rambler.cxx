@@ -22,6 +22,7 @@
 #include "screenmodeprefs.h"
 #include "localeprefs.h"
 #include "pointerprefs.h"
+#include "fontprefs.h"
 
 #include <FL/Fl.H>
 #include <FL/Fl_Menu_Item.H>
@@ -185,6 +186,7 @@ void Rambler::apply_prefs(IconWindow *w) {
     l->label_multiline = prefs_.label_lines;
     l->label_multiline_on_focus = prefs_.lines_on_focus;
     l->icon_font_family = prefs_.icon_font;
+    l->icon_font_name = prefs_.icon_font_name;
     l->icon_font_size = prefs_.icon_font_size;
     l->label_maxlen = prefs_.label_maxlen;
     l->hspacing = prefs_.hspacing;
@@ -1195,7 +1197,7 @@ void make_prefs_drawer() {
     std::error_code ec;
     fs::create_directories(dir, ec);
     struct { const char *file, *name, *arg; } progs[] = {
-        {"Input.desktop", "Input", "input"}, {"Locale.desktop", "Locale", "locale"},
+        {"Font.desktop", "Font", "font"}, {"Input.desktop", "Input", "input"}, {"Locale.desktop", "Locale", "locale"},
         {"Pointer.desktop", "Pointer", "pointer"}, {"Lune.desktop", "Lune", "lune"}, {"Rambler.desktop", "Rambler", "rambler"},
         {"ScreenMode.desktop", "ScreenMode", "screenmode"}};
     for (auto &pr : progs) {
@@ -1228,9 +1230,10 @@ int main(int argc, char **argv) {
         else if (prefs_program == "screenmode") edit_screenmode_prefs(true);
         else if (prefs_program == "locale") edit_locale_prefs(true);
         else if (prefs_program == "pointer") edit_pointer_prefs(true);
+        else if (prefs_program == "font") edit_font_prefs(true);
         else if (prefs_program == "rambler") edit_prefs(RamblerPrefs::load(), [](const RamblerPrefs &) {}, true);
         else {
-            fprintf(stderr, "rambler: no preferences program '%s' (input, locale, lune, pointer, rambler, screenmode)\n", prefs_program.c_str());
+            fprintf(stderr, "rambler: no preferences program '%s' (font, input, locale, lune, pointer, rambler, screenmode)\n", prefs_program.c_str());
             return 1;
         }
         return run();

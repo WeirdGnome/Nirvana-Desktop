@@ -98,6 +98,7 @@ public:
     int label_multiline = 1;
     bool label_multiline_on_focus = false;
     int icon_font_family = -1;   // the icon font (font.prefs FP_ICONFONT): -1 the screen's, 0 sans, 1 serif, 2 fixed
+    std::string icon_font_name;   // the Font preferences' icon font by name ("" - the family)
     int icon_font_size = 0;      // 0: the screen font's size less one   // all the lines only on the focused entry's label
     int hspacing = 5, vspacing = 5;   // ILC_ICON_HORIZONTALMARGIN_DEFAULT ...
     int image_spacing = 1;            // between the image and the label
@@ -171,6 +172,7 @@ protected:
     int label_font_size() const { return icon_font_size > 0 ? icon_font_size : lune::prefs().font_size - 1; }
     Fl_Font label_font(bool bold = false) const {
         static const Fl_Font fams[3][2] = {{FL_HELVETICA, FL_HELVETICA_BOLD}, {FL_TIMES, FL_TIMES_BOLD}, {FL_COURIER, FL_COURIER_BOLD}};
+        if (!icon_font_name.empty()) return lune::named_font(icon_font_name, bold);
         if (icon_font_family >= 0 && icon_font_family < 3) return fams[icon_font_family][bold];
         return bold ? lune::prefs().font_bold : lune::prefs().font;
     }
