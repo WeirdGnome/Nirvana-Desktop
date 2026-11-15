@@ -17,6 +17,7 @@
 #include "catalog.h"
 
 #include <FL/Fl.H>
+#include <FL/Fl_Tooltip.H>
 #include <FL/fl_draw.H>
 #include <FL/platform.H>
 
@@ -84,6 +85,8 @@ void load_prefs() {
             else if (k == "drag_autostart") p.drag_autostart = atoi(v.c_str());
             else if (k == "drag_autostart_length") p.drag_autostart_length = std::clamp(atoi(v.c_str()), 1, 20);
             else if (k == "drag_look") p.drag_look = std::clamp(atoi(v.c_str()), 0, 3);
+            else if (k == "bubble_first") p.bubble_first = std::clamp(atoi(v.c_str()), 0, 50);
+            else if (k == "bubble_next") p.bubble_next = std::clamp(atoi(v.c_str()), 0, 50);
             else if (k == "balancing_look") p.balancing_look = std::clamp(atoi(v.c_str()), 0, 1);
         }
         fclose(f);
@@ -113,6 +116,7 @@ void save_prefs() {
     fprintf(f, "drag_left=%d\ndrag_middle=%d\ndrag_autostart=%d\ndrag_autostart_length=%d\ndrag_look=%d\nbalancing_look=%d\n",
             (int)p.drag_left, (int)p.drag_middle, (int)p.drag_autostart, p.drag_autostart_length, p.drag_look,
             p.balancing_look);
+    fprintf(f, "bubble_first=%d\nbubble_next=%d\n", p.bubble_first, p.bubble_next);
     fprintf(f, "drag_left_modifier=%s\ndrag_middle_modifier=%s\n", p.drag_left_modifier.c_str(), p.drag_middle_modifier.c_str());
     fclose(f);
 }
@@ -191,6 +195,9 @@ void apply_prefs() {
     p.font = fams[p.font_family][0];
     p.font_bold = fams[p.font_family][1];
     for (int i = 1; i < Frame_Count; i++) set_std_frame((StdFrame)i, p.frame[i].empty() ? default_frame((StdFrame)i) : p.frame[i]);
+    // bubble help: FLTK's tooltips with the delays set
+    Fl_Tooltip::delay(p.bubble_first / 10.0f);
+    Fl_Tooltip::hoverdelay(p.bubble_next / 10.0f);
     // the window manager takes the colours too (its frames, the screens' title bars)
     if (fl_display) {
         char v[64];
@@ -1344,7 +1351,7 @@ void Slider::value(int v) {
 // CalcKnobDimensions: as wide as the widest number, with the knob frame around it
 int Slider::knob_w() const {
     fl_font(prefs().font, prefs().font_size);
-    int wmax = std::max((int)fl_width(std::to_string(min_).c_str()), (int)fl_width(std::to_string(max_).c_str()));
+    int wmax = std::max((int)fl_width(text(min_).c_str()), (int)fl_width(text(max_).c_str()));
     const FrameSpec &k = std_frame(Frame_Knob);
     FrameBorders b = frame_borders(k.type, k.down);
     return wmax + b.left + b.right + k.inner_left + k.inner_right;
@@ -1390,7 +1397,7 @@ void Slider::draw_contents() {
     draw_frame(k.type, k.down != dragging_, kx, ky, kw, kh);
     fl_font(prefs().font, prefs().font_size);
     fl_color(pens()[MPEN_TEXT]);
-    fl_draw(std::to_string(value_).c_str(), kx, ky, kw, kh, FL_ALIGN_CENTER);
+    fl_draw(text(value_).c_str(), kx, ky, kw, kh, FL_ALIGN_CENTER);
 }
 
 int Slider::handle(int e) {

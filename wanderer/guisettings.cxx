@@ -8,6 +8,10 @@
 */
 #include "guisettings.h"
 #include "zune.h"
+#include <map>
+#include <FL/platform.H>
+#include <FL/Fl_RGB_Image.H>
+#include "icons.h"
 
 #include <FL/Fl.H>
 #include <FL/fl_draw.H>
@@ -59,7 +63,66 @@ Slider *number(int v) { return new Slider(0, 20, v); }   // the spacing: sliders
 
 std::string hex(unsigned v) { char b[8]; snprintf(b, sizeof b, "%06X", v); return b; }
 
-Window *g_win = nullptr;
+zune::Window *g_win = nullptr;
+
+// an image of the Special page (a popimage: 28 pixels, in a button frame)
+class SpecialImage : public Area {
+public:
+    explicit SpecialImage(std::function<void(int, int, int, int)> f) : Area(Frame_ImageButton), f_(std::move(f)) {}
+    void ask_min_max(int &minw, int &minh, int &defw, int &defh, int &maxw, int &maxh) override {
+        minw = defw = maxw = minh = defh = maxh = 20;   // (MUIA_MaxWidth / MaxHeight 28 with the frame)
+    }
+
+protected:
+    void draw_contents() override { f_(mleft(), mtop(), mwidth(), mheight()); }
+    std::function<void(int, int, int, int)> f_;
+};
+
+// a picture of the icons, made small (as the device images)
+void draw_small_icon(IconKind k, int X, int Y, int W, int H) {
+    static std::map<int, Fl_RGB_Image *> cache;
+    Fl_RGB_Image *&img = cache[(int)k];
+    if (!img) {
+        Fl_Offscreen off = fl_create_offscreen(ICON_W, ICON_H);
+        fl_begin_offscreen(off);
+        fl_color(fl_rgb_color(255, 0, 255));
+        fl_rectf(0, 0, ICON_W, ICON_H);
+        draw_icon(k, 0, 0, false);
+        uchar *rgb = fl_read_image(nullptr, 0, 0, ICON_W, ICON_H);
+        fl_end_offscreen();
+        fl_delete_offscreen(off);
+        auto *rgba = new uchar[ICON_W * ICON_H * 4];
+        for (int i = 0; i < ICON_W * ICON_H; i++) {
+            bool key = rgb[i * 3] == 255 && rgb[i * 3 + 1] == 0 && rgb[i * 3 + 2] == 255;
+            for (int c = 0; c < 3; c++) rgba[i * 4 + c] = key ? 0 : rgb[i * 3 + c];
+            rgba[i * 4 + 3] = key ? 0 : 255;
+        }
+        delete[] rgb;
+        Fl_RGB_Image full(rgba, ICON_W, ICON_H, 4);
+        full.alloc_array = 1;
+        Fl_RGB_Scaling old = Fl_Image::RGB_scaling();
+        Fl_Image::RGB_scaling(FL_RGB_SCALING_BILINEAR);
+        img = (Fl_RGB_Image *)full.copy(18, 18 * ICON_H / ICON_W);
+        Fl_Image::RGB_scaling(old);
+    }
+    img->draw(X + (W - img->w()) / 2, Y + (H - img->h()) / 2);
+}
+
+// the tape deck's images: play, play back, pause, stop, record, up, down (in the text pen;
+// record in red)
+void draw_tape(int which, int X, int Y, int W, int H) {
+    int cx = X + W / 2, cy = Y + H / 2, r = std::min(W, H) / 2 - 3;
+    fl_color(pens()[MPEN_TEXT]);
+    switch (which) {
+    case 0: fl_polygon(cx - r / 2, cy - r, cx - r / 2, cy + r, cx + r, cy); break;
+    case 1: fl_polygon(cx + r / 2, cy - r, cx + r / 2, cy + r, cx - r, cy); break;
+    case 2: fl_rectf(cx - r + 1, cy - r, r * 2 / 3, 2 * r); fl_rectf(cx + r / 3, cy - r, r * 2 / 3, 2 * r); break;
+    case 3: fl_rectf(cx - r + 1, cy - r + 1, 2 * r - 1, 2 * r - 1); break;
+    case 4: fl_color(fl_rgb_color(0xCC, 0x22, 0x22)); fl_pie(cx - r, cy - r, 2 * r, 2 * r, 0, 360); break;
+    case 5: fl_polygon(cx - r, cy + r / 2, cx + r, cy + r / 2, cx, cy - r); break;
+    case 6: fl_polygon(cx - r, cy - r / 2, cx + r, cy - r / 2, cx, cy + r); break;
+    }
+}
 
 }  // namespace
 
@@ -72,7 +135,7 @@ void edit_gui_settings() {
     auto *root = VGroup();
     root->vspacing(10);
     auto *main = HGroup();
-    const char *pages[] = {"Windows", "Groups", "Buttons", "Cycles", "Sliders", "Scrollbars", "Listviews", "Strings", "Navigation", "Palette"};
+    const char *pages[] = {"System", "Windows", "Groups", "Buttons", "Cycles", "Sliders", "Scrollbars", "Listviews", "Strings", "Navigation", "Special", "Palette"};
     auto *list = new List();
     list->frame(Frame_InputList);
     {
@@ -86,6 +149,25 @@ void edit_gui_settings() {
     auto *pageframe = new Group(Group::Vertical, Frame_Text);
     pageframe->inner(6, 6, 6, 6);
     auto *book = new Register({});
+    // -- System (systemp.c): the bubble help's delays (the public screen, iconification and
+    // ARexx groups have nothing to set on X11)
+    Slider *bfirst, *bnext;
+    {
+        auto *pg = VGroup();
+        auto *g = new Group(Group::Vertical, Frame_Group);
+        g->frame_title("Bubble Help");
+        g->columns(2);
+        auto secs = [](int v) { char b[16]; snprintf(b, sizeof b, "%.1f s", 0.1 * v); return std::string(b); };
+        new Text("\033rFirst bubble:");
+        bfirst = new Slider(0, 50, saved.bubble_first);
+        bfirst->format = secs;
+        new Text("\033rNext bubble:");
+        bnext = new Slider(0, 50, saved.bubble_next);
+        bnext->format = secs;
+        g->end();
+        VSpace();
+        pg->end();
+    }
     // -- Windows: the fonts, the spacing (windowp.c)
     Slider *wl, *wr, *wt, *wb;
     Cycle *fam, *size;
@@ -148,12 +230,6 @@ void edit_gui_settings() {
         new Text("\033rFrame:");
         frames.push_back({Frame_ImageButton, frame_cycle(Frame_ImageButton)});
         ib->end();
-        auto *tx = new Group(Group::Vertical, Frame_Group);
-        tx->frame_title("Texts");
-        tx->columns(2);
-        new Text("\033rFrame:");
-        frames.push_back({Frame_Text, frame_cycle(Frame_Text)});
-        tx->end();
         VSpace();
         pg->end();
     }
@@ -213,12 +289,10 @@ void edit_gui_settings() {
     {
         auto *pg = VGroup();
         auto *g = new Group(Group::Vertical, Frame_Group);
-        g->frame_title("Frames");
+        g->frame_title("Frame");
         g->columns(2);
         new Text("\033rScrollbar:");
         frames.push_back({Frame_Prop, frame_cycle(Frame_Prop)});
-        new Text("\033rGauge:");
-        frames.push_back({Frame_Gauge, frame_cycle(Frame_Gauge)});
         g->end();
         VSpace();
         pg->end();
@@ -274,6 +348,7 @@ void edit_gui_settings() {
         new Text("\033rAutostart:");
         dauto = new Checkmark(saved.drag_autostart);
         dlen = new Slider(1, 20, saved.drag_autostart_length);
+        dlen->format = [](int v) { return trs("%s pixel", std::to_string(v)); };   // MSG_PIXEL
         c3->end();
         auto *c2 = new Group(Group::Vertical);
         c2->columns(2);
@@ -336,6 +411,57 @@ void edit_gui_settings() {
             (*keys)[i] = v;
             fill_keys();
         };
+        pg->end();
+    }
+    // -- Special (specialp.c): text fields, the progress indicator, the device and tape images
+    {
+        auto *pg = VGroup();
+        auto *top = new Group(Group::Vertical);
+        top->columns(2);
+        auto *tf = new Group(Group::Vertical, Frame_Group);
+        tf->frame_title("Text Fields");
+        auto *tfr = new Group(Group::Vertical);
+        tfr->columns(2);
+        new Text("\033rFrame:");
+        frames.push_back({Frame_Text, frame_cycle(Frame_Text)});
+        tfr->end();
+        new Text("\033cExample Textfield", Frame_Text);
+        tf->end();
+        auto *pi = new Group(Group::Vertical, Frame_Group);
+        pi->frame_title("Progress Indicator");
+        pi->columns(2);
+        new Text("\033rFrame:");
+        frames.push_back({Frame_Gauge, frame_cycle(Frame_Gauge)});
+        new Text("\033rExample:");
+        auto *ga = new Gauge();
+        ga->set(50, 100);
+        ga->info("50 %");
+        VSpace();
+        new Scale();
+        pi->end();
+        top->end();
+        // the images (MUII_Drawer ... MUII_TapeDown): shown, not chosen here
+        auto images = [](const char *title, std::vector<std::pair<const char *, std::function<void(int, int, int, int)>>> v) {
+            auto *g = new Group(Group::Horizontal, Frame_Group);
+            g->frame_title(title);
+            HSpace();
+            for (auto &[name, fn] : v) {
+                auto *im = new SpecialImage(fn);
+                im->copy_tooltip(tr(name).c_str());
+            }
+            HSpace();
+            g->end();
+        };
+        auto icon = [](IconKind k) {
+            return [k](int X, int Y, int W, int H) { draw_small_icon(k, X, Y, W, H); };
+        };
+        images("Device Images", {{"Drawer", icon(IconKind::Drawer)}, {"Hard disk", icon(IconKind::Harddisk)},
+                                 {"Disk", icon(IconKind::Removable)}, {"RAM", icon(IconKind::RamDisk)},
+                                 {"Volume", icon(IconKind::Optical)}, {"Network", icon(IconKind::Network)},
+                                 {"Assign", icon(IconKind::Link)}});
+        auto tape = [](int which) { return [which](int X, int Y, int W, int H) { draw_tape(which, X, Y, W, H); }; };
+        images("Tape Images", {{"Play", tape(0)}, {"Play back", tape(1)}, {"Pause", tape(2)}, {"Stop", tape(3)},
+                               {"Record", tape(4)}, {"Up", tape(5)}, {"Down", tape(6)}});
         pg->end();
     }
     // -- Palette (the screen's four colours: the palette preferences)
@@ -412,6 +538,8 @@ void edit_gui_settings() {
         p.drag_autostart_length = dlen->value();
         p.drag_look = dlook->active();
         p.balancing_look = blook->active();
+        p.bubble_first = bfirst->value();
+        p.bubble_next = bnext->value();
         for (int i = 0; i < MUIKEY_COUNT; i++) p.keys[i] = (*keys)[i] == KEY_DEFAULTS[i] ? "" : (*keys)[i];
     };
     // a scheme fills the four colours in
@@ -421,7 +549,7 @@ void edit_gui_settings() {
         csd->value(hex(PALETTES[i].shadow));
         cfl->value(hex(PALETTES[i].fill));
     };
-    auto *w = new Window("Zune Preferences", root);
+    auto *w = new zune::Window("Zune Preferences", root);
     g_win = w;
     auto close = [w] { w->hide(); Fl::delete_widget(w); g_win = nullptr; };
     save->on_press = [=] { collect(); save_prefs(); apply_prefs(); close(); };

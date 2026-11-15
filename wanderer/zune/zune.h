@@ -74,6 +74,9 @@ struct Prefs {
     int drag_autostart_length = 3;
     int drag_look = 0;      // DNDLook: 0 always solid, 1 ghosted on box, 2 ghosted outside, 3 always ghosted
     int balancing_look = 0; // 0 show frames, 1 show objects
+    // bubble help (System page): the delays before the first bubble and between bubbles, in
+    // tenths of a second (configdata.c 30 and 10)
+    int bubble_first = 30, bubble_next = 10;
     int font_size = 13;          // the screen font (topaz-like 8 pt is too small on today's screens)
     Fl_Font font = FL_HELVETICA, font_bold = FL_HELVETICA_BOLD, font_fixed = FL_COURIER;
 };
@@ -394,6 +397,9 @@ public:
     bool accepts_focus() const override { return !disabled_; }
     Slider(int min, int max, int value, bool horiz = true);   // horiz false: MUIA_Slider_Horiz FALSE
     int value() const { return value_; }
+    // MUIM_Numeric_Stringify / MUIA_Numeric_Format: the number as the knob shows it
+    std::function<std::string(int)> format;
+    std::string text(int v) const { return format ? format(v) : std::to_string(v); }
     void value(int v);
     std::function<void(int)> on_change;
     void ask_min_max(int &minw, int &minh, int &defw, int &defh, int &maxw, int &maxh) override;
