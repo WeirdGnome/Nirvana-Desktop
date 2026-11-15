@@ -1072,6 +1072,11 @@ void IconDrawerList::update() {
         e.path = it->path().string();
         e.label = name;
         e.icon = get_disk_object(e.path);
+        // the icon's own place in the drawer (do_CurrentX/Y; a snapshot later overrides it)
+        if (e.icon && e.icon->current_x != NO_ICON_POSITION && e.icon->current_y != NO_ICON_POSITION) {
+            e.provided_x = e.icon->current_x;
+            e.provided_y = e.icon->current_y;
+        }
         struct stat st;
         if (lstat(e.path.c_str(), &st) == 0) {
             e.mtime = st.st_mtime;

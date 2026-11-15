@@ -53,6 +53,10 @@
   never run - and kept in `~/.cache/rambler/appimage-icons`; without it, the thumbnail
   desktop tools left in `~/.cache/thumbnails` is used. A `.info` beside the AppImage still
   comes first. The package recommends `squashfs-tools`.
+- **What an icon file holds is used**: its tool types (shown and used, e.g. `STARTPRI`,
+  unless set in Information), its default tool (when it names a program there is on this
+  system) and its position in the drawer (until the drawer is snapshot). Information
+  shows the file's own icon; clicking it shows the selected image.
 
 ### Fixed
 - Polish: the Scrollbars page of the Lune preferences was named like the Sliders page.

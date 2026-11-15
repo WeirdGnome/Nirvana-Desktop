@@ -15,6 +15,7 @@
 #include <FL/fl_draw.H>
 #include <FL/Fl_Text_Buffer.H>
 #include <FL/Fl_Text_Display.H>
+#include <FL/Fl_RGB_Image.H>
 
 #include <algorithm>
 #include <cstring>
@@ -462,9 +463,11 @@ static std::string tools_file() {
     return base + "/rambler/defaulttools";
 }
 
+std::string icon_default_tool(const std::string &path);
+
 std::string default_tool(const std::string &path) {
     FILE *f = fopen(tools_file().c_str(), "r");
-    if (!f) return "";
+    if (!f) return icon_default_tool(path);
     char line[4096];
     std::string r;
     while (fgets(line, sizeof line, f)) {
@@ -474,7 +477,29 @@ std::string default_tool(const std::string &path) {
         if (t != std::string::npos && l.substr(0, t) == path) r = l.substr(t + 1);
     }
     fclose(f);
-    return r;
+    return r.empty() ? icon_default_tool(path) : r;
+}
+
+// the default tool of the project's icon file (do_DefaultTool), when it names a program
+// there is here (an absolute path, or a name found in PATH; the original system's paths
+// such as "SYS:Utilities/..." are not)
+std::string icon_default_tool(const std::string &path) {
+    auto o = get_disk_object(path);
+    if (!o || o->default_tool.empty()) return "";
+    std::string t = o->default_tool, prog = t.substr(0, t.find(' '));
+    std::error_code ec;
+    if (prog.find(':') != std::string::npos) return "";
+    if (prog[0] == '/') return access(prog.c_str(), X_OK) == 0 ? t : "";
+    const char *pathenv = getenv("PATH");
+    std::string dirs = pathenv ? pathenv : "/usr/bin:/bin";
+    for (size_t a = 0; a < dirs.size();) {
+        size_t b = dirs.find(':', a);
+        if (b == std::string::npos) b = dirs.size();
+        std::string cand = dirs.substr(a, b - a) + "/" + prog;
+        if (b > a && access(cand.c_str(), X_OK) == 0) return t;
+        a = b + 1;
+    }
+    return "";
 }
 
 void set_default_tool(const std::string &path, const std::string &tool) {
@@ -522,7 +547,11 @@ std::vector<std::string> tool_types(const std::string &path) {
     std::vector<std::string> v;
     char buf[8192];
     ssize_t n = lgetxattr(path.c_str(), "user.tooltypes", buf, sizeof buf);
-    if (n <= 0) return v;
+    if (n <= 0) {
+        // none set here: the icon file's (do_ToolTypes)
+        if (auto o = get_disk_object(path)) return o->tool_types;
+        return v;
+    }
     std::string all(buf, n), line;
     std::istringstream in(all);
     while (std::getline(in, line)) if (!line.empty()) v.push_back(line);
@@ -596,7 +625,15 @@ void information(const std::string &path) {
     auto *root = VGroup();
     {
         auto *head = HGroup();
-        auto *img = new ImageButton(ICON_W, ICON_H, [kind](int x, int y, int, int, bool sel) { draw_icon(kind, x, y, sel); });
+        // the file's own icon (its .info, an AppImage's), else the default one; clicking it
+        // shows the selected image (a dual icon's second one)
+        auto dobj = get_disk_object(path);
+        int iw = dobj ? std::max(ICON_W, dobj->width) : ICON_W, ih = dobj ? std::max(ICON_H, dobj->height) : ICON_H;
+        auto *img = new ImageButton(iw, ih, [kind, dobj](int x, int y, int w, int h, bool sel) {
+            if (dobj) {
+                if (Fl_RGB_Image *i = dobj->image(sel)) i->draw(x + (w - dobj->width) / 2, y + (h - dobj->height) / 2);
+            } else draw_icon(kind, x, y, sel);
+        });
         img->frame(Frame_None);
         img->input_mode(Input_Toggle);
         auto *name = new Text("\033l" + fs::path(path).filename().string(), Frame_Text);

@@ -54,6 +54,11 @@
   jest uruchamiany – i przechowywana w `~/.cache/rambler/appimage-icons`; bez tego
   używana jest miniatura zostawiona przez narzędzia pulpitu w `~/.cache/thumbnails`.
   Plik `.info` obok AppImage nadal ma pierwszeństwo. Paczka zaleca `squashfs-tools`.
+- **Zawartość pliku ikony jest używana**: jego typy narzędzi (pokazywane i używane, np.
+  `STARTPRI`, o ile nie ustawiono ich w Informacjach), narzędzie domyślne (gdy wskazuje
+  program istniejący w tym systemie) i położenie w szufladzie (do zrobienia zdjęcia
+  szuflady). Okno Informacje pokazuje własną ikonę pliku; kliknięcie pokazuje obraz
+  zaznaczenia.
 
 ### Poprawki
 - Po polsku strona Paski przewijania w preferencjach Lune nazywała się tak samo jak strona
