@@ -175,6 +175,7 @@ public:
     bool selected() const { return selected_; }
     void selected(bool s);
     void disabled(bool d) { disabled_ = d; d ? deactivate() : activate(); redraw(); }
+    bool disabled() const { return disabled_; }
     std::function<void()> on_press;   // RelVerify: released over it; Toggle: toggled
     // the frame + inner spacing on each side
     int add_left() const, add_right() const, add_top() const, add_bottom() const;

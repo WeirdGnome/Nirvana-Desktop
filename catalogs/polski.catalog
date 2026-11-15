@@ -756,3 +756,12 @@ The window under the pointer becomes active.	Okno pod wskaźnikiem staje się ak
 Blanks the screen after some minutes without input.	Wygasza ekran po kilku minutach bezczynności.
 A double click brings a window to the front.	Podwójne kliknięcie wysuwa okno na wierzch.
 The Caps Lock key does not lock.	Klawisz Caps Lock nie blokuje wielkich liter.
+Grab:	Zrzut:
+Whole screen	Cały ekran
+Active window	Aktywne okno
+Delay:	Opóźnienie:
+Hide this window:	Ukryj to okno:
+File:	Plik:
+Grab	Zrób zrzut
+No picture yet	Jeszcze nie ma obrazu
+The screen could not be read.	Nie udało się odczytać ekranu.

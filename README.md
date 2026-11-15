@@ -96,7 +96,8 @@ rambler-wm & rambler --backdrop
 
 *Tools > Tools Drawer* holds the utilities: Calculator (`rambler --utility calculator`; with a tape), MultiView (`rambler --utility multiview FILE`;
 texts and pictures), Editor (`rambler --utility editor FILE`), Exchange (`rambler --utility exchange`; the
-commodities ClickToFront, AutoPoint, Blanker and NoCapsLock), Clock (`rambler --utility clock`; analog or
+commodities ClickToFront, AutoPoint, Blanker and NoCapsLock), ScreenGrabber
+(`rambler --utility screengrabber`), Clock (`rambler --utility clock`; analog or
 digital, the date in its title, an alarm).
 
 *Tools > Prefs Drawer* opens the preferences programs: Input, Lune (the GUI settings),

@@ -25,6 +25,11 @@
   wygasa po 1-120 minutach bezczynności) i **NoCapsLock** (Caps Lock nie blokuje). Każdy
   można przełączyć na Aktywny albo Nieaktywny; „Pokaż okno” otwiera ustawienia
   ClickToFront i Blankera. Zmiana działa od razu i zostaje na następną sesję.
+- **ScreenGrabber** (`rambler --utility screengrabber`, w szufladzie Tools): zrzut całego
+  ekranu albo aktywnego okna z ramką, po opóźnieniu 0-30 sekund, z własnym oknem
+  ukrytym na ten czas, jeśli tak wybrano; podgląd w pomniejszeniu, zapis do pliku PNG
+  (domyślnie w szufladzie obrazów, z datą i godziną w nazwie).
+- Lune: obiekt podaje, czy jest wyłączony.
 
 ## 0.17.0 – 2026-11-15
 

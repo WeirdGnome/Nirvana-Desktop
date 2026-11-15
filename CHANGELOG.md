@@ -24,6 +24,11 @@
   lock). Each is switched Active or Inactive; Show Interface opens the settings of
   ClickToFront and Blanker. A change takes effect at once and is kept for the next
   session.
+- **ScreenGrabber** (`rambler --utility screengrabber`, in the Tools drawer): a picture of
+  the whole screen or of the active window with its frame, after a delay of 0 to 30
+  seconds, its own window hidden meanwhile if wished; shown small, saved as a PNG file
+  (by default in the pictures drawer, named after the date and time).
+- Lune: an object tells whether it is disabled.
 
 ## 0.17.0 – 2026-11-15
 
