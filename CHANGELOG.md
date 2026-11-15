@@ -9,9 +9,20 @@
   printing, colour, resolution and quality, as its driver offers them. The settings are the
   user's own (`lpoptions`), so no rights are asked. *Printers...* opens the system's
   printer tool (or CUPS's web pages) to set printers up.
+- **Clock** (`rambler --utility clock`, in the Tools drawer): the time on an analog or a
+  digital face, the date in the window's title. Settings menu: seconds, date, 24 hour,
+  an alarm (it beeps as the Sound preferences set it up and says so), Save Settings.
 - Lune: a Cycle's entries can be set again.
+- Lune: **window menus** (Menustrip, Menu, Menuitem): a Lune window's menus show in the
+  screen bar like Rambler's own, with check mark items, exclude groups and Super+key
+  shortcuts.
+- Lune: the Clock class can leave out the seconds hand.
 
 ### Fixed
+- Window manager: a title a program set right after its window opened did not show (it
+  was read before the window's changes were watched).
+- Window manager: a dialog centred over a narrow window no longer opens partly off the
+  screen.
 - Sound preferences: the volume's label clashed with the disk volume's in the Polish
   catalog.
 

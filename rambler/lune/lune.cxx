@@ -2117,6 +2117,9 @@ int Window::handle(int e) {
         last_focus_->widget()->take_focus();
         return 1;
     }
+    if ((e == FL_KEYBOARD || e == FL_SHORTCUT) && (Fl::event_state() & FL_META) && !menus_.empty() &&
+        Fl::event_key() < 128 && menu_key(Fl::event_key()))
+        return 1;
     if (e == FL_KEYBOARD) {
         // window.c: Next / Previous gadget move along the cycle chain (wrapping; with no active
         // object the first / the last), Gadget off: no active object; Close window: as the
@@ -2206,7 +2209,104 @@ void Window::show() {
             resize(it->second.x, it->second.y, W, H);
         }
     }
+    bool was = shown();
     Fl_Double_Window::show();
+    if (!was && !menus_.empty()) publish_menu();
+}
+
+// ---------------------------------------------------------------------------------------------
+// The menus (Menustrip): _RAMBLER_MENU on the window, one line per item - depth TAB id TAB
+// flags TAB label TAB key; the window manager sends the item picked (_RAMBLER_MENU_PICK)
+MenuEntry *Window::menu_entry(int id, std::vector<MenuEntry> *in) {
+    for (auto &m : in ? *in : menus_) {
+        if (m.id == id && m.children.empty()) return &m;
+        if (MenuEntry *c = menu_entry(id, &m.children)) return c;
+    }
+    return nullptr;
+}
+
+void Window::publish_menu() {
+    if (!shown() || !fl_display) return;
+    std::string out;
+    std::function<void(const std::vector<MenuEntry> &, int)> put = [&](const std::vector<MenuEntry> &v, int depth) {
+        for (auto &m : v) {
+            int f = m.flags | (m.exclude ? Menu_Toggle : 0);
+            out += std::to_string(depth) + "\t" + std::to_string(m.id) + "\t" + std::to_string(f) + "\t" + tr(m.label) + "\t" +
+                   (m.key ? std::string("Super+") + (char)toupper((unsigned char)m.key) : "") + "\n";
+            put(m.children, depth + 1);
+        }
+    };
+    put(menus_, 0);
+    Atom prop = XInternAtom(fl_display, "_RAMBLER_MENU", False), utf8 = XInternAtom(fl_display, "UTF8_STRING", False);
+    if (menus_.empty()) XDeleteProperty(fl_display, fl_xid(this), prop);
+    else XChangeProperty(fl_display, fl_xid(this), prop, utf8, 8, PropModeReplace, (const unsigned char *)out.data(), (int)out.size());
+    XFlush(fl_display);
+}
+
+namespace {
+// the item picked in the screen bar: for a Lune window with menus (other windows' are their
+// program's)
+int menu_events(void *event, void *) {
+    XEvent *e = (XEvent *)event;
+    static Atom pick = XInternAtom(fl_display, "_RAMBLER_MENU_PICK", False);
+    if (e->type != ClientMessage || e->xclient.message_type != pick) return 0;
+    auto *w = dynamic_cast<Window *>(fl_find(e->xclient.window));
+    if (!w || !w->on_menu) return 0;
+    w->menu_pick((int)e->xclient.data.l[0]);
+    return 1;
+}
+}  // namespace
+
+void Window::menustrip(std::vector<MenuEntry> m) {
+    static bool handler = false;
+    if (!handler) { Fl::add_system_handler(menu_events, nullptr); handler = true; }
+    menus_ = std::move(m);
+    publish_menu();
+}
+
+bool Window::menu_checked(int id) {
+    MenuEntry *m = menu_entry(id);
+    return m && (m->flags & Menu_Checked);
+}
+
+void Window::menu_checked(int id, bool on) {
+    MenuEntry *m = menu_entry(id);
+    if (!m) return;
+    if (on && m->exclude) {   // (the others of its group off)
+        std::function<void(std::vector<MenuEntry> &)> off = [&](std::vector<MenuEntry> &v) {
+            for (auto &o : v) { if (o.exclude == m->exclude) o.flags &= ~Menu_Checked; off(o.children); }
+        };
+        off(menus_);
+    }
+    m->flags = on ? m->flags | Menu_Checked : m->flags & ~Menu_Checked;
+    publish_menu();
+}
+
+void Window::menu_disabled(int id, bool d) {
+    if (MenuEntry *m = menu_entry(id)) { m->flags = d ? m->flags | Menu_Disabled : m->flags & ~Menu_Disabled; publish_menu(); }
+}
+
+void Window::menu_pick(int id) {
+    MenuEntry *m = menu_entry(id);
+    if (!m || (m->flags & Menu_Disabled)) return;
+    if (m->exclude) menu_checked(id, true);
+    else if (m->flags & Menu_Toggle) menu_checked(id, !(m->flags & Menu_Checked));
+    if (on_menu) on_menu(id);
+}
+
+// Super+key: the item with that shortcut
+bool Window::menu_key(int key) {
+    std::function<MenuEntry *(std::vector<MenuEntry> &)> find = [&](std::vector<MenuEntry> &v) -> MenuEntry * {
+        for (auto &m : v) {
+            if (m.key && tolower((unsigned char)m.key) == tolower(key) && m.children.empty()) return &m;
+            if (MenuEntry *c = find(m.children)) return c;
+        }
+        return nullptr;
+    };
+    MenuEntry *m = find(menus_);
+    if (!m) return false;
+    menu_pick(m->id);
+    return true;
 }
 
 void Window::hide() {

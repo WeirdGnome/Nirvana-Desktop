@@ -9,9 +9,21 @@
   rozdzielczość i jakość - tak, jak oferuje je sterownik. Ustawienia są własne
   użytkownika (`lpoptions`), więc system nie pyta o uprawnienia. *Drukarki...* otwiera
   systemowe narzędzie do drukarek (albo strony WWW CUPS), by je skonfigurować.
+- **Clock** (`rambler --utility clock`, w szufladzie Tools): czas na tarczy analogowej
+  albo cyfrowej, data w tytule okna. Menu Ustawienia: sekundy, data, zegar 24-godzinny,
+  budzik (daje sygnał tak, jak ustawiają go preferencje Sound, i o tym informuje),
+  Zapisz ustawienia.
 - Lune: listę pozycji Cycle można ustawić ponownie.
+- Lune: **menu okien** (Menustrip, Menu, Menuitem): menu okna Lune pokazują się w pasku
+  ekranu tak jak menu Ramblera, z pozycjami zaznaczanymi, grupami wykluczającymi i
+  skrótami Super+klawisz.
+- Lune: klasa Clock może nie pokazywać wskazówki sekundowej.
 
 ### Poprawione
+- Menedżer okien: tytuł ustawiony przez program tuż po otwarciu okna nie był widoczny
+  (był czytany, zanim menedżer zaczął śledzić zmiany okna).
+- Menedżer okien: okno dialogowe wyśrodkowane nad wąskim oknem nie wychodzi już
+  częściowo poza ekran.
 - Preferencje Sound: etykieta głośności kolidowała w katalogu polskim z „Wolumin:”.
 
 ## 0.16.0 – 2026-11-15

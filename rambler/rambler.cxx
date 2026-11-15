@@ -28,6 +28,7 @@
 #include "timeprefs.h"
 #include "soundprefs.h"
 #include "printerprefs.h"
+#include "clock.h"
 
 #include <FL/Fl.H>
 #include <FL/Fl_Menu_Item.H>
@@ -944,7 +945,9 @@ static int x_events(void *event, void *) {
     static Atom pick = XInternAtom(fl_display, "_RAMBLER_MENU_PICK", False);
     if (e->type != ClientMessage || e->xclient.message_type != pick) return 0;
     Fl_Window *fw = fl_find(e->xclient.window);
-    if (auto *w = dynamic_cast<IconWindow *>(fw)) g_rambler.pick(w, (int)e->xclient.data.l[0]);
+    auto *w = dynamic_cast<IconWindow *>(fw);
+    if (!w) return 0;   // (a Lune window's own menus)
+    g_rambler.pick(w, (int)e->xclient.data.l[0]);
     return 1;
 }
 
@@ -1251,6 +1254,25 @@ void make_prefs_drawer() {
     }
 }
 
+// the Tools drawer (SYS:Utilities here): a starter for each of Rambler's utilities, made
+// once (one the user throws away stays away: the names made are noted in .made)
+void make_tools_drawer() {
+    std::string dir = config_dir() + "/tools", made_file = dir + "/.made";
+    std::error_code ec;
+    fs::create_directories(dir, ec);
+    std::string made = read_file(made_file);
+    struct { const char *file, *name, *arg; } utils[] = {{"Clock.desktop", "Clock", "clock"}};
+    for (auto &u : utils) {
+        if (made.find(std::string(u.file) + "\n") != std::string::npos) continue;
+        std::string f = dir + "/" + u.file;
+        if (!fs::exists(f))
+            std::ofstream(f) << "[Desktop Entry]\nType=Application\nName=" << u.name << "\nExec=rambler --utility " << u.arg
+                             << "\nIcon=rambler-utility-" << u.arg << "\nCategories=Utility;\n";
+        made += std::string(u.file) + "\n";
+    }
+    std::ofstream(made_file) << made;
+}
+
 int main(int argc, char **argv) {
     // dates and times in the user's language (the locale's FORMAT_DEF); numbers stay as they are
     setlocale(LC_TIME, "");
@@ -1261,6 +1283,16 @@ int main(int argc, char **argv) {
     for (int i = 1; i < argc; i++) {
         if (!strcmp(argv[i], "--backdrop")) backdrop = true;
         else if (!strcmp(argv[i], "--prefs") && i + 1 < argc) prefs_program = argv[++i];
+        else if (!strcmp(argv[i], "--utility") && i + 1 < argc) {
+            // a utility on its own (SYS:Utilities/...)
+            std::string u = argv[++i];
+            Fl::visual(FL_DOUBLE | FL_INDEX);
+            lune::load_prefs();
+            fl_open_display();
+            if (u == "clock") run_clock();
+            else { fprintf(stderr, "rambler: no utility '%s' (clock)\n", u.c_str()); return 1; }
+            return run();
+        }
         else if (!strcmp(argv[i], "--appimage-icon") && i + 1 < argc) {
             // (what becomes of an AppImage's icon, step by step - to find why one has none)
             Fl::visual(FL_DOUBLE | FL_INDEX);
@@ -1303,6 +1335,7 @@ int main(int argc, char **argv) {
     if (backdrop) PointerPrefs::load().apply();
     if (backdrop && InputPrefs::exists()) InputPrefs::load().apply();
     if (backdrop) make_prefs_drawer();
+    if (backdrop) make_tools_drawer();
     if (backdrop && first_in_session()) run_startup();   // once per session (not again after a restart)
     Fl::add_timeout(5.0, Rambler::tick, &g_rambler);
     Fl::add_timeout(0.5, Rambler::watch_volumes, &g_rambler);

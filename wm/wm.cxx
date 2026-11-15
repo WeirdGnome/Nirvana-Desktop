@@ -618,6 +618,8 @@ void manage(Window w, bool existing) {
             c->screen = p->screen;
             c->x = p->x + (p->w - c->w) / 2;
             c->y = std::max(BAR_H, p->y + (p->h - c->h) / 3);
+            // (over its parent, but within the screen when it fits)
+            if (c->w <= SW) c->x = std::clamp(c->x, 0, SW - c->w);
         }
         c->x = std::clamp(c->x, -c->w + 40, SW - 40);
         if (!c->undecorated) c->y = std::clamp(c->y, BAR_H, SH - TITLE_H);
@@ -629,6 +631,8 @@ void manage(Window w, bool existing) {
     c->frame = XCreateWindow(dpy, c->screen->win, c->x, c->y, c->w, c->h, 0, CopyFromParent, InputOutput,
                              CopyFromParent, CWBackPixel | CWEventMask, &a);
     XSelectInput(dpy, w, PropertyChangeMask | StructureNotifyMask);
+    // (the title again: one changed between the first look and the selection went unseen)
+    c->title = window_title(w);
     XSetWindowBorderWidth(dpy, w, 0);
     XAddToSaveSet(dpy, w);
     if (wa.map_state == IsViewable) c->ignore_unmap++;   // reparenting unmaps it once

@@ -8,6 +8,7 @@
 #include "lune.h"
 #include "iconlist.h"
 
+#include <cmath>
 #include <FL/fl_draw.H>
 
 #include <algorithm>
@@ -281,6 +282,32 @@ IconKind icon_kind(const std::string &path, bool is_dir, bool is_volume, bool ex
 }
 
 namespace {
+// The Clock utility: a clock's face, the hands at ten past ten
+void clock_icon(int x, int y) {
+    int cx = x + 23, cy = y + 23, r = 19;
+    fl_color(C(0x404040));
+    fl_pie(cx - r + 2, cy - r + 2, 2 * r, 2 * r, 0, 360);   // (its shadow)
+    fl_color(C(0xF4F4F4));
+    fl_pie(cx - r, cy - r, 2 * r, 2 * r, 0, 360);
+    fl_color(C(0x6688BB));
+    fl_line_style(FL_SOLID, 3);
+    fl_arc(cx - r, cy - r, 2 * r, 2 * r, 0, 360);
+    fl_color(C(0x000000));
+    for (int i = 0; i < 12; i++) {
+        double a = i * M_PI / 6;
+        fl_line_style(FL_SOLID, i % 3 ? 1 : 2);
+        fl_line(cx + (int)(sin(a) * (r - 6)), cy - (int)(cos(a) * (r - 6)), cx + (int)(sin(a) * (r - 3)), cy - (int)(cos(a) * (r - 3)));
+    }
+    fl_line_style(FL_SOLID | FL_CAP_ROUND, 3);
+    fl_line(cx, cy, cx - 8, cy - 5);
+    fl_line_style(FL_SOLID | FL_CAP_ROUND, 2);
+    fl_line(cx, cy, cx + 7, cy - 11);
+    fl_line_style(0);
+    fl_color(C(0xEE4444));
+    fl_line(cx, cy, cx + 3, cy + 12);
+    fl_pie(cx - 2, cy - 2, 4, 4, 0, 360);
+}
+
 // A preferences program: a panel with three sliders (the settings), and over its corner the
 // sign of what it sets
 void prefs_icon(IconKind k, int x, int y) {
@@ -402,7 +429,7 @@ bool builtin_icon(const std::string &name, IconKind &k) {
         {"rambler-prefs-locale", IconKind::PrefsLocale}, {"rambler-prefs-lune", IconKind::PrefsLune},
         {"rambler-prefs-network", IconKind::PrefsNetwork}, {"rambler-prefs-pointer", IconKind::PrefsPointer},
         {"rambler-prefs-rambler", IconKind::PrefsRambler}, {"rambler-prefs-screenmode", IconKind::PrefsScreenMode},
-        {"rambler-prefs-printer", IconKind::PrefsPrinter}, {"rambler-prefs-sound", IconKind::PrefsSound}, {"rambler-prefs-time", IconKind::PrefsTime}};
+        {"rambler-prefs-printer", IconKind::PrefsPrinter}, {"rambler-prefs-sound", IconKind::PrefsSound}, {"rambler-prefs-time", IconKind::PrefsTime}, {"rambler-utility-clock", IconKind::UtilityClock}};
     for (auto &[n, kind] : NAMES) if (name == n) { k = kind; return true; }
     return false;
 }
@@ -423,6 +450,7 @@ void draw_icon(IconKind k, int x, int y, bool selected) {
     case IconKind::PrefsNetwork: case IconKind::PrefsPointer: case IconKind::PrefsPrinter: case IconKind::PrefsRambler: case IconKind::PrefsScreenMode: case IconKind::PrefsSound: case IconKind::PrefsTime:
         prefs_icon(k, x, y);
         break;
+    case IconKind::UtilityClock: clock_icon(x, y); break;
     default: project(k, x, y); break;
     }
     g_sel = false;

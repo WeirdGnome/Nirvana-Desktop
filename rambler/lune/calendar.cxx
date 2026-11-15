@@ -225,8 +225,8 @@ void Clock::draw_contents() {
         fl_line((int)cx, (int)cy, (int)(cx + sin(a) * len), (int)(cy - cos(a) * len));
     };
     hand(((h_ % 12) + m_ / 60.0) / 12.0, r * 0.5, std::max(3, sz / 30), pens()[MPEN_SHADOW]);
-    hand((m_ + s_ / 60.0) / 60.0, r * 0.75, std::max(2, sz / 45), pens()[MPEN_SHADOW]);
-    hand(s_ / 60.0, r * 0.85, 1, pens()[MPEN_FILL]);
+    hand((m_ + (seconds_ ? s_ / 60.0 : 0)) / 60.0, r * 0.75, std::max(2, sz / 45), pens()[MPEN_SHADOW]);
+    if (seconds_) hand(s_ / 60.0, r * 0.85, 1, pens()[MPEN_FILL]);
     fl_line_style(0);
     fl_color(pens()[MPEN_SHADOW]);
     fl_pie((int)cx - 3, (int)cy - 3, 6, 6, 0, 360);

@@ -688,3 +688,13 @@ Install the cups package to print.	Aby drukować, zainstaluj pakiet cups.
 Settings	Ustawienia
 Description	Opis
 Sound volume:	Głośność:
+Clock	Zegar
+Analog	Analogowy
+Digital	Cyfrowy
+Seconds	Sekundy
+24 Hour	24 godziny
+Set Alarm...	Ustaw budzik...
+Set Alarm	Ustaw budzik
+Alarm	Budzik
+Alarm time:	Godzina budzika:
+Save Settings	Zapisz ustawienia

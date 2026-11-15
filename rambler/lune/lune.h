@@ -618,13 +618,14 @@ public:
     void frozen(bool f);
     bool frozen() const { return frozen_; }
     std::function<void()> on_tick;   // (each second, when it goes)
+    void seconds(bool s) { seconds_ = s; redraw(); }   // the seconds hand shown
     void ask_min_max(int &minw, int &minh, int &defw, int &defh, int &maxw, int &maxh) override;
 
 protected:
     void draw_contents() override;
     static void tick(void *d);
     int h_ = 0, m_ = 0, s_ = 0;
-    bool frozen_ = false;
+    bool frozen_ = false, seconds_ = true;
 };
 
 // ---------------------------------------------------------------------------------------------
@@ -652,8 +653,29 @@ protected:
 // the file requester the image adjust window uses for a picture (set by the program)
 extern std::function<bool(const std::string &title, std::string &path)> file_request_hook;
 
+// Menustrip, Menu, Menuitem (classes/menustrip.c, menu.c, menuitem.c): the window's menus,
+// which the window manager shows in the screen's bar while the menu button is held over
+// the window (Intuition's menus). An item with children is a menu (or a sub-menu); a
+// check mark item (Menu_Toggle) flips by itself when picked, the items of one exclude
+// group (MUIA_Menuitem_Exclude) are checked one at a time; key: the Super+key shortcut
+enum MenuFlags { Menu_Disabled = 1, Menu_Toggle = 2, Menu_Checked = 4, Menu_Line = 8 };
+struct MenuEntry {
+    std::string label;
+    int id = 0, flags = 0;
+    char key = 0;
+    int exclude = 0;
+    std::vector<MenuEntry> children;
+};
+
 class Window : public Fl_Double_Window {
 public:
+    // MUIA_Window_Menustrip; on_menu: an item picked (MUIA_Menuitem_Trigger), by its id
+    void menustrip(std::vector<MenuEntry> m);
+    std::function<void(int)> on_menu;
+    bool menu_checked(int id);
+    void menu_checked(int id, bool on);
+    void menu_disabled(int id, bool off);
+    void menu_pick(int id);   // (as if the item were picked)
     Window(const std::string &title, Area *root = nullptr);
     ~Window() override;
     void root(Area *r);
@@ -673,6 +695,10 @@ public:
     int handle(int e) override;
 
 private:
+    std::vector<MenuEntry> menus_;
+    MenuEntry *menu_entry(int id, std::vector<MenuEntry> *in = nullptr);
+    void publish_menu();
+    bool menu_key(int key);
     bool requester_ = false;
     std::string id_;
     Area *root_ = nullptr;
