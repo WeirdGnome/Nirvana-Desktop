@@ -65,6 +65,10 @@ bool put_png_icon(const std::string &info_file, const DiskObject &o);
 // a named icon of the icon themes (a .desktop file's Icon=: a name, or a picture's path),
 // the size nearest an icon's; nullptr - not found
 std::shared_ptr<DiskObject> theme_icon(const std::string &name);
+// a default icon (def_drawer ...): def_NAME.info in the session's icons ($XDG_RUNTIME_DIR/
+// rambler/icons, as ENV:Sys), the user's (~/.config/rambler/icons, as ENVARC:Sys) or the
+// installation's (share/rambler/icons); the name's case does not matter
+std::shared_ptr<DiskObject> default_disk_object(const std::string &name);
 // an AppImage's own icon (appimage.cxx): nullptr - not an AppImage, or no icon in it
 std::shared_ptr<DiskObject> appimage_icon(const std::string &path);
 // the steps of taking an AppImage's icon out, told on stdout (rambler --appimage-icon FILE)

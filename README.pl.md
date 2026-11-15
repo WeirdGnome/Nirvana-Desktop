@@ -63,6 +63,9 @@ Sesja uruchamia najpierw `rambler-wm`, a potem `rambler --backdrop`. Polecenie
 * **Pliki ikon**: własna ikona pliku to `nazwa.info` obok niego (ikony klasyczne,
   NewIcons, kolorowe i PNG). Ikona podwójna ma drugi obraz na stan zaznaczenia; idzie
   razem z plikiem przy kopiowaniu, przenoszeniu, zmianie nazwy i usuwaniu.
+* **Ikony domyślne**: pliki `def_drawer.info`, `def_tool.info`, `def_project.info`,
+  `def_disk.info`, `def_txt.info` … w `~/.config/rambler/icons` zastępują ikony każdej
+  szuflady, narzędzia, projektu, dysku, tekstu … bez własnej ikony.
 * **AppImage** pokazują ikonę, którą zawierają (wyjmowaną przez `unsquashfs` z paczki
   `squashfs-tools`; AppImage nie jest przy tym uruchamiany). `rambler --appimage-icon PLIK`
   opisuje krok po kroku, co dzieje się z ikoną AppImage. AppImage z obrazem DwarFS zamiast

@@ -9,6 +9,7 @@
 */
 #pragma once
 #include <string>
+#include <vector>
 
 namespace rambler {
 
@@ -19,6 +20,9 @@ enum class IconKind {
     // the preferences programs (the Prefs drawer): a panel and the program's sign
     PrefsFont, PrefsInput, PrefsLocale, PrefsLune, PrefsNetwork, PrefsPointer, PrefsRambler, PrefsScreenMode
 };
+// the default icon files that stand for a kind (ENV:Sys/def_*.info), the first found used:
+// e.g. Text -> def_txt, def_ascii, def_text, def_project
+std::vector<std::string> default_icon_names(IconKind k);
 // the built-in icon a .desktop file asks for (Icon=rambler-prefs-input ...); false - none
 bool builtin_icon(const std::string &name, IconKind &k);
 

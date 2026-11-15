@@ -12,6 +12,7 @@
 */
 #pragma once
 #include "diskobject.h"
+#include "icons.h"
 #include <memory>
 #include "lune.h"
 
@@ -149,6 +150,7 @@ protected:
     void draw_entry_label(IconEntry &e, int lx, int ly);
     virtual void draw_icon_image(IconEntry &e, int x, int y, bool selected);
     virtual void icon_size(IconEntry &e, int &w, int &h);
+    std::shared_ptr<DiskObject> shown_icon(IconEntry &e, IconKind &k);
     void create_label(IconEntry &e);
     void split_label(IconEntry &e);
     void label_rect(IconEntry &e, int &w, int &h);

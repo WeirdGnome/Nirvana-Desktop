@@ -1,5 +1,16 @@
 # Lista zmian
 
+## 0.14.0 (w przygotowaniu)
+
+### Nowe
+- **Ikony domyślne** (jak `ENV:Sys/def_*.info`): plik, szuflada albo dysk bez własnej ikony
+  pokazuje ikonę domyślną swojego rodzaju z `~/.config/rambler/icons` (albo z sesyjnego
+  `$XDG_RUNTIME_DIR/rambler/icons`, albo z `share/rambler/icons` instalacji): `def_drawer`,
+  `def_tool`, `def_project`, `def_disk`, `def_harddisk`, `def_ram`, `def_trashcan`,
+  `def_txt`, `def_picture`, `def_sound`, `def_movie`, `def_archive`, `def_document`,
+  `def_script`, `def_cdrom`, `def_network` (pliki `.info` dowolnego rodzaju, który Rambler
+  czyta, także podwójne). Bez nich zostają wbudowane rysunki.
+
 ## 0.13.3 – 2026-11-15
 
 ### Poprawki

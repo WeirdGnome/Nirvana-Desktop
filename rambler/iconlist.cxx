@@ -256,9 +256,27 @@ void IconList::create_label(IconEntry &e) {
 // ---------------------------------------------------------------------------------------------
 // Rectangles (IconList_GetIconLabelRectangle / GetIconAreaRectangle)
 // ---------------------------------------------------------------------------------------------
+// What an entry looks like: its kind, and the icon file shown for it - its own, else the
+// default icon of its kind (def_*.info), else none (the built-in picture of the kind)
+std::shared_ptr<DiskObject> IconList::shown_icon(IconEntry &e, IconKind &k) {
+    k = icon_kind(e.path, e.is_drawer() && e.type != ST_ROOT, e.type == ST_ROOT, e.executable);
+    if (e.type == ST_LINKFILE) k = IconKind::Link;
+    if (e.trash) k = IconKind::Trash;
+    if (e.unmounted) k = IconKind::Removable;
+    if (e.network) k = IconKind::Network;
+    if (e.network_volume) k = IconKind::NetworkDisk;
+    if (e.kind >= 0) k = (IconKind)e.kind;
+    if (e.icon && !e.trash && !e.unmounted) return e.icon;
+    if (e.app_window) return nullptr;
+    for (auto &n : default_icon_names(k))
+        if (auto d = default_disk_object(n)) return d;
+    return nullptr;
+}
+
 void IconList::icon_size(IconEntry &e, int &w, int &h) {
     if (display_flags & Disp_NoIcons) { w = h = 0; return; }
-    if (e.icon) { w = e.icon->width; h = e.icon->height; return; }   // its icon file's size
+    IconKind k;
+    if (auto d = shown_icon(e, k)) { w = d->width; h = d->height; return; }   // its icon file's size
     w = ICON_W;
     h = ICON_H;
 }
@@ -460,22 +478,19 @@ void IconList::resize(int X, int Y, int W, int H) {
 // The image of an entry (icons.cxx): by its type and name
 void IconList::draw_icon_image(IconEntry &e, int x, int y, bool sel) {
     if (display_flags & Disp_NoIcons) return;
-    IconKind k = icon_kind(e.path, e.is_drawer() && e.type != ST_ROOT, e.type == ST_ROOT, e.executable);
-    if (e.type == ST_LINKFILE) k = IconKind::Link;
-    if (e.trash) k = IconKind::Trash;
-    if (e.unmounted) k = IconKind::Removable;
-    if (e.network) k = IconKind::Network;
-    if (e.network_volume) k = IconKind::NetworkDisk;
-    if (e.kind >= 0) k = (IconKind)e.kind;
-    if (e.icon && !e.trash && !e.unmounted) {
+    IconKind k;
+    int iw = ICON_W, ih = ICON_H;
+    if (auto d = shown_icon(e, k)) {
         // the icon file's image: the selected one of a dual icon, else the lightened one
-        if (Fl_RGB_Image *img = e.icon->image(sel)) img->draw(x, y);
+        if (Fl_RGB_Image *img = d->image(sel)) img->draw(x, y);
+        iw = d->width;
+        ih = d->height;
     } else draw_icon(k, x, y, sel);
     if (e.unmounted) {
         // ghosted: every other pixel in the background pen (as a disabled gadget)
         fl_color(pens()[MPEN_BACKGROUND]);
-        for (int gy = y; gy < y + ICON_H; gy++)
-            for (int gx = x + (gy & 1); gx < x + ICON_W; gx += 2) fl_point(gx, gy);
+        for (int gy = y; gy < y + ih; gy++)
+            for (int gx = x + (gy & 1); gx < x + iw; gx += 2) fl_point(gx, gy);
     }
 }
 

@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.14.0 (unreleased)
+
+### Added
+- **Default icons** (as `ENV:Sys/def_*.info`): a file, drawer or volume without an icon of
+  its own shows the default icon of its kind from `~/.config/rambler/icons` (or the
+  session's `$XDG_RUNTIME_DIR/rambler/icons`, or the installation's
+  `share/rambler/icons`): `def_drawer`, `def_tool`, `def_project`, `def_disk`,
+  `def_harddisk`, `def_ram`, `def_trashcan`, `def_txt`, `def_picture`, `def_sound`,
+  `def_movie`, `def_archive`, `def_document`, `def_script`, `def_cdrom`, `def_network`
+  (`.info` files of any kind Rambler reads, dual ones too). Without them the built-in
+  pictures stay.
+
 ## 0.13.3 – 2026-11-15
 
 ### Fixed

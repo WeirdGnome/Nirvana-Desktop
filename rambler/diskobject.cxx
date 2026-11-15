@@ -21,6 +21,7 @@
 #include <cstring>
 #include <fstream>
 #include <map>
+#include <dirent.h>
 #include <sys/stat.h>
 #include <unistd.h>
 #ifdef RAMBLER_HAVE_ZLIB
@@ -584,6 +585,55 @@ bool put_png_icon(const std::string &info_file, const DiskObject &o) {
         if (!out) { unlink(tmp.c_str()); return false; }
     }
     return rename(tmp.c_str(), info_file.c_str()) == 0;
+}
+
+std::shared_ptr<DiskObject> default_disk_object(const std::string &name) {
+    // the directories, and the icon files in them by their names in lower case (looked at
+    // again when a directory changes)
+    struct Dir { std::string path; time_t mtime = -1; std::map<std::string, std::string> files; };
+    static std::vector<Dir> dirs;
+    if (dirs.empty()) {
+        if (const char *r = getenv("XDG_RUNTIME_DIR"); r && *r) dirs.push_back({std::string(r) + "/rambler/icons"});
+        const char *x = getenv("XDG_CONFIG_HOME");
+        std::string base = x && *x ? x : std::string(getenv("HOME") ? getenv("HOME") : "/tmp") + "/.config";
+        dirs.push_back({base + "/rambler/icons"});
+        char exe[4096];
+        ssize_t n = readlink("/proc/self/exe", exe, sizeof exe - 1);
+        if (n > 0) {
+            exe[n] = 0;
+            std::string d(exe);
+            dirs.push_back({d.substr(0, d.rfind('/')) + "/../share/rambler/icons"});
+        }
+    }
+    std::string want = name + ".info";
+    for (auto &c : want) c = (char)tolower(c);
+    // (the directories looked at once a second at most: this is asked for every icon drawn)
+    static time_t looked = 0;
+    time_t now = time(nullptr);
+    bool look = now != looked;
+    looked = now;
+    for (auto &d : dirs) {
+        struct stat st;
+        if (look && stat(d.path.c_str(), &st) != 0) { d.files.clear(); d.mtime = -1; continue; }
+        if (look && st.st_mtime != d.mtime) {
+            d.mtime = st.st_mtime;
+            d.files.clear();
+            if (DIR *dp = opendir(d.path.c_str())) {
+                while (dirent *de = readdir(dp)) {
+                    std::string f = de->d_name, l = f;
+                    for (auto &c : l) c = (char)tolower(c);
+                    if (l.size() > 9 && l.rfind("def_", 0) == 0) d.files[l] = d.path + "/" + f;
+                }
+                closedir(dp);
+            }
+        }
+        auto it = d.files.find(want);
+        if (it == d.files.end()) continue;
+        // (read through the icon file cache: kept while the file stays as it is)
+        std::string p = it->second;
+        if (auto o = get_disk_object(p.substr(0, p.size() - 5))) return o;
+    }
+    return nullptr;
 }
 
 std::shared_ptr<DiskObject> theme_icon(const std::string &name) {

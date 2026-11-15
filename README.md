@@ -80,6 +80,9 @@ rambler-wm & rambler --backdrop
 * **Icon files**: a file's own icon is `name.info` beside it (classic, NewIcons, colour
   and PNG icons). A dual icon has a second image for its selected state; it goes with its
   file when the file is copied, moved, renamed or deleted.
+* **Default icons**: put `def_drawer.info`, `def_tool.info`, `def_project.info`,
+  `def_disk.info`, `def_txt.info` ... into `~/.config/rambler/icons` and they stand for
+  every drawer, tool, project, disk, text ... without an icon of its own.
 * **AppImages** show the icon they carry (taken out with `unsquashfs` from the
   `squashfs-tools` package; the AppImage is not run for it). `rambler --appimage-icon FILE`
   tells, step by step, what becomes of an AppImage's icon. AppImages with a DwarFS image

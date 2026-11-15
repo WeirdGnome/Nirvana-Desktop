@@ -346,6 +346,30 @@ void prefs_icon(IconKind k, int x, int y) {
 }
 }  // namespace
 
+std::vector<std::string> default_icon_names(IconKind k) {
+    switch (k) {
+    case IconKind::Drawer: case IconKind::OpenDrawer: return {"def_drawer"};
+    case IconKind::Harddisk: return {"def_harddisk", "def_harddrive", "def_disk"};
+    case IconKind::Removable: return {"def_disk"};
+    case IconKind::Optical: return {"def_cdrom", "def_cd", "def_disk"};
+    case IconKind::RamDisk: return {"def_ram", "def_disk"};
+    case IconKind::Trash: return {"def_trashcan", "def_trash"};
+    case IconKind::Network: return {"def_network"};
+    case IconKind::NetworkDisk: return {"def_netdisk", "def_network", "def_disk"};
+    case IconKind::Tool: return {"def_tool"};
+    case IconKind::Script: return {"def_script", "def_tool"};
+    case IconKind::Text: return {"def_txt", "def_ascii", "def_text", "def_project"};
+    case IconKind::Picture: return {"def_picture", "def_ilbm", "def_image", "def_project"};
+    case IconKind::Sound: return {"def_sound", "def_audio", "def_project"};
+    case IconKind::Movie: return {"def_movie", "def_video", "def_anim", "def_project"};
+    case IconKind::Archive: return {"def_archive", "def_lha", "def_project"};
+    case IconKind::Document: return {"def_document", "def_doc", "def_project"};
+    case IconKind::Link: return {"def_link", "def_project"};
+    case IconKind::Project: return {"def_project"};
+    default: return {};   // (the preferences programs' icons are Rambler's own)
+    }
+}
+
 bool builtin_icon(const std::string &name, IconKind &k) {
     static const std::pair<const char *, IconKind> NAMES[] = {
         {"rambler-prefs-font", IconKind::PrefsFont}, {"rambler-prefs-input", IconKind::PrefsInput},
