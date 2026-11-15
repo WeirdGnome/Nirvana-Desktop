@@ -56,32 +56,53 @@ std::string cache_dir() {
     return base + "/rambler/appimage-icons";
 }
 
-// a program run without a shell; true when it ended well
-bool run(const std::vector<std::string> &argv) {
+// a program run without a shell: its exit code (127: it could not be started), its messages
+// kept in err
+int run(const std::vector<std::string> &argv, std::string &err) {
+    int pipefd[2];
+    if (pipe(pipefd) != 0) return 127;
     pid_t pid = fork();
-    if (pid < 0) return false;
+    if (pid < 0) { close(pipefd[0]); close(pipefd[1]); return 127; }
     if (pid == 0) {
         int null = open("/dev/null", 1);
-        if (null >= 0) { dup2(null, 1); dup2(null, 2); }
+        if (null >= 0) dup2(null, 1);
+        dup2(pipefd[1], 2);
+        close(pipefd[0]);
         std::vector<char *> a;
         for (auto &s : argv) a.push_back(const_cast<char *>(s.c_str()));
         a.push_back(nullptr);
         execvp(a[0], a.data());
         _exit(127);
     }
+    close(pipefd[1]);
+    char buf[512];
+    ssize_t n;
+    while ((n = read(pipefd[0], buf, sizeof buf)) > 0) if (err.size() < 2000) err.append(buf, (size_t)n);
+    close(pipefd[0]);
     int st = 0;
     waitpid(pid, &st, 0);
-    return WIFEXITED(st) && WEXITSTATUS(st) == 0;
+    return WIFEXITED(st) ? WEXITSTATUS(st) : 127;
 }
 
-// .DirIcon taken out of the squashfs into dir (a link followed inside the image)
-std::string extract_dir_icon(const std::string &appimage, unsigned long long offset, const std::string &dir) {
+enum class Taken { Picture, NoIcon, Failed };   // what taking the icon out came to
+
+// .DirIcon taken out of the squashfs into dir (a link followed inside the image); only the
+// options every unsquashfs with -o (4.4, 2019) knows
+std::string extract_dir_icon(const std::string &appimage, unsigned long long offset, const std::string &dir, Taken &how) {
     std::error_code ec;
     std::string name = ".DirIcon";
+    how = Taken::NoIcon;
     for (int hops = 0; hops < 4; hops++) {
         fs::remove_all(dir, ec);
-        if (!run({"unsquashfs", "-q", "-n", "-no-xattrs", "-o", std::to_string(offset), "-d", dir, "-f", appimage, name}))
+        std::string err;
+        int rc = run({"unsquashfs", "-o", std::to_string(offset), "-d", dir, "-f", appimage, name}, err);
+        if (rc != 0) {
+            // (said in the session's log: no unsquashfs, an unsquashfs too old, a damaged image)
+            how = Taken::Failed;
+            fprintf(stderr, "rambler: the icon of %s could not be taken out (unsquashfs: %s)\n", appimage.c_str(),
+                    rc == 127 ? "not installed - the squashfs-tools package" : err.substr(0, err.find('\n')).c_str());
             return "";
+        }
         std::string got = dir + "/" + name;
         if (fs::is_symlink(got, ec)) {
             // a link (".DirIcon -> app.png", or "usr/share/icons/.../app.png"): that one, inside
@@ -91,7 +112,8 @@ std::string extract_dir_icon(const std::string &appimage, unsigned long long off
             name = target;
             continue;
         }
-        return fs::is_regular_file(got, ec) ? got : "";
+        if (fs::is_regular_file(got, ec)) { how = Taken::Picture; return got; }
+        return "";
     }
     return "";
 }
@@ -180,11 +202,14 @@ std::shared_ptr<DiskObject> appimage_icon(const std::string &path) {
     std::string picture;
     for (const char *ext : {".png", ".svg", ".xpm"})
         if (fs::is_regular_file(cached + ext, ec)) { picture = cached + ext; break; }
-    bool tried = fs::exists(cached + ".none", ec);   // (taken out before, with no picture: not again)
+    // (an AppImage known to have no icon: not again; ".noicon" - an earlier version marked
+    // failures too, so its ".none" marks are not trusted)
+    bool tried = fs::exists(cached + ".noicon", ec), failed = false;
     if (picture.empty() && !tried && type == 2 && offset > 0 && offset < (unsigned long long)st.st_size) {
         std::string dir = cache_dir() + "/" + key + ".tmp";
         fs::create_directories(cache_dir(), ec);
-        std::string got = extract_dir_icon(path, offset, dir);
+        Taken how;
+        std::string got = extract_dir_icon(path, offset, dir, how);
         if (!got.empty()) {
             // the kind of picture from its first bytes (.DirIcon has no extension)
             std::ifstream in(got, std::ios::binary);
@@ -200,11 +225,13 @@ std::shared_ptr<DiskObject> appimage_icon(const std::string &path) {
             }
         }
         fs::remove_all(dir, ec);
-        if (picture.empty()) std::ofstream(cached + ".none");
+        failed = how == Taken::Failed;
+        if (picture.empty() && !failed) std::ofstream(cached + ".noicon");
+        fs::remove(cached + ".none", ec);
     }
     if (picture.empty()) picture = thumbnail_of(path);
     if (!picture.empty()) obj = icon_from_picture(picture, ICON_W);
-    kept[path] = {st.st_mtime, st.st_size, obj};
+    if (!failed || obj) kept[path] = {st.st_mtime, st.st_size, obj};   // (a failure: tried again next time)
     return obj;
 }
 

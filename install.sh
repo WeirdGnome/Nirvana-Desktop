@@ -182,5 +182,6 @@ else
 fi
 
 say "Done."
+command -v unsquashfs >/dev/null 2>&1 || echo "Note: AppImages show their icons with unsquashfs:  sudo apt install squashfs-tools"
 echo "Log out and choose \"Rambler\" from the sessions of the login screen."
 echo "To remove it:  ./install.sh --uninstall   (or: sudo apt remove $PKGNAME)"

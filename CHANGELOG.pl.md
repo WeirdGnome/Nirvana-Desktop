@@ -1,5 +1,19 @@
 # Lista zmian
 
+## 0.13.1 – 2026-11-15
+
+### Poprawki
+- **Szuflada Prefs**: programy w niej nie miały ikon, pokazywały się jako „Input.desktop” i
+  nie dawały się uruchomić (otwarcie dawało „sh: Lune.desktop: not found”). Otwarcie pliku
+  `.desktop` uruchamia teraz jego program; szuflady pokazują plik `.desktop` pod jego
+  nazwą i z jego ikoną (z motywów ikon). Programy preferencji mają własne ikony, a pliki
+  z 0.13.0 są tworzone od nowa z nimi.
+- **AppImage bez ikon**: gdy wyjęcie ikony się nie udało (brak `unsquashfs` albo starsza
+  wersja nieznająca użytych opcji), AppImage był na stałe oznaczany jako bez ikony. Teraz
+  oznaczany jest tylko AppImage naprawdę bez ikony, nieudana próba jest ponawiana (i
+  opisana w dzienniku sesji), a oznaczenia z 0.13.0 są pomijane. `install.sh` mówi, gdy
+  brakuje `unsquashfs`.
+
 ## 0.13.0 – 2026-11-15
 
 ### Zmiany

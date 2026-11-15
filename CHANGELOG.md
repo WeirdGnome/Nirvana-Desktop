@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.13.1 – 2026-11-15
+
+### Fixed
+- **The Prefs drawer**: its launchers had no icons, showed as "Input.desktop" and could not
+  be started (opening one gave "sh: Lune.desktop: not found"). Opening a `.desktop` file
+  now starts its program; drawers show a `.desktop` file by its name and its icon (from
+  the icon themes). The preferences programs have icons of their own, and the launchers
+  of 0.13.0 are made again with them.
+- **AppImages without icons**: when taking an icon out failed (no `unsquashfs` yet, or an
+  older one that does not know the options used), the AppImage was marked as having no
+  icon for good. Now only an AppImage really without an icon is marked, a failure is
+  tried again (and said in the session's log), and the marks of 0.13.0 are not trusted.
+  `install.sh` says when `unsquashfs` is missing.
+
 ## 0.13.0 – 2026-11-15
 
 ### Changed
