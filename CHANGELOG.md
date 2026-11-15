@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.15.0 (unreleased)
+## 0.15.0 – 2026-11-15
 
 ### Added
 - **IControl preferences** (`rambler --prefs icontrol`, in the Prefs drawer): the window

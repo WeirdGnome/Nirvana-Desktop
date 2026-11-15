@@ -1,6 +1,6 @@
 # Lista zmian
 
-## 0.15.0 (w przygotowaniu)
+## 0.15.0 – 2026-11-15
 
 ### Nowe
 - **Preferencje IControl** (`rambler --prefs icontrol`, w szufladzie Prefs): ustawienia
