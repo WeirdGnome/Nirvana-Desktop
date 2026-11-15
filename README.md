@@ -80,8 +80,9 @@ rambler-wm & rambler --backdrop
 
 ## Preferences
 
-*Tools > Prefs Drawer* opens the preferences programs: Input, Lune (the GUI settings) and
-Rambler. Each also runs on its own (`rambler --prefs input|lune|rambler`). As on the
+*Tools > Prefs Drawer* opens the preferences programs: Input, Lune (the GUI settings),
+Rambler and ScreenMode (the display mode, with xrandr). Each also runs on its own
+(`rambler --prefs input|lune|rambler|screenmode`). As on the
 original system, **Use** puts the settings into effect for this session only (they are
 written to `$XDG_RUNTIME_DIR/rambler`, the counterpart of ENV:) and **Save** also keeps
 them (`~/.config/rambler`, the counterpart of ENVARC:). A running Rambler takes up a change

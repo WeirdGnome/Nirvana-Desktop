@@ -553,3 +553,19 @@ Double-Click Delay:	Czas podwójnego kliknięcia:
 Left-Handed Mouse:	Mysz dla leworęcznych:
 Input Preferences	Preferencje wejścia
 Prefs Drawer	Szuflada Prefs
+Screen Mode Preferences	Preferencje trybu ekranu
+Display Mode	Tryb wyświetlania
+Properties	Właściwości
+Width:	Szerokość:
+Height:	Wysokość:
+Autoscroll:	Autoprzewijanie:
+Mode Information	Informacje o trybie
+Back Now	Wróć teraz
+Testing the screen mode.	Test trybu ekranu.
+The screen goes back in %d seconds.	Ekran wróci do poprzedniego trybu za %d s.
+Output	Wyjście
+Visible size	Widoczny rozmiar
+Refresh rate	Odświeżanie
+The monitor's preferred mode	Tryb zalecany przez monitor
+In use now	Używany teraz
+No display mode chosen.	Nie wybrano trybu wyświetlania.

@@ -63,8 +63,9 @@ Sesja uruchamia najpierw `rambler-wm`, a potem `rambler --backdrop`. Polecenie
 
 ## Preferencje
 
-*Tools > Prefs Drawer* otwiera programy preferencji: Input, Lune (GUI Settings) i
-Rambler. Każdy działa też samodzielnie (`rambler --prefs input|lune|rambler`). Jak w
+*Tools > Prefs Drawer* otwiera programy preferencji: Input, Lune (GUI Settings),
+Rambler i ScreenMode (tryb wyświetlania, przez xrandr). Każdy działa też samodzielnie
+(`rambler --prefs input|lune|rambler|screenmode`). Jak w
 oryginalnym systemie, **Use** wprowadza ustawienia tylko na tę sesję (zapisuje je w
 `$XDG_RUNTIME_DIR/rambler`, odpowiedniku ENV:), a **Save** także je zachowuje
 (`~/.config/rambler`, odpowiednik ENVARC:). Działający Rambler przyjmuje zmianę zrobioną

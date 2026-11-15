@@ -19,10 +19,15 @@
   running Rambler takes the change up at once, as IPrefs does.
 - Icons dragged from a drawer onto the root window's background are left out there, where
   they were dropped (as Leave Out does; they stay in their drawer on the disk).
+- **ScreenMode preferences** (`rambler --prefs screenmode`, in the Prefs drawer): the
+  display mode and refresh rate of an output, a screen larger than the mode with
+  Autoscroll (xrandr panning), and Test, which puts the mode on for ten seconds and then
+  goes back. Saved settings are put into effect at the start of a session.
 
 ### Fixed
 - Polish: the Scrollbars page of the Lune preferences was named like the Sliders page.
 - The close gadget of the Lune preferences now cancels, as Cancel does.
+- A window that remembers its size is never opened smaller than its contents need.
 
 ## 0.12.0 – 2026-11-15
 

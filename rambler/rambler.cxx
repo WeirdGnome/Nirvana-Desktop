@@ -19,6 +19,7 @@
 #include "guisettings.h"
 #include "find.h"
 #include "inputprefs.h"
+#include "screenmodeprefs.h"
 
 #include <FL/Fl.H>
 #include <FL/Fl_Menu_Item.H>
@@ -1180,7 +1181,8 @@ void make_prefs_drawer() {
     std::error_code ec;
     fs::create_directories(dir, ec);
     struct { const char *file, *name, *arg; } progs[] = {
-        {"Input.desktop", "Input", "input"}, {"Lune.desktop", "Lune", "lune"}, {"Rambler.desktop", "Rambler", "rambler"}};
+        {"Input.desktop", "Input", "input"}, {"Lune.desktop", "Lune", "lune"}, {"Rambler.desktop", "Rambler", "rambler"},
+        {"ScreenMode.desktop", "ScreenMode", "screenmode"}};
     for (auto &pr : progs) {
         std::string f = dir + "/" + pr.file;
         if (fs::exists(f, ec)) continue;
@@ -1208,9 +1210,10 @@ int main(int argc, char **argv) {
         fl_open_display();
         if (prefs_program == "input") edit_input_prefs(true);
         else if (prefs_program == "lune") edit_gui_settings(true);
+        else if (prefs_program == "screenmode") edit_screenmode_prefs(true);
         else if (prefs_program == "rambler") edit_prefs(RamblerPrefs::load(), [](const RamblerPrefs &) {}, true);
         else {
-            fprintf(stderr, "rambler: no preferences program '%s' (input, lune, rambler)\n", prefs_program.c_str());
+            fprintf(stderr, "rambler: no preferences program '%s' (input, lune, rambler, screenmode)\n", prefs_program.c_str());
             return 1;
         }
         return run();
@@ -1222,6 +1225,7 @@ int main(int argc, char **argv) {
     fl_open_display();
     g_rambler.start(backdrop);
     // as IPrefs: the input preferences put into effect (when there are any saved)
+    if (backdrop && ScreenModePrefs::exists()) ScreenModePrefs::load().apply();
     if (backdrop && InputPrefs::exists()) InputPrefs::load().apply();
     if (backdrop) make_prefs_drawer();
     if (backdrop && first_in_session()) run_startup();   // once per session (not again after a restart)

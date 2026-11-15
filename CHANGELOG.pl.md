@@ -19,11 +19,17 @@
   działający Rambler od razu przyjmuje zmianę, jak IPrefs.
 - Ikony przeciągnięte z szuflady na tło okna głównego zostają tam wyłożone, w miejscu
   upuszczenia (jak Leave Out; na dysku zostają w swojej szufladzie).
+- **Preferencje ScreenMode** (`rambler --prefs screenmode`, w szufladzie Prefs): tryb
+  wyświetlania i odświeżanie wyjścia, ekran większy niż tryb z autoprzewijaniem (panning
+  xrandr) oraz Próba, która włącza tryb na dziesięć sekund i wraca do poprzedniego.
+  Zapisane ustawienia są wprowadzane na początku sesji.
 
 ### Poprawki
 - Po polsku strona Paski przewijania w preferencjach Lune nazywała się tak samo jak strona
   Suwaki.
 - Gadżet zamknięcia w preferencjach Lune anuluje teraz zmiany, jak Cancel.
+- Okno, które pamięta swój rozmiar, nie otwiera się już mniejsze, niż potrzebuje jego
+  zawartość.
 
 ## 0.12.0 – 2026-11-15
 

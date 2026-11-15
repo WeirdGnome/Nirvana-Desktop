@@ -34,7 +34,7 @@ add_executable(lune-test rambler/lune/test_lune.cxx)
 target_link_libraries(lune-test lune)
 
 # Rambler
-add_library(rambler-classes STATIC rambler/iconlist.cxx rambler/icons.cxx rambler/iconwindow.cxx rambler/tools.cxx rambler/prefs.cxx rambler/fileops.cxx rambler/guisettings.cxx rambler/find.cxx rambler/inputprefs.cxx)
+add_library(rambler-classes STATIC rambler/iconlist.cxx rambler/icons.cxx rambler/iconwindow.cxx rambler/tools.cxx rambler/prefs.cxx rambler/fileops.cxx rambler/guisettings.cxx rambler/find.cxx rambler/inputprefs.cxx rambler/screenmodeprefs.cxx)
 target_include_directories(rambler-classes PUBLIC rambler)
 target_link_libraries(rambler-classes PUBLIC lune)
 add_executable(iconlist-test rambler/test_iconlist.cxx)
@@ -60,5 +60,8 @@ install(FILES LICENSE README.md DESTINATION share/doc/rambler-x11 COMPONENT ramb
 
 # the catalogs: next to the programs in the build tree, installed into share/rambler/catalogs
 file(GLOB RAMBLER_CATALOGS ${CMAKE_CURRENT_SOURCE_DIR}/catalogs/*.catalog)
-file(COPY ${RAMBLER_CATALOGS} DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/catalogs)
+foreach(cat ${RAMBLER_CATALOGS})   # (copied again whenever one changes)
+    get_filename_component(cat_name ${cat} NAME)
+    configure_file(${cat} ${CMAKE_CURRENT_BINARY_DIR}/catalogs/${cat_name} COPYONLY)
+endforeach()
 install(FILES ${RAMBLER_CATALOGS} DESTINATION share/rambler/catalogs COMPONENT rambler)

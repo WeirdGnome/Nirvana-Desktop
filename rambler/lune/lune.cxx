@@ -2165,7 +2165,15 @@ void Window::show() {
     if (!shown() && !id_.empty() && prefs().window_positions != 0) {
         auto &m = positions();
         auto it = m.find(id_);
-        if (it != m.end()) resize(it->second.x, it->second.y, std::max(it->second.w, 20), std::max(it->second.h, 20));
+        if (it != m.end()) {
+            // within the window's limits now (its contents may have grown since)
+            int minw = 20, minh = 20, maxw = 0, maxh = 0;
+            get_size_range(&minw, &minh, &maxw, &maxh);
+            int W = std::max(it->second.w, std::max(minw, 20)), H = std::max(it->second.h, std::max(minh, 20));
+            if (maxw > 0) W = std::min(W, maxw);
+            if (maxh > 0) H = std::min(H, maxh);
+            resize(it->second.x, it->second.y, W, H);
+        }
     }
     Fl_Double_Window::show();
 }
