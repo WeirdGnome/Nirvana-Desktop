@@ -104,6 +104,14 @@ void load_prefs() {
             else if (k == "list_cursor") p.list_cursor = std::clamp(atoi(v.c_str()), 128, 145);
             else if (k == "list_select") p.list_select = std::clamp(atoi(v.c_str()), 128, 145);
             else if (k == "list_selcur") p.list_selcur = std::clamp(atoi(v.c_str()), 128, 145);
+            else if (k.rfind("string_", 0) == 0) {
+                static const std::pair<const char *, int Prefs::*> sk[] = {
+                    {"string_bg", &Prefs::string_bg}, {"string_text", &Prefs::string_text},
+                    {"string_active_bg", &Prefs::string_active_bg}, {"string_active_text", &Prefs::string_active_text},
+                    {"string_cursor", &Prefs::string_cursor}, {"string_marked_bg", &Prefs::string_marked_bg},
+                    {"string_marked_text", &Prefs::string_marked_text}};
+                for (auto &[name, m] : sk) if (k == name) p.*m = std::clamp(atoi(v.c_str()), 0, MPEN_COUNT - 1);
+            }
             else if (k == "bubble_first") p.bubble_first = std::clamp(atoi(v.c_str()), 0, 50);
             else if (k == "bubble_next") p.bubble_next = std::clamp(atoi(v.c_str()), 0, 50);
             else if (k == "balancing_look") p.balancing_look = std::clamp(atoi(v.c_str()), 0, 1);
@@ -143,6 +151,10 @@ void save_prefs() {
             p.list_multi, p.list_refresh, (int)p.list_smoothed, p.list_smoothval, p.list_leading, p.list_font_family,
             p.list_font_size, p.fixed_font_size, p.list_back, p.readlist_back, p.list_cursor, p.list_select,
             p.list_selcur);
+    fprintf(f, "string_bg=%d\nstring_text=%d\nstring_active_bg=%d\nstring_active_text=%d\nstring_cursor=%d\n"
+               "string_marked_bg=%d\nstring_marked_text=%d\n",
+            p.string_bg, p.string_text, p.string_active_bg, p.string_active_text, p.string_cursor, p.string_marked_bg,
+            p.string_marked_text);
     fprintf(f, "scrollbar_arrangement=%d\nscrollbar_type=%d\n", p.scrollbar_arrangement, p.scrollbar_type);
     fprintf(f, "bubble_first=%d\nbubble_next=%d\n", p.bubble_first, p.bubble_next);
     fprintf(f, "drag_left_modifier=%s\ndrag_middle_modifier=%s\n", p.drag_left_modifier.c_str(), p.drag_middle_modifier.c_str());
@@ -859,11 +871,16 @@ Button::Button(const std::string &label) : Text("\033c" + label, Frame_Button) {
 String::String(const std::string &contents, int maxlen) : Area(Frame_String) {
     background(MPEN_BACKGROUND);
     begin();
-    in_ = new Fl_Input(0, 0, 10, 10);
+    // (the string's own input: its colours follow whether it is the active one)
+    struct Input : Fl_Input {
+        Input() : Fl_Input(0, 0, 10, 10) {}
+        int handle(int e) override {
+            if ((e == FL_FOCUS || e == FL_UNFOCUS) && parent()) parent()->redraw();
+            return Fl_Input::handle(e);
+        }
+    };
+    in_ = new Input();
     in_->box(FL_FLAT_BOX);
-    // configdata: the background "2:m2" (the half shine pen), active "2:m1"
-    in_->color(pens()[MPEN_HALFSHINE]);
-    in_->selection_color(pens()[MPEN_FILL]);
     in_->textfont(prefs().font);
     in_->textsize(prefs().font_size);
     in_->value(contents.c_str());
@@ -874,6 +891,29 @@ String::String(const std::string &contents, int maxlen) : Area(Frame_String) {
         if (s->on_acknowledge) s->on_acknowledge();
     }, this);
     end();
+}
+
+// the colours of the Strings page: inactive "2:m2" / "m5", active "2:m1" / "m5", the cursor
+// "m7", the marked text's background "m6" (its text: FLTK's contrast to it)
+void String::draw_background(int X, int Y, int W, int H) {
+    Area::draw_background(X, Y, W, H);
+    const Prefs &p = prefs();
+    bool active = Fl::focus() == in_;
+    in_->color(pens()[active ? p.string_active_bg : p.string_bg]);
+    in_->textcolor(pens()[active ? p.string_active_text : p.string_text]);
+    in_->cursor_color(pens()[p.string_cursor]);
+    in_->selection_color(pens()[p.string_marked_bg]);
+    in_->textfont(p.font);
+    in_->textsize(p.font_size);
+    if (center_) {
+        // centred while not being edited (Fl_Input has no centred text: the space before it)
+        fl_font(p.font, p.font_size);
+        int tw = (int)fl_width(in_->value());
+        in_->resize(active ? mleft() : mleft() + std::max(0, (mwidth() - tw) / 2 - 3), mtop(),
+                    active ? mwidth() : mwidth() - std::max(0, (mwidth() - tw) / 2 - 3), mheight());
+        fl_color(in_->color());
+        fl_rectf(mleft(), mtop(), mwidth(), mheight());
+    }
 }
 
 void String::ask_min_max(int &minw, int &minh, int &defw, int &defh, int &maxw, int &maxh) {

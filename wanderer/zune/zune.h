@@ -90,6 +90,11 @@ struct Prefs {
     int list_back = MUII_SHINE, readlist_back = MUII_SHINE;   // (configdata "0:128"; white here)
     int list_cursor = MUII_FILL, list_select = MUII_FILLBACK, list_selcur = MUII_FILLBACK2;
     Fl_Font list_font = FL_HELVETICA;
+    // the Strings page (pens, MPEN_*): the background and text of an inactive and of the
+    // active string, the cursor, the marked text's background and text (configdata.c
+    // "2:m2", "m5", "2:m1", "m5", "m7", "m6", "m0")
+    int string_bg = 2, string_text = 5, string_active_bg = 1, string_active_text = 5, string_cursor = 7,
+        string_marked_bg = 6, string_marked_text = 0;
     int list_size() const { return list_font_size > 0 ? list_font_size : font_size; }
     std::string custom_frame[16];   // the Frames page: the custom frames' frame.config files
     int font_size = 13;          // the screen font (topaz-like 8 pt is too small on today's screens)
@@ -303,9 +308,14 @@ public:
     std::function<void()> on_acknowledge;   // Return pressed
     void ask_min_max(int &minw, int &minh, int &defw, int &defh, int &maxw, int &maxh) override;
     void resize(int X, int Y, int W, int H) override;
+    void center(bool c) { center_ = c; }   // MUIV_String_Format_Center (shown so while inactive)
+
+protected:
+    void draw_background(int X, int Y, int W, int H) override;
 
 private:
     Fl_Input *in_;
+    bool center_ = false;
 };
 
 // ---------------------------------------------------------------------------------------------

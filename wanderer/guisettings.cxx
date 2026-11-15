@@ -449,18 +449,68 @@ void edit_gui_settings() {
         cu->end();
         pg->end();
     }
-    // -- Strings (stringsp.c)
+    // -- Strings (stringsp.c): the frame, the pop-up buttons, the colours, an example
+    Cycle *sbg, *stext, *sabg, *satext, *scur, *smbg, *smtext;
     {
+        auto pen = [](int which) {
+            // a pen (the poppen): its sample and its name
+            auto *row = HGroup();
+            row->spacing(2);
+            auto *sample = new SpecialImage([](int, int, int, int) {});
+            auto *c = new Cycle({"Shine", "Halfshine", "Background", "Halfshadow", "Shadow", "Text", "Fill", "Mark"}, which);
+            row->end();
+            sample->painter([c](int X, int Y, int W, int H) { fl_color(pens()[c->active()]); fl_rectf(X, Y, W, H); });
+            c->on_change = [sample](int) { sample->redraw(); };
+            return c;
+        };
         auto *pg = VGroup();
-        auto *g = new Group(Group::Vertical, Frame_Group);
-        g->frame_title("Frame");
-        g->columns(2);
-        new Text("\033rStrings:");
+        auto *top = HGroup();
+        auto *left = VGroup();
+        auto *fr = new Group(Group::Vertical, Frame_Group);
+        fr->frame_title("String Frame");
         frames.push_back({Frame_String, frame_cycle(Frame_String)});
-        new Text("\033rPop-ups:");
-        frames.push_back({Frame_PopUp, frame_cycle(Frame_PopUp)});
-        g->end();
-        VSpace();
+        fr->end();
+        auto *pb = new Group(Group::Horizontal, Frame_Group);
+        pb->frame_title("Special Popup Buttons");
+        pb->same_width(true);
+        const std::pair<PopImage, const char *> pops[] = {{Pop_Up, "Default"}, {Pop_File, "File"}, {Pop_Drawer, "Drawer"}};
+        for (auto &[img, name] : pops) {
+            auto *col = VGroup();
+            col->vspacing(1);
+            auto *row = HGroup();
+            HSpace();
+            PopButton(img);
+            HSpace();
+            row->end();
+            new Text(std::string("\033c") + name);
+            col->end();
+        }
+        pb->end();
+        left->end();
+        auto *right = VGroup();
+        auto colours = [&](const char *title, int bg, int text, Cycle *&cbg, Cycle *&ctext) {
+            auto *g = new Group(Group::Vertical, Frame_Group);
+            g->frame_title(title);
+            g->columns(2);
+            new Text("\033rBackground:");
+            cbg = pen(bg);
+            new Text("\033rText:");
+            ctext = pen(text);
+            g->end();
+        };
+        colours("Inactive String Colors", saved.string_bg, saved.string_text, sbg, stext);
+        colours("Active String Colors", saved.string_active_bg, saved.string_active_text, sabg, satext);
+        auto *cm = HGroup();
+        auto *cg = new Group(Group::Vertical, Frame_Group);
+        cg->frame_title("Cursor");
+        scur = pen(saved.string_cursor);
+        cg->end();
+        cm->end();
+        colours("Marked String Colors", saved.string_marked_bg, saved.string_marked_text, smbg, smtext);
+        right->end();
+        top->end();
+        auto *ex = new String(tr("Example String Gadget"), 256);
+        ex->center(true);
         pg->end();
     }
     // -- Navigation (navigationp.c): drag & drop, balancing groups, the keys
@@ -706,6 +756,13 @@ void edit_gui_settings() {
         p.bubble_first = bfirst->value();
         p.bubble_next = bnext->value();
         p.scrollbar_arrangement = *sbarr;
+        p.string_bg = sbg->active();
+        p.string_text = stext->active();
+        p.string_active_bg = sabg->active();
+        p.string_active_text = satext->active();
+        p.string_cursor = scur->active();
+        p.string_marked_bg = smbg->active();
+        p.string_marked_text = smtext->active();
         p.list_multi = lmulti->active();
         p.list_refresh = lrefresh->active();
         p.list_smoothed = lsmooth->on();
