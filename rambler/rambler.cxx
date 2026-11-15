@@ -30,6 +30,7 @@
 #include "printerprefs.h"
 #include "clock.h"
 #include "calculator.h"
+#include "multiview.h"
 
 #include <FL/Fl.H>
 #include <FL/Fl_Menu_Item.H>
@@ -500,7 +501,11 @@ void Rambler::open_entry(IconWindow *w, IconEntry &e) {
         argv.insert(argv.end(), args.begin(), args.end());
         launch(argv, dir);
     } else if (has_opener(e.path)) launch({"xdg-open", e.path}, dir);
-    else {
+    else if (multiview_can_show(e.path)) {
+        // nothing set for it, but a text or a picture: MultiView, as the original shows a
+        // project of a known data type
+        launch({"rambler", "--utility", "multiview", e.path}, dir);
+    } else {
         // nothing opens this kind of file: Execute Command with its name, to be given the
         // program to open it with (execute_open_with_command)
         std::string name = fs::path(e.path).filename().string();
@@ -1262,7 +1267,7 @@ void make_tools_drawer() {
     std::error_code ec;
     fs::create_directories(dir, ec);
     std::string made = read_file(made_file);
-    struct { const char *file, *name, *arg; } utils[] = {{"Calculator.desktop", "Calculator", "calculator"}, {"Clock.desktop", "Clock", "clock"}};
+    struct { const char *file, *name, *arg; } utils[] = {{"Calculator.desktop", "Calculator", "calculator"}, {"Clock.desktop", "Clock", "clock"}, {"MultiView.desktop", "MultiView", "multiview"}};
     for (auto &u : utils) {
         if (made.find(std::string(u.file) + "\n") != std::string::npos) continue;
         std::string f = dir + "/" + u.file;
@@ -1292,7 +1297,8 @@ int main(int argc, char **argv) {
             fl_open_display();
             if (u == "clock") run_clock();
             else if (u == "calculator") run_calculator();
-            else { fprintf(stderr, "rambler: no utility '%s' (calculator, clock)\n", u.c_str()); return 1; }
+            else if (u == "multiview") run_multiview(i + 1 < argc ? argv[i + 1] : "");
+            else { fprintf(stderr, "rambler: no utility '%s' (calculator, clock, multiview)\n", u.c_str()); return 1; }
             return run();
         }
         else if (!strcmp(argv[i], "--appimage-icon") && i + 1 < argc) {

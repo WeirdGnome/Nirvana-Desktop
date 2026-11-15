@@ -1,5 +1,17 @@
 # Lista zmian
 
+## 0.18.0 (w przygotowaniu)
+
+### Nowe
+- **MultiView** (`rambler --utility multiview [PLIK]`, w szufladzie Tools): pokazuje
+  tekst (czcionką o stałej szerokości, z zawijaniem wierszy), obraz (PNG, JPEG, GIF, BMP,
+  SVG, XPM...; dopasowany do okna albo w swoim rozmiarze, przesuwany myszą) albo
+  cokolwiek innego jako zrzut szesnastkowy. Projekt: Otwórz, Zapisz jako, Drukuj, O
+  programie, Zakończ; Edycja: Kopiuj, Zaznacz wszystko, Usuń zaznaczenie (przeciągnięcie
+  zaznacza wiersze); Szukaj: Szukaj, Szukaj dalej; Widok: Zawijanie wierszy, Dopasuj do
+  okna. Bez pliku pyta o plik. Rambler otwiera nim tekst albo obraz, gdy system nie ma
+  programu dla danego rodzaju pliku.
+
 ## 0.17.0 – 2026-11-15
 
 ### Nowe

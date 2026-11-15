@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.18.0 (unreleased)
+
+### Added
+- **MultiView** (`rambler --utility multiview [FILE]`, in the Tools drawer): shows a text
+  (in the fixed font, with word wrap), a picture (PNG, JPEG, GIF, BMP, SVG, XPM...; fitted
+  to the window or at its size, dragged with the mouse) or anything else as a hex dump.
+  Project: Open, Save As, Print, About, Quit; Edit: Copy, Select All, Clear Selected (a
+  drag marks lines); Search: Find, Find Next; View: Word Wrap, Fit to Window. Without a
+  file it asks for one. Rambler opens a text or a picture with it when the system has no
+  program set for that kind of file.
+
 ## 0.17.0 – 2026-11-15
 
 ### Added

@@ -308,6 +308,24 @@ void clock_icon(int x, int y) {
     fl_pie(cx - 2, cy - 2, 4, 4, 0, 360);
 }
 
+// MultiView: a page with a picture and lines of text, and a lens over it
+void multiview_icon(int x, int y) {
+    rect(x + 6, y + 3, 28, 36, 0xFFFFFF);
+    rect(x + 9, y + 6, 14, 10, 0x6688BB);
+    poly(0x3B8A4A, {x + 9, y + 16, x + 14, y + 10, x + 18, y + 14, x + 20, y + 12, x + 23, y + 16});
+    fl_color(C(0x777777));
+    for (int i = 0; i < 4; i++) fl_xyline(x + 9, y + 21 + i * 4, x + 30 - (i % 2) * 6);
+    fl_color(C(0x404040));
+    fl_line_style(FL_SOLID | FL_CAP_ROUND, 4);
+    fl_line(x + 35, y + 34, x + 41, y + 41);
+    fl_line_style(FL_SOLID, 2);
+    fl_color(C(0xD9E6F5));
+    fl_pie(x + 23, y + 22, 14, 14, 0, 360);
+    fl_color(C(0x404040));
+    fl_arc(x + 23, y + 22, 14, 14, 0, 360);
+    fl_line_style(0);
+}
+
 // The Calculator: its case, the display and the keys
 void calculator_icon(int x, int y) {
     box3d(x + 9, y + 4, 28, 38, 0x8A8A8A, 0xC8C8C8, 0x404040);
@@ -441,7 +459,7 @@ bool builtin_icon(const std::string &name, IconKind &k) {
         {"rambler-prefs-locale", IconKind::PrefsLocale}, {"rambler-prefs-lune", IconKind::PrefsLune},
         {"rambler-prefs-network", IconKind::PrefsNetwork}, {"rambler-prefs-pointer", IconKind::PrefsPointer},
         {"rambler-prefs-rambler", IconKind::PrefsRambler}, {"rambler-prefs-screenmode", IconKind::PrefsScreenMode},
-        {"rambler-prefs-printer", IconKind::PrefsPrinter}, {"rambler-prefs-sound", IconKind::PrefsSound}, {"rambler-prefs-time", IconKind::PrefsTime}, {"rambler-utility-clock", IconKind::UtilityClock}, {"rambler-utility-calculator", IconKind::UtilityCalculator}};
+        {"rambler-prefs-printer", IconKind::PrefsPrinter}, {"rambler-prefs-sound", IconKind::PrefsSound}, {"rambler-prefs-time", IconKind::PrefsTime}, {"rambler-utility-clock", IconKind::UtilityClock}, {"rambler-utility-calculator", IconKind::UtilityCalculator}, {"rambler-utility-multiview", IconKind::UtilityMultiView}};
     for (auto &[n, kind] : NAMES) if (name == n) { k = kind; return true; }
     return false;
 }
@@ -464,6 +482,7 @@ void draw_icon(IconKind k, int x, int y, bool selected) {
         break;
     case IconKind::UtilityClock: clock_icon(x, y); break;
     case IconKind::UtilityCalculator: calculator_icon(x, y); break;
+    case IconKind::UtilityMultiView: multiview_icon(x, y); break;
     default: project(k, x, y); break;
     }
     g_sel = false;
