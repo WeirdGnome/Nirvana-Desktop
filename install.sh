@@ -129,7 +129,7 @@ DEPENDS=""
 if command -v dpkg-shlibdeps >/dev/null 2>&1; then
     mkdir -p "$BUILD/shlibs/debian"
     echo "Source: $PKGNAME" > "$BUILD/shlibs/debian/control"
-    DEPENDS=$(cd "$BUILD/shlibs" && dpkg-shlibdeps -O "$ROOT/usr/bin/rambler" "$ROOT/usr/bin/rambler-wm" 2>/dev/null \
+    DEPENDS=$(cd "$BUILD/shlibs" && dpkg-shlibdeps --ignore-missing-info -O "$ROOT/usr/bin/rambler" "$ROOT/usr/bin/rambler-wm" 2>/dev/null \
               | sed -n 's/^shlibs:Depends=//p')
 fi
 SIZE=$(du -sk "$ROOT" | cut -f1)
