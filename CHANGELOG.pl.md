@@ -54,6 +54,12 @@
   jest uruchamiany – i przechowywana w `~/.cache/rambler/appimage-icons`; bez tego
   używana jest miniatura zostawiona przez narzędzia pulpitu w `~/.cache/thumbnails`.
   Plik `.info` obok AppImage nadal ma pierwszeństwo. Paczka zaleca `squashfs-tools`.
+- **Ikony podwójne dla AppImage**: *Icon > Snapshot* na AppImage bez `.info` zapisuje mu
+  własną ikonę (jak Snapshot daje plikowi z ikoną domyślną jego własną): podwójną ikonę
+  PNG – obrazek z AppImage, a po nim obraz zaznaczenia (rozjaśniony), który można
+  przemalować w dowolnym programie graficznym. Ikony PNG są zapisywane jak w AROS, z
+  blokiem `icOn` (położenie, typ, narzędzie domyślne, typy narzędzi), który jest teraz
+  także odczytywany.
 - **Zawartość pliku ikony jest używana**: jego typy narzędzi (pokazywane i używane, np.
   `STARTPRI`, o ile nie ustawiono ich w Informacjach), narzędzie domyślne (gdy wskazuje
   program istniejący w tym systemie) i położenie w szufladzie (do zrobienia zdjęcia

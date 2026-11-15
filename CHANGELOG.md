@@ -53,6 +53,11 @@
   never run - and kept in `~/.cache/rambler/appimage-icons`; without it, the thumbnail
   desktop tools left in `~/.cache/thumbnails` is used. A `.info` beside the AppImage still
   comes first. The package recommends `squashfs-tools`.
+- **Dual icons for AppImages**: *Icon > Snapshot* on an AppImage without a `.info` writes
+  one for it (as Snapshot gives a file shown with a default icon an icon of its own): a
+  dual PNG icon - the AppImage's picture, then the selected image (made lighter), which
+  can be painted over in any paint program. PNG icons are written as on AROS, with the
+  `icOn` chunk (position, type, default tool, tool types), which is now also read.
 - **What an icon file holds is used**: its tool types (shown and used, e.g. `STARTPRI`,
   unless set in Information), its default tool (when it names a program there is on this
   system) and its position in the drawer (until the drawer is snapshot). Information

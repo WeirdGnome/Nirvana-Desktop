@@ -82,6 +82,8 @@ rambler-wm & rambler --backdrop
   file when the file is copied, moved, renamed or deleted.
 * **AppImages** show the icon they carry (taken out with `unsquashfs` from the
   `squashfs-tools` package; the AppImage is not run for it).
+  *Icon > Snapshot* writes it out as the AppImage's own dual icon (`Name.AppImage.info`:
+  two PNG images one after the other); paint over the second one for the selected look.
 
 ## Preferences
 

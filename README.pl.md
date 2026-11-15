@@ -65,6 +65,9 @@ Sesja uruchamia najpierw `rambler-wm`, a potem `rambler --backdrop`. Polecenie
   razem z plikiem przy kopiowaniu, przenoszeniu, zmianie nazwy i usuwaniu.
 * **AppImage** pokazują ikonę, którą zawierają (wyjmowaną przez `unsquashfs` z paczki
   `squashfs-tools`; AppImage nie jest przy tym uruchamiany).
+  *Icon > Snapshot* zapisuje ją jako własną podwójną ikonę AppImage
+  (`Nazwa.AppImage.info`: dwa obrazy PNG jeden po drugim); przemaluj drugi, by zmienić
+  wygląd zaznaczenia.
 
 ## Preferencje
 

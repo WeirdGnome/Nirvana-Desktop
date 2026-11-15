@@ -38,10 +38,17 @@ struct DiskObject {
     std::vector<std::string> tool_types;
     int current_x = (int)0x80000000, current_y = (int)0x80000000;   // NO_ICON_POSITION
     Fl_RGB_Image *image(bool selected) const;      // (made the first time)
-    ~DiskObject();
 
 private:
-    mutable Fl_RGB_Image *img_[2] = {nullptr, nullptr};
+    // the images made for drawing: each object its own (a copy starts without them)
+    struct Images {
+        Fl_RGB_Image *p[2] = {nullptr, nullptr};
+        Images() = default;
+        Images(const Images &) {}
+        Images &operator=(const Images &) { return *this; }
+        ~Images();
+    };
+    mutable Images img_;
 };
 
 // the icon file of a file, drawer or volume (path + ".info"; a volume's root: Disk.info);
@@ -52,6 +59,9 @@ std::shared_ptr<DiskObject> read_icon_file(const std::string &info_file);
 // an icon made from a picture (PNG, SVG ...), scaled to fit max x max; one image, the
 // selected one lighter
 std::shared_ptr<DiskObject> icon_from_picture(const std::string &picture, int max);
+// writing a PNG icon (PutDiskObject in the PNG form): the normal image, the icOn chunk
+// (position, type, default tool, tool types), the selected image after it - a dual icon
+bool put_png_icon(const std::string &info_file, const DiskObject &o);
 // an AppImage's own icon (appimage.cxx): nullptr - not an AppImage, or no icon in it
 std::shared_ptr<DiskObject> appimage_icon(const std::string &path);
 

@@ -1075,6 +1075,16 @@ void Rambler::menu_action(IconWindow *w, int id) {
             if (e->app_window) continue;
             std::string key = w->is_root() ? e->path : fs::path(e->path).filename().string();
             if (id == MEN_ICON_SNAPSHOT) s.icons[key] = {e->x, e->y};
+            // an AppImage's icon (no .info yet) is written out as its own dual icon, as
+            // Snapshot gives a file shown with a default icon an icon of its own; its second
+            // image (selected) can then be painted over
+            std::error_code ec;
+            if (id == MEN_ICON_SNAPSHOT && e->icon && !e->is_drawer() && !fs::exists(e->path + ".info", ec)) {
+                DiskObject o = *e->icon;
+                o.current_x = e->x;
+                o.current_y = e->y;
+                if (put_png_icon(e->path + ".info", o)) e->icon = get_disk_object(e->path);
+            }
             else { s.icons.erase(key); e->provided_x = e->provided_y = NO_ICON_POSITION; }
         }
         save_snapshot(w->location(), s);

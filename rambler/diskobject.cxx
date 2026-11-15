@@ -22,6 +22,7 @@
 #include <fstream>
 #include <map>
 #include <sys/stat.h>
+#include <unistd.h>
 #ifdef RAMBLER_HAVE_ZLIB
 #include <zlib.h>
 #endif
@@ -226,10 +227,39 @@ bool read_icon35(const std::vector<unsigned char> &d, size_t start, DiskObject &
 }
 
 // a PNG icon: the image, and a second PNG after IEND (diskobjPNGio.c)
+// The icOn chunk of a PNG icon (diskobjPNGio.c): attributes, each a 32-bit tag and a
+// 32-bit value, or a string ending with NUL for the default tool and the tool types
+const unsigned ATTR_ICONX = 0x80001001, ATTR_ICONY = 0x80001002, ATTR_DEFAULTTOOL = 0x8000100a,
+               ATTR_TOOLTYPE = 0x8000100b, ATTR_TYPE = 0x8000100f;
+
+void read_icon_chunk(const unsigned char *p, size_t n, DiskObject &o) {
+    auto be = [](const unsigned char *q) { return (unsigned)q[0] << 24 | q[1] << 16 | q[2] << 8 | q[3]; };
+    size_t i = 0;
+    while (i + 4 <= n) {
+        unsigned attr = be(p + i);
+        i += 4;
+        if (attr == ATTR_DEFAULTTOOL || attr == ATTR_TOOLTYPE) {
+            size_t e = i;
+            while (e < n && p[e]) e++;
+            std::string s((const char *)p + i, e - i);
+            i = e + 1;
+            if (attr == ATTR_DEFAULTTOOL) o.default_tool = s; else o.tool_types.push_back(s);
+            continue;
+        }
+        if (attr < 0x80001001 || attr > 0x80001107 || i + 4 > n) break;   // (unknown: no telling its size)
+        unsigned v = be(p + i);
+        i += 4;
+        if (attr == ATTR_ICONX) o.current_x = (int)v;
+        else if (attr == ATTR_ICONY) o.current_y = (int)v;
+        else if (attr == ATTR_TYPE) o.type = (int)v;
+    }
+}
+
 bool read_png_icon(const std::vector<unsigned char> &d, DiskObject &o) {
     size_t pos = 8, first_end = 0;
     while (pos + 8 <= d.size()) {
         unsigned size = (unsigned)d[pos] << 24 | d[pos + 1] << 16 | d[pos + 2] << 8 | d[pos + 3];
+        if (!memcmp(&d[pos + 4], "icOn", 4) && pos + 8 + size <= d.size()) read_icon_chunk(&d[pos + 8], size, o);
         bool iend = !memcmp(&d[pos + 4], "IEND", 4);
         pos += (size_t)size + 12;
         if (iend) { first_end = pos; break; }
@@ -428,17 +458,17 @@ void make_selected(DiskObject &o) {
 
 Fl_RGB_Image *DiskObject::image(bool sel) const {
     int i = sel ? 1 : 0;
-    if (!img_[i]) {
+    if (!img_.p[i]) {
         const auto &px = sel ? selected : normal;
         if (px.empty() || width <= 0 || height <= 0) return nullptr;
-        img_[i] = new Fl_RGB_Image(px.data(), width, height, 4);
+        img_.p[i] = new Fl_RGB_Image(px.data(), width, height, 4);
     }
-    return img_[i];
+    return img_.p[i];
 }
 
-DiskObject::~DiskObject() {
-    delete img_[0];
-    delete img_[1];
+DiskObject::Images::~Images() {
+    delete p[0];
+    delete p[1];
 }
 
 std::shared_ptr<DiskObject> read_icon_file(const std::string &file) {
@@ -487,6 +517,73 @@ std::shared_ptr<DiskObject> icon_from_picture(const std::string &picture, int ma
     o->type = 3;   // WBTOOL
     make_selected(*o);
     return o;
+}
+
+namespace {
+unsigned crc32_of(const unsigned char *p, size_t n, unsigned crc = 0) {
+    static unsigned table[256];
+    static bool made = false;
+    if (!made) {
+        for (unsigned i = 0; i < 256; i++) {
+            unsigned c = i;
+            for (int k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320u ^ (c >> 1) : c >> 1;
+            table[i] = c;
+        }
+        made = true;
+    }
+    crc = ~crc;
+    for (size_t i = 0; i < n; i++) crc = table[(crc ^ p[i]) & 255] ^ (crc >> 8);
+    return ~crc;
+}
+
+std::vector<unsigned char> png_bytes(const std::vector<unsigned char> &rgba, int w, int h) {
+    char tmp[] = "/tmp/rambler-icon-XXXXXX";
+    int fd = mkstemp(tmp);
+    std::vector<unsigned char> out;
+    if (fd < 0) return out;
+    close(fd);
+    if (fl_write_png(tmp, rgba.data(), w, h, 4) == 0) {
+        std::ifstream in(tmp, std::ios::binary);
+        out.assign((std::istreambuf_iterator<char>(in)), std::istreambuf_iterator<char>());
+    }
+    unlink(tmp);
+    return out;
+}
+}  // namespace
+
+bool put_png_icon(const std::string &info_file, const DiskObject &o) {
+    if (o.normal.empty() || o.width <= 0 || o.height <= 0) return false;
+    std::vector<unsigned char> first = png_bytes(o.normal, o.width, o.height);
+    std::vector<unsigned char> second = png_bytes(o.selected.empty() ? o.normal : o.selected, o.width, o.height);
+    if (first.size() < 20 || second.empty()) return false;
+    // the icOn chunk before the first image's IEND: the place, the type, the tool, the tool types
+    std::vector<unsigned char> data;
+    auto u32 = [&data](unsigned v) { for (int s = 24; s >= 0; s -= 8) data.push_back((v >> s) & 255); };
+    if (o.current_x != (int)0x80000000 && o.current_y != (int)0x80000000) {
+        u32(ATTR_ICONX); u32((unsigned)o.current_x);
+        u32(ATTR_ICONY); u32((unsigned)o.current_y);
+    }
+    if (o.type) { u32(ATTR_TYPE); u32((unsigned)o.type); }
+    if (!o.default_tool.empty()) { u32(ATTR_DEFAULTTOOL); data.insert(data.end(), o.default_tool.begin(), o.default_tool.end()); data.push_back(0); }
+    for (auto &t : o.tool_types) { u32(ATTR_TOOLTYPE); data.insert(data.end(), t.begin(), t.end()); data.push_back(0); }
+    std::vector<unsigned char> chunk;
+    for (int s = 24; s >= 0; s -= 8) chunk.push_back((data.size() >> s) & 255);
+    const unsigned char id[4] = {'i', 'c', 'O', 'n'};
+    chunk.insert(chunk.end(), id, id + 4);
+    chunk.insert(chunk.end(), data.begin(), data.end());
+    unsigned crc = crc32_of(chunk.data() + 4, chunk.size() - 4);
+    for (int s = 24; s >= 0; s -= 8) chunk.push_back((crc >> s) & 255);
+    std::vector<unsigned char> file(first.begin(), first.end() - 12);   // (IEND is the last 12 bytes)
+    if (!data.empty()) file.insert(file.end(), chunk.begin(), chunk.end());
+    file.insert(file.end(), first.end() - 12, first.end());
+    file.insert(file.end(), second.begin(), second.end());   // the selected image after it: a dual icon
+    std::string tmp = info_file + ".new";
+    {
+        std::ofstream out(tmp, std::ios::binary);
+        out.write((const char *)file.data(), (std::streamsize)file.size());
+        if (!out) { unlink(tmp.c_str()); return false; }
+    }
+    return rename(tmp.c_str(), info_file.c_str()) == 0;
 }
 
 std::shared_ptr<DiskObject> get_disk_object(const std::string &path, bool volume) {
