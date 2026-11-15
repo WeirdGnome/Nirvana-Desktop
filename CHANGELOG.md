@@ -17,6 +17,8 @@
   and Rambler (`rambler --prefs lune|rambler`). Use keeps the settings for the session
   (`$XDG_RUNTIME_DIR/rambler`, as ENV:), Save also in `~/.config/rambler` (as ENVARC:); a
   running Rambler takes the change up at once, as IPrefs does.
+- Icons dragged from a drawer onto the root window's background are left out there, where
+  they were dropped (as Leave Out does; they stay in their drawer on the disk).
 
 ### Fixed
 - Polish: the Scrollbars page of the Lune preferences was named like the Sliders page.

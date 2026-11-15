@@ -75,6 +75,8 @@ rambler-wm & rambler --backdrop
 * **Icons**: a double click opens; Shift adds to the selection; a lasso selects in the
   empty space. Dragging icons to another window moves them within a volume and copies
   them across volumes.
+* **Leave Out**: icons dragged from a drawer onto the empty background of the root window
+  are left out there; *Icon > Put Away* takes them back.
 
 ## Preferences
 

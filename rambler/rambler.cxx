@@ -139,6 +139,7 @@ private:
     void update_all(const std::string &dir);
     IconWindow *window_at(int x_root, int y_root, IconWindow *except);
     void drop(IconWindow *from, std::vector<IconEntry *> &entries, IconEntry *target);
+    void leave_out_at(IconWindow *from, std::vector<IconEntry *> &entries);
     void drop_paths(const std::vector<std::string> &sources, const std::string &dest);
     void menu_action(IconWindow *w, int id);
 };
@@ -498,8 +499,37 @@ IconWindow *Rambler::window_at(int xr, int yr, IconWindow *except) {
 }
 
 // Icons dropped: onto a drawer icon (into it), into another window (into its drawer), or onto
-// the root window (left out - not yet). Within one volume they move, across volumes they
-// are copied (Rambler's rule).
+// the root window's background (left out there, where they were dropped, as Leave Out
+// does). Within one volume they move, across volumes they are copied (Rambler's rule).
+// Icons dragged out of a drawer onto the root window's background: left out (they stay in
+// their drawer on the disk), each where it was dropped - for this session, until snapshot
+void Rambler::leave_out_at(IconWindow *from, std::vector<IconEntry *> &entries) {
+    IconList *fl = from->iconlist();
+    std::vector<std::pair<std::string, std::pair<int, int>>> placed;   // path, screen position
+    auto v = left_out_paths();
+    for (auto *e : entries) {
+        // not volumes, the trash or programs' icons; only files and drawers
+        if (e->trash || e->type == ST_ROOT || e->app_window || e->path.empty() || e->path[0] != '/') continue;
+        placed.push_back({e->path, {from->x() + fl->mleft() - fl->view_left() + e->x,
+                                    from->y() + fl->mtop() - fl->view_top() + e->y}});
+        if (std::find(v.begin(), v.end(), e->path) == v.end()) v.push_back(e->path);
+    }
+    fl->rethink();   // (back to their places in the drawer)
+    if (placed.empty() || !root_) return;
+    set_left_out(v);
+    root_->update();
+    apply_snapshot(root_);
+    IconList *rl = root_->iconlist();
+    for (auto &[path, pos] : placed)
+        for (auto &e : rl->entries())
+            if (e.left_out && e.path == path) {
+                e.provided_x = std::max(0, pos.first - root_->x() - rl->mleft() + rl->view_left());
+                e.provided_y = std::max(0, pos.second - root_->y() - rl->mtop() + rl->view_top());
+            }
+    rl->rethink();
+    rl->redraw();
+}
+
 void Rambler::drop(IconWindow *from, std::vector<IconEntry *> &entries, IconEntry *target) {
     std::string dest;
     if (target && target->app_window) {
@@ -519,6 +549,7 @@ void Rambler::drop(IconWindow *from, std::vector<IconEntry *> &entries, IconEntr
                 IconEntry *vol = to->iconlist()->entry_at(Fl::event_x_root() - to->x(), Fl::event_y_root() - to->y());
                 if (vol && vol->app_window) { drop(from, entries, vol); return; }
                 if (vol) dest = vol->path;
+                else { leave_out_at(from, entries); return; }
             }
             if (dest.empty()) { from->iconlist()->rethink(); return; }
         } else {

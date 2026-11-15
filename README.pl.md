@@ -58,6 +58,8 @@ Sesja uruchamia najpierw `rambler-wm`, a potem `rambler --backdrop`. Polecenie
 * **Ikony**: dwuklik otwiera. Shift dodaje do zaznaczenia. Przeciągnięcie po pustym
   miejscu zaznacza lassem. Ikony przeciągnięte do innego okna są przenoszone w obrębie
   dysku i kopiowane między dyskami.
+* **Wyłożenie**: ikony przeciągnięte z szuflady na puste tło okna głównego zostają tam
+  wyłożone; *Icon > Put Away* je zabiera.
 
 ## Preferencje
 

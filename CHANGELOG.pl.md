@@ -17,6 +17,8 @@
   Rambler (`rambler --prefs lune|rambler`). Use zachowuje ustawienia na sesję
   (`$XDG_RUNTIME_DIR/rambler`, jak ENV:), Save także w `~/.config/rambler` (jak ENVARC:);
   działający Rambler od razu przyjmuje zmianę, jak IPrefs.
+- Ikony przeciągnięte z szuflady na tło okna głównego zostają tam wyłożone, w miejscu
+  upuszczenia (jak Leave Out; na dysku zostają w swojej szufladzie).
 
 ### Poprawki
 - Po polsku strona Paski przewijania w preferencjach Lune nazywała się tak samo jak strona
