@@ -85,7 +85,7 @@ const int SIZE_W = 16, SIZE_H = 16;
 
 Atom WM_PROTOCOLS, WM_DELETE_WINDOW, WM_STATE, WM_TAKE_FOCUS, NET_WM_NAME, UTF8_STRING, NET_WM_WINDOW_TYPE,
     NET_WM_WINDOW_TYPE_DESKTOP, NET_WM_WINDOW_TYPE_DOCK, NET_SUPPORTED, NET_ACTIVE_WINDOW, NET_CLIENT_LIST,
-    NET_SUPPORTING_WM_CHECK, NET_WM_STATE, NET_WM_STATE_FULLSCREEN, RAMBLER_SCREEN_TITLE, RAMBLER_PALETTE,
+    NET_SUPPORTING_WM_CHECK, NET_WM_STATE, NET_WM_STATE_FULLSCREEN, RAMBLER_SCREEN_TITLE, RAMBLER_PALETTE, RAMBLER_FONT,
     NET_WM_STATE_MAXIMIZED_VERT, NET_WM_STATE_MAXIMIZED_HORZ, NET_CLOSE_WINDOW, NET_FRAME_EXTENTS, NET_WORKAREA,
     NET_NUMBER_OF_DESKTOPS, NET_CURRENT_DESKTOP, NET_DESKTOP_GEOMETRY;
 
@@ -1377,6 +1377,28 @@ void palette_changed() {
     }
 }
 
+// The Font preferences changed the screen font (Lune sets _RAMBLER_FONT on the root window:
+// "family TAB size"): the bars' and menus' text in it, as large as the bars allow
+void font_changed() {
+    static std::string had;
+    std::string v = utf8_prop(root, RAMBLER_FONT);
+    if (v.empty() || v == had) return;
+    auto tab = v.find('\t');
+    if (tab == std::string::npos) return;
+    std::string family = v.substr(0, tab);
+    int size = std::clamp(atoi(v.c_str() + tab + 1), 8, std::min(BAR_H, TITLE_H) - 5);
+    for (char &ch : family) if (ch == ':' || ch == '-') ch = ' ';   // (no fontconfig syntax in a name)
+    XftFont *f = XftFontOpenName(dpy, scr, (family + ":pixelsize=" + std::to_string(size)).c_str());
+    if (!f) return;
+    had = v;
+    if (font) XftFontClose(dpy, font);
+    font = f;
+    for (auto *s : screens) {
+        s->draw_bar();
+        for (auto *cl : s->clients) draw_frame(cl);
+    }
+}
+
 }  // namespace
 
 int main(int argc, char **argv) {
@@ -1416,6 +1438,7 @@ int main(int argc, char **argv) {
     RAMBLER_MENU = atom("_RAMBLER_MENU");
     RAMBLER_SCREEN_TITLE = atom("_RAMBLER_SCREEN_TITLE");
     RAMBLER_PALETTE = atom("_RAMBLER_PALETTE");
+    RAMBLER_FONT = atom("_RAMBLER_FONT");
     RAMBLER_MENU_PICK = atom("_RAMBLER_MENU_PICK");
 
     // the palette: the GUI settings' (~/.config/rambler/lune.prefs), else the default
@@ -1445,6 +1468,7 @@ int main(int argc, char **argv) {
     }
     apply_palette(bg, sd, sh, fl);
     font = XftFontOpenName(dpy, scr, "sans-10");
+    font_changed();   // (Rambler running already: its screen font)
     XDefineCursor(dpy, root, XCreateFontCursor(dpy, XC_left_ptr));
 
     // EWMH: who manages the windows, what is supported
@@ -1555,6 +1579,7 @@ int main(int argc, char **argv) {
             break;
         case PropertyNotify:
             if (ev.xproperty.window == root && ev.xproperty.atom == RAMBLER_PALETTE) palette_changed();
+            if (ev.xproperty.window == root && ev.xproperty.atom == RAMBLER_FONT) font_changed();
             else if (by_window.count(ev.xproperty.window)) {
                 Client *c = by_window[ev.xproperty.window];
                 if (ev.xproperty.atom == XA_WM_NAME || ev.xproperty.atom == NET_WM_NAME) {

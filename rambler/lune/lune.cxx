@@ -309,6 +309,13 @@ void apply_prefs() {
         Atom utf8 = XInternAtom(fl_display, "UTF8_STRING", False);
         XChangeProperty(fl_display, RootWindow(fl_display, fl_screen), prop, utf8, 8, PropModeReplace, (unsigned char *)v,
                         (int)strlen(v));
+        // and the screen font (its title bars and menus): "family TAB pixel size"
+        static const char *const FAMS[] = {"Sans", "Serif", "Monospace"};
+        std::string f = (p.font_name.empty() ? std::string(FAMS[std::clamp(p.font_family, 0, 2)]) : p.font_name) + "\t" +
+                        std::to_string(p.font_size);
+        Atom fprop = XInternAtom(fl_display, "_RAMBLER_FONT", False);
+        XChangeProperty(fl_display, RootWindow(fl_display, fl_screen), fprop, utf8, 8, PropModeReplace,
+                        (const unsigned char *)f.c_str(), (int)f.size());
         XFlush(fl_display);
     }
     // every window: laid out again (sizes depend on the font and frames) and drawn

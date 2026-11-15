@@ -6,12 +6,12 @@ oryginałów AROS; pliki i komentarze przeniesione z AROS nadal je wymieniają. 
 działa na FLTK, a okna obsługuje własny menedżer okien `rambler-wm`, który przejmuje
 rolę Intuition: ekrany, ramki okien, gadżety i menu na pasku ekranu.
 
-Wersja: **0.12.0**. Dotychczasowa Nirvana Desktop jest na gałęzi `nirvana-legacy`.
+Wersja: **0.13.0**. Dotychczasowa Nirvana Desktop jest na gałęzi `nirvana-legacy`.
 
 ## Instalacja
 
 ```sh
-tar xzf rambler-x11-0.12.0.tar.gz
+tar xzf rambler-x11-0.13.0.tar.gz
 cd rambler-x11
 ./install.sh
 ```

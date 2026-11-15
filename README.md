@@ -15,12 +15,12 @@ Parts of the port:
 * **window manager** (`wm`, later) – what Intuition does on AROS: window frames and
   gadgets, screens, screen dragging.
 
-Version: **0.12.0**
+Version: **0.13.0**
 
 ## Installing
 
 ```sh
-tar xzf rambler-x11-0.12.0.tar.gz
+tar xzf rambler-x11-0.13.0.tar.gz
 cd rambler-x11
 ./install.sh
 ```

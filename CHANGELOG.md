@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.13.0 (unreleased)
+## 0.13.0 – 2026-11-15
 
 ### Changed
 - **The port is now called Rambler, and its toolkit Lune**, to keep it apart from the AROS
@@ -34,6 +34,7 @@
   system's fixed-width text, each any font of the system with its size, chosen in a new
   **font requester** (Lune's, as ASL's: families, sizes, a sample). The family choices in
   the GUI settings and Rambler preferences stay; picking one there replaces the font by name.
+  The window manager's title bars and screen bar use the screen font too.
 - **Network preferences** (`rambler --prefs network`), with NetworkManager doing the work
   (`nmcli`): Interfaces (up or down, DHCP or a static address with netmask, gateway and
   name servers), Host (the computer's name) and Wireless (the networks in reach with

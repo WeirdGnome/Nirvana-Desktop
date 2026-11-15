@@ -1,6 +1,6 @@
 # Lista zmian
 
-## 0.13.0 (w przygotowaniu)
+## 0.13.0 – 2026-11-15
 
 ### Zmiany
 - **Port nazywa się teraz Rambler, a jego biblioteka interfejsu Lune**, żeby odróżnić go
@@ -35,6 +35,7 @@
   systemu o stałej szerokości – dowolna czcionka systemu z rozmiarem, wybierana w nowym
   **wyborze czcionki** (Lune, jak ASL: rodziny, rozmiary, próbka). Wybór rodziny w GUI
   Settings i preferencjach Ramblera zostaje; wybranie jej tam zastępuje czcionkę z nazwy.
+  Paski tytułowe okien i pasek ekranu w menedżerze okien też używają czcionki ekranu.
 - **Preferencje Network** (`rambler --prefs network`), przez NetworkManagera (`nmcli`):
   Interfejsy (włączony lub nie, DHCP albo stały adres z maską, bramą i serwerami DNS),
   Komputer (nazwa komputera) i Sieci bezprzewodowe (sieci w zasięgu z sygnałem i
