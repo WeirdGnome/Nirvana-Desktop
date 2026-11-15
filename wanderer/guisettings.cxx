@@ -82,6 +82,10 @@ protected:
     std::function<void(int, int, int, int)> f_;
 };
 
+// MakeBackgroundPopimage / MakePoppen
+Popimage *background_pop(const std::string &spec) { return new Popimage(spec, Popimage::Background, tr("Adjust Background")); }
+Popimage *pen_pop(const std::string &spec) { return new Popimage(spec, Popimage::Pen, tr("Adjust Pen")); }
+
 // MakeSingleRadio: a radio button image without a frame (MUII_RadioButton)
 class RadioMark : public Checkmark {
 public:
@@ -188,6 +192,31 @@ void edit_gui_settings() {
         VSpace();
         pg->end();
     }
+    // the backgrounds and pens chosen with popimages on the pages (put in by collect)
+    auto pop_specs = std::make_shared<std::vector<std::pair<std::string Prefs::*, Popimage *>>>();
+    auto spec_pop = [pop_specs, &saved](std::string Prefs::*m, bool pen = false) {
+        auto *pi = pen ? pen_pop(saved.*m) : background_pop(saved.*m);
+        pop_specs->push_back({m, pi});
+        return pi;
+    };
+    // a row of popimages, each with its label under it (as the original's VGroup + CLabel)
+    auto pop_row = [&](const char *title, std::vector<std::pair<const char *, std::string Prefs::*>> items) {
+        auto *g = new Group(Group::Horizontal, Frame_Group);
+        g->frame_title(title);
+        g->same_width(true);
+        for (auto &[label, m] : items) {
+            auto *col = VGroup();
+            col->vspacing(1);
+            auto *row = HGroup();
+            HSpace();
+            spec_pop(m);
+            HSpace();
+            row->end();
+            new Text(std::string("\033c") + label);
+            col->end();
+        }
+        g->end();
+    };
     // -- Windows: the fonts, the spacing (windowp.c)
     Slider *wl, *wr, *wt, *wb;
     Cycle *fam, *size;
@@ -203,6 +232,7 @@ void edit_gui_settings() {
         new Text("\033rSize:");
         size = new Cycle({"11", "12", "13", "14", "15", "16", "18"}, si);
         fonts->end();
+        pop_row("Background", {{"Window", &Prefs::window_back}, {"Requester", &Prefs::requester_back}});
         auto *sp = new Group(Group::Vertical, Frame_Group);
         sp->frame_title("Spacing");
         sp->columns(4);
@@ -232,6 +262,7 @@ void edit_gui_settings() {
         new Text("\033rHorizontal:"); gh = number(saved.group_hspacing);
         new Text("\033rVertical:"); gv = number(saved.group_vspacing);
         sp->end();
+        pop_row("Background", {{"Framed", &Prefs::group_back}, {"Register", &Prefs::register_back}, {"Page", &Prefs::page_back}});
         VSpace();
         pg->end();
     }
@@ -319,6 +350,11 @@ void edit_gui_settings() {
         cmin = new Slider(2, 20, saved.cycle_menu_min);
         new Text("\033rRecessed entries:");
         crec = new Checkmark(saved.cycle_menu_recessed);
+        new Text("\033rBackground:");
+        auto *pb = HGroup();
+        spec_pop(&Prefs::popup_back);
+        HSpace();
+        pb->end();
         g->end();
         VSpace();
         pg->end();
@@ -333,12 +369,16 @@ void edit_gui_settings() {
         cont->columns(2);
         new Text("\033rFrame:");
         frames.push_back({Frame_Slider, frame_cycle(Frame_Slider)});
+        new Text("\033rBackground:");
+        auto *cb = HGroup(); spec_pop(&Prefs::slider_back); HSpace(); cb->end();
         cont->end();
         auto *knob = new Group(Group::Vertical, Frame_Group);
         knob->frame_title("Knob Design");
         knob->columns(2);
         new Text("\033rFrame:");
         frames.push_back({Frame_Knob, frame_cycle(Frame_Knob)});
+        new Text("\033rBackground:");
+        auto *kb = HGroup(); spec_pop(&Prefs::slider_knob); HSpace(); kb->end();
         knob->end();
         top->end();
         auto *ex = new Group(Group::Vertical, Frame_Group);
@@ -384,6 +424,15 @@ void edit_gui_settings() {
         new Text("\033rGadget Type:");
         sbtype = new Cycle({"Standard", "NewLook", "Custom"}, saved.scrollbar_type);
         tr_->end();
+        auto *bb = HGroup();
+        HSpace();
+        auto *bbc = VGroup();
+        bbc->vspacing(1);
+        spec_pop(&Prefs::prop_back);
+        new Text("\033cBackground");
+        bbc->end();
+        HSpace();
+        bb->end();
         bar->end();
         left->end();
         auto *right = VGroup();
@@ -491,19 +540,9 @@ void edit_gui_settings() {
         pg->end();
     }
     // -- Strings (stringsp.c): the frame, the pop-up buttons, the colours, an example
-    Cycle *sbg, *stext, *sabg, *satext, *scur, *smbg, *smtext;
+    Popimage *sbg, *stext, *sabg, *satext, *scur, *smbg, *smtext;
     {
-        auto pen = [](int which) {
-            // a pen (the poppen): its sample and its name
-            auto *row = HGroup();
-            row->spacing(2);
-            auto *sample = new SpecialImage([](int, int, int, int) {});
-            auto *c = new Cycle({"Shine", "Halfshine", "Background", "Halfshadow", "Shadow", "Text", "Fill", "Mark"}, which);
-            row->end();
-            sample->painter([c](int X, int Y, int W, int H) { fl_color(pens()[c->active()]); fl_rectf(X, Y, W, H); });
-            c->on_change = [sample](int) { sample->redraw(); };
-            return c;
-        };
+        auto pen = [](const std::string &spec) { return pen_pop(spec); };
         auto *pg = VGroup();
         auto *top = HGroup();
         auto *left = VGroup();
@@ -529,7 +568,7 @@ void edit_gui_settings() {
         pb->end();
         left->end();
         auto *right = VGroup();
-        auto colours = [&](const char *title, int bg, int text, Cycle *&cbg, Cycle *&ctext) {
+        auto colours = [&](const char *title, const std::string &bg, const std::string &text, Popimage *&cbg, Popimage *&ctext) {
             auto *g = new Group(Group::Vertical, Frame_Group);
             g->frame_title(title);
             g->columns(2);
@@ -610,6 +649,11 @@ void edit_gui_settings() {
         // below sets the chosen one's (the original's scroll group of strings)
         auto *kc = new Group(Group::Vertical, Frame_Group);
         kc->frame_title("Keyboard Control");
+        auto *ac = HGroup();
+        new Text("\033rColor of active object:");
+        spec_pop(&Prefs::active_object_color, true);
+        HSpace();
+        ac->end();
         auto *kl = new List();
         kl->frame(Frame_ReadList);
         kl->columns({"Function", "Key"});
@@ -653,6 +697,8 @@ void edit_gui_settings() {
         tfr->columns(2);
         new Text("\033rFrame:");
         frames.push_back({Frame_Text, frame_cycle(Frame_Text)});
+        new Text("\033rBackground:");
+        auto *tb2 = HGroup(); spec_pop(&Prefs::text_back); HSpace(); tb2->end();
         tfr->end();
         new Text("\033cExample Textfield", Frame_Text);
         tf->end();
@@ -797,19 +843,20 @@ void edit_gui_settings() {
         p.bubble_first = bfirst->value();
         p.bubble_next = bnext->value();
         p.scrollbar_arrangement = *sbarr;
+        for (auto &[m, pi] : *pop_specs) p.*m = pi->spec();
         p.button_back = bback->spec();
         p.selected_back = bsel->spec();
         p.button_font_family = bfam->active() - 1;
         p.button_font_size = bsize->active() ? SIZES[bsize->active() - 1] : 0;
         p.radio_hspacing = rh->value();
         p.radio_vspacing = rv->value();
-        p.string_bg = sbg->active();
-        p.string_text = stext->active();
-        p.string_active_bg = sabg->active();
-        p.string_active_text = satext->active();
-        p.string_cursor = scur->active();
-        p.string_marked_bg = smbg->active();
-        p.string_marked_text = smtext->active();
+        p.string_bg = sbg->spec();
+        p.string_text = stext->spec();
+        p.string_active_bg = sabg->spec();
+        p.string_active_text = satext->spec();
+        p.string_cursor = scur->spec();
+        p.string_marked_bg = smbg->spec();
+        p.string_marked_text = smtext->spec();
         p.list_multi = lmulti->active();
         p.list_refresh = lrefresh->active();
         p.list_smoothed = lsmooth->on();

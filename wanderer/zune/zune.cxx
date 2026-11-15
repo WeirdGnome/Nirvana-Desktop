@@ -42,6 +42,22 @@ static std::string prefs_path() {
     return base + "/wanderer/zune.prefs";
 }
 
+// the image and pen specs of the preferences, by their names in the file
+static const std::pair<const char *, std::string Prefs::*> SPEC_PREFS[] = {
+    {"window_back", &Prefs::window_back}, {"requester_back", &Prefs::requester_back},
+    {"group_back", &Prefs::group_back}, {"register_back", &Prefs::register_back}, {"page_back", &Prefs::page_back},
+    {"popup_back", &Prefs::popup_back}, {"text_back", &Prefs::text_back}, {"prop_back", &Prefs::prop_back},
+    {"slider_back", &Prefs::slider_back}, {"slider_knob", &Prefs::slider_knob},
+    {"active_object_color", &Prefs::active_object_color}, {"string_bg", &Prefs::string_bg},
+    {"string_text", &Prefs::string_text}, {"string_active_bg", &Prefs::string_active_bg},
+    {"string_active_text", &Prefs::string_active_text}, {"string_cursor", &Prefs::string_cursor},
+    {"string_marked_bg", &Prefs::string_marked_bg}, {"string_marked_text", &Prefs::string_marked_text}};
+
+static std::string Prefs::*spec_pref(const std::string &k) {
+    for (auto &[name, m] : SPEC_PREFS) if (k == name) return m;
+    return nullptr;
+}
+
 void load_prefs() {
     Prefs &p = prefs();
     FILE *f = fopen(prefs_path().c_str(), "r");
@@ -104,20 +120,7 @@ void load_prefs() {
             else if (k == "list_cursor") p.list_cursor = v;
             else if (k == "list_select") p.list_select = v;
             else if (k == "list_selcur") p.list_selcur = v;
-            else if (k.rfind("string_", 0) == 0) {
-                static const std::pair<const char *, int Prefs::*> sk[] = {
-                    {"string_bg", &Prefs::string_bg}, {"string_text", &Prefs::string_text},
-                    {"string_active_bg", &Prefs::string_active_bg}, {"string_active_text", &Prefs::string_active_text},
-                    {"string_cursor", &Prefs::string_cursor}, {"string_marked_bg", &Prefs::string_marked_bg},
-                    {"string_marked_text", &Prefs::string_marked_text}};
-                for (auto &[name, m] : sk) if (k == name) p.*m = std::clamp(atoi(v.c_str()), 0, MPEN_COUNT - 1);
-            }
-            else if (k == "button_back") p.button_back = v;
-            else if (k == "selected_back") p.selected_back = v;
-            else if (k == "button_font_family") p.button_font_family = std::clamp(atoi(v.c_str()), -1, 2);
-            else if (k == "button_font_size") p.button_font_size = std::clamp(atoi(v.c_str()), 0, 24);
-            else if (k == "radio_hspacing") p.radio_hspacing = std::clamp(atoi(v.c_str()), 0, 20);
-            else if (k == "radio_vspacing") p.radio_vspacing = std::clamp(atoi(v.c_str()), 0, 20);
+            else if (std::string Prefs::*m = spec_pref(k)) p.*m = v;
             else if (k == "bubble_first") p.bubble_first = std::clamp(atoi(v.c_str()), 0, 50);
             else if (k == "bubble_next") p.bubble_next = std::clamp(atoi(v.c_str()), 0, 50);
             else if (k == "balancing_look") p.balancing_look = std::clamp(atoi(v.c_str()), 0, 1);
@@ -157,12 +160,7 @@ void save_prefs() {
             p.list_multi, p.list_refresh, (int)p.list_smoothed, p.list_smoothval, p.list_leading, p.list_font_family,
             p.list_font_size, p.fixed_font_size, p.list_back.c_str(), p.readlist_back.c_str(), p.list_cursor.c_str(),
             p.list_select.c_str(), p.list_selcur.c_str());
-    fprintf(f, "string_bg=%d\nstring_text=%d\nstring_active_bg=%d\nstring_active_text=%d\nstring_cursor=%d\n"
-               "string_marked_bg=%d\nstring_marked_text=%d\n",
-            p.string_bg, p.string_text, p.string_active_bg, p.string_active_text, p.string_cursor, p.string_marked_bg,
-            p.string_marked_text);
-    fprintf(f, "button_back=%s\nselected_back=%s\nbutton_font_family=%d\nbutton_font_size=%d\nradio_hspacing=%d\nradio_vspacing=%d\n",
-            p.button_back.c_str(), p.selected_back.c_str(), p.button_font_family, p.button_font_size, p.radio_hspacing, p.radio_vspacing);
+    for (auto &[name, m] : SPEC_PREFS) fprintf(f, "%s=%s\n", name, (p.*m).c_str());
     fprintf(f, "scrollbar_arrangement=%d\nscrollbar_type=%d\n", p.scrollbar_arrangement, p.scrollbar_type);
     fprintf(f, "bubble_first=%d\nbubble_next=%d\n", p.bubble_first, p.bubble_next);
     fprintf(f, "drag_left_modifier=%s\ndrag_middle_modifier=%s\n", p.drag_left_modifier.c_str(), p.drag_middle_modifier.c_str());
@@ -308,12 +306,37 @@ void Area::min_max(int &minw, int &minh, int &defw, int &defh, int &maxw, int &m
     defh = std::clamp(defh, minh, std::max(minh, maxh));
 }
 
+void Area::draw_parent_background(int X, int Y, int W, int H) {
+    // the background of the first ancestor that has one, laid over that ancestor (a gradient
+    // runs over all of it), shown only here
+    fl_push_clip(X, Y, W, H);
+    bool done = false;
+    for (Fl_Widget *p = parent(); p && !done; p = p->parent()) {
+        if (auto *a = dynamic_cast<Area *>(p)) {
+            auto *g = dynamic_cast<Group *>(a);
+            bool own = a->bg_ref_ || a->bg_pen_ >= 0 || (g && g->frame_spec().type != FST_NONE);
+            if (own) { a->draw_background(a->x(), a->y(), a->w(), a->h()); done = true; }
+        } else if (auto *w = dynamic_cast<Window *>(p)) {
+            draw_imspec(w->background_spec(), 0, 0, w->w(), w->h());
+            done = true;
+        }
+    }
+    if (!done) draw_imspec(prefs().window_back, X, Y, W, H);
+    fl_pop_clip();
+}
+
 void Area::draw_background(int X, int Y, int W, int H) {
-    if (bg_pen_ < 0) return;
     if ((std_ == Frame_Button || std_ == Frame_ImageButton) && bg_pen_ == MPEN_BACKGROUND) {
         // a button: MUII_ButtonBack, pressed MUII_SelectedBack (the Buttons page's patterns)
         bool down = selected_ && (input_ == Input_RelVerify || input_ == Input_Immediate);
         draw_imspec(down ? prefs().selected_back : prefs().button_back, X, Y, W, H);
+        return;
+    }
+    if (bg_ref_) { draw_imspec(prefs().*bg_ref_, X, Y, W, H); return; }
+    if (bg_pen_ < 0) {
+        // a framed group: MUII_GroupBack; otherwise the parent's background
+        if (dynamic_cast<Group *>(this) && frame_spec().type != FST_NONE) { draw_imspec(prefs().group_back, X, Y, W, H); return; }
+        draw_parent_background(X, Y, W, H);
         return;
     }
     int pen = bg_pen_;
@@ -597,17 +620,13 @@ void Group::draw() {
         // a framed group draws its background (configdata: MUII_GroupBack); the title sits on
         // the top edge of the frame, centred
         int th = title_h();
-        if (bg_pen_ >= 0 || frame_spec().type != FST_NONE) {
-            fl_color(pens()[bg_pen_ >= 0 ? bg_pen_ : MPEN_BACKGROUND]);
-            fl_rectf(x(), y(), w(), h());
-        }
+        draw_background(x(), y(), w(), h());
         draw_frame(frame_spec(), x(), y() + th / 2, w(), h() - th / 2);
         if (th) {
             fl_font(prefs().font_bold, prefs().font_size);
             int tw = (int)fl_width(title_.c_str()) + 8;
             int tx = x() + (w() - tw) / 2;
-            fl_color(pens()[MPEN_BACKGROUND]);
-            fl_rectf(tx, y(), tw, th);
+            draw_background(tx, y(), tw, th);
             fl_color(pens()[MPEN_TEXT]);
             fl_draw(title_.c_str(), tx, y(), tw, th, FL_ALIGN_CENTER);
         }
@@ -623,7 +642,9 @@ static const int INTERTAB = 4, TEXTSPACING = 4, REGISTERTAB_EXTRA_HEIGHT = 7;
 
 Register::Register(const std::vector<std::string> &titles) : Group(Group::Vertical) {
     for (auto &t : titles) titles_.push_back(tr_text(t));
-    background(MPEN_BACKGROUND);   // the register's own background inside its frame
+    // the register's own background inside its frame (MUII_RegisterBack); a page group
+    // without titles: MUII_PageBack
+    background(titles.empty() ? &Prefs::page_back : &Prefs::register_back);
 }
 
 int Register::tab_h() const { return titles_.empty() ? 0 : prefs().font_size + REGISTERTAB_EXTRA_HEIGHT; }
@@ -708,18 +729,18 @@ void Register::draw_tab(int i) {
     if (i == active_) {
         top = y(); bottom = y() + tab_h() - 1 - 2;
         left = x() + x1 - 1; right = x() + x2 + 1;
-        fl_color(P[MPEN_BACKGROUND]);
         int bw = right - left + 1;
-        fl_rectf(left, top + 4, bw, tab_h() - 4);
-        fl_rectf(left + 2, top + 2, bw - 4, 2);
-        fl_rectf(left + 4, top + 1, bw - 8, 1);
+        const std::string &rb = prefs().register_back;
+        draw_imspec(rb, left, top + 4, bw, tab_h() - 4);
+        draw_imspec(rb, left + 2, top + 2, bw - 4, 2);
+        draw_imspec(rb, left + 4, top + 1, bw - 8, 1);
     } else {
         top = y() + 2; bottom = y() + tab_h() - 1 - 1;
         left = x() + x1; right = x() + x2;
-        fl_color(P[MPEN_BACKGROUND]);
-        fl_rectf(left, top + 4, right - left + 1, bottom - top - 3);
-        fl_rectf(left + 2, top + 2, right - left - 3, 2);
-        fl_rectf(left + 4, top + 1, right - left - 7, 1);
+        const std::string &rb = prefs().register_back;
+        draw_imspec(rb, left, top + 4, right - left + 1, bottom - top - 3);
+        draw_imspec(rb, left + 2, top + 2, right - left - 3, 2);
+        draw_imspec(rb, left + 4, top + 1, right - left - 7, 1);
     }
     auto px = [](int X, int Y) { fl_point(X, Y); };
     fl_color(P[MPEN_SHINE]);
@@ -734,8 +755,7 @@ void Register::draw_tab(int i) {
         px(left - 1, bottom + 1);
         fl_color(P[MPEN_SHADOW]);
         px(right + 1, bottom + 1);
-        fl_color(P[MPEN_BACKGROUND]);   // the frame's top line opens under the active tab
-        fl_xyline(left - 1, bottom + 2, right + 1);
+        draw_imspec(prefs().register_back, left - 1, bottom + 2, right - left + 3, 1);   // the frame's top line opens under the active tab
     }
     fl_color(P[MPEN_SHADOW]);
     px(right - 1, top + 2);
@@ -756,12 +776,8 @@ void Register::draw_tab(int i) {
 void Register::draw() {
     if (damage() & ~FL_DAMAGE_CHILD) {
         // the parent's background behind the tabs, the register's inside the frame
-        Fl_Widget *p = parent();
-        auto *pa = dynamic_cast<Area *>(p);
-        (void)pa;
-        fl_color(pens()[MPEN_BACKGROUND]);
-        fl_rectf(x(), y(), w(), h());
         if (titles_.empty()) {   // a page group
+            draw_background(x(), y(), w(), h());
             for (int i = 0; i < children(); i++) if (child(i)->visible()) child(i)->damage(FL_DAMAGE_ALL);
             draw_children();
             return;
@@ -769,6 +785,8 @@ void Register::draw() {
         const Pens &P = pens();
         int th = tab_h();
         int fw = w(), fh = h() - th;
+        draw_parent_background(x(), y(), w(), th);
+        draw_background(x(), y() + th, w(), h() - th);
         fl_color(P[MPEN_SHINE]);
         fl_yxline(x(), y() + th - 1, y() + th + fh - 1);
         fl_xyline(x() + 1, y() + th - 1, x() + fw - 2);
@@ -816,7 +834,7 @@ void Rectangle::draw_contents() {
 // Text
 // ============================================================================================
 Text::Text(const std::string &t, StdFrame f) : Area(f), text_(tr_text(t)) {
-    if (f == Frame_Text) background(MPEN_BACKGROUND);
+    if (f == Frame_Text) background(&Prefs::text_back);   // MUII_TextBack
 }
 
 // Zune's control sequences: ESC c / r / l alignment, ESC b bold, ESC n normal, ESC - stop
@@ -923,10 +941,11 @@ void String::draw_background(int X, int Y, int W, int H) {
     Area::draw_background(X, Y, W, H);
     const Prefs &p = prefs();
     bool active = Fl::focus() == in_;
-    in_->color(pens()[active ? p.string_active_bg : p.string_bg]);
-    in_->textcolor(pens()[active ? p.string_active_text : p.string_text]);
-    in_->cursor_color(pens()[p.string_cursor]);
-    in_->selection_color(pens()[p.string_marked_bg]);
+    auto pen = [](const std::string &s) { unsigned c = penspec_rgb(s); return fl_rgb_color((c >> 16) & 255, (c >> 8) & 255, c & 255); };
+    in_->color(pen(active ? p.string_active_bg : p.string_bg));
+    in_->textcolor(pen(active ? p.string_active_text : p.string_text));
+    in_->cursor_color(pen(p.string_cursor));
+    in_->selection_color(pen(p.string_marked_bg));
     in_->textfont(p.font);
     in_->textsize(p.font_size);
     if (center_) {
@@ -955,7 +974,7 @@ void String::resize(int X, int Y, int W, int H) {
 // Prop
 // ============================================================================================
 Prop::Prop(bool horiz) : Area(Frame_Prop), horiz_(horiz) {
-    background(MPEN_HALFSHADOW);   // the track
+    background(&Prefs::prop_back);   // the track (MUII_PropBack)
     inner(1, 1, 1, 1);
 }
 
@@ -1180,8 +1199,7 @@ public:
     int highlighted() const { return active_; }
     void draw() override {
         const Pens &p = pens();
-        fl_color(p[MPEN_BACKGROUND]);   // MUII_PopupBack
-        fl_rectf(0, 0, w(), h());
+        draw_imspec(prefs().popup_back, 0, 0, w(), h());   // MUII_PopupBack
         draw_frame(std_frame(Frame_PopUp), 0, 0, w(), h());
         fl_font(prefs().font, prefs().font_size);
         for (int i = 0; i < (int)entries_.size(); i++) {
@@ -1534,7 +1552,7 @@ int List::handle(int e) {
 Slider::Slider(int min, int max, int value, bool horiz)
     : Area(Frame_Slider), min_(min), max_(std::max(min, max)), horiz_(horiz) {
     value_ = std::clamp(value, min_, max_);
-    background(MPEN_BACKGROUND);   // MUII_SliderBack "0:128"
+    background(&Prefs::slider_back);   // MUII_SliderBack "0:128"
 }
 
 void Slider::value(int v) {
@@ -1589,8 +1607,7 @@ void Slider::draw_contents() {
     if (horiz_) kx += knob_pos();
     else ky += knob_pos();
     const FrameSpec &k = std_frame(Frame_Knob);
-    fl_color(pens()[MPEN_BACKGROUND]);   // MUII_SliderKnob
-    fl_rectf(kx, ky, kw, kh);
+    draw_imspec(prefs().slider_knob, kx, ky, kw, kh);   // MUII_SliderKnob
     draw_frame(k.type, k.down != dragging_, kx, ky, kw, kh);
     fl_font(prefs().font, prefs().font_size);
     fl_color(pens()[MPEN_TEXT]);
@@ -2038,12 +2055,13 @@ int Window::handle(int e) {
 
 void Window::draw() {
     if (damage() & ~FL_DAMAGE_CHILD) {
-        // configdata: the window background "0:128"
-        fl_color(pens()[MPEN_BACKGROUND]);
-        fl_rectf(0, 0, w(), h());
+        // MUII_WindowBack "0:128" (a requester: MUII_RequesterBack "0:137")
+        draw_imspec(background_spec(), 0, 0, w(), h());
     }
     draw_children();
 }
+
+const std::string &Window::background_spec() const { return requester_ ? prefs().requester_back : prefs().window_back; }
 
 int run() { return Fl::run(); }
 

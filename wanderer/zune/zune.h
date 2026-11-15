@@ -98,12 +98,18 @@ struct Prefs {
     // the Buttons page: the background and the pressed background of buttons (MUII
     // patterns), the button font (-1 / 0: the normal one), the radio buttons' spacing
     std::string button_back = "0:128", selected_back = "0:131";   // (image specs)
+    // the other backgrounds (image specs, configdata.c): windows, requesters, framed groups,
+    // registers, page groups, pop-ups, text fields, scrollers (the half shadow here), sliders
+    // and their knobs; the colour of the active object (Navigation page)
+    std::string window_back = "0:128", requester_back = "0:137", group_back = "0:128", register_back = "0:128",
+                page_back = "0:128", popup_back = "0:128", text_back = "0:128", prop_back = "2:m3",
+                slider_back = "0:128", slider_knob = "0:128", active_object_color = "m0";
     int button_font_family = -1, button_font_size = 0;
     int radio_hspacing = 4, radio_vspacing = 1;
     Fl_Font button_font = FL_HELVETICA, button_font_bold = FL_HELVETICA_BOLD;
     int button_size() const { return button_font_size > 0 ? button_font_size : font_size; }
-    int string_bg = 2, string_text = 5, string_active_bg = 1, string_active_text = 5, string_cursor = 7,
-        string_marked_bg = 6, string_marked_text = 0;
+    std::string string_bg = "m2", string_text = "m5", string_active_bg = "m1", string_active_text = "m5",
+                string_cursor = "m7", string_marked_bg = "m6", string_marked_text = "m0";   // (pen specs)
     int list_size() const { return list_font_size > 0 ? list_font_size : font_size; }
     std::string custom_frame[16];   // the Frames page: the custom frames' frame.config files
     int font_size = 13;          // the screen font (topaz-like 8 pt is too small on today's screens)
@@ -128,7 +134,9 @@ public:
     void frame(const std::string &spec) { own_ = FrameSpec::parse(spec); std_ = Frame_Count; }
     const FrameSpec &frame_spec() const { return std_ < Frame_Count ? std_frame(std_) : own_; }
     // the background: a pen (MPEN_BACKGROUND by default) or none (the parent's shows through)
-    void background(int pen) { bg_pen_ = pen; }
+    void background(int pen) { bg_pen_ = pen; bg_ref_ = nullptr; }
+    // a background of the preferences (an image spec, e.g. &Prefs::text_back)
+    void background(std::string Prefs::*ref) { bg_ref_ = ref; }
     void inner(int l, int r, int t, int b) { il_ = l; ir_ = r; it_ = t; ib_ = b; inner_set_ = true; }
     void weight(int w) { weight_ = w; hweight_ = vweight_ = -1; }
     int weight() const { return weight_; }
@@ -165,9 +173,12 @@ protected:
     void draw_active_outline();
     void focus_changed();
     virtual void draw_background(int X, int Y, int W, int H);
+    // no background of its own: the parent's shows through (MUIM_DrawParentBackground)
+    void draw_parent_background(int X, int Y, int W, int H);
+    std::string Prefs::*bg_ref_ = nullptr;
     StdFrame std_ = Frame_None;
     FrameSpec own_;
-    int bg_pen_ = MPEN_BACKGROUND;
+    int bg_pen_ = -1;   // (-1: none of its own - the parent's)
     int il_ = 0, ir_ = 0, it_ = 0, ib_ = 0;
     bool inner_set_ = false;
     int weight_ = 100, hweight_ = -1, vweight_ = -1, fixw_ = 0, fixh_ = 0;
@@ -569,6 +580,9 @@ public:
     ~Window() override;
     void root(Area *r);
     Area *root() const { return root_; }
+    // a requester's window has the requester background (MUII_RequesterBack)
+    void requester(bool r) { requester_ = r; }
+    const std::string &background_spec() const;
     // the size from the root object's default size (MUIA_Window_Width/Height default)
     void fit();
     void resize(int X, int Y, int W, int H) override;
@@ -576,6 +590,7 @@ public:
     int handle(int e) override;
 
 private:
+    bool requester_ = false;
     Area *root_ = nullptr;
     std::string title_;
     std::unique_ptr<class Fl_Widget_Tracker> last_focus_;   // the active object when the window was left

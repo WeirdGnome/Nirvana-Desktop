@@ -64,7 +64,7 @@ namespace {
 class RequesterWindow : public Window {
 public:
     RequesterWindow(const std::string &title, Area *root, std::function<void(bool)> key)
-        : Window(title, root), key_(std::move(key)) {}
+        : Window(title, root), key_(std::move(key)) { requester(true); }   // MUII_RequesterBack
     int handle(int e) override {
         if (e == FL_KEYBOARD || e == FL_SHORTCUT) {
             int k = Fl::event_key();

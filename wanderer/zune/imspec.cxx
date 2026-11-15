@@ -18,6 +18,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <map>
+#include <vector>
 #include <unistd.h>
 
 namespace zune {
@@ -150,6 +151,12 @@ void draw_imspec(const ImSpec &s, int X, int Y, int W, int H) {
         double ox = dx < 0 ? W - 1 : 0, oy = dy < 0 ? H - 1 : 0;
         int r1 = (s.rgb >> 16) & 255, g1 = (s.rgb >> 8) & 255, b1 = s.rgb & 255;
         int r2 = (s.rgb2 >> 16) & 255, g2 = (s.rgb2 >> 8) & 255, b2 = s.rgb2 & 255;
+        // (the last few gradients drawn are kept: the same one is drawn again for every object
+        // that shows it through)
+        struct Cached { std::string key; Fl_RGB_Image *img; };
+        static std::vector<Cached> cache;
+        std::string key = s.str() + "@" + std::to_string(W) + "x" + std::to_string(H);
+        for (auto &c : cache) if (c.key == key) { c.img->draw(X, Y); return; }
         auto *d = new uchar[W * H * 3];
         for (int yy = 0; yy < H; yy++)
             for (int xx = 0; xx < W; xx++) {
@@ -160,9 +167,11 @@ void draw_imspec(const ImSpec &s, int X, int Y, int W, int H) {
                 px[1] = (uchar)(g1 + (g2 - g1) * t);
                 px[2] = (uchar)(b1 + (b2 - b1) * t);
             }
-        Fl_RGB_Image img(d, W, H, 3);
-        img.alloc_array = 1;
-        img.draw(X, Y);
+        auto *img = new Fl_RGB_Image(d, W, H, 3);
+        img->alloc_array = 1;
+        img->draw(X, Y);
+        cache.push_back({key, img});
+        if (cache.size() > 8) { delete cache.front().img; cache.erase(cache.begin()); }
         return;
     }
     default: return;
