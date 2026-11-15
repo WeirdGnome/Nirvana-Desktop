@@ -1,5 +1,18 @@
 # Lista zmian
 
+## 0.13.2 – 2026-11-15
+
+### Poprawki
+- Więcej AppImage pokazuje ikony: te bez znacznika „AI” w nagłówku (rozpoznawane po nazwie
+  `*.AppImage`), te, których system plików nie zaczyna się zaraz po programie (szukany po
+  sygnaturze), obrazy z atrybutami rozszerzonymi (`unsquashfs -no-xattrs`; liczy się to,
+  co wyjęto, niezależnie od kodu wyjścia) oraz dowiązania `.DirIcon` bezwzględne albo
+  sięgające katalogu wyżej wewnątrz obrazu. Obsługiwane są też obrazki JPEG i BMP.
+
+### Nowe
+- `rambler --appimage-icon PLIK` opisuje każdy krok wyjmowania ikony AppImage, żeby
+  znaleźć przyczynę, gdy jej brak.
+
 ## 0.13.1 – 2026-11-15
 
 ### Poprawki

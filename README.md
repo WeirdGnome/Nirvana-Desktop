@@ -15,12 +15,12 @@ Parts of the port:
 * **window manager** (`wm`, later) – what Intuition does on AROS: window frames and
   gadgets, screens, screen dragging.
 
-Version: **0.13.1**
+Version: **0.13.2**
 
 ## Installing
 
 ```sh
-tar xzf rambler-x11-0.13.1.tar.gz
+tar xzf rambler-x11-0.13.2.tar.gz
 cd rambler-x11
 ./install.sh
 ```
@@ -81,7 +81,8 @@ rambler-wm & rambler --backdrop
   and PNG icons). A dual icon has a second image for its selected state; it goes with its
   file when the file is copied, moved, renamed or deleted.
 * **AppImages** show the icon they carry (taken out with `unsquashfs` from the
-  `squashfs-tools` package; the AppImage is not run for it).
+  `squashfs-tools` package; the AppImage is not run for it). `rambler --appimage-icon FILE`
+  tells, step by step, what becomes of an AppImage's icon.
   *Icon > Snapshot* writes it out as the AppImage's own dual icon (`Name.AppImage.info`:
   two PNG images one after the other); paint over the second one for the selected look.
 

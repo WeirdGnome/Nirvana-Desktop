@@ -33,12 +33,28 @@ namespace rambler {
 
 namespace {
 
-// "AI" and the type at byte 8 of the ELF header (0 - not an AppImage)
+// the steps told (rambler --appimage-icon FILE)
+FILE *g_trace = nullptr;
+#define TRACE(...) do { if (g_trace) { fprintf(g_trace, __VA_ARGS__); fputc('\n', g_trace); } } while (0)
+
+bool ends_appimage(const std::string &path) {
+    std::string n = path.substr(path.find_last_of('/') + 1);
+    for (auto &c : n) c = (char)tolower(c);
+    return n.size() > 9 && n.compare(n.size() - 9, 9, ".appimage") == 0;
+}
+
+// An AppImage: an ELF program with "AI" and the type at byte 8 of its header - or, without
+// that mark (some tools leave it out), an ELF program named *.AppImage. The squashfs starts
+// where the ELF ends (after its section headers); if its magic "hsqs" is not there, it is
+// looked for after the program's headers (0 - not an AppImage)
 int appimage_type(const std::string &path, unsigned long long &squashfs_offset) {
     std::ifstream in(path, std::ios::binary);
     unsigned char h[64];
     if (!in.read((char *)h, sizeof h)) return 0;
-    if (memcmp(h, "\x7f" "ELF", 4) || h[8] != 'A' || h[9] != 'I' || (h[10] != 1 && h[10] != 2)) return 0;
+    if (memcmp(h, "\x7f" "ELF", 4)) return 0;
+    bool marked = h[8] == 'A' && h[9] == 'I' && (h[10] == 1 || h[10] == 2);
+    if (!marked && !ends_appimage(path)) return 0;
+    int type = marked ? h[10] : 2;
     bool le = h[5] == 1;
     auto get = [&](int at, int n) {
         unsigned long long v = 0;
@@ -47,7 +63,27 @@ int appimage_type(const std::string &path, unsigned long long &squashfs_offset) 
     };
     if (h[4] == 2) squashfs_offset = get(0x28, 8) + get(0x3A, 2) * get(0x3C, 2);   // ELF64
     else squashfs_offset = get(0x20, 4) + get(0x2E, 2) * get(0x30, 2);              // ELF32
-    return h[10];
+    TRACE("ELF%d, AppImage mark: %s, type %d; the ELF ends at %llu", h[4] == 2 ? 64 : 32, marked ? "yes" : "no (by its name)",
+          type, squashfs_offset);
+    if (type != 2) return type;
+    char magic[4] = {0};
+    in.clear();
+    in.seekg((std::streamoff)squashfs_offset);
+    if (in.read(magic, 4) && !memcmp(magic, "hsqs", 4)) { TRACE("squashfs found there"); return type; }
+    // not there: the first "hsqs" in the first 8 MB, at a 4-byte boundary
+    in.clear();
+    in.seekg(0);
+    std::vector<char> buf(8u << 20);
+    in.read(buf.data(), (std::streamsize)buf.size());
+    size_t n = (size_t)in.gcount();
+    for (size_t i = 64; i + 4 <= n; i += 4)
+        if (!memcmp(&buf[i], "hsqs", 4)) {
+            squashfs_offset = i;
+            TRACE("squashfs found by its magic at %zu", i);
+            return type;
+        }
+    TRACE("no squashfs found");
+    return 0;
 }
 
 std::string cache_dir() {
@@ -92,27 +128,38 @@ std::string extract_dir_icon(const std::string &appimage, unsigned long long off
     std::error_code ec;
     std::string name = ".DirIcon";
     how = Taken::NoIcon;
-    for (int hops = 0; hops < 4; hops++) {
+    for (int hops = 0; hops < 6; hops++) {
         fs::remove_all(dir, ec);
         std::string err;
-        int rc = run({"unsquashfs", "-o", std::to_string(offset), "-d", dir, "-f", appimage, name}, err);
-        if (rc != 0) {
+        // (-no-xattrs: the image's extended attributes could not all be set by a user, and
+        // that is an error to some versions)
+        int rc = run({"unsquashfs", "-no-xattrs", "-o", std::to_string(offset), "-d", dir, "-f", appimage, name}, err);
+        std::string got = dir + "/" + name;
+        TRACE("unsquashfs ... %s: exit %d%s%s", name.c_str(), rc, err.empty() ? "" : ", said: ",
+              err.substr(0, err.find('\n')).c_str());
+        // what was taken out counts, whatever the exit code (warnings make some versions fail)
+        if (rc != 0 && !fs::exists(fs::symlink_status(got, ec))) {
             // (said in the session's log: no unsquashfs, an unsquashfs too old, a damaged image)
             how = Taken::Failed;
             fprintf(stderr, "rambler: the icon of %s could not be taken out (unsquashfs: %s)\n", appimage.c_str(),
                     rc == 127 ? "not installed - the squashfs-tools package" : err.substr(0, err.find('\n')).c_str());
             return "";
         }
-        std::string got = dir + "/" + name;
         if (fs::is_symlink(got, ec)) {
-            // a link (".DirIcon -> app.png", or "usr/share/icons/.../app.png"): that one, inside
+            // a link (".DirIcon -> app.png", "usr/share/icons/.../app.png", "/app.png",
+            // "../x.png"): that file inside the image, its path made plain against the link's
+            // directory; one leaving the image is not followed
             std::string target = fs::read_symlink(got, ec).string();
-            while (target.rfind("./", 0) == 0) target = target.substr(2);
-            if (target.empty() || target[0] == '/' || target.find("..") != std::string::npos) return "";
-            name = target;
+            fs::path base = target.size() && target[0] == '/' ? fs::path() : fs::path(name).parent_path();
+            fs::path p = (base / fs::path(target).relative_path()).lexically_normal();
+            std::string s = p.string();
+            TRACE("%s is a link to %s -> %s", name.c_str(), target.c_str(), s.c_str());
+            if (s.empty() || s == "." || s.rfind("..", 0) == 0) return "";
+            name = s;
             continue;
         }
-        if (fs::is_regular_file(got, ec)) { how = Taken::Picture; return got; }
+        if (fs::is_regular_file(got, ec)) { how = Taken::Picture; TRACE("taken out: %s", name.c_str()); return got; }
+        TRACE("%s is not in the image", name.c_str());
         return "";
     }
     return "";
@@ -183,12 +230,28 @@ std::string md5_hex(const std::string &msg) {
 }
 }  // namespace
 
+std::shared_ptr<DiskObject> appimage_icon(const std::string &path);
+
+int appimage_icon_trace(const std::string &path) {
+    // every step told, nothing kept from before
+    g_trace = stdout;
+    std::error_code ec;
+    struct stat st;
+    if (stat(path.c_str(), &st) != 0) { printf("%s: cannot be read\n", path.c_str()); return 1; }
+    std::string key = md5_hex(path + "|" + std::to_string(st.st_size) + "|" + std::to_string(st.st_mtime));
+    for (const char *ext : {".png", ".svg", ".xpm", ".jpg", ".bmp", ".noicon", ".none"}) fs::remove(cache_dir() + "/" + key + ext, ec);
+    printf("%s (%lld bytes)\n", path.c_str(), (long long)st.st_size);
+    auto o = appimage_icon(path);
+    g_trace = nullptr;
+    return o ? 0 : 1;
+}
+
 std::shared_ptr<DiskObject> appimage_icon(const std::string &path) {
     struct stat st;
     if (stat(path.c_str(), &st) != 0 || !S_ISREG(st.st_mode) || st.st_size < 4096) return nullptr;
     unsigned long long offset = 0;
     int type = appimage_type(path, offset);
-    if (!type) return nullptr;
+    if (!type) { TRACE("not an AppImage"); return nullptr; }
     // kept while the AppImage stays as it is
     struct Kept { time_t mtime; off_t size; std::shared_ptr<DiskObject> obj; };
     static std::map<std::string, Kept> kept;
@@ -200,11 +263,13 @@ std::shared_ptr<DiskObject> appimage_icon(const std::string &path) {
     std::string cached = cache_dir() + "/" + key;
     std::error_code ec;
     std::string picture;
-    for (const char *ext : {".png", ".svg", ".xpm"})
+    for (const char *ext : {".png", ".svg", ".xpm", ".jpg", ".bmp"})
         if (fs::is_regular_file(cached + ext, ec)) { picture = cached + ext; break; }
+    TRACE("kept before: %s", picture.empty() ? "no" : picture.c_str());
     // (an AppImage known to have no icon: not again; ".noicon" - an earlier version marked
     // failures too, so its ".none" marks are not trusted)
     bool tried = fs::exists(cached + ".noicon", ec), failed = false;
+    if (tried) TRACE("known to have no icon (%s.noicon)", cached.c_str());
     if (picture.empty() && !tried && type == 2 && offset > 0 && offset < (unsigned long long)st.st_size) {
         std::string dir = cache_dir() + "/" + key + ".tmp";
         fs::create_directories(cache_dir(), ec);
@@ -218,7 +283,10 @@ std::shared_ptr<DiskObject> appimage_icon(const std::string &path) {
             std::string h(head, (size_t)in.gcount());
             const char *ext = !h.compare(0, 4, "\x89PNG") ? ".png"
                               : h.find("<svg") != std::string::npos || h.find("<?xml") != std::string::npos ? ".svg"
-                              : h.find("XPM") != std::string::npos ? ".xpm" : nullptr;
+                              : h.find("XPM") != std::string::npos ? ".xpm"
+                              : !h.compare(0, 2, "\xFF\xD8") ? ".jpg"
+                              : !h.compare(0, 2, "BM") ? ".bmp" : nullptr;
+            TRACE("the picture: %s", ext ? ext + 1 : "of a kind not known");
             if (ext) {
                 fs::rename(got, cached + ext, ec);
                 if (!ec) picture = cached + ext;
@@ -229,8 +297,9 @@ std::shared_ptr<DiskObject> appimage_icon(const std::string &path) {
         if (picture.empty() && !failed) std::ofstream(cached + ".noicon");
         fs::remove(cached + ".none", ec);
     }
-    if (picture.empty()) picture = thumbnail_of(path);
+    if (picture.empty()) { picture = thumbnail_of(path); TRACE("thumbnail: %s", picture.empty() ? "none" : picture.c_str()); }
     if (!picture.empty()) obj = icon_from_picture(picture, ICON_W);
+    TRACE("icon: %s", obj ? (std::to_string(obj->width) + "x" + std::to_string(obj->height)).c_str() : "none (the picture could not be read)");
     if (!failed || obj) kept[path] = {st.st_mtime, st.st_size, obj};   // (a failure: tried again next time)
     return obj;
 }

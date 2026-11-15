@@ -1245,6 +1245,12 @@ int main(int argc, char **argv) {
     for (int i = 1; i < argc; i++) {
         if (!strcmp(argv[i], "--backdrop")) backdrop = true;
         else if (!strcmp(argv[i], "--prefs") && i + 1 < argc) prefs_program = argv[++i];
+        else if (!strcmp(argv[i], "--appimage-icon") && i + 1 < argc) {
+            // (what becomes of an AppImage's icon, step by step - to find why one has none)
+            Fl::visual(FL_DOUBLE | FL_INDEX);
+            lune::load_prefs();
+            return appimage_icon_trace(argv[++i]);
+        }
     }
     if (!prefs_program.empty()) {
         // a preferences program on its own (SYS:Prefs/...): its editor, the program ends with it

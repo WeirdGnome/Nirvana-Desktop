@@ -67,5 +67,7 @@ bool put_png_icon(const std::string &info_file, const DiskObject &o);
 std::shared_ptr<DiskObject> theme_icon(const std::string &name);
 // an AppImage's own icon (appimage.cxx): nullptr - not an AppImage, or no icon in it
 std::shared_ptr<DiskObject> appimage_icon(const std::string &path);
+// the steps of taking an AppImage's icon out, told on stdout (rambler --appimage-icon FILE)
+int appimage_icon_trace(const std::string &path);
 
 }  // namespace rambler

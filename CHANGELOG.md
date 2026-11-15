@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.13.2 – 2026-11-15
+
+### Fixed
+- More AppImages show their icons: ones without the "AI" mark in their header (known by
+  the name `*.AppImage`), ones whose file system is not right after the program (found by
+  its magic), images with extended attributes (`unsquashfs -no-xattrs`; what was taken out
+  counts whatever the exit code), and `.DirIcon` links that are absolute or go up a
+  directory inside the image. JPEG and BMP pictures are taken too.
+
+### Added
+- `rambler --appimage-icon FILE` tells each step of taking an AppImage's icon out, to find
+  why one has none.
+
 ## 0.13.1 – 2026-11-15
 
 ### Fixed
