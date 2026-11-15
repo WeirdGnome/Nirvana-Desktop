@@ -48,6 +48,11 @@
   IMAG / ARGB chunk, the PNG attached after the first); an icon with one image is shown
   lighter, as on AROS. The `.info` files are not listed themselves, and they go with
   their file when it is copied, moved, renamed or deleted.
+- **AppImages show their own icons.** The icon (`.DirIcon`, PNG, SVG or XPM, also through
+  a link) is taken out of the AppImage's file system with `unsquashfs` - the program is
+  never run - and kept in `~/.cache/rambler/appimage-icons`; without it, the thumbnail
+  desktop tools left in `~/.cache/thumbnails` is used. A `.info` beside the AppImage still
+  comes first. The package recommends `squashfs-tools`.
 
 ### Fixed
 - Polish: the Scrollbars page of the Lune preferences was named like the Sliders page.

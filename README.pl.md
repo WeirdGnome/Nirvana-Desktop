@@ -63,6 +63,8 @@ Sesja uruchamia najpierw `rambler-wm`, a potem `rambler --backdrop`. Polecenie
 * **Pliki ikon**: własna ikona pliku to `nazwa.info` obok niego (ikony klasyczne,
   NewIcons, kolorowe i PNG). Ikona podwójna ma drugi obraz na stan zaznaczenia; idzie
   razem z plikiem przy kopiowaniu, przenoszeniu, zmianie nazwy i usuwaniu.
+* **AppImage** pokazują ikonę, którą zawierają (wyjmowaną przez `unsquashfs` z paczki
+  `squashfs-tools`; AppImage nie jest przy tym uruchamiany).
 
 ## Preferencje
 

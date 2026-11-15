@@ -49,6 +49,11 @@
   IMAG / ARGB, PNG doklejony po pierwszym); ikona z jednym obrazem jest wtedy
   rozjaśniana, jak w AROS. Same pliki `.info` nie są pokazywane, a przy kopiowaniu,
   przenoszeniu, zmianie nazwy i usuwaniu idą razem ze swoim plikiem.
+- **AppImage pokazują własne ikony.** Ikona (`.DirIcon`, PNG, SVG albo XPM, także przez
+  dowiązanie) jest wyjmowana z systemu plików AppImage przez `unsquashfs` – program nie
+  jest uruchamiany – i przechowywana w `~/.cache/rambler/appimage-icons`; bez tego
+  używana jest miniatura zostawiona przez narzędzia pulpitu w `~/.cache/thumbnails`.
+  Plik `.info` obok AppImage nadal ma pierwszeństwo. Paczka zaleca `squashfs-tools`.
 
 ### Poprawki
 - Po polsku strona Paski przewijania w preferencjach Lune nazywała się tak samo jak strona

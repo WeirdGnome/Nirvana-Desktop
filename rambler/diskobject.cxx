@@ -13,6 +13,8 @@
 #include "lune.h"
 
 #include <FL/Fl_PNG_Image.H>
+#include <FL/Fl_Shared_Image.H>
+#include <FL/Fl_SVG_Image.H>
 #include <FL/Fl_RGB_Image.H>
 
 #include <algorithm>
@@ -453,10 +455,45 @@ std::shared_ptr<DiskObject> read_icon_file(const std::string &file) {
     return o;
 }
 
+std::shared_ptr<DiskObject> icon_from_picture(const std::string &picture, int max) {
+    static bool registered = false;
+    if (!registered) { fl_register_images(); registered = true; }
+    Fl_Shared_Image *si = Fl_Shared_Image::get(picture.c_str());
+    if (!si || si->w() <= 0 || si->h() <= 0) { if (si) si->release(); return nullptr; }
+    int w = si->w(), h = si->h();
+    if (w > max || h > max) {   // (the proportions kept)
+        if (w >= h) { h = std::max(1, h * max / w); w = max; }
+        else { w = std::max(1, w * max / h); h = max; }
+    }
+    Fl_Image *img = si->image() ? si->image()->copy(w, h) : nullptr;   // (an SVG is drawn at that size)
+    si->release();
+    if (auto *svg = dynamic_cast<Fl_SVG_Image *>(img)) svg->normalize();   // (drawn now, at that size)
+    auto *rgb = dynamic_cast<Fl_RGB_Image *>(img);
+    if (!rgb || !rgb->data() || !rgb->data()[0] || rgb->d() < 1) { delete img; return nullptr; }
+    auto o = std::make_shared<DiskObject>();
+    o->width = rgb->w();
+    o->height = rgb->h();
+    int dpt = rgb->d(), ld = rgb->ld() ? rgb->ld() : rgb->w() * dpt;
+    const unsigned char *px = (const unsigned char *)rgb->data()[0];
+    o->normal.resize((size_t)o->width * o->height * 4);
+    for (int y = 0; y < o->height; y++)
+        for (int x = 0; x < o->width; x++) {
+            const unsigned char *s = px + y * ld + x * dpt;
+            unsigned char *t = &o->normal[((size_t)y * o->width + x) * 4];
+            if (dpt >= 3) { t[0] = s[0]; t[1] = s[1]; t[2] = s[2]; t[3] = dpt == 4 ? s[3] : 255; }
+            else { t[0] = t[1] = t[2] = s[0]; t[3] = dpt == 2 ? s[1] : 255; }
+        }
+    delete img;
+    o->type = 3;   // WBTOOL
+    make_selected(*o);
+    return o;
+}
+
 std::shared_ptr<DiskObject> get_disk_object(const std::string &path, bool volume) {
     std::string file = volume ? (path.empty() || path.back() == '/' ? path : path + "/") + "Disk.info" : path + ".info";
     struct stat st;
-    if (stat(file.c_str(), &st) != 0 || !S_ISREG(st.st_mode)) return nullptr;
+    // no icon file: an AppImage brings its own icon
+    if (stat(file.c_str(), &st) != 0 || !S_ISREG(st.st_mode)) return volume ? nullptr : appimage_icon(path);
     // kept while the file stays as it is (and, for classic icons, the screen's pens)
     struct Kept { time_t mtime; off_t size; unsigned pens; std::shared_ptr<DiskObject> obj; };
     static std::map<std::string, Kept> cache;

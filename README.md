@@ -80,6 +80,8 @@ rambler-wm & rambler --backdrop
 * **Icon files**: a file's own icon is `name.info` beside it (classic, NewIcons, colour
   and PNG icons). A dual icon has a second image for its selected state; it goes with its
   file when the file is copied, moved, renamed or deleted.
+* **AppImages** show the icon they carry (taken out with `unsquashfs` from the
+  `squashfs-tools` package; the AppImage is not run for it).
 
 ## Preferences
 

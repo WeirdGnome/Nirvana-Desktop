@@ -49,5 +49,10 @@ private:
 std::shared_ptr<DiskObject> get_disk_object(const std::string &path, bool volume = false);
 // reading an icon file itself
 std::shared_ptr<DiskObject> read_icon_file(const std::string &info_file);
+// an icon made from a picture (PNG, SVG ...), scaled to fit max x max; one image, the
+// selected one lighter
+std::shared_ptr<DiskObject> icon_from_picture(const std::string &picture, int max);
+// an AppImage's own icon (appimage.cxx): nullptr - not an AppImage, or no icon in it
+std::shared_ptr<DiskObject> appimage_icon(const std::string &path);
 
 }  // namespace rambler
