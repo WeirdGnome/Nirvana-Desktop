@@ -12,6 +12,7 @@
 #include "icons.h"
 
 #include <FL/Fl.H>
+#include <FL/fl_draw.H>
 #include <FL/Fl_Text_Buffer.H>
 #include <FL/Fl_Text_Display.H>
 
@@ -108,28 +109,45 @@ int request(const std::string &title, const std::string &text, const std::string
         result = positive && n > 1 ? 1 : 0;
         done = true;
     });
+    // (EasyRequest: the requester is wide enough for its title and the window's gadgets)
+    fl_font(prefs().font, prefs().font_size);
+    int tw = (int)fl_width(tr(title).c_str()) + 3 * 24 + 16;
+    if (w->w() < tw) w->size(tw, w->h());
     centre(w);
     run_modal(w, done);
     return result;
 }
 
-void launch(const std::vector<std::string> &argv, const std::string &dir) {
-    if (argv.empty()) return;
+bool launch(const std::vector<std::string> &argv, const std::string &dir) {
+    if (argv.empty()) return false;
+    // a pipe closed on exec: a byte through it - the program could not be started
+    int fd[2];
+    if (pipe2(fd, O_CLOEXEC) != 0) fd[0] = fd[1] = -1;
     pid_t pid = fork();
     if (pid == 0) {
         setsid();
         if (fork() != 0) _exit(0);   // detached: the program is nobody's child
+        if (fd[0] >= 0) close(fd[0]);
         if (!dir.empty() && chdir(dir.c_str()) != 0) {}
         std::vector<char *> a;
         for (auto &s : argv) a.push_back(const_cast<char *>(s.c_str()));
         a.push_back(nullptr);
         execvp(a[0], a.data());
+        if (fd[1] >= 0 && write(fd[1], "x", 1) != 1) {}
         _exit(127);
     }
+    if (fd[1] >= 0) close(fd[1]);
+    bool ok = pid > 0;
     if (pid > 0) {
         int st;
         waitpid(pid, &st, 0);
     }
+    if (fd[0] >= 0) {
+        char c;
+        if (ok && read(fd[0], &c, 1) == 1) ok = false;
+        close(fd[0]);
+    }
+    return ok;
 }
 
 // --------------------------------------------------------------------------------------------
@@ -1002,26 +1020,37 @@ static bool listed(const std::string &list, const char *name) {
     return false;
 }
 
-// The programs started with Wanderer: everything in the Startup drawer (~/.config/wanderer/startup:
-// programs, scripts, .desktop files - in the order of their names), then the autostart
-// entries of the system and the user (XDG autostart) meant for this desktop
-void run_startup() {
-    const char *x = getenv("XDG_CONFIG_HOME");
-    std::string conf = x && *x ? x : std::string(getenv("HOME") ? getenv("HOME") : "/tmp") + "/.config";
-    std::string startup = conf + "/wanderer/startup";
-    std::error_code ec;
-    fs::create_directories(startup, ec);
-    std::vector<fs::path> items;
-    for (auto it = fs::directory_iterator(startup, ec); !ec && it != fs::directory_iterator(); it.increment(ec))
-        items.push_back(it->path());
-    std::sort(items.begin(), items.end());
-    for (auto &p : items) {
-        DesktopEntry e;
-        if (p.extension() == ".desktop") {
-            if (read_desktop_entry(p.string(), e) && !e.hidden) launch({"/bin/sh", "-c", e.exec}, getenv("HOME") ? getenv("HOME") : "/");
-        } else if (fs::is_regular_file(p, ec) && access(p.c_str(), X_OK) == 0)
-            launch({p.string()}, getenv("HOME") ? getenv("HOME") : "/");
+// The programs started with Wanderer (Tools/ExecuteStartup): everything in the Startup
+// drawer (~/.config/wanderer/startup: programs, scripts, .desktop files), in the order of
+// their STARTPRI tool type (+127 first, -128 last, 0 without one; the same: by name), each
+// followed by a pause of its WAIT tool type (seconds, at most 60); then the autostart entries
+// of the system and the user (XDG autostart) meant for this desktop. (DONOTWAIT is taken for
+// every program, as the original does.)
+namespace {
+struct StartupItem {
+    std::string name;
+    std::vector<std::string> argv;
+    int pri = 0, wait = 0;
+};
+std::vector<StartupItem> g_startup;
+size_t g_startup_next = 0;
+std::string g_conf;
+void run_autostart(const std::string &conf);
+
+std::string home_dir() { return getenv("HOME") ? getenv("HOME") : "/"; }
+
+void start_next(void *) {
+    while (g_startup_next < g_startup.size()) {
+        StartupItem &it = g_startup[g_startup_next++];
+        if (!launch(it.argv, home_dir()))
+            request(tr("Warning"), trs("Startup:\nCould not start\n%s", it.name), tr("OK"));
+        if (it.wait > 0) { Fl::add_timeout(it.wait, start_next); return; }
     }
+    if (!g_conf.empty()) { run_autostart(g_conf); g_conf.clear(); }   // the Startup drawer done
+}
+
+void run_autostart(const std::string &conf) {
+    std::error_code ec;
     // XDG autostart: the user's entries hide the system's of the same name
     std::map<std::string, std::string> entries;
     for (std::string dir : {std::string("/etc/xdg/autostart"), conf + "/autostart"})
@@ -1033,8 +1062,43 @@ void run_startup() {
         if (!e.only_show_in.empty() && !listed(e.only_show_in, "Wanderer")) continue;
         if (listed(e.not_show_in, "Wanderer")) continue;
         if (!in_path(e.try_exec)) continue;
-        launch({"/bin/sh", "-c", e.exec}, getenv("HOME") ? getenv("HOME") : "/");
+        launch({"/bin/sh", "-c", e.exec}, home_dir());
     }
+}
+}  // namespace
+
+void run_startup() {
+    const char *x = getenv("XDG_CONFIG_HOME");
+    std::string conf = x && *x ? x : std::string(getenv("HOME") ? getenv("HOME") : "/tmp") + "/.config";
+    std::string startup = conf + "/wanderer/startup";
+    std::error_code ec;
+    fs::create_directories(startup, ec);
+    std::vector<fs::path> paths;
+    for (auto it = fs::directory_iterator(startup, ec); !ec && it != fs::directory_iterator(); it.increment(ec))
+        paths.push_back(it->path());
+    std::sort(paths.begin(), paths.end());
+    g_startup.clear();
+    g_startup_next = 0;
+    for (auto &p : paths) {
+        StartupItem it;
+        it.name = p.filename().string();
+        if (p.extension() == ".desktop") {
+            DesktopEntry e;
+            if (!read_desktop_entry(p.string(), e) || e.hidden) continue;
+            it.argv = {"/bin/sh", "-c", e.exec};
+        } else if (fs::is_regular_file(p, ec) && access(p.c_str(), X_OK) == 0) {
+            it.argv = {p.string()};
+        } else continue;
+        for (auto &t : tool_types(p.string())) {
+            if (t.rfind("STARTPRI=", 0) == 0) it.pri = std::clamp(atoi(t.c_str() + 9), -128, 127);
+            else if (t.rfind("WAIT=", 0) == 0) it.wait = std::clamp(atoi(t.c_str() + 5), 0, 60);
+        }
+        g_startup.push_back(it);
+    }
+    // Enqueue: the highest priority first, the same in the order found
+    std::stable_sort(g_startup.begin(), g_startup.end(), [](auto &a, auto &b) { return a.pri > b.pri; });
+    g_conf = conf;
+    start_next(nullptr);
 }
 
 // The Tools menu: the programs, scripts and .desktop files in ~/.config/wanderer/tools

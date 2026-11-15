@@ -71,6 +71,7 @@ std::string volume_paths_in_command(const std::string &cmd);
 void run_with_output(const std::string &command, const std::string &dir, const std::string &title = "");
 
 // starts a program / opens a file with the system's handler, detached
-void launch(const std::vector<std::string> &argv, const std::string &dir);
+// (false: it could not be started)
+bool launch(const std::vector<std::string> &argv, const std::string &dir);
 
 }  // namespace wanderer

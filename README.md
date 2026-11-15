@@ -74,6 +74,18 @@ wanderer-wm & wanderer --backdrop
   empty space. Dragging icons to another window moves them within a volume and copies
   them across volumes.
 
+## Programs started with Wanderer
+
+At the start of a session Wanderer starts everything in `~/.config/wanderer/startup`
+(programs, scripts, `.desktop` files), then the XDG autostart entries. Two tool types (set in
+Information) work as on the original system:
+
+- `STARTPRI=n` (from -128 to 127): the highest is started first; without one, 0. Programs
+  with the same priority start in the order of their names.
+- `WAIT=n` (seconds, at most 60): a pause after the program before the next one starts.
+
+A program that cannot be started shows a requester, and the rest start after it.
+
 ## Programs' items in the Tools menu
 
 A program can add items to Wanderer's Tools menu (as AddAppMenuItem does). It sets the

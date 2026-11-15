@@ -57,6 +57,19 @@ Sesja uruchamia najpierw `wanderer-wm`, a potem `wanderer --backdrop`. Polecenie
   miejscu zaznacza lassem. Ikony przeciągnięte do innego okna są przenoszone w obrębie
   dysku i kopiowane między dyskami.
 
+## Programy uruchamiane z Wandererem
+
+Na początku sesji Wanderer uruchamia wszystko z `~/.config/wanderer/startup` (programy,
+skrypty, pliki `.desktop`), a potem wpisy autostartu XDG. Dwa typy narzędzi (ustawiane w
+oknie Informacje) działają jak w oryginalnym systemie:
+
+- `STARTPRI=n` (od -128 do 127): najwyższy startuje pierwszy; bez niego 0. Programy o tym
+  samym priorytecie startują w kolejności nazw.
+- `WAIT=n` (sekundy, najwyżej 60): przerwa po programie, zanim wystartuje następny.
+
+Program, którego nie da się uruchomić, pokazuje okienko z ostrzeżeniem, a pozostałe
+startują po nim.
+
 ## Pozycje programów w menu Tools
 
 Program może dodać pozycje do menu Tools Wanderera (jak AddAppMenuItem). Ustawia na swoim
