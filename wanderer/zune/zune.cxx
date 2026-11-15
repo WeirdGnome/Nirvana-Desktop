@@ -85,6 +85,10 @@ void load_prefs() {
             else if (k == "drag_autostart") p.drag_autostart = atoi(v.c_str());
             else if (k == "drag_autostart_length") p.drag_autostart_length = std::clamp(atoi(v.c_str()), 1, 20);
             else if (k == "drag_look") p.drag_look = std::clamp(atoi(v.c_str()), 0, 3);
+            else if (k.rfind("custom_frame_", 0) == 0) {
+                int i = atoi(k.c_str() + 13) - 1;
+                if (i >= 0 && i < 16) p.custom_frame[i] = v;
+            }
             else if (k == "bubble_first") p.bubble_first = std::clamp(atoi(v.c_str()), 0, 50);
             else if (k == "bubble_next") p.bubble_next = std::clamp(atoi(v.c_str()), 0, 50);
             else if (k == "balancing_look") p.balancing_look = std::clamp(atoi(v.c_str()), 0, 1);
@@ -116,6 +120,8 @@ void save_prefs() {
     fprintf(f, "drag_left=%d\ndrag_middle=%d\ndrag_autostart=%d\ndrag_autostart_length=%d\ndrag_look=%d\nbalancing_look=%d\n",
             (int)p.drag_left, (int)p.drag_middle, (int)p.drag_autostart, p.drag_autostart_length, p.drag_look,
             p.balancing_look);
+    for (int i = 0; i < 16; i++)
+        if (!p.custom_frame[i].empty()) fprintf(f, "custom_frame_%d=%s\n", i + 1, p.custom_frame[i].c_str());
     fprintf(f, "bubble_first=%d\nbubble_next=%d\n", p.bubble_first, p.bubble_next);
     fprintf(f, "drag_left_modifier=%s\ndrag_middle_modifier=%s\n", p.drag_left_modifier.c_str(), p.drag_middle_modifier.c_str());
     fclose(f);
@@ -194,6 +200,7 @@ void apply_prefs() {
     static const Fl_Font fams[3][2] = {{FL_HELVETICA, FL_HELVETICA_BOLD}, {FL_TIMES, FL_TIMES_BOLD}, {FL_COURIER, FL_COURIER_BOLD}};
     p.font = fams[p.font_family][0];
     p.font_bold = fams[p.font_family][1];
+    for (int i = 0; i < 16; i++) set_custom_frame(i, p.custom_frame[i]);
     for (int i = 1; i < Frame_Count; i++) set_std_frame((StdFrame)i, p.frame[i].empty() ? default_frame((StdFrame)i) : p.frame[i]);
     // bubble help: FLTK's tooltips with the delays set
     Fl_Tooltip::delay(p.bubble_first / 10.0f);

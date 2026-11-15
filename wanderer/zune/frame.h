@@ -18,8 +18,16 @@ namespace zune {
 enum FrameType {
     FST_NONE, FST_RECT, FST_BEVEL, FST_THIN_BORDER, FST_THICK_BORDER, FST_ROUND_BEVEL,
     FST_WIN_BEVEL, FST_ROUND_THICK_BORDER, FST_ROUND_THIN_BORDER, FST_GRAY_BORDER,
-    FST_SEMIROUND_BEVEL, FST_ROUNDED, FST_COUNT
+    FST_SEMIROUND_BEVEL, FST_ROUNDED, FST_COUNT,
+    // the custom frames (FST_CUSTOM1..16: the Frames page's pictures); a spec's type is then a
+    // letter from 'c' on (base 36, as zune_frame_intern_to_spec writes it)
+    FST_CUSTOM1 = FST_COUNT, FST_ALL = FST_CUSTOM1 + 16
 };
+// a custom frame from its frame.config (TileLeft ... InnerBottom; up/default and
+// down/default pictures beside it); "" - none. Without its pictures it is drawn as a
+// rectangle (as the original falls back)
+void set_custom_frame(int n, const std::string &config);   // n 0..15
+bool custom_frame_loaded(int n);
 
 struct FrameSpec {
     int type = FST_NONE;

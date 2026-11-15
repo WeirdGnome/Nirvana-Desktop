@@ -8,6 +8,7 @@
 */
 #include "guisettings.h"
 #include "zune.h"
+#include "tools.h"
 #include <map>
 #include <FL/platform.H>
 #include <FL/Fl_RGB_Image.H>
@@ -48,14 +49,16 @@ struct FrameSetting {
     Cycle *cycle;
     std::string spec() const {
         std::string cur = prefs().frame[kind].empty() ? default_frame(kind) : prefs().frame[kind];
-        const char hexd[] = "0123456789ABCDEF";
-        cur[0] = hexd[cycle->active()];
+        // the type as zune_frame_intern_to_spec writes it: 0-9, then a-z (the custom frames)
+        int t = cycle->active();
+        cur[0] = t < 10 ? char('0' + t) : char('a' + t - 10);
         return cur;
     }
 };
 
 Cycle *frame_cycle(StdFrame kind) {
     std::vector<std::string> names(FRAME_NAMES, FRAME_NAMES + FST_COUNT);
+    for (int i = 1; i <= 16; i++) names.push_back(trs("Custom #%s", std::to_string(i)));
     return new Cycle(names, std_frame(kind).type);
 }
 
@@ -135,7 +138,7 @@ void edit_gui_settings() {
     auto *root = VGroup();
     root->vspacing(10);
     auto *main = HGroup();
-    const char *pages[] = {"System", "Windows", "Groups", "Buttons", "Cycles", "Sliders", "Scrollbars", "Listviews", "Strings", "Navigation", "Special", "Palette"};
+    const char *pages[] = {"System", "Windows", "Groups", "Buttons", "Cycles", "Sliders", "Scrollbars", "Listviews", "Strings", "Navigation", "Special", "Frames", "Palette"};
     auto *list = new List();
     list->frame(Frame_InputList);
     {
@@ -464,6 +467,33 @@ void edit_gui_settings() {
                                {"Record", tape(4)}, {"Up", tape(5)}, {"Down", tape(6)}});
         pg->end();
     }
+    // -- Frames (framesp.c): the custom frames #1 to #16 - each a frame.config file with the
+    // pictures up/default and down/default beside it
+    String *cframe[16];
+    {
+        auto *pg = VGroup();
+        VSpace();
+        auto *g = new Group(Group::Vertical, Frame_Group);
+        g->frame_title("Custom Frames");
+        g->columns(4);
+        for (int i = 0; i < 16; i++) {
+            new Text("\033r#" + std::to_string(i + 1));
+            auto *row = HGroup();
+            row->spacing(0);
+            cframe[i] = new String(saved.custom_frame[i], 1024);
+            auto *pop = PopButton(Pop_File);
+            row->end();
+            String *str = cframe[i];
+            pop->on_press = [str] {
+                std::string path = str->value();
+                if (path.empty()) path = std::string(getenv("HOME") ? getenv("HOME") : "/") + "/";
+                if (file_request(tr("Custom Frames"), path)) str->value(path);
+            };
+        }
+        g->end();
+        VSpace();
+        pg->end();
+    }
     // -- Palette (the screen's four colours: the palette preferences)
     Cycle *scheme;
     String *cbg, *csh, *csd, *cfl;
@@ -540,6 +570,7 @@ void edit_gui_settings() {
         p.balancing_look = blook->active();
         p.bubble_first = bfirst->value();
         p.bubble_next = bnext->value();
+        for (int i = 0; i < 16; i++) p.custom_frame[i] = cframe[i]->value();
         for (int i = 0; i < MUIKEY_COUNT; i++) p.keys[i] = (*keys)[i] == KEY_DEFAULTS[i] ? "" : (*keys)[i];
     };
     // a scheme fills the four colours in

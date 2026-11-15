@@ -99,6 +99,30 @@ wtedy, gdy program deklaruje, że je obsługuje: właściwość `_WANDERER_APPIC
 (`CARDINAL`, po jednej na ikonę, w kolejności) z ustawionym bitem *n* dla klasy *n* (jak
 znaczniki WBAPPICONA_Supports). Bez niej ikona obsługuje tylko otwarcie.
 
+## Własne ramki
+
+GUI Settings > Ramki przyjmuje do 16 własnych ramek. Każda to plik `frame.config` z
+dwoma obrazkami obok: `up/default` i `down/default` (PNG, BMP, GIF lub JPEG; rozszerzenie
+można pominąć). Plik ustala, ile pikseli brzegów obrazka to narożniki i krawędzie
+(`TileLeft`, `TileTop`, `TileRight`, `TileBottom`), oraz ile miejsca ramka zajmuje z
+każdej strony (`InnerLeft`, `InnerTop`, `InnerRight`, `InnerBottom`), po jednym
+ustawieniu w wierszu:
+
+```
+TileLeft 4
+TileTop 4
+TileRight 4
+TileBottom 4
+InnerLeft 3
+InnerTop 3
+InnerRight 3
+InnerBottom 3
+```
+
+Narożniki są rysowane bez zmian, krawędzie i środek są powtarzane. Ramki pojawiają się
+potem jako „Własna nr 1” do „Własna nr 16” w każdym wyborze ramki. Ramka, której obrazków
+nie da się odczytać, jest rysowana jako prostokąt.
+
 ## Języki
 
 Interfejs mówi językiem użytkownika (`LANGUAGE`, `LC_ALL`, `LC_MESSAGES`, `LANG`).

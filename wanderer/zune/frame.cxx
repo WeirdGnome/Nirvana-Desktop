@@ -15,6 +15,13 @@
 #include <FL/fl_draw.H>
 
 #include <cstdlib>
+#include <cstring>
+#include <cstdio>
+#include <algorithm>
+#include <unistd.h>
+#include <FL/Fl_Shared_Image.H>
+#include <FL/Fl_RGB_Image.H>
+#include <FL/Fl_Image.H>
 
 namespace zune {
 
@@ -218,12 +225,23 @@ static const FrameBorders BORDERS[FST_COUNT][2] = {
     {{2, 2, 2, 2}, {2, 2, 2, 2}},   // ROUNDED
 };
 
+static FrameBorders custom_borders(int n);
+static bool draw_custom(int n, bool down, int x, int y, int w, int h);
+
 FrameBorders frame_borders(int type, bool down) {
+    if (type >= FST_CUSTOM1 && type < FST_ALL) {
+        if (custom_frame_loaded(type - FST_CUSTOM1)) return custom_borders(type - FST_CUSTOM1);
+        type = FST_RECT;
+    }
     if (type < 0 || type >= FST_COUNT) return {0, 0, 0, 0};
     return BORDERS[type][down ? 1 : 0];
 }
 
 void draw_frame(int type, bool down, int x, int y, int w, int h) {
+    if (type >= FST_CUSTOM1 && type < FST_ALL) {
+        if (draw_custom(type - FST_CUSTOM1, down, x, y, w, h)) return;
+        type = FST_RECT;
+    }
     switch (type) {
     case FST_RECT: rect_draw(x, y, w, h, down ? MPEN_SHADOW : MPEN_SHINE); break;
     case FST_BEVEL:
@@ -266,15 +284,15 @@ void draw_frame(int type, bool down, int x, int y, int w, int h) {
 // ---------------------------------------------------------------------------------------------
 static int hexdigit(char c) {
     if (c >= '0' && c <= '9') return c - '0';
-    if (c >= 'a' && c <= 'f') return c - 'a' + 10;
-    if (c >= 'A' && c <= 'F') return c - 'A' + 10;
+    if (c >= 'a' && c <= 'z') return c - 'a' + 10;   // (a type past 'f': the custom frames)
+    if (c >= 'A' && c <= 'Z') return c - 'A' + 10;
     return 0;
 }
 
 FrameSpec FrameSpec::parse(const std::string &s) {
     FrameSpec f;
     if (s.size() >= 1) f.type = hexdigit(s[0]);
-    if (f.type >= FST_COUNT) f.type = FST_NONE;
+    if (f.type >= FST_ALL) f.type = FST_NONE;
     if (s.size() >= 2) f.down = s[1] == '1';
     if (s.size() >= 6) {
         f.inner_left = hexdigit(s[2]);
@@ -320,6 +338,114 @@ const FrameSpec &std_frame(StdFrame which) {
         ready = true;
     }
     return table[which < 0 || which >= Frame_Count ? 0 : which];
+}
+
+
+
+// ---------------------------------------------------------------------------------------------
+// Custom frames (datatypescache.c ReadFrameConfig, frame.c draw_tile_frame)
+// ---------------------------------------------------------------------------------------------
+namespace {
+struct CustomFrame {
+    std::string config;
+    int tile_left = 0, tile_top = 0, tile_right = 0, tile_bottom = 0;
+    int inner_left = 0, inner_top = 0, inner_right = 0, inner_bottom = 0;
+    Fl_RGB_Image *up = nullptr, *down = nullptr;
+    bool pictures_pending = false;
+};
+CustomFrame g_custom[16];
+
+Fl_RGB_Image *load_picture(const std::string &base) {
+    static bool registered = false;
+    if (!registered) { fl_register_images(); registered = true; }
+    for (const char *ext : {"", ".png", ".ilbm", ".iff", ".bmp", ".gif", ".jpg"}) {
+        std::string p = base + ext;
+        if (access(p.c_str(), R_OK) != 0) continue;
+        Fl_Shared_Image *si = Fl_Shared_Image::get(p.c_str());
+        if (!si || si->w() <= 0) continue;
+        // a copy of its own (as an RGB image the parts of it can be drawn)
+        const Fl_Image *base = si->image() ? si->image() : si;
+        Fl_Image *c = const_cast<Fl_Image *>(base)->copy();
+        si->release();
+        if (auto *rgb = dynamic_cast<Fl_RGB_Image *>(c)) return rgb;
+        delete c;
+    }
+    return nullptr;
+}
+
+// DrawTileToImage: the source part repeated over the destination part
+void tile(Fl_RGB_Image *img, int sx, int sy, int sw, int sh, int dx, int dy, int dw, int dh) {
+    if (sw <= 0 || sh <= 0 || dw <= 0 || dh <= 0) return;
+    fl_push_clip(dx, dy, dw, dh);
+    for (int y = dy; y < dy + dh; y += sh)
+        for (int x = dx; x < dx + dw; x += sw) img->draw(x, y, std::min(sw, dx + dw - x), std::min(sh, dy + dh - y), sx, sy);
+    fl_pop_clip();
+}
+}  // namespace
+
+void set_custom_frame(int n, const std::string &config) {
+    if (n < 0 || n >= 16) return;
+    CustomFrame &f = g_custom[n];
+    if (f.config == config) return;
+    delete f.up; delete f.down;
+    f = CustomFrame();
+    f.config = config;
+    if (config.empty()) return;
+    FILE *in = fopen(config.c_str(), "r");
+    if (in) {
+        char line[256];
+        while (fgets(line, sizeof line, in)) {
+            static const std::pair<const char *, int CustomFrame::*> keys[] = {
+                {"TileLeft ", &CustomFrame::tile_left}, {"TileTop ", &CustomFrame::tile_top},
+                {"TileRight ", &CustomFrame::tile_right}, {"TileBottom ", &CustomFrame::tile_bottom},
+                {"InnerLeft ", &CustomFrame::inner_left}, {"InnerTop ", &CustomFrame::inner_top},
+                {"InnerRight ", &CustomFrame::inner_right}, {"InnerBottom ", &CustomFrame::inner_bottom}};
+            for (auto &[k, m] : keys)
+                if (strncmp(line, k, strlen(k)) == 0) f.*m = atoi(line + strlen(k));
+        }
+        fclose(in);
+    }
+    f.pictures_pending = true;   // (read when first drawn: the display is open then)
+}
+
+bool custom_frame_loaded(int n) {
+    if (n < 0 || n >= 16) return false;
+    CustomFrame &f = g_custom[n];
+    if (f.pictures_pending) {
+        f.pictures_pending = false;
+        std::string dir = f.config.substr(0, f.config.find_last_of('/') + 1);
+        f.up = load_picture(dir + "up/default");
+        f.down = load_picture(dir + "down/default");
+        if (!f.up || !f.down) { delete f.up; delete f.down; f.up = f.down = nullptr; }
+    }
+    return f.up != nullptr;
+}
+
+static FrameBorders custom_borders(int n) {
+    const CustomFrame &f = g_custom[n];
+    return {f.inner_left, f.inner_right, f.inner_top, f.inner_bottom};
+}
+
+// draw_tile_frame: the corners as they are, the edges and the middle repeated
+static bool draw_custom(int n, bool down, int x, int y, int w, int h) {
+    if (!custom_frame_loaded(n) || w <= 0 || h <= 0) return false;
+    const CustomFrame &f = g_custom[n];
+    Fl_RGB_Image *src = down ? f.down : f.up;
+    int lw = std::min(f.tile_left, w), rw = std::min(f.tile_right, w - lw);
+    int th = std::min(f.tile_top, h), bh = std::min(f.tile_bottom, h - th);
+    int mw = w - lw - rw, mh = h - th - bh;
+    int smw = src->w() - f.tile_left - f.tile_right, smh = src->h() - f.tile_top - f.tile_bottom;
+    int rp = src->w() - f.tile_right, bp = src->h() - f.tile_bottom;
+    tile(src, 0, 0, lw, th, x, y, lw, th);
+    tile(src, 0, bp, lw, bh, x, y + h - bh, lw, bh);
+    tile(src, rp, 0, rw, th, x + w - rw, y, rw, th);
+    tile(src, rp, bp, rw, bh, x + w - rw, y + h - bh, rw, bh);
+    tile(src, f.tile_left, 0, smw, th, x + lw, y, mw, th);
+    tile(src, f.tile_left, bp, smw, bh, x + lw, y + h - bh, mw, bh);
+    tile(src, 0, f.tile_top, lw, smh, x, y + th, lw, mh);
+    tile(src, rp, f.tile_top, rw, smh, x + w - rw, y + th, rw, mh);
+    tile(src, f.tile_left, f.tile_top, smw, smh, x + lw, y + th, mw, mh);
+    return true;
 }
 
 }  // namespace zune

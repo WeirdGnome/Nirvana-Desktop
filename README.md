@@ -114,6 +114,30 @@ program says it takes them: the property `_WANDERER_APPICON_SUPPORTS` (`CARDINAL
 each icon, in order) with bit *n* set for class *n* (as the WBAPPICONA_Supports tags).
 Without it an icon takes Open only.
 
+## Custom frames
+
+GUI Settings > Frames takes up to 16 custom frames, each a `frame.config` file with
+two pictures beside it: `up/default` and `down/default` (PNG, BMP, GIF or JPEG; the
+extension may be left out). The file sets how many pixels of the picture's edges are
+corners and edges (`TileLeft`, `TileTop`, `TileRight`, `TileBottom`) and the room the
+frame takes on each side (`InnerLeft`, `InnerTop`, `InnerRight`, `InnerBottom`), one
+setting a line:
+
+```
+TileLeft 4
+TileTop 4
+TileRight 4
+TileBottom 4
+InnerLeft 3
+InnerTop 3
+InnerRight 3
+InnerBottom 3
+```
+
+The corners are drawn as they are; the edges and the middle are repeated. The frames
+then appear as "Custom #1" to "Custom #16" in every frame choice. A frame whose pictures
+cannot be read is drawn as a rectangle.
+
 ## Languages
 
 The interface follows the user's language (`LANGUAGE`, `LC_ALL`, `LC_MESSAGES`, `LANG`).

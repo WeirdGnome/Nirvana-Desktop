@@ -77,6 +77,7 @@ struct Prefs {
     // bubble help (System page): the delays before the first bubble and between bubbles, in
     // tenths of a second (configdata.c 30 and 10)
     int bubble_first = 30, bubble_next = 10;
+    std::string custom_frame[16];   // the Frames page: the custom frames' frame.config files
     int font_size = 13;          // the screen font (topaz-like 8 pt is too small on today's screens)
     Fl_Font font = FL_HELVETICA, font_bold = FL_HELVETICA_BOLD, font_fixed = FL_COURIER;
 };
