@@ -143,6 +143,8 @@ struct IControlPrefs {
     bool drag_bottom = true;         // a screen dragged down to the bottom edge (else its bar stays)
     unsigned meta_drag = Mod4Mask;   // the key that drags a screen from anywhere
     bool menu_3d = false;            // the menus' look: classic or 3D
+    bool menu_popup = false;         // pop-up menus: the titles in a box at the pointer
+    bool title_pulldown = true;      // (pop-up) the screen bar still drops its menus down
     bool menu_sticky = false;        // a click of the menu button leaves the menus open
     bool offscreen = true;           // windows moved partly off the screen
 } ic;
@@ -163,6 +165,8 @@ void read_icontrol(const std::string &text) {
         else if (k == "drag_bottom") p.drag_bottom = v;
         else if (k == "meta_drag") p.meta_drag = v == 1 ? Mod1Mask : v == 2 ? ControlMask : Mod4Mask;
         else if (k == "menu_look") p.menu_3d = v == 1;
+        else if (k == "menu_type") p.menu_popup = v == 1;
+        else if (k == "menu_title_pulldown") p.title_pulldown = v;
         else if (k == "menu_sticky") p.menu_sticky = v;
         else if (k == "offscreen") p.offscreen = v;
     }
@@ -763,6 +767,9 @@ struct MenuState {
     int item = -1, sub_item = -1, sub_of = -1;
     Time opened = 0;                     // when the menu button went down
     bool stuck = false;                  // sticky menus (IControl): left open by a click
+    bool popup = false;                  // pop-up menus (IControl): the titles in tbox
+    Window tbox = 0;
+    int tbox_x = 0, tbox_y = 0, tbox_w = 0, tbox_h = 0;
 } menu;
 Time last_press = 0;                     // (the time of the last button press)
 
@@ -942,11 +949,19 @@ void open_title(int t) {
     if (t == menu.title) return;
     close_box();
     menu.title = t;
-    draw_menu_bar();
+    if (menu.popup) draw_menu_box(menu.tbox, menu.titles, menu.tbox_w, menu.tbox_h, t);
+    else draw_menu_bar();
     if (t < 0 || menu.titles[t].disabled() || menu.titles[t].children.empty()) return;
     menu_box_size(menu.titles[t].children, menu.box_w, menu.box_h);
-    menu.box_x = std::min(menu.title_x[t], SW - menu.box_w);
-    menu.box_y = menu.s->y + BAR_H - 1;
+    if (menu.popup) {
+        // beside the title in the pop-up box (on its left when there is no room on the right)
+        menu.box_x = menu.tbox_x + menu.tbox_w - 8;
+        if (menu.box_x + menu.box_w > SW) menu.box_x = std::max(0, menu.tbox_x - menu.box_w + 8);
+        menu.box_y = std::clamp(menu.tbox_y + item_y(menu.titles, t) - MENU_PAD, 0, std::max(0, SH - menu.box_h));
+    } else {
+        menu.box_x = std::min(menu.title_x[t], SW - menu.box_w);
+        menu.box_y = menu.s->y + BAR_H - 1;
+    }
     menu.box = make_box(menu.box_x, menu.box_y, menu.box_w, menu.box_h);
     draw_menu_box(menu.box, menu.titles[t].children, menu.box_w, menu.box_h, -1);
 }
@@ -965,7 +980,7 @@ void open_sub(int item) {
     draw_menu_box(menu.sub, items[item].children, menu.sub_w, menu.sub_h, -1);
 }
 
-bool menu_begin(Client *c) {
+bool menu_begin(Client *c, bool from_bar = false) {
     if (!c || !read_menu(c, menu.titles)) return false;
     menu.open = true;
     menu.c = c;
@@ -973,15 +988,35 @@ bool menu_begin(Client *c) {
     menu.title = -1;
     menu.opened = last_press;
     menu.stuck = false;
-    draw_menu_bar();
+    // pop-up menus (IControl): the menu titles in a box at the pointer - but a click on the
+    // screen bar drops them down from it, when the titles are to stay there
+    menu.popup = ic.menu_popup && !(from_bar && ic.title_pulldown);
+    if (menu.popup) {
+        Window r, ch;
+        int px = 0, py = 0, wx, wy;
+        unsigned mask;
+        XQueryPointer(dpy, root, &r, &ch, &px, &py, &wx, &wy, &mask);
+        menu_box_size(menu.titles, menu.tbox_w, menu.tbox_h);
+        menu.tbox_x = std::clamp(px - 8, 0, std::max(0, SW - menu.tbox_w));
+        menu.tbox_y = std::clamp(py - MENU_PAD - ITEM_H / 2, 0, std::max(0, SH - menu.tbox_h));
+        menu.tbox = make_box(menu.tbox_x, menu.tbox_y, menu.tbox_w, menu.tbox_h);
+        draw_menu_box(menu.tbox, menu.titles, menu.tbox_w, menu.tbox_h, -1);
+    } else draw_menu_bar();
     XGrabPointer(dpy, root, False, ButtonReleaseMask | PointerMotionMask | ButtonPressMask, GrabModeAsync,
                  GrabModeAsync, None, None, CurrentTime);
     return true;
 }
 
 void menu_motion(int xr, int yr) {
+    // pop-up: over the titles' box, the title under the pointer opens beside it
+    if (menu.popup && xr >= menu.tbox_x && xr < menu.tbox_x + menu.tbox_w && yr >= menu.tbox_y &&
+        yr < menu.tbox_y + menu.tbox_h) {
+        int t = item_at(menu.titles, yr - menu.tbox_y);
+        if (t >= 0) open_title(t);
+        return;
+    }
     // over the bar: the title under the pointer drops down
-    if (yr >= menu.s->y && yr < menu.s->y + BAR_H) {
+    if (!menu.popup && yr >= menu.s->y && yr < menu.s->y + BAR_H) {
         for (int i = 0; i < (int)menu.titles.size(); i++)
             if (xr >= menu.title_x[i] && xr < menu.title_x[i] + menu.title_w[i]) { open_title(i); break; }
         if (menu.box && menu.item != -1) { menu.item = -1; draw_menu_box(menu.box, menu.titles[menu.title].children, menu.box_w, menu.box_h, -1); }
@@ -1055,6 +1090,7 @@ void send_menu_pick(Client *c, int id) {
 void menu_end(bool pick) {
     int id = pick ? menu_current_id() : 0;
     close_box();
+    if (menu.tbox) XDestroyWindow(dpy, menu.tbox);
     XUngrabPointer(dpy, CurrentTime);
     WScreen *s = menu.s;
     Client *c = menu.c;
@@ -1178,7 +1214,7 @@ void button_press(XButtonEvent &e) {
             // the right button over the screen: the active window's menus (or the backdrop's)
             Client *c = active && active->screen == s ? active : nullptr;
             if (!c) for (auto *k : s->clients) if (k->backdrop) c = k;
-            menu_begin(c);
+            menu_begin(c, true);
         } else if (s != front_screen()) screen_to_front(s);
         return;
     }

@@ -6,8 +6,10 @@
 - **Preferencje IControl** (`rambler --prefs icontrol`, w szufladzie Prefs): ustawienia
   menedżera okien, jak ustawienia Intuition w oryginale. Ekrany: nowe okna na ekranie z
   przodu albo na pierwszym, czy ekran można ściągnąć do samej dolnej krawędzi, klawisz
-  (Super, Alt albo Ctrl) do przeciągania ekranu z dowolnego miejsca. Menu: wygląd
-  klasyczny albo 3D, menu lepkie (krótkie kliknięcie przyciskiem menu zostawia je
+  (Super, Alt albo Ctrl) do przeciągania ekranu z dowolnego miejsca. Menu: rozwijane z
+  paska ekranu albo **przy wskaźniku** (tytuły menu w okienku przy wskaźniku, każdy
+  otwiera się obok; pasek ekranu może nadal je rozwijać), wygląd klasyczny albo 3D, menu
+  lepkie (krótkie kliknięcie przyciskiem menu zostawia je
   otwarte; kliknięcie wybiera pozycję albo je zamyka). Okna: czy można je przesuwać
   częściowo poza ekran. Menedżer okien przyjmuje zmianę od razu.
 

@@ -10,6 +10,8 @@
       drag_bottom        1: a screen can be dragged down to the bottom edge (else its bar
                          stays in sight)
       meta_drag          the key held to drag a screen from anywhere: 0 Super, 1 Alt, 2 Ctrl
+      menu_type          0 pull-down (from the screen bar), 1 pop-up (at the pointer)
+      menu_title_pulldown  1: with pop-up menus, the screen bar still drops its menus down
       menu_look          0 classic, 1 3D
       menu_sticky        1: a click of the menu button leaves the menus open
       offscreen          1: windows can be moved partly off the screen
@@ -34,12 +36,12 @@ namespace rambler {
 
 namespace {
 struct IControl {
-    bool frontmost_default = true, drag_bottom = true, menu_sticky = false, offscreen = true;
-    int meta_drag = 0, menu_look = 0;
+    bool frontmost_default = true, drag_bottom = true, menu_sticky = false, offscreen = true, title_pulldown = true;
+    int meta_drag = 0, menu_look = 0, menu_type = 0;
     std::string text() const {
         std::ostringstream o;
         o << "frontmost_default=" << frontmost_default << "\ndrag_bottom=" << drag_bottom << "\nmeta_drag=" << meta_drag
-          << "\nmenu_look=" << menu_look << "\nmenu_sticky=" << menu_sticky << "\noffscreen=" << offscreen << "\n";
+          << "\nmenu_type=" << menu_type << "\nmenu_title_pulldown=" << title_pulldown << "\nmenu_look=" << menu_look << "\nmenu_sticky=" << menu_sticky << "\noffscreen=" << offscreen << "\n";
         return o.str();
     }
 };
@@ -64,6 +66,8 @@ IControl load() {
         else if (k == "drag_bottom") p.drag_bottom = v;
         else if (k == "meta_drag") p.meta_drag = std::clamp(v, 0, 2);
         else if (k == "menu_look") p.menu_look = std::clamp(v, 0, 1);
+        else if (k == "menu_type") p.menu_type = std::clamp(v, 0, 1);
+        else if (k == "menu_title_pulldown") p.title_pulldown = v;
         else if (k == "menu_sticky") p.menu_sticky = v;
         else if (k == "offscreen") p.offscreen = v;
     }
@@ -134,10 +138,14 @@ void edit_icontrol_prefs(bool standalone) {
     auto *mm = new Group(Group::Vertical, Frame_Group);
     mm->frame_title("Menus");
     mm->columns(2);
+    new Text("\033rType:");
+    auto *type = new Cycle({"Pull-down", "Pop-up"}, p.menu_type);
     new Text("\033rLook:");
     auto *look = new Cycle({"Classic", "3D"}, p.menu_look);
     new Text("\033rSticky:");
     auto *sticky = new Checkmark(p.menu_sticky);
+    new Text("\033rPull-down in screen bar:");
+    auto *titlepd = new Checkmark(p.title_pulldown);
     mm->end();
     HVSpace();
     mp->end();
@@ -163,12 +171,16 @@ void edit_icontrol_prefs(bool standalone) {
     root->end();
     (void)bl; (void)br; (void)bt;
 
+    titlepd->disabled(p.menu_type == 0);
+    type->on_change = [=](int i) { titlepd->disabled(i == 0); titlepd->redraw(); };
     auto collect = [=] {
         IControl n;
         n.frontmost_default = front->on();
         n.drag_bottom = bb->on();
         n.meta_drag = meta->active();
         n.menu_look = look->active();
+        n.menu_type = type->active();
+        n.title_pulldown = titlepd->on();
         n.menu_sticky = sticky->on();
         n.offscreen = off->on();
         return n;
