@@ -19,6 +19,15 @@ fi
 # the user's own settings for the session (e.g. RAMBLER_SCREENS=3)
 [ -r "$HOME/.config/rambler/session.conf" ] && . "$HOME/.config/rambler/session.conf"
 
+# the Locale preferences (saved): the languages, the country's formats, the timezone
+LOCALE_PREFS="$CONF/rambler/locale.prefs"
+if [ -r "$LOCALE_PREFS" ]; then
+    v=$(sed -n 's/^languages=//p' "$LOCALE_PREFS"); [ -n "$v" ] && export LANGUAGE="$v"
+    v=$(sed -n 's/^country=//p' "$LOCALE_PREFS")
+    [ -n "$v" ] && export LC_TIME="$v" LC_NUMERIC="$v" LC_MONETARY="$v" LC_PAPER="$v" LC_MEASUREMENT="$v"
+    v=$(sed -n 's/^timezone=//p' "$LOCALE_PREFS"); [ -n "$v" ] && export TZ="$v"
+fi
+
 export XDG_CURRENT_DESKTOP=Rambler
 export XDG_SESSION_DESKTOP=rambler
 export DESKTOP_SESSION=rambler

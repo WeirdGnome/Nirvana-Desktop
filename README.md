@@ -81,8 +81,8 @@ rambler-wm & rambler --backdrop
 ## Preferences
 
 *Tools > Prefs Drawer* opens the preferences programs: Input, Lune (the GUI settings),
-Rambler and ScreenMode (the display mode, with xrandr). Each also runs on its own
-(`rambler --prefs input|lune|rambler|screenmode`). As on the
+Rambler, ScreenMode (the display mode, with xrandr) and Locale (languages, country,
+timezone). Each also runs on its own (`rambler --prefs input|locale|lune|rambler|screenmode`). As on the
 original system, **Use** puts the settings into effect for this session only (they are
 written to `$XDG_RUNTIME_DIR/rambler`, the counterpart of ENV:) and **Save** also keeps
 them (`~/.config/rambler`, the counterpart of ENVARC:). A running Rambler takes up a change
@@ -154,7 +154,8 @@ cannot be read is drawn as a rectangle.
 
 ## Languages
 
-The interface follows the user's language (`LANGUAGE`, `LC_ALL`, `LC_MESSAGES`, `LANG`).
+The interface follows the preferred languages of the Locale preferences, else the
+user's language (`LANGUAGE`, `LC_ALL`, `LC_MESSAGES`, `LANG`).
 The texts come from catalogs in `share/rambler/catalogs`, one line per text: the English
 text, a TAB, the translation. Polish (`polski.catalog`) is included. A text without a
 translation shows in English.

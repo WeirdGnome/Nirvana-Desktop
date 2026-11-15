@@ -18,6 +18,11 @@ const std::string &tr(const std::string &english);
 std::string tr_text(const std::string &text);
 const char *language_name();   // "polski", "" - English
 
+// the languages a catalog can be in (the Locale preferences' list): ISO code, own name;
+// the last has code nullptr
+struct Lang { const char *code, *name; };
+extern const Lang LANGS[];
+
 // a translated text with %s in it filled in, in order ("Delete %s?")
 std::string trs(const std::string &english, const std::string &a = "", const std::string &b = "");
 

@@ -5,6 +5,7 @@
     Catalogs (catalog.h).
 */
 #include "catalog.h"
+#include "lune.h"
 
 #include <cstdlib>
 #include <cstring>
@@ -16,11 +17,12 @@
 
 namespace lune {
 
-namespace {
-
-struct Lang { const char *code, *name; };
 const Lang LANGS[] = {{"pl", "polski"}, {"de", "deutsch"}, {"fr", "français"}, {"it", "italiano"},
-                      {"es", "español"}, {"cs", "čeština"}, {"sv", "svenska"}, {"nl", "nederlands"}};
+                      {"es", "español"}, {"cs", "čeština"}, {"sv", "svenska"}, {"nl", "nederlands"},
+                      {"pt", "português"}, {"da", "dansk"}, {"no", "norsk"}, {"fi", "suomi"},
+                      {"hu", "magyar"}, {"ru", "русский"}, {"el", "ελληνικά"}, {"tr", "türkçe"}, {nullptr, nullptr}};
+
+namespace {
 
 std::string g_lang;
 std::unordered_map<std::string, std::string> g_cat;
@@ -37,15 +39,40 @@ std::string unescape(const std::string &s) {
     return o;
 }
 
-void load() {
-    g_loaded = true;
+// the preferred languages of the Locale preferences ("pl:en"; the session's in use first,
+// then the saved ones), else of the environment
+std::string preferred_languages() {
+    const char *x = getenv("XDG_CONFIG_HOME");
+    std::string base = x && *x ? x : std::string(getenv("HOME") ? getenv("HOME") : "/tmp") + "/.config";
+    for (const std::string &f : {env_dir() + "/locale.prefs", base + "/rambler/locale.prefs"}) {
+        std::ifstream in(f);
+        if (!in) continue;
+        std::string line;
+        while (std::getline(in, line))
+            if (line.rfind("languages=", 0) == 0 && line.size() > 10) return line.substr(10);
+        break;   // (the file in use says nothing: the environment's)
+    }
     const char *env = nullptr;
     for (const char *v : {"LANGUAGE", "LC_ALL", "LC_MESSAGES", "LANG"})
         if ((env = getenv(v)) && *env) break;
-    if (!env || !*env) return;
-    std::string code(env, strcspn(env, "_.@:"));
-    for (auto &l : LANGS) if (code == l.code) g_lang = l.name;
-    if (g_lang.empty()) return;
+    return env ? env : "";
+}
+
+void load() {
+    g_loaded = true;
+    // the first of the preferred languages that has a catalog; English ends the search
+    std::string langs = preferred_languages();
+    std::vector<std::string> names;
+    for (size_t a = 0; a < langs.size();) {
+        size_t b = langs.find(':', a);
+        if (b == std::string::npos) b = langs.size();
+        std::string item = langs.substr(a, b - a);
+        a = b + 1;
+        std::string code = item.substr(0, strcspn(item.c_str(), "_.@"));
+        if (code == "en" || code == "C" || code == "POSIX") break;
+        for (const Lang *l = LANGS; l->code; l++) if (code == l->code) names.push_back(l->name);
+    }
+    if (names.empty()) return;
     // where the catalogs are: $RAMBLER_CATALOGS, next to the program (build tree), the
     // installation's share/rambler/catalogs
     std::vector<std::string> dirs;
@@ -61,9 +88,11 @@ void load() {
     }
     dirs.push_back("/usr/share/rambler/catalogs");
     dirs.push_back("/usr/local/share/rambler/catalogs");
+    for (auto &name : names)
     for (auto &d : dirs) {
-        std::ifstream in(d + "/" + g_lang + ".catalog");
+        std::ifstream in(d + "/" + name + ".catalog");
         if (!in) continue;
+        g_lang = name;
         std::string line;
         while (std::getline(in, line)) {
             if (line.empty() || line[0] == '#') continue;

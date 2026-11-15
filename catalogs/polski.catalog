@@ -19,7 +19,7 @@ Update	Odśwież
 Select Contents	Zaznacz wszystko
 Clear Selection	Usuń zaznaczenie
 Snapshot	Zapamiętaj położenie
-All	Wszystko
+All	Wszystkie
 View	Widok
 as Icons	jako ikony
 as List	jako lista
@@ -128,7 +128,7 @@ Shine:	Rozjaśnienie:
 Shadow / text:	Cień / tekst:
 Fill:	Wypełnienie:
 Font:	Czcionka:
-Font size:	Wielkość czcionki:
+Font size:	Rozmiar czcionki:
 Buttons:	Przyciski:
 Groups:	Grupy:
 The colours apply at once, also to the window frames and the screens.	Kolory działają od razu, także w ramkach okien i na ekranach.
@@ -203,8 +203,6 @@ Only on focus:	Tylko przy fokusie:
 Dropped icons:	Upuszczone ikony:
 Move	Przenieś
 Hidden volumes:	Ukryte woluminy:
-Font:	Czcionka:
-Font size:	Rozmiar czcionki:
 Fixed tiles	Stałe kafelki
 Date:	Data:
 Version:	Wersja:
@@ -325,22 +323,13 @@ X offset:	Przesunięcie X:
 Y offset:	Przesunięcie Y:
 The file '%s' in	Plik '%s' w
 is protected from deletion. Delete it anyway?	jest chroniony przed usunięciem. Usunąć mimo to?
-All	Wszystkie
 No access to the drawer '%s' in	Brak dostępu do szuflady '%s' w
 No access to the file '%s' in	Brak dostępu do pliku '%s' w
 Skip All	Pomiń wszystkie
-Device:	Urządzenie:
-File system:	System plików:
 Unknown	Nieznany
-Name:	Nazwa:
-Size:	Rozmiar:
-Used:	Zajęte:
-Free:	Wolne:
-Block size:	Rozmiar bloku:
 Status:	Stan:
 Read only	Tylko do odczytu
 Read/Write	Odczyt i zapis
-Disk Info	Informacje o dysku
 '%s' contains illegal characters (/ or :).	'%s' zawiera niedozwolone znaki (/ lub :).
 Enter Command and its Arguments:	Podaj polecenie i jego argumenty:
 Execute Command	Wykonaj polecenie
@@ -569,3 +558,16 @@ Refresh rate	Odświeżanie
 The monitor's preferred mode	Tryb zalecany przez monitor
 In use now	Używany teraz
 No display mode chosen.	Nie wybrano trybu wyświetlania.
+Locale Preferences	Preferencje lokalne
+Language	Język
+Country	Kraj
+Timezone	Strefa czasowa
+Available Languages	Dostępne języki
+Preferred Languages	Preferowane języki
+Clear List	Wyczyść listę
+Example	Przykład
+Date and time	Data i czas
+Number	Liczba
+Currency	Waluta
+This locale is not installed.	Te ustawienia regionalne nie są zainstalowane.
+The system's formats.	Formaty systemu.

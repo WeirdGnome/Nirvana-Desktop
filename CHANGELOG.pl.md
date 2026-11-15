@@ -23,6 +23,11 @@
   wyświetlania i odświeżanie wyjścia, ekran większy niż tryb z autoprzewijaniem (panning
   xrandr) oraz Próba, która włącza tryb na dziesięć sekund i wraca do poprzedniego.
   Zapisane ustawienia są wprowadzane na początku sesji.
+- **Preferencje Locale** (`rambler --prefs locale`): preferowane języki (pierwszy, który
+  ma katalog, jest językiem interfejsu; programy dostają je jako `LANGUAGE`), kraj
+  (formaty dat, liczb i walut: zainstalowane ustawienia regionalne) i strefa czasowa
+  (`TZ`). Sesja eksportuje zapisane ustawienia; po Use dostają je programy uruchamiane
+  przez Ramblera.
 
 ### Poprawki
 - Po polsku strona Paski przewijania w preferencjach Lune nazywała się tak samo jak strona

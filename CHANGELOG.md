@@ -23,6 +23,10 @@
   display mode and refresh rate of an output, a screen larger than the mode with
   Autoscroll (xrandr panning), and Test, which puts the mode on for ten seconds and then
   goes back. Saved settings are put into effect at the start of a session.
+- **Locale preferences** (`rambler --prefs locale`): the preferred languages (the first
+  one with a catalog is the interface's; programs get them as `LANGUAGE`), the country
+  (the formats of dates, numbers and money: an installed locale) and the timezone (`TZ`).
+  The session exports the saved ones; after Use, the programs Rambler starts get them.
 
 ### Fixed
 - Polish: the Scrollbars page of the Lune preferences was named like the Sliders page.
