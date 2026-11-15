@@ -1015,6 +1015,7 @@ bool read_desktop_entry(const std::string &file, DesktopEntry &e) {
         if (k == "Name") e.name = v;
         else if (k == "Exec") e.exec = v;
         else if (k == "TryExec") e.try_exec = v;
+        else if (k == "Icon") e.icon = v;
         else if (k == "Hidden") e.hidden = v == "true";
         else if (k == "NoDisplay") e.no_display = v == "true";
         else if (k == "OnlyShowIn") e.only_show_in = v;

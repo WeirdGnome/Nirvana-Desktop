@@ -15,8 +15,12 @@ namespace rambler {
 enum class IconKind {
     Drawer, OpenDrawer, Harddisk, Removable, Optical, RamDisk, Trash,
     Project, Text, Picture, Sound, Movie, Archive, Document, Tool, Script, Link,
-    Network, NetworkDisk
+    Network, NetworkDisk,
+    // the preferences programs (the Prefs drawer): a panel and the program's sign
+    PrefsFont, PrefsInput, PrefsLocale, PrefsLune, PrefsNetwork, PrefsPointer, PrefsRambler, PrefsScreenMode
 };
+// the built-in icon a .desktop file asks for (Icon=rambler-prefs-input ...); false - none
+bool builtin_icon(const std::string &name, IconKind &k);
 
 // the kind of a file or directory (by type and name)
 IconKind icon_kind(const std::string &path, bool is_dir, bool is_volume, bool executable);

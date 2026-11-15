@@ -49,7 +49,7 @@ bool file_request(const std::string &title, std::string &path);
 
 // .desktop files
 struct DesktopEntry {
-    std::string name, exec, try_exec, only_show_in, not_show_in;
+    std::string name, exec, try_exec, only_show_in, not_show_in, icon;
     bool hidden = false, no_display = false, terminal = false;
 };
 bool read_desktop_entry(const std::string &file, DesktopEntry &e);

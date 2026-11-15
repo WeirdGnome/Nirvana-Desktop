@@ -470,6 +470,17 @@ void Rambler::open_entry(IconWindow *w, IconEntry &e) {
     };
     collect(root_);
     for (auto *o : windows_) collect(o);
+    // a .desktop file: the program it describes (its Exec), the other icons its arguments
+    if (e.path.size() > 8 && e.path.compare(e.path.size() - 8, 8, ".desktop") == 0) {
+        DesktopEntry d;
+        if (read_desktop_entry(e.path, d) && !d.exec.empty()) {
+            std::vector<std::string> argv = {"/bin/sh", "-c", d.exec + " \"$@\"", "sh"};
+            if (d.terminal) argv = {"x-terminal-emulator", "-e", "/bin/sh", "-c", d.exec + " \"$@\"", "sh"};
+            argv.insert(argv.end(), args.begin(), args.end());
+            launch(argv, getenv("HOME") ? getenv("HOME") : dir);
+            return;
+        }
+    }
     if (stat(e.path.c_str(), &st) == 0 && (st.st_mode & S_IXUSR) && S_ISREG(st.st_mode)) {
         std::vector<std::string> argv = {e.path};
         argv.insert(argv.end(), args.begin(), args.end());
@@ -1213,10 +1224,14 @@ void make_prefs_drawer() {
         {"ScreenMode.desktop", "ScreenMode", "screenmode"}};
     for (auto &pr : progs) {
         std::string f = dir + "/" + pr.file;
-        if (fs::exists(f, ec)) continue;
+        // made when missing, and made again when it is one of ours from an earlier version
+        // (without its icon); the user's own files stay as they are
+        std::string had = read_file(f), want_exec = std::string("Exec=rambler --prefs ") + pr.arg;
+        if (!had.empty() && (had.find(want_exec) == std::string::npos || had.find("Icon=rambler-prefs-") != std::string::npos))
+            continue;
         std::ofstream out(f);
-        out << "[Desktop Entry]\nType=Application\nName=" << pr.name << "\nExec=rambler --prefs " << pr.arg
-            << "\nCategories=Settings;\n";
+        out << "[Desktop Entry]\nType=Application\nName=" << pr.name << "\n" << want_exec
+            << "\nIcon=rambler-prefs-" << pr.arg << "\nCategories=Settings;\n";
     }
 }
 

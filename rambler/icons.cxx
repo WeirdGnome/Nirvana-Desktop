@@ -280,6 +280,82 @@ IconKind icon_kind(const std::string &path, bool is_dir, bool is_volume, bool ex
     return IconKind::Project;
 }
 
+namespace {
+// A preferences program: a panel with three sliders (the settings), and over its corner the
+// sign of what it sets
+void prefs_icon(IconKind k, int x, int y) {
+    box3d(x + 4, y + 8, 34, 30, 0xAAAAAA, 0xE6E6E6, 0x5E5E5E);
+    for (int i = 0; i < 3; i++) {
+        int ly = y + 15 + i * 8;
+        fl_color(C(0x404040));
+        fl_xyline(x + 9, ly, x + 33);
+        box3d(x + 11 + ((i * 9 + 5) % 18), ly - 3, 5, 7, 0x6688BB, 0xA9C0E4, 0x3C5A8A);
+    }
+    // the sign: in a round plate at the top right
+    int sx = x + 28, sy = y + 2, sw = 18;
+    fl_color(C(0xFFFFFF));
+    fl_pie(sx, sy, sw, sw, 0, 360);
+    fl_color(C(0x000000));
+    fl_arc(sx, sy, sw, sw, 0, 360);
+    int cx = sx + sw / 2, cy = sy + sw / 2;
+    switch (k) {
+    case IconKind::PrefsFont:     // a letter
+        fl_color(C(0x000000));
+        fl_font(FL_TIMES_BOLD, 14);
+        fl_draw("A", cx - 5, cy + 5);
+        break;
+    case IconKind::PrefsInput:    // a key
+        box3d(cx - 6, cy - 5, 12, 10, 0xD9D9D9, 0xFFFFFF, 0x777777);
+        break;
+    case IconKind::PrefsLocale:   // a globe
+        fl_color(C(0x4A90D9));
+        fl_pie(cx - 6, cy - 6, 12, 12, 0, 360);
+        fl_color(C(0x3B8A4A));
+        fl_pie(cx - 4, cy - 5, 6, 7, 0, 360);
+        fl_color(C(0x000000));
+        fl_arc(cx - 6, cy - 6, 12, 12, 0, 360);
+        break;
+    case IconKind::PrefsLune:     // a palette: four colours
+        fl_color(C(0xEE4444)); fl_rectf(cx - 6, cy - 6, 6, 6);
+        fl_color(C(0x40B040)); fl_rectf(cx, cy - 6, 6, 6);
+        fl_color(C(0x4A70D0)); fl_rectf(cx - 6, cy, 6, 6);
+        fl_color(C(0xF0C020)); fl_rectf(cx, cy, 6, 6);
+        break;
+    case IconKind::PrefsNetwork:  // two machines joined
+        rect(cx - 7, cy - 6, 6, 5, 0x6688BB);
+        rect(cx + 1, cy + 1, 6, 5, 0x6688BB);
+        fl_color(C(0x000000));
+        fl_line(cx - 4, cy - 1, cx - 4, cy + 3);
+        fl_line(cx - 4, cy + 3, cx + 1, cy + 3);
+        break;
+    case IconKind::PrefsPointer:  // the pointer
+        poly(0xEE4444, {cx - 5, cy - 7, cx + 5, cy + 1, cx, cy + 1, cx + 2, cy + 6, cx, cy + 7, cx - 2, cy + 2, cx - 5, cy + 5});
+        break;
+    case IconKind::PrefsRambler:  // a drawer
+        box3d(cx - 7, cy - 5, 14, 11, 0x6688BB, 0xA9C0E4, 0x3C5A8A);
+        box3d(cx - 3, cy - 1, 6, 3, 0xD9D9D9, 0xFFFFFF, 0x777777);
+        break;
+    default:                      // ScreenMode: a monitor
+        box3d(cx - 7, cy - 6, 14, 10, 0x404040, 0x808080, 0x202020);
+        fl_color(C(0x4A90D9));
+        fl_rectf(cx - 5, cy - 4, 10, 6);
+        fl_color(C(0x000000));
+        fl_xyline(cx - 3, cy + 6, cx + 3);
+        break;
+    }
+}
+}  // namespace
+
+bool builtin_icon(const std::string &name, IconKind &k) {
+    static const std::pair<const char *, IconKind> NAMES[] = {
+        {"rambler-prefs-font", IconKind::PrefsFont}, {"rambler-prefs-input", IconKind::PrefsInput},
+        {"rambler-prefs-locale", IconKind::PrefsLocale}, {"rambler-prefs-lune", IconKind::PrefsLune},
+        {"rambler-prefs-network", IconKind::PrefsNetwork}, {"rambler-prefs-pointer", IconKind::PrefsPointer},
+        {"rambler-prefs-rambler", IconKind::PrefsRambler}, {"rambler-prefs-screenmode", IconKind::PrefsScreenMode}};
+    for (auto &[n, kind] : NAMES) if (name == n) { k = kind; return true; }
+    return false;
+}
+
 void draw_icon(IconKind k, int x, int y, bool selected) {
     g_sel = selected;
     switch (k) {
@@ -292,6 +368,10 @@ void draw_icon(IconKind k, int x, int y, bool selected) {
     case IconKind::Trash: trash(x, y); break;
     case IconKind::Network: network(x, y); break;
     case IconKind::NetworkDisk: network_disk(x, y); break;
+    case IconKind::PrefsFont: case IconKind::PrefsInput: case IconKind::PrefsLocale: case IconKind::PrefsLune:
+    case IconKind::PrefsNetwork: case IconKind::PrefsPointer: case IconKind::PrefsRambler: case IconKind::PrefsScreenMode:
+        prefs_icon(k, x, y);
+        break;
     default: project(k, x, y); break;
     }
     g_sel = false;

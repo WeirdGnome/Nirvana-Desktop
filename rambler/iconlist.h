@@ -66,6 +66,7 @@ struct IconEntry {
     bool network = false;             // the Network Access icon of the root window
     bool network_volume = false;      // a network file system (NFS, SMB, SSHFS ...)
     std::shared_ptr<DiskObject> icon; // its icon file (name.info / Disk.info); none: a default icon
+    int kind = -1;                    // a built-in icon asked for by name (IconKind; -1: by its type)
     long app_id = 0;                  // and the icon's number there
     int provided_x = NO_ICON_POSITION, provided_y = NO_ICON_POSITION;   // a snapshot position
     // computed (iconlist.c: ie_IconX/Y, ie_AreaWidth/Height, ie_IconWidth/Height ...)

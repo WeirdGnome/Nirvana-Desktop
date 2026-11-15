@@ -11,6 +11,7 @@
 */
 #include "iconlist.h"
 #include "icons.h"
+#include "tools.h"
 #include "catalog.h"
 
 #include <FL/Fl.H>
@@ -465,6 +466,7 @@ void IconList::draw_icon_image(IconEntry &e, int x, int y, bool sel) {
     if (e.unmounted) k = IconKind::Removable;
     if (e.network) k = IconKind::Network;
     if (e.network_volume) k = IconKind::NetworkDisk;
+    if (e.kind >= 0) k = (IconKind)e.kind;
     if (e.icon && !e.trash && !e.unmounted) {
         // the icon file's image: the selected one of a dual icon, else the lightened one
         if (Fl_RGB_Image *img = e.icon->image(sel)) img->draw(x, y);
@@ -1072,6 +1074,17 @@ void IconDrawerList::update() {
         e.path = it->path().string();
         e.label = name;
         e.icon = get_disk_object(e.path);
+        // a .desktop file (a program's launcher on Linux): its name and its icon
+        if (!e.icon && name.size() > 8 && name.compare(name.size() - 8, 8, ".desktop") == 0) {
+            DesktopEntry d;
+            if (read_desktop_entry(e.path, d)) {
+                if (!d.name.empty()) e.label = d.name;
+                IconKind k;
+                if (builtin_icon(d.icon, k)) e.kind = (int)k;
+                else if (!d.icon.empty()) e.icon = theme_icon(d.icon);
+                if (e.kind < 0 && !e.icon) e.kind = (int)IconKind::Tool;
+            }
+        }
         // the icon's own place in the drawer (do_CurrentX/Y; a snapshot later overrides it)
         if (e.icon && e.icon->current_x != NO_ICON_POSITION && e.icon->current_y != NO_ICON_POSITION) {
             e.provided_x = e.icon->current_x;

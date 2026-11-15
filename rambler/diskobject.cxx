@@ -586,6 +586,56 @@ bool put_png_icon(const std::string &info_file, const DiskObject &o) {
     return rename(tmp.c_str(), info_file.c_str()) == 0;
 }
 
+std::shared_ptr<DiskObject> theme_icon(const std::string &name) {
+    static std::map<std::string, std::shared_ptr<DiskObject>> found;
+    auto it = found.find(name);
+    if (it != found.end()) return it->second;
+    std::shared_ptr<DiskObject> o;
+    struct stat st;
+    if (!name.empty() && name[0] == '/') {
+        if (stat(name.c_str(), &st) == 0) o = icon_from_picture(name, 48);
+    } else if (!name.empty() && name.find('/') == std::string::npos) {
+        // the icon theme directories (the user's first), the sizes nearest 48 first, then pixmaps
+        std::vector<std::string> bases;
+        std::string home = getenv("HOME") ? getenv("HOME") : "";
+        if (!home.empty()) { bases.push_back(home + "/.local/share/icons"); bases.push_back(home + "/.icons"); }
+        const char *xd = getenv("XDG_DATA_DIRS");
+        std::string dirs = xd && *xd ? xd : "/usr/local/share:/usr/share";
+        for (size_t a = 0; a < dirs.size();) {
+            size_t b = dirs.find(':', a);
+            if (b == std::string::npos) b = dirs.size();
+            if (b > a) bases.push_back(dirs.substr(a, b - a) + "/icons");
+            a = b + 1;
+        }
+        static const char *const SIZES[] = {"48x48", "64x64", "scalable", "96x96", "128x128", "256x256", "32x32", "512x512", "24x24"};
+        static const char *const THEMES[] = {"hicolor", "Adwaita", "breeze", "Papirus", "gnome", "oxygen"};
+        static const char *const KINDS[] = {"apps", "categories", "devices", "places", "mimetypes"};
+        std::string file;
+        for (auto &b : bases) {
+            for (auto *t : THEMES) {
+                for (auto *sz : SIZES)
+                    for (auto *k : KINDS)
+                        for (const char *ext : {".png", ".svg"}) {
+                            std::string f = b + "/" + t + "/" + sz + "/" + k + "/" + name + ext;
+                            if (stat(f.c_str(), &st) == 0) { file = f; goto done; }
+                        }
+            }
+            for (const char *ext : {".png", ".svg", ".xpm"}) {   // (an icon straight in the directory)
+                std::string f = b + "/" + name + ext;
+                if (stat(f.c_str(), &st) == 0) { file = f; goto done; }
+            }
+        }
+        for (const char *ext : {".png", ".svg", ".xpm"}) {
+            std::string f = std::string("/usr/share/pixmaps/") + name + ext;
+            if (stat(f.c_str(), &st) == 0) { file = f; break; }
+        }
+    done:
+        if (!file.empty()) o = icon_from_picture(file, 48);
+    }
+    found[name] = o;
+    return o;
+}
+
 std::shared_ptr<DiskObject> get_disk_object(const std::string &path, bool volume) {
     std::string file = volume ? (path.empty() || path.back() == '/' ? path : path + "/") + "Disk.info" : path + ".info";
     struct stat st;

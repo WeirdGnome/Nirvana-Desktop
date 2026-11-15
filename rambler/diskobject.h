@@ -62,6 +62,9 @@ std::shared_ptr<DiskObject> icon_from_picture(const std::string &picture, int ma
 // writing a PNG icon (PutDiskObject in the PNG form): the normal image, the icOn chunk
 // (position, type, default tool, tool types), the selected image after it - a dual icon
 bool put_png_icon(const std::string &info_file, const DiskObject &o);
+// a named icon of the icon themes (a .desktop file's Icon=: a name, or a picture's path),
+// the size nearest an icon's; nullptr - not found
+std::shared_ptr<DiskObject> theme_icon(const std::string &name);
 // an AppImage's own icon (appimage.cxx): nullptr - not an AppImage, or no icon in it
 std::shared_ptr<DiskObject> appimage_icon(const std::string &path);
 
