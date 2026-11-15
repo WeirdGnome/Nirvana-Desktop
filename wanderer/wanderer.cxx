@@ -554,13 +554,21 @@ std::vector<Fl_Menu_Item> Wanderer::menu_items(IconWindow *w) {
     bool sel = !l->selection().empty();
     bool drawer = !w->is_root();
     bool left_out_sel = false, trash_sel = w->location() == trash_dir(), volume_sel = false, eject_sel = false, format_sel = false;
+    bool app_sel = false, only_apps = true;
+    unsigned long app_mask = ~0ul;
     for (auto *e : l->selection()) {
         if (e->left_out) left_out_sel = true;
         if (e->trash) trash_sel = true;
         if (e->type == ST_ROOT) volume_sel = true;
         if (e->type == ST_ROOT && !e->device.empty() && !e->unmounted) eject_sel = true;
         if (e->type == ST_ROOT && !e->device.empty()) format_sel = true;
+        if (e->app_window) { app_sel = true; app_mask &= e->app_supports; }
+        else only_apps = false;
     }
+    // a program's icon selected: only what it takes (and Wanderer passes on)
+    app_mask &= 1ul << AMCLASSICON_Open | 1ul << AMCLASSICON_Snapshot | 1ul << AMCLASSICON_UnSnapshot |
+                1ul << AMCLASSICON_Delete | 1ul << AMCLASSICON_EmptyTrash;
+    auto app_ok = [&](int cls) { return !app_sel || (app_mask >> cls & 1); };
     int sf = l->sort_flags, df = l->display_flags;
     auto chk = [](bool on) { return FL_MENU_RADIO | (on ? FL_MENU_VALUE : 0); };
     auto tog = [](bool on) { return FL_MENU_TOGGLE | (on ? FL_MENU_VALUE : 0); };
@@ -606,19 +614,19 @@ std::vector<Fl_Menu_Item> Wanderer::menu_items(IconWindow *w) {
             {"Find...", FL_META + 'f', nullptr, (void *)MEN_WINDOW_FIND, drawer ? 0 : dis},
             {nullptr},
         {"Icon", 0, nullptr, nullptr, FL_SUBMENU},
-            {"Open", FL_META + 'o', nullptr, (void *)MEN_ICON_OPEN, sel ? 0 : dis},
-            {"Copy", FL_META + 'c', nullptr, (void *)MEN_ICON_COPY, sel && drawer ? 0 : dis},
-            {"Rename...", FL_META + 'r', nullptr, (void *)MEN_ICON_RENAME, sel && drawer ? 0 : dis},
-            {"Information...", FL_META + 'i', nullptr, (void *)MEN_ICON_INFORMATION, sel ? 0 : dis},
-            {"Snapshot", FL_META + 's', nullptr, (void *)MEN_ICON_SNAPSHOT, sel ? 0 : dis},
-            {"Unsnapshot", FL_META + 'u', nullptr, (void *)MEN_ICON_UNSNAPSHOT, sel ? 0 : dis},
-            {"Leave Out", FL_META + 'l', nullptr, (void *)MEN_ICON_LEAVEOUT, sel && drawer ? 0 : dis},
+            {"Open", FL_META + 'o', nullptr, (void *)MEN_ICON_OPEN, sel && app_ok(AMCLASSICON_Open) ? 0 : dis},
+            {"Copy", FL_META + 'c', nullptr, (void *)MEN_ICON_COPY, sel && drawer && !app_sel ? 0 : dis},
+            {"Rename...", FL_META + 'r', nullptr, (void *)MEN_ICON_RENAME, sel && drawer && !app_sel ? 0 : dis},
+            {"Information...", FL_META + 'i', nullptr, (void *)MEN_ICON_INFORMATION, sel && !app_sel ? 0 : dis},
+            {"Snapshot", FL_META + 's', nullptr, (void *)MEN_ICON_SNAPSHOT, sel && app_ok(AMCLASSICON_Snapshot) ? 0 : dis},
+            {"Unsnapshot", FL_META + 'u', nullptr, (void *)MEN_ICON_UNSNAPSHOT, sel && app_ok(AMCLASSICON_UnSnapshot) ? 0 : dis},
+            {"Leave Out", FL_META + 'l', nullptr, (void *)MEN_ICON_LEAVEOUT, sel && drawer && !app_sel ? 0 : dis},
             {"Put Away", FL_META + 'p', nullptr, (void *)MEN_ICON_PUTAWAY, (left_out_sel ? 0 : dis) | FL_MENU_DIVIDER},
-            {"Delete...", 0, nullptr, (void *)MEN_ICON_DELETE, sel && drawer ? 0 : dis},
+            {"Delete...", 0, nullptr, (void *)MEN_ICON_DELETE, sel && (drawer || only_apps) && app_ok(AMCLASSICON_Delete) ? 0 : dis},
             {"Disk Info...", 0, nullptr, (void *)MEN_ICON_DISKINFO, volume_sel ? 0 : dis},
             {"Eject", FL_META + 'j', nullptr, (void *)MEN_ICON_EJECT, eject_sel ? 0 : dis},
             {"Format...", 0, nullptr, (void *)MEN_ICON_FORMAT, format_sel ? 0 : dis},
-            {"Empty Trash", 0, nullptr, (void *)MEN_ICON_EMPTYTRASH, trash_sel ? 0 : dis},
+            {"Empty Trash", 0, nullptr, (void *)MEN_ICON_EMPTYTRASH, (trash_sel || app_sel) && app_ok(AMCLASSICON_EmptyTrash) ? 0 : dis},
             {nullptr},
         {"Tools", 0, nullptr, nullptr, FL_SUBMENU},
             {"Tools Drawer", 0, nullptr, (void *)MEN_TOOLS_DRAWER},
@@ -846,6 +854,22 @@ void Wanderer::menu_action(IconWindow *w, int id) {
     }
     IconList *l = w->iconlist();
     auto resort = [l, w] { l->sort(); for (auto &e : l->entries()) e.provided_x = e.provided_y = NO_ICON_POSITION; l->rethink(); w->update_status(); };
+
+    // a program's icons (AppIcons) among the selected: the program is told what was picked
+    // (SendAppIconMenuMessage: snapshot, unsnapshot, delete; empty trash for the first one)
+    if (id == MEN_ICON_SNAPSHOT || id == MEN_ICON_UNSNAPSHOT || id == MEN_ICON_DELETE || id == MEN_ICON_EMPTYTRASH) {
+        long cls = id == MEN_ICON_SNAPSHOT ? AMCLASSICON_Snapshot : id == MEN_ICON_UNSNAPSHOT ? AMCLASSICON_UnSnapshot
+                 : id == MEN_ICON_DELETE   ? AMCLASSICON_Delete   : AMCLASSICON_EmptyTrash;
+        auto sel = l->selection();
+        bool files = false;
+        for (auto *e : sel) {
+            if (!e->app_window) { files = true; continue; }
+            app_message({e->app_window, e->app_id, e->label}, "_WANDERER_APPICON_MESSAGE", "_WANDERER_APPICON_ARGS", {}, cls);
+            if (id == MEN_ICON_EMPTYTRASH) return;
+        }
+        if (!files && !sel.empty()) return;
+    }
+
     switch (id) {
     case MEN_WANDERER_BACKDROP: {
         // the root window between a backdrop and a window: made again
@@ -942,6 +966,7 @@ void Wanderer::menu_action(IconWindow *w, int id) {
     case MEN_ICON_UNSNAPSHOT: {
         Snapshot s = load_snapshot(w->location());
         for (auto *e : l->selection()) {
+            if (e->app_window) continue;
             std::string key = w->is_root() ? e->path : fs::path(e->path).filename().string();
             if (id == MEN_ICON_SNAPSHOT) s.icons[key] = {e->x, e->y};
             else { s.icons.erase(key); e->provided_x = e->provided_y = NO_ICON_POSITION; }
@@ -952,6 +977,7 @@ void Wanderer::menu_action(IconWindow *w, int id) {
     }
     case MEN_ICON_DELETE: {
         auto sel = l->selection();
+        sel.erase(std::remove_if(sel.begin(), sel.end(), [](IconEntry *e) { return e->app_window != 0; }), sel.end());
         std::string what = sel.size() == 1 ? "'" + sel[0]->label + "'" : trs("%s icons", std::to_string(sel.size()));
         int r = request("Delete", trs("Delete %s?\nMove to Trash keeps them until the trash is emptied;\nDelete removes them for good.", what),
                         "Move to Trash|Delete|Cancel");

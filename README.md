@@ -107,6 +107,13 @@ top-level window. Opening the icon, or dropping icons onto it, sends the window 
 ClientMessage `_WANDERER_APPICON_MESSAGE` (`l[0]` the icon's number, `l[1]` the number of
 paths); the dropped icons' paths are in `_WANDERER_APPICON_ARGS` (separated by NUL).
 
+`l[2]` says why the message was sent (the AMCLASSICON numbers): 0 the icon was opened or
+icons were dropped on it; 4 Snapshot, 5 Unsnapshot, 8 Delete, 10 Empty Trash were picked
+in the Icon menu while it was selected. Those items are enabled for the icon only when the
+program says it takes them: the property `_WANDERER_APPICON_SUPPORTS` (`CARDINAL`, one for
+each icon, in order) with bit *n* set for class *n* (as the WBAPPICONA_Supports tags).
+Without it an icon takes Open only.
+
 ## Languages
 
 The interface follows the user's language (`LANGUAGE`, `LC_ALL`, `LC_MESSAGES`, `LANG`).

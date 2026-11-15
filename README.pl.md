@@ -92,6 +92,13 @@ ClientMessage `_WANDERER_APPICON_MESSAGE` (`l[0]` numer ikony, `l[1]` liczba śc
 ścieżki upuszczonych ikon są we właściwości `_WANDERER_APPICON_ARGS` (rozdzielone znakiem
 NUL).
 
+`l[2]` mówi, dlaczego wysłano komunikat (numery AMCLASSICON): 0 ikonę otwarto albo
+upuszczono na nią ikony; 4 Zapamiętaj położenie, 5 Zapomnij położenie, 8 Usuń, 10 Opróżnij
+kosz wybrano z menu Ikona, gdy była zaznaczona. Te pozycje są dostępne dla ikony tylko
+wtedy, gdy program deklaruje, że je obsługuje: właściwość `_WANDERER_APPICON_SUPPORTS`
+(`CARDINAL`, po jednej na ikonę, w kolejności) z ustawionym bitem *n* dla klasy *n* (jak
+znaczniki WBAPPICONA_Supports). Bez niej ikona obsługuje tylko otwarcie.
+
 ## Języki
 
 Interfejs mówi językiem użytkownika (`LANGUAGE`, `LC_ALL`, `LC_MESSAGES`, `LANG`).

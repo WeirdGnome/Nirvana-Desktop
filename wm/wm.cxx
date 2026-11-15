@@ -1073,7 +1073,9 @@ void button_press(XButtonEvent &e) {
     if (by_window.count(e.window)) {
         Client *c = by_window[e.window];
         if (c->screen != front_screen() && c->screen->y == 0) screen_to_front(c->screen);
-        if (!c->backdrop) activate(c);
+        // (the backdrop too: as the system's backdrop window, it takes the keys and its menus
+        // show; it is not raised - activating raises nothing)
+        activate(c);
         // the right button over a window with menus: the screen bar shows them
         if (e.button == Button3 && menu_begin(c)) {
             XAllowEvents(dpy, AsyncPointer, CurrentTime);

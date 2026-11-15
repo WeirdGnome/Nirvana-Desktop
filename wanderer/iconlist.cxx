@@ -1202,6 +1202,7 @@ void IconVolumeList::update() {
         e.executable = true;
         e.app_window = a.window;
         e.app_id = a.id;
+        e.app_supports = a.supports;
         add(std::move(e));
     }
     rethink();
@@ -1258,6 +1259,18 @@ std::vector<AppItem> app_items(const char *property) {
         if (XGetWindowProperty(d, w, prop, 0, 16384, False, AnyPropertyType, &type, &format, &len, &after, &p) !=
                 Success || !p)
             continue;
+        // the program's own list of what each item takes (CARDINAL, one for each, in order)
+        std::vector<unsigned long> sup;
+        {
+            unsigned char *q = nullptr;
+            unsigned long qn = 0, qa;
+            Atom qt;
+            int qf;
+            if (XGetWindowProperty(d, w, XInternAtom(d, (std::string(property) + "_SUPPORTS").c_str(), False), 0, 1024, False,
+                                   XA_CARDINAL, &qt, &qf, &qn, &qa, &q) == Success && q && qf == 32)
+                sup.assign((unsigned long *)q, (unsigned long *)q + qn);
+            if (q) XFree(q);
+        }
         if (format == 8) {
             std::string all((char *)p, len);
             long id = 0;
@@ -1266,7 +1279,7 @@ std::vector<AppItem> app_items(const char *property) {
                 size_t z = all.find('\0', at);
                 if (z == std::string::npos) z = all.size();
                 std::string label = all.substr(at, z - at);
-                if (!label.empty()) items.push_back({w, id, label});
+                if (!label.empty()) items.push_back({w, id, label, id < (long)sup.size() ? sup[id] | 1 : 1});
                 id++;
                 at = z + 1;
             }
@@ -1277,7 +1290,7 @@ std::vector<AppItem> app_items(const char *property) {
 }
 
 void app_message(const AppItem &item, const char *message, const char *args_property,
-                 const std::vector<std::string> &paths) {
+                 const std::vector<std::string> &paths, long cls) {
     Display *d = fl_display;
     std::string args;
     for (auto &p : paths) { args += p; args += '\0'; }
@@ -1290,6 +1303,7 @@ void app_message(const AppItem &item, const char *message, const char *args_prop
     e.xclient.format = 32;
     e.xclient.data.l[0] = item.id;
     e.xclient.data.l[1] = (long)paths.size();
+    e.xclient.data.l[2] = cls;
     XSendEvent(d, item.window, False, NoEventMask, &e);
     XFlush(d);
 }

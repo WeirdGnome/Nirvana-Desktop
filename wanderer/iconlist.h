@@ -60,6 +60,7 @@ struct IconEntry {
     std::string device;               // a volume: its block device (/dev/sdb1)
     bool unmounted = false;           // a volume not mounted yet (ghosted; opening mounts it)
     unsigned long app_window = 0;     // an AppIcon: the program's window
+    unsigned long app_supports = 1;   // and the Icon menu's items it takes (WBAPPICONA_Supports*)
     bool network = false;             // the Network Access icon of the root window
     bool network_volume = false;      // a network file system (NFS, SMB, SSHFS ...)
     long app_id = 0;                  // and the icon's number there
@@ -222,10 +223,16 @@ void set_left_out(const std::vector<std::string> &paths);
 std::vector<std::string> hidden_volumes();
 // Programs' AppIcons / AppMenuItems: the names in a property (UTF8_STRING, NUL-separated)
 // on the top-level windows (_NET_CLIENT_LIST); a message back with the paths it concerns
-struct AppItem { unsigned long window; long id; std::string label; };
+// supports: the Icon menu's items it takes (a bit for each AMCLASSICON_*; Open only by default)
+struct AppItem { unsigned long window; long id; std::string label; unsigned long supports = 1; };
 std::vector<AppItem> app_items(const char *property);
+// the classes of an AppIcon's message (l[2]; workbench.h AMCLASSICON_*): 0 opened or icons
+// dropped on it, else the Icon menu's item picked with it selected
+enum { AMCLASSICON_Open, AMCLASSICON_Copy, AMCLASSICON_Rename, AMCLASSICON_Information, AMCLASSICON_Snapshot,
+       AMCLASSICON_UnSnapshot, AMCLASSICON_LeaveOut, AMCLASSICON_PutAway, AMCLASSICON_Delete, AMCLASSICON_FormatDisk,
+       AMCLASSICON_EmptyTrash };
 void app_message(const AppItem &item, const char *message, const char *args_property,
-                 const std::vector<std::string> &paths);
+                 const std::vector<std::string> &paths, long cls = 0);
 void set_hidden_volumes(const std::vector<std::string> &names);
 
 // IconVolumeList: the mounted volumes (the desktop's root window)
