@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.14.0 (unreleased)
+## 0.14.0 – 2026-11-15
 
 ### Added
 - **Default icons** (as `ENV:Sys/def_*.info`): a file, drawer or volume without an icon of

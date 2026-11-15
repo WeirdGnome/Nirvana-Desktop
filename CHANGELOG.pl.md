@@ -1,6 +1,6 @@
 # Lista zmian
 
-## 0.14.0 (w przygotowaniu)
+## 0.14.0 – 2026-11-15
 
 ### Nowe
 - **Ikony domyślne** (jak `ENV:Sys/def_*.info`): plik, szuflada albo dysk bez własnej ikony
