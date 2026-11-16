@@ -44,6 +44,11 @@
 #include <unistd.h>
 #include <vector>
 #include "../rambler/beep.h"
+#include "decor.h"
+
+#include <memory>
+#include <dirent.h>
+#include <strings.h>
 
 namespace {
 
@@ -78,11 +83,17 @@ int text_width(const std::string &s) {
 // --------------------------------------------------------------------------------------------
 // Geometry of the frames
 // --------------------------------------------------------------------------------------------
-const int BAR_H = 20;          // the screen's title bar
-const int TITLE_H = 20;        // a window's title bar
-const int BORDER_L = 4, BORDER_R = 4, BORDER_B = 4;
-const int GADGET_W = 22;       // close, zoom, depth
-const int SIZE_W = 16, SIZE_H = 16;
+// (the default look's; a decoration theme sets them from its pictures and settings)
+int BAR_H = 20;                // the screen's title bar
+int TITLE_H = 20;              // a window's title bar
+int BORDER_L = 4, BORDER_R = 4, BORDER_B = 4;
+int GADGET_W = 22;             // close, zoom, depth (and the screen's depth gadget)
+int SIZE_W = 16, SIZE_H = 16;
+
+// The decoration theme (THEME:): the frames, the screen bars and the gadgets drawn from its
+// pictures, as decoration.library and its decorator classes draw them; none: the default look
+std::unique_ptr<decor::Theme> theme;
+decor::ScreenBar theme_bar;
 
 Atom WM_PROTOCOLS, WM_DELETE_WINDOW, WM_STATE, WM_TAKE_FOCUS, NET_WM_NAME, UTF8_STRING, NET_WM_WINDOW_TYPE,
     NET_WM_WINDOW_TYPE_DESKTOP, NET_WM_WINDOW_TYPE_DOCK, NET_SUPPORTED, NET_ACTIVE_WINDOW, NET_CLIENT_LIST,
@@ -272,8 +283,107 @@ void draw_size(Drawable d, GC gc, int x, int y, int w, int h, bool pressed) {
 
 GC gc_for(Drawable d) { return XCreateGC(dpy, d, 0, nullptr); }
 
+// ---- the themed look -------------------------------------------------------------------------
+int font_height() { return font->ascent + font->descent; }
+
+decor::WindowFrame frame_of(const Client *c) {
+    return decor::window_frame(*theme, font_height(), c->w, c->h, true, true, true, true);
+}
+
+// a drawing of the decorator onto a drawable (its pixels as 32-bit words: 24 and 32 bit
+// TrueColor displays)
+bool themed_ok() {
+    return theme && (DefaultDepth(dpy, scr) == 24 || DefaultDepth(dpy, scr) == 32) && DefaultVisual(dpy, scr)->c_class == TrueColor;
+}
+void put_rastport(Drawable d, GC gc, decor::RastPort &rp) {
+    XImage *im = XCreateImage(dpy, DefaultVisual(dpy, scr), DefaultDepth(dpy, scr), ZPixmap, 0, (char *)rp.px.data(),
+                              (unsigned)rp.w, (unsigned)rp.h, 32, rp.w * 4);
+    if (!im) return;
+    XPutImage(dpy, d, gc, im, 0, 0, 0, 0, (unsigned)rp.w, (unsigned)rp.h);
+    im->data = nullptr;
+    XDestroyImage(im);
+}
+
+// TextFit: as much of a text as fits in maxw pixels
+std::string fit_text(const std::string &s, int maxw) {
+    if (text_width(s) <= maxw) return s;
+    std::string t = s;
+    while (!t.empty() && text_width(t) > maxw) {
+        do t.pop_back(); while (!t.empty() && ((unsigned char)t.back() & 0xC0) == 0x80);
+        if (!t.empty() && ((unsigned char)t.back() & 0x80)) t.pop_back();   // (a sequence's first byte)
+    }
+    return t;
+}
+
+// a title in a theme's way: plain, with a shadow (+1,+1) or an outline (eight times round)
+void themed_title(Drawable d, int x, int y, int maxw, const std::string &s, bool outline, bool shadow, uint32_t text_rgb,
+                  uint32_t shadow_rgb, XftColor *plain) {
+    auto color = [](uint32_t rgb) {
+        XRenderColor rc = {(unsigned short)(((rgb >> 16) & 0xff) * 257), (unsigned short)(((rgb >> 8) & 0xff) * 257),
+                           (unsigned short)((rgb & 0xff) * 257), 0xffff};
+        XftColor c;
+        XftColorAllocValue(dpy, DefaultVisual(dpy, scr), DefaultColormap(dpy, scr), &rc, &c);
+        return c;
+    };
+    // (plain: in the pen given, or in the colour given when there is no pen)
+    if (!outline && !shadow) {
+        if (plain) { draw_text(d, x, y, maxw, s, plain); return; }
+        XftColor tc = color(text_rgb);
+        draw_text(d, x, y, maxw, s, &tc);
+        XftColorFree(dpy, DefaultVisual(dpy, scr), DefaultColormap(dpy, scr), &tc);
+        return;
+    }
+    XftColor tc = color(text_rgb), sc = color(shadow_rgb);
+    if (outline) {
+        for (auto [dx, dy] : {std::pair{1, 0}, {2, 0}, {0, 0}, {0, 1}, {0, 2}, {1, 2}, {2, 1}, {2, 2}})
+            draw_text(d, x + dx, y + dy, maxw + 2, s, &sc);
+        draw_text(d, x + 1, y + 1, maxw + 2, s, &tc);
+    } else {
+        draw_text(d, x + 1, y + 1, maxw + 1, s, &sc);
+        draw_text(d, x, y, maxw, s, &tc);
+    }
+    XftColorFree(dpy, DefaultVisual(dpy, scr), DefaultColormap(dpy, scr), &tc);
+    XftColorFree(dpy, DefaultVisual(dpy, scr), DefaultColormap(dpy, scr), &sc);
+}
+
+void draw_frame_themed(Client *c) {
+    Window f = c->frame;
+    int w = c->w, h = c->h;
+    decor::WindowFrame fr = frame_of(c);
+    decor::RastPort rp;
+    rp.size(w, h);
+    // the gadgets' states: held down, or the window's (in)active look
+    decor::GadgetStates gs;
+    int idle = c->active ? decor::IDS_NORMAL : decor::IDS_INACTIVENORMAL;
+    gs.close = c->pressed == G_CLOSE ? decor::IDS_SELECTED : idle;
+    gs.depth = c->pressed == G_DEPTH ? decor::IDS_SELECTED : idle;
+    gs.zoom = c->pressed == G_ZOOM ? decor::IDS_SELECTED : idle;
+    gs.size = c->pressed == G_SIZE ? decor::IDS_SELECTED : idle;
+    struct Fit { std::string text, shown; } fit{c->title, ""};
+    int tx, ty, tw;
+    decor::draw_window(*theme, rp, fr, c->active, gs, !c->title.empty(), font->ascent, font_height(),
+                       [](void *d, int maxw) {
+                           auto *ft = (Fit *)d;
+                           ft->shown = fit_text(ft->text, maxw);
+                           return ft->shown.empty() ? 0 : text_width(ft->shown);
+                       }, &fit, tx, ty, tw);
+    Pixmap pm = XCreatePixmap(dpy, f, (unsigned)w, (unsigned)h, (unsigned)DefaultDepth(dpy, scr));
+    GC gc = gc_for(pm);
+    put_rastport(pm, gc, rp);
+    if (tx >= 0) {
+        // FILLTEXTPEN (active) and TEXTPEN: the text pen, black
+        const decor::Config &dc = theme->dc;
+        themed_title(pm, tx, ty, tw + 1, fit.shown, dc.TitleOutline, dc.TitleShadow, dc.TitleColorText, dc.TitleColorShadow,
+                     &xft_black);
+    }
+    XCopyArea(dpy, pm, f, gc, 0, 0, (unsigned)w, (unsigned)h, 0, 0);
+    XFreeGC(dpy, gc);
+    XFreePixmap(dpy, pm);
+}
+
 void draw_frame(Client *c) {
     if (c->bare()) return;
+    if (themed_ok()) { draw_frame_themed(c); return; }
     Window f = c->frame;
     GC gc = gc_for(f);
     int w = c->w, h = c->h;
@@ -298,6 +408,35 @@ void draw_frame(Client *c) {
 }
 
 void WScreen::draw_bar() {
+    if (themed_ok()) {
+        // screendecorclass: the bar from the theme's picture, the title, the depth gadget
+        decor::RastPort rp;
+        rp.size(SW, BAR_H);
+        int tx, ty;
+        decor::draw_screen_bar(*theme, rp, theme_bar, decor::IDS_NORMAL, font->ascent, font_height(), tx, ty);
+        Pixmap pm = XCreatePixmap(dpy, win, (unsigned)SW, (unsigned)BAR_H, (unsigned)DefaultDepth(dpy, scr));
+        GC gc = gc_for(pm);
+        put_rastport(pm, gc, rp);
+        std::string t = title;
+        if (active && active->screen == this && !active->screen_title.empty()) t = active->screen_title;
+        else for (auto *c : clients) if (c->backdrop && !c->screen_title.empty()) t = c->screen_title;
+        int room = theme_bar.title_right - tx - (this == main_screen ? tray_width() : 0);
+        const decor::Config &dc = theme->dc;
+        // the title's colours: the theme's (TITLE_DEFCOLORTEXT/SHADOW when it gives none for
+        // an outline), plain without them in BARDETAILPEN
+        bool own = dc.STitleColorText != 0xFFFFFFFF;
+        uint32_t text_rgb = dc.STitleColorText & 0xFFFFFF, shadow_rgb = dc.STitleColorShadow & 0xFFFFFF;
+        if (dc.STitleOutline) {
+            if (!own) text_rgb = 0xCCCCCC;
+            if (dc.STitleColorShadow == 0xFFFFFFFF) shadow_rgb = 0x444444;
+        }
+        themed_title(pm, tx, ty, room, fit_text(t, room), dc.STitleOutline, !dc.STitleOutline && dc.STitleShadow,
+                     text_rgb, shadow_rgb, own || dc.STitleOutline || dc.STitleShadow ? nullptr : &xft_black);
+        XCopyArea(dpy, pm, win, gc, 0, 0, (unsigned)SW, (unsigned)BAR_H, 0, 0);
+        XFreeGC(dpy, gc);
+        XFreePixmap(dpy, pm);
+        return;
+    }
     GC gc = gc_for(win);
     fill(win, gc, pen_white, 0, 0, SW, BAR_H - 1);
     fill(win, gc, pen_black, 0, BAR_H - 1, SW, 1);
@@ -703,6 +842,15 @@ void unmanage(Client *c, bool destroyed) {
 
 Gadget gadget_at(Client *c, int x, int y) {
     if (c->bare()) return G_NONE;
+    if (themed_ok()) {
+        decor::WindowFrame f = frame_of(c);
+        if (f.close.contains(x, y)) return G_CLOSE;
+        if (f.depth.contains(x, y)) return G_DEPTH;
+        if (f.zoom.contains(x, y)) return G_ZOOM;
+        if (y < f.border_top) return G_TITLE;
+        if (f.size.contains(x, y)) return G_SIZE;
+        return G_NONE;
+    }
     if (y < TITLE_H) {
         if (x < GADGET_W) return G_CLOSE;
         if (x >= c->w - GADGET_W) return G_DEPTH;
@@ -1397,6 +1545,7 @@ int on_error(Display *, XErrorEvent *e) {
         fprintf(stderr, "rambler-wm: another window manager is running\n");
         exit(1);
     }
+    if (getenv("RAMBLER_WM_DEBUG")) fprintf(stderr, "rambler-wm: X error %d (request %d)\n", e->error_code, e->request_code);
     return 0;   // windows that went away meanwhile
 }
 
@@ -1536,6 +1685,70 @@ void palette_changed() {
 
 // The Font preferences changed the screen font (Lune sets _RAMBLER_FONT on the root window:
 // "family TAB size"): the bars' and menus' text in it, as large as the bars allow
+// ---- THEME: --------------------------------------------------------------------------------
+// the theme in use: theme.var (ENV:, else ENVARC:) holds its drawer, "THEMES:Name" or a path;
+// none set: THEMES:Ice, the system's default; "none": the default look without a theme
+std::string theme_drawer() {
+    const char *x = getenv("XDG_CONFIG_HOME"), *rt = getenv("XDG_RUNTIME_DIR"), *home = getenv("HOME");
+    std::string base = x && *x ? x : std::string(home ? home : "/tmp") + "/.config";
+    std::string env = rt && *rt ? std::string(rt) + "/rambler/theme.var" : "/tmp/rambler-" + std::to_string(getuid()) + "/theme.var";
+    std::string v = "THEMES:Ice";
+    for (const std::string &f : {env, base + "/rambler/theme.var"}) {
+        if (FILE *fp = fopen(f.c_str(), "r")) {
+            char buf[1024] = "";
+            if (fgets(buf, sizeof buf, fp)) v = buf;
+            fclose(fp);
+            break;
+        }
+    }
+    while (!v.empty() && (v.back() == '\n' || v.back() == '\r' || v.back() == ' ')) v.pop_back();
+    if (v.empty() || !strcasecmp(v.c_str(), "none")) return "";
+    if (strncasecmp(v.c_str(), "THEMES:", 7)) return v;
+    // THEMES: the user's themes, then the installation's
+    std::string name = v.substr(7);
+    std::vector<std::string> dirs;
+    const char *xd = getenv("XDG_DATA_HOME");
+    dirs.push_back(xd && *xd ? std::string(xd) + "/rambler/themes" : std::string(home ? home : "/tmp") + "/.local/share/rambler/themes");
+    char exe[4096];
+    ssize_t n = readlink("/proc/self/exe", exe, sizeof exe - 1);
+    if (n > 0) {
+        exe[n] = 0;
+        std::string d(exe);
+        d = d.substr(0, d.rfind('/'));
+        dirs.push_back(d + "/themes");
+        dirs.push_back(d + "/../share/rambler/themes");
+    }
+    dirs.push_back("/usr/share/rambler/themes");
+    dirs.push_back("/usr/local/share/rambler/themes");
+    for (auto &d : dirs) {
+        std::string p = decor::find_path(d, name);
+        if (!p.empty()) return p;
+    }
+    return "";
+}
+
+// the frames' and the bars' sizes: the theme's (they grow with the font, as the original's do)
+void theme_geometry() {
+    if (!theme) return;
+    decor::WindowFrame f = decor::window_frame(*theme, font_height(), 400, 300, true, true, true, true);
+    TITLE_H = f.border_top;
+    BORDER_L = f.border_left;
+    BORDER_R = f.border_right;
+    BORDER_B = f.border_bottom;
+    SIZE_W = f.size.w;
+    SIZE_H = f.size.h;
+    theme_bar = decor::screen_bar(*theme, font_height(), SW);
+    BAR_H = theme_bar.bar_height + 1;
+    GADGET_W = SW - theme_bar.depth.x;
+}
+
+void load_theme() {
+    std::string d = theme_drawer();
+    theme = d.empty() ? nullptr : decor::load_theme(d);
+    if (!d.empty() && !theme) fprintf(stderr, "rambler-wm: no decoration theme in %s\n", d.c_str());
+    theme_geometry();
+}
+
 void font_changed() {
     static std::string had;
     std::string v = utf8_prop(root, RAMBLER_FONT);
@@ -1543,13 +1756,15 @@ void font_changed() {
     auto tab = v.find('\t');
     if (tab == std::string::npos) return;
     std::string family = v.substr(0, tab);
-    int size = std::clamp(atoi(v.c_str() + tab + 1), 8, std::min(BAR_H, TITLE_H) - 5);
+    // (the default look's bars are of a fixed height; a theme's grow with the font)
+    int size = std::clamp(atoi(v.c_str() + tab + 1), 8, theme ? 64 : std::min(BAR_H, TITLE_H) - 5);
     for (char &ch : family) if (ch == ':' || ch == '-') ch = ' ';   // (no fontconfig syntax in a name)
     XftFont *f = XftFontOpenName(dpy, scr, (family + ":pixelsize=" + std::to_string(size)).c_str());
     if (!f) return;
     had = v;
     if (font) XftFontClose(dpy, font);
     font = f;
+    theme_geometry();
     for (auto *s : screens) {
         s->draw_bar();
         for (auto *cl : s->clients) draw_frame(cl);
@@ -1665,6 +1880,7 @@ int main(int argc, char **argv) {
     }
     apply_palette(bg, sd, sh, fl);
     font = XftFontOpenName(dpy, scr, "sans-10");
+    load_theme();
     font_changed();   // (Rambler running already: its screen font)
     XDefineCursor(dpy, root, XCreateFontCursor(dpy, XC_left_ptr));
 

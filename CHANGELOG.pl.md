@@ -3,6 +3,15 @@
 ## 0.19.0 (w przygotowaniu)
 
 ### Nowe
+- **Motywy dekoracji** w menedżerze okien, przeportowane z AROS (decortheme.library,
+  decorator.library, klasy dekoratorów okien i ekranów): ramki okien (pasek tytułu z
+  obrazu motywu złożony z części, ramki wypełnione gradientem albo obrazem i
+  cieniowane, gadżety zamykania, powiększania, głębi i rozmiaru z ich obrazów w swoich
+  stanach) i paski ekranów (obraz paska, gadżet głębi ekranu) są rysowane z motywu w
+  formacie AROS, z tymi samymi ustawieniami (`System/Config`, `Menu/Config`) i
+  rozmiarami (pasek tytułu rośnie z czcionką, jak w AROS). Dołączony jest domyślny motyw
+  AROS **Ice**; jest używany, o ile `theme.var` nie wskazuje innego motywu (albo `none`,
+  dotychczasowego wyglądu). Zob. `themes/README.md`.
 - **KeyShow** (`rambler --utility keyshow`, w szufladzie Tools): pełna klawiatura z
   tym, co wpisuje każdy klawisz w używanym układzie (dowolne pismo, klawisze martwe jako
   ich znak diakrytyczny). Wciśnięte klawisze są pokazane jako wciśnięte, a z Shift albo

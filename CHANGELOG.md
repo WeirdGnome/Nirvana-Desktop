@@ -3,6 +3,15 @@
 ## 0.19.0 (unreleased)
 
 ### Added
+- **Decoration themes** in the window manager, ported from AROS (decortheme.library,
+  decorator.library, the window and screen decorator classes): the window frames (title
+  bar from the theme's picture in its parts, borders filled with a gradient or a picture
+  and shaded, the close, zoom, depth and size gadgets from their pictures in their states)
+  and the screen bars (the bar's picture, the screen depth gadget) are drawn from a theme
+  in the AROS format, with the same settings (`System/Config`, `Menu/Config`) and sizes
+  (the title bar grows with the font, as on AROS). AROS's default theme **Ice** comes with
+  it and is used unless `theme.var` names another theme (or `none`, the look so far). See
+  `themes/README.md`.
 - **KeyShow** (`rambler --utility keyshow`, in the Tools drawer): a full-size keyboard
   drawn with what each key types in the keymap in use (any script, dead keys as their
   accent). The keys held show pressed and Shift or AltGr held shows that level; a click

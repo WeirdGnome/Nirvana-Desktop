@@ -104,7 +104,8 @@ fi
 # --- the packages needed for building --------------------------------------------------------
 if [ "$DEPS" -eq 1 ] && command -v apt-get >/dev/null 2>&1; then
     PKGS="build-essential cmake git pkg-config dpkg-dev libx11-dev libxft-dev libxext-dev \
-libxinerama-dev libxcursor-dev libxfixes-dev libxrender-dev libfontconfig1-dev libfreetype-dev"
+libxinerama-dev libxcursor-dev libxfixes-dev libxrender-dev libfontconfig1-dev libfreetype-dev \
+libpng-dev zlib1g-dev"
     MISSING=""
     for p in $PKGS; do
         dpkg -s "$p" >/dev/null 2>&1 || MISSING="$MISSING $p"

@@ -53,9 +53,15 @@ install(TARGETS rambler RUNTIME DESTINATION bin COMPONENT rambler)
 find_package(X11 REQUIRED)
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(XFT REQUIRED xft)
-add_executable(rambler-wm wm/wm.cxx)
+find_package(PNG REQUIRED)
+add_executable(rambler-wm wm/wm.cxx wm/decor.cxx)
 target_include_directories(rambler-wm PRIVATE ${XFT_INCLUDE_DIRS})
-target_link_libraries(rambler-wm ${XFT_LIBRARIES} ${X11_LIBRARIES} ${X11_Xext_LIB})
+target_link_libraries(rambler-wm ${XFT_LIBRARIES} ${X11_LIBRARIES} ${X11_Xext_LIB} PNG::PNG)
+
+# the decoration themes: next to the programs in the build tree, installed into
+# share/rambler/themes
+file(COPY themes/ DESTINATION ${CMAKE_BINARY_DIR}/themes)
+install(DIRECTORY themes/ DESTINATION share/rambler/themes COMPONENT rambler)
 install(TARGETS rambler-wm RUNTIME DESTINATION bin COMPONENT rambler)
 
 # the session for the display manager
