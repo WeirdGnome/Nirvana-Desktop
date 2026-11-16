@@ -100,6 +100,10 @@ void load_prefs() {
             else if (k == "shadow") p.shadow = (unsigned)strtoul(v.c_str(), nullptr, 16);
             else if (k == "shine") p.shine = (unsigned)strtoul(v.c_str(), nullptr, 16);
             else if (k == "fill") p.fill = (unsigned)strtoul(v.c_str(), nullptr, 16);
+            else if (k == "text_pen") p.text_pen = v.empty() ? -1 : (long)strtoul(v.c_str(), nullptr, 16);
+            else if (k == "filltext_pen") p.filltext_pen = v.empty() ? -1 : (long)strtoul(v.c_str(), nullptr, 16);
+            else if (k == "bardetail_pen") p.bardetail_pen = v.empty() ? -1 : (long)strtoul(v.c_str(), nullptr, 16);
+            else if (k == "barblock_pen") p.barblock_pen = v.empty() ? -1 : (long)strtoul(v.c_str(), nullptr, 16);
             else if (k == "button_frame" && v.size() == 6) p.frame[Frame_Button] = p.frame[Frame_ImageButton] = v;
             else if (k == "group_frame" && v.size() == 6) p.frame[Frame_Group] = v;
             else if (k.rfind("frame_", 0) == 0 && v.size() == 6) {
@@ -178,6 +182,9 @@ static void write_prefs(const std::string &path) {
                "group_hspacing=%d\ngroup_vspacing=%d\nwindow_left=%d\nwindow_right=%d\nwindow_top=%d\nwindow_bottom=%d\n",
             p.background, p.shadow, p.shine, p.fill, p.font_size, p.font_family, p.group_hspacing, p.group_vspacing,
             p.window_left, p.window_right, p.window_top, p.window_bottom);
+    for (auto [k, v] : {std::pair{"text_pen", p.text_pen}, {"filltext_pen", p.filltext_pen}, {"bardetail_pen", p.bardetail_pen},
+                        {"barblock_pen", p.barblock_pen}})
+        if (v >= 0) fprintf(f, "%s=%06lX\n", k, v & 0xFFFFFF);
     fprintf(f, "cycle_menu_position=%d\ncycle_menu_min=%d\ncycle_menu_recessed=%d\n", p.cycle_menu_position,
             p.cycle_menu_min, (int)p.cycle_menu_recessed);
     for (int i = 1; i < Frame_Count; i++)
@@ -286,7 +293,7 @@ Fl_Font named_font(const std::string &family, bool bold) {
 void apply_prefs() {
     Prefs &p = prefs();
     auto col = [](unsigned rgb) { return fl_rgb_color((rgb >> 16) & 255, (rgb >> 8) & 255, rgb & 255); };
-    set_palette(col(p.background), col(p.shadow), col(p.shine), col(p.fill));
+    set_palette(col(p.background), col(p.shadow), col(p.shine), col(p.fill), p.text_pen >= 0 ? (long)(unsigned)col((unsigned)p.text_pen) : -1L);
     static const Fl_Font fams[3][2] = {{FL_HELVETICA, FL_HELVETICA_BOLD}, {FL_TIMES, FL_TIMES_BOLD}, {FL_COURIER, FL_COURIER_BOLD}};
     p.font = p.font_name.empty() ? fams[p.font_family][0] : named_font(p.font_name);
     p.font_bold = p.font_name.empty() ? fams[p.font_family][1] : named_font(p.font_name, true);
@@ -302,9 +309,12 @@ void apply_prefs() {
     Fl_Tooltip::hoverdelay(p.bubble_next / 10.0f);
     // the window manager takes the colours too (its frames, the screens' title bars)
     if (fl_display) {
-        char v[64];
-        snprintf(v, sizeof v, "%06X %06X %06X %06X", p.background & 0xFFFFFF, p.shadow & 0xFFFFFF, p.shine & 0xFFFFFF,
-                 p.fill & 0xFFFFFF);
+        // "background shadow shine fill text filltext bardetail barblock"
+        auto pen = [](long v, unsigned dflt) { return (unsigned)(v >= 0 ? v : dflt) & 0xFFFFFF; };
+        char v[96];
+        snprintf(v, sizeof v, "%06X %06X %06X %06X %06X %06X %06X %06X", p.background & 0xFFFFFF, p.shadow & 0xFFFFFF,
+                 p.shine & 0xFFFFFF, p.fill & 0xFFFFFF, pen(p.text_pen, p.shadow), pen(p.filltext_pen, p.shadow),
+                 pen(p.bardetail_pen, p.shadow), pen(p.barblock_pen, p.shine));
         Atom prop = XInternAtom(fl_display, "_RAMBLER_PALETTE", False);
         Atom utf8 = XInternAtom(fl_display, "UTF8_STRING", False);
         XChangeProperty(fl_display, RootWindow(fl_display, fl_screen), prop, utf8, 8, PropModeReplace, (unsigned char *)v,
@@ -2072,6 +2082,21 @@ void Window::fit() {
     int ew = p.window_left + p.window_right, eh = p.window_top + p.window_bottom;
     size(c + ew, d + eh);
     size_range(a + ew, b + eh, e >= MAXMAX ? 0 : e + ew, f >= MAXMAX ? 0 : f + eh);
+}
+
+void Window::recalc() {
+    if (!root_) return;
+    int a, b, c, d, e, f;
+    root_->min_max(a, b, c, d, e, f);
+    auto &p = prefs();
+    int ew = p.window_left + p.window_right, eh = p.window_top + p.window_bottom;
+    size_range(a + ew, b + eh, e >= MAXMAX ? 0 : e + ew, f >= MAXMAX ? 0 : f + eh);
+    int W = std::max(w(), a + ew), H = std::max(h(), b + eh);
+    if (e < MAXMAX) W = std::min(W, e + ew);
+    if (f < MAXMAX) H = std::min(H, f + eh);
+    if (W != w() || H != h()) size(W, H);
+    else if (auto *g = dynamic_cast<Group *>(root_)) g->relayout();
+    redraw();
 }
 
 void Window::resize(int X, int Y, int W, int H) {

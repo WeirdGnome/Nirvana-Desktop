@@ -34,7 +34,7 @@ struct Pens {
 };
 
 const Pens &pens();
-void set_palette(Fl_Color background, Fl_Color shadow, Fl_Color shine, Fl_Color fill);
+void set_palette(Fl_Color background, Fl_Color shadow, Fl_Color shine, Fl_Color fill, long text = -1);
 
 // The patterns of the image specs "0:128" ... "0:145" (MUII_BACKGROUND ... MUII_MARKBACKGROUND,
 // imspec.c): a pen, or two pens in a fine grid

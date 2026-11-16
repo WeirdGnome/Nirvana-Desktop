@@ -14,6 +14,18 @@
   come with it: Ice (AROS's default, used unless `theme.var` names another theme, or
   `none`, the look so far), AROSDefault, DarkEnder, Darkness, Xstream, Retro1, Retro3,
   Retro4 and Semaphore (the last four renamed). See `themes/README.md`.
+- **Appearance preferences** (`rambler --prefs appearance`, in the Prefs drawer), ported
+  from AROS: theming on or off, the theme (the drawers of THEMES:) with a preview drawn
+  from it and its description, and "Use theme configuration for.." the palette and the
+  fonts a theme brings (Lune, Rambler and pointers to follow); the compositing settings
+  shown as the original has them (on X the window manager composes the screens). Save
+  writes `theme.var`; the window manager takes the new theme up at once - the windows get
+  their new frames where they are (the original needs a restart).
+- The DrawInfo pens with colours of their own: TEXTPEN, FILLTEXTPEN, BARDETAILPEN and
+  BARBLOCKPEN (from a palette such as a theme's): Lune's text, the windows' titles, the
+  screen bars and the menus are drawn in them.
+- Lune: `Window::recalc()` (MUIM_Window_RecalcDisplay): a window grows when its contents
+  need more room.
 - **KeyShow** (`rambler --utility keyshow`, in the Tools drawer): a full-size keyboard
   drawn with what each key types in the keymap in use (any script, dead keys as their
   accent). The keys held show pressed and Shift or AltGr held shows that level; a click

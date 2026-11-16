@@ -15,14 +15,14 @@ namespace lune {
 static Pens g_pens;
 static bool g_ready = false;
 
-void set_palette(Fl_Color background, Fl_Color shadow, Fl_Color shine, Fl_Color fill) {
+void set_palette(Fl_Color background, Fl_Color shadow, Fl_Color shine, Fl_Color fill, long text) {
     g_pens.pen[MPEN_SHINE] = shine;
     g_pens.pen[MPEN_BACKGROUND] = background;
     g_pens.pen[MPEN_SHADOW] = shadow;
     // the window class: half way between the background and the shine / shadow pen
     g_pens.pen[MPEN_HALFSHINE] = fl_color_average(shine, background, 0.5f);
     g_pens.pen[MPEN_HALFSHADOW] = fl_color_average(shadow, background, 0.5f);
-    g_pens.pen[MPEN_TEXT] = shadow;      // TEXTPEN: the second colour
+    g_pens.pen[MPEN_TEXT] = text >= 0 ? (Fl_Color)text : shadow;   // TEXTPEN: the second colour, unless set
     g_pens.pen[MPEN_FILL] = fill;        // FILLPEN: the fourth colour
     g_pens.pen[MPEN_MARK] = fill;
     g_ready = true;

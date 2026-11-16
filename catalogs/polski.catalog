@@ -767,3 +767,18 @@ No picture yet	Jeszcze nie ma obrazu
 The screen could not be read.	Nie udało się odczytać ekranu.
 Keymap:	Układ klawiatury:
 Qualifiers:	Modyfikatory:
+Appearance Preferences	Ustawienia motywów graficznych
+Enable theming	Uaktywnij motywy graficzne
+-Preview Unavailable-	-Podgląd niedostępny-
+Theme:	Motyw:
+Pointers	Wskaźniki
+Theming	Motywy
+Compositing	Kompozycja
+Enable screen composition	Włącz kompozycję ekranu
+Composite below	Kompozycja poniżej
+Composite left	Kompozycja po lewej
+Composite right	Kompozycja po prawej
+Enable compositing with alpha	Uaktywnij kompozycję z przezroczystością
+Scale smaller screens up to the largest screen's mode	Skaluj mniejsze ekrany do trybu największego ekranu
+Use the display's highest mode instead	Zamiast tego użyj najwyższego trybu wyświetlacza
+Use theme configuration for..	Użyj konfiguracji motywu dla..

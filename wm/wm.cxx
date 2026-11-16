@@ -60,9 +60,12 @@ int SW, SH;
 // --------------------------------------------------------------------------------------------
 // Pens and fonts
 // --------------------------------------------------------------------------------------------
-unsigned long pen_grey, pen_black, pen_white, pen_blue, pen_halfshadow;
+unsigned long pen_grey, pen_black, pen_white, pen_blue, pen_halfshadow, pen_barblock;
 XftFont *font;
 XftColor xft_black, xft_white;
+// the DrawInfo pens with colours of their own (the palette's, a theme's): TEXTPEN, FILLTEXTPEN
+// (an active window's title), BARDETAILPEN (the screen bar's and the menus' text)
+XftColor xft_text, xft_filltext, xft_bardetail;
 bool xft_ready = false;
 XftDraw *xft_for(Drawable d) {
     return XftDrawCreate(dpy, d, DefaultVisual(dpy, scr), DefaultColormap(dpy, scr));
@@ -97,7 +100,7 @@ decor::ScreenBar theme_bar;
 
 Atom WM_PROTOCOLS, WM_DELETE_WINDOW, WM_STATE, WM_TAKE_FOCUS, NET_WM_NAME, UTF8_STRING, NET_WM_WINDOW_TYPE,
     NET_WM_WINDOW_TYPE_DESKTOP, NET_WM_WINDOW_TYPE_DOCK, NET_SUPPORTED, NET_ACTIVE_WINDOW, NET_CLIENT_LIST,
-    NET_SUPPORTING_WM_CHECK, NET_WM_STATE, NET_WM_STATE_FULLSCREEN, RAMBLER_SCREEN_TITLE, RAMBLER_PALETTE, RAMBLER_FONT, RAMBLER_ICONTROL, RAMBLER_SOUND, RAMBLER_COMMODITIES,
+    NET_SUPPORTING_WM_CHECK, NET_WM_STATE, NET_WM_STATE_FULLSCREEN, RAMBLER_SCREEN_TITLE, RAMBLER_PALETTE, RAMBLER_FONT, RAMBLER_ICONTROL, RAMBLER_SOUND, RAMBLER_COMMODITIES, RAMBLER_THEME,
     NET_WM_STATE_MAXIMIZED_VERT, NET_WM_STATE_MAXIMIZED_HORZ, NET_CLOSE_WINDOW, NET_FRAME_EXTENTS, NET_WORKAREA,
     NET_NUMBER_OF_DESKTOPS, NET_CURRENT_DESKTOP, NET_DESKTOP_GEOMETRY;
 
@@ -375,7 +378,7 @@ void draw_frame_themed(Client *c) {
         // FILLTEXTPEN (active) and TEXTPEN: the text pen, black
         const decor::Config &dc = theme->dc;
         themed_title(pm, tx, ty, tw + 1, fit.shown, dc.TitleOutline, dc.TitleShadow, dc.TitleColorText, dc.TitleColorShadow,
-                     &xft_black);
+                     c->active ? &xft_filltext : &xft_text);
     }
     XCopyArea(dpy, pm, f, gc, 0, 0, (unsigned)w, (unsigned)h, 0, 0);
     XFreeGC(dpy, gc);
@@ -390,7 +393,8 @@ void draw_frame_themed(Client *c) {
                 std::string s = fit_text(*(std::string *)d, maxw);
                 return s.empty() ? 0 : text_width(s);
             }, &c->title);
-        if (!rs.empty()) {
+        if (rs.empty()) XShapeCombineMask(dpy, f, ShapeBounding, 0, 0, None, ShapeSet);
+        else {
             std::vector<XRectangle> xr;
             for (auto &r : rs) if (r.w > 0 && r.h > 0) xr.push_back({(short)r.x, (short)r.y, (unsigned short)r.w, (unsigned short)r.h});
             XShapeCombineRectangles(dpy, f, ShapeBounding, 0, 0, xr.data(), (int)xr.size(), ShapeSet, Unsorted);
@@ -420,7 +424,7 @@ void draw_frame(Client *c) {
     draw_size(f, gc, w - SIZE_W, h - SIZE_H, SIZE_W, SIZE_H, c->pressed == G_SIZE);
     // the title
     int tx = GADGET_W + 6, tw = w - 3 * GADGET_W - 12;
-    draw_text(f, tx, (TITLE_H + font->ascent - font->descent) / 2, tw, c->title, &xft_black);
+    draw_text(f, tx, (TITLE_H + font->ascent - font->descent) / 2, tw, c->title, c->active ? &xft_filltext : &xft_text);
     XFreeGC(dpy, gc);
 }
 
@@ -448,24 +452,24 @@ void WScreen::draw_bar() {
             if (dc.STitleColorShadow == 0xFFFFFFFF) shadow_rgb = 0x444444;
         }
         themed_title(pm, tx, ty, room, fit_text(t, room), dc.STitleOutline, !dc.STitleOutline && dc.STitleShadow,
-                     text_rgb, shadow_rgb, own || dc.STitleOutline || dc.STitleShadow ? nullptr : &xft_black);
+                     text_rgb, shadow_rgb, own || dc.STitleOutline || dc.STitleShadow ? nullptr : &xft_bardetail);
         XCopyArea(dpy, pm, win, gc, 0, 0, (unsigned)SW, (unsigned)BAR_H, 0, 0);
         XFreeGC(dpy, gc);
         XFreePixmap(dpy, pm);
         return;
     }
     GC gc = gc_for(win);
-    fill(win, gc, pen_white, 0, 0, SW, BAR_H - 1);
+    fill(win, gc, pen_barblock, 0, 0, SW, BAR_H - 1);
     fill(win, gc, pen_black, 0, BAR_H - 1, SW, 1);
     // the active window's screen title, else the screen's own
     std::string t = title;
     if (active && active->screen == this && !active->screen_title.empty()) t = active->screen_title;
     else for (auto *c : clients) if (c->backdrop && !c->screen_title.empty()) t = c->screen_title;
     int room = SW - GADGET_W - 12 - (this == main_screen ? tray_width() : 0);
-    draw_text(win, 6, (BAR_H - 1 + font->ascent - font->descent) / 2, room, t, &xft_black);
+    draw_text(win, 6, (BAR_H - 1 + font->ascent - font->descent) / 2, room, t, &xft_bardetail);
     // the depth gadget
     int gx = SW - GADGET_W;
-    fill(win, gc, pen_white, gx, 0, GADGET_W, BAR_H - 1);
+    fill(win, gc, pen_barblock, gx, 0, GADGET_W, BAR_H - 1);
     XSetForeground(dpy, gc, pen_black);
     XDrawLine(dpy, win, gc, gx, 0, gx, BAR_H - 2);
     int bw = GADGET_W - 12, bh = BAR_H - 10;
@@ -1036,7 +1040,7 @@ void draw_menu_box(Window w, const std::vector<MenuItem> &items, int bw, int bh,
     // the pointer in the fill pen (FILLTEXT on it)
     // (IControl's 3D look: the background pen in a raised bevel, the item under the pointer
     // pressed in)
-    unsigned long block = ic.menu_3d ? pen_grey : pen_white;
+    unsigned long block = ic.menu_3d ? pen_grey : pen_barblock;
     fill(w, gc, block, 0, 0, bw, bh);
     if (ic.menu_3d) bevel(w, gc, 0, 0, bw, bh, false);
     else {
@@ -1049,7 +1053,7 @@ void draw_menu_box(Window w, const std::vector<MenuItem> &items, int bw, int bh,
         bool lit = i == hi && !m.disabled();
         if (lit && ic.menu_3d) bevel(w, gc, 2, y, bw - 4, ITEM_H, true);
         else if (lit) fill(w, gc, pen_blue, 2, y, bw - 4, ITEM_H);
-        XftColor *col = &xft_black;
+        XftColor *col = &xft_bardetail;
         int ty = y + (ITEM_H + font->ascent - font->descent) / 2;
         if ((m.flags & 2) && (m.flags & 4)) {   // the check mark
             XSetForeground(dpy, gc, pen_black);
@@ -1088,7 +1092,7 @@ void draw_menu_box(Window w, const std::vector<MenuItem> &items, int bw, int bh,
 Window make_box(int x, int y, int w, int h) {
     XSetWindowAttributes a = {};
     a.override_redirect = True;
-    a.background_pixel = ic.menu_3d ? pen_grey : pen_white;
+    a.background_pixel = ic.menu_3d ? pen_grey : pen_barblock;
     a.save_under = True;
     a.event_mask = ExposureMask;
     Window b = XCreateWindow(dpy, root, x, y, w, h, 0, CopyFromParent, InputOutput, CopyFromParent,
@@ -1100,7 +1104,7 @@ Window make_box(int x, int y, int w, int h) {
 void draw_menu_bar() {
     WScreen *s = menu.s;
     GC gc = gc_for(s->win);
-    fill(s->win, gc, pen_white, 0, 0, SW, BAR_H - 1);
+    fill(s->win, gc, pen_barblock, 0, 0, SW, BAR_H - 1);
     fill(s->win, gc, pen_black, 0, BAR_H - 1, SW, 1);
     menu.title_x.clear();
     menu.title_w.clear();
@@ -1111,7 +1115,7 @@ void draw_menu_bar() {
         menu.title_w.push_back(w);
         bool lit = i == menu.title;
         if (lit) fill(s->win, gc, pen_blue, x, 0, w, BAR_H - 1);
-        draw_text(s->win, x + 8, (BAR_H - 1 + font->ascent - font->descent) / 2, w, menu.titles[i].label, &xft_black);
+        draw_text(s->win, x + 8, (BAR_H - 1 + font->ascent - font->descent) / 2, w, menu.titles[i].label, &xft_bardetail);
         if (menu.titles[i].disabled()) {
             static const char stip[] = {0x05, 0x0a};
             Pixmap pm = XCreateBitmapFromData(dpy, s->win, stip, 4, 2);
@@ -1663,7 +1667,13 @@ void display_beep() {
 
 // The pens from four colours (hex RRGGBB): the background, the shadow (and text), the shine,
 // the fill; HALFSHADOW half way between the background and the shadow
-void apply_palette(const std::string &bg, const std::string &sd, const std::string &sh, const std::string &fl) {
+void apply_palette(const std::string &bg, const std::string &sd, const std::string &sh, const std::string &fl,
+                   std::string tx = "", std::string ft = "", std::string bd = "", std::string bb = "") {
+    if (tx.empty()) tx = sd;
+    if (ft.empty()) ft = sd;
+    if (bd.empty()) bd = sd;
+    if (bb.empty()) bb = sh;
+    pen_barblock = alloc(("#" + bb).c_str());
     pen_grey = alloc(("#" + bg).c_str());
     pen_black = alloc(("#" + sd).c_str());
     pen_white = alloc(("#" + sh).c_str());
@@ -1676,7 +1686,11 @@ void apply_palette(const std::string &bg, const std::string &sd, const std::stri
     if (xft_ready) {
         XftColorFree(dpy, DefaultVisual(dpy, scr), DefaultColormap(dpy, scr), &xft_black);
         XftColorFree(dpy, DefaultVisual(dpy, scr), DefaultColormap(dpy, scr), &xft_white);
+        for (XftColor *c : {&xft_text, &xft_filltext, &xft_bardetail}) XftColorFree(dpy, DefaultVisual(dpy, scr), DefaultColormap(dpy, scr), c);
     }
+    XftColorAllocName(dpy, DefaultVisual(dpy, scr), DefaultColormap(dpy, scr), ("#" + tx).c_str(), &xft_text);
+    XftColorAllocName(dpy, DefaultVisual(dpy, scr), DefaultColormap(dpy, scr), ("#" + ft).c_str(), &xft_filltext);
+    XftColorAllocName(dpy, DefaultVisual(dpy, scr), DefaultColormap(dpy, scr), ("#" + bd).c_str(), &xft_bardetail);
     XftColorAllocName(dpy, DefaultVisual(dpy, scr), DefaultColormap(dpy, scr), ("#" + sd).c_str(), &xft_black);
     XftColorAllocName(dpy, DefaultVisual(dpy, scr), DefaultColormap(dpy, scr), ("#" + sh).c_str(), &xft_white);
     xft_ready = true;
@@ -1686,9 +1700,9 @@ void apply_palette(const std::string &bg, const std::string &sd, const std::stri
 // the pens again, every frame and screen bar drawn again
 void palette_changed() {
     std::string v = utf8_prop(root, RAMBLER_PALETTE);
-    char a[8] = {}, b[8] = {}, c[8] = {}, d[8] = {};
-    if (sscanf(v.c_str(), "%6s %6s %6s %6s", a, b, c, d) != 4) return;
-    apply_palette(a, b, c, d);   // background, shadow, shine, fill
+    char a[8] = {}, b[8] = {}, c[8] = {}, d[8] = {}, e[8] = {}, f[8] = {}, g[8] = {}, h[8] = {};
+    if (sscanf(v.c_str(), "%6s %6s %6s %6s %6s %6s %6s %6s", a, b, c, d, e, f, g, h) < 4) return;
+    apply_palette(a, b, c, d, e, f, g, h);   // background, shadow, shine, fill, the text pens
     for (auto *s : screens) {
         XSetWindowBackground(dpy, s->win, pen_grey);
         XClearWindow(dpy, s->win);
@@ -1763,7 +1777,43 @@ void load_theme() {
     std::string d = theme_drawer();
     theme = d.empty() ? nullptr : decor::load_theme(d);
     if (!d.empty() && !theme) fprintf(stderr, "rambler-wm: no decoration theme in %s\n", d.c_str());
+    if (!theme) {   // (the default look's sizes)
+        BAR_H = 20; TITLE_H = 20; BORDER_L = BORDER_R = BORDER_B = 4; GADGET_W = 22; SIZE_W = SIZE_H = 16;
+    }
     theme_geometry();
+}
+
+// The Appearance preferences chose another theme (_RAMBLER_THEME on the root window): it is
+// taken up at once (the original needs a restart) - the frames take the new borders round
+// the same windows, the screens' bars their new height
+void make_backdrop(Client *c);
+// the frames' borders changed (another theme, another font): the same windows in new frames
+void reframe(int ol, int orr, int ot, int ob) {
+    for (auto *s : screens) {
+        for (auto *c : s->clients) {
+            c->shape_w = -1;
+            if (!theme && !c->bare()) XShapeCombineMask(dpy, c->frame, ShapeBounding, 0, 0, None, ShapeSet);
+            if (c->backdrop) { make_backdrop(c); continue; }
+            if (c->bare()) continue;
+            int dw = BORDER_L + BORDER_R - ol - orr, dh = TITLE_H + BORDER_B - ot - ob;
+            c->w += dw; c->h += dh;
+            c->min_w += dw; c->min_h += dh;
+            if (c->max_w) c->max_w += dw;
+            if (c->max_h) c->max_h += dh;
+            if (c->y < BAR_H) c->y = BAR_H;
+            place(c);
+        }
+        s->draw_bar();
+    }
+    long area[4] = {0, BAR_H, SW, SH - BAR_H};
+    XChangeProperty(dpy, root, NET_WORKAREA, XA_CARDINAL, 32, PropModeReplace, (unsigned char *)area, 4);
+    tray_layout();
+}
+
+void theme_changed() {
+    int ol = BORDER_L, orr = BORDER_R, ot = TITLE_H, ob = BORDER_B;
+    load_theme();
+    reframe(ol, orr, ot, ob);
 }
 
 void font_changed() {
@@ -1781,11 +1831,14 @@ void font_changed() {
     had = v;
     if (font) XftFontClose(dpy, font);
     font = f;
+    int ol = BORDER_L, orr = BORDER_R, ot = TITLE_H, ob = BORDER_B, obar = BAR_H;
     theme_geometry();
-    for (auto *s : screens) {
-        s->draw_bar();
-        for (auto *cl : s->clients) draw_frame(cl);
-    }
+    if (ol != BORDER_L || orr != BORDER_R || ot != TITLE_H || ob != BORDER_B || obar != BAR_H) reframe(ol, orr, ot, ob);
+    else
+        for (auto *s : screens) {
+            s->draw_bar();
+            for (auto *cl : s->clients) draw_frame(cl);
+        }
 }
 
 }  // namespace
@@ -1831,6 +1884,7 @@ int main(int argc, char **argv) {
     RAMBLER_ICONTROL = atom("_RAMBLER_ICONTROL");
     RAMBLER_SOUND = atom("_RAMBLER_SOUND");
     RAMBLER_COMMODITIES = atom("_RAMBLER_COMMODITIES");
+    RAMBLER_THEME = atom("_RAMBLER_THEME");
     RAMBLER_MENU_PICK = atom("_RAMBLER_MENU_PICK");
 
     // the IControl preferences: the ones in use (the property, ENV:), else the saved ones
@@ -1871,7 +1925,7 @@ int main(int argc, char **argv) {
     }
 
     // the palette: the GUI settings' (~/.config/rambler/lune.prefs), else the default
-    std::string bg = "AAAAAA", sd = "000000", sh = "FFFFFF", fl = "6688BB";
+    std::string bg = "AAAAAA", sd = "000000", sh = "FFFFFF", fl = "6688BB", tx, ft, bd, bb;
     {
         const char *x = getenv("XDG_CONFIG_HOME");
         std::string base = x && *x ? x : std::string(getenv("HOME") ? getenv("HOME") : "/tmp") + "/.config";
@@ -1891,11 +1945,13 @@ int main(int argc, char **argv) {
                 std::string k = l.substr(0, eq), v = l.substr(eq + 1);
                 if (k == "background") bg = v; else if (k == "shadow") sd = v;
                 else if (k == "shine") sh = v; else if (k == "fill") fl = v;
+                else if (k == "text_pen") tx = v; else if (k == "filltext_pen") ft = v;
+                else if (k == "bardetail_pen") bd = v; else if (k == "barblock_pen") bb = v;
             }
             fclose(f);
         }
     }
-    apply_palette(bg, sd, sh, fl);
+    apply_palette(bg, sd, sh, fl, tx, ft, bd, bb);
     font = XftFontOpenName(dpy, scr, "sans-10");
     load_theme();
     font_changed();   // (Rambler running already: its screen font)
@@ -2007,6 +2063,7 @@ int main(int argc, char **argv) {
         case PropertyNotify:
             if (ev.xproperty.window == root && ev.xproperty.atom == RAMBLER_PALETTE) palette_changed();
             if (ev.xproperty.window == root && ev.xproperty.atom == RAMBLER_FONT) font_changed();
+            if (ev.xproperty.window == root && ev.xproperty.atom == RAMBLER_THEME) theme_changed();
             if (ev.xproperty.window == root && ev.xproperty.atom == RAMBLER_COMMODITIES)
                 read_commodities(utf8_prop(root, RAMBLER_COMMODITIES));
             if (ev.xproperty.window == root && ev.xproperty.atom == RAMBLER_SOUND)

@@ -86,7 +86,7 @@ cyfrowy, data w tytule, budzik).
 
 *Tools > Prefs Drawer* otwiera programy preferencji: Input, Lune (GUI Settings),
 Rambler, IControl (ekrany, menu i okna menedżera okien), ScreenMode (tryb wyświetlania,
-przez xrandr), Time (data i godzina), Sound (sygnał i wyjście dźwięku), Printer (drukarki CUPS i ich papier), Locale (języki, kraj, strefa
+przez xrandr), Time (data i godzina), Sound (sygnał i wyjście dźwięku), Printer (drukarki CUPS i ich papier), Appearance (motyw dekoracji), Locale (języki, kraj, strefa
 czasowa), Pointer (motyw i rozmiar kursora), Font (czcionki ikon, ekranu i systemu) i
 Network (interfejsy, nazwa komputera, sieci bezprzewodowe; wymaga działającego
 NetworkManagera). Każdy działa też samodzielnie

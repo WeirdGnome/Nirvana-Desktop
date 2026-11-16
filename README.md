@@ -102,7 +102,7 @@ digital, the date in its title, an alarm).
 
 *Tools > Prefs Drawer* opens the preferences programs: Input, Lune (the GUI settings),
 Rambler, IControl (the window manager's screens, menus and windows), ScreenMode (the
-display mode, with xrandr), Time (the date and the time), Sound (the beep and the sound output), Printer (the CUPS printers and their paper), Locale (languages, country,
+display mode, with xrandr), Time (the date and the time), Sound (the beep and the sound output), Printer (the CUPS printers and their paper), Appearance (the decoration theme), Locale (languages, country,
 timezone), Pointer (the cursor theme and size), Font (the icons', screen and system
 fonts) and Network (interfaces, host name, wireless networks; NetworkManager needs to be
 running). Each also runs on its own

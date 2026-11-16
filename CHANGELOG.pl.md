@@ -15,6 +15,18 @@
   `theme.var` nie wskazuje innego motywu albo `none`, czyli dotychczasowego wyglądu),
   AROSDefault, DarkEnder, Darkness, Xstream, Retro1, Retro3, Retro4 i Semaphore (cztery
   ostatnie pod zmienionymi nazwami). Zob. `themes/README.md`.
+- **Preferencje Appearance** (`rambler --prefs appearance`, w szufladzie Prefs),
+  przeportowane z AROS: włączanie motywów, wybór motywu (katalogi THEMES:) z podglądem
+  rysowanym z motywu i jego opisem oraz „Użyj konfiguracji motywu dla..” - paleta i
+  czcionki dostarczone z motywem (Lune, Rambler i wskaźniki w następnym kroku); ustawienia
+  kompozycji pokazane jak w oryginale (w X ekrany składa menedżer okien). Zapisz zapisuje
+  `theme.var`; menedżer okien od razu przyjmuje nowy motyw - okna dostają nowe ramki w
+  tym samym miejscu (oryginał wymaga ponownego uruchomienia).
+- Pióra DrawInfo z własnymi kolorami: TEXTPEN, FILLTEXTPEN, BARDETAILPEN i BARBLOCKPEN
+  (z palety, np. motywu): w nich rysowany jest tekst Lune, tytuły okien, paski ekranów i
+  menu.
+- Lune: `Window::recalc()` (MUIM_Window_RecalcDisplay): okno rośnie, gdy jego zawartość
+  potrzebuje więcej miejsca.
 - **KeyShow** (`rambler --utility keyshow`, w szufladzie Tools): pełna klawiatura z
   tym, co wpisuje każdy klawisz w używanym układzie (dowolne pismo, klawisze martwe jako
   ich znak diakrytyczny). Wciśnięte klawisze są pokazane jako wciśnięte, a z Shift albo

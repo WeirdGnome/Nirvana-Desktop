@@ -60,6 +60,10 @@ bool key_spec_valid(const std::string &spec);
 struct Prefs {
     // the screen's palette (MUI pens come from it) and the frames of buttons and groups
     unsigned background = 0xAAAAAA, shadow = 0x000000, shine = 0xFFFFFF, fill = 0x6688BB;
+    // the other pens of the screen's DrawInfo with colours of their own (palette.prefs, a
+    // theme's): TEXTPEN, FILLTEXTPEN, BARDETAILPEN, BARBLOCKPEN; -1: the default pens' colour
+    // (the shadow pen's, the shine pen's for BARBLOCK)
+    long text_pen = -1, filltext_pen = -1, bardetail_pen = -1, barblock_pen = -1;
     std::string frame[Frame_Count];   // the frames of the standard kinds ("" - the built-in one)
     int font_family = 0;         // 0 sans, 1 serif, 2 fixed
     int group_hspacing = 6, group_vspacing = 3;
@@ -693,6 +697,9 @@ public:
     const std::string &background_spec() const;
     // the size from the root object's default size (MUIA_Window_Width/Height default)
     void fit();
+    // the contents changed their sizes (objects shown or hidden, MUIA_ShowMe): the window's
+    // limits again, the window as large as its contents need at least
+    void recalc();
     void resize(int X, int Y, int W, int H) override;
     void draw() override;
     int handle(int e) override;
