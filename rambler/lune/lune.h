@@ -136,6 +136,8 @@ struct Prefs {
 // the original's GUI settings file (Zune/global.prefs, as a theme brings it) read into the
 // preferences (zuneimport.cxx); false: no settings in it
 bool import_zune_prefs(const std::string &file, Prefs &p);
+// the settings in use watched (every Lune program does, unless it watches them itself)
+void prefs_watch(bool on);
 
 // a font of the system by its family name ("DejaVu Sans"), plain or bold: an FLTK font
 // number of its own (made the first time it is asked for)

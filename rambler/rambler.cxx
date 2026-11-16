@@ -1361,6 +1361,7 @@ int main(int argc, char **argv) {
     if (backdrop && first_in_session()) run_startup();   // once per session (not again after a restart)
     Fl::add_timeout(5.0, Rambler::tick, &g_rambler);
     Fl::add_timeout(0.5, Rambler::watch_volumes, &g_rambler);
+    lune::prefs_watch(false);   // (Rambler watches the settings itself)
     Rambler::watch_prefs(&g_rambler);   // (the first look only notes what is there)
     return run();
 }

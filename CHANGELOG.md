@@ -8,6 +8,9 @@
   backgrounds - gradients included -, the frames, the spacings, the fonts, the strings'
   pens, the keys, the cycles' and the lists' settings); eight of the nine themes bring
   them. Lune reads the original's settings file (`lune::import_zune_prefs`).
+- Every Lune program (the Tools, the preferences programs run on their own) takes up a
+  change of the GUI settings in use at once, as Rambler does (IPrefs); its windows grow
+  when the new fonts or frames need more room.
 
 ## 0.19.0 – 2026-11-16
 

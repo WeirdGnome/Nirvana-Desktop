@@ -8,6 +8,9 @@
   przycisków, list i innych - także gradienty -, ramki, odstępy, czcionki, pióra pól
   tekstowych, klawisze, ustawienia gadżetów Cycle i list); ma je osiem z dziewięciu
   motywów. Lune czyta plik ustawień oryginału (`lune::import_zune_prefs`).
+- Każdy program Lune (narzędzia z Tools, preferencje uruchomione osobno) od razu
+  przyjmuje zmianę ustawień GUI, tak jak Rambler (IPrefs); jego okna rosną, gdy nowe
+  czcionki albo ramki potrzebują więcej miejsca.
 
 ## 0.19.0 – 2026-11-16
 

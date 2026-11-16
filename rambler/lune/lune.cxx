@@ -332,7 +332,7 @@ void apply_prefs() {
     for (Fl_Window *w = Fl::first_window(); w; w = Fl::next_window(w)) {
         if (auto *zw = dynamic_cast<Window *>(w)) {
             zw->color(pens()[MPEN_BACKGROUND]);
-            zw->resize(zw->x(), zw->y(), zw->w(), zw->h());
+            zw->recalc();
         }
         w->redraw();
     }
@@ -2220,7 +2220,32 @@ std::map<std::string, WinPos> &positions() {
 }
 }  // namespace
 
+// The settings in use (ENV:) looked at every second, as IPrefs tells the programs of a
+// change: another program's Use or Save (the GUI settings, the Appearance preferences) is
+// taken up by every Lune program at once
+static bool g_prefs_watch = true;
+void prefs_watch(bool on) { g_prefs_watch = on; }
+static void watch_env_prefs(void *) {
+    static std::string seen;
+    static bool first = true;
+    std::string now;
+    if (FILE *f = fopen(env_prefs_path().c_str(), "r")) {
+        char buf[4096];
+        size_t n;
+        while ((n = fread(buf, 1, sizeof buf, f)) > 0) now.append(buf, n);
+        fclose(f);
+    }
+    if (now != seen) {
+        seen = now;
+        if (!first && !now.empty() && g_prefs_watch) { load_prefs(); apply_prefs(); }
+    }
+    first = false;
+    Fl::repeat_timeout(1.0, watch_env_prefs);
+}
+
 void Window::show() {
+    static bool watching = false;
+    if (!watching) { watching = true; Fl::add_timeout(0.0, watch_env_prefs); }
     if (!shown() && !id_.empty() && prefs().window_positions != 0) {
         auto &m = positions();
         auto it = m.find(id_);
