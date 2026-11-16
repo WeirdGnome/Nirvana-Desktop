@@ -751,6 +751,31 @@ WindowFrame window_frame(const Theme &t, int font_height, int W, int H, bool has
     return f;
 }
 
+namespace {
+// getleftgadgetsdimensions, getrightgadgetsdimensions and the room the title bar's fixed
+// parts take (defwidth)
+struct BarLayout { int xl0 = 0, xl1 = 0, xr0 = 0, xr1 = 0, defwidth = 0; };
+BarLayout bar_layout(const Config &dc, const WindowFrame &f, int W) {
+    BarLayout b;
+    b.xr0 = 1000000;
+    if (f.close.on && !dc.CloseGadgetOnRight) { b.xl0 = f.close.x; b.xl1 = f.close.x + f.close.w; }
+    for (const Box *g : {&f.depth, &f.zoom, &f.close}) {
+        if (!g->on || g->w <= 0) continue;
+        if (g == &f.close && !dc.CloseGadgetOnRight) continue;
+        b.xr0 = std::min(b.xr0, g->x);
+        b.xr1 = std::max(b.xr1, g->x + g->w);
+    }
+    if (b.xr0 == 1000000) b.xr0 = 0;
+    b.defwidth = b.xl0 != b.xl1 ? dc.BarPreGadget_s : dc.BarPre_s;
+    if (b.xr1 == 0) b.xr1 = b.xr0 = W - dc.BarPre_s;
+    b.defwidth += b.xl1 - b.xl0;
+    b.defwidth += dc.BarJoinGB_s + dc.BarJoinBT_s + dc.BarJoinTB_s + dc.BarJoinBG_s;
+    b.defwidth += b.xr1 - b.xr0;
+    b.defwidth += b.xr0 != b.xr1 ? dc.BarPostGadget_s : dc.BarPost_s;
+    return b;
+}
+}  // namespace
+
 void draw_window(Theme &t, RastPort &rp, const WindowFrame &f, bool active, const GadgetStates &gs, bool has_title,
                  int font_ascent, int font_height, int (*fit)(void *, int), void *fit_data, int &title_x,
                  int &title_baseline, int &title_width) {
@@ -779,21 +804,8 @@ void draw_window(Theme &t, RastPort &rp, const WindowFrame &f, bool active, cons
         else horiz_vert_repeat(border, color, 0, 0, rp, 0, 0, W, bt);
     }
     // the gadgets on the left (the close gadget) and on the right
-    int xl0 = 0, xl1 = 0, xr0 = 1000000, xr1 = 0;
-    if (f.close.on && !dc.CloseGadgetOnRight) { xl0 = f.close.x; xl1 = f.close.x + f.close.w; }
-    for (const Box *g : {&f.depth, &f.zoom, &f.close}) {
-        if (!g->on || g->w <= 0) continue;
-        if (g == &f.close && !dc.CloseGadgetOnRight) continue;
-        xr0 = std::min(xr0, g->x);
-        xr1 = std::max(xr1, g->x + g->w);
-    }
-    if (xr0 == 1000000) xr0 = 0;
-    int defwidth = xl0 != xl1 ? dc.BarPreGadget_s : dc.BarPre_s;
-    if (xr1 == 0) xr1 = xr0 = W - dc.BarPre_s;
-    defwidth += xl1 - xl0;
-    defwidth += dc.BarJoinGB_s + dc.BarJoinBT_s + dc.BarJoinTB_s + dc.BarJoinBG_s;
-    defwidth += xr1 - xr0;
-    defwidth += xr0 != xr1 ? dc.BarPostGadget_s : dc.BarPost_s;
+    BarLayout bl_ = bar_layout(dc, f, W);
+    int xl0 = bl_.xl0, xl1 = bl_.xl1, xr0 = bl_.xr0, xr1 = bl_.xr1, defwidth = bl_.defwidth;
     bool hastitle = has_title && defwidth < W;
     int textpixellen = 0;
     if (hastitle) textpixellen = fit ? fit(fit_data, W - defwidth) : 0;
@@ -886,6 +898,79 @@ void draw_window(Theme &t, RastPort &rp, const WindowFrame &f, bool active, cons
     gadget(WinZoom, f.zoom, gs.zoom, true);
     gadget(WinDepth, f.depth, gs.depth, true);
     gadget(WinSize, f.size, gs.size, false);
+}
+
+// windecor_windowshape: the window's shape - the title bar where its picture is not
+// transparent (BarMasking), or corners rounded (BarRounded); empty: no shape
+std::vector<Rect> window_shape(Theme &t, const WindowFrame &f, int W, int H, bool active, bool has_title,
+                               int (*fit)(void *, int), void *fit_data) {
+    const Config &dc = t.dc;
+    std::vector<Rect> out;
+    int bt = f.border_top;
+    if (dc.BarMasking) {
+        // DrawShapePartialTitleBar: the title bar's parts' alpha into a W x BorderTop map
+        std::vector<uint8_t> lut((size_t)W * std::max(0, bt), 0);
+        const Image *src = t.di.winbar_normal.get();
+        if (src && src->ok && bt > 0) {
+            std::shared_ptr<Image> scaled;
+            if (dc.BarHeight != bt) { scaled = scale_image(*src, src->w, 2 * bt); src = scaled.get(); }
+            BarLayout b = bar_layout(dc, f, W);
+            bool hastitle = has_title && b.defwidth < W;
+            int textpixellen = hastitle && fit ? fit(fit_data, W - b.defwidth) : 0;
+            int dy = active ? 0 : bt, x = 0;
+            auto part = [&](int sx, int sw, int dw) {
+                // WriteTiledImageShape
+                int w = dw;
+                if (!src->ok || sw == 0 || dw == 0) return;
+                if (x > W) return;
+                if (x + w > W) w = W - x;
+                while (w > 0) {
+                    int ddw = std::min(sw, w);
+                    for (int yy = 0; yy < bt; yy++)
+                        for (int xx = 0; xx < ddw; xx++) {
+                            int px = sx + xx, py = dy + yy;
+                            if (px >= 0 && px < src->w && py >= 0 && py < src->h && x + xx >= 0 && x + xx < W)
+                                lut[(size_t)yy * W + x + xx] = (uint8_t)A(src->data[(size_t)py * src->w + px]);
+                        }
+                    w -= ddw;
+                    x += ddw;
+                }
+            };
+            if (b.xl0 != b.xl1) {
+                part(dc.BarPreGadget_o, dc.BarPreGadget_s, dc.BarPreGadget_s);
+                if (b.xl1 - b.xl0 > 0) part(dc.BarLGadgetFill_o, dc.BarLGadgetFill_s, b.xl1 - b.xl0);
+            } else
+                part(dc.BarPre_o, dc.BarPre_s, dc.BarPreGadget_s);
+            part(dc.BarJoinGB_o, dc.BarJoinGB_s, dc.BarJoinGB_s);
+            if (hastitle && textpixellen > 0) {
+                part(dc.BarJoinBT_o, dc.BarJoinBT_s, dc.BarJoinBT_s);
+                part(dc.BarTitleFill_o, dc.BarTitleFill_s, textpixellen);
+                part(dc.BarJoinTB_o, dc.BarJoinTB_s, dc.BarJoinTB_s);
+            }
+            part(dc.BarRFill_o, dc.BarRFill_s, b.xr0 - x - dc.BarJoinBG_s);
+            part(dc.BarJoinBG_o, dc.BarJoinBG_s, dc.BarJoinBG_s);
+            if (b.xr1 - b.xr0 > 0) part(dc.BarRGadgetFill_o, dc.BarRGadgetFill_s, b.xr1 - b.xr0);
+            if (b.xr0 != b.xr1) part(dc.BarPostGadget_o, dc.BarPostGadget_s, dc.BarPostGadget_s);
+            else part(dc.BarPost_o, dc.BarPost_s, dc.BarPost_s);
+        }
+        // RegionFromLUT8Image: below the bar all of it, in the bar the runs not transparent
+        out.push_back({0, bt, W, H - bt});
+        for (int y = 0; y < bt; y++) {
+            int start = -1;
+            for (int x = 0; x <= W; x++) {
+                bool opaque = x < W && lut[(size_t)y * W + x] != 0;
+                if (opaque && start < 0) start = x;
+                if (!opaque && start >= 0) { out.push_back({start, y, x - start, 1}); start = -1; }
+            }
+        }
+        return out;
+    }
+    if (!dc.BarRounded) return out;
+    // the corners rounded: rows cut in by 9, 6, 4, 3, 2, 1, 0 pixels
+    int x2 = W - 1, y2 = H - 1;
+    const int cut[][2] = {{9, 0}, {6, 1}, {4, 2}, {3, 3}, {2, 4}, {1, 6}, {0, 9}};
+    for (auto &c : cut) out.push_back({c[0], c[1], x2 - 2 * c[0] + 1, y2 - c[1] + 1});
+    return out;
 }
 
 // ============================================================================================

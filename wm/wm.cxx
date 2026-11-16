@@ -123,6 +123,7 @@ struct Client {
     int max_w = 0, max_h = 0;                 // 0: no limit (frame sizes)
     int inc_w = 1, inc_h = 1, base_w = 0, base_h = 0;   // resize increments (terminals: characters)
     int pressed = 0;                          // a gadget held down
+    int shape_w = -1, shape_h = -1, shape_active = -1;   // the frame's shape made for (a theme's)
     int ignore_unmap = 0;                     // unmaps caused by reparenting a mapped window
 };
 
@@ -379,6 +380,22 @@ void draw_frame_themed(Client *c) {
     XCopyArea(dpy, pm, f, gc, 0, 0, (unsigned)w, (unsigned)h, 0, 0);
     XFreeGC(dpy, gc);
     XFreePixmap(dpy, pm);
+    // the frame's shape (rounded title bars), made again when the size or the activity changed
+    if (c->shape_w != w || c->shape_h != h || c->shape_active != (int)c->active) {
+        c->shape_w = w;
+        c->shape_h = h;
+        c->shape_active = c->active;
+        std::vector<decor::Rect> rs = decor::window_shape(*theme, fr, w, h, c->active, !c->title.empty(),
+            [](void *d, int maxw) {
+                std::string s = fit_text(*(std::string *)d, maxw);
+                return s.empty() ? 0 : text_width(s);
+            }, &c->title);
+        if (!rs.empty()) {
+            std::vector<XRectangle> xr;
+            for (auto &r : rs) if (r.w > 0 && r.h > 0) xr.push_back({(short)r.x, (short)r.y, (unsigned short)r.w, (unsigned short)r.h});
+            XShapeCombineRectangles(dpy, f, ShapeBounding, 0, 0, xr.data(), (int)xr.size(), ShapeSet, Unsorted);
+        }
+    }
 }
 
 void draw_frame(Client *c) {

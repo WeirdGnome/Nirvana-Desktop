@@ -9,9 +9,12 @@
   cieniowane, gadżety zamykania, powiększania, głębi i rozmiaru z ich obrazów w swoich
   stanach) i paski ekranów (obraz paska, gadżet głębi ekranu) są rysowane z motywu w
   formacie AROS, z tymi samymi ustawieniami (`System/Config`, `Menu/Config`) i
-  rozmiarami (pasek tytułu rośnie z czcionką, jak w AROS). Dołączony jest domyślny motyw
-  AROS **Ice**; jest używany, o ile `theme.var` nie wskazuje innego motywu (albo `none`,
-  dotychczasowego wyglądu). Zob. `themes/README.md`.
+  rozmiarami (pasek tytułu rośnie z czcionką, jak w AROS), a także kształty okien w
+  motywach z zaokrąglonymi paskami tytułu (BarMasking, BarRounded). Dołączone jest
+  **wszystkie dziewięć motywów z drzewa źródeł AROS**: Ice (domyślny w AROS, używany, o ile
+  `theme.var` nie wskazuje innego motywu albo `none`, czyli dotychczasowego wyglądu),
+  AROSDefault, DarkEnder, Darkness, Xstream, Retro1, Retro3, Retro4 i Semaphore (cztery
+  ostatnie pod zmienionymi nazwami). Zob. `themes/README.md`.
 - **KeyShow** (`rambler --utility keyshow`, w szufladzie Tools): pełna klawiatura z
   tym, co wpisuje każdy klawisz w używanym układzie (dowolne pismo, klawisze martwe jako
   ich znak diakrytyczny). Wciśnięte klawisze są pokazane jako wciśnięte, a z Shift albo

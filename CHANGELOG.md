@@ -9,9 +9,11 @@
   and shaded, the close, zoom, depth and size gadgets from their pictures in their states)
   and the screen bars (the bar's picture, the screen depth gadget) are drawn from a theme
   in the AROS format, with the same settings (`System/Config`, `Menu/Config`) and sizes
-  (the title bar grows with the font, as on AROS). AROS's default theme **Ice** comes with
-  it and is used unless `theme.var` names another theme (or `none`, the look so far). See
-  `themes/README.md`.
+  (the title bar grows with the font, as on AROS), and the window shapes of the themes with
+  rounded title bars (BarMasking, BarRounded). **All nine themes of the AROS source tree**
+  come with it: Ice (AROS's default, used unless `theme.var` names another theme, or
+  `none`, the look so far), AROSDefault, DarkEnder, Darkness, Xstream, Retro1, Retro3,
+  Retro4 and Semaphore (the last four renamed). See `themes/README.md`.
 - **KeyShow** (`rambler --utility keyshow`, in the Tools drawer): a full-size keyboard
   drawn with what each key types in the keymap in use (any script, dead keys as their
   accent). The keys held show pressed and Shift or AltGr held shows that level; a click

@@ -190,6 +190,11 @@ void draw_window(Theme &t, RastPort &rp, const WindowFrame &f, bool active, cons
                  bool has_title, int font_ascent, int font_height, int (*fit)(void *, int), void *fit_data,
                  int &title_x, int &title_baseline, int &title_width);
 
+// windecor_windowshape: the window's shape as rectangles (none: the whole window)
+struct Rect { int x, y, w, h; };
+std::vector<Rect> window_shape(Theme &t, const WindowFrame &f, int W, int H, bool active, bool has_title,
+                               int (*fit)(void *, int), void *fit_data);
+
 // ---- the screen bar (screendecorclass.c) -----------------------------------------------------
 struct ScreenBar {
     int bar_height = 0;             // the screen's BarHeight (the bar is BarHeight + 1 high)
