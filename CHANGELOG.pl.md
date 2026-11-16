@@ -1,6 +1,6 @@
 # Lista zmian
 
-## 0.19.0 (w przygotowaniu)
+## 0.19.0 – 2026-11-16
 
 ### Nowe
 - **Motywy dekoracji** w menedżerze okien, przeportowane z AROS (decortheme.library,

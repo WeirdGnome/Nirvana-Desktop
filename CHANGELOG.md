@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.19.0 (unreleased)
+## 0.19.0 – 2026-11-16
 
 ### Added
 - **Decoration themes** in the window manager, ported from AROS (decortheme.library,
