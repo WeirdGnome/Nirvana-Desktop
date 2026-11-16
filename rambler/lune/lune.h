@@ -133,6 +133,10 @@ struct Prefs {
     std::string font_name, fixed_font_name;
     Fl_Font font = FL_HELVETICA, font_bold = FL_HELVETICA_BOLD, font_fixed = FL_COURIER;
 };
+// the original's GUI settings file (Zune/global.prefs, as a theme brings it) read into the
+// preferences (zuneimport.cxx); false: no settings in it
+bool import_zune_prefs(const std::string &file, Prefs &p);
+
 // a font of the system by its family name ("DejaVu Sans"), plain or bold: an FLTK font
 // number of its own (made the first time it is asked for)
 Fl_Font named_font(const std::string &family, bool bold = false);

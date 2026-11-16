@@ -428,6 +428,7 @@ void edit_appearance_prefs(bool standalone) {
             Prefs &p = prefs();
             RamblerPrefs rp = RamblerPrefs::load();
             bool lune_changed = false, rambler_changed = false;
+            if (!zune->disabled() && zune->on()) lune_changed |= import_zune_prefs(decor::find_path(dir, (*options)[0].file), p);
             if (!pal->disabled() && pal->on()) lune_changed |= import_palette(decor::find_path(dir, (*options)[2].file), p);
             if (!font->disabled() && font->on()) {
                 bool f = import_fonts(decor::find_path(dir, (*options)[3].file), p, rp);

@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.20.0 (unreleased)
+
+### Added
+- Appearance: "Use theme configuration for.. Lune" takes the GUI settings a theme brings
+  (the original's `Zune/global.prefs`: the window, group, button, list and other
+  backgrounds - gradients included -, the frames, the spacings, the fonts, the strings'
+  pens, the keys, the cycles' and the lists' settings); eight of the nine themes bring
+  them. Lune reads the original's settings file (`lune::import_zune_prefs`).
+
 ## 0.19.0 – 2026-11-16
 
 ### Added

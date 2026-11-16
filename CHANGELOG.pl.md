@@ -1,5 +1,14 @@
 # Lista zmian
 
+## 0.20.0 (w przygotowaniu)
+
+### Nowe
+- Appearance: „Użyj konfiguracji motywu dla.. Lune” przejmuje ustawienia GUI
+  dostarczone z motywem (plik `Zune/global.prefs` z oryginału: tła okien, grup,
+  przycisków, list i innych - także gradienty -, ramki, odstępy, czcionki, pióra pól
+  tekstowych, klawisze, ustawienia gadżetów Cycle i list); ma je osiem z dziewięciu
+  motywów. Lune czyta plik ustawień oryginału (`lune::import_zune_prefs`).
+
 ## 0.19.0 – 2026-11-16
 
 ### Nowe

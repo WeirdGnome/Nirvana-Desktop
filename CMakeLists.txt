@@ -23,7 +23,7 @@ if(NOT FLTK_FOUND)
 endif()
 
 # Lune on FLTK
-add_library(lune STATIC rambler/lune/pens.cxx rambler/lune/frame.cxx rambler/lune/lune.cxx rambler/lune/catalog.cxx rambler/lune/imspec.cxx rambler/lune/fontreq.cxx rambler/lune/calendar.cxx)
+add_library(lune STATIC rambler/lune/pens.cxx rambler/lune/frame.cxx rambler/lune/lune.cxx rambler/lune/catalog.cxx rambler/lune/imspec.cxx rambler/lune/fontreq.cxx rambler/lune/calendar.cxx rambler/lune/zuneimport.cxx)
 target_include_directories(lune PUBLIC rambler/lune)
 target_link_libraries(lune PUBLIC fltk::fltk fltk::images)
 
