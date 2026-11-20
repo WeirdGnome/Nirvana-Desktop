@@ -116,7 +116,7 @@ if [ $deps -eq 1 ]; then
     $SUDO apt-get install -y meson ninja-build pkg-config gcc g++ gettext \
         libarchive-dev zlib1g-dev liblzma-dev libzstd-dev liblz4-dev \
         libefl-all-dev libwayland-dev wayland-protocols squashfs-tools libarchive-tools \
-        labwc curl xz-utils
+        labwc curl xz-utils libgl1-mesa-dri libgbm1
     # the global menu's modules for GTK programs (run-time; not every release has both)
     $SUDO apt-get install -y appmenu-gtk3-module appmenu-gtk2-module ||
         $SUDO apt-get install -y appmenu-gtk3-module ||

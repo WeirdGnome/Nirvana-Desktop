@@ -23,6 +23,10 @@
 - The system's volume icon is labelled "System" (its assign stays `SYS:`).
 
 ### Fixed
+- On graphics hardware whose driver gives wlroots no GPU buffers (gbm_bo_create
+  failing: a black screen), the session starts labwc again with software rendering
+  and keeps that choice in `~/.nirvana/Prefs/wlr-renderer`. `install.sh --deps`
+  installs the Mesa drivers (`libgl1-mesa-dri`, `libgbm1`).
 - Menus left their texts behind on Wayland when another menu was opened or they were
   shut (the rows were not deleted with their panel).
 - Sessions started by a display manager without elogind (LightDM on Devuan, say) were

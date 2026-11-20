@@ -28,6 +28,10 @@ run_desktop() {
         status=$?
         echo "nirvana-desktop ended with status $status"
         [ $status -eq 0 ] && return 0
+        # (no compositor any more: nothing to start the desktop in)
+        if [ -n "${LABWC_PID:-}" ] && ! kill -0 "$LABWC_PID" 2> /dev/null; then
+            return 1
+        fi
         if [ $(($(date +%s) - started)) -lt 10 ]; then
             fails=$((fails + 1))
         else
@@ -110,8 +114,49 @@ case "${1:-}" in
         fi
         # the user's labwc settings if there are any, else Nirvana's
         if [ -d "${XDG_CONFIG_HOME:-$HOME/.config}/labwc" ]; then
-            exec labwc -s "$NIRVANA/C/nirvana-session --in-labwc"
+            set -- -s "$NIRVANA/C/nirvana-session --in-labwc"
+        else
+            set -- -C "$NIRVANA/S/labwc" -s "$NIRVANA/C/nirvana-session --in-labwc"
         fi
-        exec labwc -C "$NIRVANA/S/labwc" -s "$NIRVANA/C/nirvana-session --in-labwc"
+        # Software rendering when the graphics driver cannot give wlroots its buffers
+        # (gbm_bo_create failing: no Mesa driver for the GPU, an old GPU, a virtual
+        # machine). The choice is kept in ~/.nirvana/Prefs/wlr-renderer; delete that
+        # file to try the GPU again.
+        RFILE="$HOME/.nirvana/Prefs/wlr-renderer"
+        if [ -z "${WLR_RENDERER:-}" ] && [ -s "$RFILE" ]; then
+            WLR_RENDERER=$(cat "$RFILE")
+            export WLR_RENDERER WLR_DRM_NO_MODIFIERS=1
+            echo "WLR_RENDERER=$WLR_RENDERER (from $RFILE)"
+        fi
+        if [ -n "${WLR_RENDERER:-}" ]; then
+            exec labwc "$@"
+        fi
+        # the GPU first, watched for its first seconds
+        start=$(wc -l < "$LOG")
+        labwc "$@" &
+        pid=$!
+        i=0
+        failed=0
+        while [ $i -lt 8 ] && kill -0 $pid 2> /dev/null; do
+            sleep 1
+            i=$((i + 1))
+            if tail -n +"$((start + 1))" "$LOG" |
+                grep -q -e "gbm_bo_create failed" -e "Failed to allocate buffer" -e "Failed to create renderer" \
+                        -e "Swapchain for output .* failed test"; then
+                failed=1
+                break
+            fi
+        done
+        if [ $failed -eq 0 ]; then
+            wait $pid
+            exit $?
+        fi
+        echo "the GPU's buffers failed: labwc started again with software rendering (pixman)"
+        kill $pid 2> /dev/null
+        wait $pid 2> /dev/null
+        mkdir -p "$HOME/.nirvana/Prefs"
+        echo pixman > "$RFILE"
+        export WLR_RENDERER=pixman WLR_DRM_NO_MODIFIERS=1
+        exec labwc "$@"
         ;;
 esac
