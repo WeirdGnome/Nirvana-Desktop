@@ -96,12 +96,18 @@ static void grab(bool on)
     }
 }
 
+bool nv_screenbar_menu_is_open(void)
+{
+    return bar.session != NULL;
+}
+
 static void session_done(void *data)
 {
     (void)data;
     bar.session = NULL;
     if (bar.closing)
         return; /* another menu is being opened in its place */
+    nv_global_menu_closed();
     bar.open_index = -1;
     title_select(-1);
     evas_object_hide(bar.catcher);

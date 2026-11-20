@@ -393,6 +393,7 @@ EAPI_MAIN int elm_main(int argc, char **argv)
     }
     ecore_event_handler_add(ECORE_EVENT_SIGNAL_USER, on_user_signal, NULL);
     dbus_start();
+    nv_global_menu_start(bus);
     elm_run();
     if (bus)
         eldbus_connection_unref(bus);

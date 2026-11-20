@@ -10,6 +10,7 @@
 #endif
 
 #define EFL_BETA_API_SUPPORT 1
+#include <Eldbus.h>
 #include <Elementary.h>
 #include <stdbool.h>
 
@@ -121,6 +122,14 @@ bool nv_screenbar_create(void);
 void nv_screenbar_menus_set(Eina_List *menus, const char *owner);
 Eina_List *nv_screenbar_own_menus(void);
 void nv_screenbar_title_set(const char *title);
+bool nv_screenbar_menu_is_open(void);
+
+/* ---------------------------------------------------------------- the global menu */
+
+/* the menu registrar on the bus (NULL: none), the focus followed */
+bool nv_global_menu_start(Eldbus_Connection *bus);
+/* (the bar's menu was shut) */
+void nv_global_menu_closed(void);
 /* the bar opens a menu: it grows over the screen while the menu is open */
 void nv_screenbar_menu_open(int index);
 void nv_screenbar_menu_close(void);
