@@ -117,6 +117,10 @@ if [ $deps -eq 1 ]; then
         libarchive-dev zlib1g-dev liblzma-dev libzstd-dev liblz4-dev \
         libefl-all-dev libwayland-dev wayland-protocols squashfs-tools libarchive-tools \
         labwc curl xz-utils
+    # the global menu's modules for GTK programs (run-time; not every release has both)
+    $SUDO apt-get install -y appmenu-gtk3-module appmenu-gtk2-module ||
+        $SUDO apt-get install -y appmenu-gtk3-module ||
+        warn "appmenu-gtk3-module could not be installed: GTK programs keep their menus in their windows"
     if [ $dwarfs -eq 1 ]; then
         say "Installing the packages libdwarfs needs"
         $SUDO apt-get install -y cmake libboost-chrono-dev libboost-filesystem-dev \

@@ -16,8 +16,8 @@ This branch is built in stages:
 |---|---|---|
 | 1 | `libnirvana` (assigns, AppImage reader), `assign`, `wbrun`, `appimage-info`, tests | **done** |
 | 2 | The EFL desktop: screen bar "Nirvana Screen", backdrop, window gadgets, Assigns editor | **done** |
-| 3 | The global menu (`com.canonical.AppMenu.Registrar`, Eldbus) | next |
-| 4 | Dock and file listers (threaded) | |
+| 3 | The global menu (`com.canonical.AppMenu.Registrar`, `org.gtk.Menus`, Eldbus) | **done** |
+| 4 | Dock and file listers (threaded) | next |
 | 5 | The Edje themes: Classic13, Classic21, Classic31, Classic41, Ambient | |
 
 ## libnirvana (LGPL-3.0-or-later)
@@ -88,6 +88,33 @@ button (which mice do not have) over a window to labwc's Lower, and the gadget c
 on a virtual pointer. With your own `~/.config/labwc/rc.xml`, add to its `<mouse>`:
 `<context name="Client"><mousebind button="Task" action="Press"><action name="Lower"/></mousebind></context>`.
 On other compositors the gadget brings the next of Nirvana's windows forward instead.
+
+## The global menu
+
+The focused program's menus are shown in the screen bar, after the Nirvana Screen menu;
+its own menubar is hidden. Two kinds of programs are understood:
+
+* **GTK** (2 and 3, through `appmenu-gtk-module`; GtkApplication menubars): the window's
+  `_GTK_UNIQUE_BUS_NAME` / `_GTK_MENUBAR_OBJECT_PATH` and the `org.gtk.Menus` /
+  `org.gtk.Actions` interfaces - sections, submenus, accelerators, check and radio items.
+* **Registrar** programs (Qt with a platform theme that exports menus, other
+  `com.canonical.dbusmenu` exporters): `nirvana-desktop` is
+  `com.canonical.AppMenu.Registrar`; shortcuts, disabled, check and radio items,
+  submenus filled on demand (AboutToShow), menus that change while shown.
+
+The Startup-Sequence sets `GTK_MODULES=appmenu-gtk-module`, `UBUNTU_MENUPROXY=1`,
+`QT_QPA_PLATFORMTHEME` and `SAL_USE_VCLPLUGIN=gtk3` (LibreOffice through GTK), and
+`setup-env.sh` sets `gtk-shell-shows-menubar=1`. `./install.sh --deps` installs
+`appmenu-gtk3-module` (and `appmenu-gtk2-module` where there is one).
+
+The focused window is read from `_NET_ACTIVE_WINDOW`: on X11 directly, on Wayland in
+XWayland - so on Wayland the global menu works for programs running through XWayland.
+Native Wayland programs have no window id to register menus under (the protocols give
+none; KDE's own appmenu protocol is not in wlroots compositors), so for them the bar
+shows the program's name and a Window menu (close, iconify, zoom; through
+wlr-foreign-toplevel-management), and they keep their menus in their windows. To have
+a GTK program's menus in the bar on Wayland, run it through XWayland
+(`GDK_BACKEND=x11`).
 
 ## Commands (GPL-3.0-or-later)
 

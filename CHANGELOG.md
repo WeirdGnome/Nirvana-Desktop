@@ -3,6 +3,23 @@
 
 *[Polski](CHANGELOG.pl.md)*
 
+## 3.0.0-alpha3 — unreleased (NirvanaNG, stage 3)
+
+### Added
+- The global menu: the focused program's menus in the screen bar, after the Nirvana
+  Screen menu. GTK programs through `org.gtk.Menus`/`org.gtk.Actions` (sections,
+  submenus, accelerators, check and radio items); other programs through
+  `com.canonical.AppMenu.Registrar`, which the desktop now is, and
+  `com.canonical.dbusmenu` (shortcuts, disabled/check/radio items, on-demand submenus,
+  live updates). The focus from `_NET_ACTIVE_WINDOW` on X11 and in XWayland; native
+  Wayland programs get their name and a Window menu (close, iconify, zoom) through
+  wlr-foreign-toplevel-management. A click on the desktop brings its own menus back.
+- `install.sh --deps` installs `appmenu-gtk3-module` (and `appmenu-gtk2-module`).
+
+### Fixed
+- The session entries are installed even where `/usr/share/wayland-sessions` did not
+  exist yet; an X11 entry is added to `/usr/share/xsessions`.
+
 ## 3.0.0-alpha2 — unreleased (NirvanaNG, stage 2)
 
 ### Added

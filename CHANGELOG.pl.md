@@ -3,6 +3,23 @@
 
 *[English](CHANGELOG.md)*
 
+## 3.0.0-alpha3 — niewydane (NirvanaNG, etap 3)
+
+### Dodane
+- Globalne menu: menu programu z fokusem na pasku ekranu, po menu Nirvana Screen.
+  Programy GTK przez `org.gtk.Menus`/`org.gtk.Actions` (sekcje, podmenu, skróty, pozycje
+  zaznaczane i radiowe); inne przez `com.canonical.AppMenu.Registrar`, którym jest teraz
+  pulpit, i `com.canonical.dbusmenu` (skróty, pozycje wyłączone/zaznaczane/radiowe,
+  podmenu na żądanie, zmiany na żywo). Fokus z `_NET_ACTIVE_WINDOW` pod X11 i w
+  XWayland; natywne programy Waylanda dostają nazwę i menu Window (zamknij, ikonizuj,
+  powiększ) przez wlr-foreign-toplevel-management. Kliknięcie w pulpit przywraca jego
+  menu.
+- `install.sh --deps` instaluje `appmenu-gtk3-module` (i `appmenu-gtk2-module`).
+
+### Poprawione
+- Wpisy sesji są instalowane także tam, gdzie `/usr/share/wayland-sessions` jeszcze nie
+  istniał; dochodzi wpis X11 w `/usr/share/xsessions`.
+
 ## 3.0.0-alpha2 — niewydane (NirvanaNG, etap 2)
 
 ### Dodane

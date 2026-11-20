@@ -93,6 +93,8 @@ static bool bind_shell(void)
     if (!id)
         return false;
     shell_version = version < 4 ? version : 4;
+    if (getenv("NIRVANA_DEBUG"))
+        fprintf(stderr, "layer shell version %u\n", version);
     shell = wl_registry_bind(ecore_wl2_display_registry_get(wl_disp), id, &zwlr_layer_shell_v1_interface,
                              shell_version);
     return shell != NULL;
@@ -257,10 +259,17 @@ void nv_layer_resize(Evas_Object *win, int w, int h)
 
 void nv_layer_keyboard(Evas_Object *win, bool on)
 {
+    nv_layer_keyboard_mode(win, on ? 1 : 0);
+}
+
+void nv_layer_keyboard_mode(Evas_Object *win, int mode)
+{
     Layer *ly = layer_of(win);
     if (!ly || !ly->ls)
         return;
-    zwlr_layer_surface_v1_set_keyboard_interactivity(ly->ls, on ? 1 : 0);
+    if (mode == 2 && shell_version < 4)
+        mode = 0;
+    zwlr_layer_surface_v1_set_keyboard_interactivity(ly->ls, (uint32_t)mode);
     Ecore_Wl2_Window *ww = elm_win_wl_window_get(win);
     if (ww)
         wl_surface_commit(ecore_wl2_window_surface_get(ww));

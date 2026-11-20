@@ -71,6 +71,8 @@ bool nv_layer_setup(Evas_Object *win, Nv_Layer layer, unsigned anchors, int w, i
 void nv_layer_resize(Evas_Object *win, int w, int h);
 /* keyboard focus for a layer window wanted or not (a menu open: wanted) */
 void nv_layer_keyboard(Evas_Object *win, bool on);
+/* the keyboard's mode exactly: 0 none, 1 exclusive, 2 on demand */
+void nv_layer_keyboard_mode(Evas_Object *win, int mode);
 
 /* ---------------------------------------------------------------- the compositor */
 
@@ -128,6 +130,8 @@ bool nv_screenbar_menu_is_open(void);
 
 /* the menu registrar on the bus (NULL: none), the focus followed */
 bool nv_global_menu_start(Eldbus_Connection *bus);
+/* the backdrop got or lost the focus (its own menus while it has it) */
+void nv_global_menu_desktop_focus(bool on);
 /* (the bar's menu was shut) */
 void nv_global_menu_closed(void);
 /* the bar opens a menu: it grows over the screen while the menu is open */

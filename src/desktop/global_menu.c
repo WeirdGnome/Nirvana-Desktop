@@ -28,6 +28,7 @@
 #include <time.h>
 #include <wayland-client.h>
 
+#include "gtk_menu.h"
 #include "wlr-foreign-toplevel-management-unstable-v1-client-protocol.h"
 
 #define REGISTRAR_BUS "com.canonical.AppMenu.Registrar"
@@ -58,6 +59,8 @@ static struct {
     struct zwlr_foreign_toplevel_manager_v1 *ftm;
     Eina_List *toplevels; /* Toplevel */
     Ecore_Timer *refresh;
+    Eina_Hash *gtk;       /* xid -> Gtk_App (GTK programs' menus, from window properties) */
+    bool desktop_focus;   /* the backdrop has the focus: the desktop's own menus */
 } gm;
 
 typedef struct Toplevel {
@@ -483,6 +486,8 @@ static void tl_done(void *data, struct zwlr_foreign_toplevel_handle_v1 *h)
 {
     (void)h;
     Toplevel *t = data;
+    if (t->pending_activated && !t->activated)
+        gm.desktop_focus = false;
     t->activated = t->pending_activated;
     schedule_refresh();
 }
@@ -597,6 +602,7 @@ static Eina_Bool on_x_property(void *data, int type, void *event)
     Ecore_X_Event_Window_Property *ev = event;
     if (ev->win == gm.x_root && ev->atom == ECORE_X_ATOM_NET_ACTIVE_WINDOW) {
         read_active();
+        gm.desktop_focus = false;
         schedule_refresh();
     }
     return ECORE_CALLBACK_PASS_ON;
@@ -644,6 +650,76 @@ static void pretty(const char *app_id, char *out, size_t len)
         out[0] -= 32;
 }
 
+/* a UTF8_STRING property of an X window, or NULL */
+static char *x_string(Ecore_X_Window w, const char *name)
+{
+    unsigned char *data = NULL;
+    int n = 0;
+    Ecore_X_Atom a = ecore_x_atom_get(name);
+    if (!ecore_x_window_prop_property_get(w, a, ECORE_X_ATOM_UTF8_STRING, 8, &data, &n) || n <= 0) {
+        free(data);
+        return NULL;
+    }
+    char *s = strndup((char *)data, (size_t)n);
+    free(data);
+    return s;
+}
+
+static void gtk_changed(void *data)
+{
+    (void)data;
+    refresh();
+}
+
+static void gtk_owner_gone(void *data, const char *bus, const char *old_id, const char *new_id)
+{
+    (void)data;
+    (void)old_id;
+    if (new_id && *new_id)
+        return;
+    Eina_Iterator *it = eina_hash_iterator_tuple_new(gm.gtk);
+    Eina_Hash_Tuple *t;
+    Eina_List *gone = NULL;
+    EINA_ITERATOR_FOREACH(it, t)
+        if (!strcmp(nv_gtk_app_bus_name(t->data), bus))
+            gone = eina_list_append(gone, (void *)(uintptr_t)*(const unsigned *)t->key);
+    eina_iterator_free(it);
+    void *x;
+    EINA_LIST_FREE(gone, x) {
+        unsigned xid = (unsigned)(uintptr_t)x;
+        eina_hash_del_by_key(gm.gtk, &xid);
+    }
+}
+
+/* a GTK program's menus for its window, read when it is first seen */
+static Gtk_App *gtk_app_for(unsigned xid)
+{
+    if (!gm.bus || !gm.x_ok)
+        return NULL;
+    Gtk_App *app = eina_hash_find(gm.gtk, &xid);
+    if (app)
+        return app;
+    char *bus = x_string(xid, "_GTK_UNIQUE_BUS_NAME");
+    char *menubar = x_string(xid, "_GTK_MENUBAR_OBJECT_PATH");
+    if (!bus || !menubar) {
+        free(bus);
+        free(menubar);
+        return NULL;
+    }
+    char *paths[3] = {x_string(xid, "_UNITY_OBJECT_PATH"), x_string(xid, "_GTK_APPLICATION_OBJECT_PATH"),
+                      x_string(xid, "_GTK_WINDOW_OBJECT_PATH")};
+    app = nv_gtk_app_new(gm.bus, bus, menubar, (const char *const *)paths, gtk_changed, NULL);
+    if (app) {
+        eina_hash_add(gm.gtk, &xid, app);
+        eldbus_name_owner_changed_callback_add(gm.bus, bus, gtk_owner_gone, NULL, EINA_FALSE);
+    }
+    for (int i = 0; i < 3; i++)
+        free(paths[i]);
+    free(bus);
+    free(menubar);
+    return app;
+}
+
 static Nv_Menu *foreign_window_menu;
 
 static void refresh(void)
@@ -653,11 +729,22 @@ static void refresh(void)
         return;
     }
     Eina_List *own = nv_screenbar_own_menus();
-    App_Menu *am = gm.active_xid ? eina_hash_find(gm.apps, &gm.active_xid) : NULL;
+    unsigned xid = gm.desktop_focus ? 0 : gm.active_xid;
+    App_Menu *am = xid ? eina_hash_find(gm.apps, &xid) : NULL;
+    Gtk_App *ga = !am && xid ? gtk_app_for(xid) : NULL;
     Eina_List *list = NULL;
     char title[256] = "";
 
-    if (am) {
+    if (ga && nv_gtk_app_menus(ga)) {
+        list = eina_list_append(NULL, eina_list_data_get(own));
+        Eina_List *l;
+        Nv_Menu *m;
+        EINA_LIST_FOREACH(nv_gtk_app_menus(ga), l, m)
+            list = eina_list_append(list, m);
+        char *n = x_name(gm.active_xid);
+        snprintf(title, sizeof title, "%s", n ? n : "");
+        free(n);
+    } else if (am) {
         app_connect(am);
         if (am->stale)
             read_layout(am);
@@ -669,7 +756,7 @@ static void refresh(void)
         char *n = x_name(gm.active_xid);
         snprintf(title, sizeof title, "%s", n ? n : "");
         free(n);
-    } else {
+    } else if (!gm.desktop_focus) {
         Toplevel *t = active_toplevel();
         bool ours = !t || (t->app_id && !strncmp(t->app_id, "nirvana", 7));
         if (!ours) {
@@ -702,6 +789,14 @@ static void refresh(void)
     eina_list_free(old);
 }
 
+void nv_global_menu_desktop_focus(bool on)
+{
+    if (gm.desktop_focus == on)
+        return;
+    gm.desktop_focus = on;
+    schedule_refresh();
+}
+
 void nv_global_menu_closed(void)
 {
     /* a menu was shut: what changed meanwhile is shown now */
@@ -712,6 +807,7 @@ void nv_global_menu_closed(void)
 bool nv_global_menu_start(Eldbus_Connection *bus)
 {
     gm.apps = eina_hash_int32_new(app_free);
+    gm.gtk = eina_hash_int32_new((Eina_Free_Cb)nv_gtk_app_free);
     gm.bus = bus;
     if (bus) {
         gm.iface = eldbus_service_interface_register(bus, REGISTRAR_PATH, &reg_desc);

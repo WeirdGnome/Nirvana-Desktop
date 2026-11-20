@@ -174,6 +174,7 @@ Eina_List *nv_backdrop_selected(void)
     return out;
 }
 
+static void take_focus(void);
 static void canvas_move(void *data, Evas *e, Evas_Object *o, void *event);
 static void canvas_up(void *data, Evas *e, Evas_Object *o, void *event);
 
@@ -183,6 +184,7 @@ static void icon_down(void *data, Evas *e, Evas_Object *o, void *event)
     (void)o;
     Icon *ic = data;
     Evas_Event_Mouse_Down *ev = event;
+    take_focus();
     if (ev->button != 1)
         return;
     if (ev->flags & EVAS_BUTTON_DOUBLE_CLICK) {
@@ -267,12 +269,32 @@ void nv_backdrop_reload(void)
 
 /* ---------------------------------------------------------------- the background */
 
+/* a click on the desktop gives it the keyboard (and so takes the focus from the
+ * programs' windows, whose menus leave the bar): exclusive for a moment, then on demand
+ * again so that a click on a window takes it back */
+static Eina_Bool keyboard_on_demand(void *data)
+{
+    (void)data;
+    nv_layer_keyboard_mode(bd.win, 2);
+    return ECORE_CALLBACK_CANCEL;
+}
+
+static void take_focus(void)
+{
+    nv_global_menu_desktop_focus(true);
+    if (nv.backend == NV_BACKEND_WAYLAND) {
+        nv_layer_keyboard_mode(bd.win, 1);
+        ecore_timer_add(0.2, keyboard_on_demand, NULL);
+    }
+}
+
 static void bg_down(void *data, Evas *e, Evas_Object *o, void *event)
 {
     (void)data;
     (void)e;
     (void)o;
     Evas_Event_Mouse_Down *ev = event;
+    take_focus(); /* a click on the desktop: its menus */
     if (ev->button == 3) {
         nv_screenbar_menu_open(2); /* the Icons menu */
         return;
@@ -370,6 +392,15 @@ static void configured(void *data, Evas_Object *win, int w, int h)
     layout(false);
 }
 
+static void on_focus(void *data, Evas_Object *o, void *ev)
+{
+    (void)o;
+    (void)ev;
+    if (getenv("NIRVANA_DEBUG"))
+        fprintf(stderr, "backdrop focus %d\n", data != NULL);
+    nv_global_menu_desktop_focus(data != NULL);
+}
+
 bool nv_backdrop_create(void)
 {
     bd.win = nv_layer_win_add("nirvana-backdrop", NV_LAYER_BACKGROUND);
@@ -390,6 +421,8 @@ bool nv_backdrop_create(void)
     evas_object_event_callback_add(bd.edje, EVAS_CALLBACK_MOUSE_UP, canvas_up, NULL);
     evas_object_event_callback_add(bd.edje, EVAS_CALLBACK_KEY_DOWN, on_key, NULL);
     evas_object_focus_set(bd.edje, EINA_TRUE);
+    evas_object_smart_callback_add(bd.win, "focus,in", on_focus, (void *)1);
+    evas_object_smart_callback_add(bd.win, "focus,out", on_focus, NULL);
 
     if (!nv_layer_setup(bd.win, NV_LAYER_BACKGROUND, NV_ANCHOR_TOP | NV_ANCHOR_BOTTOM | NV_ANCHOR_LEFT | NV_ANCHOR_RIGHT,
                         0, 0, -1, true, configured, NULL))

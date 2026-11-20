@@ -16,8 +16,8 @@ Gałąź powstaje etapami:
 |---|---|---|
 | 1 | `libnirvana` (assigny, czytnik AppImage), `assign`, `wbrun`, `appimage-info`, testy | **gotowe** |
 | 2 | Pulpit EFL: pasek „Nirvana Screen”, tło, gadżety okien, edytor assignów | **gotowe** |
-| 3 | Globalne menu (`com.canonical.AppMenu.Registrar`, Eldbus) | następny |
-| 4 | Dok i listery plików (wielowątkowe) | |
+| 3 | Globalne menu (`com.canonical.AppMenu.Registrar`, `org.gtk.Menus`, Eldbus) | **gotowe** |
+| 4 | Dok i listery plików (wielowątkowe) | następny |
 | 5 | Motywy Edje: Classic13, Classic21, Classic31, Classic41, Ambient | |
 
 ## libnirvana (LGPL-3.0-or-later)
@@ -80,6 +80,26 @@ klika go wirtualnym wskaźnikiem. Przy własnym `~/.config/labwc/rc.xml` dopisz 
 `<mouse>`:
 `<context name="Client"><mousebind button="Task" action="Press"><action name="Lower"/></mousebind></context>`.
 W innych kompozytorach gadżet wysuwa zamiast tego następne okno Nirvany.
+
+## Globalne menu
+
+Menu programu, który ma fokus, pokazuje się na pasku ekranu po menu Nirvana Screen;
+własny pasek menu programu jest ukryty. Obsługiwane są dwa rodzaje programów:
+
+* **GTK** (2 i 3, przez `appmenu-gtk-module`; paski menu GtkApplication): właściwości
+  okna `_GTK_UNIQUE_BUS_NAME` / `_GTK_MENUBAR_OBJECT_PATH` i interfejsy `org.gtk.Menus` /
+  `org.gtk.Actions` - sekcje, podmenu, skróty, pozycje zaznaczane i radiowe.
+* programy **Registrara** (Qt z motywem platformy eksportującym menu, inne eksportery
+  `com.canonical.dbusmenu`): `nirvana-desktop` jest `com.canonical.AppMenu.Registrar`;
+  skróty, pozycje wyłączone, zaznaczane i radiowe, podmenu wypełniane na żądanie
+  (AboutToShow), menu zmieniające się w trakcie.
+
+Okno z fokusem jest czytane z `_NET_ACTIVE_WINDOW`: pod X11 wprost, pod Waylandem w
+XWayland - więc pod Waylandem globalne menu działa dla programów uruchomionych przez
+XWayland. Natywne programy Waylanda nie mają identyfikatora okna, pod którym mogłyby
+zgłosić menu (protokoły go nie dają), więc dla nich pasek pokazuje nazwę programu i menu
+Window (zamknij, ikonizuj, powiększ; przez wlr-foreign-toplevel-management), a menu
+zostają w ich oknach. Program GTK z menu na pasku pod Waylandem: `GDK_BACKEND=x11`.
 
 ## Polecenia (GPL-3.0-or-later)
 
