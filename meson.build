@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 project('nirvana-desktop', ['c', 'cpp'],
-  version: '3.0.0-alpha3',
+  version: '3.0.0-alpha4',
   license: 'GPL-3.0-or-later AND LGPL-3.0-or-later',
   meson_version: '>= 0.60',
   default_options: [
@@ -149,6 +149,7 @@ if have_desktop
     'src/desktop/global_menu.c',
     'src/desktop/gtk_menu.c',
     'src/desktop/icons.c',
+    'src/desktop/dock.c',
     proto_src,
     dependencies: [libnirvana_dep, elementary, efl_ecore, efl_efreet, efl_efreet_mime, efl_eldbus, archive,
                    ecore_x, ecore_wl2, wayland_client],

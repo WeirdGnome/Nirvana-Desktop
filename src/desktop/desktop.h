@@ -125,6 +125,8 @@ void nv_screenbar_menus_set(Eina_List *menus, const char *owner);
 Eina_List *nv_screenbar_own_menus(void);
 void nv_screenbar_title_set(const char *title);
 bool nv_screenbar_menu_is_open(void);
+/* a menu at a place of the screen (the dock's, an icon's), shown by the bar */
+void nv_screenbar_popup(Nv_Menu *m, int x, int y);
 
 /* ---------------------------------------------------------------- the global menu */
 
@@ -188,6 +190,10 @@ bool nv_is_desktop_file(const char *path);
 const char *nv_icon_name_path(const char *icon, int size);
 /* a picture for a file: a program's or AppImage's icon, its type's, else the theme's */
 Evas_Object *nv_icon_for_path(Evas_Object *parent, const char *path, bool is_dir, int size);
+
+/* ---------------------------------------------------------------- the dock */
+
+bool nv_dock_create(void);
 
 /* ---------------------------------------------------------------- listers, editor */
 

@@ -3,6 +3,24 @@
 
 *[English](CHANGELOG.md)*
 
+## 3.0.0-alpha4 — niewydane (NirvanaNG, etap 4)
+
+### Dodane
+- Nirvana Dock: programy (.desktop, AppImage, pliki wykonywalne), pod-doki otwierane
+  nad swoją ikoną, separatory i docky (zegar, CPU, RAM); upuszczone pliki są
+  przypinane; menu ikony (Open, Move Left/Right, Remove from Dock); zapis w
+  `~/.nirvana/Prefs/dock.conf`. Powierzchnia warstwy pod Waylandem, okno dock pod X11.
+- Lister: widok ikon lub listy, sortowanie po nazwie, dacie, rozmiarze, typie, tryb
+  przeglądarki, pole położenia, archiwa jako szuflady (libarchive), menu pozycji (Open,
+  Information, Copy Path, Extract Icon... dla AppImage), przeciąganie plików.
+
+### Poprawione
+- Sesje uruchamiane przez menedżer logowania bez elogind (np. LightDM na Devuanie)
+  dawały czarny ekran: brak `XDG_RUNTIME_DIR`, bez którego labwc nie startuje.
+  `nirvana-session` sam go teraz tworzy, uruchamia szynę sesji, gdy jej brak, zapisuje
+  dziennik w `~/.nirvana/Logs/session.log`, restartuje pulpit po awarii i kończy sesję
+  (powrót do ekranu logowania), gdy pulpit w ogóle nie startuje.
+
 ## 3.0.0-alpha3 — niewydane (NirvanaNG, etap 3)
 
 ### Dodane

@@ -3,6 +3,24 @@
 
 *[Polski](CHANGELOG.pl.md)*
 
+## 3.0.0-alpha4 — unreleased (NirvanaNG, stage 4)
+
+### Added
+- The Nirvana Dock: launchers (.desktop files, AppImages, programs), sub-docks that
+  open above their item, separators and dockies (clock, CPU, RAM); files dropped on it
+  are pinned; an item's menu (Open, Move Left/Right, Remove from Dock); kept in
+  `~/.nirvana/Prefs/dock.conf`. A layer surface on Wayland, a dock window on X11.
+- The lister: views as icons or a list, sorting by name, date, size or type, browser
+  mode, a location field, archives browsed as drawers (libarchive), an item menu
+  (Open, Information, Copy Path, Extract Icon... for AppImages), dragging files out.
+
+### Fixed
+- Sessions started by a display manager without elogind (LightDM on Devuan, say) were
+  a black screen: `XDG_RUNTIME_DIR` was not set, and labwc does not start without it.
+  `nirvana-session` now makes one, starts a session bus when there is none, logs to
+  `~/.nirvana/Logs/session.log`, restarts the desktop after a crash and ends the
+  session (back to the login screen) when it cannot start at all.
+
 ## 3.0.0-alpha3 — unreleased (NirvanaNG, stage 3)
 
 ### Added

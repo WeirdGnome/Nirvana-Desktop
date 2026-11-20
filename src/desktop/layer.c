@@ -177,26 +177,34 @@ static void x11_shown(void *data, Evas *e, Evas_Object *o, void *event)
     ecore_timer_add(0.3, x11_place_later, data); /* (some managers move it after mapping) */
 }
 
+/* a window's place on an X screen from its anchors (centred along a free axis) */
+static void x11_geometry(Layer *ly, int *x, int *y, int *w, int *h)
+{
+    int sw = 0, sh = 0;
+    ecore_x_screen_size_get(ecore_x_default_screen_get(), &sw, &sh);
+    bool l = ly->anchors & NV_ANCHOR_LEFT, r = ly->anchors & NV_ANCHOR_RIGHT;
+    bool t = ly->anchors & NV_ANCHOR_TOP, b = ly->anchors & NV_ANCHOR_BOTTOM;
+    if ((l && r) || !*w)
+        *w = sw;
+    if ((t && b) || !*h)
+        *h = sh;
+    *x = l ? 0 : r ? sw - *w : (sw - *w) / 2;
+    *y = t ? 0 : b ? sh - *h : (sh - *h) / 2;
+}
+
 static bool setup_x11(Layer *ly, Nv_Layer layer, int w, int h, int exclusive)
 {
     Ecore_X_Window xw = elm_win_xwindow_get(ly->win);
     if (!xw)
         return false;
-    int sw = 0, sh = 0;
-    ecore_x_screen_size_get(ecore_x_default_screen_get(), &sw, &sh);
-    int x = 0, y = 0;
-    if ((ly->anchors & (NV_ANCHOR_LEFT | NV_ANCHOR_RIGHT)) == (NV_ANCHOR_LEFT | NV_ANCHOR_RIGHT) || !w)
-        w = sw;
-    if ((ly->anchors & (NV_ANCHOR_TOP | NV_ANCHOR_BOTTOM)) == (NV_ANCHOR_TOP | NV_ANCHOR_BOTTOM) || !h)
-        h = sh;
-    if ((ly->anchors & NV_ANCHOR_BOTTOM) && !(ly->anchors & NV_ANCHOR_TOP))
-        y = sh - h;
-    if ((ly->anchors & NV_ANCHOR_RIGHT) && !(ly->anchors & NV_ANCHOR_LEFT))
-        x = sw - w;
+    int x, y;
+    x11_geometry(ly, &x, &y, &w, &h);
     evas_object_move(ly->win, x, y);
     evas_object_resize(ly->win, w, h);
     if (exclusive > 0 && (ly->anchors & NV_ANCHOR_TOP) && !(ly->anchors & NV_ANCHOR_BOTTOM))
         ecore_x_netwm_strut_partial_set(xw, 0, 0, exclusive, 0, 0, 0, 0, 0, x, x + w - 1, 0, 0);
+    else if (exclusive > 0 && (ly->anchors & NV_ANCHOR_BOTTOM) && !(ly->anchors & NV_ANCHOR_TOP))
+        ecore_x_netwm_strut_partial_set(xw, 0, 0, 0, exclusive, 0, 0, 0, 0, 0, 0, x, x + w - 1);
     if (layer == NV_LAYER_BACKGROUND || layer == NV_LAYER_BOTTOM)
         ecore_x_window_lower(xw);
     else
@@ -249,11 +257,16 @@ void nv_layer_resize(Evas_Object *win, int w, int h)
             wl_surface_commit(ecore_wl2_window_surface_get(ww));
         wl_display_flush(ecore_wl2_display_get(wl_disp));
     } else {
-        evas_object_resize(win, w ? w : ly->w, h);
+        int x, y;
+        x11_geometry(ly, &x, &y, &w, &h);
+        ly->x = x;
+        ly->y = y;
+        ly->w = w;
         ly->h = h;
+        evas_object_resize(win, w, h);
         x11_place(ly);
         if (ly->cb)
-            ly->cb(ly->data, win, w ? w : ly->w, h);
+            ly->cb(ly->data, win, w, h);
     }
 }
 

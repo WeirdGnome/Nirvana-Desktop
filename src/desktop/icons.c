@@ -37,7 +37,7 @@ const char *nv_icon_name_path(const char *icon, int size)
     const char *p = efreet_icon_path_find(elm_config_icon_theme_get(), icon, size);
     if (!p)
         p = efreet_icon_path_find("hicolor", icon, size);
-    return p; /* (a stringshare from Efreet) */
+    return p ? eina_stringshare_add(p) : NULL; /* (Efreet's string is its own) */
 }
 
 static bool image_from_file(Evas_Object *img, const char *file)

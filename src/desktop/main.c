@@ -391,6 +391,8 @@ EAPI_MAIN int elm_main(int argc, char **argv)
         fprintf(stderr, "nirvana-desktop: the screen bar could not be made\n");
         return 1;
     }
+    if (!nv_dock_create())
+        fprintf(stderr, "nirvana-desktop: no dock (the theme has none, or no layer for it)\n");
     ecore_event_handler_add(ECORE_EVENT_SIGNAL_USER, on_user_signal, NULL);
     dbus_start();
     nv_global_menu_start(bus);

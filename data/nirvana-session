@@ -4,34 +4,114 @@
 # nirvana-session - a Nirvana Desktop session.
 #
 #     nirvana-session            on Wayland: labwc (a wlroots compositor) with the desktop
-#     nirvana-session --x11      on X11 (from ~/.xinitrc): the desktop beside your window
-#                                manager (NIRVANA_WM, else openbox)
+#     nirvana-session --x11      on X11 (from ~/.xinitrc or a display manager): the desktop
+#                                beside your window manager (NIRVANA_WM, else openbox)
 #
-# The Startup-Sequence is read first (the user's, else the system's): it sets the global
-# menu's environment and makes the assigns.
+# What the session lacks is made up first: XDG_RUNTIME_DIR (on systems without elogind
+# or systemd-logind a display manager may not set it), a session bus. Everything the
+# session says goes to ~/.nirvana/Logs/session.log. The Startup-Sequence is read next
+# (the user's, else the system's): it sets the global menu's environment and makes the
+# assigns.
 
 NIRVANA=${NIRVANA:-/opt/nirvana}
 PATH="$NIRVANA/C:$PATH"
 export PATH
 
+# the desktop: started again when it stops by accident (0 is Quit); when it cannot
+# start at all (five times in a row within seconds), the session ends - back to the
+# login screen, with the reason in the log - rather than leaving a black screen
+run_desktop() {
+    fails=0
+    while :; do
+        started=$(date +%s)
+        nirvana-desktop "$@"
+        status=$?
+        echo "nirvana-desktop ended with status $status"
+        [ $status -eq 0 ] && return 0
+        if [ $(($(date +%s) - started)) -lt 10 ]; then
+            fails=$((fails + 1))
+        else
+            fails=0
+        fi
+        if [ $fails -ge 5 ]; then
+            echo "nirvana-desktop does not start; the session ends"
+            return 1
+        fi
+        sleep 2
+    done
+}
+if [ "${1:-}" = "--in-labwc" ]; then
+    run_desktop --wayland
+    # (labwc ends with the desktop)
+    [ -n "${LABWC_PID:-}" ] && kill "$LABWC_PID"
+    exit 0
+fi
+
+# ---------------------------------------------------------------- the log
+LOGDIR="$HOME/.nirvana/Logs"
+mkdir -p "$LOGDIR" 2> /dev/null
+LOG="$LOGDIR/session.log"
+if [ -z "${NIRVANA_IN_DBUS:-}" ] && [ -f "$LOG" ]; then
+    mv -f "$LOG" "$LOG.old" 2> /dev/null
+fi
+exec >> "$LOG" 2>&1
+echo "nirvana-session $* - $(date)"
+
+# ---------------------------------------------------------------- XDG_RUNTIME_DIR
+# wlroots (labwc) will not start without it; the assigns live in it
+if [ -z "${XDG_RUNTIME_DIR:-}" ] || [ ! -d "$XDG_RUNTIME_DIR" ] || [ ! -w "$XDG_RUNTIME_DIR" ]; then
+    uid=$(id -u)
+    for d in "/run/user/$uid" "${TMPDIR:-/tmp}/runtime-$uid"; do
+        if { [ -d "$d" ] || mkdir -p "$d" 2> /dev/null; } && [ -O "$d" ]; then
+            chmod 700 "$d"
+            XDG_RUNTIME_DIR=$d
+            break
+        fi
+    done
+    export XDG_RUNTIME_DIR
+    echo "XDG_RUNTIME_DIR was not set: using $XDG_RUNTIME_DIR"
+fi
+
+# ---------------------------------------------------------------- the session bus
+# the global menu and wbrun talk over it; start one when the display manager did not
+if [ -z "${DBUS_SESSION_BUS_ADDRESS:-}" ] && [ -z "${NIRVANA_IN_DBUS:-}" ]; then
+    if command -v dbus-run-session > /dev/null; then
+        echo "no session bus: starting one"
+        NIRVANA_IN_DBUS=1 exec dbus-run-session -- "$0" "$@"
+    else
+        echo "no session bus, and no dbus-run-session (package dbus): no global menu"
+    fi
+fi
+
+# ---------------------------------------------------------------- Startup-Sequence
 if [ -r "$HOME/.nirvana/Startup-Sequence" ]; then
     . "$HOME/.nirvana/Startup-Sequence"
 elif [ -r "$NIRVANA/S/Startup-Sequence" ]; then
     . "$NIRVANA/S/Startup-Sequence"
 fi
+export XDG_CURRENT_DESKTOP="${XDG_CURRENT_DESKTOP:-Nirvana}"
 
 case "${1:-}" in
     --x11)
+        export XDG_SESSION_TYPE=x11
         WM=${NIRVANA_WM:-openbox}
-        "$WM" &
-        exec nirvana-desktop --x11
+        if command -v "$WM" > /dev/null; then
+            "$WM" &
+        else
+            echo "no window manager $WM (set NIRVANA_WM): the desktop runs without one"
+        fi
+        run_desktop --x11
         ;;
     *)
         export XDG_SESSION_TYPE=wayland
-        # the user's labwc settings if there are any, else Nirvana's
-        if [ -d "$HOME/.config/labwc" ]; then
-            exec labwc -s nirvana-desktop
+        if ! command -v labwc > /dev/null; then
+            echo "labwc is not installed (sudo apt install labwc)"
+            exit 1
         fi
-        exec labwc -C "$NIRVANA/S/labwc" -s nirvana-desktop
+        # the user's labwc settings if there are any, else Nirvana's
+        if [ -d "${XDG_CONFIG_HOME:-$HOME/.config}/labwc" ]; then
+            exec labwc -s "$NIRVANA/C/nirvana-session --in-labwc"
+        fi
+        exec labwc -C "$NIRVANA/S/labwc" -s "$NIRVANA/C/nirvana-session --in-labwc"
         ;;
 esac

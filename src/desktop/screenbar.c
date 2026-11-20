@@ -31,6 +31,7 @@ static struct {
     Eina_List *handlers;
     bool grabbed;
     bool closing;
+    bool fresh;              /* a popup opened by the press being handled now */
 } bar = {.open_index = -1};
 
 /* ---------------------------------------------------------------- the menu host */
@@ -156,6 +157,38 @@ void nv_screenbar_menu_open(int index)
                                        session_done, NULL);
 }
 
+static void fresh_over(void *data)
+{
+    (void)data;
+    bar.fresh = false;
+}
+
+/* a menu at a place of the screen (a dock's or an icon's menu), shown by the bar */
+void nv_screenbar_popup(Nv_Menu *m, int x, int y)
+{
+    if (bar.session) {
+        bar.closing = true;
+        nv_menu_session_close(bar.session);
+        bar.closing = false;
+    } else {
+        if (nv.backend == NV_BACKEND_WAYLAND) {
+            nv_layer_resize(bar.win, 0, nv.screen_h);
+            nv_layer_keyboard(bar.win, true);
+        }
+        evas_object_move(bar.catcher, 0, nv.bar_h);
+        evas_object_resize(bar.catcher, nv.screen_w, nv.screen_h);
+        evas_object_show(bar.catcher);
+        grab(true);
+    }
+    bar.open_index = -1;
+    title_select(-1);
+    bar.session = nv_menu_session_open(&host, NULL, m, x, y, session_done, NULL);
+    /* the press that opened it (a dock's, an icon's) reaches the bar's handler too: it
+     * must not shut the popup */
+    bar.fresh = true;
+    ecore_job_add(fresh_over, NULL);
+}
+
 /* the title under x (bar coordinates), -1 for none */
 static int title_at(int x, int y)
 {
@@ -206,7 +239,7 @@ static Eina_Bool on_move(void *data, int type, void *event)
     int x, y;
     event_xy(ev->x, ev->y, ev->root.x, ev->root.y, &x, &y);
     int t = title_at(x, y);
-    if (t >= 0 && t != bar.open_index)
+    if (t >= 0 && t != bar.open_index && bar.open_index >= 0)
         nv_screenbar_menu_open(t);
     else
         nv_menu_session_motion(bar.session, x, y);
@@ -223,6 +256,8 @@ static Eina_Bool on_down(void *data, int type, void *event)
     int x, y;
     event_xy(ev->x, ev->y, ev->root.x, ev->root.y, &x, &y);
     int t = title_at(x, y);
+    if (bar.fresh)
+        return ECORE_CALLBACK_PASS_ON;
     if (!bar.session) {
         if (t >= 0 && ev->buttons == 1)
             nv_screenbar_menu_open(t);
@@ -233,6 +268,8 @@ static Eina_Bool on_down(void *data, int type, void *event)
     if (t >= 0) {
         if (t == bar.open_index && ev->buttons == 1)
             nv_screenbar_menu_close(); /* a second click on the open title shuts it */
+        else if (t != bar.open_index)
+            nv_screenbar_menu_open(t);
         return ECORE_CALLBACK_PASS_ON;
     }
     if (!nv_menu_session_press(bar.session, x, y))
@@ -252,7 +289,7 @@ static Eina_Bool on_up(void *data, int type, void *event)
     bool closed;
     nv_menu_session_release(bar.session, x, y, &closed);
     /* a held right button let go away from the menus shuts them */
-    if (!closed && bar.session && ev->buttons == 3 && title_at(x, y) < 0) {
+    if (!closed && bar.session && ev->buttons == 3 && bar.open_index >= 0 && title_at(x, y) < 0) {
         Nv_Menu_Session *s = bar.session;
         bool inside = nv_menu_session_press(s, x, y);
         if (!inside)
