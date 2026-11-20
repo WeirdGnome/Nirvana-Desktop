@@ -2,3 +2,4 @@ build/
 *.edj
 *.o
 *.so
+build-*/

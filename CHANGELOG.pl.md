@@ -1,0 +1,27 @@
+<!-- SPDX-License-Identifier: GPL-3.0-or-later -->
+# Lista zmian
+
+*[English](CHANGELOG.md)*
+
+## 3.0.0-alpha1 — niewydane (NirvanaNG, etap 1)
+
+Nowy początek na gałęzi `NirvanaNG`: nowy kod, Meson, C11.
+
+### Dodane
+- `libnirvana` (LGPL-3.0-or-later):
+  - baza assignów w `$XDG_RUNTIME_DIR/nirvana-ram/assigns.db` ze zmianami atomowymi pod
+    blokadą; domyślne assigny (SYS:, Home:, RAM:, Nirvana:, Themes:, Tools:, katalogi
+    użytkownika XDG, katalogi z $HOME); multi-assigny; tworzenie, zastępowanie,
+    dodawanie, usuwanie, zmiana kolejności, zmiana nazwy i kasowanie;
+    `nirvana_to_posix()` i `posix_to_nirvana()` (najdłuższy prefiks); trwały zapis w
+    `~/.nirvana/Startup-Sequence`; powiadamianie działającego pulpitu sygnałem SIGUSR1;
+  - czytnik AppImage, który niczego nie uruchamia: offset ładunku ELF (ELF64 i ELF32),
+    własny czytnik SquashFS 4.0 (gzip, lzma, xz, lz4, zstd), ISO 9660 przez libarchive,
+    DwarFS przez libdwarfs (opcjonalnie); ikona (.DirIcon, inaczej Icon z pliku
+    .desktop) i klucze pliku .desktop;
+  - środowisko uruchamiania dla globalnego menu, domyślny program typu MIME
+    (mimeapps.list), procesy potomne odłączone od sesji.
+- `assign`, `wbrun` (EFL: Efreet, Eldbus) i `appimage-info` (GPL-3.0-or-later).
+- `setup-env.sh` i szablon `Startup-Sequence`.
+- Testy: assigny, polecenie `assign`, AppImage spakowane każdym kompresorem i jako ISO,
+  uszkodzone obrazy.

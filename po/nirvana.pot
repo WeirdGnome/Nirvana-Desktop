@@ -1,0 +1,124 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the nirvana package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: nirvana\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-11-20 18:02+0000\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=CHARSET\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: src/cli/assign.c:40
+#, c-format
+msgid ""
+"Usage: assign [NAME: [PATH[;PATH...] | REMOVE]] [OPTIONS]\n"
+"\n"
+"  assign                         list the assigns\n"
+"  assign NAME:                   show one assign\n"
+"  assign NAME: PATH;PATH ...     make or replace an assign\n"
+"  assign NAME: PATH --add        add a path to an assign\n"
+"  assign NAME: REMOVE            remove an assign\n"
+"  assign --init                  write the default assigns\n"
+"\n"
+"Options:\n"
+"  --desktop, --no-desktop        show a volume icon on the desktop or not\n"
+"  --add                          add the paths instead of replacing them\n"
+"  --save                         keep the change in ~/.nirvana/Startup-"
+"Sequence\n"
+"  --quiet                        do not tell the desktop\n"
+"  --help, --version\n"
+msgstr ""
+
+#: src/cli/assign.c:73
+msgid "[desktop]"
+msgstr ""
+
+#: src/cli/assign.c:83
+msgid "cannot read the assigns"
+msgstr ""
+
+#: src/cli/assign.c:142
+#, c-format
+msgid "assign: unknown option %s\n"
+msgstr ""
+
+#: src/cli/assign.c:154
+#, c-format
+msgid "assign: too many paths\n"
+msgstr ""
+
+#: src/cli/assign.c:166
+msgid "cannot write the default assigns"
+msgstr ""
+
+#: src/cli/assign.c:178
+#, c-format
+msgid ""
+"assign: \"%s\" is not an assign's name (it ends in a colon: \"Work:\")\n"
+msgstr ""
+
+#: src/cli/assign.c:186 src/cli/assign.c:199 src/cli/assign.c:227
+msgid "cannot write the Startup-Sequence"
+msgstr ""
+
+#: src/cli/wbrun.c:51
+#, c-format
+msgid ""
+"Usage: wbrun [--with PROGRAM] [--print] PATH [ARGUMENTS...]\n"
+"Opens PATH (a Nirvana or POSIX path) as the desktop opens it.\n"
+msgstr ""
+
+#: src/cli/wbrun.c:130
+#, c-format
+msgid "wbrun: %s starts no program\n"
+msgstr ""
+
+#: src/cli/wbrun.c:164
+#, c-format
+msgid "wbrun: no program %s\n"
+msgstr ""
+
+#: src/cli/wbrun.c:164
+#, c-format
+msgid "wbrun: no program opens %s\n"
+msgstr ""
+
+#: src/cli/wbrun.c:201
+#, c-format
+msgid "wbrun: unknown option %s\n"
+msgstr ""
+
+#: src/cli/wbrun.c:241
+#, c-format
+msgid "wbrun: %s is not a desktop entry\n"
+msgstr ""
+
+#: src/cli/appimage_info.c:37
+#, c-format
+msgid ""
+"Usage: appimage-info FILE [--icon OUT | --desktop | --extract PATH OUT]\n"
+msgstr ""
+
+#: src/cli/appimage_info.c:52
+#, c-format
+msgid "appimage-info: no icon: %s\n"
+msgstr ""
+
+#: src/cli/appimage_info.c:62
+#, c-format
+msgid "appimage-info: no .desktop file: %s\n"
+msgstr ""
+
+#: src/cli/appimage_info.c:97
+#, c-format
+msgid "appimage-info: bad arguments\n"
+msgstr ""

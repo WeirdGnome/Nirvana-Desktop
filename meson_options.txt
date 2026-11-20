@@ -1,0 +1,9 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+option('dwarfs', type: 'feature', value: 'auto',
+       description: 'DwarFS AppImages through libdwarfs (C++20)')
+option('desktop', type: 'feature', value: 'auto',
+       description: 'The EFL desktop and the CLI tools that need EFL (wbrun)')
+option('nls', type: 'boolean', value: true,
+       description: 'Translations through gettext')
+option('prefix_nirvana', type: 'string', value: '/opt/nirvana',
+       description: 'The system part of Nirvana: (C/, Libs/, Themes/)')

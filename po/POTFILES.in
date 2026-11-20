@@ -1,0 +1,3 @@
+src/cli/assign.c
+src/cli/wbrun.c
+src/cli/appimage_info.c
