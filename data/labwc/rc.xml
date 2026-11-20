@@ -1,0 +1,30 @@
+<?xml version="1.0"?>
+<!-- SPDX-License-Identifier: GPL-3.0-or-later -->
+<!-- labwc's settings for a Nirvana Desktop session (used when ~/.config/labwc is missing).
+     Programs keep the compositor's frames; Nirvana's own windows draw theirs. -->
+<labwc_config>
+  <core>
+    <decoration>server</decoration>
+    <gap>0</gap>
+  </core>
+  <theme>
+    <name></name>
+    <cornerRadius>6</cornerRadius>
+    <font place="ActiveWindow"><name>sans</name><size>10</size><weight>bold</weight></font>
+  </theme>
+  <focus>
+    <followMouse>no</followMouse>
+    <raiseOnFocus>yes</raiseOnFocus>
+  </focus>
+  <keyboard>
+    <keybind key="W-Tab"><action name="NextWindow"/></keybind>
+    <keybind key="A-Tab"><action name="NextWindow"/></keybind>
+    <keybind key="W-n"><action name="Execute" command="x-terminal-emulator"/></keybind>
+    <keybind key="A-F4"><action name="Close"/></keybind>
+    <keybind key="W-Up"><action name="ToggleMaximize"/></keybind>
+    <keybind key="W-Down"><action name="Iconify"/></keybind>
+  </keyboard>
+  <mouse>
+    <default/>
+  </mouse>
+</labwc_config>

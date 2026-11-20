@@ -1,0 +1,37 @@
+#!/bin/sh
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
+# nirvana-session - a Nirvana Desktop session.
+#
+#     nirvana-session            on Wayland: labwc (a wlroots compositor) with the desktop
+#     nirvana-session --x11      on X11 (from ~/.xinitrc): the desktop beside your window
+#                                manager (NIRVANA_WM, else openbox)
+#
+# The Startup-Sequence is read first (the user's, else the system's): it sets the global
+# menu's environment and makes the assigns.
+
+NIRVANA=${NIRVANA:-/opt/nirvana}
+PATH="$NIRVANA/C:$PATH"
+export PATH
+
+if [ -r "$HOME/.nirvana/Startup-Sequence" ]; then
+    . "$HOME/.nirvana/Startup-Sequence"
+elif [ -r "$NIRVANA/S/Startup-Sequence" ]; then
+    . "$NIRVANA/S/Startup-Sequence"
+fi
+
+case "${1:-}" in
+    --x11)
+        WM=${NIRVANA_WM:-openbox}
+        "$WM" &
+        exec nirvana-desktop --x11
+        ;;
+    *)
+        export XDG_SESSION_TYPE=wayland
+        # the user's labwc settings if there are any, else Nirvana's
+        if [ -d "$HOME/.config/labwc" ]; then
+            exec labwc -s nirvana-desktop
+        fi
+        exec labwc -C "$NIRVANA/S/labwc" -s nirvana-desktop
+        ;;
+esac

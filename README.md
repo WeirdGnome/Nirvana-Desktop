@@ -15,8 +15,8 @@ This branch is built in stages:
 | Stage | What | State |
 |---|---|---|
 | 1 | `libnirvana` (assigns, AppImage reader), `assign`, `wbrun`, `appimage-info`, tests | **done** |
-| 2 | The EFL desktop: screen bar "Nirvana Screen", backdrop, window gadgets, Assigns editor | next |
-| 3 | The global menu (`com.canonical.AppMenu.Registrar`, Eldbus) | |
+| 2 | The EFL desktop: screen bar "Nirvana Screen", backdrop, window gadgets, Assigns editor | **done** |
+| 3 | The global menu (`com.canonical.AppMenu.Registrar`, Eldbus) | next |
 | 4 | Dock and file listers (threaded) | |
 | 5 | The Edje themes: Classic13, Classic21, Classic31, Classic41, Ambient | |
 
@@ -47,6 +47,39 @@ the ELF runtime (`e_shoff + e_shnum * e_shentsize`), and read as the file system
 * ISO 9660 (type-1 images) — through libarchive;
 * DwarFS — through libdwarfs, when it is available at build time (`-Ddwarfs=enabled`).
 
+## nirvana-desktop (GPL-3.0-or-later)
+
+```
+nirvana-session                      a Wayland session: labwc with the desktop
+nirvana-session --x11                on X11, beside a window manager (from ~/.xinitrc)
+nirvana-desktop [--theme NAME] [--wayland | --x11]
+```
+
+* **The screen bar** "Nirvana Screen": a layer surface (wlr-layer-shell, top layer) that
+  keeps its strip of the screen; on X11 a dock window with a strut. Menu titles
+  (Nirvana Screen, Window, Icons, Tools), the clock, the depth gadget. The menus drop
+  down on a click (or held with the right button: releasing over an item chooses it),
+  follow the keyboard (arrows, Return, Escape, underlined letters) and have Super
+  shortcuts. While a menu is open on Wayland the bar's surface grows over the screen.
+* **The backdrop**: a layer surface of the background layer with a volume icon for each
+  assign with `DESKTOP=1`; select, drag, rubber band, double click to open, Snapshot and
+  Clean Up (Icons menu). The icons follow the assigns (SIGUSR1 from `assign`).
+* **Window gadgets** on the desktop's own windows: close at the left; prefs, jump,
+  iconify, zoom and depth at the right; a resize gadget; moving and resizing go through
+  the display server, so they work on Wayland too.
+* **The Assigns editor** (Nirvana Screen -> Assigns...): the assigns with New, Clone,
+  Delete; a name, "Show volume icon on Desktop", the paths in search order with Add Path
+  (file selector), Remove Path, Move Up/Down, Open in Lister; Use, Save (also to
+  `~/.nirvana/Startup-Sequence`), Cancel.
+* **The lister** (a first version; stage 4 makes it complete): a drawer as icons, read in
+  a thread, AppImage icons read without running them, `#?` patterns in the filter.
+* D-Bus: `org.nirvana.Desktop` on the session bus (`OpenDrawer`, `ReloadAssigns`,
+  `ShowAssignsEditor`) - `wbrun` opens drawers through it.
+
+Programs' own windows keep the frames their compositor (or window manager) gives them;
+the gadgets are drawn on Nirvana's windows. Some Super shortcuts may be taken by the
+compositor or window manager first.
+
 ## Commands (GPL-3.0-or-later)
 
 ```
@@ -64,7 +97,8 @@ appimage-info Some.AppImage [--icon out.png | --desktop | --extract PATH OUT]
 
 ```
 sudo apt install meson ninja-build pkg-config libarchive-dev zlib1g-dev liblzma-dev \
-                 libzstd-dev liblz4-dev libefl-all-dev squashfs-tools
+                 libzstd-dev liblz4-dev libefl-all-dev libwayland-dev wayland-protocols \
+                 squashfs-tools labwc
 meson setup build
 ninja -C build
 meson test -C build
@@ -73,7 +107,8 @@ sudo ./setup-env.sh --system       # /opt/nirvana/{C,Libs,Themes,S}, /nirvana
 ./setup-env.sh --user              # ~/.nirvana, Startup-Sequence, GTK settings
 ```
 
-`wbrun` needs EFL (Ecore, Efreet, Eldbus); without it the rest builds. The tests need
+`wbrun` and `nirvana-desktop` need EFL (Elementary, Efreet, Eldbus, Ecore-X,
+Ecore-Wl2) and `edje_cc`; without them libnirvana and `assign` still build. The tests need
 `mksquashfs` (and `bsdtar` for the ISO test).
 
 ## Known limits
@@ -92,4 +127,5 @@ sudo ./setup-env.sh --system       # /opt/nirvana/{C,Libs,Themes,S}, /nirvana
 * `libnirvana` (`src/lib/`, `include/`): LGPL-3.0-or-later (`COPYING.LESSER`).
 * Everything else — commands, desktop, themes, scripts: GPL-3.0-or-later (`COPYING`).
 
-Each file carries an SPDX line.
+Each file carries an SPDX line. The Wayland protocol files in `protocols/` keep their
+authors' (MIT) licences.

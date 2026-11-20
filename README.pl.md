@@ -15,8 +15,8 @@ Gałąź powstaje etapami:
 | Etap | Co | Stan |
 |---|---|---|
 | 1 | `libnirvana` (assigny, czytnik AppImage), `assign`, `wbrun`, `appimage-info`, testy | **gotowe** |
-| 2 | Pulpit EFL: pasek „Nirvana Screen”, tło, gadżety okien, edytor assignów | następny |
-| 3 | Globalne menu (`com.canonical.AppMenu.Registrar`, Eldbus) | |
+| 2 | Pulpit EFL: pasek „Nirvana Screen”, tło, gadżety okien, edytor assignów | **gotowe** |
+| 3 | Globalne menu (`com.canonical.AppMenu.Registrar`, Eldbus) | następny |
 | 4 | Dok i listery plików (wielowątkowe) | |
 | 5 | Motywy Edje: Classic13, Classic21, Classic31, Classic41, Ambient | |
 
@@ -41,6 +41,37 @@ którym jest: SquashFS 4.0 (własny czytnik: gzip, lzma, xz, lz4, zstd; dowiąza
 fragmenty, bloki rzadkie; każdy offset z obrazu sprawdzany), ISO 9660 (przez libarchive),
 DwarFS (przez libdwarfs, jeśli jest przy budowaniu).
 
+## nirvana-desktop (GPL-3.0-or-later)
+
+```
+nirvana-session                      sesja Wayland: labwc z pulpitem
+nirvana-session --x11                pod X11, obok menedżera okien (z ~/.xinitrc)
+nirvana-desktop [--theme NAZWA] [--wayland | --x11]
+```
+
+* **Pasek ekranu** „Nirvana Screen”: powierzchnia warstwy (wlr-layer-shell, warstwa top)
+  rezerwująca swój pas ekranu; pod X11 okno typu dock ze strutem. Tytuły menu
+  (Nirvana Screen, Window, Icons, Tools), zegar, gadżet głębi. Menu rozwijają się po
+  kliknięciu (lub przytrzymane prawym przyciskiem: puszczenie nad pozycją ją wybiera),
+  obsługują klawiaturę (strzałki, Enter, Escape, podkreślone litery) i skróty z Super.
+* **Tło**: powierzchnia warstwy tła z ikoną woluminu dla każdego assignu z `DESKTOP=1`;
+  zaznaczanie, przeciąganie, ramka zaznaczenia, dwuklik otwiera, Snapshot i Clean Up.
+  Ikony nadążają za assignami (SIGUSR1 z `assign`).
+* **Gadżety okien** na własnych oknach Nirvany: zamknięcie po lewej; prefs, jump,
+  iconify, zoom i depth po prawej; gadżet zmiany rozmiaru; przesuwanie i zmiana rozmiaru
+  przez serwer wyświetlania, więc działają też pod Waylandem.
+* **Edytor assignów** (Nirvana Screen -> Assigns...): New, Clone, Delete; nazwa, „Show
+  volume icon on Desktop”, ścieżki w kolejności przeszukiwania z Add Path (wybór
+  katalogu), Remove Path, Move Up/Down, Open in Lister; Use, Save (także do
+  `~/.nirvana/Startup-Sequence`), Cancel.
+* **Lister** (pierwsza wersja; etap 4 go uzupełni): szuflada jako ikony, czytana w
+  wątku, ikony AppImage bez uruchamiania, wzorce `#?` w filtrze.
+* D-Bus: `org.nirvana.Desktop` na szynie sesji (`OpenDrawer`, `ReloadAssigns`,
+  `ShowAssignsEditor`).
+
+Okna programów mają ramki od kompozytora (lub menedżera okien); gadżety są rysowane na
+oknach Nirvany. Niektóre skróty z Super może przechwycić kompozytor.
+
 ## Polecenia (GPL-3.0-or-later)
 
 ```
@@ -58,7 +89,8 @@ appimage-info Coś.AppImage [--icon out.png | --desktop | --extract ŚCIEŻKA WY
 
 ```
 sudo apt install meson ninja-build pkg-config libarchive-dev zlib1g-dev liblzma-dev \
-                 libzstd-dev liblz4-dev libefl-all-dev squashfs-tools
+                 libzstd-dev liblz4-dev libefl-all-dev libwayland-dev wayland-protocols \
+                 squashfs-tools labwc
 meson setup build && ninja -C build && meson test -C build
 sudo ninja -C build install        # do /opt/nirvana (C/, Libs/)
 sudo ./setup-env.sh --system
@@ -79,3 +111,4 @@ sudo ./setup-env.sh --system
 ## Licencje
 
 `libnirvana` (`src/lib/`, `include/`): LGPL-3.0-or-later; reszta: GPL-3.0-or-later.
+Pliki protokołów Waylanda w `protocols/` mają licencje swoich autorów (MIT).

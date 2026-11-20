@@ -1,0 +1,7 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+[Desktop Entry]
+Name=Nirvana Desktop
+Comment=A spatial desktop with a screen bar and a global menu
+Exec=/opt/nirvana/C/nirvana-session
+Type=Application
+DesktopNames=Nirvana

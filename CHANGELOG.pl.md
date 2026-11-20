@@ -3,6 +3,25 @@
 
 *[English](CHANGELOG.md)*
 
+## 3.0.0-alpha2 — niewydane (NirvanaNG, etap 2)
+
+### Dodane
+- `nirvana-desktop` (EFL): pasek ekranu „Nirvana Screen” i tło jako powierzchnie
+  wlr-layer-shell pod Waylandem (okna dock i desktop pod X11); rozwijane menu (Nirvana
+  Screen, Window, Icons, Tools) z myszą, przytrzymanym prawym przyciskiem, klawiaturą i
+  skrótami Super; zegar; ikony woluminów dla assignów z DESKTOP=1 (zaznaczanie,
+  przeciąganie, ramka, otwieranie, Snapshot, Clean Up, przeładowanie na SIGUSR1).
+- Gadżety okien Nirvany: zamknięcie; prefs, jump, iconify, zoom, depth; zmiana
+  rozmiaru - przesuwanie i zmiana rozmiaru przez serwer wyświetlania.
+- Edytor assignów: New, Clone, Delete; nazwa, ikona na pulpicie, ścieżki w kolejności
+  (Add Path, Remove Path, Move Up/Down, Open in Lister); Use, Save, Cancel.
+- Pierwszy lister: ikony czytane w wątku, ikony AppImage, wzorce `#?` w filtrze.
+- Usługa D-Bus `org.nirvana.Desktop` (OpenDrawer, ReloadAssigns, ShowAssignsEditor).
+- Motyw Ambient (`themes/ambient.edc`, obrazki rysowane przez
+  `tools/make-theme-images.py`); opis kontraktu motywów w `themes/README.md`.
+- `nirvana-session` (labwc pod Waylandem lub obok menedżera okien pod X11), ustawienia
+  labwc, wpis sesji dla menedżerów logowania.
+
 ## 3.0.0-alpha1 — niewydane (NirvanaNG, etap 1)
 
 Nowy początek na gałęzi `NirvanaNG`: nowy kod, Meson, C11.

@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 project('nirvana-desktop', ['c', 'cpp'],
-  version: '3.0.0-alpha1',
+  version: '3.0.0-alpha2',
   license: 'GPL-3.0-or-later AND LGPL-3.0-or-later',
   meson_version: '>= 0.60',
   default_options: [
@@ -101,9 +101,60 @@ if have_efl_cli
     install_rpath: rpath)
 endif
 
+# ------------------------------------------------------------------ the desktop (GPL-3.0)
+elementary = dependency('elementary', required: get_option('desktop'))
+ecore_x = dependency('ecore-x', required: get_option('desktop'))
+ecore_wl2 = dependency('ecore-wl2', required: get_option('desktop'))
+wayland_client = dependency('wayland-client', required: get_option('desktop'))
+wayland_scanner = find_program('wayland-scanner', required: get_option('desktop'))
+edje_cc = find_program('edje_cc', required: get_option('desktop'))
+have_desktop = have_efl_cli and elementary.found() and ecore_x.found() and ecore_wl2.found() \
+  and wayland_client.found() and wayland_scanner.found() and edje_cc.found()
+
+if have_desktop
+  wl_protocols = dependency('wayland-protocols')
+  wl_protocols_dir = wl_protocols.get_variable(pkgconfig: 'pkgdatadir')
+  proto_src = []
+  foreach xml : [
+      'protocols' / 'wlr-layer-shell-unstable-v1.xml',
+      wl_protocols_dir / 'stable' / 'xdg-shell' / 'xdg-shell.xml',  # (the layer shell's popups)
+    ]
+    name = xml.split('/')[-1].replace('.xml', '')
+    proto_src += custom_target(name + '-header',
+      input: xml,
+      output: name + '-client-protocol.h',
+      command: [wayland_scanner, 'client-header', '@INPUT@', '@OUTPUT@'])
+    proto_src += custom_target(name + '-code',
+      input: xml,
+      output: name + '-protocol.c',
+      command: [wayland_scanner, 'private-code', '@INPUT@', '@OUTPUT@'])
+  endforeach
+
+  executable('nirvana-desktop',
+    'src/desktop/main.c',
+    'src/desktop/layer.c',
+    'src/desktop/menu.c',
+    'src/desktop/screenbar.c',
+    'src/desktop/backdrop.c',
+    'src/desktop/window_frame.c',
+    'src/desktop/lister.c',
+    'src/desktop/assign_editor.c',
+    proto_src,
+    dependencies: [libnirvana_dep, elementary, efl_ecore, efl_efreet, efl_efreet_mime, efl_eldbus,
+                   ecore_x, ecore_wl2, wayland_client],
+    install: true,
+    install_rpath: rpath)
+
+  subdir('themes')
+endif
+
 # ------------------------------------------------------------------ the session's files
 install_data('data/Startup-Sequence', install_dir: get_option('prefix') / 'S')
 install_data('setup-env.sh', install_dir: get_option('prefix') / 'S', install_mode: 'rwxr-xr-x')
+install_data('data/nirvana-session', install_dir: get_option('prefix') / get_option('bindir'),
+             install_mode: 'rwxr-xr-x')
+install_data('data/labwc/rc.xml', install_dir: get_option('prefix') / 'S' / 'labwc')
+install_data('data/nirvana.desktop', install_dir: get_option('prefix') / 'S')
 
 # ------------------------------------------------------------------ translations
 if get_option('nls') and find_program('xgettext', required: false).found()
@@ -116,5 +167,6 @@ subdir('tests')
 summary({
   'DwarFS AppImages': dwarfs.found(),
   'wbrun (EFL)': have_efl_cli,
+  'nirvana-desktop (EFL, Wayland, X11)': have_desktop,
   'NLS': get_option('nls'),
 }, section: 'Features')

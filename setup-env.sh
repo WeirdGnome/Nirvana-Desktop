@@ -52,6 +52,12 @@ if [ $do_system -eq 1 ]; then
     if [ ! -e "$NIRVANA/S/Startup-Sequence" ] && [ -f "$HERE/data/Startup-Sequence" ]; then
         install -m 755 "$HERE/data/Startup-Sequence" "$NIRVANA/S/Startup-Sequence"
     fi
+    # the session in the display managers' lists
+    if [ -d /usr/share/wayland-sessions ] && [ -f "$NIRVANA/S/nirvana.desktop" ] &&
+       [ ! -e /usr/share/wayland-sessions/nirvana.desktop ]; then
+        install -m 644 "$NIRVANA/S/nirvana.desktop" /usr/share/wayland-sessions/nirvana.desktop
+        say "made /usr/share/wayland-sessions/nirvana.desktop"
+    fi
     say "system part ready in $NIRVANA"
 fi
 

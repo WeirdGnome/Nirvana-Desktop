@@ -3,6 +3,25 @@
 
 *[Polski](CHANGELOG.pl.md)*
 
+## 3.0.0-alpha2 — unreleased (NirvanaNG, stage 2)
+
+### Added
+- `nirvana-desktop` (EFL): the screen bar "Nirvana Screen" and the backdrop as
+  wlr-layer-shell surfaces on Wayland (dock and desktop windows on X11); pull-down
+  menus (Nirvana Screen, Window, Icons, Tools) with mouse, held right button, keyboard
+  and Super shortcuts; the clock; volume icons for assigns with DESKTOP=1 (select, drag,
+  rubber band, open, Snapshot, Clean Up, reloaded on SIGUSR1).
+- Window gadgets on the desktop's windows: close; prefs, jump, iconify, zoom, depth;
+  resize - move and resize through the display server.
+- The Assigns editor: New, Clone, Delete; name, desktop icon, paths in order (Add Path,
+  Remove Path, Move Up/Down, Open in Lister); Use, Save, Cancel.
+- A first lister: icons read in a thread, AppImage icons, `#?` filter patterns.
+- D-Bus service `org.nirvana.Desktop` (OpenDrawer, ReloadAssigns, ShowAssignsEditor).
+- The Ambient theme (`themes/ambient.edc`, images drawn by
+  `tools/make-theme-images.py`); the theme contract in `themes/README.md`.
+- `nirvana-session` (labwc on Wayland, or beside a window manager on X11), labwc
+  settings, a session entry for display managers.
+
 ## 3.0.0-alpha1 — unreleased (NirvanaNG, stage 1)
 
 A new start on the `NirvanaNG` branch: new code, Meson, C11.
