@@ -121,6 +121,7 @@ if have_desktop
   proto_src = []
   foreach xml : [
       'protocols' / 'wlr-layer-shell-unstable-v1.xml',
+      'protocols' / 'wlr-virtual-pointer-unstable-v1.xml',
       wl_protocols_dir / 'stable' / 'xdg-shell' / 'xdg-shell.xml',  # (the layer shell's popups)
     ]
     name = xml.split('/')[-1].replace('.xml', '')
@@ -143,6 +144,7 @@ if have_desktop
     'src/desktop/window_frame.c',
     'src/desktop/lister.c',
     'src/desktop/assign_editor.c',
+    'src/desktop/compositor.c',
     proto_src,
     dependencies: [libnirvana_dep, elementary, efl_ecore, efl_efreet, efl_efreet_mime, efl_eldbus,
                    ecore_x, ecore_wl2, wayland_client],

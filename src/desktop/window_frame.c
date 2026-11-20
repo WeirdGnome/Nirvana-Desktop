@@ -90,6 +90,10 @@ void nv_window_depth(Nv_Window *w)
         ecore_x_window_lower(elm_win_xwindow_get(nv.backdrop)); /* (the backdrop stays below) */
         return;
     }
+    /* Wayland: the compositor lowers it (labwc; the pointer is on the gadget), else the
+     * next window comes forward */
+    if (nv_compositor_lower_under_pointer())
+        return;
     Nv_Window *o = next_window(w);
     if (o)
         elm_win_activate(o->win);

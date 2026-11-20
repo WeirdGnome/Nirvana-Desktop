@@ -89,5 +89,11 @@ if [ $do_user -eq 1 ]; then
         fi
         say "set gtk-shell-shows-menubar=1 in $S"
     fi
+    # your own labwc settings: the depth gadgets need one mouse binding there
+    L="${XDG_CONFIG_HOME:-$HOME/.config}/labwc/rc.xml"
+    if [ -f "$L" ] && ! grep -q 'button="Task"' "$L"; then
+        say "note: for the depth gadgets under labwc, add this to the <mouse> section of $L:"
+        say '  <context name="Client"><mousebind button="Task" action="Press"><action name="Lower"/></mousebind></context>'
+    fi
     say "user part ready in $U"
 fi

@@ -26,5 +26,10 @@
   </keyboard>
   <mouse>
     <default/>
+    <!-- the depth gadgets: nirvana-desktop clicks the "Task" button (which mice do not
+         have) on a virtual pointer over the window to lower -->
+    <context name="Client">
+      <mousebind button="Task" action="Press"><action name="Lower"/></mousebind>
+    </context>
   </mouse>
 </labwc_config>

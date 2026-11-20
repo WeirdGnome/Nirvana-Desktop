@@ -23,6 +23,9 @@
   (`--deps`, `--no-tests`, `--no-dwarfs`, `--uninstall`); pobiera libdwarfs 0.15.10
   (ze sprawdzeniem SHA-256), buduje ją i instaluje dla AppImage z DwarFS, radzi sobie
   z plikami datowanymi w przyszłość (zegar opóźniony) i ze źródłami bez prawa zapisu.
+- Gadżet głębi spycha okno pod spód pod Waylandem w labwc (przycisk „Task” powiązany
+  z akcją Lower, klikany wirtualnym wskaźnikiem); setup-env.sh podpowiada, co dopisać
+  do własnego rc.xml labwc.
 - AppImage z DwarFS czytane przez libdwarfs 0.15 (most w C++23, jak jej nagłówki);
   test DwarFS z mkdwarfs, gdy jest dostępny.
 - `nirvana-session` (labwc pod Waylandem lub obok menedżera okien pod X11), ustawienia

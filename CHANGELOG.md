@@ -23,6 +23,9 @@
   `--no-dwarfs`, `--uninstall`); it downloads libdwarfs 0.15.10 (SHA-256 checked),
   builds and installs it for DwarFS AppImages, and copes with sources dated in the
   future (a clock behind) and sources it may not write in.
+- The depth gadget lowers its window on Wayland under labwc (a "Task" button mouse
+  binding to labwc's Lower, clicked on a virtual pointer); setup-env.sh says what to add
+  to an own labwc rc.xml.
 - DwarFS AppImages read through libdwarfs 0.15 (the bridge is C++23, as its headers
   are); a DwarFS test made with mkdwarfs when it is there.
 - `nirvana-session` (labwc on Wayland, or beside a window manager on X11), labwc

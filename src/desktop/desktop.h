@@ -71,6 +71,12 @@ void nv_layer_resize(Evas_Object *win, int w, int h);
 /* keyboard focus for a layer window wanted or not (a menu open: wanted) */
 void nv_layer_keyboard(Evas_Object *win, bool on);
 
+/* ---------------------------------------------------------------- the compositor */
+
+/* the window under the pointer put to the back by the compositor (Wayland: labwc, with
+ * Nirvana's settings); false when the compositor cannot be asked */
+bool nv_compositor_lower_under_pointer(void);
+
 /* ---------------------------------------------------------------- menus (menu.c) */
 
 typedef struct Nv_Menu Nv_Menu;

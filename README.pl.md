@@ -73,6 +73,14 @@ nirvana-desktop [--theme NAZWA] [--wayland | --x11]
 Okna programów mają ramki od kompozytora (lub menedżera okien); gadżety są rysowane na
 oknach Nirvany. Niektóre skróty z Super może przechwycić kompozytor.
 
+Gadżet głębi spycha okno pod spód pod X11, a pod Waylandem w labwc: Wayland nie daje
+programom polecenia „przesuń okno pod spód”, więc ustawienia labwc od Nirvany wiążą
+przycisk myszy „Task” (którego myszy nie mają) nad oknem z akcją Lower, a gadżet
+klika go wirtualnym wskaźnikiem. Przy własnym `~/.config/labwc/rc.xml` dopisz do sekcji
+`<mouse>`:
+`<context name="Client"><mousebind button="Task" action="Press"><action name="Lower"/></mousebind></context>`.
+W innych kompozytorach gadżet wysuwa zamiast tego następne okno Nirvany.
+
 ## Polecenia (GPL-3.0-or-later)
 
 ```

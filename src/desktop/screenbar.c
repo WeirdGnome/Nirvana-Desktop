@@ -514,9 +514,29 @@ static void on_depth(void *data, Evas_Object *o, const char *em, const char *src
     (void)o;
     (void)em;
     (void)src;
-    Nv_Window *w = nv_window_active();
-    if (w)
-        nv_window_depth(w);
+    /* the screen's depth gadget: the front window, whoever's, to the back */
+    if (nv.backend == NV_BACKEND_WAYLAND) {
+        /* (Wayland tells no client which window is in front: the desktop's own active
+         * window goes back, or the next of its windows comes forward) */
+        Nv_Window *w = nv_window_active() ? nv_window_active() : eina_list_last_data_get(nv.windows);
+        if (w) {
+            Nv_Window *next = NULL;
+            Eina_List *l;
+            Nv_Window *o;
+            EINA_LIST_FOREACH(nv.windows, l, o)
+                if (o != w)
+                    next = o;
+            if (next)
+                elm_win_activate(next->win);
+        }
+        return;
+    }
+    Ecore_X_Window active = 0;
+    if (ecore_x_window_prop_window_get(ecore_x_window_root_first_get(), ECORE_X_ATOM_NET_ACTIVE_WINDOW, &active, 1) == 1 &&
+        active && active != elm_win_xwindow_get(nv.backdrop) && active != elm_win_xwindow_get(bar.win)) {
+        ecore_x_window_lower(active);
+        ecore_x_window_lower(elm_win_xwindow_get(nv.backdrop));
+    }
 }
 
 bool nv_screenbar_create(void)

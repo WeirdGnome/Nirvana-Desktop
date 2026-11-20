@@ -82,6 +82,13 @@ Programs' own windows keep the frames their compositor (or window manager) gives
 the gadgets are drawn on Nirvana's windows. Some Super shortcuts may be taken by the
 compositor or window manager first.
 
+The depth gadget lowers its window on X11 and, on Wayland, under labwc: Wayland gives a
+program no request to lower a window, so Nirvana's labwc settings bind the "Task" mouse
+button (which mice do not have) over a window to labwc's Lower, and the gadget clicks it
+on a virtual pointer. With your own `~/.config/labwc/rc.xml`, add to its `<mouse>`:
+`<context name="Client"><mousebind button="Task" action="Press"><action name="Lower"/></mousebind></context>`.
+On other compositors the gadget brings the next of Nirvana's windows forward instead.
+
 ## Commands (GPL-3.0-or-later)
 
 ```
