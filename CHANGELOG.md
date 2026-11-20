@@ -19,6 +19,8 @@
 - D-Bus service `org.nirvana.Desktop` (OpenDrawer, ReloadAssigns, ShowAssignsEditor).
 - The Ambient theme (`themes/ambient.edc`, images drawn by
   `tools/make-theme-images.py`); the theme contract in `themes/README.md`.
+- `install.sh`: build, test, install and set up in one go (`--deps`, `--no-tests`,
+  `--uninstall`).
 - `nirvana-session` (labwc on Wayland, or beside a window manager on X11), labwc
   settings, a session entry for display managers.
 

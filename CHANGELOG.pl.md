@@ -19,6 +19,8 @@
 - Usługa D-Bus `org.nirvana.Desktop` (OpenDrawer, ReloadAssigns, ShowAssignsEditor).
 - Motyw Ambient (`themes/ambient.edc`, obrazki rysowane przez
   `tools/make-theme-images.py`); opis kontraktu motywów w `themes/README.md`.
+- `install.sh`: budowanie, testy, instalacja i konfiguracja jednym poleceniem
+  (`--deps`, `--no-tests`, `--uninstall`).
 - `nirvana-session` (labwc pod Waylandem lub obok menedżera okien pod X11), ustawienia
   labwc, wpis sesji dla menedżerów logowania.
 

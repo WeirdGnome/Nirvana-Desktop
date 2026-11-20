@@ -95,6 +95,9 @@ appimage-info Some.AppImage [--icon out.png | --desktop | --extract PATH OUT]
 
 ## Building
 
+The short way: `./install.sh` (`./install.sh --deps` installs the packages first,
+`./install.sh --uninstall` removes it again). By hand:
+
 ```
 sudo apt install meson ninja-build pkg-config libarchive-dev zlib1g-dev liblzma-dev \
                  libzstd-dev liblz4-dev libefl-all-dev libwayland-dev wayland-protocols \

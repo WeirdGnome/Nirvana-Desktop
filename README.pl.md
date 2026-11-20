@@ -87,6 +87,9 @@ appimage-info Coś.AppImage [--icon out.png | --desktop | --extract ŚCIEŻKA WY
 
 ## Budowanie
 
+Najprościej: `./install.sh` (`./install.sh --deps` najpierw instaluje pakiety,
+`./install.sh --uninstall` usuwa instalację). Ręcznie:
+
 ```
 sudo apt install meson ninja-build pkg-config libarchive-dev zlib1g-dev liblzma-dev \
                  libzstd-dev liblz4-dev libefl-all-dev libwayland-dev wayland-protocols \
