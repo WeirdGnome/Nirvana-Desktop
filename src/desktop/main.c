@@ -90,22 +90,36 @@ const char *nv_theme_data(const char *key)
     return v;
 }
 
-/* the theme named in ~/.nirvana/Prefs/desktop.conf ("theme=classic31"), else Ambient */
+/* a setting of ~/.nirvana/Prefs/desktop.conf ("key=value" lines), or def */
+const char *nv_pref(const char *key, const char *def)
+{
+    static Eina_Hash *prefs;
+    if (!prefs) {
+        prefs = eina_hash_string_superfast_new(free);
+        char path[PATH_MAX];
+        snprintf(path, sizeof path, "%s/.nirvana/Prefs/desktop.conf", getenv("HOME") ? getenv("HOME") : "");
+        FILE *f = fopen(path, "r");
+        if (f) {
+            char line[512];
+            while (fgets(line, sizeof line, f)) {
+                line[strcspn(line, "\r\n")] = 0;
+                char *eq = strchr(line, '=');
+                if (!eq || line[0] == '#')
+                    continue;
+                *eq = 0;
+                eina_hash_set(prefs, line, strdup(eq + 1));
+            }
+            fclose(f);
+        }
+    }
+    const char *v = eina_hash_find(prefs, key);
+    return v && *v ? v : def;
+}
+
+/* the theme named in desktop.conf ("theme=classic31"), else Ambient */
 static void prefs_theme(char *out, size_t len)
 {
-    snprintf(out, len, "ambient");
-    char path[PATH_MAX];
-    snprintf(path, sizeof path, "%s/.nirvana/Prefs/desktop.conf", getenv("HOME") ? getenv("HOME") : "");
-    FILE *f = fopen(path, "r");
-    if (!f)
-        return;
-    char line[200];
-    while (fgets(line, sizeof line, f)) {
-        line[strcspn(line, "\r\n")] = 0;
-        if (!strncmp(line, "theme=", 6) && line[6])
-            snprintf(out, len, "%.180s", line + 6);
-    }
-    fclose(f);
+    snprintf(out, len, "%.200s", nv_pref("theme", "ambient"));
 }
 
 /* ---------------------------------------------------------------- small windows */

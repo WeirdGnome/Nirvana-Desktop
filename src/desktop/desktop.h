@@ -40,6 +40,8 @@ extern Nv_Desktop nv;
 bool nv_theme_find(const char *name, char *out, size_t len);
 /* an Edje object of a theme group; NULL when the theme lacks it */
 Evas_Object *nv_edje_add(Evas_Object *parent, const char *group);
+/* a setting of ~/.nirvana/Prefs/desktop.conf ("menus=hold"), or def */
+const char *nv_pref(const char *key, const char *def);
 /* a data item of the theme ("nirvana/screenbar/height") */
 const char *nv_theme_data(const char *key);
 
@@ -125,6 +127,12 @@ void nv_screenbar_menus_set(Eina_List *menus, const char *owner);
 Eina_List *nv_screenbar_own_menus(void);
 void nv_screenbar_title_set(const char *title);
 bool nv_screenbar_menu_is_open(void);
+/* the right button pressed on the desktop (at screen x, y): the menu strip held open;
+ * the moves and the release that follow are passed on while it is held */
+void nv_screenbar_hold_begin(int x, int y);
+bool nv_screenbar_holding(void);
+void nv_screenbar_hold_move(int x, int y);
+void nv_screenbar_hold_end(int x, int y);
 /* a menu at a place of the screen (the dock's, an icon's), shown by the bar */
 void nv_screenbar_popup(Nv_Menu *m, int x, int y);
 

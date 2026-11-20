@@ -185,6 +185,10 @@ static void icon_down(void *data, Evas *e, Evas_Object *o, void *event)
     Icon *ic = data;
     Evas_Event_Mouse_Down *ev = event;
     take_focus();
+    if (ev->button == 3) {
+        nv_screenbar_hold_begin(ev->canvas.x, ev->canvas.y);
+        return;
+    }
     if (ev->button != 1)
         return;
     if (ev->flags & EVAS_BUTTON_DOUBLE_CLICK) {
@@ -239,7 +243,8 @@ void nv_backdrop_reload(void)
             free(ic);
             continue;
         }
-        edje_object_part_text_set(ic->obj, "nirvana.text.label", ic->name);
+        /* the system's volume is called "System" on the desktop (its assign is SYS:) */
+        edje_object_part_text_set(ic->obj, "nirvana.text.label", !strcasecmp(ic->name, "SYS") ? _("System") : ic->name);
         evas_object_resize(ic->obj, ICON_W, ICON_H);
         evas_object_event_callback_add(ic->obj, EVAS_CALLBACK_MOUSE_DOWN, icon_down, ic);
         evas_object_event_callback_add(ic->obj, EVAS_CALLBACK_MOUSE_MOVE, canvas_move, NULL);
@@ -296,7 +301,8 @@ static void bg_down(void *data, Evas *e, Evas_Object *o, void *event)
     Evas_Event_Mouse_Down *ev = event;
     take_focus(); /* a click on the desktop: its menus */
     if (ev->button == 3) {
-        nv_screenbar_menu_open(2); /* the Icons menu */
+        /* the menu strip, held with the button (the backdrop is at the screen's origin) */
+        nv_screenbar_hold_begin(ev->canvas.x, ev->canvas.y);
         return;
     }
     if (ev->button != 1)
@@ -318,6 +324,10 @@ static void canvas_move(void *data, Evas *e, Evas_Object *o, void *event)
     (void)o;
     Evas_Event_Mouse_Move *ev = event;
     int x = ev->cur.canvas.x, y = ev->cur.canvas.y;
+    if (nv_screenbar_holding()) {
+        nv_screenbar_hold_move(x, y);
+        return;
+    }
     if (bd.press_icon) {
         if (!bd.dragging && abs(x - bd.press_x) + abs(y - bd.press_y) < 5)
             return;
@@ -352,7 +362,12 @@ static void canvas_up(void *data, Evas *e, Evas_Object *o, void *event)
     (void)data;
     (void)e;
     (void)o;
-    (void)event;
+    Evas_Event_Mouse_Up *ev = event;
+    if (nv_screenbar_holding()) {
+        if (ev->button == 3)
+            nv_screenbar_hold_end(ev->canvas.x, ev->canvas.y);
+        return;
+    }
     if (bd.dragging) {
         Eina_List *l;
         Icon *ic;

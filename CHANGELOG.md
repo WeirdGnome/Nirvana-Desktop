@@ -14,7 +14,17 @@
   mode, a location field, archives browsed as drawers (libarchive), an item menu
   (Open, Information, Copy Path, Extract Icon... for AppImages), dragging files out.
 
+### Changed
+- The menu titles show while the right mouse button is held - on the bar or on the
+  desktop - as on the classic desktops; the bar shows the screen's or the program's
+  title otherwise (so "Nirvana Screen" is no longer there twice). Moving onto a title
+  drops its menu, releasing over an item chooses it. `menus=always` in
+  `~/.nirvana/Prefs/desktop.conf` keeps the titles on the bar.
+- The system's volume icon is labelled "System" (its assign stays `SYS:`).
+
 ### Fixed
+- Menus left their texts behind on Wayland when another menu was opened or they were
+  shut (the rows were not deleted with their panel).
 - Sessions started by a display manager without elogind (LightDM on Devuan, say) were
   a black screen: `XDG_RUNTIME_DIR` was not set, and labwc does not start without it.
   `nirvana-session` now makes one, starts a session bus when there is none, logs to

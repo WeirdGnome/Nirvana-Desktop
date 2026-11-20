@@ -14,7 +14,17 @@
   przeglądarki, pole położenia, archiwa jako szuflady (libarchive), menu pozycji (Open,
   Information, Copy Path, Extract Icon... dla AppImage), przeciąganie plików.
 
+### Zmienione
+- Tytuły menu pokazują się, gdy trzymany jest prawy przycisk myszy - na pasku lub na
+  pulpicie - jak na klasycznych pulpitach; poza tym pasek pokazuje tytuł ekranu lub
+  programu (więc „Nirvana Screen” nie jest już dwa razy). Najechanie na tytuł rozwija
+  jego menu, puszczenie nad pozycją ją wybiera. `menus=always` w
+  `~/.nirvana/Prefs/desktop.conf` zostawia tytuły na stałe.
+- Ikona woluminu systemowego ma podpis „System” (assign pozostaje `SYS:`).
+
 ### Poprawione
+- Pod Waylandem menu zostawiały po sobie napisy po otwarciu innego menu lub zamknięciu
+  (wiersze nie były usuwane razem z panelem).
 - Sesje uruchamiane przez menedżer logowania bez elogind (np. LightDM na Devuanie)
   dawały czarny ekran: brak `XDG_RUNTIME_DIR`, bez którego labwc nie startuje.
   `nirvana-session` sam go teraz tworzy, uruchamia szynę sesji, gdy jej brak, zapisuje

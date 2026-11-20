@@ -263,7 +263,10 @@ static void panel_close(Nv_Menu_Session *s, Panel *p)
         s->hover = NULL;
     s->panels = eina_list_remove(s->panels, p);
     eina_list_free(p->rows);
-    evas_object_del(p->bg); /* the box and the rows with it */
+    /* (an Edje object does not delete what it swallows: the box - and with it the rows -
+     * goes first, or its texts stay on a host that outlives the panel) */
+    evas_object_del(p->box);
+    evas_object_del(p->bg);
     s->host->panel_del(s->host_data, p->host);
     free(p);
 }

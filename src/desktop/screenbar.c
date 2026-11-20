@@ -8,8 +8,12 @@
  * gadget. The menus drop down from it: on Wayland the bar's surface grows over the
  * screen while a menu is open (the area below the bar transparent, a click there
  * closes the menu); on X11 the panels are popup windows and the pointer is grabbed.
- * A press of the right button on the bar opens the menus too, held: releasing over an
- * item chooses it.
+ *
+ * As on the classic desktops the menu titles show while the right mouse button is held
+ * (on the bar or on the desktop) - the bar shows the screen's or the program's title
+ * otherwise; moving onto a title drops its menu, releasing over an item chooses it.
+ * "menus=always" in ~/.nirvana/Prefs/desktop.conf keeps the titles on the bar, to be
+ * clicked.
  */
 #include "desktop.h"
 #include "menu_host.h"
@@ -32,7 +36,15 @@ static struct {
     bool grabbed;
     bool closing;
     bool fresh;              /* a popup opened by the press being handled now */
+    bool classic;            /* the titles only while the right button is held */
+    bool strip;              /* the titles are shown */
+    bool holding;            /* the right button is held */
+    bool expanded;           /* the bar is over the screen (menus open) */
+    char title[256];         /* the title shown when the titles are not */
 } bar = {.open_index = -1};
+
+static void titles_rebuild(void);
+static void title_show(void);
 
 /* ---------------------------------------------------------------- the menu host */
 
@@ -102,6 +114,46 @@ bool nv_screenbar_menu_is_open(void)
     return bar.session != NULL;
 }
 
+/* the bar over the screen (the menus are drawn in it on Wayland), or back */
+static void expand(bool with_grab)
+{
+    if (bar.expanded)
+        return;
+    bar.expanded = true;
+    if (nv.backend == NV_BACKEND_WAYLAND) {
+        nv_layer_resize(bar.win, 0, nv.screen_h);
+        nv_layer_keyboard(bar.win, true);
+    }
+    evas_object_move(bar.catcher, 0, nv.bar_h);
+    evas_object_resize(bar.catcher, nv.screen_w, nv.screen_h);
+    evas_object_show(bar.catcher);
+    if (with_grab)
+        grab(true);
+}
+
+static void shrink(void)
+{
+    if (!bar.expanded)
+        return;
+    bar.expanded = false;
+    evas_object_hide(bar.catcher);
+    grab(false);
+    if (nv.backend == NV_BACKEND_WAYLAND) {
+        nv_layer_keyboard(bar.win, false);
+        nv_layer_resize(bar.win, 0, nv.bar_h);
+    }
+}
+
+/* the titles shown (classic: only while the right button is held) */
+static void strip_show(bool on)
+{
+    if (!bar.classic || bar.strip == on)
+        return;
+    bar.strip = on;
+    titles_rebuild();
+    title_show();
+}
+
 static void session_done(void *data)
 {
     (void)data;
@@ -111,12 +163,10 @@ static void session_done(void *data)
     nv_global_menu_closed();
     bar.open_index = -1;
     title_select(-1);
-    evas_object_hide(bar.catcher);
-    grab(false);
-    if (nv.backend == NV_BACKEND_WAYLAND) {
-        nv_layer_keyboard(bar.win, false);
-        nv_layer_resize(bar.win, 0, nv.bar_h);
-    }
+    if (bar.holding)
+        return; /* the strip stays while the button is held */
+    strip_show(false);
+    shrink();
 }
 
 void nv_screenbar_menu_close(void)
@@ -139,14 +189,8 @@ void nv_screenbar_menu_open(int index)
         bar.closing = false;
     } else {
         /* the bar grows over the screen: the panels go into it */
-        if (nv.backend == NV_BACKEND_WAYLAND) {
-            nv_layer_resize(bar.win, 0, nv.screen_h);
-            nv_layer_keyboard(bar.win, true);
-        }
-        evas_object_move(bar.catcher, 0, nv.bar_h);
-        evas_object_resize(bar.catcher, nv.screen_w, nv.screen_h);
-        evas_object_show(bar.catcher);
-        grab(true);
+        strip_show(true);
+        expand(!bar.holding);
     }
     bar.open_index = index;
     title_select(index);
@@ -171,14 +215,7 @@ void nv_screenbar_popup(Nv_Menu *m, int x, int y)
         nv_menu_session_close(bar.session);
         bar.closing = false;
     } else {
-        if (nv.backend == NV_BACKEND_WAYLAND) {
-            nv_layer_resize(bar.win, 0, nv.screen_h);
-            nv_layer_keyboard(bar.win, true);
-        }
-        evas_object_move(bar.catcher, 0, nv.bar_h);
-        evas_object_resize(bar.catcher, nv.screen_w, nv.screen_h);
-        evas_object_show(bar.catcher);
-        grab(true);
+        expand(true);
     }
     bar.open_index = -1;
     title_select(-1);
@@ -205,6 +242,56 @@ static int title_at(int x, int y)
         i++;
     }
     return -1;
+}
+
+/* ---------------------------------------------------------------- the held right button */
+
+void nv_screenbar_hold_begin(int x, int y)
+{
+    if (bar.session)
+        nv_screenbar_menu_close();
+    bar.holding = true;
+    strip_show(true);
+    expand(false); /* (the pointer stays with what was pressed; its moves are passed on) */
+    int t = title_at(x, y);
+    if (t >= 0)
+        nv_screenbar_menu_open(t);
+}
+
+bool nv_screenbar_holding(void)
+{
+    return bar.holding;
+}
+
+void nv_screenbar_hold_move(int x, int y)
+{
+    if (!bar.holding)
+        return;
+    int t = title_at(x, y);
+    if (t >= 0 && t != bar.open_index)
+        nv_screenbar_menu_open(t);
+    else if (bar.session)
+        nv_menu_session_motion(bar.session, x, y);
+}
+
+void nv_screenbar_hold_end(int x, int y)
+{
+    if (!bar.holding)
+        return;
+    bar.holding = false;
+    if (bar.session) {
+        bool closed = false;
+        /* over an item: chosen; elsewhere: the menus go */
+        Nv_Menu_Session *s = bar.session;
+        if (nv_menu_session_press(s, x, y))
+            nv_menu_session_release(s, x, y, &closed);
+        if (!closed && bar.session)
+            nv_screenbar_menu_close();
+    }
+    if (!bar.session) {
+        strip_show(false);
+        shrink();
+    }
 }
 
 /* ---------------------------------------------------------------- input */
@@ -234,10 +321,14 @@ static Eina_Bool on_move(void *data, int type, void *event)
     (void)data;
     (void)type;
     Ecore_Event_Mouse_Move *ev = event;
-    if (!bar.session || !our_event(ev->event_window))
+    if ((!bar.session && !bar.holding) || !our_event(ev->event_window))
         return ECORE_CALLBACK_PASS_ON;
     int x, y;
     event_xy(ev->x, ev->y, ev->root.x, ev->root.y, &x, &y);
+    if (bar.holding) {
+        nv_screenbar_hold_move(x, y);
+        return ECORE_CALLBACK_PASS_ON;
+    }
     int t = title_at(x, y);
     if (t >= 0 && t != bar.open_index && bar.open_index >= 0)
         nv_screenbar_menu_open(t);
@@ -258,11 +349,13 @@ static Eina_Bool on_down(void *data, int type, void *event)
     int t = title_at(x, y);
     if (bar.fresh)
         return ECORE_CALLBACK_PASS_ON;
+    if (ev->buttons == 3 && (bar.classic || !bar.session) && y < nv.bar_h) {
+        nv_screenbar_hold_begin(x, y);
+        return ECORE_CALLBACK_PASS_ON;
+    }
     if (!bar.session) {
         if (t >= 0 && ev->buttons == 1)
             nv_screenbar_menu_open(t);
-        else if (ev->buttons == 3 && y < nv.bar_h)
-            nv_screenbar_menu_open(t >= 0 ? t : 0);
         return ECORE_CALLBACK_PASS_ON;
     }
     if (t >= 0) {
@@ -282,10 +375,15 @@ static Eina_Bool on_up(void *data, int type, void *event)
     (void)data;
     (void)type;
     Ecore_Event_Mouse_Button *ev = event;
-    if (!bar.session || !our_event(ev->event_window))
+    if ((!bar.session && !bar.holding) || !our_event(ev->event_window))
         return ECORE_CALLBACK_PASS_ON;
     int x, y;
     event_xy(ev->x, ev->y, ev->root.x, ev->root.y, &x, &y);
+    if (bar.holding) {
+        if (ev->buttons == 3)
+            nv_screenbar_hold_end(x, y);
+        return ECORE_CALLBACK_PASS_ON;
+    }
     bool closed;
     nv_menu_session_release(bar.session, x, y, &closed);
     /* a held right button let go away from the menus shuts them */
@@ -373,11 +471,14 @@ static Eina_Bool on_key(void *data, int type, void *event)
 
 static void titles_rebuild(void)
 {
-    nv_screenbar_menu_close();
+    if (!bar.holding)
+        nv_screenbar_menu_close();
     Evas_Object *o;
     EINA_LIST_FREE(bar.titles, o)
         evas_object_del(o);
     elm_box_clear(bar.box);
+    if (bar.classic && !bar.strip)
+        return; /* (no titles until the right button is held) */
     Eina_List *l;
     Nv_Menu *m;
     EINA_LIST_FOREACH(bar.menus, l, m) {
@@ -398,14 +499,20 @@ static void titles_rebuild(void)
         evas_object_show(o);
         bar.titles = eina_list_append(bar.titles, o);
     }
+    /* the titles placed now (a menu may be opened under the pointer at once) */
+    edje_object_calc_force(bar.edje);
+    evas_smart_objects_calculate(evas_object_evas_get(bar.win));
 }
 
 void nv_screenbar_menus_set(Eina_List *menus, const char *owner)
 {
+    if (bar.holding || bar.session)
+        return; /* (not under the user's pointer; the global menu sets them again later) */
     bar.menus = menus ? menus : bar.own;
     free(bar.owner);
     bar.owner = owner ? strdup(owner) : NULL;
     titles_rebuild();
+    title_show();
 }
 
 Eina_List *nv_screenbar_own_menus(void)
@@ -413,9 +520,22 @@ Eina_List *nv_screenbar_own_menus(void)
     return bar.own;
 }
 
+/* the title: the program's (or the screen's); not while the titles are there (classic),
+ * nor beside the desktop's own menus (whose first is the screen's own) */
+static void title_show(void)
+{
+    const char *t = bar.title[0] ? bar.title : NV_SCREEN_TITLE;
+    if (bar.classic)
+        t = bar.strip ? "" : t;
+    else if (bar.menus == bar.own)
+        t = "";
+    edje_object_part_text_set(bar.edje, "nirvana.text.title", t);
+}
+
 void nv_screenbar_title_set(const char *title)
 {
-    edje_object_part_text_set(bar.edje, "nirvana.text.title", title ? title : NV_SCREEN_TITLE);
+    snprintf(bar.title, sizeof bar.title, "%s", title ? title : "");
+    title_show();
 }
 
 /* ---------------------------------------------------------------- the clock */
@@ -601,7 +721,6 @@ bool nv_screenbar_create(void)
         fprintf(stderr, "nirvana-desktop: the theme %s has no screen bar\n", nv.theme);
         return false;
     }
-    edje_object_part_text_set(bar.edje, "nirvana.text.title", NV_SCREEN_TITLE);
     edje_object_signal_callback_add(bar.edje, "nirvana,gadget,depth", "nirvana", on_depth, NULL);
     bar.box = elm_box_add(bar.win);
     elm_box_horizontal_set(bar.box, EINA_TRUE);
@@ -611,9 +730,11 @@ bool nv_screenbar_create(void)
     evas_object_resize(bar.edje, nv.screen_w > 0 ? nv.screen_w : 800, nv.bar_h);
     evas_object_show(bar.edje);
 
+    bar.classic = strcmp(nv_pref("menus", "hold"), "always") != 0;
     build_own_menus();
     bar.menus = bar.own;
     titles_rebuild();
+    title_show();
 
     bar.clock = ecore_timer_add(1.0, clock_tick, NULL);
     clock_tick(NULL);
