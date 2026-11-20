@@ -13,7 +13,12 @@
 set -eu
 
 HERE=$(cd "$(dirname "$0")" && pwd)
+# the build goes beside the sources; when they are not yours to write in (unpacked as
+# root, say), into ~/.cache instead
 BUILD="$HERE/build"
+if [ ! -w "$HERE" ] || { [ -e "$BUILD" ] && [ ! -w "$BUILD" ]; }; then
+    BUILD="${XDG_CACHE_HOME:-$HOME/.cache}/nirvana-desktop/build"
+fi
 PREFIX=${NIRVANA:-/opt/nirvana}
 deps=0
 tests=1
@@ -71,7 +76,8 @@ for tool in meson ninja pkg-config cc; do
     fi
 done
 
-say "Configuring (prefix $PREFIX)"
+mkdir -p "$(dirname "$BUILD")"
+say "Configuring (prefix $PREFIX, build in $BUILD)"
 if [ -d "$BUILD" ]; then
     meson setup --reconfigure "$BUILD" "$HERE" -Dprefix="$PREFIX"
 else
