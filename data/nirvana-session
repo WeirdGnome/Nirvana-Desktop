@@ -118,45 +118,54 @@ case "${1:-}" in
         else
             set -- -C "$NIRVANA/S/labwc" -s "$NIRVANA/C/nirvana-session --in-labwc"
         fi
-        # Software rendering when the graphics driver cannot give wlroots its buffers
-        # (gbm_bo_create failing: no Mesa driver for the GPU, an old GPU, a virtual
-        # machine). The choice is kept in ~/.nirvana/Prefs/wlr-renderer; delete that
-        # file to try the GPU again.
+        # When the graphics driver cannot give wlroots its buffers (gbm_bo_create
+        # failing - a black screen), labwc is started again, first on the GPU without
+        # buffer modifiers (Intel's driver often needs that), then with software
+        # rendering. What worked is kept in ~/.nirvana/Prefs/wlr-renderer ("nomod" or
+        # "pixman"); delete that file to try the plain GPU again.
         RFILE="$HOME/.nirvana/Prefs/wlr-renderer"
-        if [ -z "${WLR_RENDERER:-}" ] && [ -s "$RFILE" ]; then
-            WLR_RENDERER=$(cat "$RFILE")
-            export WLR_RENDERER WLR_DRM_NO_MODIFIERS=1
-            echo "WLR_RENDERER=$WLR_RENDERER (from $RFILE)"
-        fi
-        if [ -n "${WLR_RENDERER:-}" ]; then
-            exec labwc "$@"
-        fi
-        # the GPU first, watched for its first seconds
-        start=$(wc -l < "$LOG")
-        labwc "$@" &
-        pid=$!
-        i=0
-        failed=0
-        while [ $i -lt 8 ] && kill -0 $pid 2> /dev/null; do
-            sleep 1
-            i=$((i + 1))
-            if tail -n +"$((start + 1))" "$LOG" |
-                grep -q -e "gbm_bo_create failed" -e "Failed to allocate buffer" -e "Failed to create renderer" \
-                        -e "Swapchain for output .* failed test"; then
-                failed=1
-                break
+        mode=$(cat "$RFILE" 2> /dev/null)
+        [ -n "${WLR_RENDERER:-}" ] && mode=given
+        for try in plain nomod pixman; do
+            case "$mode" in
+                nomod) [ $try = plain ] && continue ;;
+                pixman) [ $try != pixman ] && continue ;;
+                given) try=given ;;
+            esac
+            case $try in
+                nomod) export WLR_DRM_NO_MODIFIERS=1 ;;
+                pixman) export WLR_DRM_NO_MODIFIERS=1 WLR_RENDERER=pixman ;;
+            esac
+            echo "starting labwc ($try)"
+            if [ $try = pixman ] || [ $try = given ]; then
+                exec labwc "$@"
             fi
+            # watched for its first seconds
+            start=$(wc -l < "$LOG")
+            labwc "$@" &
+            pid=$!
+            i=0
+            failed=0
+            while [ $i -lt 8 ] && kill -0 $pid 2> /dev/null; do
+                sleep 1
+                i=$((i + 1))
+                if tail -n +"$((start + 1))" "$LOG" |
+                    grep -q -e "gbm_bo_create failed" -e "Failed to allocate buffer" \
+                            -e "Failed to create renderer" -e "Swapchain for output .* failed test"; then
+                    failed=1
+                    break
+                fi
+            done
+            if [ $failed -eq 0 ]; then
+                [ $try = nomod ] && { mkdir -p "$HOME/.nirvana/Prefs"; echo nomod > "$RFILE"; }
+                wait $pid
+                exit $?
+            fi
+            echo "the GPU's buffers failed ($try): labwc is started again"
+            kill $pid 2> /dev/null
+            wait $pid 2> /dev/null
+            sleep 1
+            [ $try = nomod ] && { mkdir -p "$HOME/.nirvana/Prefs"; echo pixman > "$RFILE"; }
         done
-        if [ $failed -eq 0 ]; then
-            wait $pid
-            exit $?
-        fi
-        echo "the GPU's buffers failed: labwc started again with software rendering (pixman)"
-        kill $pid 2> /dev/null
-        wait $pid 2> /dev/null
-        mkdir -p "$HOME/.nirvana/Prefs"
-        echo pixman > "$RFILE"
-        export WLR_RENDERER=pixman WLR_DRM_NO_MODIFIERS=1
-        exec labwc "$@"
         ;;
 esac

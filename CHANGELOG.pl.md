@@ -24,8 +24,9 @@
 
 ### Poprawione
 - Na sprzęcie, którego sterownik nie daje wlroots buforów GPU (błąd gbm_bo_create:
-  czarny ekran), sesja uruchamia labwc ponownie z renderowaniem programowym i
-  zapamiętuje to w `~/.nirvana/Prefs/wlr-renderer`. `install.sh --deps` instaluje
+  czarny ekran), sesja uruchamia labwc ponownie - najpierw na GPU bez
+  modyfikatorów buforów (Intel), potem z renderowaniem programowym - i zapamiętuje to,
+  co zadziałało, w `~/.nirvana/Prefs/wlr-renderer`. `install.sh --deps` instaluje
   sterowniki Mesa (`libgl1-mesa-dri`, `libgbm1`).
 - Pod Waylandem menu zostawiały po sobie napisy po otwarciu innego menu lub zamknięciu
   (wiersze nie były usuwane razem z panelem).
