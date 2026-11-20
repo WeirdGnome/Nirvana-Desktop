@@ -148,8 +148,9 @@ if have_desktop
     'src/desktop/compositor.c',
     'src/desktop/global_menu.c',
     'src/desktop/gtk_menu.c',
+    'src/desktop/icons.c',
     proto_src,
-    dependencies: [libnirvana_dep, elementary, efl_ecore, efl_efreet, efl_efreet_mime, efl_eldbus,
+    dependencies: [libnirvana_dep, elementary, efl_ecore, efl_efreet, efl_efreet_mime, efl_eldbus, archive,
                    ecore_x, ecore_wl2, wayland_client],
     install: true,
     install_rpath: rpath)

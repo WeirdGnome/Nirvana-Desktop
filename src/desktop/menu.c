@@ -385,6 +385,8 @@ static void choose(Nv_Menu_Session *s, Nv_Menu_Item *it)
     void *data = it->data;
     if (it->kind == NV_ITEM_CHECK)
         it->checked = !it->checked;
+    else if (it->kind == NV_ITEM_RADIO)
+        it->checked = true;
     nv_menu_session_close(s);
     if (cb)
         cb(data, it);

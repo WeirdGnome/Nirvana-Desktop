@@ -180,6 +180,15 @@ void nv_window_depth(Nv_Window *w);
 void nv_window_jump(Nv_Window *w);
 Nv_Window *nv_window_active(void);
 
+/* ---------------------------------------------------------------- pictures (icons.c) */
+
+bool nv_is_appimage(const char *path);
+bool nv_is_desktop_file(const char *path);
+/* an icon theme's name ("org.gimp.GIMP") or a path as a file (a stringshare), or NULL */
+const char *nv_icon_name_path(const char *icon, int size);
+/* a picture for a file: a program's or AppImage's icon, its type's, else the theme's */
+Evas_Object *nv_icon_for_path(Evas_Object *parent, const char *path, bool is_dir, int size);
+
 /* ---------------------------------------------------------------- listers, editor */
 
 /* a drawer opened in a lister window (a POSIX or Nirvana path) */

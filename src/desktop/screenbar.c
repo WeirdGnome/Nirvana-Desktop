@@ -438,9 +438,10 @@ static void window_menu_show(void *data, Nv_Menu *m)
                 nv_menu_add_separator(m);
                 continue;
             }
-            Nv_Menu_Item *it = src->kind == NV_ITEM_CHECK
-                                   ? nv_menu_add_check(m, src->label, src->checked, src->cb, src->data)
-                                   : nv_menu_add(m, src->label, src->shortcut, src->cb, src->data);
+            Nv_Menu_Item *it = nv_menu_add(m, src->label, src->shortcut, src->cb, src->data);
+            it->kind = src->kind;
+            it->checked = src->checked;
+            it->id = src->id;
             it->enabled = src->enabled;
         }
     }
