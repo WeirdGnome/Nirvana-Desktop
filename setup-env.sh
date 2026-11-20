@@ -52,11 +52,21 @@ if [ $do_system -eq 1 ]; then
     if [ ! -e "$NIRVANA/S/Startup-Sequence" ] && [ -f "$HERE/data/Startup-Sequence" ]; then
         install -m 755 "$HERE/data/Startup-Sequence" "$NIRVANA/S/Startup-Sequence"
     fi
-    # the session in the display managers' lists
-    if [ -d /usr/share/wayland-sessions ] && [ -f "$NIRVANA/S/nirvana.desktop" ] &&
-       [ ! -e /usr/share/wayland-sessions/nirvana.desktop ]; then
-        install -m 644 "$NIRVANA/S/nirvana.desktop" /usr/share/wayland-sessions/nirvana.desktop
+    # the sessions in the display managers' lists (made again on every run: an update
+    # gets the current entries)
+    if [ -f "$NIRVANA/S/nirvana.desktop" ]; then
+        mkdir -p /usr/share/wayland-sessions
+        sed "s|/opt/nirvana|$NIRVANA|g" "$NIRVANA/S/nirvana.desktop" > /usr/share/wayland-sessions/nirvana.desktop
+        chmod 644 /usr/share/wayland-sessions/nirvana.desktop
         say "made /usr/share/wayland-sessions/nirvana.desktop"
+    else
+        say "warning: $NIRVANA/S/nirvana.desktop is missing (is Nirvana installed?)" >&2
+    fi
+    if [ -f "$NIRVANA/S/nirvana-x11.desktop" ]; then
+        mkdir -p /usr/share/xsessions
+        sed "s|/opt/nirvana|$NIRVANA|g" "$NIRVANA/S/nirvana-x11.desktop" > /usr/share/xsessions/nirvana-x11.desktop
+        chmod 644 /usr/share/xsessions/nirvana-x11.desktop
+        say "made /usr/share/xsessions/nirvana-x11.desktop"
     fi
     say "system part ready in $NIRVANA"
 fi

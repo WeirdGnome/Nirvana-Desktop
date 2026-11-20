@@ -102,7 +102,8 @@ if [ $uninstall -eq 1 ]; then
         tr '\n' '\0' < "$DWARFS_SRC/build/install_manifest.txt" | $SUDO xargs -0 rm -f
     fi
     [ -L /nirvana ] && $SUDO rm -f /nirvana
-    $SUDO rm -f /etc/ld.so.conf.d/nirvana.conf /usr/share/wayland-sessions/nirvana.desktop
+    $SUDO rm -f /etc/ld.so.conf.d/nirvana.conf /usr/share/wayland-sessions/nirvana.desktop \
+        /usr/share/xsessions/nirvana-x11.desktop
     $SUDO ldconfig 2> /dev/null || true
     say "Done (your ~/.nirvana was left alone)"
     exit 0

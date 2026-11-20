@@ -1,0 +1,7 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+[Desktop Entry]
+Name=Nirvana Desktop (X11)
+Comment=Nirvana Desktop on X11, beside a window manager (NIRVANA_WM, else openbox)
+Exec=/opt/nirvana/C/nirvana-session --x11
+Type=Application
+DesktopNames=Nirvana

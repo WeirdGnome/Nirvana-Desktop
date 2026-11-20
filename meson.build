@@ -122,6 +122,7 @@ if have_desktop
   foreach xml : [
       'protocols' / 'wlr-layer-shell-unstable-v1.xml',
       'protocols' / 'wlr-virtual-pointer-unstable-v1.xml',
+      'protocols' / 'wlr-foreign-toplevel-management-unstable-v1.xml',
       wl_protocols_dir / 'stable' / 'xdg-shell' / 'xdg-shell.xml',  # (the layer shell's popups)
     ]
     name = xml.split('/')[-1].replace('.xml', '')
@@ -145,6 +146,7 @@ if have_desktop
     'src/desktop/lister.c',
     'src/desktop/assign_editor.c',
     'src/desktop/compositor.c',
+    'src/desktop/global_menu.c',
     proto_src,
     dependencies: [libnirvana_dep, elementary, efl_ecore, efl_efreet, efl_efreet_mime, efl_eldbus,
                    ecore_x, ecore_wl2, wayland_client],
@@ -160,7 +162,7 @@ install_data('setup-env.sh', install_dir: get_option('prefix') / 'S', install_mo
 install_data('data/nirvana-session', install_dir: get_option('prefix') / get_option('bindir'),
              install_mode: 'rwxr-xr-x')
 install_data('data/labwc/rc.xml', install_dir: get_option('prefix') / 'S' / 'labwc')
-install_data('data/nirvana.desktop', install_dir: get_option('prefix') / 'S')
+install_data('data/nirvana.desktop', 'data/nirvana-x11.desktop', install_dir: get_option('prefix') / 'S')
 
 # ------------------------------------------------------------------ translations
 if get_option('nls') and find_program('xgettext', required: false).found()
