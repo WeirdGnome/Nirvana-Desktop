@@ -39,7 +39,8 @@ być trwale zapisane w `~/.nirvana/Startup-Sequence`.
 za runtime'em ELF (`e_shoff + e_shnum * e_shentsize`) i czytany jako system plików,
 którym jest: SquashFS 4.0 (własny czytnik: gzip, lzma, xz, lz4, zstd; dowiązania,
 fragmenty, bloki rzadkie; każdy offset z obrazu sprawdzany), ISO 9660 (przez libarchive),
-DwarFS (przez libdwarfs, jeśli jest przy budowaniu).
+DwarFS (przez libdwarfs 0.15, którą `install.sh` pobiera, sprawdza i buduje; most
+jest w C++23, tak jak nagłówki libdwarfs).
 
 ## nirvana-desktop (GPL-3.0-or-later)
 
@@ -102,9 +103,9 @@ sudo ./setup-env.sh --system
 
 ## Znane ograniczenia
 
-* **DwarFS**: libdwarfs nie ma w pakietach Devuana ani Debiana; AppImage z DwarFS są
-  czytane tylko, gdy libdwarfs (0.12+, z pakietem CMake) jest zainstalowana przy
-  budowaniu. Bez niej zgłaszają „nieobsługiwane”.
+* **DwarFS**: libdwarfs nie ma w pakietach Devuana ani Debiana; `install.sh` ją buduje
+  (raz, od kilku minut do pół godziny). Bez niej (`--no-dwarfs`) AppImage z DwarFS
+  zgłaszają „nieobsługiwane”.
 * **Globalne menu pod Waylandem**: `com.canonical.AppMenu.Registrar` rozpoznaje okna po
   identyfikatorach okien X11. Pod Waylandem działa dla programów X11 (przez XWayland);
   natywne programy Waylanda nie mają takich identyfikatorów, a kompozytory wlroots nie

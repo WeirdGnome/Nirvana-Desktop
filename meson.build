@@ -45,6 +45,7 @@ lib_src = files(
 )
 lib_deps = [zlib, lzma, zstd, lz4, archive]
 lib_cargs = []
+lib_override = []
 
 dwarfs = dependency('dwarfs', required: get_option('dwarfs'),
                     modules: ['dwarfs::dwarfs_reader'], method: 'auto')
@@ -52,6 +53,8 @@ if dwarfs.found()
   lib_src += files('src/lib/appimage_dwarfs.cpp')
   lib_deps += dwarfs
   lib_cargs += '-DNIRVANA_WITH_DWARFS'
+  # libdwarfs' headers are C++23 (std::byteswap...): the bridge is compiled as C++23
+  lib_override += 'cpp_std=c++23'
 endif
 
 libnirvana = shared_library('nirvana', lib_src,
@@ -62,6 +65,7 @@ libnirvana = shared_library('nirvana', lib_src,
   version: '3.0.0',
   soversion: '3',
   gnu_symbol_visibility: 'default',
+  override_options: lib_override,
   install: true,
   install_rpath: get_option('prefix') / get_option('libdir'))
 

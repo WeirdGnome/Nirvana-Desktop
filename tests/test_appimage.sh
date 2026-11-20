@@ -155,6 +155,20 @@ if [ -n "$BSDTAR" ]; then
     check test-iso.AppImage iso9660 "ISO 9660" AppDir/testapp.png
 fi
 
+# DwarFS (when mkdwarfs is there; a build without libdwarfs reports "not supported")
+MKDWARFS=${MKDWARFS:-$(command -v mkdwarfs || true)}
+if [ -n "$MKDWARFS" ]; then
+    rm -f p.dwarfs
+    if "$MKDWARFS" -i AppDir -o p.dwarfs -l 3 --log-level=error > /dev/null 2>&1; then
+        cat $RUNTIME p.dwarfs > test-dwarfs.AppImage
+        check test-dwarfs.AppImage dwarfs DwarFS AppDir/testapp.png
+    else
+        echo "skip dwarfs: mkdwarfs failed"
+    fi
+else
+    echo "skip dwarfs: no mkdwarfs"
+fi
+
 # broken images: cut short, scribbled over - an error, never a crash
 SIZE=$(stat -c %s test-gzip.AppImage)
 head -c $((RSIZE + 2000)) test-gzip.AppImage > cut.AppImage

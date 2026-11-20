@@ -45,7 +45,9 @@ the ELF runtime (`e_shoff + e_shnum * e_shentsize`), and read as the file system
 * SquashFS 4.0 — libnirvana's own reader (gzip, lzma, xz, lz4, zstd; links followed,
   fragments, sparse blocks); every offset taken from the image is bounds-checked;
 * ISO 9660 (type-1 images) — through libarchive;
-* DwarFS — through libdwarfs, when it is available at build time (`-Ddwarfs=enabled`).
+* DwarFS — through libdwarfs (0.15), which `install.sh` downloads, checks and builds
+  (it is not packaged by Devuan or Debian); the bridge is C++23, as libdwarfs' headers
+  are. Built by hand: `-Ddwarfs=enabled -Dcmake_prefix_path=<dir of dwarfs-config.cmake>`.
 
 ## nirvana-desktop (GPL-3.0-or-later)
 
@@ -116,9 +118,9 @@ Ecore-Wl2) and `edje_cc`; without them libnirvana and `assign` still build. The 
 
 ## Known limits
 
-* **DwarFS**: libdwarfs is not packaged for Devuan or Debian; DwarFS AppImages are read
-  only when libdwarfs (0.12 or later, with its CMake package) is installed and found at
-  build time. Without it they report "not supported".
+* **DwarFS**: libdwarfs is not packaged for Devuan or Debian; `install.sh` builds it
+  (once, a few minutes up to half an hour). Without it (`--no-dwarfs`) DwarFS AppImages
+  report "not supported".
 * **The global menu on Wayland**: `com.canonical.AppMenu.Registrar` identifies windows
   by their X11 window ids. Under Wayland it works for X11 programs (through XWayland);
   native Wayland programs export no such ids, and wlroots compositors have no common

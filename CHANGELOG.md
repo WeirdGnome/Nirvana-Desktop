@@ -20,7 +20,11 @@
 - The Ambient theme (`themes/ambient.edc`, images drawn by
   `tools/make-theme-images.py`); the theme contract in `themes/README.md`.
 - `install.sh`: build, test, install and set up in one go (`--deps`, `--no-tests`,
-  `--uninstall`).
+  `--no-dwarfs`, `--uninstall`); it downloads libdwarfs 0.15.10 (SHA-256 checked),
+  builds and installs it for DwarFS AppImages, and copes with sources dated in the
+  future (a clock behind) and sources it may not write in.
+- DwarFS AppImages read through libdwarfs 0.15 (the bridge is C++23, as its headers
+  are); a DwarFS test made with mkdwarfs when it is there.
 - `nirvana-session` (labwc on Wayland, or beside a window manager on X11), labwc
   settings, a session entry for display managers.
 
