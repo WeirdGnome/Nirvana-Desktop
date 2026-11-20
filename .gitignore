@@ -1,0 +1,4 @@
+build/
+*.edj
+*.o
+*.so
