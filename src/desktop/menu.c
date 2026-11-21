@@ -128,6 +128,7 @@ struct Nv_Menu_Session {
     double opened_at;
     void (*done)(void *data);
     void *done_data;
+    int layer;         /* the panels' canvas layer */
 };
 
 static Nv_Menu_Item *row_item(Panel *p, int i)
@@ -139,13 +140,16 @@ static void panel_select(Panel *p, int i)
 {
     if (p->sel == i)
         return;
-    if (p->sel >= 0) {
+    Nv_Menu_Item *old = p->sel >= 0 ? eina_list_nth(p->menu->items, (unsigned)p->sel) : NULL;
+    if (old && old->enabled) {
         Evas_Object *o = eina_list_nth(p->rows, (unsigned)p->sel);
         if (o)
             edje_object_signal_emit(o, "nirvana,state,unselected", "nirvana");
     }
     p->sel = i;
-    if (i >= 0) {
+    Nv_Menu_Item *it = i >= 0 ? eina_list_nth(p->menu->items, (unsigned)i) : NULL;
+    /* (a disabled item is not lit: it cannot be chosen) */
+    if (it && it->enabled && it->kind != NV_ITEM_SEPARATOR) {
         Evas_Object *o = eina_list_nth(p->rows, (unsigned)i);
         if (o)
             edje_object_signal_emit(o, "nirvana,state,selected", "nirvana");
@@ -204,13 +208,17 @@ static Panel *panel_open(Nv_Menu_Session *s, Nv_Menu *m, Nv_Menu_Item *parent_it
     h += 10; /* the background's own border */
     w += 4;
 
-    /* placed on the screen: shifted in from the right edge, or to the other side */
-    if (x + w > nv.screen_w)
-        x = alt_x >= 0 ? alt_x - w : nv.screen_w - w;
-    if (x < 0)
-        x = 0;
-    if (y + h > nv.screen_h)
-        y = nv.screen_h - h > nv.bar_h ? nv.screen_h - h : nv.bar_h;
+    /* placed in the host's area (the screen): shifted in from the right edge, or to the
+     * other side */
+    int bx = 0, by = nv.bar_h, bw = nv.screen_w, bh = nv.screen_h - nv.bar_h;
+    if (s->host->bounds)
+        s->host->bounds(s->host_data, &bx, &by, &bw, &bh);
+    if (x + w > bx + bw)
+        x = alt_x >= 0 ? alt_x - w : bx + bw - w;
+    if (x < bx)
+        x = bx;
+    if (y + h > by + bh)
+        y = by + bh - h > by ? by + bh - h : by;
     p->x = x;
     p->y = y;
     p->w = w;
@@ -232,7 +240,7 @@ static Panel *panel_open(Nv_Menu_Session *s, Nv_Menu *m, Nv_Menu_Item *parent_it
             edje_object_part_text_set(o, "nirvana.text.shortcut", it->shortcut ? it->shortcut : "");
             if (it->submenu)
                 edje_object_signal_emit(o, "nirvana,state,submenu", "nirvana");
-            if (!it->enabled && !it->submenu)
+            if (!it->enabled)
                 edje_object_signal_emit(o, "nirvana,state,disabled", "nirvana");
             if (it->kind != NV_ITEM_NORMAL && it->checked)
                 edje_object_signal_emit(o, "nirvana,state,checked", "nirvana");
@@ -250,7 +258,7 @@ static Panel *panel_open(Nv_Menu_Session *s, Nv_Menu *m, Nv_Menu_Item *parent_it
     edje_object_part_swallow(p->bg, "nirvana.swallow.content", p->box);
     evas_object_move(p->bg, ox, oy);
     evas_object_resize(p->bg, w, h);
-    evas_object_layer_set(p->bg, 100);
+    evas_object_layer_set(p->bg, s->layer ? s->layer : 100);
     evas_object_show(p->bg);
     s->panels = eina_list_append(s->panels, p);
     return p;
@@ -355,6 +363,15 @@ Nv_Menu_Session *nv_menu_session_open(const Nv_Menu_Host *host, void *host_data,
     s->opened_at = ecore_time_get();
     panel_open(s, m, NULL, x, y, -1);
     return s;
+}
+
+void nv_menu_session_raise(Nv_Menu_Session *s, int layer)
+{
+    s->layer = layer;
+    Eina_List *l;
+    Panel *p;
+    EINA_LIST_FOREACH(s->panels, l, p)
+        evas_object_layer_set(p->bg, layer);
 }
 
 void nv_menu_session_close(Nv_Menu_Session *s)

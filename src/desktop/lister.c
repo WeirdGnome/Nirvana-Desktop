@@ -79,7 +79,6 @@ struct Lister {
 static Eina_List *listers;
 static Elm_Gengrid_Item_Class *gitc;
 static Elm_Genlist_Item_Class *litc;
-static bool default_browser;
 
 static void rescan(Lister *ls);
 static void rebuild_view(Lister *ls);
@@ -729,24 +728,6 @@ static void extract_icon(Lister *ls, Entry *e)
     elm_win_inwin_activate(ls->inwin);
 }
 
-static void cm_open(void *data, Evas_Object *o, void *ev)
-{
-    (void)o;
-    (void)ev;
-    Lister *ls = data;
-    if (ls->menu_entry)
-        open_entry(ls, ls->menu_entry);
-}
-
-static void cm_info(void *data, Evas_Object *o, void *ev)
-{
-    (void)o;
-    (void)ev;
-    Lister *ls = data;
-    if (ls->menu_entry)
-        information(ls, ls->menu_entry);
-}
-
 static void cm_extract(void *data, Evas_Object *o, void *ev)
 {
     (void)o;
@@ -776,33 +757,179 @@ static Elm_Object_Item *item_at(Lister *ls, int x, int y)
     return elm_genlist_at_xy_item_get(ls->view_obj, x, y, &pos);
 }
 
+/* ---------------------------------------------------------------- context menus */
+
+static void items_each(Lister *ls, void (*fn)(Lister *ls, Elm_Object_Item *it, bool selected, void *data), void *data);
+static void item_select(Lister *ls, Elm_Object_Item *it, bool on);
+static void do_unselect(Lister *ls, Elm_Object_Item *it, bool selected, void *data);
+static void v_information(void *v);
+static Nv_Sort v_sort(void *v);
+static void v_set_sort(void *v, Nv_Sort s);
+static void v_set_list_mode(void *v, bool on);
+static void v_set_show_all(void *v, bool on);
+static void v_select_all(void *v);
+static void v_invert(void *v);
+static Lister *lister_new(const char *path, const char *inner, bool archive);
+
+
+static Nv_Menu *cmenu;
+
+static void cmenu_done(void *data)
+{
+    (void)data;
+    /* (freed after the item's action has run) */
+    Nv_Menu *m = cmenu;
+    cmenu = NULL;
+    if (m)
+        nv_menu_free(m);
+}
+
+static void c_open(void *d, Nv_Menu_Item *it) { (void)it; Lister *ls = d; if (ls->menu_entry) open_entry(ls, ls->menu_entry); }
+static void c_open_new(void *d, Nv_Menu_Item *it)
+{
+    (void)it;
+    Lister *ls = d;
+    if (!ls->menu_entry)
+        return;
+    char full[PATH_MAX * 2];
+    entry_path(ls->menu_entry, full, sizeof full);
+    if (!ls->archive)
+        lister_new(full, "", false);
+}
+static void c_shell(void *d, Nv_Menu_Item *it)
+{
+    (void)it;
+    Lister *ls = d;
+    char full[PATH_MAX * 2];
+    if (ls->menu_entry && ls->menu_entry->dir)
+        entry_path(ls->menu_entry, full, sizeof full);
+    else
+        snprintf(full, sizeof full, "%s", ls->path);
+    nv_new_shell_at(full);
+}
+static void c_info(void *d, Nv_Menu_Item *it) { (void)it; v_information(d); }
+static void c_sort(void *d, Nv_Menu_Item *it) { v_set_sort(d, (Nv_Sort)it->id); }
+static void c_view(void *d, Nv_Menu_Item *it) { v_set_list_mode(d, it->id == 1); }
+static void c_all(void *d, Nv_Menu_Item *it) { v_set_show_all(d, it->checked); }
+static void c_select_all(void *d, Nv_Menu_Item *it) { (void)it; v_select_all(d); }
+static void c_invert(void *d, Nv_Menu_Item *it) { (void)it; v_invert(d); }
+static void c_update(void *d, Nv_Menu_Item *it) { (void)it; rescan(d); }
+static void c_copy_path(void *d, Nv_Menu_Item *it) { (void)it; cm_copy_path(d, NULL, NULL); }
+static void c_extract(void *d, Nv_Menu_Item *it) { (void)it; cm_extract(d, NULL, NULL); }
+
+static Nv_Menu *sort_menu(Lister *ls)
+{
+    Nv_Menu *sub = nv_menu_new(_("Sort By"));
+    static const char *const names[] = {N_("_Name"), N_("_Type"), N_("_Size"), N_("_Date")};
+    for (int i = 0; i < 4; i++) {
+        Nv_Menu_Item *it = nv_menu_add_check(sub, _(names[i]), (int)v_sort(ls) == i, c_sort, ls);
+        it->kind = NV_ITEM_RADIO;
+        it->id = i;
+    }
+    return sub;
+}
+
+/* an item's menu (Ambient's order: its actions, Information, Sort, New Drawer, the
+ * clipboard, what changes it) */
+static Nv_Menu *item_menu(Lister *ls, Entry *e)
+{
+    char full[PATH_MAX * 2];
+    entry_path(e, full, sizeof full);
+    Nv_Menu *m = nv_menu_new(e->dir ? _("Drawer") : _("File"));
+    if (e->dir && !ls->browser) {
+        nv_menu_add(m, _("_Open..."), NULL, c_open, ls);
+    } else {
+        nv_menu_add(m, _("_Open"), NULL, c_open, ls);
+        if (e->dir)
+            nv_menu_add(m, _("Open in _New Window..."), NULL, ls->archive ? NULL : c_open_new, ls);
+    }
+    if (e->dir) {
+        nv_menu_add(m, _("Open _Shell..."), NULL, ls->archive ? NULL : c_shell, ls);
+        nv_menu_add(m, _("_Find..."), NULL, NULL, ls);
+    }
+    nv_menu_add(m, _("Copy _To..."), NULL, NULL, ls);
+    nv_menu_add(m, _("_Move To..."), NULL, NULL, ls);
+    nv_menu_add_separator(m);
+    nv_menu_add(m, _("_Information..."), "Super+I", c_info, ls);
+    nv_menu_add_separator(m);
+    nv_menu_add_submenu(m, _("Sort _By"), sort_menu(ls));
+    nv_menu_add_separator(m);
+    nv_menu_add(m, _("New _Drawer..."), NULL, NULL, ls);
+    nv_menu_add_separator(m);
+    nv_menu_add(m, _("Cu_t"), "Super+X", NULL, ls);
+    nv_menu_add(m, _("_Copy"), "Super+C", NULL, ls);
+    if (e->dir)
+        nv_menu_add(m, _("Paste _Into"), NULL, NULL, ls);
+    nv_menu_add_separator(m);
+    nv_menu_add(m, _("_Rename..."), "Super+R", NULL, ls);
+    nv_menu_add(m, _("_Delete"), NULL, NULL, ls);
+    nv_menu_add(m, _("Move to _Trashcan"), NULL, NULL, ls);
+    if (!ls->archive) {
+        Nv_Menu *act = nv_menu_new(_("Actions"));
+        nv_menu_add(act, _("Copy _Path"), NULL, c_copy_path, ls);
+        if (!e->dir && nv_is_appimage(full))
+            nv_menu_add(act, _("_Extract Icon..."), NULL, c_extract, ls);
+        nv_menu_add_separator(m);
+        nv_menu_add_submenu(m, _("_Actions"), act);
+    }
+    return m;
+}
+
+/* the window's own menu (its background): how it shows, the selection, new things */
+static Nv_Menu *view_menu(Lister *ls)
+{
+    Nv_Menu *m = nv_menu_new(_("View"));
+    Nv_Menu *views = nv_menu_new(_("View"));
+    Nv_Menu_Item *it = nv_menu_add_check(views, _("as _Icons"), ls->view == VIEW_ICONS, c_view, ls);
+    it->kind = NV_ITEM_RADIO;
+    it->id = 0;
+    it = nv_menu_add_check(views, _("as _List"), ls->view == VIEW_LIST, c_view, ls);
+    it->kind = NV_ITEM_RADIO;
+    it->id = 1;
+    nv_menu_add_submenu(m, _("_View"), views);
+    Nv_Menu *show = nv_menu_new(_("Show"));
+    nv_menu_add_check(show, _("_All Files"), ls->show_hidden, c_all, ls);
+    nv_menu_add_submenu(m, _("S_how"), show);
+    nv_menu_add_separator(m);
+    nv_menu_add(m, _("Open _Shell..."), NULL, ls->archive ? NULL : c_shell, ls);
+    nv_menu_add(m, _("_Find..."), NULL, NULL, ls);
+    nv_menu_add_separator(m);
+    nv_menu_add_submenu(m, _("Sort _By"), sort_menu(ls));
+    nv_menu_add_separator(m);
+    nv_menu_add(m, _("Select _All"), "Super+A", c_select_all, ls);
+    nv_menu_add(m, _("_Invert"), NULL, c_invert, ls);
+    nv_menu_add_separator(m);
+    nv_menu_add(m, _("New _Drawer..."), NULL, NULL, ls);
+    nv_menu_add_separator(m);
+    nv_menu_add(m, _("Cu_t"), "Super+X", NULL, ls);
+    nv_menu_add(m, _("_Copy"), "Super+C", NULL, ls);
+    nv_menu_add(m, _("_Paste"), "Super+V", NULL, ls);
+    nv_menu_add_separator(m);
+    nv_menu_add(m, _("_Update"), NULL, c_update, ls);
+    return m;
+}
+
 static void on_view_down(void *data, Evas *e, Evas_Object *o, void *event)
 {
     (void)e;
-    (void)o;
     Lister *ls = data;
     Evas_Event_Mouse_Down *ev = event;
     if (ev->button != 3)
         return;
     Elm_Object_Item *it = item_at(ls, ev->canvas.x, ev->canvas.y);
-    if (!it)
-        return;
-    Entry *en = elm_object_item_data_get(it);
-    ls->menu_entry = en;
-    Evas_Object *menu = elm_menu_add(ls->w->win);
-    elm_menu_item_add(menu, NULL, NULL, _("Open"), cm_open, ls);
-    elm_menu_item_add(menu, NULL, NULL, _("Information..."), cm_info, ls);
-    if (!ls->archive) {
-        elm_menu_item_add(menu, NULL, NULL, _("Copy Path"), cm_copy_path, ls);
-        char full[PATH_MAX * 2];
-        entry_path(en, full, sizeof full);
-        if (!en->dir && nv_is_appimage(full)) {
-            elm_menu_item_separator_add(menu, NULL);
-            elm_menu_item_add(menu, NULL, NULL, _("Extract Icon..."), cm_extract, ls);
+    ls->menu_entry = it ? elm_object_item_data_get(it) : NULL;
+    if (it) {
+        /* the item is what the menu is for (and the others selected with it) */
+        bool sel = ls->view == VIEW_ICONS ? elm_gengrid_item_selected_get(it) : elm_genlist_item_selected_get(it);
+        if (!sel) {
+            items_each(ls, do_unselect, NULL);
+            item_select(ls, it, true);
         }
     }
-    elm_menu_move(menu, ev->canvas.x, ev->canvas.y);
-    evas_object_show(menu);
+    if (cmenu)
+        nv_win_context_close();
+    cmenu = it ? item_menu(ls, ls->menu_entry) : view_menu(ls);
+    nv_win_context(ls->w->win, o, cmenu, ev->canvas.x, ev->canvas.y, cmenu_done, ls);
 }
 
 /* ---------------------------------------------------------------- dragging out */
@@ -891,22 +1018,8 @@ static void rebuild_view(Lister *ls)
     status_update(ls);
 }
 
-/* ---------------------------------------------------------------- the Window menu */
+/* ---------------------------------------------------------------- selecting */
 
-static void m_parent(void *data, Nv_Menu_Item *it) { (void)it; open_parent(data); }
-static void m_update(void *data, Nv_Menu_Item *it) { (void)it; rescan(data); }
-static void m_hidden(void *data, Nv_Menu_Item *it)
-{
-    Lister *ls = data;
-    ls->show_hidden = it->checked;
-    refilter(ls);
-}
-static void m_browser(void *data, Nv_Menu_Item *it)
-{
-    Lister *ls = data;
-    ls->browser = it->checked;
-    default_browser = ls->browser; /* (new listers follow the last choice) */
-}
 static void m_select_all(void *data, Nv_Menu_Item *it)
 {
     (void)it;
@@ -920,54 +1033,110 @@ static void m_select_all(void *data, Nv_Menu_Item *it)
     }
 }
 
-static void window_menu_refresh(Lister *ls);
+/* ---------------------------------------------------------------- the view's operations */
 
-static void m_view(void *data, Nv_Menu_Item *it)
+/* each item of the view, with its selection */
+static void items_each(Lister *ls, void (*fn)(Lister *ls, Elm_Object_Item *it, bool selected, void *data), void *data)
 {
-    Lister *ls = data;
-    View v = it->id == 1 ? VIEW_ICONS : VIEW_LIST;
-    if (v != ls->view) {
-        ls->view = v;
+    if (ls->view == VIEW_ICONS) {
+        for (Elm_Object_Item *gi = elm_gengrid_first_item_get(ls->view_obj); gi; gi = elm_gengrid_item_next_get(gi))
+            fn(ls, gi, elm_gengrid_item_selected_get(gi), data);
+    } else {
+        for (Elm_Object_Item *gi = elm_genlist_first_item_get(ls->view_obj); gi; gi = elm_genlist_item_next_get(gi))
+            fn(ls, gi, elm_genlist_item_selected_get(gi), data);
+    }
+}
+
+static void item_select(Lister *ls, Elm_Object_Item *it, bool on)
+{
+    if (ls->view == VIEW_ICONS)
+        elm_gengrid_item_selected_set(it, on);
+    else
+        elm_genlist_item_selected_set(it, on);
+}
+
+static void do_unselect(Lister *ls, Elm_Object_Item *it, bool selected, void *data)
+{
+    (void)data;
+    if (selected)
+        item_select(ls, it, false);
+}
+
+static void do_invert(Lister *ls, Elm_Object_Item *it, bool selected, void *data)
+{
+    (void)data;
+    item_select(ls, it, !selected);
+}
+
+static void do_collect(Lister *ls, Elm_Object_Item *it, bool selected, void *data)
+{
+    (void)ls;
+    if (!selected)
+        return;
+    Eina_List **out = data;
+    Entry *e = elm_object_item_data_get(it);
+    char full[PATH_MAX * 2];
+    entry_path(e, full, sizeof full);
+    *out = eina_list_append(*out, strdup(full));
+}
+
+static void do_info(Lister *ls, Elm_Object_Item *it, bool selected, void *data)
+{
+    (void)data;
+    if (selected)
+        information(ls, elm_object_item_data_get(it));
+}
+
+static bool v_list_mode(void *v) { return ((Lister *)v)->view == VIEW_LIST; }
+static void v_set_list_mode(void *v, bool on)
+{
+    Lister *ls = v;
+    View nv_ = on ? VIEW_LIST : VIEW_ICONS;
+    if (nv_ != ls->view) {
+        ls->view = nv_;
         rebuild_view(ls);
     }
-    window_menu_refresh(ls);
 }
-
-static void m_sort(void *data, Nv_Menu_Item *it)
+static const Sort sort_of[] = {[NV_SORT_NAME] = SORT_NAME, [NV_SORT_TYPE] = SORT_TYPE, [NV_SORT_SIZE] = SORT_SIZE,
+                               [NV_SORT_DATE] = SORT_DATE};
+static Nv_Sort v_sort(void *v)
 {
-    Lister *ls = data;
-    ls->sort = (Sort)it->id;
+    Sort s = ((Lister *)v)->sort;
+    return s == SORT_TYPE ? NV_SORT_TYPE : s == SORT_SIZE ? NV_SORT_SIZE : s == SORT_DATE ? NV_SORT_DATE : NV_SORT_NAME;
+}
+static void v_set_sort(void *v, Nv_Sort s)
+{
+    Lister *ls = v;
+    ls->sort = sort_of[s];
     refilter(ls);
-    window_menu_refresh(ls);
 }
-
-static void window_menu_refresh(Lister *ls)
+static bool v_show_all(void *v) { return ((Lister *)v)->show_hidden; }
+static void v_set_show_all(void *v, bool on)
 {
-    Nv_Menu *wm = ls->w->window_menu;
-    nv_menu_clear(wm);
-    nv_menu_add(wm, _("Open _Parent"), "Super+P", m_parent, ls);
-    nv_menu_add(wm, _("_Update"), NULL, m_update, ls);
-    nv_menu_add(wm, _("Select _Contents"), NULL, m_select_all, ls);
-    nv_menu_add_separator(wm);
-    Nv_Menu_Item *it;
-    it = nv_menu_add_check(wm, _("View as _Icons"), ls->view == VIEW_ICONS, m_view, ls);
-    it->kind = NV_ITEM_RADIO;
-    it->id = 1;
-    it = nv_menu_add_check(wm, _("View as _List"), ls->view == VIEW_LIST, m_view, ls);
-    it->kind = NV_ITEM_RADIO;
-    it->id = 2;
-    nv_menu_add_separator(wm);
-    static const char *const sorts[] = {N_("Sort by _Name"), N_("Sort by _Date"), N_("Sort by _Size"),
-                                        N_("Sort by _Type")};
-    for (int i = 0; i < 4; i++) {
-        it = nv_menu_add_check(wm, _(sorts[i]), (int)ls->sort == i, m_sort, ls);
-        it->kind = NV_ITEM_RADIO;
-        it->id = i;
-    }
-    nv_menu_add_separator(wm);
-    nv_menu_add_check(wm, _("Show _Hidden Files"), ls->show_hidden, m_hidden, ls);
-    nv_menu_add_check(wm, _("_Browser Mode"), ls->browser, m_browser, ls);
+    Lister *ls = v;
+    ls->show_hidden = on;
+    refilter(ls);
 }
+static void v_select_all(void *v) { m_select_all(v, NULL); }
+static void v_invert(void *v) { items_each(v, do_invert, NULL); }
+static Eina_List *v_selected(void *v)
+{
+    Eina_List *out = NULL;
+    items_each(v, do_collect, &out);
+    return out;
+}
+static const char *v_directory(void *v)
+{
+    Lister *ls = v;
+    return ls->archive ? NULL : ls->path;
+}
+static void v_information(void *v) { items_each(v, do_info, NULL); }
+static void v_update(void *v) { rescan(v); }
+
+static const Nv_View_Ops view_ops = {
+    v_list_mode, v_set_list_mode, v_sort, v_set_sort, v_show_all, v_set_show_all, v_select_all, v_invert,
+    v_selected, v_directory, v_information, v_update,
+};
 
 /* ---------------------------------------------------------------- the window */
 
@@ -1035,7 +1204,9 @@ static Lister *lister_new(const char *path, const char *inner, bool archive)
         litc->func.content_get = item_content;
     }
     Lister *ls = calloc(1, sizeof *ls);
-    ls->browser = default_browser;
+    /* spatial (a drawer opens in its own window, as on the classic desktops) or browsing
+     * (in the same window): "lister=browse" in desktop.conf */
+    ls->browser = !strcmp(nv_pref("lister", "spatial"), "browse");
     ls->w = nv_window_new("nirvana-lister", "", 600, 400);
     ls->w->on_close = lister_close;
     ls->w->data = ls;
@@ -1083,8 +1254,8 @@ static Lister *lister_new(const char *path, const char *inner, bool archive)
 
     nv_window_content_set(ls->w, ls->box);
     evas_object_show(ls->box);
-    ls->w->window_menu = nv_menu_new("lister");
-    window_menu_refresh(ls);
+    ls->w->view = &view_ops;
+    ls->w->view_data = ls;
 
     listers = eina_list_append(listers, ls);
     nv_window_show(ls->w);

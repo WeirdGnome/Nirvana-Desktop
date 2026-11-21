@@ -51,22 +51,24 @@ nirvana-desktop [--theme NAZWA]      sam pulpit, w działającym labwc
 
 * **Pasek ekranu** „Nirvana Screen”: powierzchnia warstwy (wlr-layer-shell, warstwa top)
   rezerwująca swój pas ekranu. Tytuły menu
-  (Nirvana Screen, Window, Icons, Tools), zegar, gadżet głębi. Menu rozwijają się po
+  (Nirvana, Edit, View, Icons, Utilities, Settings, Tools - jak w Ambiencie), zegar,
+  gadżet głębi. Menu rozwijają się po
   kliknięciu (lub przytrzymane prawym przyciskiem: puszczenie nad pozycją ją wybiera),
   obsługują klawiaturę (strzałki, Enter, Escape, podkreślone litery) i skróty z Super.
 * **Tło**: powierzchnia warstwy tła z ikoną woluminu dla każdego assignu z `DESKTOP=1`;
-  zaznaczanie, przeciąganie, ramka zaznaczenia, dwuklik otwiera, Snapshot i Clean Up.
+  zaznaczanie, przeciąganie, ramka zaznaczenia, dwuklik otwiera; prawy przycisk na ikonie
+  daje jej menu kontekstowe (Open, Open Shell, Information, Snapshot, UnSnapshot, Eject...).
   Ikony nadążają za assignami (SIGUSR1 z `assign`).
 * **Gadżety okien** na własnych oknach Nirvany: zamknięcie po lewej; prefs, jump,
   iconify, zoom i depth po prawej; gadżet zmiany rozmiaru; przesuwanie i zmiana rozmiaru
   przez serwer wyświetlania, więc działają też pod Waylandem.
-* **Edytor assignów** (Nirvana Screen -> Assigns...): New, Clone, Delete; nazwa, „Show
+* **Edytor assignów** (Settings -> Assigns...): New, Clone, Delete; nazwa, „Show
   volume icon on Desktop”, ścieżki w kolejności przeszukiwania z Add Path (wybór
   katalogu), Remove Path, Move Up/Down, Open in Lister; Use, Save (także do
   `~/.nirvana/Startup-Sequence`), Cancel.
 * **Lister** (pierwsza wersja; etap 4 go uzupełni): szuflada jako ikony, czytana w
   wątku, ikony AppImage bez uruchamiania, wzorce `#?` w filtrze.
-* **Motywy** (Tools -> Theme, zapamiętane w `~/.nirvana/Prefs/desktop.conf`; pulpit
+* **Motywy** (Settings -> Theme, zapamiętane w `~/.nirvana/Prefs/desktop.conf`; pulpit
   uruchamia się od nowa w wybranym): Ambient (domyślny: miękkie gradienty), Classic 1.3
   (cztery kolory, ostre piksele), Classic 2.1 (szary z wypukłymi krawędziami), Classic
   3.1 (osiem kolorów, niebieskoszare tło), Classic 4.1 (gładkie szarości, gradientowe

@@ -29,6 +29,9 @@ typedef struct Nv_Desktop {
     Evas_Object *backdrop;  /* the backdrop's window */
     Eina_List *windows;     /* Nv_Window: the desktop's own framed windows */
     struct Nv_Window *active;
+    /* the window the screen's View, Edit and Icons menus act on: the last of the
+     * desktop's windows to be active, NULL when the desktop itself was clicked last */
+    struct Nv_Window *view_window;
 } Nv_Desktop;
 
 extern Nv_Desktop nv;
@@ -137,6 +140,16 @@ void nv_screenbar_hold_move(int x, int y);
 void nv_screenbar_hold_end(int x, int y);
 /* a menu at a place of the screen (the dock's, an icon's), shown by the bar */
 void nv_screenbar_popup(Nv_Menu *m, int x, int y);
+/* a context menu at the pointer while the right button pressed at x, y is held (the
+ * moves and the release passed on with nv_screenbar_hold_move/_end) */
+void nv_screenbar_context(Nv_Menu *m, int x, int y);
+
+/* a context menu in one of the desktop's windows, at (x, y) of its canvas, while the
+ * right button pressed on `pressed` is held (NULL: opened by a key); done is called when
+ * it shuts (to free m) */
+void nv_win_context(Evas_Object *win, Evas_Object *pressed, Nv_Menu *m, int x, int y, void (*done)(void *data),
+                    void *data);
+void nv_win_context_close(void);
 
 /* ---------------------------------------------------------------- the global menu */
 
@@ -167,6 +180,27 @@ void nv_backdrop_snapshot(void);
 typedef struct Nv_Window Nv_Window;
 typedef void (*Nv_Window_Cb)(void *data, Nv_Window *w);
 
+/* how a view sorts (the order of Ambient's Sort By menu) */
+typedef enum { NV_SORT_NAME, NV_SORT_TYPE, NV_SORT_SIZE, NV_SORT_DATE } Nv_Sort;
+
+/* what a window showing files (a lister) lets the screen's menus do with it */
+typedef struct Nv_View_Ops {
+    bool (*list_mode)(void *v);
+    void (*set_list_mode)(void *v, bool on);
+    Nv_Sort (*sort)(void *v);
+    void (*set_sort)(void *v, Nv_Sort s);
+    bool (*show_all)(void *v);
+    void (*set_show_all)(void *v, bool on);
+    void (*select_all)(void *v);
+    void (*invert)(void *v);
+    /* the selected items' POSIX paths (malloc'd strings) */
+    Eina_List *(*selected)(void *v);
+    /* the directory shown (POSIX), or NULL (an archive) */
+    const char *(*directory)(void *v);
+    void (*information)(void *v);
+    void (*update)(void *v);
+} Nv_View_Ops;
+
 struct Nv_Window {
     Evas_Object *win;
     Evas_Object *layout;   /* the theme's nirvana/frame (an elm_layout) */
@@ -179,6 +213,8 @@ struct Nv_Window {
     Nv_Window_Cb on_prefs; /* NULL: no prefs gadget action */
     void *data;
     Nv_Menu *window_menu;  /* the window's own items in the Window menu, or NULL */
+    const Nv_View_Ops *view; /* a window showing files: its operations, else NULL */
+    void *view_data;
 };
 
 Nv_Window *nv_window_new(const char *name, const char *title, int w, int h);
@@ -222,6 +258,13 @@ void nv_drive_open(Nv_Drive *d);
 void nv_drive_eject(Nv_Drive *d);
 /* the selected drive icons ejected (the Icons menu) */
 void nv_backdrop_eject_selected(void);
+void nv_backdrop_invert(void);
+/* an icon is selected on the desktop (drives: a drive's icon) */
+bool nv_backdrop_any_selected(bool drives);
+/* the selected volumes' Information */
+void nv_backdrop_information(void);
+/* a volume's Information: its name, where it is, its size and free space */
+void nv_volume_information(const char *name, const char *posix);
 
 /* ---------------------------------------------------------------- the dock */
 
@@ -238,8 +281,12 @@ void nv_assign_editor_show(void);
 /* a path opened as wbrun does it (a drawer in a lister, other things started) */
 void nv_open_path(const char *posix_path);
 void nv_new_shell(void);
+/* a shell in a drawer (POSIX; NULL: home) */
+void nv_new_shell_at(const char *dir);
 void nv_execute_command(void);
 void nv_about(void);
+/* the system's name, kernel, processor, memory */
+void nv_about_system(void);
 void nv_quit(void);
 /* a short message in a small window */
 void nv_message(const char *title, const char *text);

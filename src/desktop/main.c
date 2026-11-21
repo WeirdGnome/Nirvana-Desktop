@@ -22,6 +22,8 @@
 #include <string.h>
 #include <strings.h>
 #include <sys/stat.h>
+#include <sys/statvfs.h>
+#include <sys/utsname.h>
 #include <unistd.h>
 
 Nv_Desktop nv;
@@ -305,6 +307,98 @@ void nv_quit(void)
     nv_window_show(w);
 }
 
+static void size_text(unsigned long long n, char *out, size_t len)
+{
+    if (n >= 1000ULL * 1000 * 1000)
+        snprintf(out, len, "%.1f GB", (double)n / 1e9);
+    else if (n >= 1000ULL * 1000)
+        snprintf(out, len, "%.1f MB", (double)n / 1e6);
+    else
+        snprintf(out, len, "%.0f kB", (double)n / 1e3);
+}
+
+void nv_volume_information(const char *name, const char *posix)
+{
+    char msg[4096];
+    if (!posix || !*posix) {
+        snprintf(msg, sizeof msg, "%s\n\n%s", name, _("Not mounted."));
+        nv_message(_("Information"), msg);
+        return;
+    }
+    struct statvfs sv;
+    if (statvfs(posix, &sv) != 0) {
+        snprintf(msg, sizeof msg, "%s\n\n%s: %s\n%s", name, _("Path"), posix, strerror(errno));
+        nv_message(_("Information"), msg);
+        return;
+    }
+    unsigned long long total = (unsigned long long)sv.f_blocks * sv.f_frsize;
+    unsigned long long avail = (unsigned long long)sv.f_bavail * sv.f_frsize;
+    unsigned long long used = total - (unsigned long long)sv.f_bfree * sv.f_frsize;
+    char t[32], u[32], a[32];
+    size_text(total, t, sizeof t);
+    size_text(used, u, sizeof u);
+    size_text(avail, a, sizeof a);
+    int pct = total ? (int)(used * 100 / total) : 0;
+    snprintf(msg, sizeof msg, "%s\n\n%s: %s\n%s: %s\n%s: %s (%d%%)\n%s: %s%s%s", name, _("Path"), posix, _("Size"), t,
+             _("Used"), u, pct, _("Free"), a, (sv.f_flag & ST_RDONLY) ? "\n" : "",
+             (sv.f_flag & ST_RDONLY) ? _("Read only") : "");
+    nv_message(_("Information"), msg);
+}
+
+/* a line's value from a "Key: value" or KEY=value file */
+static bool file_value(const char *path, const char *key, char sep, char *out, size_t len)
+{
+    FILE *f = fopen(path, "r");
+    if (!f)
+        return false;
+    char line[512];
+    size_t k = strlen(key);
+    bool found = false;
+    while (fgets(line, sizeof line, f)) {
+        if (strncmp(line, key, k))
+            continue;
+        char *v = line + k;
+        while (*v == ' ' || *v == '\t')
+            v++;
+        if (*v != sep)
+            continue;
+        v++;
+        while (*v == ' ' || *v == '"')
+            v++;
+        v[strcspn(v, "\"\n")] = 0;
+        snprintf(out, len, "%s", v);
+        found = true;
+        break;
+    }
+    fclose(f);
+    return found;
+}
+
+void nv_about_system(void)
+{
+    char os[256] = "Linux", cpu[256] = "?", mem[64] = "?", msg[2048];
+    file_value("/etc/os-release", "PRETTY_NAME", '=', os, sizeof os);
+    file_value("/proc/cpuinfo", "model name", ':', cpu, sizeof cpu);
+    char kb[64];
+    if (file_value("/proc/meminfo", "MemTotal", ':', kb, sizeof kb))
+        size_text(strtoull(kb, NULL, 10) * 1024ULL, mem, sizeof mem);
+    struct utsname u;
+    uname(&u);
+    long cpus = sysconf(_SC_NPROCESSORS_ONLN);
+    double up = 0;
+    FILE *f = fopen("/proc/uptime", "r");
+    if (f) {
+        if (fscanf(f, "%lf", &up) != 1)
+            up = 0;
+        fclose(f);
+    }
+    int days = (int)(up / 86400), hours = (int)(up / 3600) % 24, mins = (int)(up / 60) % 60;
+    snprintf(msg, sizeof msg, "%s\n\n%s: %s %s (%s)\n%s: %s × %ld\n%s: %s\n%s: %dd %02d:%02d\n%s: %s", os,
+             _("Kernel"), u.sysname, u.release, u.machine, _("Processor"), cpu, cpus, _("Memory"), mem, _("Up"), days,
+             hours, mins, _("Computer"), u.nodename);
+    nv_message(_("About the System"), msg);
+}
+
 void nv_about(void)
 {
     nv_message(_("About"), "Nirvana Desktop " NIRVANA_VERSION "\n\n"
@@ -340,6 +434,11 @@ void nv_open_path(const char *posix_path)
 
 void nv_new_shell(void)
 {
+    nv_new_shell_at(NULL);
+}
+
+void nv_new_shell_at(const char *dir)
+{
     const char *t = getenv("TERMINAL");
     const char *const cands[] = {t, "x-terminal-emulator", "foot", "alacritty", "kitty", "terminology",
                                  "xfce4-terminal", "konsole", "gnome-terminal", "lxterminal", "xterm", NULL};
@@ -355,9 +454,12 @@ void nv_new_shell(void)
             snprintf(path, sizeof path, "%s/%s", d, cands[i]);
             if (access(path, X_OK) == 0) {
                 const char *argv[] = {path, NULL};
-                if (chdir(getenv("HOME") ? getenv("HOME") : "/") != 0) { /* (where the shell starts) */
+                /* (where the shell starts: the drawer, else home) */
+                if ((!dir || chdir(dir) != 0) && chdir(getenv("HOME") ? getenv("HOME") : "/") != 0) {
                 }
                 spawn_report(nirvana_spawn(argv), cands[i]);
+                if (chdir(getenv("HOME") ? getenv("HOME") : "/") != 0) {
+                }
                 return;
             }
         }

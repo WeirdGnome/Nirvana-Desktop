@@ -17,6 +17,10 @@
 #include "desktop.h"
 #include "menu_host.h"
 
+#include <Ecore_File.h>
+
+#include <limits.h>
+#include <stdlib.h>
 #include <string.h>
 #include <strings.h>
 #include <time.h>
@@ -33,6 +37,8 @@ static struct {
     Eina_List *handlers;
     bool closing;
     bool fresh;              /* a popup opened by the press being handled now */
+    bool hold_popup;         /* the held button keeps a context menu, not the bar's */
+    int hold_x, hold_y;      /* where it was pressed */
     bool classic;            /* the titles only while the right button is held */
     bool strip;              /* the titles are shown */
     bool holding;            /* the right button is held */
@@ -69,7 +75,7 @@ static void host_panel_del(void *data, Evas_Object *host)
         evas_object_del(host);
 }
 
-static const Nv_Menu_Host host = {host_probe, host_panel_new, host_panel_del};
+static const Nv_Menu_Host host = {host_probe, host_panel_new, host_panel_del, NULL};
 
 /* ---------------------------------------------------------------- menus open and shut */
 
@@ -195,6 +201,17 @@ void nv_screenbar_popup(Nv_Menu *m, int x, int y)
     ecore_job_add(fresh_over, NULL);
 }
 
+/* a context menu at the pointer, while the right button (pressed on x, y) is held:
+ * letting go over an item chooses it, a click without moving leaves the menu open */
+void nv_screenbar_context(Nv_Menu *m, int x, int y)
+{
+    nv_screenbar_popup(m, x, y);
+    bar.holding = true;
+    bar.hold_popup = true;
+    bar.hold_x = x;
+    bar.hold_y = y;
+}
+
 /* the title under x (bar coordinates), -1 for none */
 static int title_at(int x, int y)
 {
@@ -236,6 +253,11 @@ void nv_screenbar_hold_move(int x, int y)
 {
     if (!bar.holding)
         return;
+    if (bar.hold_popup) {
+        if (bar.session)
+            nv_menu_session_motion(bar.session, x, y);
+        return;
+    }
     int t = title_at(x, y);
     if (t >= 0 && t != bar.open_index)
         nv_screenbar_menu_open(t);
@@ -248,6 +270,19 @@ void nv_screenbar_hold_end(int x, int y)
     if (!bar.holding)
         return;
     bar.holding = false;
+    if (bar.hold_popup) {
+        bar.hold_popup = false;
+        if (!bar.session)
+            return;
+        bool closed = false;
+        Nv_Menu_Session *s = bar.session;
+        if (nv_menu_session_press(s, x, y))
+            nv_menu_session_release(s, x, y, &closed);
+        else if (abs(x - bar.hold_x) > 4 || abs(y - bar.hold_y) > 4)
+            nv_screenbar_menu_close(); /* (let go away from it: gone) */
+        /* (a click: it stays, to be clicked) */
+        return;
+    }
     if (bar.session) {
         bool closed = false;
         /* over an item: chosen; elsewhere: the menus go */
@@ -522,49 +557,189 @@ static void m_assigns(void *d, Nv_Menu_Item *it) { (void)d; (void)it; nv_assign_
 static void m_execute(void *d, Nv_Menu_Item *it) { (void)d; (void)it; nv_execute_command(); }
 static void m_shell(void *d, Nv_Menu_Item *it) { (void)d; (void)it; nv_new_shell(); }
 static void m_about(void *d, Nv_Menu_Item *it) { (void)d; (void)it; nv_about(); }
+static void m_about_system(void *d, Nv_Menu_Item *it) { (void)d; (void)it; nv_about_system(); }
 static void m_quit(void *d, Nv_Menu_Item *it) { (void)d; (void)it; nv_quit(); }
-static void m_update(void *d, Nv_Menu_Item *it) { (void)d; (void)it; nv_backdrop_reload(); }
-static void m_open_drawer(void *d, Nv_Menu_Item *it) { (void)it; nv_lister_open(d); }
+static void m_open_drawer(void *d, Nv_Menu_Item *it) { (void)it; nv_open_path(d); }
 
-static void m_win_close(void *d, Nv_Menu_Item *it) { (void)d; (void)it; if (nv_window_active()) nv_window_close(nv_window_active()); }
-static void m_win_iconify(void *d, Nv_Menu_Item *it) { (void)d; (void)it; if (nv_window_active()) nv_window_iconify(nv_window_active()); }
-static void m_win_zoom(void *d, Nv_Menu_Item *it) { (void)d; (void)it; if (nv_window_active()) nv_window_zoom(nv_window_active()); }
-static void m_win_depth(void *d, Nv_Menu_Item *it) { (void)d; (void)it; if (nv_window_active()) nv_window_depth(nv_window_active()); }
+/* the view the menus act on: a window showing files, else (NULL) the desktop */
+static Nv_Window *view_win(void)
+{
+    Nv_Window *w = nv.view_window;
+    return w && w->view ? w : NULL;
+}
 
-static void m_icons_open(void *d, Nv_Menu_Item *it) { (void)d; (void)it; nv_backdrop_open_selected(); }
-static void m_icons_eject(void *d, Nv_Menu_Item *it) { (void)d; (void)it; nv_backdrop_eject_selected(); }
-static void m_icons_all(void *d, Nv_Menu_Item *it) { (void)d; (void)it; nv_backdrop_select_all(true); }
-static void m_icons_none(void *d, Nv_Menu_Item *it) { (void)d; (void)it; nv_backdrop_select_all(false); }
-static void m_icons_cleanup(void *d, Nv_Menu_Item *it) { (void)d; (void)it; nv_backdrop_clean_up(); }
-static void m_icons_snapshot(void *d, Nv_Menu_Item *it) { (void)d; (void)it; nv_backdrop_snapshot(); }
+static void m_select_all(void *d, Nv_Menu_Item *it)
+{
+    (void)d;
+    (void)it;
+    Nv_Window *w = view_win();
+    if (w)
+        w->view->select_all(w->view_data);
+    else
+        nv_backdrop_select_all(true);
+}
 
-/* the Window menu: its items for the active window, and the window's own items */
-static void window_menu_show(void *data, Nv_Menu *m)
+static void m_invert(void *d, Nv_Menu_Item *it)
+{
+    (void)d;
+    (void)it;
+    Nv_Window *w = view_win();
+    if (w)
+        w->view->invert(w->view_data);
+    else
+        nv_backdrop_invert();
+}
+
+static void m_list_mode(void *d, Nv_Menu_Item *it)
+{
+    (void)d;
+    Nv_Window *w = view_win();
+    if (w)
+        w->view->set_list_mode(w->view_data, it->checked);
+}
+
+static void m_sort(void *d, Nv_Menu_Item *it)
+{
+    (void)d;
+    Nv_Window *w = view_win();
+    if (w)
+        w->view->set_sort(w->view_data, (Nv_Sort)it->id);
+}
+
+static void m_show_all(void *d, Nv_Menu_Item *it)
+{
+    (void)d;
+    Nv_Window *w = view_win();
+    if (w)
+        w->view->set_show_all(w->view_data, it->checked);
+}
+
+static void m_update(void *d, Nv_Menu_Item *it)
+{
+    (void)d;
+    (void)it;
+    Nv_Window *w = view_win();
+    if (w)
+        w->view->update(w->view_data);
+    else
+        nv_backdrop_reload();
+}
+
+static void m_information(void *d, Nv_Menu_Item *it)
+{
+    (void)d;
+    (void)it;
+    Nv_Window *w = view_win();
+    if (w)
+        w->view->information(w->view_data);
+    else
+        nv_backdrop_information();
+}
+
+static void m_eject(void *d, Nv_Menu_Item *it) { (void)d; (void)it; nv_backdrop_eject_selected(); }
+
+/* something is selected in the view the menus act on */
+static bool view_has_selection(void)
+{
+    Nv_Window *w = view_win();
+    if (!w)
+        return nv_backdrop_any_selected(false);
+    Eina_List *sel = w->view->selected(w->view_data);
+    bool any = sel != NULL;
+    char *p;
+    EINA_LIST_FREE(sel, p)
+        free(p);
+    return any;
+}
+
+/* the first menu, the desktop's own (Ambient's has the desktop's name) */
+static void build_main_menu(Nv_Menu *m)
+{
+    nv_menu_add(m, _("_My Computer..."), NULL, NULL, NULL);
+    nv_menu_add_separator(m);
+    nv_menu_add(m, _("_Execute Command..."), "Super+E", m_execute, NULL);
+    nv_menu_add(m, _("New _Shell..."), "Super+N", m_shell, NULL);
+    nv_menu_add_separator(m);
+    nv_menu_add(m, _("_About..."), "Super+?", m_about, NULL);
+    nv_menu_add(m, _("About the S_ystem..."), NULL, m_about_system, NULL);
+    nv_menu_add_separator(m);
+    nv_menu_add(m, _("_Quit..."), "Super+Q", m_quit, NULL);
+}
+
+/* Edit: the clipboard (stage B), the selection */
+static void edit_menu_show(void *data, Nv_Menu *m)
 {
     (void)data;
     nv_menu_clear(m);
-    Nv_Window *w = nv_window_active();
-    nv_menu_add(m, _("_Close"), "Super+K", w ? m_win_close : NULL, NULL);
-    nv_menu_add(m, _("_Iconify"), NULL, w ? m_win_iconify : NULL, NULL);
-    nv_menu_add(m, _("_Zoom"), NULL, w ? m_win_zoom : NULL, NULL);
-    nv_menu_add(m, _("_Depth"), NULL, w ? m_win_depth : NULL, NULL);
-    if (w && w->window_menu && w->window_menu->items) {
-        nv_menu_add_separator(m);
-        /* the window's items copied (the window keeps its own) */
-        Eina_List *l;
-        Nv_Menu_Item *src;
-        EINA_LIST_FOREACH(w->window_menu->items, l, src) {
-            if (src->kind == NV_ITEM_SEPARATOR) {
-                nv_menu_add_separator(m);
-                continue;
-            }
-            Nv_Menu_Item *it = nv_menu_add(m, src->label, src->shortcut, src->cb, src->data);
-            it->kind = src->kind;
-            it->checked = src->checked;
-            it->id = src->id;
-            it->enabled = src->enabled;
-        }
+    nv_menu_add(m, _("Cu_t"), "Super+X", NULL, NULL);
+    nv_menu_add(m, _("_Copy"), "Super+C", NULL, NULL);
+    nv_menu_add(m, _("_Paste"), "Super+V", NULL, NULL);
+    nv_menu_add_separator(m);
+    nv_menu_add(m, _("Select _All"), "Super+A", m_select_all, NULL);
+    nv_menu_add(m, _("_Invert"), NULL, m_invert, NULL);
+}
+
+/* View: the window's way of showing its files */
+static void view_menu_show(void *data, Nv_Menu *m)
+{
+    (void)data;
+    nv_menu_clear(m);
+    Nv_Window *w = view_win();
+    nv_menu_add(m, _("New _Drawer..."), NULL, NULL, NULL);
+    nv_menu_add_separator(m);
+    Nv_Menu_Item *it = nv_menu_add_check(m, _("_List Mode"), w && w->view->list_mode(w->view_data),
+                                         w ? m_list_mode : NULL, NULL);
+    it->shortcut = strdup("Super+L");
+    nv_menu_add_separator(m);
+    Nv_Menu *sub = nv_menu_new(_("Sort By"));
+    static const char *const names[] = {N_("_Name"), N_("_Type"), N_("_Size"), N_("_Date")};
+    Nv_Sort cur = w ? w->view->sort(w->view_data) : NV_SORT_NAME;
+    for (int i = 0; i < 4; i++) {
+        it = nv_menu_add_check(sub, _(names[i]), w && (int)cur == i, w ? m_sort : NULL, NULL);
+        it->kind = NV_ITEM_RADIO;
+        it->id = i;
+        if (i == NV_SORT_NAME)
+            it->shortcut = strdup("Super+.");
     }
+    it = nv_menu_add_submenu(m, _("Sort _By"), sub);
+    it->enabled = w != NULL;
+    nv_menu_add_separator(m);
+    nv_menu_add_check(m, _("Show _All Files"), w && w->view->show_all(w->view_data), w ? m_show_all : NULL, NULL);
+    nv_menu_add(m, _("_Update"), NULL, m_update, NULL);
+}
+
+/* Icons: what is selected */
+static void icons_menu_show(void *data, Nv_Menu *m)
+{
+    (void)data;
+    nv_menu_clear(m);
+    bool sel = view_has_selection();
+    bool drive = !view_win() && nv_backdrop_any_selected(true);
+    nv_menu_add(m, _("_Information..."), "Super+I", sel ? m_information : NULL, NULL);
+    nv_menu_add_separator(m);
+    nv_menu_add(m, _("_Put Away"), NULL, NULL, NULL);
+    nv_menu_add(m, _("_Eject"), "Super+J", drive ? m_eject : NULL, NULL);
+    nv_menu_add_separator(m);
+    nv_menu_add(m, _("_Rename..."), "Super+R", NULL, NULL);
+    nv_menu_add(m, _("_Delete"), "Super+Delete", NULL, NULL);
+    nv_menu_add_separator(m);
+    nv_menu_add(m, _("Move to _Trashcan"), "Super+T", NULL, NULL);
+    nv_menu_add(m, _("Rest_ore"), "Super+Y", NULL, NULL);
+    nv_menu_add(m, _("E_mpty Trashcan"), NULL, NULL, NULL);
+    nv_menu_add_separator(m);
+    nv_menu_add(m, _("_Format..."), NULL, NULL, NULL);
+}
+
+/* Utilities */
+static void build_utilities_menu(Nv_Menu *m)
+{
+    nv_menu_add(m, _("_Exchange..."), "Super+H", NULL, NULL);
+    nv_menu_add(m, _("System _Monitor..."), NULL, NULL, NULL);
+    nv_menu_add_separator(m);
+    nv_menu_add(m, _("System _Log..."), NULL, NULL, NULL);
+    nv_menu_add_separator(m);
+    nv_menu_add(m, _("Format _Disk..."), NULL, NULL, NULL);
+    nv_menu_add(m, _("_Find..."), "Super+F", NULL, NULL);
 }
 
 static void m_theme(void *data, Nv_Menu_Item *it)
@@ -593,59 +768,73 @@ static Nv_Menu *themes_menu(void)
     return sub;
 }
 
-/* the Tools menu: the assigns as drawers to open, and the editor */
+/* Settings: the desktop's settings window (stage F); meanwhile the theme, the assigns */
+static void settings_menu_show(void *data, Nv_Menu *m)
+{
+    (void)data;
+    nv_menu_clear(m);
+    nv_menu_add(m, _("_Desktop..."), NULL, NULL, NULL);
+    nv_menu_add_submenu(m, _("_Theme"), themes_menu());
+    nv_menu_add(m, _("_Assigns..."), NULL, m_assigns, NULL);
+    nv_menu_add_separator(m);
+    nv_menu_add(m, _("_System..."), NULL, NULL, NULL);
+}
+
+/* Tools: the programs in Tools: (the user's own), run from here */
 static void tools_menu_show(void *data, Nv_Menu *m)
 {
     (void)data;
     nv_menu_clear(m);
-    nv_menu_add(m, _("_Assigns..."), "Super+A", m_assigns, NULL);
-    nv_menu_add(m, _("_Execute Command..."), "Super+E", m_execute, NULL);
-    nv_menu_add(m, _("New _Shell"), "Super+N", m_shell, NULL);
-    nv_menu_add_separator(m);
-    Nv_Menu *vols = nv_menu_new(_("Volumes"));
-    nirvana_assign_list l;
-    if (nirvana_assign_list_load(&l) >= 0) {
-        for (size_t i = 0; i < l.count; i++) {
-            char label[NIRVANA_NAME_MAX + 4];
-            snprintf(label, sizeof label, "%s:", l.items[i].name);
-            /* (the label doubles as the path to open: "Name:") */
-            nv_menu_add(vols, label, NULL, m_open_drawer, (void *)eina_stringshare_add(label));
+    char dir[PATH_MAX];
+    Eina_List *files = NULL;
+    if (nirvana_to_posix("Tools:", dir, sizeof dir) == 0)
+        files = ecore_file_ls(dir);
+    char *f;
+    EINA_LIST_FREE(files, f) {
+        char full[PATH_MAX * 2];
+        snprintf(full, sizeof full, "%s/%s", dir, f);
+        if (f[0] != '.' && (ecore_file_can_exec(full) || nv_is_desktop_file(full))) {
+            char label[256];
+            snprintf(label, sizeof label, "%s", f);
+            char *dot = strrchr(label, '.');
+            if (dot && !strcmp(dot, ".desktop"))
+                *dot = 0;
+            nv_menu_add(m, label, NULL, m_open_drawer, (void *)eina_stringshare_add(full));
         }
-        nirvana_assign_list_free(&l);
+        free(f);
     }
-    nv_menu_add_submenu(m, _("Open _Volume"), vols);
-    nv_menu_add_separator(m);
-    nv_menu_add_submenu(m, _("_Theme"), themes_menu());
+    if (!m->items)
+        nv_menu_add(m, _("(No tools in Tools:)"), NULL, NULL, NULL);
 }
 
 static void build_own_menus(void)
 {
-    Nv_Menu *m = nv_menu_new(NV_SCREEN_TITLE);
-    nv_menu_add(m, _("_Assigns..."), "Super+A", m_assigns, NULL);
-    nv_menu_add(m, _("_Execute Command..."), "Super+E", m_execute, NULL);
-    nv_menu_add(m, _("New _Shell"), "Super+N", m_shell, NULL);
-    nv_menu_add_separator(m);
-    nv_menu_add(m, _("_Update All"), NULL, m_update, NULL);
-    nv_menu_add_separator(m);
-    nv_menu_add(m, _("A_bout..."), "Super+?", m_about, NULL);
-    nv_menu_add(m, _("_Quit..."), "Super+Q", m_quit, NULL);
+    Nv_Menu *m = nv_menu_new("Nirvana");
+    build_main_menu(m);
     bar.own = eina_list_append(bar.own, m);
 
-    m = nv_menu_new(_("Window"));
-    m->about_to_show = window_menu_show;
-    window_menu_show(NULL, m);
+    m = nv_menu_new(_("Edit"));
+    m->about_to_show = edit_menu_show;
+    edit_menu_show(NULL, m);
+    bar.own = eina_list_append(bar.own, m);
+
+    m = nv_menu_new(_("View"));
+    m->about_to_show = view_menu_show;
+    view_menu_show(NULL, m);
     bar.own = eina_list_append(bar.own, m);
 
     m = nv_menu_new(_("Icons"));
-    nv_menu_add(m, _("_Open"), "Super+O", m_icons_open, NULL);
-    nv_menu_add_separator(m);
-    nv_menu_add(m, _("Select _All"), "Super+Shift+A", m_icons_all, NULL);
-    nv_menu_add(m, _("Select _None"), NULL, m_icons_none, NULL);
-    nv_menu_add_separator(m);
-    nv_menu_add(m, _("_Eject"), "Super+Y", m_icons_eject, NULL);
-    nv_menu_add_separator(m);
-    nv_menu_add(m, _("_Clean Up"), "Super+.", m_icons_cleanup, NULL);
-    nv_menu_add(m, _("_Snapshot"), NULL, m_icons_snapshot, NULL);
+    m->about_to_show = icons_menu_show;
+    icons_menu_show(NULL, m);
+    bar.own = eina_list_append(bar.own, m);
+
+    m = nv_menu_new(_("Utilities"));
+    build_utilities_menu(m);
+    bar.own = eina_list_append(bar.own, m);
+
+    m = nv_menu_new(_("Settings"));
+    m->about_to_show = settings_menu_show;
+    settings_menu_show(NULL, m);
     bar.own = eina_list_append(bar.own, m);
 
     m = nv_menu_new(_("Tools"));

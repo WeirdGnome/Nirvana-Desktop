@@ -12,6 +12,8 @@ typedef struct Nv_Menu_Host {
      * that window's canvas it goes */
     Evas_Object *(*panel_new)(void *data, int x, int y, int w, int h, int *ox, int *oy);
     void (*panel_del)(void *data, Evas_Object *host);
+    /* the area panels must fit in (NULL: the screen below the bar) */
+    void (*bounds)(void *data, int *x, int *y, int *w, int *h);
 } Nv_Menu_Host;
 
 typedef struct Nv_Menu_Session Nv_Menu_Session;
@@ -32,5 +34,7 @@ bool nv_menu_session_press(Nv_Menu_Session *s, int x, int y);
 bool nv_menu_session_release(Nv_Menu_Session *s, int x, int y, bool *closed);
 int nv_menu_session_key(Nv_Menu_Session *s, const char *key, const char *string);
 void nv_menu_session_select_first(Nv_Menu_Session *s);
+/* the panels put in a canvas layer (above a window's own objects) */
+void nv_menu_session_raise(Nv_Menu_Session *s, int layer);
 
 #endif

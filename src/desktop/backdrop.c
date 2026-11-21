@@ -71,6 +71,53 @@ static void places_load(void)
     fclose(f);
 }
 
+static void layout(bool all);
+
+static void places_write(void)
+{
+    char path[PATH_MAX], dir[PATH_MAX];
+    snprintf(dir, sizeof dir, "%s/.nirvana/Prefs", getenv("HOME") ? getenv("HOME") : "");
+    mkdir(dir, 0755);
+    places_path(path, sizeof path);
+    FILE *f = fopen(path, "w");
+    if (!f) {
+        nv_message(_("Snapshot"), strerror(errno));
+        return;
+    }
+    Eina_Iterator *it = eina_hash_iterator_tuple_new(bd.places);
+    Eina_Hash_Tuple *t;
+    EINA_ITERATOR_FOREACH(it, t) {
+        const int *xy = t->data;
+        fprintf(f, "%s %d %d\n", (const char *)t->key, xy[0], xy[1]);
+    }
+    eina_iterator_free(it);
+    fclose(f);
+}
+
+/* the selected icons' places kept (snapshot) or forgotten (unsnapshot) */
+static void snapshot_selected(bool keep)
+{
+    Eina_List *l;
+    Icon *ic;
+    EINA_LIST_FOREACH(bd.icons, l, ic) {
+        if (!ic->selected)
+            continue;
+        if (keep) {
+            int *xy = malloc(2 * sizeof(int));
+            xy[0] = ic->x;
+            xy[1] = ic->y;
+            eina_hash_set(bd.places, ic->name, xy);
+            ic->placed = true;
+        } else {
+            eina_hash_del_by_key(bd.places, ic->name);
+            ic->placed = false;
+        }
+    }
+    places_write();
+    if (!keep)
+        layout(false);
+}
+
 void nv_backdrop_snapshot(void)
 {
     char path[PATH_MAX], dir[PATH_MAX];
@@ -184,6 +231,50 @@ Eina_List *nv_backdrop_selected(void)
     return out;
 }
 
+void nv_backdrop_invert(void)
+{
+    Eina_List *l;
+    Icon *ic;
+    EINA_LIST_FOREACH(bd.icons, l, ic)
+        icon_select(ic, !ic->selected);
+}
+
+bool nv_backdrop_any_selected(bool drives)
+{
+    Eina_List *l;
+    Icon *ic;
+    EINA_LIST_FOREACH(bd.icons, l, ic)
+        if (ic->selected && (!drives || ic->drive))
+            return true;
+    return false;
+}
+
+/* the selected icons' volumes described: where they are, how full */
+void nv_backdrop_information(void)
+{
+    Eina_List *l;
+    Icon *ic;
+    EINA_LIST_FOREACH(bd.icons, l, ic) {
+        if (!ic->selected)
+            continue;
+        char posix[PATH_MAX] = "";
+        const char *label = ic->name;
+        if (ic->drive) {
+            Nv_Drive *d = nv_drive_find(ic->drive);
+            if (d) {
+                label = d->label;
+                snprintf(posix, sizeof posix, "%s", d->mount ? d->mount : "");
+            }
+        } else {
+            char vol[NIRVANA_NAME_MAX + 2];
+            snprintf(vol, sizeof vol, "%s:", ic->name);
+            if (nirvana_to_posix(vol, posix, sizeof posix) < 0)
+                posix[0] = 0;
+        }
+        nv_volume_information(label, posix);
+    }
+}
+
 void nv_backdrop_eject_selected(void)
 {
     Eina_List *l;
@@ -200,6 +291,76 @@ static void take_focus(void);
 static void canvas_move(void *data, Evas *e, Evas_Object *o, void *event);
 static void canvas_up(void *data, Evas *e, Evas_Object *o, void *event);
 
+/* ---------------------------------------------------------------- an icon's context menu */
+
+static Nv_Menu *cmenu;   /* the one shown (made again for each) */
+static Icon *cmenu_icon; /* the icon it was asked on */
+
+/* where a volume's icon leads (POSIX), or false (a drive not mounted) */
+static bool icon_dir(Icon *ic, char *out, size_t len)
+{
+    if (ic->drive) {
+        Nv_Drive *d = nv_drive_find(ic->drive);
+        if (!d || !d->mount)
+            return false;
+        snprintf(out, len, "%s", d->mount);
+        return true;
+    }
+    char vol[NIRVANA_NAME_MAX + 2];
+    snprintf(vol, sizeof vol, "%s:", ic->name);
+    return nirvana_to_posix(vol, out, len) == 0;
+}
+
+static void cm_open(void *d, Nv_Menu_Item *it) { (void)d; (void)it; if (cmenu_icon) open_icon(cmenu_icon); }
+static void cm_shell(void *d, Nv_Menu_Item *it)
+{
+    (void)d;
+    (void)it;
+    char dir[PATH_MAX];
+    if (cmenu_icon && icon_dir(cmenu_icon, dir, sizeof dir))
+        nv_new_shell_at(dir);
+}
+static void cm_info(void *d, Nv_Menu_Item *it) { (void)d; (void)it; nv_backdrop_information(); }
+static void cm_snapshot(void *d, Nv_Menu_Item *it) { (void)d; (void)it; snapshot_selected(true); }
+static void cm_unsnapshot(void *d, Nv_Menu_Item *it) { (void)d; (void)it; snapshot_selected(false); }
+static void cm_eject(void *d, Nv_Menu_Item *it) { (void)d; (void)it; nv_backdrop_eject_selected(); }
+
+static void icon_context_menu(Icon *ic, int x, int y)
+{
+    if (cmenu)
+        nv_menu_free(cmenu);
+    cmenu_icon = ic;
+    int n = 0;
+    bool any_placed = false;
+    Eina_List *l;
+    Icon *o;
+    EINA_LIST_FOREACH(bd.icons, l, o)
+        if (o->selected) {
+            n++;
+            any_placed |= o->placed;
+        }
+    char dir[PATH_MAX];
+    bool has_dir = icon_dir(ic, dir, sizeof dir);
+    cmenu = nv_menu_new(n > 1 ? _("Icons") : _("Volume"));
+    nv_menu_add(cmenu, _("_Open..."), NULL, cm_open, NULL);
+    nv_menu_add(cmenu, _("Open _Shell..."), NULL, has_dir ? cm_shell : NULL, NULL);
+    nv_menu_add(cmenu, _("_Find..."), NULL, NULL, NULL);
+    nv_menu_add_separator(cmenu);
+    nv_menu_add(cmenu, _("_Information..."), "Super+I", cm_info, NULL);
+    nv_menu_add_separator(cmenu);
+    nv_menu_add(cmenu, _("Snapshot"), NULL, cm_snapshot, NULL);
+    nv_menu_add(cmenu, _("UnSnapshot"), NULL, any_placed ? cm_unsnapshot : NULL, NULL);
+    nv_menu_add_separator(cmenu);
+    nv_menu_add(cmenu, _("_Rename..."), "Super+R", NULL, NULL);
+    nv_menu_add(cmenu, _("_Put Away"), NULL, NULL, NULL);
+    nv_menu_add(cmenu, _("_Format..."), NULL, NULL, NULL);
+    if (ic->drive)
+        nv_menu_add(cmenu, _("_Eject"), "Super+J", cm_eject, NULL);
+    nv_menu_add_separator(cmenu);
+    nv_menu_add(cmenu, _("Paste _Into"), NULL, NULL, NULL);
+    nv_screenbar_context(cmenu, x, y);
+}
+
 static void icon_down(void *data, Evas *e, Evas_Object *o, void *event)
 {
     (void)e;
@@ -208,7 +369,12 @@ static void icon_down(void *data, Evas *e, Evas_Object *o, void *event)
     Evas_Event_Mouse_Down *ev = event;
     take_focus();
     if (ev->button == 3) {
-        nv_screenbar_hold_begin(ev->canvas.x, ev->canvas.y);
+        /* the icon's context menu, for it (and the others selected with it) */
+        if (!ic->selected) {
+            nv_backdrop_select_all(false);
+            icon_select(ic, true);
+        }
+        icon_context_menu(ic, ev->canvas.x, ev->canvas.y);
         return;
     }
     if (ev->button != 1)
@@ -254,6 +420,7 @@ void nv_backdrop_reload(void)
         free(ic);
     }
     bd.press_icon = NULL;
+    cmenu_icon = NULL;
     places_load();
     nirvana_assign_list list;
     if (nirvana_assign_list_load(&list) < 0)
@@ -341,6 +508,7 @@ static Eina_Bool keyboard_on_demand(void *data)
 static void take_focus(void)
 {
     nv_global_menu_desktop_focus(true);
+    nv.view_window = NULL; /* (the screen's menus act on the desktop now) */
     nv_layer_keyboard_mode(bd.win, 1);
     ecore_timer_add(0.2, keyboard_on_demand, NULL);
 }

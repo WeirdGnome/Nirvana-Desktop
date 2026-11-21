@@ -58,23 +58,25 @@ nirvana-desktop [--theme NAME]       the desktop alone, in a running labwc
 
 * **The screen bar** "Nirvana Screen": a layer surface (wlr-layer-shell, top layer) that
   keeps its strip of the screen. Menu titles
-  (Nirvana Screen, Window, Icons, Tools), the clock, the depth gadget. The menus drop
+  (Nirvana, Edit, View, Icons, Utilities, Settings, Tools - Ambient's), the clock, the
+  depth gadget. The menus drop
   down on a click (or held with the right button: releasing over an item chooses it),
   follow the keyboard (arrows, Return, Escape, underlined letters) and have Super
   shortcuts. While a menu is open the bar's surface grows over the screen.
 * **The backdrop**: a layer surface of the background layer with a volume icon for each
-  assign with `DESKTOP=1`; select, drag, rubber band, double click to open, Snapshot and
-  Clean Up (Icons menu). The icons follow the assigns (SIGUSR1 from `assign`).
+  assign with `DESKTOP=1` and each removable drive; select, drag, rubber band, double
+  click to open; the right button on an icon gives its context menu (Open, Open Shell,
+  Information, Snapshot, UnSnapshot, Eject...). The icons follow the assigns (SIGUSR1 from `assign`).
 * **Window gadgets** on the desktop's own windows: close at the left; prefs, jump,
   iconify, zoom and depth at the right; a resize gadget; moving and resizing go through
   the display server, so they work on Wayland too.
-* **The Assigns editor** (Nirvana Screen -> Assigns...): the assigns with New, Clone,
+* **The Assigns editor** (Settings -> Assigns...): the assigns with New, Clone,
   Delete; a name, "Show volume icon on Desktop", the paths in search order with Add Path
   (file selector), Remove Path, Move Up/Down, Open in Lister; Use, Save (also to
   `~/.nirvana/Startup-Sequence`), Cancel.
 * **The lister** (a first version; stage 4 makes it complete): a drawer as icons, read in
   a thread, AppImage icons read without running them, `#?` patterns in the filter.
-* **Themes** (Tools -> Theme, kept in `~/.nirvana/Prefs/desktop.conf`; the desktop
+* **Themes** (Settings -> Theme, kept in `~/.nirvana/Prefs/desktop.conf`; the desktop
   starts again in the one chosen): Ambient (the default: soft gradients), Classic 1.3
   (four colours, sharp pixels), Classic 2.1 (grey with raised edges), Classic 3.1 (eight
   colours, a blue-grey backdrop), Classic 4.1 (smooth greys, gradient title bars). See

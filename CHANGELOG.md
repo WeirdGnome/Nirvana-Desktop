@@ -12,12 +12,24 @@
   gradient title bars).
 - Removable drives on the desktop (UDisks2 on the system bus): USB sticks, memory cards
   and discs get a volume icon named by their label; opening one mounts it and shows it
-  in a lister, Icons -> Eject (Super+Y) unmounts it and ejects the medium or powers the
+  in a lister, Icons -> Eject (Super+J) unmounts it and ejects the medium or powers the
   drive off.
-- Tools -> Theme: the themes found in `Themes:`, the one in use checked; a choice is
+- Settings -> Theme: the themes found in `Themes:`, the one in use checked; a choice is
   kept in `~/.nirvana/Prefs/desktop.conf` and the desktop starts again in it.
 
 ### Changed
+- The menus as Ambient's (`docs/AMBIENT-PARITY.md` follows how far Nirvana is): the
+  screen's menus are Nirvana (My Computer, Execute Command, New Shell, About, About the
+  System, Quit), Edit (Cut, Copy, Paste, Select All, Invert), View (New Drawer, List
+  Mode, Sort By, Show All Files, Update), Icons (Information, Put Away, Eject, Rename,
+  Delete, Trashcan, Format), Utilities, Settings (Theme, Assigns) and Tools (the
+  programs in `Tools:`); Edit, View and Icons act on the lister last used, or on the
+  desktop. What is not done yet is shown disabled. The Window menu is gone.
+- Context menus: the right button on an icon (on the desktop, in a lister) or on a
+  lister's background gives Ambient's context menu at the pointer - held and let go
+  over an item, or clicked. A lister's spatial or browsing way is set with
+  `lister=browse` in `~/.nirvana/Prefs/desktop.conf`.
+- Disabled menu items are no longer lit under the pointer.
 - The themes share their groups (`themes/common.edc`); a theme gives fonts, sizes,
   colour classes and images. `tools/make-theme-images.py` draws every theme's images.
 - The resize gadget shows itself pressed.

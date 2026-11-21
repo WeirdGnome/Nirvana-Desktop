@@ -12,11 +12,23 @@
   (gładkie szarości, gradientowe belki tytułowe).
 - Wymienne dyski na pulpicie (UDisks2 na szynie systemowej): pendrive'y, karty pamięci i
   płyty dostają ikonę woluminu z ich etykietą; otwarcie montuje i pokazuje w listerze,
-  Icons -> Eject (Super+Y) odmontowuje i wysuwa nośnik albo wyłącza napęd.
-- Tools -> Theme: motywy znalezione w `Themes:`, używany zaznaczony; wybór jest
+  Icons -> Eject (Super+J) odmontowuje i wysuwa nośnik albo wyłącza napęd.
+- Settings -> Theme: motywy znalezione w `Themes:`, używany zaznaczony; wybór jest
   zapisywany w `~/.nirvana/Prefs/desktop.conf`, a pulpit uruchamia się w nim od nowa.
 
 ### Zmienione
+- Menu jak w Ambiencie (`docs/AMBIENT-PARITY.md` pokazuje, jak daleko jest Nirvana): menu
+  ekranu to Nirvana (My Computer, Execute Command, New Shell, About, About the System,
+  Quit), Edit (Cut, Copy, Paste, Select All, Invert), View (New Drawer, List Mode, Sort
+  By, Show All Files, Update), Icons (Information, Put Away, Eject, Rename, Delete,
+  kosz, Format), Utilities, Settings (Theme, Assigns) i Tools (programy z `Tools:`);
+  Edit, View i Icons działają na ostatnio używanym listerze albo na pulpicie. To, czego
+  jeszcze nie ma, jest wyszarzone. Menu Window zniknęło.
+- Menu kontekstowe: prawy przycisk na ikonie (na pulpicie, w listerze) albo na tle
+  listera daje menu kontekstowe Ambienta przy wskaźniku - przytrzymane i puszczone nad
+  pozycją albo kliknięte. Tryb listera (przestrzenny albo przeglądanie) ustawia
+  `lister=browse` w `~/.nirvana/Prefs/desktop.conf`.
+- Wyszarzone pozycje menu nie podświetlają się już pod wskaźnikiem.
 - Motywy mają wspólne grupy (`themes/common.edc`); motyw daje czcionki, rozmiary, klasy
   kolorów i obrazki. `tools/make-theme-images.py` rysuje obrazki wszystkich motywów.
 - Gadżet zmiany rozmiaru pokazuje wciśnięcie.

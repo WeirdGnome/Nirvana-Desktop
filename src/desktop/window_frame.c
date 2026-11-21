@@ -41,7 +41,7 @@ static void set_active(Nv_Window *w, bool on)
         eina_list_free(kids);
     }
     if (on)
-        nv.active = w;
+        nv.active = nv.view_window = w;
     else if (nv.active == w)
         nv.active = NULL;
 }
@@ -200,6 +200,8 @@ static void on_del(void *data, Evas *e, Evas_Object *o, void *event)
     nv.windows = eina_list_remove(nv.windows, w);
     if (nv.active == w)
         nv.active = NULL;
+    if (nv.view_window == w)
+        nv.view_window = NULL;
     if (w->window_menu)
         nv_menu_free(w->window_menu);
     free(w->title);

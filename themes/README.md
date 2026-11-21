@@ -4,7 +4,7 @@
 A theme is one Edje file (`NAME.edj`, compiled from `NAME.edc` with the images of
 `images/NAME/`) in `Themes:` (`~/.nirvana/Themes`, `/opt/nirvana/Themes`). The desktop
 uses the one named in `~/.nirvana/Prefs/desktop.conf` (`theme=NAME`), else `ambient`;
-`nirvana-desktop --theme NAME` overrides both. Tools -> Theme lists the themes found and
+`nirvana-desktop --theme NAME` overrides both. Settings -> Theme lists the themes found and
 writes the choice; the desktop starts again in it.
 
 | Theme | Look |
