@@ -6,6 +6,7 @@
 #     sudo ./setup-env.sh --system      /opt/nirvana/{C,Libs,Themes,S}, the /nirvana link
 #     ./setup-env.sh --user             ~/.nirvana, the Startup-Sequence, GTK's settings
 #     ./setup-env.sh                    both (the system part only when run as root)
+#     ./setup-env.sh --system --destdir D  the system part made under D (for a package)
 #
 # Nothing is overwritten that is already there (a Startup-Sequence you changed is kept);
 # run again any time.
@@ -17,60 +18,72 @@ HERE=$(cd "$(dirname "$0")" && pwd)
 
 do_system=0
 do_user=0
-case "${1:-}" in
-    --system) do_system=1 ;;
-    --user) do_user=1 ;;
-    "") do_user=1; [ "$(id -u)" -eq 0 ] && do_system=1 ;;
-    -h|--help) sed -n '3,12p' "$0"; exit 0 ;;
-    *) echo "setup-env.sh: unknown option $1" >&2; exit 1 ;;
-esac
+R=""
+while [ $# -gt 0 ]; do
+    case "$1" in
+        --system) do_system=1 ;;
+        --user) do_user=1 ;;
+        --destdir) R=${2%/}; shift ;;
+        --destdir=*) R=${1#--destdir=}; R=${R%/} ;;
+        -h|--help) sed -n '3,14p' "$0"; exit 0 ;;
+        *) echo "setup-env.sh: unknown option $1" >&2; exit 1 ;;
+    esac
+    shift
+done
+if [ $do_system -eq 0 ] && [ $do_user -eq 0 ]; then
+    do_user=1
+    [ "$(id -u)" -eq 0 ] && do_system=1
+fi
 
 say() { printf '%s\n' "$*"; }
 
+# R: the system part put under a directory (a package being made), not in the system
 if [ $do_system -eq 1 ]; then
-    if [ "$(id -u)" -ne 0 ]; then
+    if [ -z "$R" ] && [ "$(id -u)" -ne 0 ]; then
         echo "setup-env.sh: --system needs root" >&2
         exit 1
     fi
     for d in C Libs Themes S Locale; do
-        mkdir -p "$NIRVANA/$d"
+        mkdir -p "$R$NIRVANA/$d"
     done
-    chmod 755 "$NIRVANA" "$NIRVANA"/*
-    if [ ! -e /nirvana ]; then
-        ln -s "$NIRVANA" /nirvana
+    chmod 755 "$R$NIRVANA" "$R$NIRVANA"/*
+    if [ ! -e "$R/nirvana" ] && [ ! -L "$R/nirvana" ]; then
+        ln -s "$NIRVANA" "$R/nirvana"
         say "made /nirvana -> $NIRVANA"
-    elif [ -L /nirvana ]; then
-        say "/nirvana is there already ($(readlink /nirvana))"
+    elif [ -L "$R/nirvana" ]; then
+        say "/nirvana is there already ($(readlink "$R/nirvana"))"
     else
         say "warning: /nirvana exists and is not a link; left alone" >&2
     fi
     # the libraries of Nirvana found by the dynamic linker
-    if [ -d /etc/ld.so.conf.d ] && [ ! -e /etc/ld.so.conf.d/nirvana.conf ]; then
-        echo "$NIRVANA/Libs" > /etc/ld.so.conf.d/nirvana.conf
-        ldconfig 2>/dev/null || true
+    if [ -n "$R" ] || { [ -d /etc/ld.so.conf.d ] && [ ! -e /etc/ld.so.conf.d/nirvana.conf ]; }; then
+        mkdir -p "$R/etc/ld.so.conf.d"
+        echo "$NIRVANA/Libs" > "$R/etc/ld.so.conf.d/nirvana.conf"
+        chmod 644 "$R/etc/ld.so.conf.d/nirvana.conf"
+        [ -n "$R" ] || ldconfig 2>/dev/null || true
     fi
-    if [ ! -e "$NIRVANA/S/Startup-Sequence" ] && [ -f "$HERE/data/Startup-Sequence" ]; then
-        install -m 755 "$HERE/data/Startup-Sequence" "$NIRVANA/S/Startup-Sequence"
+    if [ ! -e "$R$NIRVANA/S/Startup-Sequence" ] && [ -f "$HERE/data/Startup-Sequence" ]; then
+        install -m 755 "$HERE/data/Startup-Sequence" "$R$NIRVANA/S/Startup-Sequence"
     fi
     # the sessions in the display managers' lists (made again on every run: an update
     # gets the current entries)
-    if [ -f "$NIRVANA/S/nirvana.desktop" ]; then
-        mkdir -p /usr/share/wayland-sessions
-        sed "s|/opt/nirvana|$NIRVANA|g" "$NIRVANA/S/nirvana.desktop" > /usr/share/wayland-sessions/nirvana.desktop
-        chmod 644 /usr/share/wayland-sessions/nirvana.desktop
+    if [ -f "$R$NIRVANA/S/nirvana.desktop" ]; then
+        mkdir -p "$R/usr/share/wayland-sessions"
+        sed "s|/opt/nirvana|$NIRVANA|g" "$R$NIRVANA/S/nirvana.desktop" > "$R/usr/share/wayland-sessions/nirvana.desktop"
+        chmod 644 "$R/usr/share/wayland-sessions/nirvana.desktop"
         say "made /usr/share/wayland-sessions/nirvana.desktop"
     else
         say "warning: $NIRVANA/S/nirvana.desktop is missing (is Nirvana installed?)" >&2
     fi
     # (the X11 session only where there is an X server: Rocky Linux 10 has none)
-    if [ -f "$NIRVANA/S/nirvana-x11.desktop" ] &&
+    if [ -f "$R$NIRVANA/S/nirvana-x11.desktop" ] &&
         { command -v Xorg > /dev/null || [ -x /usr/libexec/Xorg ] || [ -x /usr/lib/xorg/Xorg ]; }; then
-        mkdir -p /usr/share/xsessions
-        sed "s|/opt/nirvana|$NIRVANA|g" "$NIRVANA/S/nirvana-x11.desktop" > /usr/share/xsessions/nirvana-x11.desktop
-        chmod 644 /usr/share/xsessions/nirvana-x11.desktop
+        mkdir -p "$R/usr/share/xsessions"
+        sed "s|/opt/nirvana|$NIRVANA|g" "$R$NIRVANA/S/nirvana-x11.desktop" > "$R/usr/share/xsessions/nirvana-x11.desktop"
+        chmod 644 "$R/usr/share/xsessions/nirvana-x11.desktop"
         say "made /usr/share/xsessions/nirvana-x11.desktop"
     fi
-    say "system part ready in $NIRVANA"
+    say "system part ready in $R$NIRVANA"
 fi
 
 if [ $do_user -eq 1 ]; then

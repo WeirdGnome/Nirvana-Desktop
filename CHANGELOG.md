@@ -15,10 +15,13 @@
   (Open, Information, Copy Path, Extract Icon... for AppImages), dragging files out.
 - `install.sh` for Rocky Linux 10 (and AlmaLinux 10, dnf): `--deps` turns on EPEL and
   CRB and installs the packages; EFL 1.28.1 and labwc 0.9.3 (with wlroots 0.19.2), which
-  those systems do not package, are built from checked release tarballs into
-  `/opt/nirvana/Libs`. `--uninstall` removes them too.
+  those systems do not package, are built from checked release tarballs and packaged. `--uninstall` removes them too.
 
 ### Changed
+- `install.sh` makes packages (.deb or .rpm: `nirvana-desktop`, `nirvana-libdwarfs`,
+  and `nirvana-efl`, `nirvana-labwc` where needed) and installs them with apt or dnf
+  instead of copying files into the system; `--uninstall` removes the packages (and
+  the files an older install.sh copied in), `--no-install` only makes them.
 - The X11 session is offered to the login manager only where there is an X server.
 - The menu titles show while the right mouse button is held - on the bar or on the
   desktop - as on the classic desktops; the bar shows the screen's or the program's

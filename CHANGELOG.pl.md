@@ -15,10 +15,14 @@
   Information, Copy Path, Extract Icon... dla AppImage), przeciąganie plików.
 - `install.sh` dla Rocky Linux 10 (i AlmaLinux 10, dnf): `--deps` włącza EPEL i CRB i
   instaluje pakiety; EFL 1.28.1 i labwc 0.9.3 (z wlroots 0.19.2), których te systemy nie
-  mają w pakietach, są budowane ze sprawdzonych tarballi wydań do `/opt/nirvana/Libs`.
+  mają w pakietach, są budowane ze sprawdzonych tarballi wydań i pakowane.
   `--uninstall` usuwa także je.
 
 ### Zmienione
+- `install.sh` robi pakiety (.deb lub .rpm: `nirvana-desktop`, `nirvana-libdwarfs`, a
+  gdzie trzeba także `nirvana-efl`, `nirvana-labwc`) i instaluje je przez apt lub dnf,
+  zamiast kopiować pliki do systemu; `--uninstall` usuwa pakiety (i pliki skopiowane
+  przez starszy install.sh), `--no-install` tylko je robi.
 - Sesja X11 trafia do menedżera logowania tylko tam, gdzie jest serwer X.
 - Tytuły menu pokazują się, gdy trzymany jest prawy przycisk myszy - na pasku lub na
   pulpicie - jak na klasycznych pulpitach; poza tym pasek pokazuje tytuł ekranu lub

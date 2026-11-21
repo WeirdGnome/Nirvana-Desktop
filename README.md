@@ -131,15 +131,24 @@ appimage-info Some.AppImage [--icon out.png | --desktop | --extract PATH OUT]
 
 ## Building
 
-The short way: `./install.sh` (`./install.sh --deps` installs the packages first,
-`./install.sh --uninstall` removes it again). It knows Debian, Devuan and Ubuntu (apt)
-and Rocky Linux 10, AlmaLinux 10 and their kin (dnf).
+The short way: `./install.sh` (`./install.sh --deps` installs the build's packages
+first, `./install.sh --uninstall` removes it again). It knows Debian, Devuan and Ubuntu
+(apt) and Rocky Linux 10, AlmaLinux 10 and their kin (dnf).
+
+`install.sh` copies nothing into the system by hand: it makes packages - `.deb` or
+`.rpm` - and installs them with apt or dnf, so the package manager knows every file and
+`apt remove` / `dnf remove` takes them all away. They are kept in
+`~/.cache/nirvana-desktop/packages` (`--no-install` only makes them):
+
+* `nirvana-desktop` - the desktop, its commands, themes, sessions, `/nirvana`;
+* `nirvana-libdwarfs` - libdwarfs, for DwarFS AppImages;
+* `nirvana-efl`, `nirvana-labwc` - EFL and labwc, only where the system has none.
 
 **Rocky Linux 10**: neither EFL nor labwc is packaged there (not in EPEL either), so
 `./install.sh --deps` turns on EPEL and CRB, installs what is packaged, and builds
 EFL 1.28.1 and labwc 0.9.3 (with wlroots 0.19.2 inside it) from their release
-tarballs, checked against their SHA-256, into `/opt/nirvana/Libs/efl` and
-`/opt/nirvana/Libs/labwc` - once; EFL takes from a quarter to an hour. What wlroots needs
+tarballs, checked against their SHA-256, as the packages `nirvana-efl` and
+`nirvana-labwc` (in `/opt/nirvana/Libs`) - once; EFL takes from a quarter to an hour. What wlroots needs
 and the system lacks, meson fetches with git. Rocky Linux 10 has no X server, so only
 the Wayland session is offered (GDM lists it). Without a network, put the tarballs the
 script names in `~/.cache/nirvana-desktop`.

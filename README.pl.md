@@ -116,14 +116,23 @@ appimage-info Coś.AppImage [--icon out.png | --desktop | --extract ŚCIEŻKA WY
 
 ## Budowanie
 
-Najprościej: `./install.sh` (`./install.sh --deps` najpierw instaluje pakiety,
-`./install.sh --uninstall` usuwa instalację). Zna Debiana, Devuana i Ubuntu (apt) oraz
-Rocky Linux 10, AlmaLinux 10 i pokrewne (dnf).
+Najprościej: `./install.sh` (`./install.sh --deps` najpierw instaluje pakiety potrzebne
+do budowania, `./install.sh --uninstall` usuwa instalację). Zna Debiana, Devuana i Ubuntu
+(apt) oraz Rocky Linux 10, AlmaLinux 10 i pokrewne (dnf).
+
+`install.sh` niczego nie kopiuje do systemu ręcznie: robi pakiety - `.deb` albo `.rpm` -
+i instaluje je przez apt lub dnf, więc menedżer pakietów zna każdy plik, a
+`apt remove` / `dnf remove` usuwa wszystko. Pakiety zostają w
+`~/.cache/nirvana-desktop/packages` (`--no-install` tylko je robi):
+
+* `nirvana-desktop` - pulpit, jego polecenia, motywy, sesje, `/nirvana`;
+* `nirvana-libdwarfs` - libdwarfs, dla AppImage z DwarFS;
+* `nirvana-efl`, `nirvana-labwc` - EFL i labwc, tylko tam, gdzie system ich nie ma.
 
 **Rocky Linux 10**: nie ma tam w pakietach ani EFL, ani labwc (w EPEL też nie), więc
 `./install.sh --deps` włącza EPEL i CRB, instaluje to, co jest w pakietach, a EFL 1.28.1
 i labwc 0.9.3 (z wbudowanym wlroots 0.19.2) buduje z tarballi wydań, sprawdzonych
-SHA-256, do `/opt/nirvana/Libs/efl` i `/opt/nirvana/Libs/labwc` - jeden raz; EFL buduje
+SHA-256, jako pakiety `nirvana-efl` i `nirvana-labwc` (w `/opt/nirvana/Libs`) - jeden raz; EFL buduje
 się od kwadransa do godziny. Czego wlroots potrzebuje, a system nie ma, meson pobiera
 gitem. Rocky Linux 10 nie ma serwera X, więc jest tylko sesja Wayland (GDM ją pokazuje).
 Bez sieci włóż tarballe, które skrypt wymienia, do `~/.cache/nirvana-desktop`.
