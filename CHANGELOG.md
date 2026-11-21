@@ -13,8 +13,13 @@
 - The lister: views as icons or a list, sorting by name, date, size or type, browser
   mode, a location field, archives browsed as drawers (libarchive), an item menu
   (Open, Information, Copy Path, Extract Icon... for AppImages), dragging files out.
+- `install.sh` for Rocky Linux 10 (and AlmaLinux 10, dnf): `--deps` turns on EPEL and
+  CRB and installs the packages; EFL 1.28.1 and labwc 0.9.3 (with wlroots 0.19.2), which
+  those systems do not package, are built from checked release tarballs into
+  `/opt/nirvana/Libs`. `--uninstall` removes them too.
 
 ### Changed
+- The X11 session is offered to the login manager only where there is an X server.
 - The menu titles show while the right mouse button is held - on the bar or on the
   desktop - as on the classic desktops; the bar shows the screen's or the program's
   title otherwise (so "Nirvana Screen" is no longer there twice). Moving onto a title

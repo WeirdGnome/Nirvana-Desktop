@@ -132,7 +132,19 @@ appimage-info Some.AppImage [--icon out.png | --desktop | --extract PATH OUT]
 ## Building
 
 The short way: `./install.sh` (`./install.sh --deps` installs the packages first,
-`./install.sh --uninstall` removes it again). By hand:
+`./install.sh --uninstall` removes it again). It knows Debian, Devuan and Ubuntu (apt)
+and Rocky Linux 10, AlmaLinux 10 and their kin (dnf).
+
+**Rocky Linux 10**: neither EFL nor labwc is packaged there (not in EPEL either), so
+`./install.sh --deps` turns on EPEL and CRB, installs what is packaged, and builds
+EFL 1.28.1 and labwc 0.9.3 (with wlroots 0.19.2 inside it) from their release
+tarballs, checked against their SHA-256, into `/opt/nirvana/Libs/efl` and
+`/opt/nirvana/Libs/labwc` - once; EFL takes from a quarter to an hour. What wlroots needs
+and the system lacks, meson fetches with git. Rocky Linux 10 has no X server, so only
+the Wayland session is offered (GDM lists it). Without a network, put the tarballs the
+script names in `~/.cache/nirvana-desktop`.
+
+By hand (Debian):
 
 ```
 sudo apt install meson ninja-build pkg-config libarchive-dev zlib1g-dev liblzma-dev \

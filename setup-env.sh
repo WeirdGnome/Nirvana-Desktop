@@ -62,7 +62,9 @@ if [ $do_system -eq 1 ]; then
     else
         say "warning: $NIRVANA/S/nirvana.desktop is missing (is Nirvana installed?)" >&2
     fi
-    if [ -f "$NIRVANA/S/nirvana-x11.desktop" ]; then
+    # (the X11 session only where there is an X server: Rocky Linux 10 has none)
+    if [ -f "$NIRVANA/S/nirvana-x11.desktop" ] &&
+        { command -v Xorg > /dev/null || [ -x /usr/libexec/Xorg ] || [ -x /usr/lib/xorg/Xorg ]; }; then
         mkdir -p /usr/share/xsessions
         sed "s|/opt/nirvana|$NIRVANA|g" "$NIRVANA/S/nirvana-x11.desktop" > /usr/share/xsessions/nirvana-x11.desktop
         chmod 644 /usr/share/xsessions/nirvana-x11.desktop

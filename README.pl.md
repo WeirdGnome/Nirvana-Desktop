@@ -117,7 +117,18 @@ appimage-info Coś.AppImage [--icon out.png | --desktop | --extract ŚCIEŻKA WY
 ## Budowanie
 
 Najprościej: `./install.sh` (`./install.sh --deps` najpierw instaluje pakiety,
-`./install.sh --uninstall` usuwa instalację). Ręcznie:
+`./install.sh --uninstall` usuwa instalację). Zna Debiana, Devuana i Ubuntu (apt) oraz
+Rocky Linux 10, AlmaLinux 10 i pokrewne (dnf).
+
+**Rocky Linux 10**: nie ma tam w pakietach ani EFL, ani labwc (w EPEL też nie), więc
+`./install.sh --deps` włącza EPEL i CRB, instaluje to, co jest w pakietach, a EFL 1.28.1
+i labwc 0.9.3 (z wbudowanym wlroots 0.19.2) buduje z tarballi wydań, sprawdzonych
+SHA-256, do `/opt/nirvana/Libs/efl` i `/opt/nirvana/Libs/labwc` - jeden raz; EFL buduje
+się od kwadransa do godziny. Czego wlroots potrzebuje, a system nie ma, meson pobiera
+gitem. Rocky Linux 10 nie ma serwera X, więc jest tylko sesja Wayland (GDM ją pokazuje).
+Bez sieci włóż tarballe, które skrypt wymienia, do `~/.cache/nirvana-desktop`.
+
+Ręcznie (Debian):
 
 ```
 sudo apt install meson ninja-build pkg-config libarchive-dev zlib1g-dev liblzma-dev \
