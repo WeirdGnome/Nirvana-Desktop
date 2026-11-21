@@ -14,6 +14,8 @@
  */
 #include "desktop.h"
 
+#include <Ecore_File.h>
+
 #include <errno.h>
 #include <limits.h>
 #include <string.h>
@@ -23,6 +25,7 @@
 typedef struct Icon {
     char name[NIRVANA_NAME_MAX];
     char *drive;       /* a removable drive's UDisks2 object, else NULL (an assign) */
+    bool trash;        /* the trashcan */
     Evas_Object *obj;
     int x, y;          /* its place on the backdrop */
     bool selected;
@@ -37,6 +40,7 @@ static struct {
     int press_x, press_y;
     bool dragging, banding;
     Eina_Hash *places; /* name -> "x y" */
+    Ecore_File_Monitor *trash_monitor;
 } bd;
 
 #define ICON_W 88
@@ -201,6 +205,14 @@ void nv_backdrop_clean_up(void)
 
 static void open_icon(Icon *ic)
 {
+    if (ic->trash) {
+        char t[PATH_MAX], f[PATH_MAX + 8];
+        nv_trash_dir(t, sizeof t);
+        snprintf(f, sizeof f, "%s/files", t);
+        ecore_file_mkpath(f);
+        nv_lister_open(f);
+        return;
+    }
     if (ic->drive) {
         Nv_Drive *d = nv_drive_find(ic->drive);
         if (d)
@@ -255,7 +267,7 @@ void nv_backdrop_information(void)
     Eina_List *l;
     Icon *ic;
     EINA_LIST_FOREACH(bd.icons, l, ic) {
-        if (!ic->selected)
+        if (!ic->selected || ic->trash)
             continue;
         char posix[PATH_MAX] = "";
         const char *label = ic->name;
@@ -273,6 +285,37 @@ void nv_backdrop_information(void)
         }
         nv_volume_information(label, posix);
     }
+}
+
+void nv_backdrop_trash_changed(void)
+{
+    /* the trashcan's icon made again, full or empty */
+    Eina_List *l;
+    Icon *ic;
+    EINA_LIST_FOREACH(bd.icons, l, ic)
+        if (ic->trash) {
+            const char *group = nv_trash_full() ? "nirvana/icon/trashcan/full" : "nirvana/icon/trashcan";
+            edje_object_file_set(ic->obj, nv.theme, group);
+            edje_object_part_text_set(ic->obj, "nirvana.text.label", _("Trashcan"));
+            if (ic->selected)
+                edje_object_signal_emit(ic->obj, "nirvana,state,selected", "nirvana");
+        }
+}
+
+static Eina_Bool trash_later(void *data)
+{
+    (void)data;
+    nv_backdrop_trash_changed();
+    return ECORE_CALLBACK_CANCEL;
+}
+
+static void on_trash_monitor(void *data, Ecore_File_Monitor *m, Ecore_File_Event ev, const char *path)
+{
+    (void)data;
+    (void)m;
+    (void)ev;
+    (void)path;
+    ecore_timer_add(0.2, trash_later, NULL);
 }
 
 void nv_backdrop_eject_selected(void)
@@ -299,6 +342,8 @@ static Icon *cmenu_icon; /* the icon it was asked on */
 /* where a volume's icon leads (POSIX), or false (a drive not mounted) */
 static bool icon_dir(Icon *ic, char *out, size_t len)
 {
+    if (ic->trash)
+        return false;
     if (ic->drive) {
         Nv_Drive *d = nv_drive_find(ic->drive);
         if (!d || !d->mount)
@@ -324,6 +369,7 @@ static void cm_info(void *d, Nv_Menu_Item *it) { (void)d; (void)it; nv_backdrop_
 static void cm_snapshot(void *d, Nv_Menu_Item *it) { (void)d; (void)it; snapshot_selected(true); }
 static void cm_unsnapshot(void *d, Nv_Menu_Item *it) { (void)d; (void)it; snapshot_selected(false); }
 static void cm_eject(void *d, Nv_Menu_Item *it) { (void)d; (void)it; nv_backdrop_eject_selected(); }
+static void cm_empty(void *d, Nv_Menu_Item *it) { (void)d; (void)it; nv_cmd_empty_trash(); }
 
 static void icon_context_menu(Icon *ic, int x, int y)
 {
@@ -339,6 +385,17 @@ static void icon_context_menu(Icon *ic, int x, int y)
             n++;
             any_placed |= o->placed;
         }
+    if (ic->trash) {
+        cmenu = nv_menu_new(_("Trashcan"));
+        nv_menu_add(cmenu, _("_Open..."), NULL, cm_open, NULL);
+        nv_menu_add_separator(cmenu);
+        nv_menu_add(cmenu, _("Snapshot"), NULL, cm_snapshot, NULL);
+        nv_menu_add(cmenu, _("UnSnapshot"), NULL, any_placed ? cm_unsnapshot : NULL, NULL);
+        nv_menu_add_separator(cmenu);
+        nv_menu_add(cmenu, _("E_mpty Trashcan"), NULL, nv_trash_full() ? cm_empty : NULL, NULL);
+        nv_screenbar_context(cmenu, x, y);
+        return;
+    }
     char dir[PATH_MAX];
     bool has_dir = icon_dir(ic, dir, sizeof dir);
     cmenu = nv_menu_new(n > 1 ? _("Icons") : _("Volume"));
@@ -443,6 +500,24 @@ void nv_backdrop_reload(void)
                 }
                 edje_object_part_text_set(ic->obj, "nirvana.text.label", d->label);
                 icon_ready(ic, keep);
+            }
+            /* and the trashcan */
+            ic = calloc(1, sizeof *ic);
+            snprintf(ic->name, sizeof ic->name, "@trashcan");
+            ic->trash = true;
+            ic->obj = nv_edje_add(bd.win, nv_trash_full() ? "nirvana/icon/trashcan/full" : "nirvana/icon/trashcan");
+            if (ic->obj) {
+                edje_object_part_text_set(ic->obj, "nirvana.text.label", _("Trashcan"));
+                icon_ready(ic, keep);
+            } else {
+                free(ic);
+            }
+            if (!bd.trash_monitor) {
+                char t[PATH_MAX], f[PATH_MAX + 8];
+                nv_trash_dir(t, sizeof t);
+                snprintf(f, sizeof f, "%s/files", t);
+                ecore_file_mkpath(f);
+                bd.trash_monitor = ecore_file_monitor_add(f, on_trash_monitor, NULL);
             }
             break;
         }

@@ -266,11 +266,74 @@ void nv_backdrop_information(void);
 /* a volume's Information: its name, where it is, its size and free space */
 void nv_volume_information(const char *name, const char *posix);
 
+/* ---------------------------------------------------------------- Information (infowin.c) */
+
+void nv_info_show(const char *path);
+void nv_info_show_volume(const char *name, const char *posix);
+/* a file's MD5 (32 hex digits and 0); false when it cannot be read or was cancelled */
+bool nv_md5_file(const char *path, char out[33], bool (*cancelled)(void *data), void *data);
+
 /* ---------------------------------------------------------------- the dock */
 
 bool nv_dock_create(void);
 
+/* ---------------------------------------------------------------- requesters (requester.c) */
+
+/* the button chosen (its index; the last one also for Escape and the close gadget) */
+typedef void (*Nv_Request_Cb)(void *data, int choice);
+/* the button chosen (-1: the last one, Cancel) and the text typed */
+typedef void (*Nv_Request_String_Cb)(void *data, int choice, const char *text);
+
+/* a question with buttons given as Ambient gives them: "*_Replace|Replace All|_Cancel" */
+void nv_request(const char *title, const char *text, const char *buttons, Nv_Request_Cb cb, void *data);
+/* a question asking for a text (a name; select_stem: "name" of "name.txt" ready to type over) */
+void nv_request_string(const char *title, const char *label, const char *initial, const char *buttons,
+                       bool select_stem, Nv_Request_String_Cb cb, void *data);
+
+/* ---------------------------------------------------------------- files (fileops.c, actions.c) */
+
+typedef enum {
+    NV_OP_COPY,
+    NV_OP_MOVE,
+    NV_OP_DELETE,
+    NV_OP_TRASH,
+    NV_OP_RESTORE,
+    NV_OP_EMPTY_TRASH,
+} Nv_File_Op;
+
+/* done in a thread with a progress window; sources (char *, POSIX) are taken */
+void nv_file_op(Nv_File_Op op, Eina_List *sources, const char *dest_dir);
+void nv_paths_free(Eina_List *paths);
+
+/* the XDG trashcan: its directory, whether a path is in it (or is it), where a trashed
+ * file came from */
+void nv_trash_dir(char *out, size_t len);
+bool nv_in_trash(const char *path);
+bool nv_trash_full(void);
+bool nv_is_trash_dir(const char *path);
+bool nv_trash_origin(const char *trashed, char *out, size_t len);
+
+/* the file clipboard */
+void nv_clip_set(const Eina_List *paths, bool cut);
+bool nv_clip_has(void);
+void nv_clip_paste(const char *dir);
+
+/* the menus' commands on files (the paths are copied) */
+void nv_cmd_delete(const Eina_List *paths);
+void nv_cmd_trash(const Eina_List *paths);
+void nv_cmd_restore(const Eina_List *paths);
+void nv_cmd_empty_trash(void);
+void nv_cmd_rename(const char *path);
+void nv_cmd_new_drawer(const char *dir);
+void nv_cmd_copy_to(const Eina_List *paths);
+void nv_cmd_move_to(const Eina_List *paths);
+
 /* ---------------------------------------------------------------- listers, editor */
+
+/* every lister reads its drawer again (files changed) */
+void nv_listers_refresh(void);
+/* the trashcan's icon on the desktop shows whether there is something in it */
+void nv_backdrop_trash_changed(void);
 
 /* a drawer opened in a lister window (a POSIX or Nirvana path) */
 void nv_lister_open(const char *path);

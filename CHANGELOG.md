@@ -17,6 +17,22 @@
 - Settings -> Theme: the themes found in `Themes:`, the one in use checked; a choice is
   kept in `~/.nirvana/Prefs/desktop.conf` and the desktop starts again in it.
 
+- Files (stage B of Ambient parity): copying, moving and deleting in a thread with
+  Ambient's progress window (the file, a gauge, files done, time remaining and speed,
+  Stop) and its questions (Replace, Replace All, Skip, Skip All, Cancel; Retry on
+  errors); the file clipboard (Edit -> Cut, Copy, Paste; Paste Into on a drawer); Rename
+  and New Drawer requesters; Delete and Move to Trashcan, asked first; Copy To and Move
+  To with a drawer chosen. A drawer is never copied into itself.
+- The trashcan: the XDG one other desktops share, with an icon on the desktop (full or
+  empty), its window, Restore and Empty Trashcan.
+- The Information window as Ambient's: "Info: NAME (Volume/Drawer/Tool/Project)" with
+  the icon, a volume's disk facts (size, used, free, file system, block size, status),
+  a drawer's files, drawers, links and total size (counted in a thread), a file's type,
+  blocks, size, size on disk, version (AppImages) and MD5; the modification date, the
+  comment (`user.xdg.comment`), the protection (readable, writable, executable) and a
+  project's default tool; Save and Cancel.
+- Listers follow changes to their drawers (file notification) as Ambient's windows do.
+
 ### Changed
 - The menus as Ambient's (`docs/AMBIENT-PARITY.md` follows how far Nirvana is): the
   screen's menus are Nirvana (My Computer, Execute Command, New Shell, About, About the

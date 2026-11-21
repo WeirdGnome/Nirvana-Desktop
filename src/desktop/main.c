@@ -319,30 +319,7 @@ static void size_text(unsigned long long n, char *out, size_t len)
 
 void nv_volume_information(const char *name, const char *posix)
 {
-    char msg[4096];
-    if (!posix || !*posix) {
-        snprintf(msg, sizeof msg, "%s\n\n%s", name, _("Not mounted."));
-        nv_message(_("Information"), msg);
-        return;
-    }
-    struct statvfs sv;
-    if (statvfs(posix, &sv) != 0) {
-        snprintf(msg, sizeof msg, "%s\n\n%s: %s\n%s", name, _("Path"), posix, strerror(errno));
-        nv_message(_("Information"), msg);
-        return;
-    }
-    unsigned long long total = (unsigned long long)sv.f_blocks * sv.f_frsize;
-    unsigned long long avail = (unsigned long long)sv.f_bavail * sv.f_frsize;
-    unsigned long long used = total - (unsigned long long)sv.f_bfree * sv.f_frsize;
-    char t[32], u[32], a[32];
-    size_text(total, t, sizeof t);
-    size_text(used, u, sizeof u);
-    size_text(avail, a, sizeof a);
-    int pct = total ? (int)(used * 100 / total) : 0;
-    snprintf(msg, sizeof msg, "%s\n\n%s: %s\n%s: %s\n%s: %s (%d%%)\n%s: %s%s%s", name, _("Path"), posix, _("Size"), t,
-             _("Used"), u, pct, _("Free"), a, (sv.f_flag & ST_RDONLY) ? "\n" : "",
-             (sv.f_flag & ST_RDONLY) ? _("Read only") : "");
-    nv_message(_("Information"), msg);
+    nv_info_show_volume(name, posix);
 }
 
 /* a line's value from a "Key: value" or KEY=value file */

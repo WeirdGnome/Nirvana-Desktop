@@ -21,6 +21,7 @@ images {
 #define IMG2(n) image: "icon_"n".png" COMP; image: "icon_"n"_sel.png" COMP;
    IMG2("harddisk") IMG2("home") IMG2("ram") IMG2("system")
    IMG2("removable") IMG2("drawer") IMG2("file") IMG2("program")
+   IMG2("trashcan") IMG2("trashcan_full")
 #define GIMG(n) image: "gadget_"n".png" COMP; image: "gadget_"n"_down.png" COMP; image: "gadget_"n"_inactive.png" COMP;
    GIMG("close") GIMG("iconify") GIMG("zoom") GIMG("depth") GIMG("jump") GIMG("prefs") GIMG("resize")
 }
@@ -368,6 +369,8 @@ ICON("volume/removable", "removable")
 ICON("drawer", "drawer")
 ICON("file", "file")
 ICON("program", "program")
+ICON("trashcan", "trashcan")
+ICON("trashcan/full", "trashcan_full")
 
 /* the same icons for listers: dark text on a light background */
 #define LICON(kind, img) \

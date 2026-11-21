@@ -638,6 +638,38 @@ static void m_information(void *d, Nv_Menu_Item *it)
 
 static void m_eject(void *d, Nv_Menu_Item *it) { (void)d; (void)it; nv_backdrop_eject_selected(); }
 
+/* the selected files of the lister the menus act on (free with nv_paths_free) */
+static Eina_List *view_selection(void)
+{
+    Nv_Window *w = view_win();
+    return w ? w->view->selected(w->view_data) : NULL;
+}
+
+static const char *view_dir(void)
+{
+    Nv_Window *w = view_win();
+    return w ? w->view->directory(w->view_data) : NULL;
+}
+
+static void m_cut(void *d, Nv_Menu_Item *it) { (void)d; (void)it; Eina_List *s = view_selection(); nv_clip_set(s, true); nv_paths_free(s); }
+static void m_copy(void *d, Nv_Menu_Item *it) { (void)d; (void)it; Eina_List *s = view_selection(); nv_clip_set(s, false); nv_paths_free(s); }
+static void m_paste(void *d, Nv_Menu_Item *it) { (void)d; (void)it; nv_clip_paste(view_dir()); }
+static void m_new_drawer(void *d, Nv_Menu_Item *it) { (void)d; (void)it; nv_cmd_new_drawer(view_dir()); }
+static void m_delete(void *d, Nv_Menu_Item *it) { (void)d; (void)it; Eina_List *s = view_selection(); nv_cmd_delete(s); nv_paths_free(s); }
+static void m_trash(void *d, Nv_Menu_Item *it) { (void)d; (void)it; Eina_List *s = view_selection(); nv_cmd_trash(s); nv_paths_free(s); }
+static void m_restore(void *d, Nv_Menu_Item *it) { (void)d; (void)it; Eina_List *s = view_selection(); nv_cmd_restore(s); nv_paths_free(s); }
+static void m_empty(void *d, Nv_Menu_Item *it) { (void)d; (void)it; nv_cmd_empty_trash(); }
+static void m_rename(void *d, Nv_Menu_Item *it)
+{
+    (void)d;
+    (void)it;
+    Eina_List *s = view_selection();
+    if (s)
+        nv_cmd_rename(eina_list_data_get(s));
+    nv_paths_free(s);
+}
+
+
 /* something is selected in the view the menus act on */
 static bool view_has_selection(void)
 {
@@ -671,9 +703,11 @@ static void edit_menu_show(void *data, Nv_Menu *m)
 {
     (void)data;
     nv_menu_clear(m);
-    nv_menu_add(m, _("Cu_t"), "Super+X", NULL, NULL);
-    nv_menu_add(m, _("_Copy"), "Super+C", NULL, NULL);
-    nv_menu_add(m, _("_Paste"), "Super+V", NULL, NULL);
+    bool sel = view_win() && view_has_selection();
+    bool dir = view_dir() != NULL;
+    nv_menu_add(m, _("Cu_t"), "Super+X", sel && dir ? m_cut : NULL, NULL);
+    nv_menu_add(m, _("_Copy"), "Super+C", sel && dir ? m_copy : NULL, NULL);
+    nv_menu_add(m, _("_Paste"), "Super+V", dir && nv_clip_has() ? m_paste : NULL, NULL);
     nv_menu_add_separator(m);
     nv_menu_add(m, _("Select _All"), "Super+A", m_select_all, NULL);
     nv_menu_add(m, _("_Invert"), NULL, m_invert, NULL);
@@ -685,7 +719,7 @@ static void view_menu_show(void *data, Nv_Menu *m)
     (void)data;
     nv_menu_clear(m);
     Nv_Window *w = view_win();
-    nv_menu_add(m, _("New _Drawer..."), NULL, NULL, NULL);
+    nv_menu_add(m, _("New _Drawer..."), NULL, view_dir() ? m_new_drawer : NULL, NULL);
     nv_menu_add_separator(m);
     Nv_Menu_Item *it = nv_menu_add_check(m, _("_List Mode"), w && w->view->list_mode(w->view_data),
                                          w ? m_list_mode : NULL, NULL);
@@ -720,12 +754,16 @@ static void icons_menu_show(void *data, Nv_Menu *m)
     nv_menu_add(m, _("_Put Away"), NULL, NULL, NULL);
     nv_menu_add(m, _("_Eject"), "Super+J", drive ? m_eject : NULL, NULL);
     nv_menu_add_separator(m);
-    nv_menu_add(m, _("_Rename..."), "Super+R", NULL, NULL);
-    nv_menu_add(m, _("_Delete"), "Super+Delete", NULL, NULL);
+    /* (files: in a lister; the desktop's icons are volumes) */
+    const char *dir = view_dir();
+    bool files = sel && dir;
+    bool in_trash = dir && nv_is_trash_dir(dir);
+    nv_menu_add(m, _("_Rename..."), "Super+R", files ? m_rename : NULL, NULL);
+    nv_menu_add(m, _("_Delete"), "Super+Delete", files ? m_delete : NULL, NULL);
     nv_menu_add_separator(m);
-    nv_menu_add(m, _("Move to _Trashcan"), "Super+T", NULL, NULL);
-    nv_menu_add(m, _("Rest_ore"), "Super+Y", NULL, NULL);
-    nv_menu_add(m, _("E_mpty Trashcan"), NULL, NULL, NULL);
+    nv_menu_add(m, _("Move to _Trashcan"), "Super+T", files && !in_trash ? m_trash : NULL, NULL);
+    nv_menu_add(m, _("Rest_ore"), "Super+Y", files && in_trash ? m_restore : NULL, NULL);
+    nv_menu_add(m, _("E_mpty Trashcan"), NULL, nv_trash_full() ? m_empty : NULL, NULL);
     nv_menu_add_separator(m);
     nv_menu_add(m, _("_Format..."), NULL, NULL, NULL);
 }

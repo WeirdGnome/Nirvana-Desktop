@@ -346,7 +346,34 @@ def program():
     return img
 
 
+def trashcan(full=False):
+    P = T["icons"]
+    img = canvas(64, 64)
+    if full:
+        # papers over the rim
+        d = ImageDraw.Draw(img)
+        d.polygon(r((20, 20, 30, 6, 38, 12, 30, 24)), fill=rgba(P["paper"]), outline=rgba(P["outline"]))
+        d.polygon(r((32, 22, 44, 8, 50, 16, 40, 26)), fill=rgba(P["paper"]), outline=rgba(P["outline"]))
+    # the bin, a little narrower at the bottom
+    d = ImageDraw.Draw(img)
+    top, bottom = pair(P["disk"])
+    d.polygon(r((14, 22, 50, 22, 46, 58, 18, 58)), fill=rgba(top), outline=rgba(P["outline"]))
+    for x in (24, 32, 40):
+        d.line(r((x, 28, x - (x - 32) // 6, 52)), fill=rgba(P["slot"]), width=S)
+    # the lid, lifted when it is full
+    lid = (10, 14, 54, 20) if full else (10, 16, 54, 22)
+    box(img, lid, P["disk"], P["outline"], radius=T["radius"] * 0.5)
+    d = ImageDraw.Draw(img)
+    d.rectangle(r((27, lid[1] - 4, 37, lid[1])), fill=rgba(bottom), outline=rgba(P["outline"]))
+    return img
+
+
+def trashcan_full():
+    return trashcan(True)
+
+
 ICONS = {
+    "trashcan": trashcan, "trashcan_full": trashcan_full,
     "harddisk": harddisk, "home": home, "ram": ram, "system": system,
     "removable": removable, "drawer": drawer, "file": file_icon, "program": program,
 }

@@ -25,9 +25,9 @@ States: **done**, **part** (there, not complete), **to do**.
 | Menu | Items | Nirvana |
 |---|---|---|
 | (the desktop's name) | My Computer..., —, Execute Command... (E), New Shell... (N), —, About... (?), About the System..., —, Quit (Q) | **done** (My Computer: phase D) |
-| Edit | Cut (X), Copy (C), Paste (V), —, Select All (A), Invert | **part** (the clipboard: phase B) |
-| View | New Drawer..., —, List Mode (L), —, Sort By > Name (.), Type, Size, Date | **done** (New Drawer: phase B) |
-| Icons | Information... (I), —, Put Away, Eject (J), —, Rename... (R), Delete (Del), —, Move to Trashcan (T), Restore (Y), Empty Trashcan, —, Format... | **part** (Information, Eject; the rest: phase B) |
+| Edit | Cut (X), Copy (C), Paste (V), —, Select All (A), Invert | **done** |
+| View | New Drawer..., —, List Mode (L), —, Sort By > Name (.), Type, Size, Date | **done** |
+| Icons | Information... (I), —, Put Away, Eject (J), —, Rename... (R), Delete (Del), —, Move to Trashcan (T), Restore (Y), Empty Trashcan, —, Format... | **part** (Put Away, Format: to do) |
 | Utilities | Exchange... (H), System Monitor..., —, System Log..., —, Format Disk..., Find... (F) | **part** (there, disabled: phases C, D, H) |
 | Settings | Desktop..., Toolkit..., —, System... | **part** (Theme, Assigns; Desktop...: phase F) |
 | Tools | the user's own items | **done** (the programs in `Tools:`) |
@@ -56,10 +56,10 @@ stay on the windows' gadgets.
 | Window | Ambient | Nirvana |
 |---|---|---|
 | Drawer (view) | icons or list (columns), spatial or browsing, a toolbar (parent, history, views, bookmarks, actions), a clickable path, a search bar, a status bar with free space, image and text views | **part** (icons/list, browsing, location, filter) |
-| Information | name, type, size, dates, protection, comment, the icon, tool types, the default tool | **part** (a short message) |
+| Information | name, type, size, dates, protection, comment, the icon, tool types, the default tool | **done** (no tool types: Linux files have none) |
 | Execute Command | a command line with history | **part** |
-| Rename, New Drawer, Pattern Rename | small requesters | **to do** |
-| Copy/Move/Delete | with progress, ask before replacing | **to do** |
+| Rename, New Drawer, Pattern Rename | small requesters | **part** (Pattern Rename: to do) |
+| Copy/Move/Delete | with progress, ask before replacing | **done** |
 | Find | patterns, contents, results list | **to do** |
 | Format | a volume's file system, name | **to do** (UDisks2 Format) |
 | My Computer | volumes and assigns | **to do** |
@@ -73,8 +73,9 @@ stay on the windows' gadgets.
 | Part | Nirvana |
 |---|---|
 | Removable volumes (Eject/Unmount) | **done** (UDisks2) |
-| Trashcan | **to do** (the XDG trash) |
-| The file clipboard (cut, copy, paste) | **to do** |
+| File notification (windows follow changes) | **done** (inotify) |
+| Trashcan | **done** (the XDG trash, an icon on the desktop) |
+| The file clipboard (cut, copy, paste) | **done** (inside Nirvana; the paths also as text) |
 | File types and their actions (Open with...) | **part** (the default program) |
 | Panels: several, sub-panels, bookmarks, a directory panel | **part** (one dock with sub-docks and dockies) |
 | Bookmarks | **to do** |
@@ -85,7 +86,7 @@ stay on the windows' gadgets.
 
 * **A** (done) - the menus as Ambient's: the screen's menus, the context menus of icons and of
   windows' backgrounds, held or clicked.
-* **B** - files: copy, move, delete with progress, rename, new drawer, the trashcan, the
+* **B** (done) - files: copy, move, delete with progress, rename, new drawer, the trashcan, the
   file clipboard, Put Away, the Information window.
 * **C** - drawer windows: toolbar, clickable path, history, status bar with free space,
   list columns, image and text views, search bar, Find.

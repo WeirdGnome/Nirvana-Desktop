@@ -19,6 +19,8 @@
 #define _GNU_SOURCE
 #include "desktop.h"
 
+#include <Ecore_File.h>
+
 #include <Efreet.h>
 #include <Efreet_Mime.h>
 #include <archive.h>
@@ -74,6 +76,8 @@ struct Lister {
     char *pattern;
     int shown;
     Entry *menu_entry;  /* the item a context menu is for */
+    Ecore_File_Monitor *monitor; /* the drawer watched (it changes: read again) */
+    Ecore_Timer *again;
 };
 
 static Eina_List *listers;
@@ -506,6 +510,37 @@ static void location_text(Lister *ls, char *out, size_t len)
         snprintf(out, len, "%s", np);
 }
 
+static Eina_Bool read_again(void *data)
+{
+    Lister *ls = data;
+    ls->again = NULL;
+    rescan(ls);
+    return ECORE_CALLBACK_CANCEL;
+}
+
+/* something changed in the drawer: read it again a moment after (a copy brings many) */
+static void on_monitor(void *data, Ecore_File_Monitor *m, Ecore_File_Event ev, const char *path)
+{
+    (void)m;
+    (void)ev;
+    (void)path;
+    Lister *ls = data;
+    if (ls->again)
+        ecore_timer_reset(ls->again);
+    else
+        ls->again = ecore_timer_add(0.25, read_again, ls);
+}
+
+static void watch(Lister *ls)
+{
+    if (ls->monitor) {
+        ecore_file_monitor_del(ls->monitor);
+        ls->monitor = NULL;
+    }
+    if (!ls->archive)
+        ls->monitor = ecore_file_monitor_add(ls->path, on_monitor, ls);
+}
+
 static void set_place(Lister *ls, const char *path, const char *inner, bool archive)
 {
     snprintf(ls->path, sizeof ls->path, "%s", path);
@@ -513,8 +548,10 @@ static void set_place(Lister *ls, const char *path, const char *inner, bool arch
     ls->archive = archive;
     char title[PATH_MAX * 2];
     location_text(ls, title, sizeof title);
-    nv_window_title_set(ls->w, title);
+    /* (the trashcan's window is called so) */
+    nv_window_title_set(ls->w, !archive && nv_is_trash_dir(path) ? _("Trashcan") : title);
     elm_entry_entry_set(ls->location, title);
+    watch(ls);
     rescan(ls);
 }
 
@@ -529,6 +566,7 @@ static Lister *find_lister(const char *path, const char *inner)
 }
 
 static Lister *lister_new(const char *path, const char *inner, bool archive);
+static Eina_List *v_selected(void *v);
 
 /* a drawer opened from a lister: in it (browser mode) or in its own window */
 static void go(Lister *from, const char *path, const char *inner, bool archive)
@@ -814,6 +852,44 @@ static void c_all(void *d, Nv_Menu_Item *it) { v_set_show_all(d, it->checked); }
 static void c_select_all(void *d, Nv_Menu_Item *it) { (void)it; v_select_all(d); }
 static void c_invert(void *d, Nv_Menu_Item *it) { (void)it; v_invert(d); }
 static void c_update(void *d, Nv_Menu_Item *it) { (void)it; rescan(d); }
+static void c_with_selection(Lister *ls, void (*fn)(const Eina_List *paths))
+{
+    Eina_List *s = v_selected(ls);
+    fn(s);
+    nv_paths_free(s);
+}
+static void clip_cut(const Eina_List *p) { nv_clip_set(p, true); }
+static void clip_copy(const Eina_List *p) { nv_clip_set(p, false); }
+static void c_cut(void *d, Nv_Menu_Item *it) { (void)it; c_with_selection(d, clip_cut); }
+static void c_copy(void *d, Nv_Menu_Item *it) { (void)it; c_with_selection(d, clip_copy); }
+static void c_copy_to(void *d, Nv_Menu_Item *it) { (void)it; c_with_selection(d, nv_cmd_copy_to); }
+static void c_move_to(void *d, Nv_Menu_Item *it) { (void)it; c_with_selection(d, nv_cmd_move_to); }
+static void c_delete(void *d, Nv_Menu_Item *it) { (void)it; c_with_selection(d, nv_cmd_delete); }
+static void c_trash(void *d, Nv_Menu_Item *it) { (void)it; c_with_selection(d, nv_cmd_trash); }
+static void c_restore(void *d, Nv_Menu_Item *it) { (void)it; c_with_selection(d, nv_cmd_restore); }
+static void c_empty(void *d, Nv_Menu_Item *it) { (void)d; (void)it; nv_cmd_empty_trash(); }
+static void c_paste(void *d, Nv_Menu_Item *it) { (void)it; Lister *ls = d; nv_clip_paste(ls->path); }
+static void c_paste_into(void *d, Nv_Menu_Item *it)
+{
+    (void)it;
+    Lister *ls = d;
+    char full[PATH_MAX * 2];
+    if (ls->menu_entry && ls->menu_entry->dir) {
+        entry_path(ls->menu_entry, full, sizeof full);
+        nv_clip_paste(full);
+    }
+}
+static void c_new_drawer(void *d, Nv_Menu_Item *it) { (void)it; Lister *ls = d; nv_cmd_new_drawer(ls->path); }
+static void c_rename(void *d, Nv_Menu_Item *it)
+{
+    (void)it;
+    Lister *ls = d;
+    char full[PATH_MAX * 2];
+    if (ls->menu_entry) {
+        entry_path(ls->menu_entry, full, sizeof full);
+        nv_cmd_rename(full);
+    }
+}
 static void c_copy_path(void *d, Nv_Menu_Item *it) { (void)it; cm_copy_path(d, NULL, NULL); }
 static void c_extract(void *d, Nv_Menu_Item *it) { (void)it; cm_extract(d, NULL, NULL); }
 
@@ -847,23 +923,28 @@ static Nv_Menu *item_menu(Lister *ls, Entry *e)
         nv_menu_add(m, _("Open _Shell..."), NULL, ls->archive ? NULL : c_shell, ls);
         nv_menu_add(m, _("_Find..."), NULL, NULL, ls);
     }
-    nv_menu_add(m, _("Copy _To..."), NULL, NULL, ls);
-    nv_menu_add(m, _("_Move To..."), NULL, NULL, ls);
+    bool fs = !ls->archive; /* (in an archive: only read) */
+    bool trash = fs && nv_is_trash_dir(ls->path);
+    nv_menu_add(m, _("Copy _To..."), NULL, fs ? c_copy_to : NULL, ls);
+    nv_menu_add(m, _("_Move To..."), NULL, fs ? c_move_to : NULL, ls);
     nv_menu_add_separator(m);
     nv_menu_add(m, _("_Information..."), "Super+I", c_info, ls);
     nv_menu_add_separator(m);
     nv_menu_add_submenu(m, _("Sort _By"), sort_menu(ls));
     nv_menu_add_separator(m);
-    nv_menu_add(m, _("New _Drawer..."), NULL, NULL, ls);
+    nv_menu_add(m, _("New _Drawer..."), NULL, fs ? c_new_drawer : NULL, ls);
     nv_menu_add_separator(m);
-    nv_menu_add(m, _("Cu_t"), "Super+X", NULL, ls);
-    nv_menu_add(m, _("_Copy"), "Super+C", NULL, ls);
+    nv_menu_add(m, _("Cu_t"), "Super+X", fs ? c_cut : NULL, ls);
+    nv_menu_add(m, _("_Copy"), "Super+C", fs ? c_copy : NULL, ls);
     if (e->dir)
-        nv_menu_add(m, _("Paste _Into"), NULL, NULL, ls);
+        nv_menu_add(m, _("Paste _Into"), NULL, fs && nv_clip_has() ? c_paste_into : NULL, ls);
     nv_menu_add_separator(m);
-    nv_menu_add(m, _("_Rename..."), "Super+R", NULL, ls);
-    nv_menu_add(m, _("_Delete"), NULL, NULL, ls);
-    nv_menu_add(m, _("Move to _Trashcan"), NULL, NULL, ls);
+    nv_menu_add(m, _("_Rename..."), "Super+R", fs ? c_rename : NULL, ls);
+    nv_menu_add(m, _("_Delete"), NULL, fs ? c_delete : NULL, ls);
+    if (trash)
+        nv_menu_add(m, _("Rest_ore"), NULL, c_restore, ls);
+    else
+        nv_menu_add(m, _("Move to _Trashcan"), NULL, fs ? c_trash : NULL, ls);
     if (!ls->archive) {
         Nv_Menu *act = nv_menu_new(_("Actions"));
         nv_menu_add(act, _("Copy _Path"), NULL, c_copy_path, ls);
@@ -899,11 +980,19 @@ static Nv_Menu *view_menu(Lister *ls)
     nv_menu_add(m, _("Select _All"), "Super+A", c_select_all, ls);
     nv_menu_add(m, _("_Invert"), NULL, c_invert, ls);
     nv_menu_add_separator(m);
-    nv_menu_add(m, _("New _Drawer..."), NULL, NULL, ls);
+    bool fs = !ls->archive;
+    Eina_List *sel = v_selected(ls);
+    bool any = sel != NULL;
+    nv_paths_free(sel);
+    nv_menu_add(m, _("New _Drawer..."), NULL, fs ? c_new_drawer : NULL, ls);
     nv_menu_add_separator(m);
-    nv_menu_add(m, _("Cu_t"), "Super+X", NULL, ls);
-    nv_menu_add(m, _("_Copy"), "Super+C", NULL, ls);
-    nv_menu_add(m, _("_Paste"), "Super+V", NULL, ls);
+    nv_menu_add(m, _("Cu_t"), "Super+X", fs && any ? c_cut : NULL, ls);
+    nv_menu_add(m, _("_Copy"), "Super+C", fs && any ? c_copy : NULL, ls);
+    nv_menu_add(m, _("_Paste"), "Super+V", fs && nv_clip_has() ? c_paste : NULL, ls);
+    if (fs && nv_is_trash_dir(ls->path)) {
+        nv_menu_add_separator(m);
+        nv_menu_add(m, _("E_mpty Trashcan"), NULL, c_empty, ls);
+    }
     nv_menu_add_separator(m);
     nv_menu_add(m, _("_Update"), NULL, c_update, ls);
     return m;
@@ -1083,8 +1172,16 @@ static void do_collect(Lister *ls, Elm_Object_Item *it, bool selected, void *dat
 static void do_info(Lister *ls, Elm_Object_Item *it, bool selected, void *data)
 {
     (void)data;
-    if (selected)
-        information(ls, elm_object_item_data_get(it));
+    if (!selected)
+        return;
+    Entry *e = elm_object_item_data_get(it);
+    if (ls->archive) {
+        information(ls, e); /* (inside an archive: what the archive tells) */
+        return;
+    }
+    char full[PATH_MAX * 2];
+    entry_path(e, full, sizeof full);
+    nv_info_show(full);
 }
 
 static bool v_list_mode(void *v) { return ((Lister *)v)->view == VIEW_LIST; }
@@ -1184,6 +1281,10 @@ static void lister_close(void *data, Nv_Window *w)
 {
     Lister *ls = data;
     scan_stop(ls);
+    if (ls->monitor)
+        ecore_file_monitor_del(ls->monitor);
+    if (ls->again)
+        ecore_timer_del(ls->again);
     listers = eina_list_remove(listers, ls);
     entries_clear(ls);
     free(ls->pattern);
@@ -1261,6 +1362,15 @@ static Lister *lister_new(const char *path, const char *inner, bool archive)
     nv_window_show(ls->w);
     set_place(ls, path, inner, archive);
     return ls;
+}
+
+void nv_listers_refresh(void)
+{
+    Eina_List *l;
+    Lister *ls;
+    EINA_LIST_FOREACH(listers, l, ls)
+        if (!ls->monitor) /* (the watched ones see it themselves) */
+            rescan(ls);
 }
 
 void nv_lister_open(const char *path)

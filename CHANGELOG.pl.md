@@ -16,6 +16,23 @@
 - Settings -> Theme: motywy znalezione w `Themes:`, używany zaznaczony; wybór jest
   zapisywany w `~/.nirvana/Prefs/desktop.conf`, a pulpit uruchamia się w nim od nowa.
 
+- Pliki (etap B zgodności z Ambientem): kopiowanie, przenoszenie i usuwanie w wątku z
+  oknem postępu Ambienta (plik, pasek, pliki zrobione, pozostały czas i szybkość, Stop)
+  i jego pytaniami (Replace, Replace All, Skip, Skip All, Cancel; Retry przy błędach);
+  schowek plików (Edit -> Cut, Copy, Paste; Paste Into na szufladzie); okienka Rename i
+  New Drawer; Delete i Move to Trashcan z pytaniem; Copy To i Move To z wyborem
+  szuflady. Szuflada nigdy nie jest kopiowana sama w siebie.
+- Kosz: ten z XDG, wspólny z innymi pulpitami, z ikoną na pulpicie (pełny albo pusty),
+  oknem, Restore i Empty Trashcan.
+- Okno Information jak w Ambiencie: "Info: NAZWA (Volume/Drawer/Tool/Project)" z ikoną,
+  dla woluminu dane dysku (rozmiar, zajęte, wolne, system plików, blok, stan), dla
+  szuflady liczba plików, szuflad, dowiązań i łączny rozmiar (liczone w wątku), dla
+  pliku typ, bloki, rozmiar, rozmiar na dysku, wersja (AppImage) i MD5; data zmiany,
+  komentarz (`user.xdg.comment`), ochrona (odczyt, zapis, wykonywanie) i domyślny
+  program projektu; Save i Cancel.
+- Listery same śledzą zmiany w swoich szufladach (powiadomienia o plikach), jak okna
+  Ambienta.
+
 ### Zmienione
 - Menu jak w Ambiencie (`docs/AMBIENT-PARITY.md` pokazuje, jak daleko jest Nirvana): menu
   ekranu to Nirvana (My Computer, Execute Command, New Shell, About, About the System,
