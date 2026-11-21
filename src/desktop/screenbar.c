@@ -5,9 +5,8 @@
  * A strip at the top of the screen (a layer surface of the top layer that keeps its
  * height for itself): the screen's title, the menu titles - the desktop's own, or the
  * focused program's (the global menu, stage 3) - the clock and the screen's depth
- * gadget. The menus drop down from it: on Wayland the bar's surface grows over the
- * screen while a menu is open (the area below the bar transparent, a click there
- * closes the menu); on X11 the panels are popup windows and the pointer is grabbed.
+ * gadget. The menus drop down from it: the bar's surface grows over the screen while a
+ * menu is open (the area below the bar transparent, a click there closes the menu).
  *
  * As on the classic desktops the menu titles show while the right mouse button is held
  * (on the bar or on the desktop) - the bar shows the screen's or the program's title
@@ -18,7 +17,6 @@
 #include "desktop.h"
 #include "menu_host.h"
 
-#include <Ecore_X.h>
 #include <string.h>
 #include <strings.h>
 #include <time.h>
@@ -33,7 +31,6 @@ static struct {
     Nv_Menu_Session *session;
     Ecore_Timer *clock;
     Eina_List *handlers;
-    bool grabbed;
     bool closing;
     bool fresh;              /* a popup opened by the press being handled now */
     bool classic;            /* the titles only while the right button is held */
@@ -57,20 +54,12 @@ static Evas_Object *host_probe(void *data)
 static Evas_Object *host_panel_new(void *data, int x, int y, int w, int h, int *ox, int *oy)
 {
     (void)data;
-    if (nv.backend == NV_BACKEND_WAYLAND) {
-        *ox = x;
-        *oy = y;
-        return bar.win;
-    }
-    Evas_Object *pw = elm_win_add(bar.win, "nirvana-menu", ELM_WIN_POPUP_MENU);
-    elm_win_borderless_set(pw, EINA_TRUE);
-    elm_win_override_set(pw, EINA_TRUE);
-    evas_object_move(pw, x, y);
-    evas_object_resize(pw, w, h);
-    evas_object_show(pw);
-    *ox = 0;
-    *oy = 0;
-    return pw;
+    (void)w;
+    (void)h;
+    /* (the panels are drawn in the bar, grown over the screen) */
+    *ox = x;
+    *oy = y;
+    return bar.win;
 }
 
 static void host_panel_del(void *data, Evas_Object *host)
@@ -95,40 +84,23 @@ static void title_select(int index)
     }
 }
 
-static void grab(bool on)
-{
-    if (nv.backend != NV_BACKEND_X11)
-        return;
-    Ecore_X_Window xw = elm_win_xwindow_get(bar.win);
-    if (on && !bar.grabbed) {
-        bar.grabbed = ecore_x_pointer_grab(xw) && ecore_x_keyboard_grab(xw);
-    } else if (!on && bar.grabbed) {
-        ecore_x_pointer_ungrab();
-        ecore_x_keyboard_ungrab();
-        bar.grabbed = false;
-    }
-}
-
 bool nv_screenbar_menu_is_open(void)
 {
     return bar.session != NULL;
 }
 
-/* the bar over the screen (the menus are drawn in it on Wayland), or back */
-static void expand(bool with_grab)
+/* the bar over the screen (the menus are drawn in it), or back */
+static void expand(bool with_keyboard)
 {
     if (bar.expanded)
         return;
     bar.expanded = true;
-    if (nv.backend == NV_BACKEND_WAYLAND) {
-        nv_layer_resize(bar.win, 0, nv.screen_h);
-        nv_layer_keyboard(bar.win, true);
-    }
+    nv_layer_resize(bar.win, 0, nv.screen_h);
+    nv_layer_keyboard(bar.win, true);
+    (void)with_keyboard;
     evas_object_move(bar.catcher, 0, nv.bar_h);
     evas_object_resize(bar.catcher, nv.screen_w, nv.screen_h);
     evas_object_show(bar.catcher);
-    if (with_grab)
-        grab(true);
 }
 
 static void shrink(void)
@@ -137,11 +109,8 @@ static void shrink(void)
         return;
     bar.expanded = false;
     evas_object_hide(bar.catcher);
-    grab(false);
-    if (nv.backend == NV_BACKEND_WAYLAND) {
-        nv_layer_keyboard(bar.win, false);
-        nv_layer_resize(bar.win, 0, nv.bar_h);
-    }
+    nv_layer_keyboard(bar.win, false);
+    nv_layer_resize(bar.win, 0, nv.bar_h);
 }
 
 /* the titles shown (classic: only while the right button is held) */
@@ -298,22 +267,15 @@ void nv_screenbar_hold_end(int x, int y)
 
 static bool our_event(Ecore_Window w)
 {
-    if (w == elm_win_window_id_get(bar.win))
-        return true;
-    /* (X11: the popup panels are the bar's children; with the grab, events come to the
-     * bar anyway) */
-    return nv.backend == NV_BACKEND_X11 && bar.grabbed;
+    return w == elm_win_window_id_get(bar.win);
 }
 
 static void event_xy(int x, int y, int rx, int ry, int *ox, int *oy)
 {
-    if (nv.backend == NV_BACKEND_X11) {
-        *ox = rx;
-        *oy = ry;
-    } else {
-        *ox = x;
-        *oy = y;
-    }
+    (void)rx;
+    (void)ry;
+    *ox = x;
+    *oy = y;
 }
 
 static Eina_Bool on_move(void *data, int type, void *event)
@@ -456,7 +418,7 @@ static Eina_Bool on_key(void *data, int type, void *event)
     Ecore_Event_Key *ev = event;
     if (!bar.session)
         return shortcut(ev) ? ECORE_CALLBACK_DONE : ECORE_CALLBACK_PASS_ON;
-    if (!our_event(ev->event_window) && nv.backend == NV_BACKEND_WAYLAND)
+    if (!our_event(ev->event_window))
         return ECORE_CALLBACK_PASS_ON;
     int r = nv_menu_session_key(bar.session, ev->key, ev->string);
     if (r == NV_MENU_KEY_PREV || r == NV_MENU_KEY_NEXT) {
@@ -678,28 +640,18 @@ static void on_depth(void *data, Evas_Object *o, const char *em, const char *src
     (void)o;
     (void)em;
     (void)src;
-    /* the screen's depth gadget: the front window, whoever's, to the back */
-    if (nv.backend == NV_BACKEND_WAYLAND) {
-        /* (Wayland tells no client which window is in front: the desktop's own active
-         * window goes back, or the next of its windows comes forward) */
-        Nv_Window *w = nv_window_active() ? nv_window_active() : eina_list_last_data_get(nv.windows);
-        if (w) {
-            Nv_Window *next = NULL;
-            Eina_List *l;
-            Nv_Window *o;
-            EINA_LIST_FOREACH(nv.windows, l, o)
-                if (o != w)
-                    next = o;
-            if (next)
-                elm_win_activate(next->win);
-        }
-        return;
-    }
-    Ecore_X_Window active = 0;
-    if (ecore_x_window_prop_window_get(ecore_x_window_root_first_get(), ECORE_X_ATOM_NET_ACTIVE_WINDOW, &active, 1) == 1 &&
-        active && active != elm_win_xwindow_get(nv.backdrop) && active != elm_win_xwindow_get(bar.win)) {
-        ecore_x_window_lower(active);
-        ecore_x_window_lower(elm_win_xwindow_get(nv.backdrop));
+    /* the screen's depth gadget: Wayland tells no client which window is in front, so
+     * the desktop's own active window goes back, or the next of its windows comes forward */
+    Nv_Window *w = nv_window_active() ? nv_window_active() : eina_list_last_data_get(nv.windows);
+    if (w) {
+        Nv_Window *next = NULL;
+        Eina_List *l;
+        Nv_Window *o;
+        EINA_LIST_FOREACH(nv.windows, l, o)
+            if (o != w)
+                next = o;
+        if (next)
+            elm_win_activate(next->win);
     }
 }
 

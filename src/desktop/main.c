@@ -3,10 +3,10 @@
  * nirvana-desktop - the Nirvana Desktop shell: the screen bar ("Nirvana Screen"), the
  * backdrop with the volume icons, the listers and the Assigns editor.
  *
- *     nirvana-desktop [--theme NAME] [--wayland | --x11]
+ *     nirvana-desktop [--theme NAME]
  *
- * On Wayland it needs a compositor with the layer shell (wlroots based: labwc, sway,
- * river, wayfire...); on X11 any window manager that honours dock and desktop windows.
+ * It runs on Wayland, in a compositor with the layer shell (labwc, as nirvana-session
+ * starts it; other wlroots compositors too). X11 programs are seen through XWayland.
  *
  * It answers on the session bus as org.nirvana.Desktop (/org/nirvana/Desktop):
  *   OpenDrawer(s path)      a drawer opened in a lister (wbrun uses it)
@@ -358,7 +358,7 @@ static Eina_Bool on_user_signal(void *data, int type, void *event)
 
 static void usage(void)
 {
-    printf(_("Usage: nirvana-desktop [--theme NAME] [--wayland | --x11]\n"));
+    printf(_("Usage: nirvana-desktop [--theme NAME]\n"));
 }
 
 EAPI_MAIN int elm_main(int argc, char **argv)
@@ -374,7 +374,7 @@ EAPI_MAIN int elm_main(int argc, char **argv)
         } else if (!strcmp(argv[i], "--help")) {
             usage();
             return 0;
-        } else if (strcmp(argv[i], "--wayland") && strcmp(argv[i], "--x11")) {
+        } else if (strcmp(argv[i], "--wayland")) { /* (accepted: the only one) */
             usage();
             return 1;
         }
@@ -416,18 +416,15 @@ EAPI_MAIN int elm_main(int argc, char **argv)
     return 0;
 }
 
-/* elm_main is called by main(); the display server chosen first */
+/* elm_main is called by main(); the desktop's own windows on Wayland */
 int main(int argc, char **argv)
 {
     nirvana_i18n_init();
-    for (int i = 1; i < argc; i++) {
-        if (!strcmp(argv[i], "--wayland"))
-            setenv("ELM_DISPLAY", "wl", 1);
-        else if (!strcmp(argv[i], "--x11"))
-            setenv("ELM_DISPLAY", "x11", 1);
+    if (!getenv("WAYLAND_DISPLAY")) {
+        fprintf(stderr, "nirvana-desktop: not on Wayland (it runs in labwc: nirvana-session)\n");
+        return 1;
     }
-    if (!getenv("ELM_DISPLAY") && getenv("WAYLAND_DISPLAY"))
-        setenv("ELM_DISPLAY", "wl", 1);
+    setenv("ELM_DISPLAY", "wl", 1);
     if (!getenv("ELM_ACCEL"))
         setenv("ELM_ACCEL", "none", 0);
     elm_init(argc, argv);

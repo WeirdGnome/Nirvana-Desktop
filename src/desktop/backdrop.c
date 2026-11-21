@@ -287,10 +287,8 @@ static Eina_Bool keyboard_on_demand(void *data)
 static void take_focus(void)
 {
     nv_global_menu_desktop_focus(true);
-    if (nv.backend == NV_BACKEND_WAYLAND) {
-        nv_layer_keyboard_mode(bd.win, 1);
-        ecore_timer_add(0.2, keyboard_on_demand, NULL);
-    }
+    nv_layer_keyboard_mode(bd.win, 1);
+    ecore_timer_add(0.2, keyboard_on_demand, NULL);
 }
 
 static void bg_down(void *data, Evas *e, Evas_Object *o, void *event)

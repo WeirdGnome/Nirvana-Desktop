@@ -571,28 +571,14 @@ static void tl_act(void *data, Nv_Menu_Item *it)
     }
 }
 
-/* ---------------------------------------------------------------- X11: the active window */
-
-static bool is_ours_x(Ecore_X_Window w)
-{
-    if (nv.backend != NV_BACKEND_X11)
-        return false;
-    if (w == elm_win_xwindow_get(nv.bar) || w == elm_win_xwindow_get(nv.backdrop))
-        return true;
-    Eina_List *l;
-    Nv_Window *nw;
-    EINA_LIST_FOREACH(nv.windows, l, nw)
-        if (w == elm_win_xwindow_get(nw->win))
-            return true;
-    return false;
-}
+/* ---------------------------------------------------------------- XWayland: the active X11 program */
 
 static void read_active(void)
 {
     Ecore_X_Window w = 0;
     if (ecore_x_window_prop_window_get(gm.x_root, ECORE_X_ATOM_NET_ACTIVE_WINDOW, &w, 1) != 1)
         w = 0;
-    gm.active_xid = is_ours_x(w) ? 0 : (unsigned)w;
+    gm.active_xid = (unsigned)w; /* (the desktop's own windows are Wayland's, not X's) */
 }
 
 static Eina_Bool on_x_property(void *data, int type, void *event)
@@ -610,11 +596,9 @@ static Eina_Bool on_x_property(void *data, int type, void *event)
 
 static void x_start(void)
 {
-    if (nv.backend == NV_BACKEND_WAYLAND) {
-        /* XWayland's root window, when there is an X server for X11 programs */
-        if (!getenv("DISPLAY") || !ecore_x_init(NULL))
-            return;
-    }
+    /* XWayland's root window, when there is an X server for X11 programs */
+    if (!getenv("DISPLAY") || !ecore_x_init(NULL))
+        return;
     gm.x_root = ecore_x_window_root_first_get();
     if (!gm.x_root)
         return;
@@ -814,8 +798,7 @@ bool nv_global_menu_start(Eldbus_Connection *bus)
         eldbus_name_request(bus, REGISTRAR_BUS, ELDBUS_NAME_REQUEST_FLAG_REPLACE_EXISTING, NULL, NULL);
     }
     x_start();
-    if (nv.backend == NV_BACKEND_WAYLAND)
-        foreign_start();
+    foreign_start();
     refresh();
     return bus != NULL;
 }

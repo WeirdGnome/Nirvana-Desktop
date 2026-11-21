@@ -71,7 +71,7 @@ static bool vp_setup(void)
 
 bool nv_compositor_lower_under_pointer(void)
 {
-    if (nv.backend != NV_BACKEND_WAYLAND || !is_labwc() || !vp_setup())
+    if (!is_labwc() || !vp_setup())
         return false;
     uint32_t t = now_ms();
     zwlr_virtual_pointer_v1_button(vp.ptr, t, NV_BTN_TASK, WL_POINTER_BUTTON_STATE_PRESSED);

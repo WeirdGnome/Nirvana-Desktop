@@ -165,7 +165,7 @@ install_data('setup-env.sh', install_dir: get_option('prefix') / 'S', install_mo
 install_data('data/nirvana-session', install_dir: get_option('prefix') / get_option('bindir'),
              install_mode: 'rwxr-xr-x')
 install_data('data/labwc/rc.xml', install_dir: get_option('prefix') / 'S' / 'labwc')
-install_data('data/nirvana.desktop', 'data/nirvana-x11.desktop', install_dir: get_option('prefix') / 'S')
+install_data('data/nirvana.desktop', install_dir: get_option('prefix') / 'S')
 
 # ------------------------------------------------------------------ translations
 if get_option('nls') and find_program('xgettext', required: false).found()
@@ -178,6 +178,6 @@ subdir('tests')
 summary({
   'DwarFS AppImages': dwarfs.found(),
   'wbrun (EFL)': have_efl_cli,
-  'nirvana-desktop (EFL, Wayland, X11)': have_desktop,
+  'nirvana-desktop (EFL, Wayland)': have_desktop,
   'NLS': get_option('nls'),
 }, section: 'Features')

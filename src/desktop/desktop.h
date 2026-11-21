@@ -21,10 +21,7 @@
 
 /* ---------------------------------------------------------------- the session */
 
-typedef enum { NV_BACKEND_X11, NV_BACKEND_WAYLAND } Nv_Backend;
-
 typedef struct Nv_Desktop {
-    Nv_Backend backend;
     char theme[4096];       /* the theme's .edj */
     int screen_w, screen_h; /* the output's size */
     int bar_h;
@@ -58,13 +55,11 @@ enum {
 
 typedef void (*Nv_Layer_Configure_Cb)(void *data, Evas_Object *win, int w, int h);
 
-/* the display server's kind found; on Wayland the layer shell bound (false when the
- * compositor has none) */
+/* (the layer shell is bound with the first layer window) */
 bool nv_layer_init(void);
-/* a window for a layer: a desktop window (background, bottom) or a dock (top, overlay) */
+/* a window for a layer (background, bottom, top, overlay) */
 Evas_Object *nv_layer_win_add(const char *name, Nv_Layer layer);
-/* A window made a layer surface (Wayland) or a dock/desktop window (X11), before it is
- * shown. A size of 0 along an anchored pair of edges means "as wide as the output".
+/* A window made a layer surface, before it is shown. A size of 0 along an anchored pair of edges means "as wide as the output".
  * exclusive: the strip the window keeps for itself (the bar's height), 0 for none, -1 to
  * cover others' strips too. */
 bool nv_layer_setup(Evas_Object *win, Nv_Layer layer, unsigned anchors, int w, int h, int exclusive,

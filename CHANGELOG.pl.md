@@ -9,7 +9,7 @@
 - Nirvana Dock: programy (.desktop, AppImage, pliki wykonywalne), pod-doki otwierane
   nad swoją ikoną, separatory i docky (zegar, CPU, RAM); upuszczone pliki są
   przypinane; menu ikony (Open, Move Left/Right, Remove from Dock); zapis w
-  `~/.nirvana/Prefs/dock.conf`. Powierzchnia warstwy pod Waylandem, okno dock pod X11.
+  `~/.nirvana/Prefs/dock.conf`. Powierzchnia warstwy pod Waylandem.
 - Lister: widok ikon lub listy, sortowanie po nazwie, dacie, rozmiarze, typie, tryb
   przeglądarki, pole położenia, archiwa jako szuflady (libarchive), menu pozycji (Open,
   Information, Copy Path, Extract Icon... dla AppImage), przeciąganie plików.
@@ -23,7 +23,9 @@
   gdzie trzeba także `nirvana-efl`, `nirvana-labwc`) i instaluje je przez apt lub dnf,
   zamiast kopiować pliki do systemu; `--uninstall` usuwa pakiety (i pliki skopiowane
   przez starszy install.sh), `--no-install` tylko je robi.
-- Sesja X11 trafia do menedżera logowania tylko tam, gdzie jest serwer X.
+- Tylko Wayland: sesja X11 (`nirvana-session --x11`, wpis X11 w menedżerze logowania) i
+  tryb X11 pulpitu (`nirvana-desktop --x11`) zostały usunięte. Programy X11 działają
+  przez XWayland, a globalne menu nadal je obsługuje.
 - Tytuły menu pokazują się, gdy trzymany jest prawy przycisk myszy - na pasku lub na
   pulpicie - jak na klasycznych pulpitach; poza tym pasek pokazuje tytuł ekranu lub
   programu (więc „Nirvana Screen” nie jest już dwa razy). Najechanie na tytuł rozwija

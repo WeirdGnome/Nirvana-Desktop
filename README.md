@@ -52,17 +52,16 @@ the ELF runtime (`e_shoff + e_shnum * e_shentsize`), and read as the file system
 ## nirvana-desktop (GPL-3.0-or-later)
 
 ```
-nirvana-session                      a Wayland session: labwc with the desktop
-nirvana-session --x11                on X11, beside a window manager (from ~/.xinitrc)
-nirvana-desktop [--theme NAME] [--wayland | --x11]
+nirvana-session                      the session: labwc with the desktop (Wayland)
+nirvana-desktop [--theme NAME]       the desktop alone, in a running labwc
 ```
 
 * **The screen bar** "Nirvana Screen": a layer surface (wlr-layer-shell, top layer) that
-  keeps its strip of the screen; on X11 a dock window with a strut. Menu titles
+  keeps its strip of the screen. Menu titles
   (Nirvana Screen, Window, Icons, Tools), the clock, the depth gadget. The menus drop
   down on a click (or held with the right button: releasing over an item chooses it),
   follow the keyboard (arrows, Return, Escape, underlined letters) and have Super
-  shortcuts. While a menu is open on Wayland the bar's surface grows over the screen.
+  shortcuts. While a menu is open the bar's surface grows over the screen.
 * **The backdrop**: a layer surface of the background layer with a volume icon for each
   assign with `DESKTOP=1`; select, drag, rubber band, double click to open, Snapshot and
   Clean Up (Icons menu). The icons follow the assigns (SIGUSR1 from `assign`).
@@ -82,7 +81,10 @@ Programs' own windows keep the frames their compositor (or window manager) gives
 the gadgets are drawn on Nirvana's windows. Some Super shortcuts may be taken by the
 compositor or window manager first.
 
-The depth gadget lowers its window on X11 and, on Wayland, under labwc: Wayland gives a
+Nirvana runs on Wayland only (there is no X11 session); X11 programs run in it through
+XWayland.
+
+The depth gadget lowers its window under labwc: Wayland gives a
 program no request to lower a window, so Nirvana's labwc settings bind the "Task" mouse
 button (which mice do not have) over a window to labwc's Lower, and the gadget clicks it
 on a virtual pointer. With your own `~/.config/labwc/rc.xml`, add to its `<mouse>`:
@@ -107,8 +109,8 @@ The Startup-Sequence sets `GTK_MODULES=appmenu-gtk-module`, `UBUNTU_MENUPROXY=1`
 `setup-env.sh` sets `gtk-shell-shows-menubar=1`. `./install.sh --deps` installs
 `appmenu-gtk3-module` (and `appmenu-gtk2-module` where there is one).
 
-The focused window is read from `_NET_ACTIVE_WINDOW`: on X11 directly, on Wayland in
-XWayland - so on Wayland the global menu works for programs running through XWayland.
+The focused X11 program is read from XWayland's `_NET_ACTIVE_WINDOW`, so the global
+menu works for programs running through XWayland.
 Native Wayland programs have no window id to register menus under (the protocols give
 none; KDE's own appmenu protocol is not in wlroots compositors), so for them the bar
 shows the program's name and a Window menu (close, iconify, zoom; through

@@ -45,13 +45,12 @@ jest w C++23, tak jak nagłówki libdwarfs).
 ## nirvana-desktop (GPL-3.0-or-later)
 
 ```
-nirvana-session                      sesja Wayland: labwc z pulpitem
-nirvana-session --x11                pod X11, obok menedżera okien (z ~/.xinitrc)
-nirvana-desktop [--theme NAZWA] [--wayland | --x11]
+nirvana-session                      sesja: labwc z pulpitem (Wayland)
+nirvana-desktop [--theme NAZWA]      sam pulpit, w działającym labwc
 ```
 
 * **Pasek ekranu** „Nirvana Screen”: powierzchnia warstwy (wlr-layer-shell, warstwa top)
-  rezerwująca swój pas ekranu; pod X11 okno typu dock ze strutem. Tytuły menu
+  rezerwująca swój pas ekranu. Tytuły menu
   (Nirvana Screen, Window, Icons, Tools), zegar, gadżet głębi. Menu rozwijają się po
   kliknięciu (lub przytrzymane prawym przyciskiem: puszczenie nad pozycją ją wybiera),
   obsługują klawiaturę (strzałki, Enter, Escape, podkreślone litery) i skróty z Super.
@@ -73,7 +72,10 @@ nirvana-desktop [--theme NAZWA] [--wayland | --x11]
 Okna programów mają ramki od kompozytora (lub menedżera okien); gadżety są rysowane na
 oknach Nirvany. Niektóre skróty z Super może przechwycić kompozytor.
 
-Gadżet głębi spycha okno pod spód pod X11, a pod Waylandem w labwc: Wayland nie daje
+Nirvana działa tylko pod Waylandem (nie ma sesji X11); programy X11 działają w niej przez
+XWayland.
+
+Gadżet głębi spycha okno pod spód w labwc: Wayland nie daje
 programom polecenia „przesuń okno pod spód”, więc ustawienia labwc od Nirvany wiążą
 przycisk myszy „Task” (którego myszy nie mają) nad oknem z akcją Lower, a gadżet
 klika go wirtualnym wskaźnikiem. Przy własnym `~/.config/labwc/rc.xml` dopisz do sekcji
@@ -94,9 +96,8 @@ własny pasek menu programu jest ukryty. Obsługiwane są dwa rodzaje programów
   skróty, pozycje wyłączone, zaznaczane i radiowe, podmenu wypełniane na żądanie
   (AboutToShow), menu zmieniające się w trakcie.
 
-Okno z fokusem jest czytane z `_NET_ACTIVE_WINDOW`: pod X11 wprost, pod Waylandem w
-XWayland - więc pod Waylandem globalne menu działa dla programów uruchomionych przez
-XWayland. Natywne programy Waylanda nie mają identyfikatora okna, pod którym mogłyby
+Program X11 z fokusem jest czytany z `_NET_ACTIVE_WINDOW` XWaylanda, więc globalne menu
+działa dla programów uruchomionych przez XWayland. Natywne programy Waylanda nie mają identyfikatora okna, pod którym mogłyby
 zgłosić menu (protokoły go nie dają), więc dla nich pasek pokazuje nazwę programu i menu
 Window (zamknij, ikonizuj, powiększ; przez wlr-foreign-toplevel-management), a menu
 zostają w ich oknach. Program GTK z menu na pasku pod Waylandem: `GDK_BACKEND=x11`.

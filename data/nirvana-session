@@ -3,9 +3,8 @@
 #
 # nirvana-session - a Nirvana Desktop session.
 #
-#     nirvana-session            on Wayland: labwc (a wlroots compositor) with the desktop
-#     nirvana-session --x11      on X11 (from ~/.xinitrc or a display manager): the desktop
-#                                beside your window manager (NIRVANA_WM, else openbox)
+#     nirvana-session            labwc (a wlroots compositor) with the desktop, on Wayland
+#                                (X11 programs run in it through XWayland)
 #
 # What the session lacks is made up first: XDG_RUNTIME_DIR (on systems without elogind
 # or systemd-logind a display manager may not set it), a session bus. Everything the
@@ -95,77 +94,63 @@ elif [ -r "$NIRVANA/S/Startup-Sequence" ]; then
 fi
 export XDG_CURRENT_DESKTOP="${XDG_CURRENT_DESKTOP:-Nirvana}"
 
-case "${1:-}" in
-    --x11)
-        export XDG_SESSION_TYPE=x11
-        WM=${NIRVANA_WM:-openbox}
-        if command -v "$WM" > /dev/null; then
-            "$WM" &
-        else
-            echo "no window manager $WM (set NIRVANA_WM): the desktop runs without one"
+export XDG_SESSION_TYPE=wayland
+if ! command -v labwc > /dev/null; then
+    echo "labwc is not installed (install.sh installs it)"
+    exit 1
+fi
+# the user's labwc settings if there are any, else Nirvana's
+if [ -d "${XDG_CONFIG_HOME:-$HOME/.config}/labwc" ]; then
+    set -- -s "$NIRVANA/C/nirvana-session --in-labwc"
+else
+    set -- -C "$NIRVANA/S/labwc" -s "$NIRVANA/C/nirvana-session --in-labwc"
+fi
+# When the graphics driver cannot give wlroots its buffers (gbm_bo_create
+# failing - a black screen), labwc is started again, first on the GPU without
+# buffer modifiers (Intel's driver often needs that), then with software
+# rendering. What worked is kept in ~/.nirvana/Prefs/wlr-renderer ("nomod" or
+# "pixman"); delete that file to try the plain GPU again.
+RFILE="$HOME/.nirvana/Prefs/wlr-renderer"
+mode=$(cat "$RFILE" 2> /dev/null)
+[ -n "${WLR_RENDERER:-}" ] && mode=given
+for try in plain nomod pixman; do
+    case "$mode" in
+        nomod) [ $try = plain ] && continue ;;
+        pixman) [ $try != pixman ] && continue ;;
+        given) try=given ;;
+    esac
+    case $try in
+        nomod) export WLR_DRM_NO_MODIFIERS=1 ;;
+        pixman) export WLR_DRM_NO_MODIFIERS=1 WLR_RENDERER=pixman ;;
+    esac
+    echo "starting labwc ($try)"
+    if [ $try = pixman ] || [ $try = given ]; then
+        exec labwc "$@"
+    fi
+    # watched for its first seconds
+    start=$(wc -l < "$LOG")
+    labwc "$@" &
+    pid=$!
+    i=0
+    failed=0
+    while [ $i -lt 8 ] && kill -0 $pid 2> /dev/null; do
+        sleep 1
+        i=$((i + 1))
+        if tail -n +"$((start + 1))" "$LOG" |
+            grep -q -e "gbm_bo_create failed" -e "Failed to allocate buffer" \
+                    -e "Failed to create renderer" -e "Swapchain for output .* failed test"; then
+            failed=1
+            break
         fi
-        run_desktop --x11
-        ;;
-    *)
-        export XDG_SESSION_TYPE=wayland
-        if ! command -v labwc > /dev/null; then
-            echo "labwc is not installed (sudo apt install labwc)"
-            exit 1
-        fi
-        # the user's labwc settings if there are any, else Nirvana's
-        if [ -d "${XDG_CONFIG_HOME:-$HOME/.config}/labwc" ]; then
-            set -- -s "$NIRVANA/C/nirvana-session --in-labwc"
-        else
-            set -- -C "$NIRVANA/S/labwc" -s "$NIRVANA/C/nirvana-session --in-labwc"
-        fi
-        # When the graphics driver cannot give wlroots its buffers (gbm_bo_create
-        # failing - a black screen), labwc is started again, first on the GPU without
-        # buffer modifiers (Intel's driver often needs that), then with software
-        # rendering. What worked is kept in ~/.nirvana/Prefs/wlr-renderer ("nomod" or
-        # "pixman"); delete that file to try the plain GPU again.
-        RFILE="$HOME/.nirvana/Prefs/wlr-renderer"
-        mode=$(cat "$RFILE" 2> /dev/null)
-        [ -n "${WLR_RENDERER:-}" ] && mode=given
-        for try in plain nomod pixman; do
-            case "$mode" in
-                nomod) [ $try = plain ] && continue ;;
-                pixman) [ $try != pixman ] && continue ;;
-                given) try=given ;;
-            esac
-            case $try in
-                nomod) export WLR_DRM_NO_MODIFIERS=1 ;;
-                pixman) export WLR_DRM_NO_MODIFIERS=1 WLR_RENDERER=pixman ;;
-            esac
-            echo "starting labwc ($try)"
-            if [ $try = pixman ] || [ $try = given ]; then
-                exec labwc "$@"
-            fi
-            # watched for its first seconds
-            start=$(wc -l < "$LOG")
-            labwc "$@" &
-            pid=$!
-            i=0
-            failed=0
-            while [ $i -lt 8 ] && kill -0 $pid 2> /dev/null; do
-                sleep 1
-                i=$((i + 1))
-                if tail -n +"$((start + 1))" "$LOG" |
-                    grep -q -e "gbm_bo_create failed" -e "Failed to allocate buffer" \
-                            -e "Failed to create renderer" -e "Swapchain for output .* failed test"; then
-                    failed=1
-                    break
-                fi
-            done
-            if [ $failed -eq 0 ]; then
-                [ $try = nomod ] && { mkdir -p "$HOME/.nirvana/Prefs"; echo nomod > "$RFILE"; }
-                wait $pid
-                exit $?
-            fi
-            echo "the GPU's buffers failed ($try): labwc is started again"
-            kill $pid 2> /dev/null
-            wait $pid 2> /dev/null
-            sleep 1
-            [ $try = nomod ] && { mkdir -p "$HOME/.nirvana/Prefs"; echo pixman > "$RFILE"; }
-        done
-        ;;
-esac
+    done
+    if [ $failed -eq 0 ]; then
+        [ $try = nomod ] && { mkdir -p "$HOME/.nirvana/Prefs"; echo nomod > "$RFILE"; }
+        wait $pid
+        exit $?
+    fi
+    echo "the GPU's buffers failed ($try): labwc is started again"
+    kill $pid 2> /dev/null
+    wait $pid 2> /dev/null
+    sleep 1
+    [ $try = nomod ] && { mkdir -p "$HOME/.nirvana/Prefs"; echo pixman > "$RFILE"; }
+done

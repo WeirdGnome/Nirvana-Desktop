@@ -15,15 +15,13 @@
  * A click starts a launcher (a .desktop file's program, an AppImage or a program, else
  * the file opened as wbrun does) or opens a sub-dock. Files dropped on the dock (.desktop
  * files, AppImages, programs) are pinned; a right click gives an item's menu (Open,
- * Move Left/Right, Remove from Dock). The dock is a layer surface on Wayland that keeps
- * its strip of the screen, a dock window on X11; a sub-dock makes it taller on Wayland
- * and is a popup window on X11.
+ * Move Left/Right, Remove from Dock). The dock is a layer surface that keeps its strip
+ * of the screen; a sub-dock makes it taller.
  */
 #define _GNU_SOURCE
 #include "desktop.h"
 
 #include <Efreet.h>
-#include <Ecore_X.h>
 #include <ctype.h>
 #include <errno.h>
 #include <limits.h>
@@ -51,7 +49,7 @@ typedef struct Dock_Item {
 
 static struct {
     Evas_Object *win, *bg, *box;
-    Evas_Object *sub_win, *sub_bg, *sub_box; /* the open sub-dock */
+    Evas_Object *sub_bg, *sub_box; /* the open sub-dock */
     Dock_Item *sub_open;
     Eina_List *items;
     int panel_w, panel_h, surf_w, surf_h;
@@ -422,7 +420,7 @@ static void item_menu(Dock_Item *it, int x, int y)
 /* the dock's place on the screen (for screen coordinates of its items) */
 static void dock_origin(int *x, int *y)
 {
-    /* (centred at the bottom of the screen, on Wayland and on X11 alike) */
+    /* (centred at the bottom of the screen) */
     *x = (nv.screen_w - dk.surf_w) / 2;
     *y = nv.screen_h - dk.surf_h;
 }
@@ -463,13 +461,6 @@ static void on_item_down(void *data, Evas *e, Evas_Object *o, void *event)
     int ox, oy, iy;
     dock_origin(&ox, &oy);
     evas_object_geometry_get(o, NULL, &iy, NULL, NULL);
-    if (it->parent && nv.backend == NV_BACKEND_X11) {
-        /* (in the sub-dock's popup window, above the dock) */
-        int sx, sy;
-        evas_object_geometry_get(dk.sub_win, &sx, &sy, NULL, NULL);
-        ox = sx;
-        oy = sy;
-    }
     item_menu(it, ox + ev->canvas.x, oy + iy - 150);
 }
 
@@ -545,15 +536,10 @@ static void sub_close(void)
         ecore_timer_del(dk.sub_close);
         dk.sub_close = NULL;
     }
-    if (nv.backend == NV_BACKEND_WAYLAND) {
-        evas_object_del(dk.sub_bg);
-        dk.sub_bg = dk.sub_box = NULL;
-        surface_size(dk.panel_w, dk.panel_h);
-        evas_object_move(dk.bg, 0, 0);
-    } else {
-        evas_object_del(dk.sub_win);
-        dk.sub_win = dk.sub_bg = dk.sub_box = NULL;
-    }
+    evas_object_del(dk.sub_bg);
+    dk.sub_bg = dk.sub_box = NULL;
+    surface_size(dk.panel_w, dk.panel_h);
+    evas_object_move(dk.bg, 0, 0);
 }
 
 static void sub_open(Dock_Item *it)
@@ -566,27 +552,11 @@ static void sub_open(Dock_Item *it)
     int cw = ITEM + 2 * PAD, ch = n * ITEM + 2 * PAD;
     int ix, iw;
     evas_object_geometry_get(it->obj, &ix, NULL, &iw, NULL);
-    Evas_Object *win;
-    int cx, cy;
-    if (nv.backend == NV_BACKEND_WAYLAND) {
-        /* the surface grows upwards; the panel stays at its bottom */
-        win = dk.win;
-        surface_size(dk.panel_w, dk.panel_h + ch + 4);
-        evas_object_move(dk.bg, 0, ch + 4);
-        cx = ix + iw / 2 - cw / 2;
-        cy = 0;
-    } else {
-        int ox, oy;
-        dock_origin(&ox, &oy);
-        dk.sub_win = win = elm_win_add(dk.win, "nirvana-subdock", ELM_WIN_POPUP_MENU);
-        elm_win_borderless_set(win, EINA_TRUE);
-        elm_win_override_set(win, EINA_TRUE);
-        evas_object_move(win, ox + ix + iw / 2 - cw / 2, oy - ch - 4);
-        evas_object_resize(win, cw, ch);
-        evas_object_show(win);
-        cx = 0;
-        cy = 0;
-    }
+    /* the surface grows upwards; the panel stays at its bottom */
+    Evas_Object *win = dk.win;
+    surface_size(dk.panel_w, dk.panel_h + ch + 4);
+    evas_object_move(dk.bg, 0, ch + 4);
+    int cx = ix + iw / 2 - cw / 2, cy = 0;
     dk.sub_bg = elm_layout_add(win);
     elm_layout_file_set(dk.sub_bg, nv.theme, "nirvana/dock/bg");
     dk.sub_box = elm_box_add(win);

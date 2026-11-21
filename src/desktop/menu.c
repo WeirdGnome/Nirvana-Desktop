@@ -4,10 +4,9 @@
  *
  * A menu is a model (Nv_Menu, Nv_Menu_Item) - the desktop's own or a program's, read
  * through D-Bus - shown as panels made of the theme's nirvana/menu/... groups. The panels
- * are put where a host says (menu_host.h): on Wayland into the screen bar's window, which
- * grows over the screen while a menu is open; on X11 each into a popup window. The
- * pointer and the keyboard are followed by hand (hit tests in screen coordinates), so
- * both work alike: hover selects, a submenu opens beside its item, a release or a click
+ * are put where a host says (menu_host.h): into the screen bar's window, which grows
+ * over the screen while a menu is open. The pointer and the keyboard are followed by hand
+ * (hit tests in screen coordinates): hover selects, a submenu opens beside its item, a release or a click
  * on an item chooses it, Escape and the arrow keys work as usual.
  */
 #include "desktop.h"

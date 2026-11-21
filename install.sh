@@ -679,11 +679,7 @@ echo
 echo "  Packages: $PKGDIR"
 echo "  (remove: ./install.sh --uninstall, or the package manager)"
 echo
-echo "  Wayland: choose \"Nirvana Desktop\" in your login manager, or run"
-echo "           $PREFIX/C/nirvana-session"
-if [ -f /usr/share/xsessions/nirvana-x11.desktop ]; then
-    echo "  X11:     choose \"Nirvana Desktop (X11)\", or put this in ~/.xinitrc:"
-    echo "           exec $PREFIX/C/nirvana-session --x11"
-fi
+echo "  Choose \"Nirvana Desktop\" in your login manager, or run"
+echo "  $PREFIX/C/nirvana-session from a text console."
 echo
 echo "  The commands are in $PREFIX/C (assign, wbrun, appimage-info)."

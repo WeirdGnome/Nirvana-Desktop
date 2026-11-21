@@ -7,14 +7,10 @@
  * (ECORE_WL2_WINDOW_TYPE_NONE), so it only draws into the surface. The first configure
  * is waited for (a round trip) before the first buffer is attached, as the protocol
  * asks.
- *
- * X11: the bar is a dock window with a strut, the backdrop a desktop window, both as big
- * as the screen asks.
  */
 #include "desktop.h"
 
 #include <Ecore_Wl2.h>
-#include <Ecore_X.h>
 #include <string.h>
 #include <wayland-client.h>
 
@@ -26,7 +22,7 @@ typedef struct Layer {
     Nv_Layer_Configure_Cb cb;
     void *data;
     bool configured;
-    int x, y, w, h;
+    int w, h;
     unsigned anchors;
 } Layer;
 
@@ -150,81 +146,11 @@ static bool setup_wayland(Layer *ly, Ecore_Wl2_Window *ww, Nv_Layer layer, int w
     return ly->configured;
 }
 
-/* ---------------------------------------------------------------- X11 */
-
-/* a window manager may place a new window where it likes; once mapped, the window is
- * asked to its place again (and keeps it: docks and desktops are not moved by users) */
-static void x11_place(void *data)
-{
-    Layer *ly = data;
-    Ecore_X_Window xw = elm_win_xwindow_get(ly->win);
-    if (xw)
-        ecore_x_window_move_resize(xw, ly->x, ly->y, ly->w, ly->h);
-}
-
-static Eina_Bool x11_place_later(void *data)
-{
-    x11_place(data);
-    return ECORE_CALLBACK_CANCEL;
-}
-
-static void x11_shown(void *data, Evas *e, Evas_Object *o, void *event)
-{
-    (void)e;
-    (void)o;
-    (void)event;
-    ecore_job_add(x11_place, data);
-    ecore_timer_add(0.3, x11_place_later, data); /* (some managers move it after mapping) */
-}
-
-/* a window's place on an X screen from its anchors (centred along a free axis) */
-static void x11_geometry(Layer *ly, int *x, int *y, int *w, int *h)
-{
-    int sw = 0, sh = 0;
-    ecore_x_screen_size_get(ecore_x_default_screen_get(), &sw, &sh);
-    bool l = ly->anchors & NV_ANCHOR_LEFT, r = ly->anchors & NV_ANCHOR_RIGHT;
-    bool t = ly->anchors & NV_ANCHOR_TOP, b = ly->anchors & NV_ANCHOR_BOTTOM;
-    if ((l && r) || !*w)
-        *w = sw;
-    if ((t && b) || !*h)
-        *h = sh;
-    *x = l ? 0 : r ? sw - *w : (sw - *w) / 2;
-    *y = t ? 0 : b ? sh - *h : (sh - *h) / 2;
-}
-
-static bool setup_x11(Layer *ly, Nv_Layer layer, int w, int h, int exclusive)
-{
-    Ecore_X_Window xw = elm_win_xwindow_get(ly->win);
-    if (!xw)
-        return false;
-    int x, y;
-    x11_geometry(ly, &x, &y, &w, &h);
-    evas_object_move(ly->win, x, y);
-    evas_object_resize(ly->win, w, h);
-    if (exclusive > 0 && (ly->anchors & NV_ANCHOR_TOP) && !(ly->anchors & NV_ANCHOR_BOTTOM))
-        ecore_x_netwm_strut_partial_set(xw, 0, 0, exclusive, 0, 0, 0, 0, 0, x, x + w - 1, 0, 0);
-    else if (exclusive > 0 && (ly->anchors & NV_ANCHOR_BOTTOM) && !(ly->anchors & NV_ANCHOR_TOP))
-        ecore_x_netwm_strut_partial_set(xw, 0, 0, 0, exclusive, 0, 0, 0, 0, 0, 0, x, x + w - 1);
-    if (layer == NV_LAYER_BACKGROUND || layer == NV_LAYER_BOTTOM)
-        ecore_x_window_lower(xw);
-    else
-        ecore_x_window_raise(xw);
-    ly->configured = true;
-    ly->x = x;
-    ly->y = y;
-    ly->w = w;
-    ly->h = h;
-    evas_object_event_callback_add(ly->win, EVAS_CALLBACK_SHOW, x11_shown, ly);
-    if (ly->cb)
-        ly->cb(ly->data, ly->win, w, h);
-    return true;
-}
-
 /* ---------------------------------------------------------------- the interface */
 
 bool nv_layer_init(void)
 {
-    return true; /* the backend is known from the first window (nv_layer_setup) */
+    return true; /* the layer shell is bound with the first window (nv_layer_setup) */
 }
 
 bool nv_layer_setup(Evas_Object *win, Nv_Layer layer, unsigned anchors, int w, int h, int exclusive,
@@ -237,12 +163,11 @@ bool nv_layer_setup(Evas_Object *win, Nv_Layer layer, unsigned anchors, int w, i
     ly->anchors = anchors;
     layers = eina_list_append(layers, ly);
     Ecore_Wl2_Window *ww = elm_win_wl_window_get(win);
-    if (ww) {
-        nv.backend = NV_BACKEND_WAYLAND;
-        return setup_wayland(ly, ww, layer, w, h, exclusive, keyboard);
+    if (!ww) {
+        fprintf(stderr, "nirvana-desktop: not on Wayland (it runs in labwc: nirvana-session)\n");
+        return false;
     }
-    nv.backend = NV_BACKEND_X11;
-    return setup_x11(ly, layer, w, h, exclusive);
+    return setup_wayland(ly, ww, layer, w, h, exclusive, keyboard);
 }
 
 void nv_layer_resize(Evas_Object *win, int w, int h)
@@ -250,24 +175,13 @@ void nv_layer_resize(Evas_Object *win, int w, int h)
     Layer *ly = layer_of(win);
     if (!ly)
         return;
-    if (ly->ls) {
-        zwlr_layer_surface_v1_set_size(ly->ls, (uint32_t)w, (uint32_t)h);
-        Ecore_Wl2_Window *ww = elm_win_wl_window_get(win);
-        if (ww)
-            wl_surface_commit(ecore_wl2_window_surface_get(ww));
-        wl_display_flush(ecore_wl2_display_get(wl_disp));
-    } else {
-        int x, y;
-        x11_geometry(ly, &x, &y, &w, &h);
-        ly->x = x;
-        ly->y = y;
-        ly->w = w;
-        ly->h = h;
-        evas_object_resize(win, w, h);
-        x11_place(ly);
-        if (ly->cb)
-            ly->cb(ly->data, win, w, h);
-    }
+    if (!ly->ls)
+        return;
+    zwlr_layer_surface_v1_set_size(ly->ls, (uint32_t)w, (uint32_t)h);
+    Ecore_Wl2_Window *ww = elm_win_wl_window_get(win);
+    if (ww)
+        wl_surface_commit(ecore_wl2_window_surface_get(ww));
+    wl_display_flush(ecore_wl2_display_get(wl_disp));
 }
 
 void nv_layer_keyboard(Evas_Object *win, bool on)

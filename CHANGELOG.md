@@ -9,7 +9,7 @@
 - The Nirvana Dock: launchers (.desktop files, AppImages, programs), sub-docks that
   open above their item, separators and dockies (clock, CPU, RAM); files dropped on it
   are pinned; an item's menu (Open, Move Left/Right, Remove from Dock); kept in
-  `~/.nirvana/Prefs/dock.conf`. A layer surface on Wayland, a dock window on X11.
+  `~/.nirvana/Prefs/dock.conf`. A layer surface on Wayland.
 - The lister: views as icons or a list, sorting by name, date, size or type, browser
   mode, a location field, archives browsed as drawers (libarchive), an item menu
   (Open, Information, Copy Path, Extract Icon... for AppImages), dragging files out.
@@ -22,7 +22,9 @@
   and `nirvana-efl`, `nirvana-labwc` where needed) and installs them with apt or dnf
   instead of copying files into the system; `--uninstall` removes the packages (and
   the files an older install.sh copied in), `--no-install` only makes them.
-- The X11 session is offered to the login manager only where there is an X server.
+- Wayland only: the X11 session (`nirvana-session --x11`, the X11 login entry) and the
+  desktop's X11 mode (`nirvana-desktop --x11`) are gone. X11 programs run through
+  XWayland, and the global menu still serves them.
 - The menu titles show while the right mouse button is held - on the bar or on the
   desktop - as on the classic desktops; the bar shows the screen's or the program's
   title otherwise (so "Nirvana Screen" is no longer there twice). Moving onto a title

@@ -13,15 +13,14 @@
  *   jump     the next of the desktop's windows to the front
  *   iconify  the window iconified
  *   zoom     between its size and the screen's (also a double click on the title)
- *   depth    to the back (X11), or the next window to the front (Wayland has no
- *            request to lower a window)
+ *   depth    to the back (labwc lowers it), else the next window to the front
+ *            (Wayland has no request to lower a window)
  *
  * Dragging the title moves the window, the corner gadget resizes it - both through the
  * display server (elm_win_move_resize_start), so they work on Wayland too.
  */
 #include "desktop.h"
 
-#include <Ecore_X.h>
 #include <string.h>
 
 static const char *const gadget_names[] = {"close", "prefs", "jump", "iconify", "zoom", "depth"};
@@ -85,12 +84,7 @@ void nv_window_zoom(Nv_Window *w)
 
 void nv_window_depth(Nv_Window *w)
 {
-    if (nv.backend == NV_BACKEND_X11 && elm_win_xwindow_get(w->win)) {
-        ecore_x_window_lower(elm_win_xwindow_get(w->win));
-        ecore_x_window_lower(elm_win_xwindow_get(nv.backdrop)); /* (the backdrop stays below) */
-        return;
-    }
-    /* Wayland: the compositor lowers it (labwc; the pointer is on the gadget), else the
+    /* the compositor lowers it (labwc; the pointer is on the gadget), else the
      * next window comes forward */
     if (nv_compositor_lower_under_pointer())
         return;
