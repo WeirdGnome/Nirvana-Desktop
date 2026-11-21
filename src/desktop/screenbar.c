@@ -532,6 +532,7 @@ static void m_win_zoom(void *d, Nv_Menu_Item *it) { (void)d; (void)it; if (nv_wi
 static void m_win_depth(void *d, Nv_Menu_Item *it) { (void)d; (void)it; if (nv_window_active()) nv_window_depth(nv_window_active()); }
 
 static void m_icons_open(void *d, Nv_Menu_Item *it) { (void)d; (void)it; nv_backdrop_open_selected(); }
+static void m_icons_eject(void *d, Nv_Menu_Item *it) { (void)d; (void)it; nv_backdrop_eject_selected(); }
 static void m_icons_all(void *d, Nv_Menu_Item *it) { (void)d; (void)it; nv_backdrop_select_all(true); }
 static void m_icons_none(void *d, Nv_Menu_Item *it) { (void)d; (void)it; nv_backdrop_select_all(false); }
 static void m_icons_cleanup(void *d, Nv_Menu_Item *it) { (void)d; (void)it; nv_backdrop_clean_up(); }
@@ -640,6 +641,8 @@ static void build_own_menus(void)
     nv_menu_add_separator(m);
     nv_menu_add(m, _("Select _All"), "Super+Shift+A", m_icons_all, NULL);
     nv_menu_add(m, _("Select _None"), NULL, m_icons_none, NULL);
+    nv_menu_add_separator(m);
+    nv_menu_add(m, _("_Eject"), "Super+Y", m_icons_eject, NULL);
     nv_menu_add_separator(m);
     nv_menu_add(m, _("_Clean Up"), "Super+.", m_icons_cleanup, NULL);
     nv_menu_add(m, _("_Snapshot"), NULL, m_icons_snapshot, NULL);

@@ -10,6 +10,9 @@
   1.3 (cztery kolory, ostre piksele, paskowane belki tytułowe), Classic 2.1 (szary z
   wypukłymi krawędziami), Classic 3.1 (osiem kolorów, niebieskoszare tło), Classic 4.1
   (gładkie szarości, gradientowe belki tytułowe).
+- Wymienne dyski na pulpicie (UDisks2 na szynie systemowej): pendrive'y, karty pamięci i
+  płyty dostają ikonę woluminu z ich etykietą; otwarcie montuje i pokazuje w listerze,
+  Icons -> Eject (Super+Y) odmontowuje i wysuwa nośnik albo wyłącza napęd.
 - Tools -> Theme: motywy znalezione w `Themes:`, używany zaznaczony; wybór jest
   zapisywany w `~/.nirvana/Prefs/desktop.conf`, a pulpit uruchamia się w nim od nowa.
 

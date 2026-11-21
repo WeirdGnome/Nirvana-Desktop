@@ -10,6 +10,10 @@
   (four colours, sharp pixels, striped title bars), Classic 2.1 (grey with raised
   edges), Classic 3.1 (eight colours, a blue-grey backdrop), Classic 4.1 (smooth greys,
   gradient title bars).
+- Removable drives on the desktop (UDisks2 on the system bus): USB sticks, memory cards
+  and discs get a volume icon named by their label; opening one mounts it and shows it
+  in a lister, Icons -> Eject (Super+Y) unmounts it and ejects the medium or powers the
+  drive off.
 - Tools -> Theme: the themes found in `Themes:`, the one in use checked; a choice is
   kept in `~/.nirvana/Prefs/desktop.conf` and the desktop starts again in it.
 

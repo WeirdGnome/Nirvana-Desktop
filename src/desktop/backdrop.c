@@ -8,6 +8,9 @@
  * the background draws a rubber band. Places are kept with Snapshot in
  * ~/.nirvana/Prefs/backdrop.icons ("Name x y"); Clean Up puts the icons in a column at
  * the right edge again. The icons are made again when the assigns change (SIGUSR1).
+ *
+ * The removable drives (drives.c) have icons too, after the assigns' ("@sdb1" in the
+ * places file); opening one mounts it, Icons -> Eject takes it away.
  */
 #include "desktop.h"
 
@@ -19,6 +22,7 @@
 
 typedef struct Icon {
     char name[NIRVANA_NAME_MAX];
+    char *drive;       /* a removable drive's UDisks2 object, else NULL (an assign) */
     Evas_Object *obj;
     int x, y;          /* its place on the backdrop */
     bool selected;
@@ -150,6 +154,12 @@ void nv_backdrop_clean_up(void)
 
 static void open_icon(Icon *ic)
 {
+    if (ic->drive) {
+        Nv_Drive *d = nv_drive_find(ic->drive);
+        if (d)
+            nv_drive_open(d);
+        return;
+    }
     char path[NIRVANA_NAME_MAX + 2];
     snprintf(path, sizeof path, "%s:", ic->name);
     nv_lister_open(path);
@@ -169,9 +179,21 @@ Eina_List *nv_backdrop_selected(void)
     Eina_List *out = NULL, *l;
     Icon *ic;
     EINA_LIST_FOREACH(bd.icons, l, ic)
-        if (ic->selected)
+        if (ic->selected && !ic->drive)
             out = eina_list_append(out, ic->name);
     return out;
+}
+
+void nv_backdrop_eject_selected(void)
+{
+    Eina_List *l;
+    Icon *ic;
+    EINA_LIST_FOREACH(bd.icons, l, ic)
+        if (ic->selected && ic->drive) {
+            Nv_Drive *d = nv_drive_find(ic->drive);
+            if (d)
+                nv_drive_eject(d);
+        }
 }
 
 static void take_focus(void);
@@ -217,6 +239,8 @@ static const char *icon_group(const char *name)
     return "nirvana/icon/volume";
 }
 
+static void icon_ready(Icon *ic, Eina_List *keep);
+
 void nv_backdrop_reload(void)
 {
     Icon *ic;
@@ -226,6 +250,7 @@ void nv_backdrop_reload(void)
         if (ic->selected)
             keep = eina_list_append(keep, strdup(ic->name));
         evas_object_del(ic->obj);
+        free(ic->drive);
         free(ic);
     }
     bd.press_icon = NULL;
@@ -233,7 +258,27 @@ void nv_backdrop_reload(void)
     nirvana_assign_list list;
     if (nirvana_assign_list_load(&list) < 0)
         return;
-    for (size_t i = 0; i < list.count; i++) {
+    for (size_t i = 0; i <= list.count; i++) {
+        /* (one more round: the drives) */
+        if (i == list.count) {
+            const Eina_List *dl;
+            Nv_Drive *d;
+            EINA_LIST_FOREACH(nv_drives_list(), dl, d) {
+                ic = calloc(1, sizeof *ic);
+                const char *base = strrchr(d->path, '/');
+                snprintf(ic->name, sizeof ic->name, "@%s", base ? base + 1 : d->path);
+                ic->drive = strdup(d->path);
+                ic->obj = nv_edje_add(bd.win, "nirvana/icon/volume/removable");
+                if (!ic->obj) {
+                    free(ic->drive);
+                    free(ic);
+                    continue;
+                }
+                edje_object_part_text_set(ic->obj, "nirvana.text.label", d->label);
+                icon_ready(ic, keep);
+            }
+            break;
+        }
         if (!list.items[i].desktop)
             continue;
         ic = calloc(1, sizeof *ic);
@@ -245,6 +290,23 @@ void nv_backdrop_reload(void)
         }
         /* the system's volume is called "System" on the desktop (its assign is SYS:) */
         edje_object_part_text_set(ic->obj, "nirvana.text.label", !strcasecmp(ic->name, "SYS") ? _("System") : ic->name);
+        icon_ready(ic, keep);
+    }
+    nirvana_assign_list_free(&list);
+    char *k;
+    EINA_LIST_FREE(keep, k)
+        free(k);
+    EINA_LIST_FOREACH(bd.icons, l, ic)
+        if (ic->placed)
+            icon_move(ic, ic->x, ic->y);
+    layout(false);
+}
+
+/* an icon made: its events, its place, kept selected */
+static void icon_ready(Icon *ic, Eina_List *keep)
+{
+    Eina_List *l;
+    {
         evas_object_resize(ic->obj, ICON_W, ICON_H);
         evas_object_event_callback_add(ic->obj, EVAS_CALLBACK_MOUSE_DOWN, icon_down, ic);
         evas_object_event_callback_add(ic->obj, EVAS_CALLBACK_MOUSE_MOVE, canvas_move, NULL);
@@ -262,14 +324,6 @@ void nv_backdrop_reload(void)
             if (!strcmp(k, ic->name))
                 icon_select(ic, true);
     }
-    nirvana_assign_list_free(&list);
-    char *k;
-    EINA_LIST_FREE(keep, k)
-        free(k);
-    EINA_LIST_FOREACH(bd.icons, l, ic)
-        if (ic->placed)
-            icon_move(ic, ic->x, ic->y);
-    layout(false);
 }
 
 /* ---------------------------------------------------------------- the background */

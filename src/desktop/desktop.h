@@ -201,6 +201,28 @@ const char *nv_icon_name_path(const char *icon, int size);
 /* a picture for a file: a program's or AppImage's icon, its type's, else the theme's */
 Evas_Object *nv_icon_for_path(Evas_Object *parent, const char *path, bool is_dir, int size);
 
+/* ---------------------------------------------------------------- drives (drives.c) */
+
+/* a removable volume, as UDisks2 tells it */
+typedef struct Nv_Drive {
+    char *path;      /* its UDisks2 object (a stable key) */
+    char *label;     /* what the icon says */
+    char *mount;     /* where it is mounted, or NULL */
+    char *drive;     /* its drive's object, or NULL */
+    bool can_eject, power_off;
+} Nv_Drive;
+
+/* UDisks2 followed (false when there is no system bus); the backdrop told of changes */
+bool nv_drives_start(void);
+const Eina_List *nv_drives_list(void);
+Nv_Drive *nv_drive_find(const char *path);
+/* mounted first when it is not, then opened in a lister */
+void nv_drive_open(Nv_Drive *d);
+/* unmounted, then ejected or powered off when the drive can be */
+void nv_drive_eject(Nv_Drive *d);
+/* the selected drive icons ejected (the Icons menu) */
+void nv_backdrop_eject_selected(void);
+
 /* ---------------------------------------------------------------- the dock */
 
 bool nv_dock_create(void);

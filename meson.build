@@ -150,6 +150,7 @@ if have_desktop
     'src/desktop/gtk_menu.c',
     'src/desktop/icons.c',
     'src/desktop/dock.c',
+    'src/desktop/drives.c',
     proto_src,
     dependencies: [libnirvana_dep, elementary, efl_ecore, efl_efreet, efl_efreet_mime, efl_eldbus, archive,
                    ecore_x, ecore_wl2, wayland_client],
