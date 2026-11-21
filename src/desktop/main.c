@@ -15,10 +15,12 @@
  */
 #include "desktop.h"
 
+#include <Ecore_File.h>
 #include <Eldbus.h>
 #include <errno.h>
 #include <limits.h>
 #include <string.h>
+#include <strings.h>
 #include <sys/stat.h>
 #include <unistd.h>
 
@@ -120,6 +122,112 @@ const char *nv_pref(const char *key, const char *def)
 static void prefs_theme(char *out, size_t len)
 {
     snprintf(out, len, "%.200s", nv_pref("theme", "ambient"));
+}
+
+static void prefs_path(char *out, size_t len)
+{
+    snprintf(out, len, "%s/.nirvana/Prefs/desktop.conf", getenv("HOME") ? getenv("HOME") : "");
+}
+
+bool nv_pref_set(const char *key, const char *value)
+{
+    char path[PATH_MAX], tmp[PATH_MAX + 8];
+    prefs_path(path, sizeof path);
+    snprintf(tmp, sizeof tmp, "%s.new", path);
+    char dir[PATH_MAX];
+    snprintf(dir, sizeof dir, "%s/.nirvana/Prefs", getenv("HOME") ? getenv("HOME") : "");
+    ecore_file_mkpath(dir);
+    FILE *out = fopen(tmp, "w");
+    if (!out)
+        return false;
+    /* the other lines kept as they are, the key's line replaced (or added) */
+    size_t klen = strlen(key);
+    bool done = false;
+    FILE *in = fopen(path, "r");
+    if (in) {
+        char line[512];
+        while (fgets(line, sizeof line, in)) {
+            if (!strncmp(line, key, klen) && line[klen] == '=') {
+                if (!done)
+                    fprintf(out, "%s=%s\n", key, value);
+                done = true;
+            } else {
+                fputs(line, out);
+            }
+        }
+        fclose(in);
+    }
+    if (!done)
+        fprintf(out, "%s=%s\n", key, value);
+    bool ok = fclose(out) == 0 && rename(tmp, path) == 0;
+    return ok;
+}
+
+/* ---------------------------------------------------------------- themes: listed, changed */
+
+static char **saved_argv;
+static char theme_name[256];
+
+const char *nv_theme_name(void)
+{
+    return theme_name;
+}
+
+static int name_cmp(const void *a, const void *b)
+{
+    return strcasecmp(a, b);
+}
+
+Eina_List *nv_themes_list(void)
+{
+    Eina_List *names = NULL;
+    char dirs[3][PATH_MAX];
+    if (nirvana_to_posix("Themes:", dirs[0], sizeof dirs[0]) != 0)
+        dirs[0][0] = 0;
+    snprintf(dirs[1], sizeof dirs[1], "%s/Themes", NIRVANA_HOME);
+    char exe[PATH_MAX];
+    exe_dir(exe, sizeof exe);
+    snprintf(dirs[2], sizeof dirs[2], "%.4000s/themes", exe);
+    for (int i = 0; i < 3; i++) {
+        if (!dirs[i][0])
+            continue;
+        Eina_List *files = ecore_file_ls(dirs[i]);
+        char *f;
+        EINA_LIST_FREE(files, f) {
+            size_t n = strlen(f);
+            if (n > 4 && !strcmp(f + n - 4, ".edj")) {
+                f[n - 4] = 0;
+                if (!eina_list_search_unsorted(names, name_cmp, f))
+                    names = eina_list_sorted_insert(names, name_cmp, eina_stringshare_add(f));
+            }
+            free(f);
+        }
+    }
+    return names;
+}
+
+void nv_theme_use(const char *name)
+{
+    if (!strcmp(name, theme_name))
+        return;
+    if (!nv_pref_set("theme", name)) {
+        nv_message(_("Theme"), _("The choice could not be saved in ~/.nirvana/Prefs/desktop.conf."));
+        return;
+    }
+    /* the desktop started again in the new theme (the same process: the session goes on) */
+    Eina_Array *args = eina_array_new(8);
+    for (int i = 0; saved_argv[i]; i++) {
+        if (!strcmp(saved_argv[i], "--theme") && saved_argv[i + 1]) {
+            i++;
+            continue;
+        }
+        eina_array_push(args, saved_argv[i]);
+    }
+    eina_array_push(args, NULL);
+    char **av = (char **)args->data;
+    execv("/proc/self/exe", av);
+    fprintf(stderr, "nirvana-desktop: could not start again: %s\n", strerror(errno));
+    eina_array_free(args);
 }
 
 /* ---------------------------------------------------------------- small windows */
@@ -365,6 +473,7 @@ EAPI_MAIN int elm_main(int argc, char **argv)
 {
     char theme[256];
     prefs_theme(theme, sizeof theme);
+    saved_argv = argv;
     for (int i = 1; i < argc; i++) {
         if (!strcmp(argv[i], "--theme") && i + 1 < argc)
             snprintf(theme, sizeof theme, "%s", argv[++i]);
@@ -379,7 +488,9 @@ EAPI_MAIN int elm_main(int argc, char **argv)
             return 1;
         }
     }
-    if (!nv_theme_find(theme, nv.theme, sizeof nv.theme) && !nv_theme_find("ambient", nv.theme, sizeof nv.theme)) {
+    snprintf(theme_name, sizeof theme_name, "%s", theme);
+    if (!nv_theme_find(theme, nv.theme, sizeof nv.theme) &&
+        !(snprintf(theme_name, sizeof theme_name, "ambient"), nv_theme_find("ambient", nv.theme, sizeof nv.theme))) {
         fprintf(stderr, "nirvana-desktop: no theme %s (looked in Themes:, %s/Themes and beside the program)\n", theme,
                 NIRVANA_HOME);
         return 1;

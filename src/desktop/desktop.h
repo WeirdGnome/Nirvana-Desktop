@@ -39,6 +39,13 @@ bool nv_theme_find(const char *name, char *out, size_t len);
 Evas_Object *nv_edje_add(Evas_Object *parent, const char *group);
 /* a setting of ~/.nirvana/Prefs/desktop.conf ("menus=hold"), or def */
 const char *nv_pref(const char *key, const char *def);
+/* a setting written to desktop.conf (the other lines kept) */
+bool nv_pref_set(const char *key, const char *value);
+/* the themes in Themes: (names, stringshares, sorted), the one in use, another chosen
+ * (saved, and the desktop started again in it) */
+Eina_List *nv_themes_list(void);
+const char *nv_theme_name(void);
+void nv_theme_use(const char *name);
 /* a data item of the theme ("nirvana/screenbar/height") */
 const char *nv_theme_data(const char *key);
 

@@ -17,8 +17,8 @@ This branch is built in stages:
 | 1 | `libnirvana` (assigns, AppImage reader), `assign`, `wbrun`, `appimage-info`, tests | **done** |
 | 2 | The EFL desktop: screen bar "Nirvana Screen", backdrop, window gadgets, Assigns editor | **done** |
 | 3 | The global menu (`com.canonical.AppMenu.Registrar`, `org.gtk.Menus`, Eldbus) | **done** |
-| 4 | Dock and file listers (threaded) | next |
-| 5 | The Edje themes: Classic13, Classic21, Classic31, Classic41, Ambient | |
+| 4 | Dock and file listers (threaded) | **done** |
+| 5 | The Edje themes: Classic13, Classic21, Classic31, Classic41, Ambient | **done** |
 
 ## libnirvana (LGPL-3.0-or-later)
 
@@ -74,6 +74,11 @@ nirvana-desktop [--theme NAME]       the desktop alone, in a running labwc
   `~/.nirvana/Startup-Sequence`), Cancel.
 * **The lister** (a first version; stage 4 makes it complete): a drawer as icons, read in
   a thread, AppImage icons read without running them, `#?` patterns in the filter.
+* **Themes** (Tools -> Theme, kept in `~/.nirvana/Prefs/desktop.conf`; the desktop
+  starts again in the one chosen): Ambient (the default: soft gradients), Classic 1.3
+  (four colours, sharp pixels), Classic 2.1 (grey with raised edges), Classic 3.1 (eight
+  colours, a blue-grey backdrop), Classic 4.1 (smooth greys, gradient title bars). See
+  `themes/README.md` to make one.
 * D-Bus: `org.nirvana.Desktop` on the session bus (`OpenDrawer`, `ReloadAssigns`,
   `ShowAssignsEditor`) - `wbrun` opens drawers through it.
 

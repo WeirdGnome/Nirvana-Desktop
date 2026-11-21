@@ -566,6 +566,32 @@ static void window_menu_show(void *data, Nv_Menu *m)
     }
 }
 
+static void m_theme(void *data, Nv_Menu_Item *it)
+{
+    (void)it;
+    nv_theme_use(data);
+}
+
+/* the themes, by their own names (a theme's "nirvana/theme/name"), the one in use checked */
+static Nv_Menu *themes_menu(void)
+{
+    Nv_Menu *sub = nv_menu_new(_("Theme"));
+    Eina_List *names = nv_themes_list();
+    const char *n;
+    EINA_LIST_FREE(names, n) {
+        char path[PATH_MAX];
+        char *label = NULL;
+        if (nv_theme_find(n, path, sizeof path))
+            label = edje_file_data_get(path, "nirvana/theme/name");
+        Nv_Menu_Item *it = nv_menu_add(sub, label ? label : n, NULL, m_theme, (void *)n);
+        it->kind = NV_ITEM_RADIO;
+        it->checked = !strcmp(n, nv_theme_name());
+        free(label);
+        /* (n stays: the item's data, for the menu's life) */
+    }
+    return sub;
+}
+
 /* the Tools menu: the assigns as drawers to open, and the editor */
 static void tools_menu_show(void *data, Nv_Menu *m)
 {
@@ -587,6 +613,8 @@ static void tools_menu_show(void *data, Nv_Menu *m)
         nirvana_assign_list_free(&l);
     }
     nv_menu_add_submenu(m, _("Open _Volume"), vols);
+    nv_menu_add_separator(m);
+    nv_menu_add_submenu(m, _("_Theme"), themes_menu());
 }
 
 static void build_own_menus(void)

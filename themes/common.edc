@@ -1,0 +1,691 @@
+/* SPDX-License-Identifier: GPL-3.0-or-later */
+/*
+ * Nirvana Desktop - the groups every theme shares (see themes/README.md for their parts
+ * and signals). A theme's .edc defines, then includes this file:
+ *   FN, FNB          the fonts (regular, bold)
+ *   FS, FSS          the text sizes (normal, small)
+ *   BAR_H            the screen bar's height; MENU_H a menu row's; TITLE_H a title bar's
+ *   ICON_TEXT_EFFECT the icon labels' effect (PLAIN, SHADOW, SOFT_SHADOW, OUTLINE)
+ * and gives its data items, color classes (THEME_COLOR_CLASSES lists them) and images
+ * (all of THEME_IMAGES, from images/NAME/).
+ */
+
+images {
+   image: "grad_bar.png" COMP;
+   image: "grad_bar_sel.png" COMP;
+   image: "grad_title_active.png" COMP;
+   image: "grad_title_inactive.png" COMP;
+   image: "grad_menu_sel.png" COMP;
+   image: "grad_backdrop.png" COMP;
+   image: "grad_dock.png" COMP;
+#define IMG2(n) image: "icon_"n".png" COMP; image: "icon_"n"_sel.png" COMP;
+   IMG2("harddisk") IMG2("home") IMG2("ram") IMG2("system")
+   IMG2("removable") IMG2("drawer") IMG2("file") IMG2("program")
+#define GIMG(n) image: "gadget_"n".png" COMP; image: "gadget_"n"_down.png" COMP; image: "gadget_"n"_inactive.png" COMP;
+   GIMG("close") GIMG("iconify") GIMG("zoom") GIMG("depth") GIMG("jump") GIMG("prefs") GIMG("resize")
+}
+
+collections {
+
+/* ------------------------------------------------------------------ the screen bar */
+group { name: "nirvana/screenbar";
+   min: 100 BAR_H;
+   parts {
+      part { name: "bg"; type: IMAGE; mouse_events: 1;
+         description { state: "default" 0.0;
+            image.normal: "grad_bar.png";
+         }
+      }
+      part { name: "line"; type: RECT; mouse_events: 0;
+         description { state: "default" 0.0;
+            color_class: "nirvana_bar_line";
+            rel1 { relative: 0.0 1.0; offset: 0 -1; }
+         }
+      }
+      part { name: "nirvana.text.title"; type: TEXT; mouse_events: 0;
+         effect: SHADOW;
+         description { state: "default" 0.0;
+            color_class: "nirvana_bar_text";
+            color3: 255 255 255 255;
+            fixed: 1 0;
+            rel1 { relative: 0.0 0.0; offset: 10 0; }
+            rel2 { relative: 0.0 1.0; offset: 10 -2; }
+            align: 0.0 0.5;
+            text { font: FNB; size: FS; min: 1 1; ellipsis: -1; align: 0.0 0.5; }
+         }
+      }
+      part { name: "nirvana.swallow.menus"; type: SWALLOW;
+         description { state: "default" 0.0;
+            rel1 { to_x: "nirvana.text.title"; relative: 1.0 0.0; offset: 14 0; }
+            rel2 { to_x: "nirvana.text.clock"; relative: 0.0 1.0; offset: -12 -2; }
+            align: 0.0 0.5;
+         }
+      }
+      part { name: "nirvana.swallow.status"; type: SWALLOW;
+         description { state: "default" 0.0;
+            fixed: 1 0;
+            rel1 { to_x: "nirvana.text.clock"; relative: 0.0 0.0; offset: -6 0; }
+            rel2 { to_x: "nirvana.text.clock"; relative: 0.0 1.0; offset: -6 -2; }
+            align: 1.0 0.5;
+         }
+      }
+      part { name: "nirvana.text.clock"; type: TEXT; mouse_events: 0;
+         effect: SHADOW;
+         description { state: "default" 0.0;
+            color_class: "nirvana_bar_text";
+            color3: 255 255 255 255;
+            fixed: 1 0;
+            rel1 { to_x: "depth"; relative: 0.0 0.0; offset: -10 0; }
+            rel2 { to_x: "depth"; relative: 0.0 1.0; offset: -10 -2; }
+            align: 1.0 0.5;
+            text { font: FN; size: FS; min: 1 1; ellipsis: -1; align: 1.0 0.5; }
+         }
+      }
+      part { name: "depth"; type: IMAGE;
+         description { state: "default" 0.0;
+            min: 18 18; max: 18 18; fixed: 1 1;
+            rel1 { relative: 1.0 0.0; offset: -22 2; }
+            rel2 { relative: 1.0 1.0; offset: -4 -3; }
+            image.normal: "gadget_depth.png";
+         }
+         description { state: "down" 0.0;
+            inherit: "default" 0.0;
+            image.normal: "gadget_depth_down.png";
+         }
+      }
+   }
+   programs {
+      program { signal: "mouse,down,1"; source: "depth";
+         action: STATE_SET "down" 0.0; target: "depth"; }
+      program { signal: "mouse,up,1"; source: "depth";
+         action: STATE_SET "default" 0.0; target: "depth"; }
+      program { signal: "mouse,clicked,1"; source: "depth";
+         action: SIGNAL_EMIT "nirvana,gadget,depth" "nirvana"; }
+      program { signal: "mouse,down,3"; source: "bg";
+         action: SIGNAL_EMIT "nirvana,menu,request" "nirvana"; }
+   }
+}
+
+group { name: "nirvana/screenbar/menutitle";
+   min: 10 MENU_H;
+   parts {
+      part { name: "sel"; type: IMAGE; mouse_events: 0;
+         description { state: "default" 0.0;
+            visible: 0;
+            image.normal: "grad_bar_sel.png";
+            rel1.offset: 0 1;
+            rel2.offset: -1 -1;
+         }
+         description { state: "selected" 0.0;
+            inherit: "default" 0.0;
+            visible: 1;
+         }
+      }
+      part { name: "nirvana.text"; type: TEXT; mouse_events: 0;
+         description { state: "default" 0.0;
+            color_class: "nirvana_bar_text";
+            rel1.offset: 8 0;
+            rel2.offset: -9 -1;
+            text { font: FN; size: FS; min: 1 1; ellipsis: -1; }
+         }
+         description { state: "selected" 0.0;
+            inherit: "default" 0.0;
+            color_class: "nirvana_menu_text_sel";
+         }
+      }
+      part { name: "event"; type: RECT;
+         description { state: "default" 0.0; color: 0 0 0 0; }
+      }
+   }
+   programs {
+      program { signal: "nirvana,state,selected"; source: "nirvana";
+         action: STATE_SET "selected" 0.0; target: "sel"; target: "nirvana.text"; }
+      program { signal: "nirvana,state,unselected"; source: "nirvana";
+         action: STATE_SET "default" 0.0; target: "sel"; target: "nirvana.text"; }
+   }
+}
+
+/* ------------------------------------------------------------------ menus */
+group { name: "nirvana/menu/bg";
+   parts {
+      part { name: "shadow"; type: RECT; mouse_events: 0;
+         description { state: "default" 0.0;
+            color_class: "nirvana_menu_shadow";
+            rel1.offset: 3 3;
+            rel2.offset: 2 2;
+         }
+      }
+      part { name: "border"; type: RECT;
+         description { state: "default" 0.0;
+            color_class: "nirvana_menu_border";
+            rel2.offset: -2 -2;
+         }
+      }
+      part { name: "bg"; type: RECT; mouse_events: 0;
+         description { state: "default" 0.0;
+            color_class: "nirvana_menu_bg";
+            rel1 { to: "border"; offset: 1 1; }
+            rel2 { to: "border"; offset: -2 -2; }
+         }
+      }
+      part { name: "nirvana.swallow.content"; type: SWALLOW;
+         description { state: "default" 0.0;
+            rel1 { to: "bg"; offset: 0 3; }
+            rel2 { to: "bg"; offset: -1 -4; }
+         }
+      }
+   }
+}
+
+group { name: "nirvana/menu/item";
+   min: 10 MENU_H;
+   parts {
+      part { name: "sel"; type: IMAGE; mouse_events: 0;
+         description { state: "default" 0.0;
+            visible: 0;
+            image.normal: "grad_menu_sel.png";
+         }
+         description { state: "selected" 0.0;
+            inherit: "default" 0.0;
+            visible: 1;
+         }
+      }
+      part { name: "check"; type: TEXT; mouse_events: 0;
+         description { state: "default" 0.0;
+            visible: 0;
+            color_class: "nirvana_menu_text";
+            rel1.offset: 6 0;
+            rel2 { relative: 0.0 1.0; offset: 20 -1; }
+            text { font: FN; size: FS; text: "✓"; }
+         }
+         description { state: "checked" 0.0;
+            inherit: "default" 0.0;
+            visible: 1;
+         }
+      }
+      part { name: "nirvana.text.label"; type: TEXT; mouse_events: 0;
+         description { state: "default" 0.0;
+            color_class: "nirvana_menu_text";
+            fixed: 0 1;
+            rel1.offset: 22 0;
+            rel2 { to_x: "nirvana.text.shortcut"; relative: 0.0 1.0; offset: -12 -1; }
+            text { font: FN; size: FS; min: 1 1; ellipsis: -1; align: 0.0 0.5; }
+         }
+         description { state: "selected" 0.0;
+            inherit: "default" 0.0;
+            color_class: "nirvana_menu_text_sel";
+         }
+         description { state: "disabled" 0.0;
+            inherit: "default" 0.0;
+            color_class: "nirvana_menu_text_disabled";
+         }
+      }
+      part { name: "nirvana.text.shortcut"; type: TEXT; mouse_events: 0;
+         description { state: "default" 0.0;
+            color_class: "nirvana_menu_text";
+            fixed: 1 1;
+            rel1 { to_x: "arrow"; relative: 0.0 0.0; offset: -4 0; }
+            rel2 { to_x: "arrow"; relative: 0.0 1.0; offset: -4 -1; }
+            align: 1.0 0.5;
+            text { font: FN; size: FSS; min: 1 1; ellipsis: -1; align: 1.0 0.5; }
+         }
+         description { state: "selected" 0.0;
+            inherit: "default" 0.0;
+            color_class: "nirvana_menu_text_sel";
+         }
+      }
+      part { name: "arrow"; type: TEXT; mouse_events: 0;
+         description { state: "default" 0.0;
+            color_class: "nirvana_menu_text";
+            visible: 0;
+            fixed: 1 1;
+            min: 14 0;
+            rel1 { relative: 1.0 0.0; offset: -18 0; }
+            rel2 { relative: 1.0 1.0; offset: -6 -1; }
+            text { font: FN; size: FSS; text: "▸"; }
+         }
+         description { state: "submenu" 0.0;
+            inherit: "default" 0.0;
+            visible: 1;
+         }
+      }
+   }
+   programs {
+      program { signal: "nirvana,state,selected"; source: "nirvana";
+         action: STATE_SET "selected" 0.0;
+         target: "sel"; target: "nirvana.text.label"; target: "nirvana.text.shortcut"; }
+      program { signal: "nirvana,state,unselected"; source: "nirvana";
+         action: STATE_SET "default" 0.0;
+         target: "sel"; target: "nirvana.text.label"; target: "nirvana.text.shortcut"; }
+      program { signal: "nirvana,state,disabled"; source: "nirvana";
+         action: STATE_SET "disabled" 0.0; target: "nirvana.text.label"; }
+      program { signal: "nirvana,state,checked"; source: "nirvana";
+         action: STATE_SET "checked" 0.0; target: "check"; }
+      program { signal: "nirvana,state,submenu"; source: "nirvana";
+         action: STATE_SET "submenu" 0.0; target: "arrow"; }
+   }
+}
+
+group { name: "nirvana/menu/separator";
+   min: 10 9;
+   parts {
+      part { name: "line"; type: RECT; mouse_events: 0;
+         description { state: "default" 0.0;
+            color_class: "nirvana_menu_separator";
+            min: 0 1; max: 99999 1;
+            rel1.offset: 8 0;
+            rel2.offset: -9 -1;
+         }
+      }
+   }
+}
+
+/* ------------------------------------------------------------------ the backdrop */
+group { name: "nirvana/backdrop";
+   parts {
+      part { name: "bg"; type: IMAGE;
+         description { state: "default" 0.0;
+            image.normal: "grad_backdrop.png";
+         }
+      }
+      part { name: "nirvana.swallow.wallpaper"; type: SWALLOW;
+         description { state: "default" 0.0; }
+      }
+      part { name: "nirvana.text.version"; type: TEXT; mouse_events: 0;
+         description { state: "default" 0.0;
+            color_class: "nirvana_backdrop_text";
+            rel1 { relative: 0.0 1.0; offset: 12 -24; }
+            rel2 { relative: 0.5 1.0; offset: 0 -8; }
+            text { font: FN; size: FSS; align: 0.0 1.0; }
+         }
+      }
+   }
+}
+
+/* ------------------------------------------------------------------ icons */
+#define ICON(kind, img) \
+group { name: "nirvana/icon/"kind; \
+   min: 88 92; \
+   parts { \
+      part { name: "image"; type: IMAGE; mouse_events: 0; \
+         description { state: "default" 0.0; \
+            min: 64 64; max: 64 64; fixed: 1 1; \
+            rel1.relative: 0.5 0.0; rel2.relative: 0.5 0.0; align: 0.5 0.0; \
+            image.normal: "icon_"img".png"; \
+         } \
+         description { state: "selected" 0.0; \
+            inherit: "default" 0.0; \
+            image.normal: "icon_"img"_sel.png"; \
+         } \
+      } \
+      part { name: "nirvana.swallow.image"; type: SWALLOW; mouse_events: 0; \
+         description { state: "default" 0.0; \
+            rel1.to: "image"; rel2.to: "image"; \
+         } \
+      } \
+      part { name: "label_bg"; type: RECT; mouse_events: 0; \
+         description { state: "default" 0.0; \
+            color_class: "nirvana_icon_text_bg"; \
+            visible: 0; \
+            rel1 { to: "nirvana.text.label"; offset: -3 -1; } \
+            rel2 { to: "nirvana.text.label"; offset: 2 0; } \
+         } \
+         description { state: "selected" 0.0; \
+            inherit: "default" 0.0; \
+            visible: 1; \
+            color_class: "nirvana_icon_text_sel_bg"; \
+         } \
+      } \
+      part { name: "nirvana.text.label"; type: TEXT; mouse_events: 0; \
+         effect: ICON_TEXT_EFFECT; \
+         description { state: "default" 0.0; \
+            color_class: "nirvana_icon_text"; \
+            color3: 255 255 255 255; \
+            rel1 { to_y: "image"; relative: 0.0 1.0; offset: 0 4; } \
+            rel2 { relative: 1.0 1.0; offset: -1 -1; } \
+            align: 0.5 0.0; \
+            fixed: 0 1; \
+            text { font: FN; size: FSS; min: 0 1; ellipsis: 0.5; align: 0.5 0.0; } \
+         } \
+      } \
+      part { name: "event"; type: RECT; \
+         description { state: "default" 0.0; color: 0 0 0 0; } \
+      } \
+   } \
+   programs { \
+      program { signal: "nirvana,state,selected"; source: "nirvana"; \
+         action: STATE_SET "selected" 0.0; target: "image"; target: "label_bg"; } \
+      program { signal: "nirvana,state,unselected"; source: "nirvana"; \
+         action: STATE_SET "default" 0.0; target: "image"; target: "label_bg"; } \
+   } \
+}
+
+ICON("volume", "harddisk")
+ICON("volume/system", "system")
+ICON("volume/home", "home")
+ICON("volume/ram", "ram")
+ICON("volume/removable", "removable")
+ICON("drawer", "drawer")
+ICON("file", "file")
+ICON("program", "program")
+
+/* the same icons for listers: dark text on a light background */
+#define LICON(kind, img) \
+group { name: "nirvana/lister/icon/"kind; \
+   parts { \
+      part { name: "image"; type: IMAGE; mouse_events: 0; \
+         description { state: "default" 0.0; \
+            aspect: 1.0 1.0; aspect_preference: BOTH; \
+            image.normal: "icon_"img".png"; \
+         } \
+         description { state: "selected" 0.0; \
+            inherit: "default" 0.0; \
+            image.normal: "icon_"img"_sel.png"; \
+         } \
+      } \
+   } \
+}
+LICON("drawer", "drawer")
+LICON("file", "file")
+LICON("program", "program")
+
+/* ------------------------------------------------------------------ window frames */
+#define GADGET(n) \
+group { name: "nirvana/frame/gadget/"n; \
+   min: 18 18; max: 18 18; \
+   parts { \
+      part { name: "img"; type: IMAGE; \
+         description { state: "default" 0.0; image.normal: "gadget_"n".png"; } \
+         description { state: "down" 0.0; inherit: "default" 0.0; image.normal: "gadget_"n"_down.png"; } \
+         description { state: "inactive" 0.0; inherit: "default" 0.0; image.normal: "gadget_"n"_inactive.png"; } \
+      } \
+   } \
+   programs { \
+      program { signal: "mouse,down,1"; source: "img"; action: STATE_SET "down" 0.0; target: "img"; } \
+      program { signal: "mouse,up,1"; source: "img"; action: STATE_SET "default" 0.0; target: "img"; } \
+      program { signal: "mouse,clicked,1"; source: "img"; action: SIGNAL_EMIT "nirvana,gadget,"n "nirvana"; } \
+      program { signal: "nirvana,state,inactive"; source: "nirvana"; action: STATE_SET "inactive" 0.0; target: "img"; } \
+      program { signal: "nirvana,state,active"; source: "nirvana"; action: STATE_SET "default" 0.0; target: "img"; } \
+   } \
+}
+GADGET("close")
+GADGET("prefs")
+GADGET("jump")
+GADGET("iconify")
+GADGET("zoom")
+GADGET("depth")
+
+group { name: "nirvana/frame";
+   parts {
+      part { name: "border"; type: RECT;
+         description { state: "default" 0.0;
+            color_class: "nirvana_frame_border";
+         }
+      }
+      part { name: "bg"; type: RECT; mouse_events: 0;
+         description { state: "default" 0.0;
+            color_class: "nirvana_frame_bg";
+            rel1.offset: 1 1;
+            rel2.offset: -2 -2;
+         }
+      }
+      part { name: "title"; type: IMAGE;
+         description { state: "default" 0.0;
+            image.normal: "grad_title_active.png";
+            rel1.offset: 1 1;
+            rel2 { relative: 1.0 0.0; offset: -2 TITLE_H; }
+         }
+         description { state: "inactive" 0.0;
+            inherit: "default" 0.0;
+            image.normal: "grad_title_inactive.png";
+         }
+      }
+      part { name: "nirvana.swallow.gadgets.left"; type: SWALLOW;
+         description { state: "default" 0.0;
+            fixed: 1 1;
+            align: 0.0 0.5;
+            rel1 { to: "title"; relative: 0.0 0.0; offset: 3 0; }
+            rel2 { to: "title"; relative: 0.0 1.0; offset: 3 -1; }
+         }
+      }
+      part { name: "nirvana.swallow.gadgets.right"; type: SWALLOW;
+         description { state: "default" 0.0;
+            fixed: 1 1;
+            align: 1.0 0.5;
+            rel1 { to: "title"; relative: 1.0 0.0; offset: -4 0; }
+            rel2 { to: "title"; relative: 1.0 1.0; offset: -4 -1; }
+         }
+      }
+      part { name: "nirvana.text.title"; type: TEXT; mouse_events: 0;
+         effect: SHADOW;
+         description { state: "default" 0.0;
+            color_class: "nirvana_title_text";
+            color3: 255 255 255 255;
+            rel1 { to_x: "nirvana.swallow.gadgets.left"; to_y: "title"; relative: 1.0 0.0; offset: 8 0; }
+            rel2 { to_x: "nirvana.swallow.gadgets.right"; to_y: "title"; relative: 0.0 1.0; offset: -8 -1; }
+            text { font: FNB; size: FS; min: 0 1; ellipsis: 0.0; align: 0.0 0.5; }
+         }
+         description { state: "inactive" 0.0;
+            inherit: "default" 0.0;
+            color_class: "nirvana_title_text_inactive";
+         }
+      }
+      part { name: "nirvana.swallow.content"; type: SWALLOW;
+         description { state: "default" 0.0;
+            rel1 { to_y: "title"; relative: 0.0 1.0; offset: 4 1; }
+            rel2 { relative: 1.0 1.0; offset: -5 -5; }
+         }
+      }
+      part { name: "resize"; type: IMAGE;
+         description { state: "default" 0.0;
+            min: 18 18; max: 18 18; fixed: 1 1;
+            rel1 { relative: 1.0 1.0; offset: -19 -19; }
+            rel2 { relative: 1.0 1.0; offset: -2 -2; }
+            image.normal: "gadget_resize.png";
+         }
+         description { state: "inactive" 0.0;
+            inherit: "default" 0.0;
+            image.normal: "gadget_resize_inactive.png";
+         }
+         description { state: "down" 0.0;
+            inherit: "default" 0.0;
+            image.normal: "gadget_resize_down.png";
+         }
+      }
+   }
+   programs {
+      program { signal: "mouse,down,1"; source: "title";
+         action: SIGNAL_EMIT "nirvana,frame,move" "nirvana"; }
+      program { signal: "mouse,down,1,double"; source: "title";
+         action: SIGNAL_EMIT "nirvana,gadget,zoom" "nirvana"; }
+      program { signal: "mouse,down,1"; source: "resize";
+         action: SIGNAL_EMIT "nirvana,frame,resize" "nirvana"; }
+      program { signal: "mouse,down,1"; source: "resize";
+         action: STATE_SET "down" 0.0; target: "resize"; }
+      program { signal: "mouse,up,1"; source: "resize";
+         action: STATE_SET "default" 0.0; target: "resize"; }
+      program { signal: "mouse,down,1"; source: "border";
+         action: SIGNAL_EMIT "nirvana,frame,resize,edge" "nirvana"; }
+      program { signal: "nirvana,state,inactive"; source: "nirvana";
+         action: STATE_SET "inactive" 0.0;
+         target: "title"; target: "nirvana.text.title"; target: "resize"; }
+      program { signal: "nirvana,state,active"; source: "nirvana";
+         action: STATE_SET "default" 0.0;
+         target: "title"; target: "nirvana.text.title"; target: "resize"; }
+   }
+}
+
+
+/* ------------------------------------------------------------------ the dock */
+group { name: "nirvana/dock/bg";
+   parts {
+      part { name: "shadow"; type: RECT; mouse_events: 0;
+         description { state: "default" 0.0;
+            color_class: "nirvana_dock_shadow";
+            rel1.offset: 2 2;
+            rel2.offset: 1 1;
+         }
+      }
+      part { name: "border"; type: RECT;
+         description { state: "default" 0.0;
+            color_class: "nirvana_dock_border";
+            rel2.offset: -3 -3;
+         }
+      }
+      part { name: "bg"; type: IMAGE; mouse_events: 0;
+         description { state: "default" 0.0;
+            image.normal: "grad_dock.png";
+            color_class: "nirvana_dock_bg";
+            rel1 { to: "border"; offset: 1 1; }
+            rel2 { to: "border"; offset: -2 -2; }
+         }
+      }
+      part { name: "nirvana.swallow.content"; type: SWALLOW;
+         description { state: "default" 0.0;
+            rel1 { to: "bg"; offset: 6 4; }
+            rel2 { to: "bg"; offset: -7 -5; }
+         }
+      }
+   }
+}
+
+group { name: "nirvana/dock/item";
+   min: 56 56;
+   parts {
+      part { name: "hilight"; type: RECT; mouse_events: 0;
+         description { state: "default" 0.0;
+            color: 255 255 255 0;
+         }
+         description { state: "hover" 0.0;
+            color_class: "nirvana_dock_hover";
+         }
+         description { state: "pressed" 0.0;
+            color_class: "nirvana_dock_pressed";
+         }
+      }
+      part { name: "nirvana.swallow.icon"; type: SWALLOW; mouse_events: 0;
+         description { state: "default" 0.0;
+            rel1.offset: 4 4;
+            rel2.offset: -5 -5;
+         }
+         description { state: "pressed" 0.0;
+            inherit: "default" 0.0;
+            rel1.offset: 6 6;
+            rel2.offset: -5 -5;
+         }
+      }
+      part { name: "subdock"; type: TEXT; mouse_events: 0;
+         description { state: "default" 0.0;
+            visible: 0;
+            color_class: "nirvana_dock_text";
+            rel1 { relative: 1.0 0.0; offset: -12 0; }
+            rel2 { relative: 1.0 0.0; offset: -1 10; }
+            text { font: FN; size: 8; text: "▴"; }
+         }
+         description { state: "sub" 0.0;
+            inherit: "default" 0.0;
+            visible: 1;
+         }
+      }
+      part { name: "event"; type: RECT;
+         description { state: "default" 0.0; color: 0 0 0 0; }
+      }
+   }
+   programs {
+      program { signal: "mouse,in"; source: "event";
+         action: STATE_SET "hover" 0.0; target: "hilight"; }
+      program { signal: "mouse,out"; source: "event";
+         action: STATE_SET "default" 0.0; target: "hilight"; target: "nirvana.swallow.icon"; }
+      program { signal: "mouse,down,1"; source: "event";
+         action: STATE_SET "pressed" 0.0; target: "hilight"; target: "nirvana.swallow.icon"; }
+      program { signal: "mouse,up,1"; source: "event";
+         action: STATE_SET "hover" 0.0; target: "hilight";
+         after: "icon_back"; }
+      program { name: "icon_back";
+         action: STATE_SET "default" 0.0; target: "nirvana.swallow.icon"; }
+      program { signal: "mouse,clicked,1"; source: "event";
+         action: SIGNAL_EMIT "nirvana,dock,activate" "nirvana"; }
+      program { signal: "nirvana,state,subdock"; source: "nirvana";
+         action: STATE_SET "sub" 0.0; target: "subdock"; }
+   }
+}
+
+group { name: "nirvana/dock/separator";
+   min: 10 56;
+   parts {
+      part { name: "line"; type: RECT; mouse_events: 0;
+         description { state: "default" 0.0;
+            color_class: "nirvana_dock_separator";
+            min: 1 0; max: 1 99999;
+            rel1.offset: 0 8;
+            rel2.offset: -1 -9;
+         }
+      }
+   }
+}
+
+group { name: "nirvana/dock/docky";
+   min: 56 56;
+   parts {
+      part { name: "track"; type: RECT; mouse_events: 0;
+         description { state: "default" 0.0;
+            color_class: "nirvana_dock_track";
+            rel1 { relative: 0.0 0.0; offset: 6 6; }
+            rel2 { relative: 0.0 1.0; offset: 11 -20; }
+         }
+         description { state: "hidden" 0.0;
+            inherit: "default" 0.0;
+            visible: 0;
+         }
+      }
+      part { name: "level"; type: RECT; mouse_events: 0;
+         dragable { x: 0 0 0; y: 1 1 0; confine: "track"; }
+         description { state: "default" 0.0;
+            color: 0 0 0 0;
+            min: 6 1; max: 6 1;
+         }
+      }
+      part { name: "fill"; type: RECT; mouse_events: 0;
+         description { state: "default" 0.0;
+            color_class: "nirvana_dock_fill";
+            rel1 { to_x: "track"; to_y: "level"; relative: 0.0 0.0; }
+            rel2 { to: "track"; }
+         }
+         description { state: "hidden" 0.0;
+            inherit: "default" 0.0;
+            visible: 0;
+         }
+      }
+      part { name: "nirvana.text.value"; type: TEXT; mouse_events: 0;
+         description { state: "default" 0.0;
+            color_class: "nirvana_dock_text";
+            rel1 { to_x: "track"; relative: 1.0 0.0; offset: 2 4; }
+            rel2 { relative: 1.0 1.0; offset: -3 -20; }
+            text { font: FNB; size: FS; min: 0 0; ellipsis: -1; }
+         }
+         description { state: "wide" 0.0;
+            inherit: "default" 0.0;
+            rel1 { relative: 0.0 0.0; offset: 2 4; }
+         }
+      }
+      part { name: "nirvana.text.label"; type: TEXT; mouse_events: 0;
+         description { state: "default" 0.0;
+            color_class: "nirvana_dock_label";
+            rel1 { relative: 0.0 1.0; offset: 0 -18; }
+            rel2 { relative: 1.0 1.0; offset: -1 -4; }
+            text { font: FN; size: 8; }
+         }
+      }
+      part { name: "event"; type: RECT;
+         description { state: "default" 0.0; color: 0 0 0 0; }
+      }
+   }
+   programs {
+      program { signal: "nirvana,state,nogauge"; source: "nirvana";
+         action: STATE_SET "hidden" 0.0; target: "fill"; target: "track";
+         after: "wide"; }
+      program { name: "wide";
+         action: STATE_SET "wide" 0.0; target: "nirvana.text.value"; }
+   }
+}
+}

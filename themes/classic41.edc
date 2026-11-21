@@ -1,0 +1,55 @@
+/* SPDX-License-Identifier: GPL-3.0-or-later */
+/*
+ * Nirvana Desktop - the "Classic 4.1" theme: smooth greys, gradient title bars, soft shadows.
+ * Its groups are common.edc's; its images are drawn by tools/make-theme-images.py.
+ */
+
+#define FN "Sans"
+#define FNB "Sans:style=Bold"
+#define FS 10
+#define FSS 9
+#define BAR_H 24
+#define MENU_H 21
+#define TITLE_H 22
+#define ICON_TEXT_EFFECT SOFT_SHADOW
+
+data {
+   item: "nirvana/theme/name" "Classic 4.1";
+   item: "nirvana/screenbar/height" "24";
+   item: "nirvana/frame/gadgets/left" "close";
+   item: "nirvana/frame/gadgets/right" "prefs jump iconify zoom depth";
+   /* the colours of the toolkit's widgets (an Elementary palette) */
+   item: "nirvana/widgets/palette" "light";
+}
+
+color_classes {
+   color_class { name: "nirvana_bar_text"; color: 20 20 24 255; color3: 255 255 255 120; }
+   color_class { name: "nirvana_bar_line"; color: 60 62 70 255; }
+   color_class { name: "nirvana_menu_text"; color: 20 20 24 255; }
+   color_class { name: "nirvana_menu_text_sel"; color: 255 255 255 255; }
+   color_class { name: "nirvana_menu_text_disabled"; color: 130 132 138 255; }
+   color_class { name: "nirvana_menu_bg"; color: 222 224 228 248; }
+   color_class { name: "nirvana_menu_border"; color: 60 62 70 255; }
+   color_class { name: "nirvana_menu_shadow"; color: 0 0 0 80; }
+   color_class { name: "nirvana_menu_separator"; color: 160 162 170 255; }
+   color_class { name: "nirvana_backdrop_text"; color: 255 255 255 70; }
+   color_class { name: "nirvana_icon_text"; color: 255 255 255 255; color3: 0 0 0 170; }
+   color_class { name: "nirvana_icon_text_bg"; color: 0 0 0 0; }
+   color_class { name: "nirvana_icon_text_sel_bg"; color: 80 110 170 230; }
+   color_class { name: "nirvana_frame_border"; color: 50 52 60 255; }
+   color_class { name: "nirvana_frame_bg"; color: 212 214 220 255; }
+   color_class { name: "nirvana_title_text"; color: 255 255 255 255; color3: 20 30 60 150; }
+   color_class { name: "nirvana_title_text_inactive"; color: 60 62 68 255; color3: 255 255 255 100; }
+   color_class { name: "nirvana_dock_shadow"; color: 0 0 0 70; }
+   color_class { name: "nirvana_dock_border"; color: 60 62 70 240; }
+   color_class { name: "nirvana_dock_bg"; color: 255 255 255 240; }
+   color_class { name: "nirvana_dock_hover"; color: 80 110 170 80; }
+   color_class { name: "nirvana_dock_pressed"; color: 64 92 150 140; }
+   color_class { name: "nirvana_dock_text"; color: 20 20 24 255; }
+   color_class { name: "nirvana_dock_label"; color: 50 52 60 255; }
+   color_class { name: "nirvana_dock_separator"; color: 100 104 114 200; }
+   color_class { name: "nirvana_dock_track"; color: 20 20 24 60; }
+   color_class { name: "nirvana_dock_fill"; color: 80 150 90 255; }
+}
+
+#include "common.edc"

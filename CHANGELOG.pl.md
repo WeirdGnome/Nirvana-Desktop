@@ -3,7 +3,22 @@
 
 *[English](CHANGELOG.md)*
 
-## 3.0.0-alpha4 — niewydane (NirvanaNG, etap 4)
+## 3.0.0-alpha5 — niewydane (NirvanaNG, etap 5)
+
+### Dodane
+- Cztery motywy obok Ambient, każdy z własnymi ikonami, gadżetami i kolorami: Classic
+  1.3 (cztery kolory, ostre piksele, paskowane belki tytułowe), Classic 2.1 (szary z
+  wypukłymi krawędziami), Classic 3.1 (osiem kolorów, niebieskoszare tło), Classic 4.1
+  (gładkie szarości, gradientowe belki tytułowe).
+- Tools -> Theme: motywy znalezione w `Themes:`, używany zaznaczony; wybór jest
+  zapisywany w `~/.nirvana/Prefs/desktop.conf`, a pulpit uruchamia się w nim od nowa.
+
+### Zmienione
+- Motywy mają wspólne grupy (`themes/common.edc`); motyw daje czcionki, rozmiary, klasy
+  kolorów i obrazki. `tools/make-theme-images.py` rysuje obrazki wszystkich motywów.
+- Gadżet zmiany rozmiaru pokazuje wciśnięcie.
+
+## 3.0.0-alpha4 — 2026-11-21 (NirvanaNG, etap 4)
 
 ### Dodane
 - Nirvana Dock: programy (.desktop, AppImage, pliki wykonywalne), pod-doki otwierane

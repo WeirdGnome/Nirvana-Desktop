@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 project('nirvana-desktop', ['c', 'cpp'],
-  version: '3.0.0-alpha4',
+  version: '3.0.0-alpha5',
   license: 'GPL-3.0-or-later AND LGPL-3.0-or-later',
   meson_version: '>= 0.60',
   default_options: [

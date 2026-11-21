@@ -17,8 +17,8 @@ Gałąź powstaje etapami:
 | 1 | `libnirvana` (assigny, czytnik AppImage), `assign`, `wbrun`, `appimage-info`, testy | **gotowe** |
 | 2 | Pulpit EFL: pasek „Nirvana Screen”, tło, gadżety okien, edytor assignów | **gotowe** |
 | 3 | Globalne menu (`com.canonical.AppMenu.Registrar`, `org.gtk.Menus`, Eldbus) | **gotowe** |
-| 4 | Dok i listery plików (wielowątkowe) | następny |
-| 5 | Motywy Edje: Classic13, Classic21, Classic31, Classic41, Ambient | |
+| 4 | Dok i listery plików (wielowątkowe) | **gotowe** |
+| 5 | Motywy Edje: Classic13, Classic21, Classic31, Classic41, Ambient | **gotowe** |
 
 ## libnirvana (LGPL-3.0-or-later)
 
@@ -66,6 +66,11 @@ nirvana-desktop [--theme NAZWA]      sam pulpit, w działającym labwc
   `~/.nirvana/Startup-Sequence`), Cancel.
 * **Lister** (pierwsza wersja; etap 4 go uzupełni): szuflada jako ikony, czytana w
   wątku, ikony AppImage bez uruchamiania, wzorce `#?` w filtrze.
+* **Motywy** (Tools -> Theme, zapamiętane w `~/.nirvana/Prefs/desktop.conf`; pulpit
+  uruchamia się od nowa w wybranym): Ambient (domyślny: miękkie gradienty), Classic 1.3
+  (cztery kolory, ostre piksele), Classic 2.1 (szary z wypukłymi krawędziami), Classic
+  3.1 (osiem kolorów, niebieskoszare tło), Classic 4.1 (gładkie szarości, gradientowe
+  paski tytułu). Jak zrobić własny: `themes/README.md`.
 * D-Bus: `org.nirvana.Desktop` na szynie sesji (`OpenDrawer`, `ReloadAssigns`,
   `ShowAssignsEditor`).
 

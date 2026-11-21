@@ -3,7 +3,22 @@
 
 *[Polski](CHANGELOG.pl.md)*
 
-## 3.0.0-alpha4 — unreleased (NirvanaNG, stage 4)
+## 3.0.0-alpha5 — unreleased (NirvanaNG, stage 5)
+
+### Added
+- Four themes beside Ambient, each with its own icons, gadgets and colours: Classic 1.3
+  (four colours, sharp pixels, striped title bars), Classic 2.1 (grey with raised
+  edges), Classic 3.1 (eight colours, a blue-grey backdrop), Classic 4.1 (smooth greys,
+  gradient title bars).
+- Tools -> Theme: the themes found in `Themes:`, the one in use checked; a choice is
+  kept in `~/.nirvana/Prefs/desktop.conf` and the desktop starts again in it.
+
+### Changed
+- The themes share their groups (`themes/common.edc`); a theme gives fonts, sizes,
+  colour classes and images. `tools/make-theme-images.py` draws every theme's images.
+- The resize gadget shows itself pressed.
+
+## 3.0.0-alpha4 — 2026-11-21 (NirvanaNG, stage 4)
 
 ### Added
 - The Nirvana Dock: launchers (.desktop files, AppImages, programs), sub-docks that
